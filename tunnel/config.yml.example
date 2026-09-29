@@ -1,0 +1,45 @@
+# cloudflared configuration — locally-managed tunnel.
+#
+# Copy to `~/.cloudflared/config.yml` (or /etc/cloudflared/config.yml) and fill in
+# the UUID printed by `cloudflared tunnel create dmb`.
+#
+# Why this exists: a Pterodactyl container is only allocated one or two ports, so
+# you cannot bind both the SPA and the API to public ports. `cloudflared` makes
+# *outbound* connections to Cloudflare's edge and carries traffic back down them,
+# so nothing has to be exposed inbound at all.
+#
+# Reference: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/local-management/configuration-file/
+#
+# Validate after editing:
+#   cloudflared tunnel ingress validate
+#   cloudflared tunnel ingress rule https://builder.example.com/api/health
+
+tunnel: 00000000-0000-0000-0000-000000000000
+credentials-file: /etc/cloudflared/00000000-0000-0000-0000-000000000000.json
+
+# Rules are evaluated top to bottom; the first match wins.
+# Cloudflare forwards the full path unmodified, and every API route already
+# lives under `/api`, so one hostname can serve both the site and the API.
+ingress:
+  # 1. API requests -> Express on 3001. Must come BEFORE the catch-all, because
+  #    a rule without `path` matches every path.
+  - hostname: builder.example.com
+    path: ^/api
+    service: http://localhost:3001
+
+  # 2. Everything else -> the built SPA (Vite preview / nginx / `pm2 dmb-web`).
+  - hostname: builder.example.com
+    service: http://localhost:5173
+
+  # ── Alternative: one subdomain per service ────────────────────────────────
+  # Handy when you want different Cloudflare Access / cache policies for the
+  # site and the API. If you use this, set VITE_API_BASE_URL to the API hostname
+  # and add that hostname to CLIENT_ORIGIN on the server.
+  #
+  # - hostname: api.builder.example.com
+  #   service: http://localhost:3001
+  # - hostname: builder.example.com
+  #   service: http://localhost:5173
+
+  # Required catch-all. Without it cloudflared refuses to start.
+  - service: http_status:404

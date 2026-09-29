@@ -1,0 +1,15 @@
+# Never bake these into a build context.
+node_modules
+dist
+**/dist
+.git
+**/.env
+**/.env.*
+*.sqlite
+*.sqlite-journal
+*.db
+**/data
+logs
+*.log
+docs
+.opencode

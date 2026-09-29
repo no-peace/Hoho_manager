@@ -1,0 +1,31 @@
+# Optional overlay: publish the stack over a Cloudflare Tunnel instead of
+# binding public ports.
+#
+#   TUNNEL_TOKEN=eyJ... docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d
+#
+# This uses a *remotely-managed* tunnel: you create it in the Cloudflare
+# dashboard (Networks -> Tunnels), point its public hostnames at
+# `http://server:3001` and `http://client:80`, and paste the connector token here.
+# No `config.yml` is needed in that mode.
+#
+# For a locally-managed tunnel (config file lives on the host, see
+# `tunnel/config.yml.example`), mount the credentials directory instead of
+# passing a token:
+#
+#   volumes:
+#     - ~/.cloudflared:/etc/cloudflared:ro
+#   command: tunnel --config /etc/cloudflared/config.yml --no-autoupdate run
+#
+# On Pterodactyl you run `cloudflared` directly inside the container rather than
+# through compose — see docs/PTERODACTYL_DEPLOYMENT.md.
+
+services:
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN — see the comment at the top of this file}
+    depends_on:
+      - server
+      - client

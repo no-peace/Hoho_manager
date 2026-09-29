@@ -1,0 +1,39 @@
+{
+  "name": "discord-message-builder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A full-featured Discord message builder website (Discohook + discord-webhook style) with a bot interaction/action system.",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client",
+    "bot"
+  ],
+  "scripts": {
+    "dev": "npm run build:shared && concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "dev:bot": "npm run dev --workspace bot",
+    "build:shared": "npm run build --workspace @dmb/shared",
+    "build:client": "npm run build --workspace client",
+    "build:server": "npm run build --workspace server",
+    "build:bot": "npm run build --workspace bot",
+    "build": "npm run build:shared && npm run build:client && npm run build:server && npm run build:bot",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "start": "npm run start --workspace server",
+    "start:bot": "npm run start --workspace bot",
+    "migrate": "npm run migrate --workspace server",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs",
+    "pm2:save": "pm2 save"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

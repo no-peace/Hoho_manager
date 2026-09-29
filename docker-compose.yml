@@ -1,0 +1,43 @@
+# Local development compose file.
+#
+#   docker compose up --build
+#
+# The client is served by nginx on 5173. In this compose setup the browser talks
+# to the API cross-origin (http://localhost:3001), so CLIENT_ORIGIN must list the
+# client host and the frontend needs VITE_API_BASE_URL baked in at build time.
+# The SQLite file lives in a named volume so it survives container restarts.
+#
+# Provide Discord credentials from your local env file:
+#   docker compose --env-file server/.env up --build
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      CLIENT_ORIGIN: http://localhost:5173
+      DATABASE_URL: /app/data/dev.sqlite
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY:-}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-key}
+    volumes:
+      - sqlite-data:/app/data
+    ports:
+      - "3001:3001"
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  sqlite-data:
