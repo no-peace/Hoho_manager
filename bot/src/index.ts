@@ -1,3 +1,8 @@
+// Fixes the JSON serialization crash when relaying Discord interactions
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 import { fileURLToPath } from "node:url";
 import { SapphireClient } from "@sapphire/framework";
 import { GatewayIntentBits } from "discord.js";

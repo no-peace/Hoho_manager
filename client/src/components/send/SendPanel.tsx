@@ -1,193 +1,230 @@
-import { useEffect } from "react";
-import { AlertCircle, CheckCircle2, RefreshCw, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, RefreshCw, Send, Edit3, Plus } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Select, TextField } from "../ui/Field";
 import { useSend } from "../../hooks/useSend";
 import { useMessageStore } from "../../store/messageStore";
 import { useProfileStore } from "../../store/profileStore";
 import { SEND_MODES } from "../../utils/constants";
-import type { SendModeValue } from "../../utils/constants";
-
-/**
- * Where the message goes.
- *
- * The two modes are presented as a choice because they have genuinely different
- * trade-offs, and the UI states them plainly:
- *   - Webhook: sent from your browser straight to Discord. Simple, but the URL is
- *     visible to the page.
- *   - Bot: sent through the API so the token stays server-side. Needs a channel id
- *     and the server's admin key.
- */
-const MODE_OPTIONS: readonly { id: SendModeValue; label: string }[] = [
-  { id: SEND_MODES.WEBHOOK, label: "Webhook URL" },
-  { id: SEND_MODES.BOT, label: "Bot token" },
-];
 
 export const SendPanel = () => {
-  const { sendMessage, isConfigured, sendMode } = useSend();
+  const { sendMessage, isConfigured } = useSend();
 
-  const webhookUrl = useProfileStore((state) => state.webhookUrl);
   const channelId = useProfileStore((state) => state.channelId);
-  const threadId = useProfileStore((state) => state.threadId);
   const botProfileId = useProfileStore((state) => state.botProfileId);
-  const webhookProfiles = useProfileStore((state) => state.webhookProfiles);
   const botProfiles = useProfileStore((state) => state.botProfiles);
   const fetchProfiles = useProfileStore((state) => state.fetchProfiles);
   const profilesStatus = useProfileStore((state) => state.status);
 
   const setSendMode = useProfileStore((state) => state.setSendMode);
-  const setWebhookUrl = useProfileStore((state) => state.setWebhookUrl);
   const setChannelId = useProfileStore((state) => state.setChannelId);
-  const setThreadId = useProfileStore((state) => state.setThreadId);
   const setBotProfileId = useProfileStore((state) => state.setBotProfileId);
 
   const send = useMessageStore((state) => state.send);
   const resetSendState = useMessageStore((state) => state.resetSendState);
 
+  const [fetchedChannels, setFetchedChannels] = useState<{id: string, name: string}[]>([]);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [targetMessageId, setTargetMessageId] = useState("");
+  const [botMessages, setBotMessages] = useState<{id: string, content: string, raw: any}[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
   useEffect(() => {
+    setSendMode(SEND_MODES.BOT);
     void fetchProfiles();
-  }, [fetchProfiles]);
+  }, [fetchProfiles, setSendMode]);
+
+  useEffect(() => {
+    setIsLoadingChannels(true);
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const adminKey = import.meta.env.VITE_ADMIN_API_KEY || '';
+    
+    fetch(`${baseUrl}/api/send/channels`, { headers: { 'x-admin-key': adminKey } })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        setFetchedChannels(data);
+        if (data.length > 0 && !channelId) setChannelId(data[0].id);
+      }
+    })
+    .catch(console.error)
+    .finally(() => setIsLoadingChannels(false));
+  }, [channelId, setChannelId]);
+
+  useEffect(() => {
+    if (isEditMode && channelId) {
+      setIsLoadingMessages(true);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || '';
+      
+      fetch(`${baseUrl}/api/send/channels/${channelId}/messages`, { headers: { 'x-admin-key': adminKey } })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setBotMessages(data);
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingMessages(false));
+    }
+  }, [isEditMode, channelId]);
+
+// NEW: Auto-load the message into the preview when selected!
+  useEffect(() => {
+    if (isEditMode && targetMessageId) {
+      const selected = botMessages.find(m => m.id === targetMessageId);
+      if (selected && selected.raw) {
+        const store = useMessageStore.getState();
+        const raw = selected.raw;
+        
+        const genId = () => Math.random().toString(36).substring(2, 9);
+        
+        const mappedData = {
+          content: raw.content || "",
+          username: raw.author?.username || "",
+          avatar_url: raw.author?.avatar 
+            ? `https://cdn.discordapp.com/avatars/${raw.author.id}/${raw.author.avatar}.png` 
+            : "",
+          thread_name: "",
+          embeds: (raw.embeds || []).map((e: any) => ({
+            ...e,
+            _id: genId(),
+            fields: (e.fields || []).map((f: any) => ({ ...f, _id: genId() }))
+          })),
+          components: (raw.components || []).map((c: any) => ({
+            ...c,
+            _id: genId(),
+            components: (c.components || []).map((child: any) => ({
+              ...child,
+              _id: genId(),
+              options: (child.options || []).map((o: any) => ({ ...o, _id: genId() }))
+            }))
+          }))
+        };
+
+        // FIX: ALWAYS load imported messages as "classic" mode!
+        // Discord doesn't save V2 layout blocks (Containers/Sections). 
+        // By forcing classic mode, all text, embeds, and action rows become perfectly editable!
+        store.load({ 
+          data: mappedData as any, 
+          mode: "classic" as any 
+        });
+      }
+    }
+  }, [targetMessageId, isEditMode, botMessages]);
 
   return (
-    <div className="space-y-3">
-      {/* Mode switch */}
-      <div className="tab-rail" role="group" aria-label="Send mode">
-        {MODE_OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            aria-pressed={sendMode === option.id}
-            onClick={() => setSendMode(option.id)}
-            className={[
-              "tab-item flex-1 text-center text-xs",
-              sendMode === option.id ? "tab-item-active" : "tab-item-idle",
-            ].join(" ")}
-          >
-            {option.label}
+    <div className="bg-[#2b2d31] p-4 rounded-lg shadow-sm font-sans flex flex-col gap-4 border border-[#1e1f22]">
+      <div className="flex justify-between items-center">
+        <h3 className="font-bold text-[#dbdee1] uppercase text-xs tracking-wider flex items-center gap-2">
+          <span className="bg-[#5865f2] w-2 h-2 rounded-full"></span> Bot Dispatch
+        </h3>
+        
+        <div className="flex bg-[#1e1f22] p-1 rounded-md">
+          <button onClick={() => { setIsEditMode(false); setTargetMessageId(""); }} className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase transition-all ${!isEditMode ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:bg-[#313338]'}`}>
+            <Plus size={12} /> New
           </button>
-        ))}
+          <button onClick={() => setIsEditMode(true)} className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase transition-all ${isEditMode ? 'bg-[#faa61a] text-white' : 'text-[#b5bac1] hover:bg-[#313338]'}`}>
+            <Edit3 size={12} /> Edit
+          </button>
+        </div>
       </div>
 
-      {sendMode === SEND_MODES.WEBHOOK ? (
-        <>
-          <TextField
-            label="Webhook URL"
-            value={webhookUrl}
-            placeholder="https://discord.com/api/webhooks/…"
-            onChange={(event) => setWebhookUrl(event.target.value)}
-          />
+      <div className="space-y-3">
+        <Select
+          label="Target Channel"
+          value={channelId}
+          onChange={(event) => setChannelId(event.target.value)}
+          options={
+            isLoadingChannels
+              ? [{ value: "", label: "Loading channels..." }]
+              : fetchedChannels.length === 0
+              ? [{ value: "", label: "No channels found..." }]
+              : [
+                  { value: "", label: "Select a channel..." },
+                  ...fetchedChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))
+                ]
+          }
+        />
 
-          <TextField
-            label="Thread ID (optional)"
-            value={threadId}
-            placeholder="Post into a thread"
-            onChange={(event) => setThreadId(event.target.value)}
-          />
-
-          {webhookProfiles.length > 0 && (
+        {isEditMode && (
+          <div className="p-3 bg-[#1e1f22] rounded border border-[#faa61a]/30 mb-2">
             <Select
-              label="Saved webhooks"
-              value=""
-              onChange={(event) => {
-                const profile = webhookProfiles.find(
-                  (candidate) => String(candidate.id) === event.target.value,
-                );
-                if (profile) setWebhookUrl(profile.url);
-              }}
-              options={[
-                { value: "", label: "Choose a saved webhook…" },
-                ...webhookProfiles.map((profile) => ({
-                  value: String(profile.id),
-                  label: profile.name,
-                })),
-              ]}
-            />
-          )}
-
-          <p className="rounded-md bg-raised px-2 py-1.5 text-[11px] text-ink-faint">
-            Sent directly from your browser to Discord — the server is not involved.
-          </p>
-        </>
-      ) : (
-        <>
-          <TextField
-            label="Channel ID"
-            value={channelId}
-            placeholder="123456789012345678"
-            onChange={(event) => setChannelId(event.target.value)}
-          />
-
-          {botProfiles.length > 0 && (
-            <Select
-              label="Bot profile"
-              value={String(botProfileId ?? "")}
-              onChange={(event) =>
-                setBotProfileId(event.target.value ? Number(event.target.value) : null)
+              label="Message to Edit"
+              value={targetMessageId}
+              onChange={(event) => setTargetMessageId(event.target.value)}
+              options={
+                isLoadingMessages
+                  ? [{ value: "", label: "Fetching recent messages..." }]
+                  : botMessages.length === 0
+                  ? [{ value: "", label: "No recent messages from bot here." }]
+                  : [
+                      { value: "", label: "Select a message to edit..." },
+                      ...botMessages.map(m => ({
+                        value: m.id,
+                        label: `${m.content.substring(0, 30)}${m.content.length > 30 ? '...' : ''} (${m.id})`
+                      }))
+                    ]
               }
-              options={[
-                { value: "", label: "Server default token" },
-                ...botProfiles.map((profile) => ({
-                  value: String(profile.id),
-                  label: profile.name,
-                })),
-              ]}
             />
-          )}
+            
+            {/* NEW: Discord URL Link Parser */}
+            <TextField
+              label="Manual Message ID or Link"
+              value={targetMessageId}
+              placeholder="123456789... or https://discord.com/..."
+              onChange={(event) => {
+                const val = event.target.value;
+                const urlMatch = val.match(/\/channels\/\d+\/\d+\/(\d+)/);
+                setTargetMessageId(urlMatch ? urlMatch[1] : val);
+              }}
+            />
+          </div>
+        )}
 
-          <p className="rounded-md bg-raised px-2 py-1.5 text-[11px] text-ink-faint">
-            Proxied through <code>POST /api/send</code> so the bot token never reaches the browser.
-          </p>
-        </>
-      )}
-
-      <div className="flex items-center gap-2">
-        <Button
-          icon={Send}
-          onClick={() => void sendMessage()}
-          disabled={!isConfigured}
-          loading={send.status === "sending"}
-          className="flex-1"
-        >
-          {send.status === "sending" ? "Sending…" : "Send message"}
-        </Button>
-        <Button
-          variant="ghost"
-          icon={RefreshCw}
-          onClick={() => void fetchProfiles()}
-          loading={profilesStatus === "loading"}
-          title="Reload profiles"
+        <Select
+          label="Bot Token Profile"
+          value={String(botProfileId ?? "")}
+          onChange={(event) => setBotProfileId(event.target.value ? Number(event.target.value) : null)}
+          options={[
+            { value: "", label: "Server Default Token (.env)" },
+            ...botProfiles.map((profile) => ({ value: String(profile.id), label: profile.name })),
+          ]}
         />
       </div>
 
+      <div className="flex items-center gap-2 mt-2">
+        <Button
+          icon={isEditMode ? Edit3 : Send}
+          // NEW: We now pass the editMessageId to the hook!
+          onClick={() => void sendMessage(isEditMode ? targetMessageId : undefined)}
+          disabled={!isConfigured || (isEditMode && !targetMessageId)}
+          loading={send.status === "sending"}
+          className={`flex-1 text-white border-none ${isEditMode ? 'bg-[#faa61a] hover:bg-[#e09415]' : 'bg-[#5865f2] hover:bg-[#4752c4]'}`}
+        >
+          {send.status === "sending" ? "Processing…" : isEditMode ? "Update Message" : "Send via Bot"}
+        </Button>
+        <Button variant="ghost" icon={RefreshCw} onClick={() => void fetchProfiles()} loading={profilesStatus === "loading"} title="Reload profiles" className="text-[#b5bac1]" />
+      </div>
+
       {!isConfigured && (
-        <p className="flex items-start gap-1.5 text-[11px] text-ink-faint">
-          <AlertCircle size={12} className="mt-0.5 shrink-0" />
-          {sendMode === SEND_MODES.BOT
-            ? "Enter a channel ID to enable sending."
-            : "Enter a webhook URL to enable sending."}
+        <p className="flex items-start gap-1.5 text-[12px] text-[#faa61a] bg-[#faa61a]/10 p-2 rounded">
+          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+          Select a channel ID to enable.
         </p>
       )}
 
       {send.status === "success" && (
-        <p className="flex items-start gap-1.5 rounded bg-online/15 px-2 py-1.5 text-[11px] text-[#6bd68f]">
-          <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
-          Message sent successfully.
+        <p className="flex items-start gap-1.5 rounded bg-[#23a559]/10 px-3 py-2 text-[12px] text-[#23a559]">
+          <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
+          Message {isEditMode ? "updated" : "dispatched"} and flows registered!
         </p>
       )}
 
       {send.status === "error" && (
-        <div className="rounded bg-danger/15 px-2 py-1.5">
-          <p className="flex items-start gap-1.5 text-[11px] text-[#f28b8b]">
-            <AlertCircle size={12} className="mt-0.5 shrink-0" />
-            {send.error}
-          </p>
-          <button
-            type="button"
-            className="mt-1 text-[10px] text-ink-faint underline"
-            onClick={resetSendState}
-          >
-            Dismiss
-          </button>
+        <div className="rounded bg-[#da373c]/10 border border-[#da373c]/20 px-3 py-2">
+          <p className="flex items-start gap-1.5 text-[12px] text-[#f28b8b]"><AlertCircle size={14} className="mt-0.5 shrink-0" /> {send.error}</p>
+          <button type="button" className="mt-2 text-[11px] text-[#b5bac1] underline" onClick={resetSendState}>Dismiss</button>
         </div>
       )}
     </div>

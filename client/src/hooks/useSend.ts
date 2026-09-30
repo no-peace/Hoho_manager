@@ -1,6 +1,4 @@
 import { useCallback } from "react";
-import type { SendRequestBody } from "@dmb/shared";
-import { api } from "../api/client";
 import { sendWebhookDirect } from "../api/discord";
 import { useActionStore } from "../store/actionStore";
 import { useMessageStore } from "../store/messageStore";
@@ -9,18 +7,6 @@ import { SEND_MODES } from "../utils/constants";
 import type { EditorMode, SendModeValue } from "../utils/constants";
 import { isPayloadEmpty } from "../utils/discord";
 
-/**
- * Sending logic, in one place.
- *
- * The two modes take very different paths:
- *   - **webhook** goes browser -> Discord directly (fewer hops, no server load)
- *   - **bot** goes browser -> `/api/send` -> Discord, because the token must
- *     never reach the client
- *
- * The UI only needs "did it work, and why not", so both paths normalise into the
- * message store's `send` state.
- */
-
 export interface SendResult {
   ok: boolean;
   error?: string;
@@ -28,7 +14,7 @@ export interface SendResult {
 }
 
 export interface UseSendReturn {
-  sendMessage: () => Promise<SendResult>;
+  sendMessage: (editMessageId?: string) => Promise<SendResult>;
   isConfigured: boolean;
   mode: EditorMode;
   sendMode: SendModeValue;
@@ -44,43 +30,56 @@ export const useSend = (): UseSendReturn => {
   const threadId = useProfileStore((state) => state.threadId);
   const botProfileId = useProfileStore((state) => state.botProfileId);
 
-  const sendMessage = useCallback(async (): Promise<SendResult> => {
+  const sendMessage = useCallback(async (editMessageId?: string): Promise<SendResult> => {
     const store = useMessageStore.getState();
-    const payload = store.getPayload();
+    const rawPayload = store.getPayload();
     const problems = store.getValidationErrors();
 
     if (problems.length > 0) {
-      const message = problems[0] ?? "This message can't be sent.";
-      setSendState({ status: "error", error: message, result: null });
-      return { ok: false, error: message };
+      setSendState({ status: "error", error: problems[0], result: null });
+      return { ok: false, error: problems[0] };
     }
-
-    if (isPayloadEmpty(payload)) {
-      const message = "Write something first — an empty message can't be sent.";
-      setSendState({ status: "error", error: message, result: null });
-      return { ok: false, error: message };
+    if (isPayloadEmpty(rawPayload)) {
+      setSendState({ status: "error", error: "Message is empty", result: null });
+      return { ok: false, error: "Message is empty" };
     }
 
     setSendState({ status: "sending", error: null, result: null });
 
     try {
       let result: unknown;
+      
+      // Cleanse the internal V2 flag (32768) which causes Discord to throw Invalid Form Body
+      const payload = { ...rawPayload };
+      if (payload.flags !== undefined) {
+          payload.flags &= ~32768;
+          if (payload.flags === 0) delete payload.flags;
+      }
 
       if (sendMode === SEND_MODES.BOT) {
-        const body: SendRequestBody = {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+        const adminKey = import.meta.env.VITE_ADMIN_API_KEY || '';
+        const body = {
           mode: "bot",
           payload,
           channelId,
           profileId: botProfileId,
-          // Multi-step flows can't fit in a 100-char custom_id, so they ride
-          // alongside the message and are registered server-side before send.
           flows: useActionStore.getState().toRegistrations(),
+          editMessageId
         };
-        result = await api.send(body);
-      } else {
-        result = await sendWebhookDirect(webhookUrl, payload, {
-          threadId: threadId || undefined,
+        
+        // We use direct fetch to guarantee the editMessageId is not stripped by shared types
+        const res = await fetch(`${baseUrl}/api/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+            body: JSON.stringify(body)
         });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || data.message || `API Error ${res.status}`);
+        result = data;
+      } else {
+        result = await sendWebhookDirect(webhookUrl, payload, { threadId: threadId || undefined });
       }
 
       setSendState({ status: "success", error: null, result });
@@ -92,10 +91,7 @@ export const useSend = (): UseSendReturn => {
     }
   }, [sendMode, webhookUrl, channelId, threadId, botProfileId, setSendState]);
 
-  /** Client-side readiness check used to enable/disable the send button. */
-  const isConfigured =
-    sendMode === SEND_MODES.BOT ? channelId.trim() !== "" : webhookUrl.trim() !== "";
-
+  const isConfigured = sendMode === SEND_MODES.BOT ? channelId.trim() !== "" : webhookUrl.trim() !== "";
   return { sendMessage, isConfigured, mode, sendMode };
 };
 
