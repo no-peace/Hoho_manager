@@ -34,7 +34,6 @@ const replaceVariables = (obj: any, vars: Record<string, any>): any => {
   return obj;
 };
 
-// Snowflake to Timestamp converter for {user.created}
 const snowflakeToUnix = (id: string) => {
   const epoch = 1420070400000;
   const binary = BigInt(id).toString(2).padStart(64, '0');
@@ -65,17 +64,11 @@ export const executeCustomId = async (
   
   const username = user?.username ?? "User";
   const displayname = member?.nick ?? user?.global_name ?? username;
-  
-  const clanTagMatch = displayname.match(/^\[(.*?)\]|^\((.*?)\)|^\{(.*?)\}/);
-  const clantag = clanTagMatch ? (clanTagMatch[1] || clanTagMatch[2] || clanTagMatch[3]) : "";
 
   const unixNow = Math.floor(Date.now() / 1000);
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
-  
-  // Convert Discord's ISO joined_at date to Unix
   const joinedAt = member?.joined_at ? Math.floor(new Date(member.joined_at).getTime() / 1000) : unixNow;
 
-  // The Master Engine Variables
   const variables: Record<string, unknown> = {
     // User
     "user.mention": `<@${userId}>`,
@@ -85,11 +78,10 @@ export const executeCustomId = async (
     "user.avatar": user?.avatar ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png` : "",
     "user.created": `<t:${userCreated}:d>`,
     "user.joined": `<t:${joinedAt}:R>`,
-    "user.clantag": clantag,
     
     // Server
     "server.id": interaction.guild_id ?? "unknown",
-    "server.name": "Your Server", // Note: Guild name requires fetching via REST if not cached
+    "server.name": "Your Server",
     "server.icon": interaction.guild_id ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/icon.png` : "",
     
     // Channel & Bot

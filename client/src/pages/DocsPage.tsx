@@ -2,7 +2,7 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 
 export const DocsPage = () => {
   return (
-    <div className="min-h-screen bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-20">
+    <div className="h-screen overflow-y-auto custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-20">
       {/* Header */}
       <div className="h-14 flex items-center px-6 border-b border-[#1e1f22] bg-[#2b2d31] sticky top-0 z-50 shadow-sm">
         <a href="/" className="flex items-center gap-2 text-[#b5bac1] hover:text-white transition-colors text-sm font-bold">
@@ -60,10 +60,6 @@ export const DocsPage = () => {
                 <tr className="hover:bg-[#1e1f22]/30 transition-colors">
                   <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.joined}'}</code></td>
                   <td className="px-5 py-3 text-[#b5bac1]">When the member joined the server (Relative Timestamp).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3 flex items-center gap-2"><code className="text-[#23a559] bg-[#1e1f22] border border-[#23a559]/30 px-1.5 py-0.5 rounded font-mono">{'{user.clantag}'}</code> <span className="text-[10px] bg-[#23a559] text-white px-1.5 py-0.5 rounded uppercase font-bold">Custom</span></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Extracts the Clan Tag if their name starts with <code>[TAG]</code>, <code>(TAG)</code>, or <code>{'{TAG}'}</code>.</td>
                 </tr>
               </tbody>
             </table>
@@ -136,7 +132,6 @@ export const DocsPage = () => {
             </table>
           </div>
         </section>
-
       </div>
     </div>
   );

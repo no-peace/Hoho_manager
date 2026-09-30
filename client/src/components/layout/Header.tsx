@@ -1,8 +1,7 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState } from "react";
 import {
   Download,
   FolderOpen,
-  LayoutTemplate,
   RotateCcw,
   Save,
   Sparkles,
@@ -14,21 +13,9 @@ import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useTemplateStore } from "../../store/templateStore";
 import { useTemplates } from "../../hooks/useTemplates";
-import {
-  downloadJson,
-  fromQueryData,
-  parseImportedJson,
-  toQueryData,
-} from "../../utils/exportImport";
+import { downloadJson, parseImportedJson } from "../../utils/exportImport";
 import { EDITOR_MODES } from "../../utils/constants";
 
-/**
- * Top bar.
- *
- * Owns the document-level actions: switching editor mode, naming/saving and
- * loading templates, and JSON import/export. `dirty` is tracked in the template
- * store so the save button can signal unsaved work.
- */
 const ModeToggle = () => {
   const mode = useMessageStore((state) => state.mode);
   const setMode = useMessageStore((state) => state.setMode);
@@ -44,10 +31,7 @@ const ModeToggle = () => {
           type="button"
           aria-pressed={mode === option.id}
           onClick={() => setMode(option.id)}
-          className={[
-            "tab-item px-3 text-xs",
-            mode === option.id ? "tab-item-active" : "tab-item-idle",
-          ].join(" ")}
+          className={`tab-item ${mode === option.id ? "tab-item-active" : "tab-item-idle"}`}
         >
           {option.label}
         </button>
@@ -60,41 +44,35 @@ export const Header = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loadOpen, setLoadOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-
   const { templates, currentName, dirty, saveCurrent, loadTemplate } = useTemplates();
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const detachTemplate = useTemplateStore((state) => state.detach);
   const removeTemplate = useTemplateStore((state) => state.remove);
 
-  const save = async (): Promise<void> => {
-    try {
-      await saveCurrent();
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : String(error));
-    }
-  };
-
   const exportJson = (): void => {
-    const { data, targets } = useMessageStore.getState();
-    downloadJson(
-      toQueryData({ data, targets }),
-      `${(currentName || "message").replace(/\s+/g, "-").toLowerCase()}.json`,
-    );
+    const payload = useMessageStore.getState().getPayload();
+    downloadJson(payload, `${currentName.trim() || "discohook-message"}.json`);
   };
 
-  const importJson = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const importJson = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
-    event.target.value = ""; // allow re-importing the same file
     if (!file) return;
-
     try {
-      const queryData = parseImportedJson(await file.text());
-      useMessageStore.getState().load(fromQueryData(queryData));
-      useActionStore.getState().reset();
-      detachTemplate();
+      const text = await file.text();
+      const document = parseImportedJson(text);
+      
+      // FIX: Wrap the parsed document in the 'data' property expected by LoadDocumentInput
+      useMessageStore.getState().load({
+        data: document as any,
+        mode: "classic" // Force classic mode to ensure imported embeds render properly
+      });
+      
+      setCurrentName(file.name.replace(/\.json$/i, ""));
       setImportError(null);
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : String(error));
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Failed to parse JSON file.");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -106,95 +84,116 @@ export const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-line bg-chrome px-4 py-2.5 shadow-md">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blurple">
-            <Sparkles size={16} className="text-white" />
+      <header className="h-14 shrink-0 flex items-center justify-between border-b border-[#1e1f22] bg-[#2b2d31] px-4 shadow-sm z-20 font-sans">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865f2] text-white shadow-sm">
+            <Sparkles size={18} />
+          </div>
+          <span className="text-[15px] font-bold text-white tracking-wide">
+            HoHo Manager
           </span>
-          <span className="text-base font-semibold text-ink-strong">Message Builder</span>
+          <ModeToggle />
         </div>
 
-        <ModeToggle />
-
-        <div className="flex min-w-48 flex-1 items-center gap-2">
+        {/* Template Bar */}
+        <div className="flex items-center gap-2 max-w-md w-full mx-4">
           <input
-            className="field !min-h-8 !py-1"
-            placeholder="Untitled template"
+            className="field !min-h-8 !py-1 text-xs"
+            placeholder="Untitled Template"
             value={currentName}
-            onChange={(event) => setCurrentName(event.target.value)}
+            onChange={(e) => setCurrentName(e.target.value)}
           />
           <Button
             size="sm"
             variant={dirty ? "primary" : "secondary"}
             icon={Save}
-            onClick={() => void save()}
+            onClick={() => void saveCurrent()}
             title={dirty ? "Save changes" : "Saved"}
+            className={dirty ? "bg-[#5865f2] hover:bg-[#4752c4] text-white border-none" : "bg-[#1e1f22] text-[#b5bac1] hover:text-white border-[#111214]"}
           >
             {dirty ? "Save" : "Saved"}
           </Button>
-          <Button size="sm" variant="secondary" icon={FolderOpen} onClick={() => setLoadOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={FolderOpen}
+            onClick={() => setLoadOpen(true)}
+            className="bg-[#1e1f22] text-[#b5bac1] hover:text-white border-[#111214]"
+          >
             Load
           </Button>
         </div>
 
+        {/* Action Controls */}
         <div className="flex items-center gap-1">
           <IconButton
             icon={Upload}
             label="Import JSON"
             onClick={() => fileInputRef.current?.click()}
+            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
           />
-          <IconButton icon={Download} label="Export JSON" onClick={exportJson} />
-          <IconButton icon={RotateCcw} label="Start over" onClick={resetDocument} />
+          <IconButton
+            icon={Download}
+            label="Export JSON"
+            onClick={exportJson}
+            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
+          />
+          <IconButton
+            icon={RotateCcw}
+            label="Start over"
+            onClick={resetDocument}
+            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
+          />
           <input
             ref={fileInputRef}
             type="file"
             accept="application/json,.json"
             className="hidden"
-            onChange={(event) => void importJson(event)}
+            onChange={(e) => void importJson(e)}
           />
         </div>
       </header>
 
-      {/* Import errors surface here rather than in an alert(). */}
+      {/* Import Error Modal */}
       <Modal
         open={Boolean(importError)}
         onClose={() => setImportError(null)}
-        title="Import problem"
+        title="Import Problem"
         footer={<Button onClick={() => setImportError(null)}>Got it</Button>}
       >
-        <p className="text-sm text-ink">{importError}</p>
+        <p className="text-sm text-[#dbdee1]">{importError}</p>
       </Modal>
 
+      {/* Template Load Modal */}
       <Modal
         open={loadOpen}
         onClose={() => setLoadOpen(false)}
-        title="Load a template"
+        title="Saved Templates"
         width="max-w-xl"
       >
         {templates.length === 0 ? (
-          <p className="flex items-center gap-2 text-sm text-ink-muted">
-            <LayoutTemplate size={15} />
-            No saved templates yet. Name this one and hit Save.
+          <p className="text-xs text-[#949ba4] py-4 text-center">
+            No saved templates yet. Type a name and click Save!
           </p>
         ) : (
-          <ul className="divide-y divide-line-soft">
+          <ul className="divide-y divide-[#1e1f22]">
             {templates.map((template) => (
-              <li key={template.id} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-ink">{template.name}</p>
-                  <p className="text-[11px] text-ink-faint">
+              <li key={template.id} className="flex items-center justify-between py-2.5">
+                <div>
+                  <p className="text-sm font-bold text-white">{template.name}</p>
+                  <p className="text-[11px] text-[#949ba4]">
                     Updated {new Date(template.updated_at).toLocaleString()}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex items-center gap-1">
                   <Button
                     size="sm"
                     onClick={() => {
-                      void (async () => {
-                        await loadTemplate(template.id);
-                        setLoadOpen(false);
-                      })();
+                      void loadTemplate(template.id);
+                      setLoadOpen(false);
                     }}
+                    className="bg-[#5865f2] hover:bg-[#4752c4] text-white border-none"
                   >
                     Load
                   </Button>
@@ -202,6 +201,7 @@ export const Header = () => {
                     size="sm"
                     variant="ghost"
                     onClick={() => void removeTemplate(template.id)}
+                    className="text-[#f28b8b] hover:bg-[#da373c]/10 border-none"
                   >
                     Delete
                   </Button>

@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-// THE MASTER VARIABLE DICTIONARY (NO DUPLICATES)
 export const VARIABLES = [
   { group: "User / Clicker" },
   { tag: "{user.mention}", label: "@ada", desc: "Mentions the user who clicked" },
@@ -13,7 +12,6 @@ export const VARIABLES = [
   { tag: "{user.avatar}", label: "https://...", desc: "Link to user's profile picture" },
   { tag: "{user.created}", label: "Oct 24, 2015", desc: "When the account was created" },
   { tag: "{user.joined}", label: "2 years ago", desc: "When they joined the server" },
-  { tag: "{user.clantag}", label: "TAG", desc: "Extracts [TAG] from their name" },
   
   { group: "Server" },
   { tag: "{server.name}", label: "Discohook", desc: "The server's name" },
@@ -59,7 +57,6 @@ const VariablePicker = ({ onSelect }: { onSelect: (tag: string) => void }) => {
       }
     };
     
-    // FIX: Only close if they scroll the PAGE, not the dropdown itself!
     const handleScroll = (e: Event) => {
       if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) return;
       setIsOpen(false);
