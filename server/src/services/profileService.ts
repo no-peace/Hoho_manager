@@ -6,7 +6,7 @@ import {
 } from "../repositories/profileRepository.js";
 import * as discord from "./discordService.js";
 import { ApiError } from "../utils/errors.js";
-import { parseWebhookUrl } from "../utils/validation.js";
+import { isSnowflake, parseWebhookUrl } from "../utils/validation.js";
 
 /**
  * Profile management for both send modes.
@@ -30,6 +30,19 @@ export interface CreateBotProfileInput {
   publicKey: string;
   defaultGuildId?: string | null;
 }
+
+export const validateBotProfileIdentity = (
+  botId: string,
+  applicationId: string,
+  publicKey: string,
+): void => {
+  if (!isSnowflake(applicationId) || botId !== applicationId) {
+    throw ApiError.badRequest("The application ID must match the bot token's Discord identity");
+  }
+  if (!/^[\da-fA-F]{64}$/.test(publicKey)) {
+    throw ApiError.badRequest("The Discord public key must be 64 hexadecimal characters");
+  }
+};
 
 /**
  * Pull the ids Discord knows about out of a webhook response.
@@ -156,6 +169,7 @@ export const botProfileService = {
   ): Promise<PublicBotProfile> {
     const identity = await discord.getBotIdentity(token).catch(() => null);
     if (!identity) throw ApiError.badRequest("Discord rejected that bot token");
+    validateBotProfileIdentity(identity.id, applicationId, publicKey);
 
     const profile = await botProfileRepository.create({
       userId,
@@ -181,9 +195,17 @@ export const botProfileService = {
     }
 
     // Re-validate whenever the token changes.
-    if (patch.token) {
-      const identity = await discord.getBotIdentity(patch.token).catch(() => null);
+    const nextApplicationId = patch.application_id ?? existing.application_id;
+    const nextPublicKey = patch.public_key ?? existing.public_key;
+    if (!/^[\da-fA-F]{64}$/.test(nextPublicKey)) {
+      throw ApiError.badRequest("The Discord public key must be 64 hexadecimal characters");
+    }
+    if (patch.token || patch.application_id) {
+      const token = patch.token ?? await botProfileRepository.revealToken(id);
+      if (!token) throw ApiError.badRequest("The stored bot token is unavailable");
+      const identity = await discord.getBotIdentity(token).catch(() => null);
       if (!identity) throw ApiError.badRequest("Discord rejected that bot token");
+      validateBotProfileIdentity(identity.id, nextApplicationId, nextPublicKey);
     }
 
     const updated = await botProfileRepository.update(id, patch);

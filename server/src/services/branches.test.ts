@@ -81,6 +81,24 @@ describe("selectBranch", () => {
     expect(branch).toEqual([{ id: null, type: "stop", config: { content: "off" } }]);
   });
 
+  it("uses the editor's left/op/right condition when a default conditions array remains", () => {
+    const editorConfig = {
+      conditions: [{ a: "", b: "" }],
+      then: config.then,
+      else: config.else,
+      left: "on",
+      op: "==",
+      right: "off",
+    };
+
+    expect(selectBranch(editorConfig, {})).toEqual([
+      { id: null, type: "stop", config: { content: "off" } },
+    ]);
+    expect(selectBranch({ ...editorConfig, left: "off" }, {})).toEqual([
+      { id: null, type: "stop", config: { content: "on" } },
+    ]);
+  });
+
   it("returns empty when the chosen branch is empty, so the flow falls through", () => {
     expect(selectBranch({ function: "equals", conditions: [], then: [] }, {})).toEqual([]);
   });

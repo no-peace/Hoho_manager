@@ -1,77 +1,73 @@
-import { useEffect, type ReactNode } from "react";
+// client/src/components/ui/Modal.tsx
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-/**
- * Modal dialog.
- *
- * Closes on Escape and on backdrop click. `role="dialog"` plus `aria-modal`
- * conveys the state to screen readers, and focus moves to the panel on open so
- * keyboard users are not left behind on the page that opened it.
- */
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
-  children: ReactNode;
-  footer?: ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
   width?: string;
 }
 
-export const Modal = ({
+export const Modal: React.FC<ModalProps> = ({
   open,
   onClose,
   title,
   children,
   footer,
-  width = "max-w-lg",
-}: ModalProps) => {
+  width = "max-w-md",
+}) => {
   useEffect(() => {
-    if (!open) return undefined;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
-    >
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div
+        className={`w-full ${width} rounded-lg bg-[#313338] border border-[#1e1f22] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 max-h-[85vh]`}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        autoFocus
-        tabIndex={-1}
-        onClick={(event) => event.stopPropagation()}
-        className={`w-full ${width} max-h-[85vh] overflow-hidden rounded-xl border border-line-soft bg-raised shadow-2xl`}
       >
-        <div className="flex items-center justify-between border-b border-line-soft px-4 py-3">
-          <h2 className="text-base font-semibold text-ink-strong">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink"
-          >
-            <X size={16} />
-          </button>
+        {title && (
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1e1f22] bg-[#2b2d31] shrink-0">
+            <h2 className="text-[14px] font-bold text-white uppercase tracking-wider">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[#b5bac1] hover:text-white transition-colors"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
+        <div className="p-5 overflow-y-auto text-[#dbdee1] flex-1 text-sm leading-relaxed custom-scrollbar">
+          {children}
         </div>
 
-        <div className="max-h-[65vh] overflow-y-auto p-4">{children}</div>
-
         {footer && (
-          <div className="flex items-center justify-end gap-2 border-t border-line-soft px-4 py-3">
+          <div className="px-5 py-3.5 border-t border-[#1e1f22] bg-[#2b2d31] flex justify-end gap-2.5 shrink-0">
             {footer}
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

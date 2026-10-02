@@ -10,6 +10,10 @@
  * leak the classes' private members and break `declaration: true`.
  */
 import { actionRepository, ActionRepository } from "./actionRepository.js";
+import {
+  interactionReceiptRepository,
+  InteractionReceiptRepository,
+} from "./interactionReceiptRepository.js";
 import { flowRepository, FlowRepository } from "./flowRepository.js";
 import {
   botProfileRepository,
@@ -24,6 +28,7 @@ export interface Repositories {
   users: UserRepository;
   templates: TemplateRepository;
   actions: ActionRepository;
+  interactionReceipts: InteractionReceiptRepository;
   flows: FlowRepository;
   webhookProfiles: WebhookProfileRepository;
   botProfiles: BotProfileRepository;
@@ -33,6 +38,7 @@ export const repositories: Repositories = Object.freeze({
   users: userRepository,
   templates: templateRepository,
   actions: actionRepository,
+  interactionReceipts: interactionReceiptRepository,
   flows: flowRepository,
   webhookProfiles: webhookProfileRepository,
   botProfiles: botProfileRepository,
@@ -41,6 +47,8 @@ export const repositories: Repositories = Object.freeze({
 export {
   actionRepository,
   ActionRepository,
+  interactionReceiptRepository,
+  InteractionReceiptRepository,
   botProfileRepository,
   BotProfileRepository,
   flowRepository,

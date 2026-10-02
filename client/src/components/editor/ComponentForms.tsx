@@ -7,7 +7,7 @@ import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { ColorPicker } from "../ui/ColorPicker";
 import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
-import { newGalleryItem } from "../../utils/componentsV2";
+import { buttonStylePatch, newGalleryItem } from "../../utils/componentsV2";
 
 /**
  * Property forms, one per component type.
@@ -167,6 +167,7 @@ const ActionRowForm = ({ component }: ComponentFormProps) => (
 
 const ButtonForm = ({ component, update }: ComponentFormProps) => {
   const isLink = component.style === ButtonStyle.Link;
+  const isPremium = component.style === ButtonStyle.Premium;
 
   return (
     <>
@@ -180,7 +181,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
       <Select
         label="Style"
         value={String(component.style ?? ButtonStyle.Primary)}
-        onChange={(event) => update({ style: Number(event.target.value) })}
+        onChange={(event) => update(buttonStylePatch(component, Number(event.target.value)))}
         options={Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => ({ value, label }))}
       />
 
@@ -190,6 +191,13 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
           value={component.url ?? ""}
           placeholder="https://discord.com"
           onChange={(event) => update({ url: event.target.value })}
+        />
+      ) : isPremium ? (
+        <TextField
+          label="SKU ID"
+          value={component.sku_id ?? ""}
+          placeholder="Discord store item ID"
+          onChange={(event) => update({ sku_id: event.target.value })}
         />
       ) : (
         <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
@@ -249,12 +257,20 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
       <div className="space-y-2">
         {options.map((option, index) => (
           <div key={option._id} className="flex items-end gap-2">
-            <TextField
-              className="flex-1"
-              label={`Option ${index + 1}`}
-              value={option.label}
-              onChange={(event) => replaceOption(index, { label: event.target.value })}
-            />
+            <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+              <TextField
+                label={`Option ${index + 1} label`}
+                limit={Limits.components.selectOptionLabel}
+                value={option.label}
+                onChange={(event) => replaceOption(index, { label: event.target.value })}
+              />
+              <TextField
+                label="Value"
+                limit={Limits.components.selectOptionLabel}
+                value={option.value}
+                onChange={(event) => replaceOption(index, { value: event.target.value })}
+              />
+            </div>
             <IconButton
               icon={Trash2}
               label="Remove option"
@@ -289,6 +305,40 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
   );
 };
 
+const EntitySelectForm = ({ component, update }: ComponentFormProps) => (
+  <>
+    <TextField
+      label="Placeholder"
+      limit={Limits.components.placeholder}
+      value={component.placeholder ?? ""}
+      onChange={(event) => update({ placeholder: event.target.value })}
+    />
+
+    <div className="grid grid-cols-2 gap-2">
+      <TextField
+        label="Min values"
+        type="number"
+        min={0}
+        max={Limits.components.options}
+        value={component.min_values ?? 1}
+        onChange={(event) => update({ min_values: Number(event.target.value) })}
+      />
+      <TextField
+        label="Max values"
+        type="number"
+        min={1}
+        max={Limits.components.options}
+        value={component.max_values ?? 1}
+        onChange={(event) => update({ max_values: Number(event.target.value) })}
+      />
+    </div>
+
+    <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
+      Discord supplies the available users, roles, or channels when this menu opens.
+    </p>
+  </>
+);
+
 /**
  * Selection menus share one form: the placeholder/action fields are identical,
  * and the option list only applies to string selects.
@@ -303,10 +353,10 @@ export const COMPONENT_FORMS: Record<number, ReactComponentType<ComponentFormPro
   [ComponentType.ActionRow]: ActionRowForm,
   [ComponentType.Button]: ButtonForm,
   [ComponentType.StringSelect]: StringSelectForm,
-  [ComponentType.UserSelect]: StringSelectForm,
-  [ComponentType.RoleSelect]: StringSelectForm,
-  [ComponentType.MentionableSelect]: StringSelectForm,
-  [ComponentType.ChannelSelect]: StringSelectForm,
+  [ComponentType.UserSelect]: EntitySelectForm,
+  [ComponentType.RoleSelect]: EntitySelectForm,
+  [ComponentType.MentionableSelect]: EntitySelectForm,
+  [ComponentType.ChannelSelect]: EntitySelectForm,
 };
 
 export default COMPONENT_FORMS;

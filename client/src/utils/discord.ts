@@ -1,4 +1,4 @@
-import { ComponentType, Limits, MessageFlags } from "@dmb/shared";
+import { ButtonStyle, ComponentType, Limits, MessageFlags } from "@dmb/shared";
 import type {
   ComponentNode,
   DiscordMessagePayload,
@@ -124,31 +124,103 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
     errors.push(`Message content is ${data.content.length}/${Limits.content} characters`);
   }
 
-  if (data.embeds.length > Limits.embed.embedsPerMessage) {
-    errors.push(`Discord allows at most ${Limits.embed.embedsPerMessage} embeds per message`);
+  if (mode === "classic") {
+    if (data.embeds.length > Limits.embed.embedsPerMessage) {
+      errors.push(`Discord allows at most ${Limits.embed.embedsPerMessage} embeds per message`);
+    }
+
+    let totalEmbedChars = 0;
+    data.embeds.forEach((embed, index) => {
+      const label = `Embed ${index + 1}`;
+      const chars = embedCharCount(embed);
+      totalEmbedChars += chars;
+
+      if (chars > Limits.embed.total) {
+        errors.push(`${label} has ${chars} characters (limit ${Limits.embed.total})`);
+      }
+      if ((embed.fields?.length ?? 0) > Limits.embed.fields) {
+        errors.push(`${label} has too many fields (limit ${Limits.embed.fields})`);
+      }
+    });
+
+    if (totalEmbedChars > Limits.embed.total) {
+      errors.push(`Embeds total ${totalEmbedChars} characters (limit ${Limits.embed.total})`);
+    }
   }
 
-  let totalEmbedChars = 0;
-  data.embeds.forEach((embed, index) => {
-    const label = `Embed ${index + 1}`;
-    const chars = embedCharCount(embed);
-    totalEmbedChars += chars;
-
-    if (chars > Limits.embed.total) {
-      errors.push(`${label} has ${chars} characters (limit ${Limits.embed.total})`);
+  const components =
+    mode === "classic"
+      ? data.components.filter((component) => component.type === ComponentType.ActionRow)
+      : data.components;
+  let componentCount = 0;
+  let actionRowCount = 0;
+  const validateRows = (components: ComponentNode[], path: string, depth: number): void => {
+    if (depth > 25) {
+      errors.push(`${path}: component nesting exceeds 25 levels`);
+      return;
     }
-    if ((embed.fields?.length ?? 0) > Limits.embed.fields) {
-      errors.push(`${label} has too many fields (limit ${Limits.embed.fields})`);
-    }
-  });
 
-  if (totalEmbedChars > Limits.embed.total) {
-    errors.push(`Embeds total ${totalEmbedChars} characters (limit ${Limits.embed.total})`);
-  }
+    components.forEach((component, index) => {
+      componentCount += 1;
+      const componentPath = `${path}[${index}]`;
+      if (component.type === ComponentType.ActionRow) {
+        actionRowCount += 1;
+        if (actionRowCount > 5) {
+          errors.push(`${componentPath}: A message cannot contain more than 5 Action Rows`);
+        }
+        const children = component.components ?? [];
+        if (children.length === 0) {
+          errors.push(`${componentPath}: Action Row needs at least one button or select menu`);
+        }
+        if (children.length > Limits.components.actionRowButtons) {
+          errors.push(`${componentPath}: Action Row allows at most ${Limits.components.actionRowButtons} controls`);
+        }
+        const hasSelect = children.some((child) => child.type !== ComponentType.Button);
+        if (hasSelect && children.length !== 1) {
+          errors.push(`${componentPath}: A select menu must be alone in its Action Row`);
+        }
+        for (const child of children) {
+          if (child.type === ComponentType.StringSelect && (child.options?.length ?? 0) === 0) {
+            errors.push(`${componentPath}: String Select needs at least one option`);
+          }
+          if (
+            child.type !== ComponentType.Button &&
+            Number.isInteger(child.min_values) &&
+            Number.isInteger(child.max_values) &&
+            (child.min_values ?? 0) > (child.max_values ?? 0)
+          ) {
+            errors.push(`${componentPath}: Minimum selections cannot exceed maximum selections`);
+          }
+        }
+        if (children.some((child) =>
+          ![
+            ComponentType.Button,
+            ComponentType.StringSelect,
+            ComponentType.UserSelect,
+            ComponentType.RoleSelect,
+            ComponentType.MentionableSelect,
+            ComponentType.ChannelSelect,
+          ].includes(child.type as never),
+        )) {
+          errors.push(`${componentPath}: Action Row children must be buttons or select menus`);
+        }
+      }
+      if (
+        component.type === ComponentType.Button &&
+        !Object.values(ButtonStyle).includes(
+          Number(component.style ?? ButtonStyle.Primary) as (typeof ButtonStyle)[keyof typeof ButtonStyle],
+        )
+      ) {
+        errors.push(`${componentPath}: Button style must be a supported Discord style`);
+      }
+      if (component.components) validateRows(component.components, `${componentPath}.components`, depth + 1);
+    });
+  };
+  validateRows(components, "components", 0);
 
-  if (data.components.length > Limits.components.total) {
+  if (componentCount > Limits.components.total) {
     errors.push(
-      `This message has ${data.components.length} components (limit ${Limits.components.total})`,
+      `This message has ${componentCount} components (limit ${Limits.components.total})`,
     );
   }
 

@@ -11,7 +11,11 @@ import { db, type DatabaseClient } from "../config/database.js";
  * `config/database.ts` and the placeholder translation in one place.
  */
 export abstract class BaseRepository {
-  protected readonly db: DatabaseClient = db;
+  protected readonly db: DatabaseClient;
+
+  constructor(database: DatabaseClient = db) {
+    this.db = database;
+  }
 }
 
 /**

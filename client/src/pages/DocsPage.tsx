@@ -17,7 +17,7 @@ export const DocsPage = () => {
         <div className="mb-10">
           <h1 className="text-3xl font-extrabold text-white mb-4">Dynamic Variables</h1>
           <p className="text-[#b5bac1] text-base leading-relaxed">
-            Variables allow your bot to dynamically inject live data into messages, embeds, and action flows at the exact moment a user clicks a button or triggers an event. We have standardized all variables to use the <code>{'{variable.name}'}</code> syntax.
+            Variables resolve in action flows when a user interacts. Initial messages are sent before there is a clicker, so user variables there remain unchanged. Use the <code>{'{variable.name}'}</code> syntax.
           </p>
         </div>
 
@@ -73,16 +73,8 @@ export const DocsPage = () => {
             <table className="w-full text-left border-collapse">
               <tbody className="text-sm divide-y divide-[#1e1f22]">
                 <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3 w-[30%]"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{server.name}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The name of the server.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
                   <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{server.id}'}</code></td>
                   <td className="px-5 py-3 text-[#b5bac1]">The server's numeric ID.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{server.icon}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">A URL link to the server's icon.</td>
                 </tr>
                 <tr className="hover:bg-[#1e1f22]/30 transition-colors">
                   <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{channel.mention}'}</code></td>

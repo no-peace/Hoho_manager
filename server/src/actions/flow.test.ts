@@ -3,6 +3,7 @@ import { InteractionResponseType, MessageFlags } from "@dmb/shared";
 import type { ActionConfig, DiscordInteraction } from "@dmb/shared";
 import type { ActionContext } from "./types.js";
 import { evaluateCheck } from "./check.js";
+import * as check from "./check.js";
 import * as setVariable from "./setVariable.js";
 import * as stop from "./stop.js";
 
@@ -73,8 +74,16 @@ describe("evaluateCheck — variable resolution", () => {
     expect(evaluateCheck(eq("{{role}}", "member"), { role: "member" })).toBe(true);
   });
 
+  it("supports the single-brace syntax used by the editor", () => {
+    expect(evaluateCheck(eq("{role}", "member"), { role: "member" })).toBe(true);
+  });
+
   it("tolerates whitespace inside the braces", () => {
     expect(evaluateCheck(eq("{{  role  }}", "member"), { role: "member" })).toBe(true);
+  });
+
+  it("tolerates whitespace inside single-brace placeholders", () => {
+    expect(evaluateCheck(eq("{  role  }", "member"), { role: "member" })).toBe(true);
   });
 
   it("resolves dotted paths", () => {
@@ -123,6 +132,15 @@ describe("evaluateCheck — and / or / not / in", () => {
     const config = { function: "in", conditions: [{ a: "b", b: "{{picks}}" }] };
     expect(evaluateCheck(config, { picks: "a, b , c" })).toBe(true);
     expect(evaluateCheck(config, { picks: "a,c" })).toBe(false);
+  });
+});
+
+describe("check handler — editor condition", () => {
+  it("continues when left/op/right passes and rejects when it fails", async () => {
+    expect(await check.run(context({ left: "3", op: ">", right: "2" }))).toBeUndefined();
+    expect(await check.run(context({ left: "1", op: ">", right: "2" }))).toMatchObject({
+      data: { content: expect.stringContaining("This interaction isn't available for you.") },
+    });
   });
 });
 

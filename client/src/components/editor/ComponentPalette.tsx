@@ -1,14 +1,24 @@
 import {
   AlignLeft,
+  AtSign,
   AppWindow,
+  Hash,
   Image as ImageIcon,
   LayoutGrid,
+  ListFilter,
   Minus,
   MousePointerClick,
   Paperclip,
+  Shield,
+  UserRound,
 } from "lucide-react";
 import { ComponentType } from "@dmb/shared";
-import { COMPONENT_DEFS, canNestIn, type ComponentGroup } from "../../utils/componentsV2";
+import {
+  COMPONENT_DEFS,
+  canAddToActionRow,
+  canNestIn,
+  type ComponentGroup,
+} from "../../utils/componentsV2";
 import { findComponent } from "../../utils/tree";
 import { useMessageStore } from "../../store/messageStore";
 import type { IconComponent } from "../ui/icon";
@@ -30,6 +40,12 @@ const ICONS: Record<number, IconComponent> = {
   [ComponentType.Separator]: Minus,
   [ComponentType.Container]: AppWindow,
   [ComponentType.ActionRow]: MousePointerClick,
+  [ComponentType.Button]: MousePointerClick,
+  [ComponentType.StringSelect]: ListFilter,
+  [ComponentType.UserSelect]: UserRound,
+  [ComponentType.RoleSelect]: Shield,
+  [ComponentType.MentionableSelect]: AtSign,
+  [ComponentType.ChannelSelect]: Hash,
 };
 
 export const ComponentPalette = () => {
@@ -55,7 +71,11 @@ export const ComponentPalette = () => {
         <p className="rounded-md bg-raised px-2 py-1.5 text-[11px] text-ink-muted">
           Adding inside{" "}
           <span className="text-ink">
-            {selected.type === ComponentType.ActionRow ? "Action Row" : "Container"}
+            {selected.type === ComponentType.ActionRow
+              ? "Action Row"
+              : selected.type === ComponentType.Section
+                ? "Section"
+                : "Container"}
           </span>
           . Select nothing to add at the top level.
         </p>
@@ -69,7 +89,13 @@ export const ComponentPalette = () => {
               {defs.map((def) => {
                 const Icon = ICONS[def.type];
                 const nests = selected ? canNestIn(selected.type, def.type) : false;
-                const disabled = Boolean(selected) && !nests;
+                const rowControls = selected?.type === ComponentType.ActionRow
+                  ? selected.components ?? []
+                  : [];
+                const rowAllowsChild =
+                  selected?.type !== ComponentType.ActionRow ||
+                  canAddToActionRow(rowControls, def.type);
+                const disabled = selected ? !nests || !rowAllowsChild : !def.topLevel;
 
                 return (
                   <button

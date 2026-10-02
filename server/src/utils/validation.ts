@@ -158,6 +158,7 @@ export const validateComponentsV2 = (components: unknown): string[] => {
   if (!Array.isArray(components)) return errors;
 
   let nodeCount = 0;
+  let actionRowCount = 0;
   let sawInteractive = false;
 
   const fail = (where: string, message: string): void => {
@@ -173,6 +174,42 @@ export const validateComponentsV2 = (components: unknown): string[] => {
 
     const type = node.type;
     const label = describeType(type);
+
+    if (type === ComponentType.ActionRow) {
+      actionRowCount += 1;
+      if (actionRowCount > 5) {
+        fail(where, "A message cannot contain more than 5 Action Rows");
+      }
+
+      const rowChildren = Array.isArray(node.components) ? node.components : [];
+      if (rowChildren.length === 0) {
+        fail(where, "ActionRow must contain at least one button or select menu");
+      }
+      if (rowChildren.length > Limits.components.actionRowButtons) {
+        fail(where, `ActionRow cannot contain more than ${Limits.components.actionRowButtons} controls`);
+      }
+
+      const selectCount = rowChildren.filter(
+        (child) =>
+          child !== null &&
+          typeof child === "object" &&
+          ROW_CHILD_TYPES.has(Number((child as Record<string, unknown>).type)) &&
+          Number((child as Record<string, unknown>).type) !== ComponentType.Button,
+      ).length;
+      if (selectCount > 0 && rowChildren.length !== 1) {
+        fail(where, "A select menu must be the only control in its ActionRow");
+      }
+      for (const child of rowChildren) {
+        if (
+          child === null ||
+          typeof child !== "object" ||
+          !ROW_CHILD_TYPES.has(Number((child as Record<string, unknown>).type))
+        ) {
+          fail(where, "ActionRow children must be buttons or select menus");
+          break;
+        }
+      }
+    }
 
     if (depth === 0 && !TOP_LEVEL_TYPES.has(Number(type))) {
       fail(where, `${label} is not allowed at the top level`);
@@ -197,18 +234,35 @@ export const validateComponentsV2 = (components: unknown): string[] => {
       sawInteractive = true;
       if (type === ComponentType.Button) {
         const style = Number(node.style);
+        if (!Object.values(ButtonStyle).includes(style as (typeof ButtonStyle)[keyof typeof ButtonStyle])) {
+          fail(where, "Button `style` must be a supported Discord button style");
+        }
         const isLink = style === ButtonStyle.Link;
         const isPremium = style === ButtonStyle.Premium;
-        if (!isLink && !isPremium) {
+        if (isPremium) {
+          if (!isSnowflake(node.sku_id)) {
+            fail(where, "Premium buttons require a valid `sku_id`");
+          }
+          if (node.custom_id !== undefined || node.url !== undefined) {
+            fail(where, "Premium buttons cannot include `custom_id` or `url`");
+          }
+        } else if (isLink) {
+          if (!isHttpUrl(node.url)) {
+            fail(where, "Link buttons require a valid `url`");
+          }
+          if (node.custom_id !== undefined || node.sku_id !== undefined) {
+            fail(where, "Link buttons cannot include `custom_id` or `sku_id`");
+          }
+        } else {
           const customId = node.custom_id;
           if (typeof customId !== "string" || customId.length === 0) {
             fail(where, "Button requires a `custom_id` (or link/premium style)");
           } else if (customId.length > Limits.components.customId) {
             fail(where, `Button custom_id exceeds ${Limits.components.customId} characters`);
           }
-        }
-        if (isLink && !isHttpUrl(node.url)) {
-          fail(where, "Link buttons require a valid `url`");
+          if (node.url !== undefined || node.sku_id !== undefined) {
+            fail(where, "Action buttons cannot include `url` or `sku_id`");
+          }
         }
         const labelText = typeof node.label === "string" ? node.label : "";
         if (!isPremium && labelText.length > Limits.components.label) {
@@ -221,11 +275,13 @@ export const validateComponentsV2 = (components: unknown): string[] => {
         fail(where, `placeholder exceeds ${Limits.components.placeholder} characters`);
       }
 
-      if (type !== ComponentType.Button && Array.isArray(node.options)) {
-        if (node.options.length > Limits.components.options) {
+      if (type === ComponentType.StringSelect) {
+        if (!Array.isArray(node.options) || node.options.length === 0) {
+          fail(where, "StringSelect requires at least one option");
+        } else if (node.options.length > Limits.components.options) {
           fail(where, `select exceeds ${Limits.components.options} options`);
         }
-        for (const [optionIndex, option] of node.options.entries()) {
+        for (const [optionIndex, option] of (Array.isArray(node.options) ? node.options : []).entries()) {
           if (option === null || typeof option !== "object") {
             fail(`${where}.options[${optionIndex}]`, "must be an object");
             continue;
@@ -265,6 +321,15 @@ export const validateComponentsV2 = (components: unknown): string[] => {
         if (maxValues !== undefined && (!Number.isInteger(maxValues) || Number(maxValues) < 1)) {
           fail(where, "`max_values` must be a positive integer");
         }
+        if (
+          Number.isInteger(minValues) &&
+          Number.isInteger(maxValues) &&
+          Number(minValues) > Number(maxValues)
+        ) {
+          fail(where, "`min_values` cannot exceed `max_values`");
+        }
+      } else if (type !== ComponentType.Button && node.options !== undefined) {
+        fail(where, "Entity select menus cannot include `options`");
       }
     }
 
@@ -364,23 +429,25 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
   }
 
   const components = payload.components;
+  const isComponentsV2 =
+    typeof payload.flags === "number" && (payload.flags & MessageFlags.IsComponentsV2) !== 0;
+
+  if (isComponentsV2) {
+    if (!Array.isArray(components) || components.length === 0) {
+      errors.push("Components V2 flag requires a non-empty `components` array");
+    }
+    if (typeof payload.content === "string" && payload.content !== "") {
+      errors.push("content cannot be used together with Components V2");
+    }
+    if (Array.isArray(payload.embeds) && payload.embeds.length > 0) {
+      errors.push("embeds cannot be used together with Components V2");
+    }
+  }
+
   if (components != null && !Array.isArray(components)) {
     errors.push("`components` must be an array");
   } else if (Array.isArray(components) && components.length > 0) {
     errors.push(...validateComponentsV2(components));
-
-    // Components V2 is mutually exclusive with classic content/embeds.
-    const isComponentsV2 =
-      typeof payload.flags === "number" &&
-      (payload.flags & MessageFlags.IsComponentsV2) !== 0;
-    if (isComponentsV2) {
-      if (typeof payload.content === "string" && payload.content !== "") {
-        errors.push("content cannot be used together with Components V2");
-      }
-      if (Array.isArray(payload.embeds) && payload.embeds.length > 0) {
-        errors.push("embeds cannot be used together with Components V2");
-      }
-    }
   }
 
   if (errors.length > 0) {

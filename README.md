@@ -27,6 +27,12 @@ Built for the web first: you design and send messages from the site, not slash c
 | Webhook URL   | Browser → Discord directly          | Webhook URLs are public by design, so it's safe |
 | Bot Token     | Browser → `POST /api/send` → Discord| The bot token never leaves the server          |
 
+Bot sending and profile management require the server's `x-admin-key`. The development client can
+send this key from `client/.env`, but it must **not** be built into a public frontend bundle. This
+project does not yet have user login/session authentication, so production bot workflows require
+a private/trusted frontend or a real authentication layer; webhook sends from the browser remain
+available without that key.
+
 Interactions (button/select/modal clicks) reach the action system one of two ways, and the two are
 **mutually exclusive per application** — Discord picks based on the app's *Interactions Endpoint
 URL*:
@@ -58,8 +64,8 @@ Available steps: `add_role`, `remove_role`, `toggle_role`, `send_dm`, `send_ephe
 
 Three of those mirror Discohook closely:
 
-- **`check`** compares values (`equals`, `in`, `and`, `or`, `not`, with `{{variable}}` and dotted
-  paths) and holds two nested step lists, **Then** and **Else**. Branches nest arbitrarily; the
+- **`check`** compares values (`equals`, `in`, `and`, `or`, `not`, with `{variable}` or
+  `{{variable}}` and dotted paths) and holds two nested step lists, **Then** and **Else**. Branches nest arbitrarily; the
   executor refuses to recurse past 10 levels.
 - **`set_variable`** has three modes — `static` (a literal), `adaptive` (a field of the interaction,
   e.g. `user.id` or the selected values), and `get` (mirror a variable by name).
@@ -70,11 +76,15 @@ A `custom_id` is capped at 100 characters, far too small for a chain, so only th
 parameters ride inline there. Longer flows are registered on the server:
 
 - **Templates** persist their flows in `action_definitions` when you save.
-- **Ad-hoc sends** ship their flows with the request; `POST /api/send` registers them before the
-  message goes out (`mode: "bot"` only — a direct webhook send never touches your server).
+- **Ad-hoc sends** ship their flows with the request; `POST /api/send` registers them against the
+  returned message ID before acknowledging the send (`mode: "bot"` only for the browser's direct
+  send path — direct webhook sends never touch your server).
 
 That precedence matters: a flow registered at send time wins over a template's stored steps, so
 re-sending a template ad-hoc never doubles its actions.
+
+Dynamic variables resolve while an interaction flow runs. They cannot refer to a clicker in the
+initial message sent before anyone clicks.
 
 ## Project layout
 

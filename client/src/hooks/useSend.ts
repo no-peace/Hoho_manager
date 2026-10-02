@@ -48,13 +48,7 @@ export const useSend = (): UseSendReturn => {
 
     try {
       let result: unknown;
-      
-      // Cleanse the internal V2 flag (32768) which causes Discord to throw Invalid Form Body
       const payload = { ...rawPayload };
-      if (payload.flags !== undefined) {
-          payload.flags &= ~32768;
-          if (payload.flags === 0) delete payload.flags;
-      }
 
       if (sendMode === SEND_MODES.BOT) {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || '';

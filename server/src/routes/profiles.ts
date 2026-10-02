@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { attachUser, requireRole, requireUser } from "../middleware/auth.js";
+import { attachUser, requireAdminKey, requireRole, requireUser } from "../middleware/auth.js";
 import { botProfileService, webhookProfileService } from "../services/profileService.js";
 import { asyncHandler } from "../utils/errors.js";
 import { optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
 
 const router = Router();
 
-router.use(attachUser);
+router.use(attachUser, requireAdminKey);
 
 const readBody = (body: unknown): Record<string, unknown> =>
   (body ?? {}) as Record<string, unknown>;
@@ -124,6 +124,7 @@ router.patch(
 
 router.delete(
   "/bots/:id",
+  requireRole("admin"),
   asyncHandler(async (req, res) => {
     await botProfileService.remove(requireId(req.params.id), requireUser(req).id);
     res.status(204).end();

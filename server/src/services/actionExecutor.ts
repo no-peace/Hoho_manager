@@ -1,3 +1,8 @@
+// Prevent JSON.stringify crashes when serializing Discord snowflake BigInts
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 import { parseCustomId } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { getActionHandler } from "../actions/index.js";
@@ -7,6 +12,7 @@ import { actionRepository, webhookProfileRepository } from "../repositories/inde
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
+import { replaceVariables } from "./variableInterpolation.js";
 
 const log = logger.child("actions");
 const MAX_BRANCH_DEPTH = 10;
@@ -17,28 +23,15 @@ export interface ExecuteResult {
   type: string | null;
 }
 
-const replaceVariables = (obj: any, vars: Record<string, any>): any => {
-  if (typeof obj === 'string') {
-    return obj.replace(/\{([^}]+)\}/g, (match, key) => {
-      return vars[key] !== undefined ? String(vars[key]) : match;
-    });
+const snowflakeToUnix = (id: string): number => {
+  try {
+    const epoch = 1420070400000;
+    const binary = BigInt(id).toString(2).padStart(64, "0");
+    const timestamp = parseInt(binary.substring(0, 42), 2) + epoch;
+    return Math.floor(timestamp / 1000);
+  } catch {
+    return Math.floor(Date.now() / 1000);
   }
-  if (Array.isArray(obj)) return obj.map(v => replaceVariables(v, vars));
-  if (obj !== null && typeof obj === 'object') {
-    const newObj: any = {};
-    for (const [k, v] of Object.entries(obj)) {
-      newObj[k] = replaceVariables(v, vars);
-    }
-    return newObj;
-  }
-  return obj;
-};
-
-const snowflakeToUnix = (id: string) => {
-  const epoch = 1420070400000;
-  const binary = BigInt(id).toString(2).padStart(64, '0');
-  const timestamp = parseInt(binary.substring(0, 42), 2) + epoch;
-  return Math.floor(timestamp / 1000);
 };
 
 export const executeCustomId = async (
@@ -48,20 +41,20 @@ export const executeCustomId = async (
   const parsed = parseCustomId(customId);
   if (!parsed) return { response: undefined, handled: false, type: null };
 
-  const stored = await actionRepository.findByCustomId(customId);
+  const stored = await actionRepository.findByCustomId(customId, interaction.message?.id);
   const steps: ExecutableStep[] =
     stored.length > 0
       ? stored.map((definition) => ({
           id: definition.id,
           type: definition.action_type,
-          config: definition.config ?? {},
+          config: (definition.config ?? {}) as Record<string, any>,
         }))
-      : [{ id: null, type: parsed.type, config: parsed.params }];
+      : [{ id: null, type: parsed.type, config: parsed.params as Record<string, any> }];
 
   const user = interaction.member?.user ?? interaction.user;
   const member = interaction.member as any;
   const userId = user?.id ?? "unknown";
-  
+
   const username = user?.username ?? "User";
   const displayname = member?.nick ?? user?.global_name ?? username;
 
@@ -78,31 +71,48 @@ export const executeCustomId = async (
     "user.avatar": user?.avatar ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png` : "",
     "user.created": `<t:${userCreated}:d>`,
     "user.joined": `<t:${joinedAt}:R>`,
-    
+
     // Server
     "server.id": interaction.guild_id ?? "unknown",
-    "server.name": "Your Server",
-    "server.icon": interaction.guild_id ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/icon.png` : "",
-    
+
     // Channel & Bot
     "channel.id": interaction.channel_id ?? "unknown",
     "channel.mention": interaction.channel_id ? `<#${interaction.channel_id}>` : "unknown",
     "bot.id": interaction.application_id ?? "unknown",
     "bot.mention": interaction.application_id ? `<@${interaction.application_id}>` : "unknown",
-    
+
     // Time
-    "now": `<t:${unixNow}:t>`,
+    now: `<t:${unixNow}:t>`,
     "now.relative": `<t:${unixNow}:R>`,
     "now.long": `<t:${unixNow}:F>`,
-    "now.unix": unixNow
+    "now.unix": unixNow,
   };
 
-  const botToken = await discord.resolveBotToken().catch(() => null);
-  const context: Omit<ActionContext, "config"> = { interaction, variables, botToken, discord, repositories: { webhookProfiles: webhookProfileRepository }, logger: log };
+  const botToken = await discord
+    .resolveBotTokenForApplication(interaction.application_id)
+    .catch(() => null);
+  const context: Omit<ActionContext, "config"> = {
+    interaction,
+    variables,
+    botToken,
+    discord,
+    repositories: { webhookProfiles: webhookProfileRepository },
+    logger: log,
+  };
 
-  const logStep = async (step: ExecutableStep, response: ActionResponse | undefined, startedAt: number): Promise<void> => {
+  const logStep = async (
+    step: ExecutableStep,
+    response: ActionResponse | undefined,
+    startedAt: number,
+  ): Promise<void> => {
     await actionRepository.log({
-      actionDefinitionId: step.id, interactionId: interaction.id, userId, guildId: interaction.guild_id ?? null, channelId: interaction.channel_id ?? null, status: response ? "success" : "pending", response: { type: step.type, ms: Date.now() - startedAt },
+      actionDefinitionId: step.id,
+      interactionId: interaction.id,
+      userId,
+      guildId: interaction.guild_id ?? null,
+      channelId: interaction.channel_id ?? null,
+      status: response ? "success" : "pending",
+      response: { type: step.type, ms: Date.now() - startedAt },
     });
   };
 
@@ -111,7 +121,10 @@ export const executeCustomId = async (
 
     for (const step of list) {
       const handler = getActionHandler(step.type);
-      if (!handler) continue;
+      if (!handler) {
+        log.warn(`No handler registered for action type: ${step.type}`);
+        continue;
+      }
 
       const started = Date.now();
 
@@ -129,6 +142,8 @@ export const executeCustomId = async (
         const parsedConfig = replaceVariables(step.config, variables);
         response = await handler.run({ ...context, config: parsedConfig });
       } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        log.error(`Action "${step.type}" threw: ${reason}`);
         response = actionFailed("Something went wrong running that action.");
       }
 

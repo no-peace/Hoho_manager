@@ -296,9 +296,14 @@ export const useMessageStore = create<MessageState>()(
       removeComponentById: (id) =>
         set((state) => {
           const { components } = removeFromTree(state.data.components, id);
+          const selection =
+            state.selection?.kind === "component" &&
+            !findComponent(components, state.selection.id)
+              ? null
+              : state.selection;
           return {
             data: { ...state.data, components },
-            selection: state.selection?.id === id ? null : state.selection,
+            selection,
           };
         }),
 

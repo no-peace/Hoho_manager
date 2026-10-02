@@ -1,25 +1,44 @@
-import type { MessageData, ComponentNode, EmbedData, EmbedField } from "@dmb/shared";
+import { MessageFlags } from "@dmb/shared";
+import type { MessageData, ComponentNode, EmbedData, EmbedField, TargetData } from "@dmb/shared";
+import { EDITOR_MODES } from "./constants";
+import type { EditorMode } from "./constants";
 
 export interface QueryData {
-  messages: { data: MessageData }[];
+  messages: { data: MessageData | { data: MessageData; targets?: TargetData[] } }[];
+  targets?: TargetData[];
+  mode?: EditorMode;
 }
 
 const genId = () => Math.random().toString(36).substring(2, 9);
 
+export const getEditorModeForDiscordMessage = (message: unknown): EditorMode => {
+  if (message === null || typeof message !== "object") return EDITOR_MODES.CLASSIC;
+  const flags = (message as Record<string, unknown>).flags;
+  return typeof flags === "number" && (flags & MessageFlags.IsComponentsV2) !== 0
+    ? EDITOR_MODES.V2
+    : EDITOR_MODES.CLASSIC;
+};
+
 export const fromQueryData = (parsed: any): MessageData => {
-  let rawData = parsed;
+  let rawData =
+    parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
 
   // 1. Detect official Discohook full workspace backups (like backups-2026-09-30.json)
-  if (parsed.backups && Array.isArray(parsed.backups) && parsed.backups.length > 0) {
-    const backup = parsed.backups[0];
+  if (rawData.backups && Array.isArray(rawData.backups) && rawData.backups.length > 0) {
+    const backup = rawData.backups[0];
     if (backup.messages && Array.isArray(backup.messages) && backup.messages.length > 0) {
       rawData = backup.messages[0].data;
     }
   }
   // 2. Detect standard QueryData single-message exports
-  else if (parsed.messages && Array.isArray(parsed.messages) && parsed.messages.length > 0) {
-    rawData = parsed.messages[0].data;
+  else if (rawData.messages && Array.isArray(rawData.messages) && rawData.messages.length > 0) {
+    rawData = rawData.messages[0].data;
   }
+
+  if (rawData === null || typeof rawData !== "object" || Array.isArray(rawData)) rawData = {};
+
+  // Older template saves wrapped the message and targets inside messages[0].data.
+  if (rawData.data !== null && typeof rawData.data === "object") rawData = rawData.data;
 
   // Fallback to empty object to prevent UI crashes if data is malformed
   if (!rawData || typeof rawData !== 'object') rawData = {};
@@ -46,9 +65,15 @@ export const fromQueryData = (parsed: any): MessageData => {
   };
 };
 
-export const toQueryData = (payload: any): QueryData => {
+export const toQueryData = (
+  payload: MessageData,
+  targets?: TargetData[],
+  mode?: EditorMode,
+): QueryData => {
   return {
-    messages: [{ data: payload }]
+    messages: [{ data: payload }],
+    ...(targets ? { targets } : {}),
+    ...(mode ? { mode } : {}),
   };
 };
 

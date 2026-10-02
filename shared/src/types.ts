@@ -79,6 +79,7 @@ export interface GalleryItem {
  */
 export interface ComponentNode {
   _id?: string;
+  _action_custom_id?: string;
   type: number;
 
   /* Content */
@@ -99,6 +100,7 @@ export interface ComponentNode {
   label?: string;
   custom_id?: string;
   url?: string;
+  sku_id?: string;
   disabled?: boolean;
   placeholder?: string;
   min_values?: number;
@@ -347,6 +349,7 @@ export interface TemplateRecord {
 export interface ActionDefinitionRecord {
   id: number;
   template_id: number | null;
+  message_id?: string | null;
   custom_id: string;
   action_type: ActionType;
   config: ActionConfig;

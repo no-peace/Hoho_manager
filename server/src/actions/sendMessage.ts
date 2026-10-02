@@ -21,6 +21,7 @@ export const description = "Send a message as the bot";
 export const run = async ({
   interaction,
   config,
+  botToken,
   discord,
   logger,
 }: ActionContext): Promise<ActionResponse | undefined> => {
@@ -31,9 +32,10 @@ export const run = async ({
 
   if (!channelId) return actionFailed("No target channel configured.");
   if (!payload) return actionFailed("No message content configured.");
+  if (!botToken) return actionFailed("The bot for this message isn't configured on the server.");
 
   try {
-    await discord.sendChannelMessage(channelId, payload, {});
+    await discord.sendChannelMessageWithToken(channelId, payload, botToken);
     return ephemeral("\ud83d\udce8 Message sent.");
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

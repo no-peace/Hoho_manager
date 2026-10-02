@@ -1,38 +1,52 @@
-import React, { useState, useEffect } from "react";
-import { Trash2, Save, Users, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trash2, Save, Users } from "lucide-react";
 import { useProfileStore } from "../../store/profileStore";
 
 export const ProfilesPanel = () => {
   const { botProfiles, fetchProfiles, status } = useProfileStore();
   const [name, setName] = useState("");
   const [token, setToken] = useState("");
+  const [applicationId, setApplicationId] = useState("");
+  const [publicKey, setPublicKey] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchProfiles();
   }, [fetchProfiles]);
 
   const handleSave = async () => {
-    if (!name || !token) return;
+    if (!name.trim() || !token.trim() || !applicationId.trim() || !publicKey.trim()) return;
     setIsSaving(true);
+    setSaveError(null);
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
       const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
-      
-      await fetch(`${baseUrl}/api/profiles/bots`, {
+
+      const response = await fetch(`${baseUrl}/api/profiles/bots`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "x-admin-key": adminKey 
         },
-        body: JSON.stringify({ name, token })
+        body: JSON.stringify({ name: name.trim(), token: token.trim(), applicationId: applicationId.trim(), publicKey: publicKey.trim() })
       });
-      
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          result && typeof result.error === "string"
+            ? result.error
+            : `Could not save bot profile (${response.status})`,
+        );
+      }
+
       setName("");
       setToken("");
+      setApplicationId("");
+      setPublicKey("");
       void fetchProfiles();
-    } catch (e) {
-      console.error("Failed to save profile", e);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsSaving(false);
     }
@@ -50,8 +64,8 @@ export const ProfilesPanel = () => {
       });
       
       void fetchProfiles();
-    } catch (e) {
-      console.error("Failed to delete profile", e);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -88,13 +102,36 @@ export const ProfilesPanel = () => {
           />
         </div>
 
+        <div>
+          <label className="block text-[11px] font-bold text-[#949ba4] mb-1">Application ID</label>
+          <input
+            type="text"
+            value={applicationId}
+            onChange={(e) => setApplicationId(e.target.value)}
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            placeholder="Discord application ID"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-[#949ba4] mb-1">Public Key</label>
+          <input
+            type="text"
+            value={publicKey}
+            onChange={(e) => setPublicKey(e.target.value)}
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            placeholder="Discord application public key"
+          />
+        </div>
+
         <button 
           onClick={handleSave}
-          disabled={!name || !token || isSaving}
+          disabled={!name.trim() || !token.trim() || !applicationId.trim() || !publicKey.trim() || isSaving}
           className="w-full mt-2 flex items-center justify-center gap-2 bg-[#5865f2] hover:bg-[#4752c4] text-white font-medium py-2 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save size={14} /> {isSaving ? "Saving..." : "Save Bot Profile"}
         </button>
+        {saveError && <p className="text-[11px] text-[#f28b8b]">{saveError}</p>}
         <p className="text-[10px] text-[#949ba4] mt-2 text-center">Tokens are encrypted and stored securely in your server's database.</p>
       </div>
 

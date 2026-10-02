@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Blocks, BookOpen, Send, Users } from "lucide-react";
 import { ComponentPalette } from "../editor/ComponentPalette";
 import { LayersPanel } from "../editor/LayersPanel";
-import { SendPanel } from "../send/SendPanel";
+import { BotDispatchModal } from "../send/BotDispatchModal";
 import { ProfilesPanel } from "./ProfilesPanel";
 
 export const Sidebar = () => {
   const [activeTab, setActiveTab] = useState<'build' | 'send' | 'profiles'>('build');
+  const [sendModalOpen, setSendModalOpen] = useState(false);
 
   return (
     <div className="w-80 h-full bg-[#2b2d31] border-r border-[#1e1f22] flex flex-col shadow-lg z-10 font-sans shrink-0">
@@ -56,7 +57,17 @@ export const Sidebar = () => {
         </div>
 
         <div className={`p-4 h-full ${activeTab === 'send' ? 'block' : 'hidden'}`}>
-          <SendPanel />
+          <button
+            type="button"
+            onClick={() => setSendModalOpen(true)}
+            className="flex items-center gap-2 rounded bg-[#5865f2] px-3 py-2 text-sm font-medium text-white hover:bg-[#4752c4]"
+          >
+            <Send size={14} /> Send via bot
+          </button>
+          <BotDispatchModal
+            open={sendModalOpen}
+            onClose={() => setSendModalOpen(false)}
+          />
         </div>
 
         <div className={`p-4 h-full ${activeTab === 'profiles' ? 'block' : 'hidden'}`}>

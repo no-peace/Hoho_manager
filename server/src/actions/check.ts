@@ -27,7 +27,7 @@ export const description = "Branch or stop the flow based on a condition";
  * (`{{result.channel_id}}`).
  */
 
-const VARIABLE_PATTERN = /^\{\{\s*([\w.$]+)\s*\}\}$/;
+const VARIABLE_PATTERN = /^\{\{\s*([\w.$]+)\s*\}\}$|^\{\s*([\w.$]+)\s*\}$/;
 
 /** Read a (possibly nested) value out of the variable bag. */
 const lookup = (path: string, variables: Record<string, unknown>): unknown => {
@@ -43,7 +43,7 @@ const lookup = (path: string, variables: Record<string, unknown>): unknown => {
 
 const resolve = (value: unknown, variables: Record<string, unknown>): unknown => {
   if (typeof value !== "string") return value;
-  const key = value.match(VARIABLE_PATTERN)?.[1];
+  const key = value.match(VARIABLE_PATTERN)?.[1] ?? value.match(VARIABLE_PATTERN)?.[2];
   return key === undefined ? value : lookup(key, variables);
 };
 
@@ -66,6 +66,49 @@ const equals = (a: unknown, b: unknown, loose: boolean): boolean => {
   // Loose equality is opt-in, which is why the cast and the lint escape exist.
   // eslint-disable-next-line eqeqeq
   return (a as Comparable) == (b as Comparable);
+};
+
+export const evaluateCondition = (left: unknown, op: string, right: unknown): boolean => {
+  const l = String(left ?? "").trim();
+  const r = String(right ?? "").trim();
+
+  const numL = Number(l);
+  const numR = Number(r);
+  const isNumeric = !Number.isNaN(numL) && !Number.isNaN(numR) && l !== "" && r !== "";
+
+  switch (op.toLowerCase()) {
+    case "==":
+    case "equals":
+    case "is equal to":
+      return l === r;
+    case "!=":
+    case "not_equals":
+      return l !== r;
+    case ">":
+      return isNumeric ? numL > numR : l > r;
+    case ">=":
+      return isNumeric ? numL >= numR : l >= r;
+    case "<":
+      return isNumeric ? numL < numR : l < r;
+    case "<=":
+      return isNumeric ? numL <= numR : l <= r;
+    case "includes":
+    case "contains":
+      return l.includes(r);
+    case "not_includes":
+    case "not_contains":
+      return !l.includes(r);
+    case "starts_with":
+      return l.startsWith(r);
+    case "ends_with":
+      return l.endsWith(r);
+    case "is_empty":
+      return l === "";
+    case "is_not_empty":
+      return l !== "";
+    default:
+      return l === r;
+  }
 };
 
 /**
@@ -125,7 +168,17 @@ export const run = async ({
   config,
   variables,
 }: ActionContext): Promise<ActionResponse | undefined> => {
-  if (evaluateCheck(config, variables)) return undefined; // continue
+  const usesEditorCondition = ["left", "right", "op", "operator"].some((key) =>
+    Object.hasOwn(config, key),
+  );
+  const passes = usesEditorCondition
+    ? evaluateCondition(
+        config.left,
+        configString(config, "op") ?? configString(config, "operator") ?? "==",
+        config.right,
+      )
+    : evaluateCheck(config, variables);
+  if (passes) return undefined; // continue
 
   const failureMessage = configString(config, "failureMessage");
   return actionFailed(failureMessage ?? "This interaction isn't available for you.");

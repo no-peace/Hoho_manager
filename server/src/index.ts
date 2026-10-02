@@ -1,7 +1,7 @@
 import { createApp } from "./app.js";
 import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
-import { flowRepository } from "./repositories/index.js";
+import { flowRepository, interactionReceiptRepository } from "./repositories/index.js";
 import { logger } from "./utils/logger.js";
 
 const log = logger.child("server");
@@ -32,8 +32,7 @@ const start = async (): Promise<void> => {
   // Expired flow state is dead weight; sweep it periodically.
   const cleanup = setInterval(
     () => {
-      flowRepository
-        .pruneExpired()
+      Promise.all([flowRepository.pruneExpired(), interactionReceiptRepository.pruneExpired()])
         .catch((error: unknown) =>
           log.warn(
             `Flow state cleanup failed: ${error instanceof Error ? error.message : String(error)}`,

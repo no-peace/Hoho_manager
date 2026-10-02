@@ -59,6 +59,11 @@ export interface DiscordApi {
     payload: DiscordMessagePayload,
     options?: { profileId?: number | null },
   ): Promise<DiscordMessage | null>;
+  sendChannelMessageWithToken(
+    channelId: string,
+    payload: DiscordMessagePayload,
+    token: string,
+  ): Promise<DiscordMessage | null>;
   sendWebhook(
     webhookUrl: string,
     payload: DiscordMessagePayload,

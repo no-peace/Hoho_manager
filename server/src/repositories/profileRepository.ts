@@ -197,11 +197,35 @@ export class BotProfileRepository extends BaseRepository {
     return this.db.get<BotRow>("SELECT * FROM bot_profiles WHERE id = @id", { id });
   }
 
+  async findActiveByApplicationId(applicationId: string): Promise<BotRow | undefined> {
+    return this.db.get<BotRow>(
+      `SELECT * FROM bot_profiles
+       WHERE application_id = @applicationId AND is_active = 1
+       ORDER BY id ASC LIMIT 1`,
+      { applicationId },
+    );
+  }
+
+  async findPublicKeyByApplicationId(applicationId: string): Promise<string | null> {
+    const row = await this.db.get<{ public_key: string }>(
+      `SELECT public_key FROM bot_profiles
+       WHERE application_id = @applicationId AND is_active = 1
+       ORDER BY id ASC LIMIT 1`,
+      { applicationId },
+    );
+    return row?.public_key ?? null;
+  }
+
   /** Decrypt and return the bot token for an outgoing Discord request. */
   async revealToken(id: number): Promise<string | null> {
     const row = await this.findRawById(id);
     if (!row) return null;
     return decrypt(row.token_encrypted);
+  }
+
+  async revealTokenByApplicationId(applicationId: string): Promise<string | null> {
+    const row = await this.findActiveByApplicationId(applicationId);
+    return row ? decrypt(row.token_encrypted) : null;
   }
 
   async findActiveByUser(userId: number): Promise<PublicBotProfile | undefined> {

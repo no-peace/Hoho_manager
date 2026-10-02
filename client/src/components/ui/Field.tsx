@@ -14,15 +14,10 @@ export const VARIABLES = [
   { tag: "{user.joined}", label: "2 years ago", desc: "When they joined the server" },
   
   { group: "Server" },
-  { tag: "{server.name}", label: "Discohook", desc: "The server's name" },
   { tag: "{server.id}", label: "987654321", desc: "ID of the current server" },
-  { tag: "{server.icon}", label: "https://...", desc: "The server's icon URL" },
-  { tag: "{server.members}", label: "1542", desc: "Total server member count" },
-  { tag: "{server.boosts}", label: "14", desc: "Number of server boosts" },
   
   { group: "Channel & Bot" },
   { tag: "{channel.mention}", label: "#general", desc: "Mentions the current channel" },
-  { tag: "{channel.name}", label: "general", desc: "Name of the channel" },
   { tag: "{channel.id}", label: "456789123", desc: "ID of the current channel" },
   { tag: "{bot.mention}", label: "@Bot", desc: "Mentions the bot" },
   { tag: "{bot.id}", label: "11223344", desc: "The bot's ID" },

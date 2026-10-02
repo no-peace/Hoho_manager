@@ -112,4 +112,26 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_webhooks_user     ON webhook_profiles(user_id);
     `,
   },
+  {
+    id: "002_interaction_receipts",
+    sql: `
+      CREATE TABLE IF NOT EXISTS interaction_receipts (
+        interaction_id TEXT PRIMARY KEY,
+        response_json  TEXT,
+        expires_at     TEXT NOT NULL,
+        created_at     TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_interaction_receipts_expires
+        ON interaction_receipts(expires_at);
+    `,
+  },
+  {
+    id: "003_message_scoped_actions",
+    sql: `
+      ALTER TABLE action_definitions ADD COLUMN message_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_actions_message_custom
+        ON action_definitions(message_id, custom_id);
+    `,
+  },
 ];

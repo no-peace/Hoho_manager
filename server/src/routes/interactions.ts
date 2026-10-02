@@ -3,12 +3,13 @@ import { InteractionResponseType } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { requireAdminKey } from "../middleware/auth.js";
 import { requireInteraction, verifyDiscordSignature } from "../middleware/verifyDiscordSignature.js";
-import { handleInteraction } from "../services/interactionHandler.js";
+import {
+  completeDeferredInteraction,
+  handleInteraction,
+} from "../services/interactionHandler.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
-
-console.log("MY PUBLIC KEY IS:", process.env.DISCORD_PUBLIC_KEY);
 
 const router = Router();
 const log = logger.child("interactions");
@@ -50,13 +51,19 @@ const log = logger.child("interactions");
 
 router.post(
   "/",
-  //express.raw({ type: "application/json" }),
-
+  express.raw({ type: "application/json", limit: "1mb" }),
   verifyDiscordSignature,
   asyncHandler(async (req, res) => {
     const interaction = requireInteraction(req);
-    console.log("🎉 IT WORKED! Received interaction type:", interaction.type);
-    res.json(await handleInteraction(interaction));
+    log.info(`Received verified interaction type ${interaction.type}`);
+    const response = await handleInteraction(interaction);
+    if (
+      response.type === InteractionResponseType.DeferredUpdateMessage ||
+      response.type === InteractionResponseType.DeferredChannelMessageWithSource
+    ) {
+      res.once("finish", () => void completeDeferredInteraction(interaction));
+    }
+    res.json(response);
   }),
 );
 
@@ -121,6 +128,12 @@ router.post(
         interaction.token,
         response,
       );
+      if (
+        response.type === InteractionResponseType.DeferredUpdateMessage ||
+        response.type === InteractionResponseType.DeferredChannelMessageWithSource
+      ) {
+        void completeDeferredInteraction(interaction);
+      }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       log.error(`Relay could not deliver a reply for ${interaction.id}: ${reason}`);

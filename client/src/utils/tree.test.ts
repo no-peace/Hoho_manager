@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { ButtonStyle, ComponentType } from "@dmb/shared";
 import {
+  buttonStylePatch,
+  canAddToActionRow,
+  canNestIn,
+  COMPONENT_DEFS,
   newActionRow,
   newButton,
   newContainer,
@@ -10,7 +15,8 @@ import {
   newTextDisplay,
 } from "./componentsV2";
 import { insertComponent, moveComponent, removeComponent, updateComponent } from "./tree";
-import { stripInternal } from "./discord";
+import { stripInternal, validateMessage } from "./discord";
+import { EDITOR_MODES } from "./constants";
 
 /**
  * The tree helpers are the backbone of every editor interaction — reordering,
@@ -145,6 +151,100 @@ describe("stripInternal", () => {
   });
 });
 
+describe("validateMessage Action Rows", () => {
+  it("rejects an empty row before direct webhook sends", () => {
+    const row = newActionRow();
+    const errors = validateMessage(
+      {
+        content: "",
+        embeds: [],
+        components: [row],
+        username: "",
+        avatar_url: "",
+        thread_name: "",
+      },
+      EDITOR_MODES.CLASSIC,
+    );
+
+    expect(errors).toContain("components[0]: Action Row needs at least one button or select menu");
+  });
+
+  it("validates only fields included in the active editor mode", () => {
+    const data = {
+      content: "",
+      embeds: [{ title: "x".repeat(7000) }],
+      components: [newTextDisplay("V2 content")],
+      username: "",
+      avatar_url: "",
+      thread_name: "",
+    };
+
+    expect(validateMessage(data, EDITOR_MODES.V2)).toEqual([]);
+    const classicErrors = validateMessage(
+      { ...data, components: [newActionRow()] },
+      EDITOR_MODES.CLASSIC,
+    );
+    expect(classicErrors).toContain(
+      "components[0]: Action Row needs at least one button or select menu",
+    );
+    expect(classicErrors.some((error) => error.startsWith("Embed 1"))).toBe(
+      true,
+    );
+  });
+
+  it("rejects string selects without options before direct webhook sends", () => {
+    const select = newStringSelect();
+    select.options = [];
+    const errors = validateMessage(
+      {
+        content: "",
+        embeds: [],
+        components: [newActionRow([select])],
+        username: "",
+        avatar_url: "",
+        thread_name: "",
+      },
+      EDITOR_MODES.CLASSIC,
+    );
+
+    expect(errors).toContain("components[0]: String Select needs at least one option");
+  });
+
+  it("rejects too many Action Rows and unknown button styles before direct sends", () => {
+    const rows = Array.from({ length: 6 }, (_, index) =>
+      newActionRow([{ ...newButton(), custom_id: `action:${index}` }]),
+    );
+    const errors = validateMessage(
+      {
+        content: "",
+        embeds: [],
+        components: rows,
+        username: "",
+        avatar_url: "",
+        thread_name: "",
+      },
+      EDITOR_MODES.CLASSIC,
+    );
+    expect(errors.some((error) => error.includes("more than 5 Action Rows"))).toBe(true);
+
+    const invalidStyle = newButton();
+    invalidStyle.style = 999;
+    expect(
+      validateMessage(
+        {
+          content: "",
+          embeds: [],
+          components: [newActionRow([invalidStyle])],
+          username: "",
+          avatar_url: "",
+          thread_name: "",
+        },
+        EDITOR_MODES.CLASSIC,
+      ).some((error) => error.includes("supported Discord style")),
+    ).toBe(true);
+  });
+});
+
 describe("component factories", () => {
   it("give every node a unique _id", () => {
     const nodes = [
@@ -172,10 +272,70 @@ describe("component factories", () => {
     expect(newActionRow().type).toBe(1);
   });
 
+  it("starts empty instead of auto-creating a button", () => {
+    expect(newActionRow().components).toEqual([]);
+    expect(newActionRow([newButton()]).components).toHaveLength(1);
+  });
+
+  it("offers interactive controls only inside action rows", () => {
+    expect(canNestIn(ComponentType.ActionRow, ComponentType.Button)).toBe(true);
+    expect(canNestIn(ComponentType.ActionRow, ComponentType.UserSelect)).toBe(true);
+    expect(canNestIn(ComponentType.Container, ComponentType.Button)).toBe(false);
+    expect(COMPONENT_DEFS.find((definition) => definition.type === ComponentType.Button)?.topLevel).toBe(
+      false,
+    );
+  });
+
+  it("enforces action-row capacity and select exclusivity in the palette", () => {
+    const buttons = Array.from({ length: 5 }, () => newButton());
+    const oneButton = [newButton()];
+    const oneSelect = [newStringSelect()];
+
+    expect(canAddToActionRow([], ComponentType.Button)).toBe(true);
+    expect(canAddToActionRow(oneButton, ComponentType.Button)).toBe(true);
+    expect(canAddToActionRow(buttons, ComponentType.Button)).toBe(false);
+    expect(canAddToActionRow(oneButton, ComponentType.StringSelect)).toBe(false);
+    expect(canAddToActionRow(oneSelect, ComponentType.Button)).toBe(false);
+    expect(canAddToActionRow([], ComponentType.UserSelect)).toBe(true);
+  });
+
   it("give buttons a custom_id, and link buttons a url instead", () => {
     expect(newButton().custom_id).toBe("action:dud");
     const link = newButton(5); // ButtonStyle.Link
     expect(link.url).toBe("https://discord.com");
     expect(link.custom_id).toBeUndefined();
+  });
+
+  it("switches button styles without leaving incompatible payload fields", () => {
+    const button = { ...newButton(), url: "", sku_id: "old-sku" };
+    const linkPatch = buttonStylePatch(button, ButtonStyle.Link);
+    expect(linkPatch).toEqual({
+      style: ButtonStyle.Link,
+      url: "https://discord.com",
+      custom_id: undefined,
+      _action_custom_id: button.custom_id,
+      sku_id: undefined,
+    });
+    expect(buttonStylePatch(button, ButtonStyle.Premium)).toEqual({
+      style: ButtonStyle.Premium,
+      sku_id: "old-sku",
+      custom_id: undefined,
+      _action_custom_id: button.custom_id,
+      url: undefined,
+    });
+    expect(buttonStylePatch(button, ButtonStyle.Success)).toEqual({
+      style: ButtonStyle.Success,
+      custom_id: button.custom_id,
+      _action_custom_id: undefined,
+      url: undefined,
+      sku_id: undefined,
+    });
+
+    const restored = {
+      ...button,
+      ...linkPatch,
+      ...buttonStylePatch({ ...button, ...linkPatch }, ButtonStyle.Success),
+    };
+    expect(restored.custom_id).toBe(button.custom_id);
   });
 });

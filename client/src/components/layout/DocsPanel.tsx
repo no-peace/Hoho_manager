@@ -8,7 +8,7 @@ export const DocsPanel = () => {
       </h3>
       
       <p className="text-[12px] text-[#949ba4] leading-relaxed mb-4">
-        You can use these variables in your message content, embeds, and action flows. When a user clicks a button or triggers an action, the bot will dynamically replace them with live data.
+        These values resolve in action flows when a user interacts. Initial messages are sent before there is a clicker, so user variables there remain unchanged.
       </p>
 
       {/* User Section */}
@@ -20,7 +20,6 @@ export const DocsPanel = () => {
             <div className="flex gap-2 items-center"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded w-32 shrink-0">{'{user.name}'}</code><span className="text-[#949ba4]">The exact username.</span></div>
             <div className="flex gap-2 items-center"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded w-32 shrink-0">{'{user.displayname}'}</code><span className="text-[#949ba4]">The server nickname.</span></div>
             <div className="flex gap-2 items-center"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded w-32 shrink-0">{'{user.avatar}'}</code><span className="text-[#949ba4]">A link to their avatar URL.</span></div>
-            <div className="flex gap-2 items-center"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded w-32 shrink-0">{'{user.clantag}'}</code><span className="text-[#949ba4]">Extracts [TAG] from their name.</span></div>
         </div>
       </div>
 

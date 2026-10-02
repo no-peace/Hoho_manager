@@ -48,8 +48,8 @@ const FALLBACK_TYPES: ActionHandlerMeta[] = [
   { type: "stop", description: "End the flow here" },
 ];
 
-/** The two config keys a `check` step stores its sub-chains under. */
-export const BRANCH_KEYS = ["then", "else"] as const;
+/** Config keys a `check` step may use to store its sub-chains. */
+export const BRANCH_KEYS = ["then", "else", "pass", "fail"] as const;
 
 /** A sensible default config for a freshly added step. */
 const defaultConfig = (type: ActionType): Record<string, unknown> => {
@@ -74,12 +74,10 @@ const defaultConfig = (type: ActionType): Record<string, unknown> => {
     case "set_variable":
       return { name: "", value: "", varType: "static" };
     case "check":
-      // Empty branches make the server fall back to "a failed check ends the
-      // flow", which is the pre-branching behaviour — so a step is never
-      // silently a no-op while the user is still wiring it up.
       return {
-        function: "equals",
-        conditions: [{ a: "", b: "", loose: false }],
+        left: "",
+        op: "==",
+        right: "",
         then: [],
         else: [],
       };

@@ -32,6 +32,27 @@ export interface DiscordMessage {
   channel_id: string;
 }
 
+export interface DiscordGuildSummary {
+  id: string;
+  name: string;
+}
+
+export interface DiscordChannelSummary {
+  id: string;
+  name: string;
+  type: number;
+}
+
+export interface DiscordMessageRecord {
+  id: string;
+  content: string;
+  timestamp?: string;
+  author?: { id: string };
+  interaction?: unknown;
+  interaction_metadata?: unknown;
+  [key: string]: unknown;
+}
+
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const asRecord = (value: unknown): Record<string, unknown> =>
@@ -63,6 +84,20 @@ export const resolveBotToken = async (profileId: number | null = null): Promise<
     });
   }
   return env.discord.botToken;
+};
+
+export const resolveBotTokenForApplication = async (
+  applicationId: string,
+): Promise<string | null> => {
+  if (applicationId === env.discord.applicationId && env.discord.botToken) {
+    return env.discord.botToken;
+  }
+
+  const profileToken = await botProfileRepository.revealTokenByApplicationId(applicationId);
+  if (profileToken) return profileToken;
+
+  if (!env.discord.applicationId) return env.discord.botToken ?? null;
+  return null;
 };
 
 interface ApiRequestOptions {
@@ -231,6 +266,71 @@ export const sendChannelMessage = async (
   return message;
 };
 
+export const sendChannelMessageWithToken = async (
+  channelId: string,
+  payload: DiscordMessagePayload,
+  token: string,
+): Promise<DiscordMessage | null> => {
+  const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
+    token,
+    body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+  });
+  log.info(`Bot sent message ${message?.id} to channel ${channelId}`);
+  return message;
+};
+
+export const editChannelMessage = async (
+  channelId: string,
+  messageId: string,
+  payload: DiscordMessagePayload,
+  { profileId = null }: BotSendOptions = {},
+): Promise<DiscordMessage | null> => {
+  const token = await resolveBotToken(profileId);
+  return apiRequest<DiscordMessage>(
+    "PATCH",
+    `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`,
+    {
+      token,
+      body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+    },
+  );
+};
+
+export const getBotGuilds = async (
+  profileId: number | null = null,
+): Promise<DiscordGuildSummary[]> => {
+  const token = await resolveBotToken(profileId);
+  return (await apiRequest<DiscordGuildSummary[]>("GET", "/users/@me/guilds", { token })) ?? [];
+};
+
+export const getGuildChannels = async (
+  guildId: string,
+  profileId: number | null = null,
+): Promise<DiscordChannelSummary[]> => {
+  const token = await resolveBotToken(profileId);
+  return (
+    (await apiRequest<DiscordChannelSummary[]>(
+      "GET",
+      `/guilds/${encodeURIComponent(guildId)}/channels`,
+      { token },
+    )) ?? []
+  );
+};
+
+export const getChannelMessages = async (
+  channelId: string,
+  profileId: number | null = null,
+): Promise<DiscordMessageRecord[]> => {
+  const token = await resolveBotToken(profileId);
+  return (
+    (await apiRequest<DiscordMessageRecord[]>(
+      "GET",
+      `/channels/${encodeURIComponent(channelId)}/messages?limit=50`,
+      { token },
+    )) ?? []
+  );
+};
+
 /** Resolve who a token belongs to — doubles as a validity check. */
 export const getBotIdentity = async (token: string): Promise<DiscordUser | null> =>
   apiRequest<DiscordUser>("GET", "/users/@me", { token });
@@ -363,9 +463,15 @@ export const deferResponse = async (
 
 export default {
   resolveBotToken,
+  resolveBotTokenForApplication,
   sendWebhook,
   getWebhookInfo,
   sendChannelMessage,
+  sendChannelMessageWithToken,
+  editChannelMessage,
+  getBotGuilds,
+  getGuildChannels,
+  getChannelMessages,
   getBotIdentity,
   addGuildMemberRole,
   removeGuildMemberRole,

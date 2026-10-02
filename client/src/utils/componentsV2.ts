@@ -1,4 +1,4 @@
-import { ButtonStyle, ComponentType } from "@dmb/shared";
+import { ButtonStyle, ComponentType, Limits } from "@dmb/shared";
 import type {
   ComponentNode,
   ComponentTypeValue,
@@ -82,8 +82,39 @@ export const newButton = (style: number = ButtonStyle.Primary): ComponentNode =>
   label: style === ButtonStyle.Link ? "Link" : "Button",
   ...(style === ButtonStyle.Link
     ? { url: "https://discord.com" }
-    : { custom_id: "action:dud" }),
+    : style === ButtonStyle.Premium
+      ? { sku_id: "" }
+      : { custom_id: "action:dud" }),
 });
+
+export const buttonStylePatch = (component: ComponentNode, style: number): Partial<ComponentNode> => {
+  const actionId = component._action_custom_id ?? component.custom_id;
+  if (style === ButtonStyle.Link) {
+    return {
+      style,
+      url: component.url || "https://discord.com",
+      custom_id: undefined,
+      _action_custom_id: actionId,
+      sku_id: undefined,
+    };
+  }
+  if (style === ButtonStyle.Premium) {
+    return {
+      style,
+      sku_id: component.sku_id ?? "",
+      custom_id: undefined,
+      _action_custom_id: actionId,
+      url: undefined,
+    };
+  }
+  return {
+    style,
+    custom_id: actionId ?? "action:dud",
+    _action_custom_id: undefined,
+    url: undefined,
+    sku_id: undefined,
+  };
+};
 
 export const newSelectOption = (index: number): SelectOption => ({
   _id: uid(),
@@ -99,7 +130,43 @@ export const newStringSelect = (): ComponentNode => ({
   options: [newSelectOption(1)],
 });
 
-export const newActionRow = (children: ComponentNode[] = [newButton()]): ComponentNode => ({
+export const newUserSelect = (): ComponentNode => ({
+  _id: uid(),
+  type: ComponentType.UserSelect,
+  custom_id: "action:dud",
+  placeholder: "Select a user",
+  min_values: 1,
+  max_values: 1,
+});
+
+export const newRoleSelect = (): ComponentNode => ({
+  _id: uid(),
+  type: ComponentType.RoleSelect,
+  custom_id: "action:dud",
+  placeholder: "Select a role",
+  min_values: 1,
+  max_values: 1,
+});
+
+export const newMentionableSelect = (): ComponentNode => ({
+  _id: uid(),
+  type: ComponentType.MentionableSelect,
+  custom_id: "action:dud",
+  placeholder: "Select a user or role",
+  min_values: 1,
+  max_values: 1,
+});
+
+export const newChannelSelect = (): ComponentNode => ({
+  _id: uid(),
+  type: ComponentType.ChannelSelect,
+  custom_id: "action:dud",
+  placeholder: "Select a channel",
+  min_values: 1,
+  max_values: 1,
+});
+
+export const newActionRow = (children: ComponentNode[] = []): ComponentNode => ({
   _id: uid(),
   type: ComponentType.ActionRow,
   components: children,
@@ -176,6 +243,54 @@ export const COMPONENT_DEFS: readonly ComponentDef[] = [
     topLevel: true,
     create: () => newActionRow(),
   },
+  {
+    type: ComponentType.Button,
+    label: "Button",
+    description: "An interactive or link button inside an action row.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newButton(),
+  },
+  {
+    type: ComponentType.StringSelect,
+    label: "String Select",
+    description: "A menu with options you define.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newStringSelect(),
+  },
+  {
+    type: ComponentType.UserSelect,
+    label: "User Select",
+    description: "Let a member choose users from the server.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newUserSelect(),
+  },
+  {
+    type: ComponentType.RoleSelect,
+    label: "Role Select",
+    description: "Let a member choose roles from the server.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newRoleSelect(),
+  },
+  {
+    type: ComponentType.MentionableSelect,
+    label: "Mentionable Select",
+    description: "Let a member choose users or roles.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newMentionableSelect(),
+  },
+  {
+    type: ComponentType.ChannelSelect,
+    label: "Channel Select",
+    description: "Let a member choose channels from the server.",
+    group: "Interactive",
+    topLevel: false,
+    create: () => newChannelSelect(),
+  },
 ];
 
 /** Types that may be nested inside a Container. */
@@ -190,6 +305,15 @@ export const CONTAINER_CHILD_TYPES: readonly number[] = [
 
 /** Types that may be nested inside a Section. */
 export const SECTION_CHILD_TYPES: readonly number[] = [ComponentType.TextDisplay];
+
+export const ACTION_ROW_CHILD_TYPES: readonly number[] = [
+  ComponentType.Button,
+  ComponentType.StringSelect,
+  ComponentType.UserSelect,
+  ComponentType.RoleSelect,
+  ComponentType.MentionableSelect,
+  ComponentType.ChannelSelect,
+];
 
 const DEF_BY_TYPE = new Map<number, ComponentDef>(
   COMPONENT_DEFS.map((def) => [def.type, def]),
@@ -213,6 +337,10 @@ export const componentLabel = (component: ComponentNode | undefined): string => 
   const names: Record<number, string> = {
     [ComponentType.Button]: "Button",
     [ComponentType.StringSelect]: "String Select",
+    [ComponentType.UserSelect]: "User Select",
+    [ComponentType.RoleSelect]: "Role Select",
+    [ComponentType.MentionableSelect]: "Mentionable Select",
+    [ComponentType.ChannelSelect]: "Channel Select",
     [ComponentType.Thumbnail]: "Thumbnail",
   };
   return component ? (names[component.type] ?? "Component") : "Component";
@@ -220,7 +348,9 @@ export const componentLabel = (component: ComponentNode | undefined): string => 
 
 /** Components that hold interactive controls (and therefore carry actions). */
 export const isInteractiveComponent = (component: ComponentNode | undefined): boolean =>
-  component?.type === ComponentType.Button ||
+  (component?.type === ComponentType.Button &&
+    component.style !== ButtonStyle.Link &&
+    component.style !== ButtonStyle.Premium) ||
   component?.type === ComponentType.StringSelect ||
   component?.type === ComponentType.UserSelect ||
   component?.type === ComponentType.RoleSelect ||
@@ -232,7 +362,19 @@ export const canNestIn = (parentType: number, childType: number): boolean => {
   if (parentType === ComponentType.Container) return CONTAINER_CHILD_TYPES.includes(childType);
   if (parentType === ComponentType.Section) return SECTION_CHILD_TYPES.includes(childType);
   if (parentType === ComponentType.ActionRow) {
-    return childType === ComponentType.Button || childType === ComponentType.StringSelect;
+    return ACTION_ROW_CHILD_TYPES.includes(childType);
   }
   return false;
+};
+
+export const canAddToActionRow = (
+  children: readonly ComponentNode[],
+  childType: number,
+): boolean => {
+  if (!canNestIn(ComponentType.ActionRow, childType)) return false;
+  if (children.length >= Limits.components.actionRowButtons) return false;
+  if (childType === ComponentType.Button) {
+    return children.every((child) => child.type === ComponentType.Button);
+  }
+  return children.length === 0;
 };

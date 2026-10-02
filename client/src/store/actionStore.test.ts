@@ -31,7 +31,9 @@ describe("createStep defaults", () => {
     const step = createStep("check");
     expect(step.config.then).toEqual([]);
     expect(step.config.else).toEqual([]);
-    expect(step.config.function).toBe("equals");
+    expect(step.config.left).toBe("");
+    expect(step.config.op).toBe("==");
+    expect(step.config.right).toBe("");
   });
 
   it("gives a set_variable step a static mode", () => {
@@ -76,6 +78,25 @@ describe("toRegistrations — nested branches", () => {
 
     expect(registration!.steps[0]!.config.then).toEqual([]);
     expect(registration!.steps[0]!.config.else).toEqual([]);
+  });
+
+  it("strips and restores editor ids in pass/fail branch aliases", () => {
+    const step = createStep("check");
+    const pass = stopStep("pass");
+    const fail = stopStep("fail");
+    const check: FlowStep = {
+      ...step,
+      config: { ...step.config, pass: [pass], fail: [fail] },
+    };
+
+    useActionStore.getState().setFlow("action:check", [check]);
+    const stored = useActionStore.getState().toList();
+    expect(JSON.stringify(stored)).not.toContain("_id");
+
+    useActionStore.getState().loadFromList(stored);
+    const reloaded = useActionStore.getState().getFlow("action:check")[0]!;
+    expect((reloaded.config.pass as FlowStep[])[0]!._id).toBeTruthy();
+    expect((reloaded.config.fail as FlowStep[])[0]!._id).toBeTruthy();
   });
 });
 

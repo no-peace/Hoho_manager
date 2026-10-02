@@ -62,12 +62,15 @@ describe("validateMessagePayload — classic fields", () => {
 
 describe("validateMessagePayload — Components V2 exclusivity", () => {
   it("accepts a V2 payload with the flag and no classic fields", () => {
-    expect(() =>
-      validateMessagePayload({
-        flags: MessageFlags.IsComponentsV2,
-        components: [textDisplay("v2 content")],
-      }),
-    ).not.toThrow();
+    const payload = validateMessagePayload({
+      flags: MessageFlags.IsComponentsV2,
+      components: [textDisplay("v2 content")],
+    });
+    expect(payload.flags).toBe(MessageFlags.IsComponentsV2);
+  });
+
+  it("rejects the V2 flag without components", () => {
+    expectDetail({ flags: MessageFlags.IsComponentsV2 }, /requires a non-empty `components` array/);
   });
 
   it("rejects content alongside Components V2", () => {
@@ -113,6 +116,47 @@ describe("validateComponentsV2 — structure", () => {
       { type: ComponentType.Button, style: ButtonStyle.Primary, label: "x", custom_id: "a" },
     ]);
     expect(errors.some((e) => e.includes("not allowed at the top level"))).toBe(true);
+  });
+
+  it("rejects empty rows, oversized rows, and selects sharing a row", () => {
+    expect(
+      validateComponentsV2([{ type: ComponentType.ActionRow, components: [] }]).join(" "),
+    ).toMatch(/at least one button or select menu/);
+
+    const tooManyButtons = Array.from({ length: 6 }, (_, index) => ({
+      type: ComponentType.Button,
+      style: ButtonStyle.Primary,
+      label: `Button ${index}`,
+      custom_id: `action:${index}`,
+    }));
+    expect(
+      validateComponentsV2([{ type: ComponentType.ActionRow, components: tooManyButtons }]).join(" "),
+    ).toMatch(/cannot contain more than 5 controls/);
+
+    expect(
+      validateComponentsV2([
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            { type: ComponentType.StringSelect, custom_id: "select", options: [] },
+            { type: ComponentType.Button, style: ButtonStyle.Primary, label: "Button", custom_id: "action:dud" },
+          ],
+        },
+      ]).join(" "),
+    ).toMatch(/select menu must be the only control/);
+  });
+
+  it("rejects more than five Action Rows and unknown button styles", () => {
+    const rows = Array.from({ length: 6 }, (_, index) => rowWithButton(`action:${index}`));
+    expect(validateComponentsV2(rows).join(" ")).toMatch(/more than 5 Action Rows/);
+    expect(
+      validateComponentsV2([
+        {
+          type: ComponentType.ActionRow,
+          components: [{ type: ComponentType.Button, style: 999, custom_id: "action:dud" }],
+        },
+      ]).join(" "),
+    ).toMatch(/supported Discord button style/);
   });
 
   it("rejects a non-integer component type", () => {
@@ -178,6 +222,27 @@ describe("validateComponentsV2 — interactive components", () => {
     expect(errors).toEqual([]);
   });
 
+  it("requires a SKU ID and forbids action fields on premium buttons", () => {
+    expect(
+      validateComponentsV2([
+        {
+          type: ComponentType.ActionRow,
+          components: [{ type: ComponentType.Button, style: ButtonStyle.Premium, sku_id: "123456789012345678" }],
+        },
+      ]),
+    ).toEqual([]);
+    expect(
+      validateComponentsV2([
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            { type: ComponentType.Button, style: ButtonStyle.Premium, custom_id: "action:dud" },
+          ],
+        },
+      ]).join(" "),
+    ).toMatch(/sku_id/);
+  });
+
   it("rejects a link button without a valid url", () => {
     const errors = validateComponentsV2([
       {
@@ -220,6 +285,23 @@ describe("validateComponentsV2 — interactive components", () => {
       },
     ]);
     expect(errors.some((e) => e.includes("25 options"))).toBe(true);
+  });
+
+  it("rejects a string select with no options and inverted selection bounds", () => {
+    const emptyOptions = validateComponentsV2([
+      { type: ComponentType.ActionRow, components: [{ type: ComponentType.StringSelect, custom_id: "a", options: [] }] },
+    ]);
+    expect(emptyOptions.some((error) => error.includes("at least one option"))).toBe(true);
+
+    const invertedBounds = validateComponentsV2([
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          { type: ComponentType.StringSelect, custom_id: "a", options: [{ label: "A", value: "a" }], min_values: 2, max_values: 1 },
+        ],
+      },
+    ]);
+    expect(invertedBounds.some((error) => error.includes("cannot exceed"))).toBe(true);
   });
 
   it("rejects select options with missing or oversized labels", () => {

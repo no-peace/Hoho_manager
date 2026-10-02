@@ -5,6 +5,7 @@ import type {
   FlowRegistration,
   StoredActionDefinition,
 } from "@dmb/shared";
+import type { DatabaseClient } from "../config/database.js";
 import { BaseRepository, parseJson, parseJsonList } from "./baseRepository.js";
 
 /**
@@ -18,6 +19,7 @@ import { BaseRepository, parseJson, parseJsonList } from "./baseRepository.js";
 interface ActionRow {
   id: number;
   template_id: number | null;
+  message_id: string | null;
   custom_id: string;
   action_type: string;
   config: string;
@@ -39,6 +41,7 @@ export interface ActionLogRow {
 
 export interface CreateActionInput {
   templateId?: number | null;
+  messageId?: string | null;
   customId: string;
   actionType: ActionType;
   config?: ActionConfig;
@@ -59,18 +62,24 @@ const hydrate = (row: ActionRow | undefined): ActionDefinitionRecord | undefined
   parseJson<ActionDefinitionRecord>(row as unknown as ActionDefinitionRecord, ["config"]);
 
 export class ActionRepository extends BaseRepository {
+  constructor(database?: DatabaseClient) {
+    super(database);
+  }
+
   async create({
     templateId = null,
+    messageId = null,
     customId,
     actionType,
     config = {},
     executionOrder = 0,
   }: CreateActionInput): Promise<ActionDefinitionRecord | undefined> {
     const { lastInsertRowid } = await this.db.run(
-      `INSERT INTO action_definitions (template_id, custom_id, action_type, config, execution_order)
-       VALUES (@templateId, @customId, @actionType, @config, @executionOrder)`,
+      `INSERT INTO action_definitions (template_id, message_id, custom_id, action_type, config, execution_order)
+       VALUES (@templateId, @messageId, @customId, @actionType, @config, @executionOrder)`,
       {
         templateId,
+        messageId,
         customId,
         actionType,
         config: JSON.stringify(config ?? {}),
@@ -117,19 +126,26 @@ export class ActionRepository extends BaseRepository {
    * saved template. Without that, sending a template-backed message ad-hoc would
    * execute both sets and double up every action.
    */
-  async findByCustomId(customId: string): Promise<ActionDefinitionRecord[]> {
-    const registered = await this.db.query<ActionRow>(
-      `SELECT * FROM action_definitions
-        WHERE custom_id = @customId AND template_id IS NULL
-        ORDER BY execution_order ASC`,
-      { customId },
-    );
+  async findByCustomId(
+    customId: string,
+    messageId?: string,
+  ): Promise<ActionDefinitionRecord[]> {
+    const registered = messageId
+      ? await this.db.query<ActionRow>(
+          `SELECT * FROM action_definitions
+           WHERE custom_id = @customId AND message_id = @messageId
+           ORDER BY execution_order ASC`,
+          { customId, messageId },
+        )
+      : [];
     if (registered.length > 0) {
       return parseJsonList(registered as unknown as ActionDefinitionRecord[], ["config"]);
     }
 
     const rows = await this.db.query<ActionRow>(
-      "SELECT * FROM action_definitions WHERE custom_id = @customId ORDER BY execution_order ASC",
+      `SELECT * FROM action_definitions
+       WHERE custom_id = @customId AND template_id IS NOT NULL
+       ORDER BY execution_order ASC`,
       { customId },
     );
     return parseJsonList(rows as unknown as ActionDefinitionRecord[], ["config"]);
@@ -140,18 +156,19 @@ export class ActionRepository extends BaseRepository {
    * ad-hoc registration for the same components. Template-owned rows are left
    * untouched.
    */
-  async registerFlows(flows: FlowRegistration[] = []): Promise<number> {
+  async registerFlows(messageId: string, flows: FlowRegistration[] = []): Promise<number> {
+    await this.db.run(
+      "DELETE FROM action_definitions WHERE message_id = @messageId AND template_id IS NULL",
+      { messageId },
+    );
+
     let written = 0;
 
     for (const flow of flows) {
-      await this.db.run(
-        "DELETE FROM action_definitions WHERE custom_id = @customId AND template_id IS NULL",
-        { customId: flow.customId },
-      );
-
       for (const [index, step] of (flow.steps ?? []).entries()) {
         await this.create({
           templateId: null,
+          messageId,
           customId: flow.customId,
           actionType: step.type,
           config: step.config ?? {},

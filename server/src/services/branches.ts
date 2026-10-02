@@ -1,69 +1,72 @@
+import { evaluateCheck, evaluateCondition } from "../actions/check.js";
+
 export interface ExecutableStep {
-  id: string | null;
+  id: number | null;
   type: string;
   config: Record<string, any>;
 }
 
+/**
+ * Checks whether an action step configuration contains branching sub-chains.
+ * Supports both Discohook formats (pass/fail and then/else).
+ */
 export const hasBranches = (config: Record<string, any>): boolean => {
-  // Detects if the action contains nested steps in Discohook's pass/fail format
-  return Array.isArray(config.pass) || Array.isArray(config.fail);
+  if (!config || typeof config !== "object") return false;
+  return (
+    (Array.isArray(config.pass) && config.pass.length > 0) ||
+    (Array.isArray(config.fail) && config.fail.length > 0) ||
+    (Array.isArray(config.then) && config.then.length > 0) ||
+    (Array.isArray(config.else) && config.else.length > 0)
+  );
 };
 
-const evaluateCondition = (left: any, op: string, right: any): boolean => {
-  const l = String(left ?? "").trim();
-  const r = String(right ?? "").trim();
+/**
+ * Safely parses an untrusted JSON array into an array of ExecutableStep objects.
+ */
+export const readBranch = (value: unknown): ExecutableStep[] => {
+  if (!Array.isArray(value)) return [];
 
-  const numL = Number(l);
-  const numR = Number(r);
-  
-  // Ensure both sides are valid numbers before doing mathematical comparisons
-  const isNum = !isNaN(numL) && !isNaN(numR) && l !== "" && r !== "";
+  const results: ExecutableStep[] = [];
+  for (const entry of value) {
+    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const type = typeof record.type === "string" ? record.type : "dud";
+    const config =
+      typeof record.config === "object" && record.config !== null && !Array.isArray(record.config)
+        ? (record.config as Record<string, any>)
+        : {};
+    const id = typeof record.id === "number" ? record.id : null;
 
-  switch (op) {
-    case "==":
-    case "equals":
-    case "is equal to":
-      return l === r;
-    case "!=":
-    case "not_equals":
-      return l !== r;
-    case ">":
-      return isNum ? numL > numR : l > r;
-    case ">=":
-      return isNum ? numL >= numR : l >= r;
-    case "<":
-      return isNum ? numL < numR : l < r;
-    case "<=":
-      return isNum ? numL <= numR : l <= r;
-    case "includes":
-      return l.includes(r);
-    case "not_includes":
-      return !l.includes(r);
-    case "starts_with":
-      return l.startsWith(r);
-    case "ends_with":
-      return l.endsWith(r);
-    case "is_empty":
-      return l === "";
-    case "is_not_empty":
-      return l !== "";
-    default:
-      return l === r; // Fallback to strict equality
+    results.push({ id, type, config });
   }
+
+  return results;
 };
 
+/**
+ * Selects the next sub-chain of steps based on evaluating the condition.
+ */
 export const selectBranch = (
   config: Record<string, any>,
-  variables: Record<string, unknown>
+  variables: Record<string, unknown>,
 ): ExecutableStep[] => {
-  // Fallback operator is "==" if none is provided by the UI
-  const operator = config.op || config.operator || "==";
-  const isTrue = evaluateCondition(config.left, operator, config.right);
+  const operator = config.op || config.operator || config.function || "==";
+  const usesEditorCondition =
+    Object.hasOwn(config, "left") ||
+    Object.hasOwn(config, "right") ||
+    Object.hasOwn(config, "op") ||
+    Object.hasOwn(config, "operator");
+  const isTrue = Array.isArray(config.conditions) && !usesEditorCondition
+    ? evaluateCheck(config, variables)
+    : evaluateCondition(config.left, operator, config.right);
 
-  // Return the 'pass' array if true, or the 'fail' array if false
-  if (isTrue) {
-    return config.pass || [];
-  } else {
-    return config.fail || [];
-  }
+  const rawBranch = isTrue
+    ? config.pass ?? config.then ?? []
+    : config.fail ?? config.else ?? [];
+
+  return readBranch(rawBranch);
 };
+
+export default { hasBranches, readBranch, selectBranch };

@@ -1,31 +1,15 @@
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useMemo, useState } from "react";
 import {
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
-  CornerDownRight,
   Plus,
   Trash2,
 } from "lucide-react";
-import { AdaptiveFields, CheckFunctions, SetVariableModes } from "@dmb/shared";
-import type { ActionConfig, CheckCondition, FlowStep } from "@dmb/shared";
+import { AdaptiveFields, SetVariableModes } from "@dmb/shared";
+import type { ActionConfig, FlowStep } from "@dmb/shared";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
-
-/**
- * Recursive flow-step editor.
- *
- * A flow is a list of steps, and a `check` step contains **two more lists**
- * (`then` / `else`) in its own config. Rendering that as a flat list would make
- * branching unrepresentable, so this component renders one list and calls itself
- * for each branch. The recursion is the whole point: a check inside a check works
- * without any special case.
- *
- * The nesting is stored in config rather than as sibling rows because the server
- * persists flows to a flat, ordered `action_definitions` table — a tree cannot be
- * expressed by `execution_order` alone. See `server/src/services/branches.ts`.
- */
 
 interface ConfigField {
   key: string;
@@ -35,14 +19,6 @@ interface ConfigField {
   type?: string;
 }
 
-/**
- * Field descriptors per action type. Keys are the same config keys the server
- * handlers read (`roleId`, `content`, …), so no translation layer is needed.
- *
- * `check` and `set_variable` are absent here on purpose: they need purpose-built
- * controls (a function picker, a mode picker, and for `check`, the branch lists)
- * and are rendered by the switch below. `stop` is a plain field.
- */
 const CONFIG_FIELDS: Record<string, readonly ConfigField[]> = {
   dud: [],
   add_role: [{ key: "roleId", label: "Role ID", placeholder: "123456789012345678" }],
@@ -50,12 +26,8 @@ const CONFIG_FIELDS: Record<string, readonly ConfigField[]> = {
   toggle_role: [{ key: "roleId", label: "Role ID", placeholder: "123456789012345678" }],
   send_ephemeral_reply: [{ key: "content", label: "Reply text", textarea: true }],
   send_dm: [{ key: "content", label: "DM text", textarea: true }],
-  open_modal: [
-    { key: "title", label: "Modal title", placeholder: "Tell us about you" },
-    { key: "customId", label: "Modal custom id", placeholder: "modal:about" },
-  ],
   send_message: [
-    { key: "channelId", label: "Channel ID (defaults to here)", placeholder: "123456789012345678" },
+    { key: "channelId", label: "Channel ID (defaults to current channel)", placeholder: "123456789012345678" },
     { key: "content", label: "Message", textarea: true },
   ],
   send_webhook_message: [
@@ -77,45 +49,66 @@ const CONFIG_FIELDS: Record<string, readonly ConfigField[]> = {
 
 const CHECK_KEY = "check";
 const SET_VARIABLE_KEY = "set_variable";
-
-/** Past this the server refuses to recurse (`MAX_BRANCH_DEPTH`), so warn first. */
-const WARN_DEPTH = 8;
-
-const labelFor = (type: string): string => type.replace(/_/g, " ");
+const OPEN_MODAL_KEY = "open_modal";
 
 const asText = (value: unknown): string =>
   typeof value === "string" ? value : value == null ? "" : String(value);
 
-/** Read a `check` step's conditions, normalised so the UI never sees `undefined`. */
-const readConditions = (config: ActionConfig): CheckCondition[] => {
-  if (!Array.isArray(config.conditions)) return [];
+export interface ModalInputField {
+  customId: string;
+  label: string;
+  style: number; // 1: Short, 2: Paragraph
+  placeholder?: string;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+}
 
-  const parsed = config.conditions.flatMap((entry) => {
-    if (entry === null || typeof entry !== "object") return [];
-    const record = entry as Record<string, unknown>;
-    return [{ a: record.a, b: record.b, loose: record.loose === true }];
-  });
+const parseModalComponents = (components: unknown): ModalInputField[] => {
+  if (!Array.isArray(components)) return [];
 
-  return parsed.length > 0 ? parsed : [{ a: "", b: "", loose: false }];
+  const fields: ModalInputField[] = [];
+  for (const row of components) {
+    if (row && typeof row === "object" && Array.isArray((row as any).components)) {
+      for (const input of (row as any).components) {
+        if (input && typeof input === "object") {
+          fields.push({
+            customId: input.custom_id || input.customId || `input_${fields.length + 1}`,
+            label: input.label || "Question",
+            style: Number(input.style) === 2 ? 2 : 1,
+            placeholder: input.placeholder || "",
+            required: input.required !== false,
+            minLength: typeof input.min_length === "number" ? input.min_length : undefined,
+            maxLength: typeof input.max_length === "number" ? input.max_length : undefined,
+          });
+        }
+      }
+    }
+  }
+  return fields;
 };
 
-/** Read a branch array out of a config, tolerating hand-edited JSON. */
-const readBranch = (config: ActionConfig, key: "then" | "else"): FlowStep[] => {
-  const value = config[key];
-  if (!Array.isArray(value)) return [];
-
-  return value.flatMap((entry) => {
-    if (entry === null || typeof entry !== "object") return [];
-    const record = entry as Record<string, unknown>;
-    return [{ type: (record.type as FlowStep["type"]) ?? "dud", config: (record.config ?? {}) as ActionConfig }];
-  });
+const formatModalComponents = (fields: ModalInputField[]) => {
+  return fields.slice(0, 5).map((field) => ({
+    type: 1, // ActionRow
+    components: [
+      {
+        type: 4, // TextInput
+        custom_id: field.customId.trim() || `input_${Date.now()}`,
+        label: field.label.trim() || "Question",
+        style: field.style === 2 ? 2 : 1,
+        placeholder: field.placeholder?.trim() || undefined,
+        required: field.required !== false,
+        min_length: field.minLength,
+        max_length: field.maxLength,
+      },
+    ],
+  }));
 };
 
 export interface StepListProps {
   steps: FlowStep[];
-  /** Receives the complete, edited list. */
   onChange: (steps: FlowStep[]) => void;
-  /** 0 for the component's own flow; >0 inside a check branch. */
   depth: number;
 }
 
@@ -123,9 +116,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const [addingType, setAddingType] = useState<string>("add_role");
   const nested = depth > 0;
 
-  // Driven by `GET /api/config` (falling back to a bundled copy) so the picker
-  // cannot drift from the server's action registry. `dud` is hidden — it exists
-  // for the inline custom-id case, not as something to choose deliberately.
   const actionTypes = useActionStore((state) => state.actionTypes);
   const typeOptions = useMemo(
     () =>
@@ -145,18 +135,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
     patch(index, { ...step, config });
   };
 
-  const move = (index: number, direction: number): void => {
-    const target = index + direction;
-    if (target < 0 || target >= steps.length) return;
-    const next = [...steps];
-    const a = next[index];
-    const b = next[target];
-    if (!a || !b) return;
-    next[index] = b;
-    next[target] = a;
-    onChange(next);
-  };
-
   const remove = (index: number): void => {
     onChange(steps.filter((_, i) => i !== index));
   };
@@ -164,7 +142,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const changeType = (index: number, type: string): void => {
     const step = steps[index];
     if (!step) return;
-    // Keep the editor `_id` so React does not remount the card mid-edit.
     patch(index, { ...createStep(type as FlowStep["type"]), _id: step._id });
   };
 
@@ -210,113 +187,213 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
       );
     }
 
-    if (step.type === CHECK_KEY) {
-      const conditions = readConditions(config);
-      const fn = asText(config.function) || "equals";
+    if (step.type === OPEN_MODAL_KEY) {
+      const inputFields = parseModalComponents(config.components);
 
-      const writeConditions = (next: CheckCondition[]): void =>
-        patchConfig(index, { ...config, conditions: next });
+      const updateInputs = (nextInputs: ModalInputField[]) => {
+        patchConfig(index, {
+          ...config,
+          components: formatModalComponents(nextInputs),
+        });
+      };
+
+      const addInput = () => {
+        if (inputFields.length >= 5) return;
+        updateInputs([
+          ...inputFields,
+          {
+            customId: `field_${inputFields.length + 1}`,
+            label: `Question ${inputFields.length + 1}`,
+            style: 1,
+            placeholder: "",
+            required: true,
+          },
+        ]);
+      };
+
+      const patchInput = (i: number, patchData: Partial<ModalInputField>) => {
+        const next = [...inputFields];
+        next[i] = { ...next[i], ...patchData };
+        updateInputs(next);
+      };
+
+      const removeInput = (i: number) => {
+        updateInputs(inputFields.filter((_, idx) => idx !== i));
+      };
 
       return (
-        <>
-          <Select
-            label="Condition"
-            value={fn}
-            onChange={(event) => patchConfig(index, { ...config, function: event.target.value })}
-            options={CheckFunctions.map((entry) => ({ value: entry.value, label: entry.label }))}
+        <div className="space-y-3">
+          <TextField
+            label="Modal Title"
+            value={asText(config.title)}
+            placeholder="Application Form"
+            onChange={(e) => patchConfig(index, { ...config, title: e.target.value })}
+          />
+          <TextField
+            label="Modal Custom ID"
+            value={asText(config.customId)}
+            placeholder="app_modal"
+            onChange={(e) => patchConfig(index, { ...config, customId: e.target.value })}
           />
 
-          <div className="space-y-2">
-            {conditions.map((condition, conditionIndex) => (
-              <div
-                key={conditionIndex}
-                className="space-y-2 rounded-md border border-line-soft bg-raised/40 p-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
-                    {conditions.length > 1 ? `Condition ${conditionIndex + 1}` : "Comparison"}
-                  </span>
-                  {conditions.length > 1 && (
-                    <IconButton
-                      icon={Trash2}
-                      label="Remove condition"
-                      size={11}
-                      onClick={() =>
-                        writeConditions(conditions.filter((_, i) => i !== conditionIndex))
-                      }
+          <div className="space-y-2 pt-1 border-t border-[#1e1f22]">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#b5bac1]">
+                Form Inputs ({inputFields.length}/5)
+              </span>
+              {inputFields.length < 5 && (
+                <Button size="sm" icon={Plus} onClick={addInput}>
+                  Add Input
+                </Button>
+              )}
+            </div>
+
+            {inputFields.length === 0 ? (
+              <p className="text-[11px] text-[#949ba4] py-2">
+                Click &ldquo;Add Input&rdquo; to add a text question to this modal (up to 5 inputs).
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {inputFields.map((input, fieldIdx) => (
+                  <div
+                    key={fieldIdx}
+                    className="p-2.5 rounded bg-[#1e1f22]/70 border border-[#2b2d31] space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1">
+                        <TextField
+                          label="Field Label"
+                          value={input.label}
+                          placeholder="e.g. Why should we accept you?"
+                          onChange={(e) => patchInput(fieldIdx, { label: e.target.value })}
+                        />
+                      </div>
+                      <IconButton
+                        icon={Trash2}
+                        label="Delete input"
+                        onClick={() => removeInput(fieldIdx)}
+                        className="text-[#f28b8b] hover:bg-[#da373c]/10 mt-4"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <TextField
+                        label="Variable Key (custom_id)"
+                        value={input.customId}
+                        placeholder="reason"
+                        onChange={(e) => patchInput(fieldIdx, { customId: e.target.value })}
+                      />
+                      <Select
+                        label="Input Style"
+                        value={String(input.style)}
+                        onChange={(e) => patchInput(fieldIdx, { style: Number(e.target.value) })}
+                        options={[
+                          { value: "1", label: "Short (Single Line)" },
+                          { value: "2", label: "Paragraph (Multi-line)" },
+                        ]}
+                      />
+                    </div>
+
+                    <TextField
+                      label="Placeholder (optional)"
+                      value={input.placeholder ?? ""}
+                      placeholder="Type your answer here..."
+                      onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
                     />
-                  )}
-                </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <TextField
-                    label="Left"
-                    value={asText(condition.a)}
-                    placeholder="{{role}}"
-                    onChange={(event) =>
-                      writeConditions(
-                        conditions.map((entry, i) =>
-                          i === conditionIndex ? { ...entry, a: event.target.value } : entry,
-                        ),
-                      )
-                    }
-                  />
-                  <TextField
-                    label={fn === "in" ? "In list" : "Right"}
-                    value={asText(condition.b)}
-                    placeholder={fn === "in" ? "a,b,c" : "member"}
-                    onChange={(event) =>
-                      writeConditions(
-                        conditions.map((entry, i) =>
-                          i === conditionIndex ? { ...entry, b: event.target.value } : entry,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-
-                <Checkbox
-                  label="Loose comparison (==)"
-                  checked={condition.loose === true}
-                  onChange={(loose) =>
-                    writeConditions(
-                      conditions.map((entry, i) =>
-                        i === conditionIndex ? { ...entry, loose } : entry,
-                      ),
-                    )
-                  }
-                />
+                    <Checkbox
+                      label="Required"
+                      checked={input.required !== false}
+                      onChange={(required) => patchInput(fieldIdx, { required })}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-
-            <Button
-              size="sm"
-              variant="outline"
-              icon={Plus}
-              onClick={() => writeConditions([...conditions, { a: "", b: "", loose: false }])}
-            >
-              Add condition
-            </Button>
+            )}
           </div>
-        </>
+        </div>
+      );
+    }
+
+    if (step.type === CHECK_KEY) {
+      const left = asText(config.left);
+      const op = asText(config.op || config.operator) || "==";
+      const right = asText(config.right);
+
+      const passSteps = Array.isArray(config.pass)
+        ? config.pass
+        : Array.isArray(config.then)
+          ? config.then
+          : [];
+      const failSteps = Array.isArray(config.fail)
+        ? config.fail
+        : Array.isArray(config.else)
+          ? config.else
+          : [];
+
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            <TextField
+              label="Left side"
+              value={left}
+              placeholder="{user.id}"
+              onChange={(e) => patchConfig(index, { ...config, left: e.target.value })}
+            />
+            <Select
+              label="Condition"
+              value={op}
+              onChange={(e) => patchConfig(index, { ...config, op: e.target.value, operator: e.target.value })}
+              options={[
+                { value: "==", label: "equals (==)" },
+                { value: "!=", label: "not equals (!=)" },
+                { value: ">", label: "greater than (>)" },
+                { value: ">=", label: "greater or equal (>=)" },
+                { value: "<", label: "less than (<)" },
+                { value: "<=", label: "less or equal (<=)" },
+                { value: "includes", label: "includes" },
+                { value: "starts_with", label: "starts with" },
+                { value: "ends_with", label: "ends with" },
+                { value: "is_empty", label: "is empty" },
+                { value: "is_not_empty", label: "is not empty" },
+              ]}
+            />
+            <TextField
+              label="Right side"
+              value={right}
+              placeholder="123456789"
+              onChange={(e) => patchConfig(index, { ...config, right: e.target.value })}
+            />
+          </div>
+
+          <BranchEditor
+            label="Condition Passed (Then)"
+            steps={passSteps}
+            depth={depth + 1}
+            onChange={(nextPass) => patchConfig(index, { ...config, pass: nextPass, then: nextPass })}
+          />
+
+          <BranchEditor
+            label="Condition Failed (Else)"
+            steps={failSteps}
+            depth={depth + 1}
+            onChange={(nextFail) => patchConfig(index, { ...config, fail: nextFail, else: nextFail })}
+          />
+        </div>
       );
     }
 
     const fields = CONFIG_FIELDS[step.type] ?? [];
-
     return (
       <>
-        {fields.map((field) => {
-          const value = asText(config[field.key]);
-
-          return field.textarea ? (
+        {fields.map((field) =>
+          field.textarea ? (
             <TextArea
               key={field.key}
               label={field.label}
-              rows={3}
-              value={value}
+              value={asText(config[field.key])}
               placeholder={field.placeholder}
-              onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+              onChange={(event) =>
                 patchConfig(index, { ...config, [field.key]: event.target.value })
               }
             />
@@ -324,113 +401,48 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             <TextField
               key={field.key}
               label={field.label}
-              type={field.type ?? "text"}
-              value={value}
+              type={field.type}
+              value={asText(config[field.key])}
               placeholder={field.placeholder}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onChange={(event) =>
                 patchConfig(index, { ...config, [field.key]: event.target.value })
               }
             />
-          );
-        })}
+          ),
+        )}
       </>
     );
   };
 
   return (
-    <div className={nested ? "space-y-2" : "space-y-2.5"}>
-      {depth > WARN_DEPTH && (
-        <p className="flex items-start gap-1.5 rounded bg-warning/10 px-2 py-1.5 text-[11px] text-warning">
-          <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-          Branches this deep may stop running — the server refuses to recurse past 10 levels.
-        </p>
-      )}
-
-      {steps.length === 0 ? (
-        <p
-          className={`rounded-lg border border-dashed border-line px-3 text-center text-[11px] text-ink-faint ${
-            nested ? "py-2" : "py-4"
-          }`}
+    <div className="space-y-2">
+      {steps.map((step, index) => (
+        <div
+          key={step._id || index}
+          className="rounded border border-[#1e1f22] bg-[#2b2d31] p-3 space-y-2.5 shadow-sm"
         >
-          {nested ? "No steps in this branch — it runs nothing." : "No steps yet."}
-        </p>
-      ) : (
-        <ol className={nested ? "space-y-2" : "space-y-2.5"}>
-          {steps.map((step, index) => (
-            <li
-              key={step._id ?? `${depth}-${index}`}
-              className="rounded-lg border border-line-soft bg-chrome"
-            >
-              <div className="flex items-center gap-1 border-b border-line-soft px-2 py-1.5">
-                {nested && <CornerDownRight size={11} className="shrink-0 text-ink-faint" />}
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blurple/20 text-[10px] font-bold text-blurple-300">
-                  {index + 1}
-                </span>
-                <span className="truncate text-[11px] font-semibold text-ink">
-                  {labelFor(step.type)}
-                </span>
+          <div className="flex items-center justify-between gap-2 border-b border-[#1e1f22] pb-2">
+            <Select
+              className="flex-1 max-w-[220px]"
+              value={step.type}
+              onChange={(event) => changeType(index, event.target.value)}
+              options={typeOptions}
+            />
+            <div className="flex items-center gap-1">
+              <IconButton
+                icon={Trash2}
+                label="Delete step"
+                onClick={() => remove(index)}
+                className="text-[#f28b8b] hover:bg-[#da373c]/10"
+              />
+            </div>
+          </div>
 
-                <span className="ml-auto flex items-center">
-                  <IconButton
-                    icon={ChevronUp}
-                    label="Move step up"
-                    size={12}
-                    disabled={index === 0}
-                    onClick={() => move(index, -1)}
-                  />
-                  <IconButton
-                    icon={ChevronDown}
-                    label="Move step down"
-                    size={12}
-                    disabled={index === steps.length - 1}
-                    onClick={() => move(index, 1)}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    label="Remove step"
-                    size={12}
-                    onClick={() => remove(index)}
-                  />
-                </span>
-              </div>
+          <div className="space-y-2 pt-1">{renderFields(index, step)}</div>
+        </div>
+      ))}
 
-              <div className="space-y-2.5 p-2.5">
-                <Select
-                  label="Action"
-                  value={step.type}
-                  onChange={(event) => changeType(index, event.target.value)}
-                  options={typeOptions}
-                />
-
-                {renderFields(index, step)}
-
-                {step.type === CHECK_KEY && (
-                  <div className="space-y-2 pt-1">
-                    <BranchEditor
-                      label="Then — condition passed"
-                      steps={readBranch(step.config ?? {}, "then")}
-                      depth={depth + 1}
-                      onChange={(branch) =>
-                        patchConfig(index, { ...(step.config ?? {}), then: branch })
-                      }
-                    />
-                    <BranchEditor
-                      label="Else — condition failed"
-                      steps={readBranch(step.config ?? {}, "else")}
-                      depth={depth + 1}
-                      onChange={(branch) =>
-                        patchConfig(index, { ...(step.config ?? {}), else: branch })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-2 pt-1">
         <Select
           className="flex-1"
           label={nested ? "Add to this branch" : "Add a step"}
@@ -450,7 +462,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   );
 };
 
-/** A labelled, collapsible sub-list. Thin wrapper so the two branches look alike. */
 const BranchEditor = ({
   label,
   steps,
@@ -465,21 +476,21 @@ const BranchEditor = ({
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="rounded-md border border-line-soft bg-raised/30">
+    <div className="rounded-md border border-[#1e1f22] bg-[#1e1f22]/40">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-1 px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-ink-muted transition-colors hover:text-ink"
+        className="flex w-full items-center gap-1 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-[#b5bac1] transition-colors hover:text-white"
       >
-        {open ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+        {open ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
         {label}
-        <span className="ml-auto font-normal normal-case text-ink-faint">
+        <span className="ml-auto font-normal normal-case text-[#949ba4]">
           {steps.length} step{steps.length === 1 ? "" : "s"}
         </span>
       </button>
 
       {open && (
-        <div className="border-t border-line-soft p-2">
+        <div className="border-t border-[#1e1f22] p-2.5">
           <StepList steps={steps} onChange={onChange} depth={depth} />
         </div>
       )}

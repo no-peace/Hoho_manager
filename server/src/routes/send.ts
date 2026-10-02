@@ -1,4 +1,3 @@
-import { env } from "../config/env.js";
 import { Router } from "express";
 import { attachUser, requireAdminKey } from "../middleware/auth.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
@@ -11,19 +10,36 @@ import { parseFlowRegistrations, validateMessagePayload } from "../utils/validat
 const router = Router();
 const log = logger.child("send");
 
+const parseProfileId = (value: unknown): number | null => {
+  if (value === undefined || value === null || value === "" || value === "null") return null;
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw ApiError.badRequest("`profileId` must be a positive integer");
+  }
+  const profileId = Number(value);
+  if (!Number.isSafeInteger(profileId) || profileId <= 0) {
+    throw ApiError.badRequest("`profileId` must be a positive integer");
+  }
+  return profileId;
+};
+
 router.post(
   "/",
   attachUser,
   sendLimiter,
   requireAdminKey,
   asyncHandler(async (req, res) => {
-    const { mode, payload: rawPayload, channelId, webhookUrl, threadId, profileId, editMessageId, ...body } = req.body;
+    const { mode, payload: rawPayload, channelId, webhookUrl, threadId, profileId: rawProfileId, editMessageId, ...body } = req.body;
+    const profileId = parseProfileId(rawProfileId);
+
+    if (mode !== "bot" && mode !== "webhook") {
+      throw ApiError.badRequest('`mode` must be "bot" or "webhook"');
+    }
 
     // STRICT SANITIZATION: Remove internal IDs and empty arrays that cause Invalid Form Body
     const message = validateMessagePayload(rawPayload);
     if (message.embeds && message.embeds.length === 0) delete message.embeds;
     if (message.components && message.components.length === 0) delete message.components;
-    if (message.flags === 0 || message.flags === 32768) delete message.flags;
+    if (message.flags === 0) delete message.flags;
     
     // Cleanse UI-only _id properties recursively
     const cleanseIds = (obj: any): any => {
@@ -40,10 +56,22 @@ router.post(
     const sanitizedMessage = cleanseIds(message);
 
     const flows = parseFlowRegistrations(body.flows);
-    if (flows.length > 0) {
-      await actionRepository.registerFlows(flows);
-      log.info(`Registered ${flows.length} action flow(s) for this message`);
-    }
+    const registerMessageFlows = async (sentMessage: unknown): Promise<void> => {
+      const messageId =
+        sentMessage !== null && typeof sentMessage === "object"
+          ? (sentMessage as Record<string, unknown>).id
+          : undefined;
+      if (typeof messageId !== "string") {
+        if (flows.length > 0) {
+          log.warn("Message was sent without an ID; its action flows could not be registered");
+        }
+        return;
+      }
+      await actionRepository.registerFlows(messageId, flows);
+      if (flows.length > 0) {
+        log.info(`Registered ${flows.length} action flow(s) for message ${messageId}`);
+      }
+    };
 
     if (mode === "webhook") {
       if (typeof webhookUrl !== "string") {
@@ -53,6 +81,7 @@ router.post(
         wait: true,
         threadId: typeof threadId === "string" ? threadId : null,
       });
+      await registerMessageFlows(sent);
       log.info(`Webhook send by user ${req.user?.id ?? "?"}`);
       return res.json({ ok: true, mode, message: sent });
     }
@@ -63,24 +92,18 @@ router.post(
 
     let sent;
     if (typeof editMessageId === "string" && editMessageId.trim() !== "") {
-      const token = env.discord.botToken;
-      const patchRes = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${editMessageId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bot ${token}` },
-        body: JSON.stringify(sanitizedMessage)
+      sent = await discord.editChannelMessage(channelId, editMessageId, sanitizedMessage, {
+        profileId,
       });
-      if (!patchRes.ok) {
-        const errText = await patchRes.text();
-        throw new Error(`Discord Edit Failed: ${patchRes.status} - ${errText}`);
-      }
-      sent = await patchRes.json();
       log.info(`Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`);
     } else {
       sent = await discord.sendChannelMessage(channelId, sanitizedMessage, {
-        profileId: typeof profileId === "number" ? profileId : null,
+        profileId,
       });
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }
+
+    await registerMessageFlows(sent);
 
     return res.json({ ok: true, mode, message: sent });
   }),
@@ -88,83 +111,55 @@ router.post(
 
 // ... KEEP YOUR EXISTING GET ROUTES BELOW THIS
 
-router.get("/channels", asyncHandler(async (_req, res) => {
-  const token = env.discord.botToken;
-  if (!token) return res.json([]);
+router.get("/channels", attachUser, requireAdminKey, asyncHandler(async (req, res) => {
+  const profileId = parseProfileId(req.query.profileId);
+  const [guild] = await discord.getBotGuilds(profileId);
+  if (!guild) return res.json([]);
 
-  const guildReq = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-    headers: { Authorization: `Bot ${token}` }
-  });
-  const guilds = await guildReq.json();
-  if (!Array.isArray(guilds) || guilds.length === 0) return res.json([]);
-
-  const channelReq = await fetch(`https://discord.com/api/v10/guilds/${guilds[0].id}/channels`, {
-    headers: { Authorization: `Bot ${token}` }
-  });
-  const channels = await channelReq.json();
-  if (!Array.isArray(channels)) return res.json([]);
-
-  const textChannels = channels
-    .filter((c: any) => c.type === 0 || c.type === 5)
-    .map((c: any) => ({ id: c.id, name: c.name }));
-
-  res.json(textChannels);
+  const channels = await discord.getGuildChannels(guild.id, profileId);
+  res.json(
+    channels
+      .filter((channel) => channel.type === 0 || channel.type === 5)
+      .map(({ id, name }) => ({ id, name })),
+  );
 }));
 
 // GET /api/send/channels/:channelId/messages - Fetches recent messages sent by the bot
-router.get("/channels/:channelId/messages", asyncHandler(async (req, res) => {
-  const token = env.discord.botToken;
-  if (!token) return res.json([]);
-  
+router.get("/channels/:channelId/messages", attachUser, requireAdminKey, asyncHandler(async (req, res) => {
+  const profileId = parseProfileId(req.query.profileId);
   const channelId = req.params.channelId;
-
-  const meReq = await fetch("https://discord.com/api/v10/users/@me", {
-    headers: { Authorization: `Bot ${token}` }
-  });
-  const me = (await meReq.json()) as any;
-
+  if (typeof channelId !== "string") {
+    throw ApiError.badRequest("`channelId` must be a string");
+  }
+  const token = await discord.resolveBotToken(profileId);
+  const me = await discord.getBotIdentity(token);
   if (!me?.id) return res.json([]);
 
-  const msgReq = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=50`, {
-    headers: { Authorization: `Bot ${token}` }
-  });
-  const messages = (await msgReq.json()) as any;
-
-  if (!Array.isArray(messages)) return res.json([]);
+  const messages = await discord.getChannelMessages(channelId, profileId);
 
   // NEW: Filter out slash command interactions so they don't clutter the Edit dropdown
   const botMessages = messages
-    .filter((m: any) => m.author?.id === me.id && !m.interaction && !m.interaction_metadata)
-    .map((m: any) => ({
-      id: m.id,
-      content: m.content || "Embed / Component Message",
-      timestamp: m.timestamp,
-      raw: m
+    .filter((message) => message.author?.id === me.id && !message.interaction && !message.interaction_metadata)
+    .map((message) => ({
+      id: message.id,
+      content: message.content || "Embed / Component Message",
+      timestamp: message.timestamp,
+      raw: message,
     }));
 
   res.json(botMessages);
 }));
 
 // Auto-Fetch Bot Identity for the Frontend
-// Auto-Fetch Bot Identity for the Frontend
 router.get(
   "/identity",
   attachUser,
   requireAdminKey,
   asyncHandler(async (req, res) => {
-    // TypeScript fix: explicitly pass undefined if no ID is provided
-    const profileId = req.query.profileId ? Number(req.query.profileId) : undefined;
-    
-    // FIX 1: resolveBotToken only takes 1 argument max
+    // Safely parse the query ID, ensuring we pass exactly 1 or 0 arguments
+    const profileId = parseProfileId(req.query.profileId);
     const token = await discord.resolveBotToken(profileId);
-    if (!token) return res.json(null);
-    
-    const reqMe = await fetch("https://discord.com/api/v10/users/@me", {
-      headers: { Authorization: `Bot ${token}` }
-    });
-    
-    // FIX 2: Cast the response to 'any' so TS allows reading properties like data.id
-    const data = (await reqMe.json()) as any;
+    const data = await discord.getBotIdentity(token);
     if (!data || !data.id) return res.json(null);
     
     return res.json({

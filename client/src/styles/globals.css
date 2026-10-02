@@ -14,12 +14,19 @@ html, body, #root {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background-color: #313338; /* Pure Discord Background */
+  background:
+    radial-gradient(circle at top, rgba(88, 101, 242, 0.16), transparent 30%),
+    linear-gradient(180deg, #1e1f22 0%, #313338 26%, #313338 100%);
   color: #DBDEE1;
   font-family: "Whitney", "gg sans", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 }
 button {
   cursor: pointer;
+}
+
+::selection {
+  background: rgba(88, 101, 242, 0.35);
+  color: #fff;
 }
 
 /* Custom Discohook Scrollbars */ 
@@ -34,13 +41,24 @@ button {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #1A1B1E;
+  background: linear-gradient(180deg, rgba(88, 101, 242, 0.8), rgba(88, 101, 242, 0.45));
   border-radius: 999px;
+  border: 2px solid #2b2d31;
 }
 
 *::-webkit-scrollbar-track {
   background: #2B2D31;
   border-radius: 999px;
+}
+
+input, textarea, select, button {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.35);
 }
 
 /* Standard Utility Classes */ 
