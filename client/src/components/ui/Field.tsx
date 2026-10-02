@@ -40,11 +40,31 @@ const VariablePicker = ({ onSelect }: { onSelect: (tag: string) => void }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleDropdown = () => {
+const toggleDropdown = () => {
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const top = window.innerHeight - rect.bottom > 300 ? rect.bottom + 4 : rect.top - 310;
-      setCoords({ top, left: rect.right - 256 });
+      const dropWidth = 256; // 64rem (w-64 in Tailwind)
+      const dropHeight = 300; // max-h constraint
+      
+      // Calculate Top/Bottom
+      let top = rect.bottom + 4;
+      if (top + dropHeight > window.innerHeight) {
+        top = rect.top - dropHeight - 4; // Flip upwards if too close to bottom
+      }
+      
+      // Calculate Left/Right with STRICT screen edge clamping
+      let left = rect.right - dropWidth;
+      
+      // FIX: If the left coordinate is less than 10px from the screen edge, force it to 10px!
+      if (left < 10) {
+        left = 10;
+      }
+      // If the right edge bleeds off the screen, pin it to the right edge
+      if (left + dropWidth > window.innerWidth) {
+        left = window.innerWidth - dropWidth - 10;
+      }
+      
+      setCoords({ top, left });
     }
     setIsOpen(!isOpen);
   };

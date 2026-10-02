@@ -1,70 +1,69 @@
-import type { ActionConfig } from "@dmb/shared";
-import { evaluateCheck } from "../actions/check.js";
-
-/**
- * `check` step branches.
- *
- * A branching `check` carries its sub-chains in its own config as `then` / `else`
- * arrays of `{ type, config }`. They are stored that way — rather than as rows in
- * `action_definitions` — because that table is a flat ordered list and cannot
- * express a tree.
- *
- * This module is deliberately free of I/O: parsing untrusted JSON and deciding
- * which branch runs are pure operations, which means the recursion the executor
- * relies on can be tested without a database.
- */
-
-/** One resolved step of an action chain. */
 export interface ExecutableStep {
-  /** `action_definitions.id`, or null for an inline (ad-hoc) or nested step. */
-  id: number | null;
+  id: string | null;
   type: string;
-  config: ActionConfig;
+  config: Record<string, any>;
 }
 
-/**
- * Normalise a `then` / `else` value into steps.
- *
- * Nested steps are already the editor's own shape, so this is a defensive read of
- * untrusted JSON rather than a conversion: anything malformed is dropped instead
- * of aborting the whole interaction. Nested `check`s survive untouched, which is
- * what makes branches nest arbitrarily deeply.
- */
-export const readBranch = (value: unknown): ExecutableStep[] => {
-  if (!Array.isArray(value)) return [];
-
-  return value.flatMap((entry) => {
-    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) return [];
-    const record = entry as Record<string, unknown>;
-    const config =
-      record.config !== null && typeof record.config === "object" && !Array.isArray(record.config)
-        ? (record.config as ActionConfig)
-        : {};
-
-    return [
-      {
-        id: null,
-        type: typeof record.type === "string" ? record.type : "dud",
-        config,
-      },
-    ];
-  });
+export const hasBranches = (config: Record<string, any>): boolean => {
+  // Detects if the action contains nested steps in Discohook's pass/fail format
+  return Array.isArray(config.pass) || Array.isArray(config.fail);
 };
 
-/** Does this `check` config carry any branch steps at all? */
-export const hasBranches = (config: ActionConfig): boolean =>
-  readBranch(config.then).length > 0 || readBranch(config.else).length > 0;
+const evaluateCondition = (left: any, op: string, right: any): boolean => {
+  const l = String(left ?? "").trim();
+  const r = String(right ?? "").trim();
 
-/**
- * The branch a `check` should recurse into.
- *
- * Returns an empty list when neither branch has steps, which the executor treats
- * as "no branches configured" and falls back to the handler's legacy behaviour.
- */
+  const numL = Number(l);
+  const numR = Number(r);
+  
+  // Ensure both sides are valid numbers before doing mathematical comparisons
+  const isNum = !isNaN(numL) && !isNaN(numR) && l !== "" && r !== "";
+
+  switch (op) {
+    case "==":
+    case "equals":
+    case "is equal to":
+      return l === r;
+    case "!=":
+    case "not_equals":
+      return l !== r;
+    case ">":
+      return isNum ? numL > numR : l > r;
+    case ">=":
+      return isNum ? numL >= numR : l >= r;
+    case "<":
+      return isNum ? numL < numR : l < r;
+    case "<=":
+      return isNum ? numL <= numR : l <= r;
+    case "includes":
+      return l.includes(r);
+    case "not_includes":
+      return !l.includes(r);
+    case "starts_with":
+      return l.startsWith(r);
+    case "ends_with":
+      return l.endsWith(r);
+    case "is_empty":
+      return l === "";
+    case "is_not_empty":
+      return l !== "";
+    default:
+      return l === r; // Fallback to strict equality
+  }
+};
+
 export const selectBranch = (
-  config: ActionConfig,
-  variables: Record<string, unknown>,
-): ExecutableStep[] =>
-  evaluateCheck(config, variables) ? readBranch(config.then) : readBranch(config.else);
+  config: Record<string, any>,
+  variables: Record<string, unknown>
+): ExecutableStep[] => {
+  // Fallback operator is "==" if none is provided by the UI
+  const operator = config.op || config.operator || "==";
+  const isTrue = evaluateCondition(config.left, operator, config.right);
 
-export default { readBranch, hasBranches, selectBranch };
+  // Return the 'pass' array if true, or the 'fail' array if false
+  if (isTrue) {
+    return config.pass || [];
+  } else {
+    return config.fail || [];
+  }
+};

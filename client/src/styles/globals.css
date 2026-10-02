@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --color-chrome: #2B2D31;
+  --color-chrome: #1E1F22;
   --color-sidebar: #2B2D31;
   --color-surface: #313338;
-  --color-raised: #1E1F22;
+  --color-raised: #2B2D31;
+  --color-hover: #35373C;
   --color-input: #1E1F22;
   --color-blurple: #5865f2;
 }
@@ -13,11 +14,10 @@ html, body, #root {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background-color: #313338; /* Exact Discord background color */
+  background-color: #313338; /* Pure Discord Background */
   color: #DBDEE1;
   font-family: "Whitney", "gg sans", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 }
-
 button {
   cursor: pointer;
 }
