@@ -3,6 +3,7 @@ import type { Request, RequestHandler } from "express";
 import type { UserRecord, UserRole } from "@dmb/shared";
 import { env } from "../config/env.js";
 import { userRepository } from "../repositories/userRepository.js";
+import { settingsService } from "../services/settingsService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 
 /**
@@ -81,3 +82,32 @@ export const requireAdminKey: RequestHandler = (req, _res, next) => {
   }
   return next();
 };
+
+/**
+ * Require either a valid master `x-admin-key` OR an `x-staff-id` header
+ * matching an authorized Head Admin in DB settings or env.ownerDiscordIds.
+ */
+export const requireHeadAdmin: RequestHandler = asyncHandler(async (req, _res, next) => {
+  const adminKey = req.get("x-admin-key");
+  if (adminKey && safeEqual(adminKey, env.adminApiKey)) {
+    req.staffContext = { isAdmin: true, staffId: null };
+    return next();
+  }
+
+  const staffId = req.get("x-staff-id");
+  if (staffId && /^\d{17,20}$/.test(staffId)) {
+    const isHead = await settingsService.isHeadAdmin(staffId);
+    if (isHead) {
+      req.staffContext = { isAdmin: true, staffId };
+      return next();
+    }
+    return next(ApiError.forbidden("Access denied: Requires authorized Head Admin credentials"));
+  }
+
+  if (adminKey) {
+    return next(ApiError.forbidden("Access denied: Invalid admin key"));
+  }
+
+  return next(ApiError.unauthorized("A valid x-admin-key or authorized x-staff-id header is required"));
+});
+

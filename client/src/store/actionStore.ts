@@ -284,10 +284,34 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       return { flows: grouped };
     }),
 
-  toRegistrations: () =>
-    Object.entries(get().flows)
-      .filter(([, steps]) => steps.length > 0)
-      .map(([customId, steps]) => ({ customId, steps: steps.map(stripStep) })),
+  toRegistrations: () => {
+    const flows = get().flows;
+    const registrations: FlowRegistration[] = [];
+
+    // Emit all top-level component flows
+    for (const [customId, steps] of Object.entries(flows)) {
+      if (steps.length === 0) continue;
+      registrations.push({ customId, steps: steps.map(stripStep) });
+
+      // Scan for open_modal steps with nested `then` branches
+      for (const step of steps) {
+        if (step.type === "open_modal" && step.config?.then && Array.isArray(step.config.then) && step.config.then.length > 0) {
+          const modalCustomId = (typeof step.config.customId === "string" && step.config.customId.trim() !== "")
+            ? step.config.customId.trim()
+            : null;
+          
+          if (modalCustomId) {
+            registrations.push({
+              customId: modalCustomId,
+              steps: step.config.then.map((entry) => stripStep(entry as FlowStep)),
+            });
+          }
+        }
+      }
+    }
+
+    return registrations;
+  },
 
   reset: () => set({ flows: {} }),
 }));

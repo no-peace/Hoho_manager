@@ -360,9 +360,14 @@ export const validateComponentsV2 = (components: unknown): string[] => {
 
   // Every interactive component must sit inside an ActionRow.
   if (sawInteractive) {
+    let checkCount = 0;
+    const startMs = Date.now();
     const checkRows = (list: unknown[], parentIsRow: boolean, path: string, depth: number): void => {
       if (depth > 25) return;
       for (const [index, entry] of list.entries()) {
+        checkCount++;
+        if (checkCount > Limits.components.total || (checkCount % 100 === 0 && Date.now() - startMs > 50)) return;
+
         if (entry === null || typeof entry !== "object") continue;
         const node = entry as Record<string, unknown>;
         const where = `${path}[${index}]`;

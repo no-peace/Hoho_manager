@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { attachUser, requireAdminKey, requireRole, requireUser } from "../middleware/auth.js";
+import { attachUser, requireHeadAdmin, requireRole, requireUser } from "../middleware/auth.js";
 import { botProfileService, webhookProfileService } from "../services/profileService.js";
 import { asyncHandler } from "../utils/errors.js";
 import { optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
 
 const router = Router();
 
-router.use(attachUser, requireAdminKey);
+router.use(attachUser, requireHeadAdmin);
 
 const readBody = (body: unknown): Record<string, unknown> =>
   (body ?? {}) as Record<string, unknown>;

@@ -20,6 +20,7 @@ import type {
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY ?? "";
+const ENV_STAFF_ID = import.meta.env.VITE_STAFF_DISCORD_ID ?? "";
 
 /** Thrown for any non-2xx response; carries the server's error code. */
 export class ApiRequestError extends Error {
@@ -45,14 +46,16 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-const request = async <T>(path: string, { method = "GET", body, signal }: RequestOptions = {}): Promise<T> => {
+export const request = async <T>(path: string, { method = "GET", body, signal }: RequestOptions = {}): Promise<T> => {
   let response: Response;
+  const staffId = ENV_STAFF_ID || localStorage.getItem("staff_id") || "";
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       headers: {
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(ADMIN_KEY ? { "x-admin-key": ADMIN_KEY } : {}),
+        ...(staffId && !ADMIN_KEY ? { "x-staff-id": staffId } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
@@ -215,6 +218,29 @@ export const api = {
         body: profile,
       }),
     removeBot: (id: number) => request<null>(`/api/profiles/bots/${id}`, { method: "DELETE" }),
+  },
+
+  discord: {
+    identity: (profileId?: number) =>
+      request<{ id: string; username: string; avatar: string | null } | null>(
+        `/api/discord/identity${profileId ? `?profileId=${profileId}` : ""}`
+      ),
+    guilds: (profileId?: number) =>
+      request<{ guilds: { id: string; name: string; icon: string | null }[] }>(
+        `/api/discord/guilds${profileId ? `?profileId=${profileId}` : ""}`
+      ),
+    channels: (guildId: string, profileId?: number) =>
+      request<{ channels: { id: string; name: string; type: number; parent_id?: string | null }[] }>(
+        `/api/discord/guilds/${guildId}/channels${profileId ? `?profileId=${profileId}` : ""}`
+      ),
+    roles: (guildId: string, profileId?: number) =>
+      request<{ roles: { id: string; name: string; color: number }[] }>(
+        `/api/discord/guilds/${guildId}/roles${profileId ? `?profileId=${profileId}` : ""}`
+      ),
+    searchMembers: (guildId: string, query: string, profileId?: number) =>
+      request<{ members: { user: { id: string; username: string; avatar: string | null }; nick?: string | null }[] }>(
+        `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
+      ),
   },
 };
 

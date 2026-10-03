@@ -156,12 +156,44 @@ const SeparatorForm = ({ component, update }: ComponentFormProps) => (
   </>
 );
 
-const ActionRowForm = ({ component }: ComponentFormProps) => (
-  <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
-    {component.components?.length ?? 0} control(s). An action row holds up to{" "}
-    {Limits.components.actionRowButtons} buttons, or a single select menu.
-  </p>
-);
+const ActionRowForm = ({ component, update }: ComponentFormProps) => {
+  const children = component.components ?? [];
+  
+  const addChild = (type: number) => {
+    update({
+      components: [
+        ...children,
+        { _id: uid(), type, config: {} } as ComponentNode
+      ]
+    });
+  };
+
+  return (
+    <>
+      <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint mb-2">
+        {children.length} control(s). An action row holds up to {Limits.components.actionRowButtons} buttons, or a single select menu.
+      </p>
+      <div className="flex gap-2">
+        <Button 
+          size="sm" 
+          variant="secondary" 
+          disabled={children.length >= Limits.components.actionRowButtons || children.some(c => c.type !== ComponentType.Button)}
+          onClick={() => addChild(ComponentType.Button)}
+        >
+          Add Button
+        </Button>
+        <Button 
+          size="sm" 
+          variant="secondary" 
+          disabled={children.length > 0}
+          onClick={() => addChild(ComponentType.StringSelect)}
+        >
+          Add Select
+        </Button>
+      </div>
+    </>
+  );
+};
 
 /* ── Interactive ──────────────────────────────────────────────────────────── */
 

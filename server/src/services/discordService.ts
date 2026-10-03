@@ -35,13 +35,35 @@ export interface DiscordMessage {
 export interface DiscordGuildSummary {
   id: string;
   name: string;
+  icon?: string | null;
 }
 
 export interface DiscordChannelSummary {
   id: string;
   name: string;
   type: number;
+  parent_id?: string | null;
 }
+
+export interface DiscordRoleSummary {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  hoist?: boolean;
+}
+
+export type DiscordRole = DiscordRoleSummary;
+
+export interface DiscordMemberSummary {
+  id: string;
+  username: string;
+  global_name: string | null;
+  nickname: string | null;
+  avatar: string | null;
+}
+
+export type DiscordMember = DiscordMemberSummary;
 
 export interface DiscordMessageRecord {
   id: string;
@@ -305,9 +327,10 @@ export const getBotGuilds = async (
 
 export const getGuildChannels = async (
   guildId: string,
-  profileId: number | null = null,
+  profileId: number | string | null = null,
 ): Promise<DiscordChannelSummary[]> => {
-  const token = await resolveBotToken(profileId);
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
   return (
     (await apiRequest<DiscordChannelSummary[]>(
       "GET",
@@ -315,6 +338,51 @@ export const getGuildChannels = async (
       { token },
     )) ?? []
   );
+};
+
+export const getGuildRoles = async (
+  guildId: string,
+  profileId: number | string | null = null,
+): Promise<DiscordRoleSummary[]> => {
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
+  const roles = await apiRequest<DiscordRoleSummary[]>(
+    "GET",
+    `/guilds/${encodeURIComponent(guildId)}/roles`,
+    { token },
+  );
+  if (!roles) return [];
+  return roles
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      color: r.color ?? 0,
+      position: r.position ?? 0,
+      hoist: r.hoist ?? false,
+    }))
+    .sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
+};
+
+export const searchGuildMembers = async (
+  guildId: string,
+  query: string,
+  profileId: number | string | null = null,
+): Promise<DiscordMemberSummary[]> => {
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
+  const rawMembers = await apiRequest<any[]>(
+    "GET",
+    `/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(query)}&limit=25`,
+    { token },
+  );
+  if (!rawMembers) return [];
+  return rawMembers.map((m) => ({
+    id: m.user?.id ?? m.id,
+    username: m.user?.username ?? m.username ?? "",
+    global_name: m.user?.global_name ?? null,
+    nickname: m.nick ?? null,
+    avatar: m.user?.avatar ?? m.avatar ?? null,
+  }));
 };
 
 export const getChannelMessages = async (
@@ -471,6 +539,8 @@ export default {
   editChannelMessage,
   getBotGuilds,
   getGuildChannels,
+  getGuildRoles,
+  searchGuildMembers,
   getChannelMessages,
   getBotIdentity,
   addGuildMemberRole,

@@ -1,5 +1,149 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Whitney", "Helvetica", "sans-serif";
+  --font-code: "Source Code Pro", "Consolas", "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Monaco", "Courier New", "Courier", "monospace";
+
+  --spacing-inherit: inherit;
+  --spacing-4-5: 1.125rem;
+
+  --color-brand-blue: #58B9FF;
+  --color-brand-pink: #FF81FF;
+
+  --color-fluxer: #3D39CE;
+  --color-fluxer-1: #4641D9;
+  --color-fluxer-2: #F0B100;
+  --color-fluxer-3: #00BBA7;
+  --color-fluxer-4: #2B7FFF;
+  --color-fluxer-5: #AD46FF;
+  --color-fluxer-6: #6A7282;
+
+  --color-primary-130: #EFF0F3;
+  --color-primary-160: #EBEDEF;
+  --color-primary-200: #E3E5E8;
+  --color-primary-230: #DBDEE1;
+  --color-primary-300: #C4C9CE;
+  --color-primary-400: #80848E;
+  --color-primary-500: #4E5058;
+  --color-primary-600: #2E2E33;
+  --color-primary-630: #202225;
+  --color-primary-700: #17181A;
+
+  --color-blurple: #5865f2;
+  --color-blurple-50: #eef3ff;
+  --color-blurple-100: #e0e9ff;
+  --color-blurple-200: #c6d6ff;
+  --color-blurple-260: #C9CDFB;
+  --color-blurple-300: #a4b9fd;
+  --color-blurple-400: #8093f9;
+  --color-blurple-500: #5865f2;
+  --color-blurple-600: #4654c0;
+  --color-blurple-700: #3a48a3;
+  --color-blurple-800: #2f2fa4;
+  --color-blurple-900: #2d2f82;
+  --color-blurple-950: #1a1a4c;
+
+  --color-blue-345: #86AFEF;
+  --color-blue-430: #3172DB;
+
+  --color-gray-100: #F3F3F4;
+  --color-gray-200: #EAEAEC;
+  --color-gray-300: #e3e5e8;
+  --color-gray-400: #d4d7dc;
+  --color-gray-500: #606069;
+  --color-gray-600: #4f545c;
+  --color-gray-700: #36393f;
+  --color-gray-800: #2f3136;
+  --color-gray-900: #202225;
+
+  --color-muted: #5C5E65;
+  --color-muted-dark: #959BA3;
+
+  --color-background-secondary: #F3F3F4;
+  --color-background-secondary-dark: #37373D;
+
+  --color-border-normal: #D9D9DC;
+  --color-border-normal-dark: #4A4A51;
+
+  /* ── Semantic UI tokens (used as Tailwind utilities) ─────────────────── */
+  /* Discord dark-mode surface hierarchy */
+  --color-chrome:   #1E1F22;   /* bg-chrome  — darkest chrome/toolbar */
+  --color-sidebar:  #2B2D31;   /* bg-sidebar — left rail / panels */
+  --color-surface:  #313338;   /* bg-surface — main canvas */
+  --color-raised:   #383A40;   /* bg-raised  — elevated cards / popovers */
+  --color-hover:    #35373C;   /* bg-hover   — item hover state */
+  --color-input:    #1E1F22;   /* bg-input   — input backgrounds */
+
+  /* Border tones */
+  --color-line:      #1E1F22;  /* border-line      — subtle divider */
+  --color-line-soft: #2E3035;  /* border-line-soft — very soft divider */
+
+  /* Text scales */
+  --color-ink:        #DBDEE1; /* text-ink       — body copy */
+  --color-ink-strong: #F2F3F5; /* text-ink-strong — headings */
+  --color-ink-muted:  #949BA4; /* text-ink-muted  — secondary text */
+  --color-ink-faint:  #5C6068; /* text-ink-faint  — disabled / hints */
+
+  /* Status / accent */
+  --color-warning:  #FAA61A;
+  --color-danger:   #DA373C;
+  --color-success:  #23A55A;
+
+  --animate-loading-dots: loading-dots 1s infinite;
+  @keyframes loading-dots {
+    0%, 70%, 100% {
+      opacity: 0.2;
+      transform: scale(1);
+    }
+    35% {
+      opacity: 1;
+      transform: scale(1.35);
+    }
+  }
+}
+
+/* ── Whitney Discord Fonts ────────────────────────────────────────────── */
+@font-face {
+  font-family: Whitney;
+  font-style: normal;
+  font-weight: 300;
+  src: url("/fonts/whitney-300.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Whitney;
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/whitney-400.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Whitney;
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/whitney-500.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Whitney;
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/whitney-600.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Whitney;
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/whitney-700.woff") format("woff");
+  font-display: swap;
+}
+
+/* ── Discord Color Variables & Root ───────────────────────────────────── */
 :root {
   --color-chrome: #1E1F22;
   --color-sidebar: #2B2D31;
@@ -7,122 +151,51 @@
   --color-raised: #2B2D31;
   --color-hover: #35373C;
   --color-input: #1E1F22;
-  --color-blurple: #5865f2;
+  --color-blurple: #5865F2;
+  scrollbar-color: #C5C9CD #EBEDEF;
+}
+
+:root.dark {
+  scrollbar-color: #1A1B1E #2B2D31;
 }
 
 html, body, #root {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top, rgba(88, 101, 242, 0.16), transparent 30%),
-    linear-gradient(180deg, #1e1f22 0%, #313338 26%, #313338 100%);
+  background-color: #313338;
   color: #DBDEE1;
   font-family: "Whitney", "gg sans", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
-}
-button {
-  cursor: pointer;
 }
 
 ::selection {
   background: rgba(88, 101, 242, 0.35);
-  color: #fff;
+  color: #ffffff;
 }
 
-/* Custom Discohook Scrollbars */ 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #1A1B1E #2B2D31;
-}
-
+/* ── Authentic Scrollbars ─────────────────────────────────────────────── */
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(88, 101, 242, 0.8), rgba(88, 101, 242, 0.45));
-  border-radius: 999px;
-  border: 2px solid #2b2d31;
+  background-color: #1A1B1E;
+  border-radius: 9999px;
+  border: 2px solid #2B2D31;
 }
 
 *::-webkit-scrollbar-track {
-  background: #2B2D31;
-  border-radius: 999px;
+  background-color: #2B2D31;
+  border-radius: 9999px;
 }
 
-input, textarea, select, button {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+/* ── Base UI Dialog & Modal Fixes ─────────────────────────────────────── */
+div[data-base-ui-portal] > div[role="presentation"]:has(~ div[role="dialog"]) {
+  z-index: 40;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.35);
-}
-
-/* Standard Utility Classes */ 
-.field {
-  min-height: 36px;
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid #111214;
-  background-color: #1e1f22;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  color: #dbdee1;
-  transition: border-color 150ms ease;
-}
-
-.field:focus {
-  border-color: #5865f2;
-  outline: none;
-}
-
-.field-label {
-  margin-bottom: 0.25rem;
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #949ba4;
-}
-
-.panel {
-  border-radius: 0.5rem;
-  border: 1px solid #1e1f22;
-  background-color: #2b2d31;
-}
-
-.tab-rail {
-  display: flex;
-  gap: 0.25rem;
-  border-radius: 0.375rem;
-  background-color: #1e1f22;
-  padding: 0.25rem;
-}
-
-.tab-item {
-  border-radius: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 150ms ease;
-}
-
-.tab-item-active {
-  background-color: #5865f2;
-  color: #ffffff;
-}
-
-.tab-item-idle {
-  color: #949ba4;
-}
-
-.tab-item-idle:hover {
-  background-color: #313338;
-  color: #dbdee1;
+/* Remove default summary marker */
+details summary::-webkit-details-marker {
+  display: none;
 }

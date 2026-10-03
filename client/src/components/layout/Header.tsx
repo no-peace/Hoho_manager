@@ -3,19 +3,24 @@ import {
   Code,
   Download,
   FolderOpen,
-  RotateCcw,
+  PanelLeft,
   Save,
   Sparkles,
   Upload,
+  ShieldAlert,
+  Settings,
 } from "lucide-react";
 import { Button, IconButton } from "../ui/Button";
 import { Modal } from "../ui/Modal";
+import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
+import { SettingsModal } from "./SettingsModal";
 import { useMessageStore } from "../../store/messageStore";
-import { useActionStore } from "../../store/actionStore";
+import { useGlobalStore } from "../../store/globalStore";
 import { useTemplateStore } from "../../store/templateStore";
 import { useTemplates } from "../../hooks/useTemplates";
 import { downloadJson, parseImportedJson } from "../../utils/exportImport";
 import { EDITOR_MODES } from "../../utils/constants";
+import { AccessPanel } from "./AccessPanel";
 
 const ModeToggle: React.FC = () => {
   const mode = useMessageStore((state) => state.mode);
@@ -49,12 +54,14 @@ export const Header: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loadOpen, setLoadOpen] = useState(false);
   const [rawJsonOpen, setRawJsonOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [rawJsonText, setRawJsonText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
   const { templates, currentName, dirty, saveCurrent, loadTemplate } = useTemplates();
+  const { selectedGuildId, setSelectedGuildId, isSidebarOpen, toggleSidebar } = useGlobalStore();
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
-  const detachTemplate = useTemplateStore((state) => state.detach);
   const removeTemplate = useTemplateStore((state) => state.remove);
 
   const exportJson = (): void => {
@@ -97,32 +104,43 @@ export const Header: React.FC = () => {
     }
   };
 
-  const resetDocument = (): void => {
-    if (confirm("Are you sure you want to clear this message and start over?")) {
-      useMessageStore.getState().reset();
-      useActionStore.getState().reset();
-      detachTemplate();
-    }
-  };
-
   return (
     <>
-      <header className="h-14 shrink-0 flex items-center justify-between border-b border-[#1e1f22] bg-[#2b2d31] px-4 shadow-sm z-20 font-sans">
-        {/* Brand & Mode */}
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 left-0 z-20 bg-slate-50 dark:bg-[#1E1F22] border-b-2 border-slate-50 dark:border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
+        {/* Brand, Mode & Sidebar Toggle */}
+        <div className="flex items-center gap-2">
+          <IconButton
+            icon={PanelLeft}
+            label="Toggle Sidebar (Ctrl+B)"
+            onClick={toggleSidebar}
+            className={`transition-colors ${
+              isSidebarOpen
+                ? "bg-[#5865f2] text-white hover:bg-[#4752c4] shadow-sm"
+                : "text-gray-500 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#1e1f22]"
+            }`}
+          />
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865f2] text-white shadow-sm">
             <Sparkles size={18} />
           </div>
-          <span className="text-[15px] font-bold text-white tracking-wide mr-2">
+          <span className="text-[15px] font-bold text-gray-900 dark:text-white tracking-wide mr-1 hidden sm:inline">
             HoHo Manager
           </span>
           <ModeToggle />
+          
+          <div className="w-48 ml-2">
+            <SearchableDiscordSelect
+              type="guild"
+              value={selectedGuildId || ""}
+              onChange={(val) => setSelectedGuildId(val as string)}
+              placeholder="Select Server..."
+            />
+          </div>
         </div>
 
         {/* Template Bar */}
         <div className="flex items-center gap-2 max-w-md w-full mx-4">
           <input
-            className="flex-1 bg-[#1e1f22] border border-[#111214] text-white text-xs px-3 py-1.5 rounded outline-none focus:border-[#5865f2]"
+            className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-[#404248] text-gray-900 dark:text-white text-xs px-3 py-1.5 rounded outline-none focus:border-blurple dark:focus:border-blurple"
             placeholder="Untitled Template"
             value={currentName}
             onChange={(e) => setCurrentName(e.target.value)}
@@ -135,8 +153,8 @@ export const Header: React.FC = () => {
             title={dirty ? "Save changes" : "Saved"}
             className={
               dirty
-                ? "bg-[#5865f2] hover:bg-[#4752c4] text-white border-none"
-                : "bg-[#1e1f22] text-[#b5bac1] hover:text-white border-[#111214]"
+                ? "bg-blurple hover:bg-blurple-600 text-white border-none"
+                : "bg-gray-200 dark:bg-[#1e1f22] text-gray-600 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white border-transparent dark:border-[#111214]"
             }
           >
             {dirty ? "Save" : "Saved"}
@@ -146,7 +164,7 @@ export const Header: React.FC = () => {
             variant="secondary"
             icon={FolderOpen}
             onClick={() => setLoadOpen(true)}
-            className="bg-[#1e1f22] text-[#b5bac1] hover:text-white border-[#111214]"
+            className="bg-gray-200 dark:bg-[#1e1f22] text-gray-600 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white border-transparent dark:border-[#111214]"
           >
             Load
           </Button>
@@ -158,29 +176,63 @@ export const Header: React.FC = () => {
             icon={Code}
             label="Raw JSON Editor"
             onClick={openRawJsonEditor}
-            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
+            className="text-gray-500 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#1e1f22]"
           />
           <IconButton
             icon={Upload}
             label="Import JSON"
             onClick={() => fileInputRef.current?.click()}
-            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
+            className="text-gray-500 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#1e1f22]"
           />
           <IconButton
             icon={Download}
             label="Export JSON"
             onClick={exportJson}
-            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
+            className="text-gray-500 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#1e1f22]"
           />
-          <IconButton
-            icon={RotateCcw}
-            label="Start over"
-            onClick={resetDocument}
-            className="text-[#b5bac1] hover:text-white hover:bg-[#1e1f22]"
-          />
+          {import.meta.env.VITE_ADMIN_API_KEY ? (
+            <>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="ml-2 text-xs flex items-center gap-1.5 font-semibold text-[#b5bac1] hover:text-white border border-[#35373c] bg-[#1e1f22] px-3 py-1 rounded transition-colors"
+                title="Settings"
+              >
+                <Settings size={14} /> Settings
+              </button>
+              <button
+                onClick={() => setAccessOpen(true)}
+                className="ml-2 text-xs flex items-center gap-1.5 font-semibold text-warning hover:text-warning/80 border border-warning/30 bg-warning/10 px-3 py-1 rounded transition-colors"
+              >
+                <ShieldAlert size={14} /> Staff Access
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                const current = localStorage.getItem("staff_id");
+                if (current) {
+                  if (confirm("Log out of Staff ID " + current + "?")) {
+                    localStorage.removeItem("staff_id");
+                    window.location.reload();
+                  }
+                } else {
+                  const id = prompt("Enter your Discord User ID to authenticate as Staff:");
+                  if (id && /^\d{17,20}$/.test(id)) {
+                    localStorage.setItem("staff_id", id);
+                    window.location.reload();
+                  } else if (id) {
+                    alert("Invalid Discord ID format.");
+                  }
+                }
+              }}
+              className="ml-2 text-xs flex items-center gap-1.5 font-semibold text-blurple hover:text-white border border-blurple/30 bg-blurple/10 px-3 py-1 rounded transition-colors"
+            >
+              {localStorage.getItem("staff_id") ? `Staff: ${localStorage.getItem("staff_id")}` : "Staff Login"}
+            </button>
+          )}
           <a
             href="/docs"
-            className="ml-2 text-xs font-semibold text-[#b5bac1] hover:text-white border border-[#35373c] bg-[#1e1f22] px-3 py-1 rounded transition-colors"
+            className="ml-2 text-xs font-semibold text-gray-500 dark:text-[#b5bac1] hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-[#35373c] bg-gray-100 dark:bg-[#1e1f22] px-3 py-1 rounded transition-colors"
           >
             Docs
           </a>
@@ -224,6 +276,20 @@ export const Header: React.FC = () => {
           />
         </div>
       </Modal>
+
+      {/* Staff Access Modal */}
+      <Modal
+        open={accessOpen}
+        onClose={() => setAccessOpen(false)}
+        title=""
+        width="max-w-4xl"
+      >
+        <div className="h-[70vh]">
+          {accessOpen && <AccessPanel />}
+        </div>
+      </Modal>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Import Error Modal */}
       <Modal

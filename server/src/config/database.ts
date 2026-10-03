@@ -170,6 +170,27 @@ export const initializeDatabase = async (): Promise<DatabaseClient> => {
     log.info("Seeded local admin user (discord_id=local-admin)");
   }
 
+  const globalSettings = await db.get<{ guild_id: string }>(
+    "SELECT guild_id FROM settings WHERE guild_id = @guildId",
+    { guildId: "__global__" },
+  );
+
+  if (!globalSettings) {
+    const now = Date.now();
+    await db.run(
+      `INSERT INTO settings (guild_id, log_channel_id, head_admin_ids, bot_profile_id, extra_settings, created_at, updated_at)
+       VALUES (@guildId, @logChannelId, @headAdminIds, NULL, '{}', @createdAt, @updatedAt)`,
+      {
+        guildId: "__global__",
+        logChannelId: env.logChannelId ?? null,
+        headAdminIds: JSON.stringify(env.ownerDiscordIds ?? []),
+        createdAt: now,
+        updatedAt: now,
+      },
+    );
+    log.info("Seeded global settings (guild_id=__global__)");
+  }
+
   return db;
 };
 

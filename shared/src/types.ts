@@ -390,3 +390,42 @@ export interface SendSuccessResponse {
   mode: SendMode;
   message: unknown;
 }
+
+/* ── Settings API ─────────────────────────────────────────────────────────── */
+
+export interface SettingsRecord {
+  guild_id: string;
+  log_channel_id: string | null;
+  head_admin_ids: string[];
+  bot_profile_id: string | null;
+  extra_settings: Record<string, unknown>;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface UpdateSettingsInput {
+  guildId?: string;
+  log_channel_id?: string | null;
+  head_admin_ids?: string[];
+  bot_profile_id?: string | null;
+  extra_settings?: Record<string, unknown>;
+}
+
+/* ── Discord entity summaries ─────────────────────────────────────────────── */
+
+export interface DiscordRoleSummary {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  hoist?: boolean;
+}
+
+export interface DiscordMemberSummary {
+  id: string;
+  username: string;
+  global_name: string | null;
+  nickname: string | null;
+  avatar: string | null;
+}
+

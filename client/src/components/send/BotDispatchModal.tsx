@@ -6,7 +6,6 @@ import {
   Square,
   Edit3,
   Send,
-  RefreshCw,
   Download,
   CheckCircle2,
 } from "lucide-react";
@@ -94,34 +93,6 @@ export const BotDispatchModal: React.FC<{
       setBotMessages([]);
     }
   }, [mode, selectedChannels, botProfileId]);
-
-  const syncBotIdentity = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
-      const query = botProfileId === null ? "" : `?profileId=${encodeURIComponent(String(botProfileId))}`;
-      const res = await fetch(`${baseUrl}/api/send/identity${query}`, {
-        headers: { "x-admin-key": adminKey },
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data || typeof data.name !== "string") {
-        throw new Error(
-          data && typeof data.error === "string"
-            ? data.error
-            : "Could not load this bot profile's identity.",
-        );
-      }
-      const info = {
-        name: data.name,
-        avatar: typeof data.avatar === "string" ? data.avatar : "",
-      };
-      setCachedBotInfo(info);
-      localStorage.setItem("bot_identity_cache", JSON.stringify(info));
-    } catch (error) {
-      alert(error instanceof Error ? error.message : String(error));
-    }
-  };
 
   const handleBotSelect = (id: number | null) => {
     setBotProfileId(id);
@@ -296,13 +267,6 @@ export const BotDispatchModal: React.FC<{
               <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
                 1. Select Bot Identity
               </h4>
-              <button
-                type="button"
-                onClick={syncBotIdentity}
-                className="text-[10px] flex items-center gap-1 font-bold text-[#5865f2] hover:underline uppercase tracking-wide"
-              >
-                <RefreshCw size={10} /> Sync Cache
-              </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
               <div

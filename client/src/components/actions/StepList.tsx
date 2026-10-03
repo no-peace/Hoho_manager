@@ -106,6 +106,59 @@ const formatModalComponents = (fields: ModalInputField[]) => {
   }));
 };
 
+export const DiscordModalPreview = ({
+  title,
+  inputs,
+}: {
+  title: string;
+  inputs: ModalInputField[];
+}) => {
+  return (
+    <div className="rounded-lg bg-[#313338] border border-[#1e1f22] overflow-hidden shadow-xl font-sans w-full my-2">
+      <div className="bg-[#2b2d31] px-4 py-3 border-b border-[#1e1f22] flex items-center justify-between">
+        <h4 className="text-sm font-bold text-white truncate">
+          {title || "Modal Preview"}
+        </h4>
+        <span className="text-xs text-[#949ba4] font-semibold cursor-default">✕</span>
+      </div>
+
+      <div className="p-4 space-y-3 bg-[#313338]">
+        {inputs.length === 0 ? (
+          <p className="text-xs text-[#949ba4] text-center py-3">No input fields added yet</p>
+        ) : (
+          inputs.map((inp, idx) => (
+            <div key={idx} className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#b5bac1]">
+                {inp.label || `Question ${idx + 1}`}
+                {inp.required !== false && <span className="text-[#da373c] ml-1">*</span>}
+              </label>
+              {inp.style === 2 ? (
+                <div className="min-h-[60px] rounded bg-[#1e1f22] border border-[#111214] p-2 text-xs text-[#949ba4] select-none">
+                  {inp.placeholder || "Paragraph response..."}
+                </div>
+              ) : (
+                <div className="h-8 rounded bg-[#1e1f22] border border-[#111214] px-2.5 flex items-center text-xs text-[#949ba4] select-none">
+                  {inp.placeholder || "Short answer..."}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="bg-[#2b2d31] px-4 py-2.5 flex items-center justify-end gap-2 border-t border-[#1e1f22]">
+        <span className="text-xs text-[#dbdee1] px-2.5 py-1">Cancel</span>
+        <button
+          type="button"
+          className="bg-[#5865f2] text-white text-xs font-semibold px-3.5 py-1 rounded shadow-sm"
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export interface StepListProps {
   steps: FlowStep[];
   onChange: (steps: FlowStep[]) => void;
@@ -221,6 +274,15 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
         updateInputs(inputFields.filter((_, idx) => idx !== i));
       };
 
+      const moveInput = (idx: number, delta: number) => {
+        const target = idx + delta;
+        if (target < 0 || target >= inputFields.length) return;
+        const next = [...inputFields];
+        const [removed] = next.splice(idx, 1);
+        next.splice(target, 0, removed);
+        updateInputs(next);
+      };
+
       return (
         <div className="space-y-3">
           <TextField
@@ -235,6 +297,26 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             placeholder="app_modal"
             onChange={(e) => patchConfig(index, { ...config, customId: e.target.value })}
           />
+
+          {/* Discord Modal Live Preview Mockup */}
+          <div className="pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#949ba4] block mb-1">
+              Live Modal Mockup
+            </span>
+            <DiscordModalPreview
+              title={asText(config.title) || "Application Form"}
+              inputs={inputFields}
+            />
+          </div>
+
+          <div className="pt-2 pb-1">
+            <BranchEditor
+              label="When Modal is Submitted (Then)"
+              steps={Array.isArray(config.then) ? config.then : []}
+              depth={depth + 1}
+              onChange={(nextThen) => patchConfig(index, { ...config, then: nextThen })}
+            />
+          </div>
 
           <div className="space-y-2 pt-1 border-t border-[#1e1f22]">
             <div className="flex items-center justify-between">
@@ -260,6 +342,29 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                     className="p-2.5 rounded bg-[#1e1f22]/70 border border-[#2b2d31] space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={fieldIdx === 0}
+                          onClick={() => moveInput(fieldIdx, -1)}
+                          className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-20 transition-colors"
+                          title="Move Question Up"
+                        >
+                          <ChevronUp size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={fieldIdx === inputFields.length - 1}
+                          onClick={() => moveInput(fieldIdx, 1)}
+                          className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-20 transition-colors"
+                          title="Move Question Down"
+                        >
+                          <ChevronDown size={13} />
+                        </button>
+                        <span className="text-[11px] font-bold text-[#b5bac1] ml-1">
+                          #{fieldIdx + 1}
+                        </span>
+                      </div>
                       <div className="flex-1">
                         <TextField
                           label="Field Label"
@@ -300,6 +405,49 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       placeholder="Type your answer here..."
                       onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
                     />
+
+                    {/* Character Limits */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <TextField
+                        label="Min Length (0 - 4000)"
+                        type="number"
+                        value={input.minLength !== undefined ? String(input.minLength) : ""}
+                        placeholder="0"
+                        onChange={(e) =>
+                          patchInput(fieldIdx, {
+                            minLength: e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                      />
+                      <TextField
+                        label="Max Length (1 - 4000)"
+                        type="number"
+                        value={input.maxLength !== undefined ? String(input.maxLength) : ""}
+                        placeholder="4000"
+                        onChange={(e) =>
+                          patchInput(fieldIdx, {
+                            maxLength: e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Variable Syntax Helper Pills */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#2b2d31]">
+                      <span className="text-[10px] text-[#949ba4]">Variable:</span>
+                      <span
+                        className="text-[10px] font-mono bg-[#111214] text-[#5865f2] px-1.5 py-0.5 rounded border border-[#5865f2]/40"
+                        title="Direct variable"
+                      >
+                        {"{{"}{input.customId}{"}}"}
+                      </span>
+                      <span
+                        className="text-[10px] font-mono bg-[#111214] text-[#949ba4] px-1.5 py-0.5 rounded border border-[#35373c]"
+                        title="Scoped variable"
+                      >
+                        {"{{"}input.{input.customId}{"}}"}
+                      </span>
+                    </div>
 
                     <Checkbox
                       label="Required"

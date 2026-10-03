@@ -78,7 +78,7 @@ export const SplitPane = ({
           if (event.key === "ArrowLeft") setRatio((r) => Math.max(minRatio, r - 0.02));
           if (event.key === "ArrowRight") setRatio((r) => Math.min(maxRatio, r + 0.02));
         }}
-        className="group relative w-px shrink-0 cursor-col-resize bg-line transition-colors hover:bg-blurple"
+        className="group relative w-px shrink-0 cursor-col-resize bg-gray-200 dark:bg-[#404248] transition-colors hover:bg-blurple"
       >
         {/* Wider invisible hit area so the 1px line is actually grabbable. */}
         <span className="absolute inset-y-0 -left-1.5 -right-1.5 block" />

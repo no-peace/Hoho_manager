@@ -35,8 +35,8 @@ const TabButton = ({
     className={[
       "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
       active
-        ? "bg-raised text-ink-strong shadow-sm"
-        : "text-ink-muted hover:bg-hover hover:text-ink",
+        ? "bg-white dark:bg-[#2b2d31] text-gray-900 dark:text-white shadow-sm"
+        : "text-gray-500 dark:text-[#949ba4] hover:bg-gray-200 dark:hover:bg-[#35373c] hover:text-gray-900 dark:hover:text-[#dbdee1]",
     ].join(" ")}
   >
     {children}
@@ -63,9 +63,9 @@ export const PropertyPanel = () => {
   const hasFlow = isInteractiveComponent(component ?? undefined) && !isLinkButton;
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-line-soft bg-sidebar">
-      <div className="flex items-center justify-between border-b border-line-soft px-3 py-2.5">
-        <h2 className="truncate text-xs font-semibold text-ink-strong">
+    <aside className="flex w-80 shrink-0 flex-col border-l border-gray-200 dark:border-[#404248] bg-gray-100 dark:bg-gray-800">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#404248] px-3 py-2.5">
+        <h2 className="truncate text-xs font-semibold text-gray-900 dark:text-white">
           {component ? componentLabel(component) : "Embed"}
         </h2>
 
@@ -91,7 +91,7 @@ export const PropertyPanel = () => {
       </div>
 
       {component && Form && hasFlow && (
-        <div className="flex gap-0.5 bg-sidebar px-3 pt-2.5">
+        <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-800 px-3 pt-2.5">
           <TabButton
             active={activeTab === "properties"}
             onClick={() => setActiveTab("properties")}
@@ -99,12 +99,12 @@ export const PropertyPanel = () => {
             Properties
           </TabButton>
           <TabButton active={activeTab === "flow"} onClick={() => setActiveTab("flow")}>
-            Flow
+            Action
           </TabButton>
         </div>
       )}
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar">
         {component && Form ? (
           activeTab === "flow" && hasFlow ? (
             <FlowBuilder component={component} />

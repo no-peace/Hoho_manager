@@ -134,4 +134,64 @@ export const migrations: readonly Migration[] = [
         ON action_definitions(message_id, custom_id);
     `,
   },
+  {
+    id: "004_staff_access",
+    sql: `
+      CREATE TABLE IF NOT EXISTS staff_access (
+        id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+        discord_user_id        TEXT    UNIQUE NOT NULL,
+        discord_username       TEXT    NOT NULL DEFAULT '',
+        granted_by_discord_id  TEXT    NOT NULL,
+        is_active              INTEGER NOT NULL DEFAULT 1,
+        expires_at             TEXT,
+        cooldown_seconds       INTEGER NOT NULL DEFAULT 30,
+        can_send_messages      INTEGER NOT NULL DEFAULT 1,
+        can_edit_messages      INTEGER NOT NULL DEFAULT 0,
+        can_delete_messages    INTEGER NOT NULL DEFAULT 0,
+        can_manage_templates   INTEGER NOT NULL DEFAULT 0,
+        allowed_channel_ids    TEXT    NOT NULL DEFAULT '[]',
+        can_mention_everyone   INTEGER NOT NULL DEFAULT 0,
+        can_mention_here       INTEGER NOT NULL DEFAULT 0,
+        can_mention_roles      INTEGER NOT NULL DEFAULT 0,
+        allowed_role_mention_ids TEXT  NOT NULL DEFAULT '[]',
+        max_messages_per_hour  INTEGER NOT NULL DEFAULT 10,
+        notes                  TEXT,
+        created_at             TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at             TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS staff_cooldowns (
+        discord_user_id  TEXT NOT NULL,
+        action           TEXT NOT NULL,
+        last_at          TEXT NOT NULL,
+        count_this_hour  INTEGER NOT NULL DEFAULT 1,
+        hour_bucket      TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY (discord_user_id, action)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_staff_access_user   ON staff_access(discord_user_id);
+      CREATE INDEX IF NOT EXISTS idx_staff_access_active ON staff_access(is_active);
+      CREATE INDEX IF NOT EXISTS idx_staff_cooldowns     ON staff_cooldowns(discord_user_id);
+    `,
+  },
+  {
+    id: "005_settings",
+    sql: `
+      CREATE TABLE IF NOT EXISTS settings (
+        guild_id        TEXT PRIMARY KEY,
+        log_channel_id  TEXT,
+        head_admin_ids  TEXT NOT NULL DEFAULT '[]',
+        bot_profile_id  TEXT,
+        extra_settings  TEXT NOT NULL DEFAULT '{}',
+        created_at      INTEGER,
+        updated_at      INTEGER
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_settings_guild ON settings(guild_id);
+
+      ALTER TABLE staff_access ADD COLUMN granular_cooldowns TEXT NOT NULL DEFAULT '{}';
+      ALTER TABLE staff_access ADD COLUMN granular_rate_limits TEXT NOT NULL DEFAULT '{}';
+    `,
+  },
 ];
+

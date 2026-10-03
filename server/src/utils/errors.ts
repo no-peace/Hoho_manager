@@ -47,6 +47,10 @@ export class ApiError extends Error {
     return new ApiError(403, message, { code: "forbidden" });
   }
 
+  static tooManyRequests(message = "Too many requests"): ApiError {
+    return new ApiError(429, message);
+  }
+
   static notFound(message = "Not found"): ApiError {
     return new ApiError(404, message, { code: "not_found" });
   }

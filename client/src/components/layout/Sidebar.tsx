@@ -1,78 +1,176 @@
 import { useState } from "react";
-import { Blocks, BookOpen, Send, Users } from "lucide-react";
+import {
+  Blocks,
+  FolderOpen,
+  FileText,
+  RefreshCw,
+  ChevronLeft,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { ComponentPalette } from "../editor/ComponentPalette";
 import { LayersPanel } from "../editor/LayersPanel";
-import { BotDispatchModal } from "../send/BotDispatchModal";
-import { ProfilesPanel } from "./ProfilesPanel";
+import { useGlobalStore } from "../../store/globalStore";
+import { useTemplates } from "../../hooks/useTemplates";
 
 export const Sidebar = () => {
-  const [activeTab, setActiveTab] = useState<'build' | 'send' | 'profiles'>('build');
-  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"elements" | "templates">("elements");
+  const [paletteOpen, setPaletteOpen] = useState(true);
+  const [layersOpen, setLayersOpen] = useState(true);
+
+  const setIsSidebarOpen = useGlobalStore((state) => state.setIsSidebarOpen);
+  const { templates, currentId, loadTemplate, refresh } = useTemplates();
 
   return (
-    <div className="w-80 h-full bg-[#2b2d31] border-r border-[#1e1f22] flex flex-col shadow-lg z-10 font-sans shrink-0">
-      {/* Tab Navigation Rail */}
-      <div className="flex p-2 gap-1 bg-[#1e1f22] border-b border-[#111214]">
+    <div className="h-full bg-[#2b2d31] border-r border-[#1e1f22] w-72 shrink-0 flex flex-col font-sans select-none z-10 shadow-lg">
+      {/* Header with Title and Collapse Button */}
+      <div className="p-3 border-b border-[#1e1f22] bg-[#1e1f22] shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Blocks size={16} className="text-[#5865f2]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-[#dbdee1]">
+            Toolbox
+          </span>
+        </div>
         <button
-          onClick={() => setActiveTab('build')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all ${
-            activeTab === 'build' ? 'bg-[#5865f2] text-white shadow-sm' : 'text-[#b5bac1] hover:bg-[#2b2d31] hover:text-[#dbdee1]'
-          }`}
+          type="button"
+          onClick={() => setIsSidebarOpen(false)}
+          className="p-1 rounded text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] transition-colors"
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
         >
-          <Blocks size={14} /> Build
+          <ChevronLeft size={16} />
         </button>
-        <button
-          onClick={() => setActiveTab('send')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all ${
-            activeTab === 'send' ? 'bg-[#5865f2] text-white shadow-sm' : 'text-[#b5bac1] hover:bg-[#2b2d31] hover:text-[#dbdee1]'
-          }`}
-        >
-          <Send size={14} /> Send
-        </button>
-        <button
-          onClick={() => setActiveTab('profiles')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all ${
-            activeTab === 'profiles' ? 'bg-[#5865f2] text-white shadow-sm' : 'text-[#b5bac1] hover:bg-[#2b2d31] hover:text-[#dbdee1]'
-          }`}
-        >
-          <Users size={14} /> Profs
-        </button>
-        <a
-          href="/docs"
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[11px] font-bold uppercase tracking-wider text-[#b5bac1] hover:bg-[#2b2d31] hover:text-[#dbdee1] transition-all"
-        >
-          <BookOpen size={14} /> Docs
-        </a>
       </div>
 
-      {/* Tab Content Panels */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col relative">
-        <div className={`flex flex-col h-full ${activeTab === 'build' ? 'flex' : 'hidden'}`}>
-          <div className="p-4 shrink-0 border-b border-[#1e1f22]">
-            <ComponentPalette />
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            <LayersPanel />
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex p-2 gap-1 bg-[#1e1f22] border-b border-[#1e1f22] shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveTab("elements")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+            activeTab === "elements"
+              ? "bg-[#5865f2] text-white shadow-sm"
+              : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+          }`}
+        >
+          <Blocks size={14} /> Elements
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("templates")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+            activeTab === "templates"
+              ? "bg-[#5865f2] text-white shadow-sm"
+              : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+          }`}
+        >
+          <FolderOpen size={14} /> Templates
+        </button>
+      </div>
 
-        <div className={`p-4 h-full ${activeTab === 'send' ? 'block' : 'hidden'}`}>
-          <button
-            type="button"
-            onClick={() => setSendModalOpen(true)}
-            className="flex items-center gap-2 rounded bg-[#5865f2] px-3 py-2 text-sm font-medium text-white hover:bg-[#4752c4]"
-          >
-            <Send size={14} /> Send via bot
-          </button>
-          <BotDispatchModal
-            open={sendModalOpen}
-            onClose={() => setSendModalOpen(false)}
-          />
-        </div>
+      {/* Tab Panels */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+        {activeTab === "elements" && (
+          <div className="p-3 space-y-3">
+            {/* Component Palette Collapsible Accordion */}
+            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(!paletteOpen)}
+                className="w-full flex items-center justify-between p-2.5 bg-[#1e1f22]/60 hover:bg-[#1e1f22] transition-colors text-left"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+                  Component Palette
+                </span>
+                {paletteOpen ? (
+                  <ChevronDown size={14} className="text-[#949ba4]" />
+                ) : (
+                  <ChevronRight size={14} className="text-[#949ba4]" />
+                )}
+              </button>
+              {paletteOpen && (
+                <div className="p-2.5 border-t border-[#1e1f22]">
+                  <ComponentPalette />
+                </div>
+              )}
+            </div>
 
-        <div className={`p-4 h-full ${activeTab === 'profiles' ? 'block' : 'hidden'}`}>
-          <ProfilesPanel />
-        </div>
+            {/* Layers & Hierarchy Collapsible Accordion */}
+            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setLayersOpen(!layersOpen)}
+                className="w-full flex items-center justify-between p-2.5 bg-[#1e1f22]/60 hover:bg-[#1e1f22] transition-colors text-left"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+                  Layers & Hierarchy
+                </span>
+                {layersOpen ? (
+                  <ChevronDown size={14} className="text-[#949ba4]" />
+                ) : (
+                  <ChevronRight size={14} className="text-[#949ba4]" />
+                )}
+              </button>
+              {layersOpen && (
+                <div className="p-2.5 border-t border-[#1e1f22]">
+                  <LayersPanel />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "templates" && (
+          <div className="p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+                Saved Templates ({templates.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c]"
+                title="Refresh templates"
+              >
+                <RefreshCw size={12} />
+              </button>
+            </div>
+
+            {templates.length === 0 ? (
+              <div className="p-4 border border-dashed border-[#35373c] rounded text-center">
+                <p className="text-xs text-[#949ba4]">No templates saved yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {templates.map((tpl) => {
+                  const isCurrent = tpl.id === currentId;
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => void loadTemplate(tpl.id)}
+                      className={`w-full text-left p-2.5 rounded-lg border transition-all flex items-start gap-2.5 ${
+                        isCurrent
+                          ? "bg-[#5865f2]/15 border-[#5865f2] text-white"
+                          : "bg-[#232428] hover:bg-[#35373c] border-[#1e1f22] text-[#dbdee1]"
+                      }`}
+                    >
+                      <FileText size={15} className={isCurrent ? "text-[#5865f2] mt-0.5" : "text-[#949ba4] mt-0.5"} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate text-[#f2f3f5]">
+                          {tpl.name || "Untitled Template"}
+                        </p>
+                        <p className="text-[10px] text-[#949ba4] mt-0.5">
+                          {new Date(tpl.updated_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { attachUser, requireAdminKey } from "../middleware/auth.js";
+import { attachUser } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
 import { actionRepository } from "../repositories/actionRepository.js";
 import * as discord from "../services/discordService.js";
@@ -26,7 +27,7 @@ router.post(
   "/",
   attachUser,
   sendLimiter,
-  requireAdminKey,
+  requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     const { mode, payload: rawPayload, channelId, webhookUrl, threadId, profileId: rawProfileId, editMessageId, ...body } = req.body;
     const profileId = parseProfileId(rawProfileId);
@@ -55,7 +56,45 @@ router.post(
     };
     const sanitizedMessage = cleanseIds(message);
 
-    const flows = parseFlowRegistrations(body.flows);
+    // For staff sends (x-staff-id present), scrub disallowed mentions and log
+    const staffCtx = req.staffContext;
+    let finalMessage = sanitizedMessage;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const { scrubMentions, sanitizeAllowedMentions } = await import("../utils/mentionScrubber.js");
+      const { payload: scrubbed, stripped } = scrubMentions(sanitizedMessage, staffCtx.record);
+      finalMessage = sanitizeAllowedMentions(scrubbed, staffCtx.record);
+      if (stripped.length > 0) {
+        const { auditLog } = await import("../services/auditLog.js");
+        auditLog({
+          event: "MENTION_BLOCKED",
+          actorDiscordId: staffCtx.staffId ?? undefined,
+          channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+          reason: `Stripped disallowed mentions: ${stripped.join(", ")}`,
+          ip: req.ip,
+        });
+      }
+    } else {
+      finalMessage = sanitizedMessage;
+    }
+
+    const rawFlows = parseFlowRegistrations(body.flows);
+    let flows = rawFlows;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const { scrubFlows } = await import("../utils/mentionScrubber.js");
+      const { flows: scrubbedFlows, stripped: strippedFlows } = scrubFlows(rawFlows, staffCtx.record);
+      flows = scrubbedFlows;
+      if (strippedFlows.length > 0) {
+        const { auditLog } = await import("../services/auditLog.js");
+        auditLog({
+          event: "MENTION_BLOCKED",
+          actorDiscordId: staffCtx.staffId ?? undefined,
+          channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+          reason: `Stripped disallowed mentions in flows: ${strippedFlows.join(", ")}`,
+          ip: req.ip,
+        });
+      }
+    }
+
     const registerMessageFlows = async (sentMessage: unknown): Promise<void> => {
       const messageId =
         sentMessage !== null && typeof sentMessage === "object"
@@ -77,7 +116,7 @@ router.post(
       if (typeof webhookUrl !== "string") {
         throw ApiError.badRequest('`webhookUrl` is required when mode is "webhook"');
       }
-      const sent = await discord.sendWebhook(webhookUrl, sanitizedMessage, {
+      const sent = await discord.sendWebhook(webhookUrl, finalMessage, {
         wait: true,
         threadId: typeof threadId === "string" ? threadId : null,
       });
@@ -92,12 +131,12 @@ router.post(
 
     let sent;
     if (typeof editMessageId === "string" && editMessageId.trim() !== "") {
-      sent = await discord.editChannelMessage(channelId, editMessageId, sanitizedMessage, {
+      sent = await discord.editChannelMessage(channelId, editMessageId, finalMessage, {
         profileId,
       });
       log.info(`Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`);
     } else {
-      sent = await discord.sendChannelMessage(channelId, sanitizedMessage, {
+      sent = await discord.sendChannelMessage(channelId, finalMessage, {
         profileId,
       });
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
@@ -105,27 +144,63 @@ router.post(
 
     await registerMessageFlows(sent);
 
+    // Audit log for staff sends
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
+      const { auditLog } = await import("../services/auditLog.js");
+      auditLog({
+        event: (typeof editMessageId === "string" && editMessageId.trim() !== "") ? "EDIT_MESSAGE" : "SEND_MESSAGE",
+        actorDiscordId: staffCtx.staffId,
+        actorUsername: staffCtx.record?.discord_username,
+        channelId: typeof channelId === "string" ? channelId : undefined,
+        messageId: typeof editMessageId === "string" ? editMessageId : undefined,
+        ip: req.ip,
+      });
+    }
+
     return res.json({ ok: true, mode, message: sent });
   }),
 );
 
 // ... KEEP YOUR EXISTING GET ROUTES BELOW THIS
 
-router.get("/channels", attachUser, requireAdminKey, asyncHandler(async (req, res) => {
+router.get("/channels", attachUser, requireStaffPermission("send"), asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
-  const [guild] = await discord.getBotGuilds(profileId);
-  if (!guild) return res.json([]);
+  const queryGuildId = typeof req.query.guildId === "string" && req.query.guildId.trim()
+    ? req.query.guildId.trim()
+    : undefined;
 
-  const channels = await discord.getGuildChannels(guild.id, profileId);
+  let targetGuildId = queryGuildId;
+  if (!targetGuildId) {
+    const [guild] = await discord.getBotGuilds(profileId);
+    targetGuildId = guild?.id;
+  }
+  if (!targetGuildId) return res.json([]);
+
+  const channels = await discord.getGuildChannels(targetGuildId, profileId);
+  
+  let filteredChannels = channels;
+  const staffCtx = req.staffContext;
+  if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+    try {
+      const allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
+      const allAllowed = allowed.includes("*");
+      if (!allAllowed) {
+        filteredChannels = channels.filter((c: any) => allowed.includes(c.id));
+      }
+    } catch {
+      filteredChannels = [];
+    }
+  }
+
   res.json(
-    channels
-      .filter((channel) => channel.type === 0 || channel.type === 5)
-      .map(({ id, name }) => ({ id, name })),
+    filteredChannels
+      .filter((channel: any) => channel.type === 0 || channel.type === 5)
+      .map(({ id, name }: any) => ({ id, name })),
   );
 }));
 
 // GET /api/send/channels/:channelId/messages - Fetches recent messages sent by the bot
-router.get("/channels/:channelId/messages", attachUser, requireAdminKey, asyncHandler(async (req, res) => {
+router.get("/channels/:channelId/messages", attachUser, requireStaffPermission("edit"), asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
   const channelId = req.params.channelId;
   if (typeof channelId !== "string") {
@@ -139,8 +214,8 @@ router.get("/channels/:channelId/messages", attachUser, requireAdminKey, asyncHa
 
   // NEW: Filter out slash command interactions so they don't clutter the Edit dropdown
   const botMessages = messages
-    .filter((message) => message.author?.id === me.id && !message.interaction && !message.interaction_metadata)
-    .map((message) => ({
+    .filter((message: any) => message.author?.id === me.id && !message.interaction && !message.interaction_metadata)
+    .map((message: any) => ({
       id: message.id,
       content: message.content || "Embed / Component Message",
       timestamp: message.timestamp,
@@ -154,7 +229,7 @@ router.get("/channels/:channelId/messages", attachUser, requireAdminKey, asyncHa
 router.get(
   "/identity",
   attachUser,
-  requireAdminKey,
+  requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     // Safely parse the query ID, ensuring we pass exactly 1 or 0 arguments
     const profileId = parseProfileId(req.query.profileId);

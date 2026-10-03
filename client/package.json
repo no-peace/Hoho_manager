@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Visual Discord message builder (Discohook-style) — Vite + React + Tailwind + Zustand.",
+  "description": "Visual Discord message builder — Vite + React + Tailwind + Zustand.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -12,14 +12,25 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "^1.5.0",
     "@dmb/shared": "*",
+    "@emoji-mart/data": "^1.1.2",
+    "@twemoji/api": "^17.0.2",
+    "chrono-node": "^2.7.5",
+    "clsx": "^2.1.1",
+    "discord-api-types": "^0.38.55",
+    "emoji-mart": "^5.5.2",
+    "he": "^1.2.0",
+    "highlight.js": "^11.9.0",
     "lucide-react": "^1.48.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "tailwind-merge": "^2.2.0",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/he": "^1.2.3",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.7",

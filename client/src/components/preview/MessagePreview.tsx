@@ -7,6 +7,7 @@ import { EmbedPreview } from "./EmbedPreview";
 import { ContainerPreview } from "./ContainerPreview";
 import { AutoComponent } from "./ComponentPreview";
 import { useMessage } from "../../hooks/useMessage";
+import { useGlobalStore } from "../../store/globalStore";
 import { EDITOR_MODES } from "../../utils/constants";
 
 /**
@@ -28,6 +29,7 @@ const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
 
 export const MessagePreview = () => {
   const { mode, data, payload, isEmpty } = useMessage();
+  const { botIdentity } = useGlobalStore();
   const [now, setNow] = useState(() => new Date());
 
   // Refresh the "Today at …" label every minute.
@@ -36,7 +38,18 @@ export const MessagePreview = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const authorName = data.username || "Message Builder";
+  const defaultDiscordAvatar = (() => {
+    if (!botIdentity?.id || !/^\d+$/.test(botIdentity.id)) return null;
+    try {
+      return `https://cdn.discordapp.com/embed/avatars/${(BigInt(botIdentity.id) >> 22n) % 6n}.png`;
+    } catch {
+      return null;
+    }
+  })();
+  const effectiveAvatar =
+    data.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
+  const effectiveUsername =
+    data.username || botIdentity?.username || "Message Builder";
   const isV2 = mode === EDITOR_MODES.V2;
 
   return (
@@ -59,8 +72,19 @@ export const MessagePreview = () => {
         ) : (
           <div className="flex gap-3">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-blurple">
-              {data.avatar_url ? (
-                <img src={data.avatar_url} alt="" className="h-full w-full object-cover" />
+              {effectiveAvatar ? (
+                <img
+                  src={effectiveAvatar}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    if (defaultDiscordAvatar && e.currentTarget.src !== defaultDiscordAvatar) {
+                      e.currentTarget.src = defaultDiscordAvatar;
+                    } else {
+                      e.currentTarget.style.display = "none";
+                    }
+                  }}
+                />
               ) : (
                 <span className="flex h-full w-full items-center justify-center">
                   <Bot size={18} className="text-white" />
@@ -70,7 +94,7 @@ export const MessagePreview = () => {
 
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2">
-                <span className="text-[15px] font-medium text-[#f2f3f5]">{authorName}</span>
+                <span className="text-[15px] font-medium text-[#f2f3f5]">{effectiveUsername}</span>
                 <span className="rounded bg-blurple px-1 py-px text-[10px] font-semibold text-white">
                   APP
                 </span>
@@ -80,31 +104,20 @@ export const MessagePreview = () => {
               </p>
 
               <div className="mt-0.5 space-y-2">
-                {/* Classic message body */}
-                {!isV2 && payload.content && (
+                {/* Unified preview: render content, embeds, and components whenever present */}
+                {payload.content && (
                   <Markdown content={payload.content} className="text-[15px] text-[#dbdee1]" />
                 )}
 
-                {!isV2 &&
+                {data.embeds &&
                   data.embeds.map((embed) => <EmbedPreview key={embed._id} embed={embed} />)}
 
-                {/* Components V2 body */}
-                {isV2 &&
+                {data.components &&
                   data.components.map((component) => (
                     <div key={component._id}>
                       <TopLevelComponent component={component} />
                     </div>
                   ))}
-
-                {/* Classic action rows appear under the content/embeds. */}
-                {!isV2 &&
-                  data.components
-                    .filter((component) => component.type === ComponentType.ActionRow)
-                    .map((component) => (
-                      <div key={component._id}>
-                        <AutoComponent component={component} />
-                      </div>
-                    ))}
               </div>
 
               {isV2 && (

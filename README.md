@@ -8,7 +8,7 @@ Built for the web first: you design and send messages from the site, not slash c
 
 > The interface deliberately mirrors [Discohook](https://discohook.app): the same `#1E1F22`
 > chrome, rounded-lg controls, and a vertical tab rail. Interactive components get a second
-> **Flow** tab where you build the ordered chain of actions a click should run.
+> **Action** tab where you build the ordered chain of actions a click should run.
 
 ## Stack
 

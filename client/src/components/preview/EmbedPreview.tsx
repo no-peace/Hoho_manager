@@ -53,7 +53,18 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
           {embed.author.icon_url && (
             <img src={embed.author.icon_url} alt="" className="h-6 w-6 rounded-full object-cover" />
           )}
-          <span className="text-sm font-semibold">{embed.author.name}</span>
+          {embed.author.url ? (
+            <a
+              href={embed.author.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-semibold hover:underline"
+            >
+              {embed.author.name}
+            </a>
+          ) : (
+            <span className="text-sm font-semibold">{embed.author.name}</span>
+          )}
         </div>
       )}
 

@@ -62,9 +62,20 @@ export interface Env {
   readonly adminApiKey: string;
   readonly encryptionKey: string | undefined;
   readonly rateLimit: RateLimitEnv;
+  /** Discord channel ID for audit logs. Bot posts structured embeds here. */
+  readonly logChannelId: string | undefined;
+  /** Owner Discord user IDs (comma-separated) who bypass staff checks. */
+  readonly ownerDiscordIds: readonly string[];
 }
 
 export const env: Env = Object.freeze({
+  logChannelId: str("LOG_CHANNEL_ID"),
+  ownerDiscordIds: Object.freeze(
+    (str("OWNER_DISCORD_IDS", "") ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean),
+  ),
   nodeEnv,
   isProd,
   isDev: !isProd,

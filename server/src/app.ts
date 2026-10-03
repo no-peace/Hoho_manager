@@ -10,6 +10,9 @@ import interactionsRouter from "./routes/interactions.js";
 import profilesRouter from "./routes/profiles.js";
 import sendRouter from "./routes/send.js";
 import templatesRouter from "./routes/templates.js";
+import accessRouter from "./routes/access.js";
+import settingsRouter from "./routes/settings.js";
+import discordRouter from "./routes/discord.js";
 
 /**
  * Build the Express application.
@@ -54,7 +57,7 @@ export const createApp = (): Express => {
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "x-admin-key"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-admin-key", "x-staff-id"],
     }),
   );
 
@@ -78,6 +81,9 @@ export const createApp = (): Express => {
   app.use("/api/send", sendRouter);
   app.use("/api/templates", templatesRouter);
   app.use("/api/profiles", profilesRouter);
+  app.use("/api/access", accessRouter);
+  app.use("/api/settings", settingsRouter);
+  app.use("/api/discord", discordRouter);
 
   // Root ping so hitting the bare host is informative rather than a 404 page.
   app.get("/", (_req, res) => {
