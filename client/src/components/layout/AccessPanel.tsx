@@ -8,7 +8,7 @@ import { useStaffAccess, type StaffRecord } from "../../hooks/useStaffAccess";
 
 export const AccessPanel = () => {
   const { records, loading, error, fetchRecords, createRecord, updateRecord, deleteRecord } = useStaffAccess();
-  const { selectedGuildId } = useGlobalStore();
+  const { selectedGuildId, currentUser } = useGlobalStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<StaffRecord>>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -102,6 +102,43 @@ export const AccessPanel = () => {
       <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-[#dbdee1]">
         {error && <div className="mb-4 p-3 bg-[#da373c]/10 border border-[#da373c]/30 text-[#da373c] rounded">{error}</div>}
 
+        {currentUser && !editingId && (
+          <div className="mb-4 flex items-center justify-between p-3 rounded-lg bg-[#1e1f22] border border-[#35373c]/50">
+            <div className="flex items-center gap-3">
+              {currentUser.avatar ? (
+                <img
+                  src={currentUser.avatarUrl || `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`}
+                  alt={currentUser.username}
+                  className="w-8 h-8 rounded-full object-cover border border-[#35373c]"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-xs font-bold">
+                  {currentUser.username.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">
+                    {currentUser.global_name || currentUser.username}
+                  </span>
+                  <span className="text-[10px] font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">
+                    {currentUser.id}
+                  </span>
+                  {currentUser.isAdmin && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#f0b232] bg-[#f0b232]/10 px-1.5 py-0.2 rounded">
+                      Head Admin
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#949ba4]">Authenticated Operator</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-semibold text-[#57f287] flex items-center gap-1.5 bg-[#57f287]/10 px-2 py-1 rounded">
+              <span className="w-2 h-2 rounded-full bg-[#57f287]" /> Active Session
+            </span>
+          </div>
+        )}
+
         {editingId ? (
           <div className="max-w-3xl space-y-6 bg-[#1e1f22] p-5 rounded-lg border border-[#111214]">
             <h3 className="text-md font-semibold text-[#dbdee1] border-b border-[#35373c] pb-2 mb-4">
@@ -111,7 +148,24 @@ export const AccessPanel = () => {
             <div className="grid grid-cols-2 gap-4">
               {isCreating ? (
                 <div>
-                  <label className="block text-[11px] font-bold text-[#949ba4] mb-1">Select User or enter ID</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-[#949ba4]">Select User or enter ID</label>
+                    {currentUser && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateForm({
+                            discord_user_id: currentUser.id,
+                            discord_username: currentUser.global_name || currentUser.username,
+                          })
+                        }
+                        className="text-[11px] text-[#5865f2] hover:underline font-semibold"
+                        title="Fill with my authenticated Discord ID"
+                      >
+                        Grant to Myself
+                      </button>
+                    )}
+                  </div>
                   <SearchableDiscordSelect
                     type="member"
                     guildId={selectedGuildId || undefined}
@@ -259,14 +313,21 @@ export const AccessPanel = () => {
                 No staff members configured. Click &quot;Grant Access&quot; to add one.
               </div>
             ) : (
-              records.map(record => (
-                <div key={record.discord_user_id} className={`flex items-center justify-between p-3 rounded border ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <strong className="text-[#dbdee1]">{record.discord_username || 'Unknown User'}</strong>
-                      <span className="text-xs font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">{record.discord_user_id}</span>
-                      {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#f28b8b] bg-[#da373c]/10 px-1.5 py-0.5 rounded">Disabled</span>}
-                    </div>
+              records.map(record => {
+                const isCurrentUser = currentUser && record.discord_user_id === currentUser.id;
+                return (
+                  <div key={record.discord_user_id} className={`flex items-center justify-between p-3 rounded border ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <strong className="text-[#dbdee1]">{record.discord_username || 'Unknown User'}</strong>
+                        {isCurrentUser && (
+                          <span className="text-[10px] font-bold text-[#5865f2] bg-[#5865f2]/15 border border-[#5865f2]/30 px-1.5 py-0.5 rounded">
+                            (You)
+                          </span>
+                        )}
+                        <span className="text-xs font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">{record.discord_user_id}</span>
+                        {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#f28b8b] bg-[#da373c]/10 px-1.5 py-0.5 rounded">Disabled</span>}
+                      </div>
                     <div className="text-xs text-[#949ba4] mt-1 flex gap-3">
                       <span>Cooldown: {record.cooldown_seconds}s</span>
                       <span>Max/hr: {record.max_messages_per_hour}</span>
@@ -278,7 +339,8 @@ export const AccessPanel = () => {
                     <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#f28b8b] hover:bg-[#da373c]/10" />
                   </div>
                 </div>
-              ))
+              );
+            })
             )}
           </div>
         )}

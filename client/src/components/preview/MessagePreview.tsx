@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, Eye, Info } from "lucide-react";
+import { Bot, Eye, Info, FileText, Link2, Music } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
@@ -8,6 +8,7 @@ import { ContainerPreview } from "./ContainerPreview";
 import { AutoComponent } from "./ComponentPreview";
 import { useMessage } from "../../hooks/useMessage";
 import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore, type AttachedFile } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
 
 /**
@@ -27,9 +28,99 @@ const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
     <AutoComponent component={component} />
   );
 
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
+  const [spoilerHidden, setSpoilerHidden] = useState(Boolean(file.spoiler));
+  const isUrl = Boolean(file.url && !file.file);
+  const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/");
+  const isAudio = file.type.startsWith("audio/");
+
+  if (isImage) {
+    return (
+      <div className="relative inline-block max-w-sm rounded-lg overflow-hidden border border-[#232428] bg-[#2b2d31]">
+        {spoilerHidden ? (
+          <div
+            onClick={() => setSpoilerHidden(false)}
+            className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+              Spoiler
+            </span>
+            <span className="text-[11px] text-[#949ba4] mt-2">Click to view</span>
+          </div>
+        ) : (
+          <div className="relative group">
+            <img
+              src={file.previewUrl}
+              alt={file.name}
+              className="max-h-72 max-w-full rounded-md object-contain"
+            />
+            {file.spoiler && (
+              <button
+                type="button"
+                onClick={() => setSpoilerHidden(true)}
+                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Hide
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (isVideo) {
+    return (
+      <div className="relative inline-block max-w-sm rounded-lg overflow-hidden border border-[#232428] bg-[#2b2d31]">
+        {spoilerHidden ? (
+          <div
+            onClick={() => setSpoilerHidden(false)}
+            className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+              Spoiler
+            </span>
+            <span className="text-[11px] text-[#949ba4] mt-2">Click to view video</span>
+          </div>
+        ) : (
+          <video
+            src={file.previewUrl}
+            controls
+            className="max-h-72 max-w-full rounded-md"
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex items-center gap-3 p-3 rounded-lg bg-[#2b2d31] border border-[#1e1f22] max-w-sm">
+      <div className="p-2.5 rounded-md bg-[#1e1f22] text-[#949ba4] shrink-0">
+        {isUrl ? <Link2 size={22} /> : isAudio ? <Music size={22} /> : <FileText size={22} />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-[#5865f2] truncate" title={file.url ?? file.name}>
+          {file.spoiler ? `SPOILER_${file.name}` : file.name}
+        </p>
+        <p className="text-[11px] text-[#949ba4] mt-0.5">
+          {isUrl ? "External URL" : formatBytes(file.size)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const MessagePreview = () => {
   const { mode, data, payload, isEmpty } = useMessage();
   const { botIdentity } = useGlobalStore();
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const [now, setNow] = useState(() => new Date());
 
   // Refresh the "Today at …" label every minute.
@@ -104,9 +195,17 @@ export const MessagePreview = () => {
               </p>
 
               <div className="mt-0.5 space-y-2">
-                {/* Unified preview: render content, embeds, and components whenever present */}
+                {/* Unified preview: render content, embeds, components, and attached files */}
                 {payload.content && (
                   <Markdown content={payload.content} className="text-[15px] text-[#dbdee1]" />
+                )}
+
+                {attachedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1 pb-1">
+                    {attachedFiles.map((file) => (
+                      <AttachmentPreviewItem key={file.id} file={file} />
+                    ))}
+                  </div>
                 )}
 
                 {data.embeds &&

@@ -2,10 +2,12 @@ import { Router } from "express";
 import { attachUser } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
+import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
 import { actionRepository } from "../repositories/actionRepository.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
+import { fetchUrlAttachments } from "../utils/urlAttachments.js";
 import { parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 
 const router = Router();
@@ -25,6 +27,7 @@ const parseProfileId = (value: unknown): number | null => {
 
 router.post(
   "/",
+  multipartParser,
   attachUser,
   sendLimiter,
   requireStaffPermission("send"),
@@ -112,6 +115,13 @@ router.post(
       }
     };
 
+    const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
+    const urlFiles = await fetchUrlAttachments(body.attachments);
+    if (uploadedFiles.length + urlFiles.length > 10) {
+      throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
+    }
+    const files = [...uploadedFiles, ...urlFiles];
+
     if (mode === "webhook") {
       if (typeof webhookUrl !== "string") {
         throw ApiError.badRequest('`webhookUrl` is required when mode is "webhook"');
@@ -119,6 +129,7 @@ router.post(
       const sent = await discord.sendWebhook(webhookUrl, finalMessage, {
         wait: true,
         threadId: typeof threadId === "string" ? threadId : null,
+        files,
       });
       await registerMessageFlows(sent);
       log.info(`Webhook send by user ${req.user?.id ?? "?"}`);
@@ -133,11 +144,13 @@ router.post(
     if (typeof editMessageId === "string" && editMessageId.trim() !== "") {
       sent = await discord.editChannelMessage(channelId, editMessageId, finalMessage, {
         profileId,
+        files,
       });
       log.info(`Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`);
     } else {
       sent = await discord.sendChannelMessage(channelId, finalMessage, {
         profileId,
+        files,
       });
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }

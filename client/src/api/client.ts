@@ -40,6 +40,8 @@ export class ApiRequestError extends Error {
   }
 }
 
+import { useGlobalStore, type CurrentUser } from "../store/globalStore";
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
@@ -48,16 +50,22 @@ interface RequestOptions {
 
 export const request = async <T>(path: string, { method = "GET", body, signal }: RequestOptions = {}): Promise<T> => {
   let response: Response;
-  const staffId = ENV_STAFF_ID || localStorage.getItem("staff_id") || "";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+  // Resolve active staff ID: store user (if authenticated) > localStorage > ENV_STAFF_ID
+  const storeUser = typeof window !== "undefined" ? useGlobalStore.getState()?.currentUser : null;
+  const staffId = storeUser?.id || (typeof localStorage !== "undefined" ? localStorage.getItem("staff_id") : "") || ENV_STAFF_ID || "";
+
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       method,
+      credentials: "include", // CRITICAL: transmit session cookies for OAuth2
       headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(!isFormData && body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(ADMIN_KEY ? { "x-admin-key": ADMIN_KEY } : {}),
         ...(staffId && !ADMIN_KEY ? { "x-staff-id": staffId } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: isFormData ? (body as FormData) : body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
   } catch (error) {
@@ -173,8 +181,8 @@ export const api = {
   health: () => request<HealthResponse>("/api/health"),
   config: () => request<ConfigResponse>("/api/config"),
 
-  /** Send a message through the backend (required for bot-token mode). */
-  send: (body: SendRequestBody) =>
+  /** Send a message through the backend (required for bot-token mode or multipart uploads). */
+  send: (body: SendRequestBody | FormData) =>
     request<SendSuccessResponse>("/api/send", { method: "POST", body }),
 
   templates: {
@@ -238,9 +246,22 @@ export const api = {
         `/api/discord/guilds/${guildId}/roles${profileId ? `?profileId=${profileId}` : ""}`
       ),
     searchMembers: (guildId: string, query: string, profileId?: number) =>
-      request<{ members: { user: { id: string; username: string; avatar: string | null }; nick?: string | null }[] }>(
+      request<{
+        members: Array<{
+          id: string;
+          username: string;
+          global_name: string | null;
+          nickname: string | null;
+          avatar: string | null;
+        }>;
+      }>(
         `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
       ),
+  },
+
+  auth: {
+    me: () => request<{ user: CurrentUser | null }>("/api/auth/me"),
+    logout: () => request<{ success: boolean; ok: boolean }>("/api/auth/logout", { method: "POST" }),
   },
 };
 

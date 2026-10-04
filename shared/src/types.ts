@@ -127,6 +127,16 @@ export interface TargetData {
 
 export type QueryDataVersion = "d2";
 
+export interface DiscordAttachmentPayload {
+  id: number | string;
+  filename: string;
+  description?: string;
+  content_type?: string;
+  size?: number;
+  url?: string;
+  is_spoiler?: boolean;
+}
+
 /** A message payload as Discord receives it — all fields optional. */
 export interface DiscordMessagePayload {
   content?: string | null;
@@ -137,6 +147,7 @@ export interface DiscordMessagePayload {
   thread_name?: string;
   flags?: number;
   allowed_mentions?: { parse?: string[]; roles?: string[]; users?: string[] };
+  attachments?: DiscordAttachmentPayload[];
 }
 
 export interface QueryDataMessage {
@@ -366,6 +377,22 @@ export interface FlowStateRecord {
   created_at: string;
 }
 
+/* ── Auth API ─────────────────────────────────────────────────────────────── */
+
+export interface AuthUserProfile {
+  id: string;
+  username: string;
+  global_name: string | null;
+  avatar: string | null;
+  avatarUrl?: string;
+  role: string;
+  isAdmin: boolean;
+}
+
+export interface AuthMeResponse {
+  user: AuthUserProfile | null;
+}
+
 /* ── Send API ─────────────────────────────────────────────────────────────── */
 
 export type SendMode = "webhook" | "bot";
@@ -377,6 +404,8 @@ export interface SendRequestBody {
   webhookUrl?: string;
   profileId?: number | null;
   threadId?: string;
+  editMessageId?: string;
+  attachments?: DiscordAttachmentPayload[];
   /**
    * Ordered action flows for the components in this message, keyed by
    * `custom_id`. Registering them makes ad-hoc (untemplated) multi-step buttons

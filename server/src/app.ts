@@ -13,6 +13,7 @@ import templatesRouter from "./routes/templates.js";
 import accessRouter from "./routes/access.js";
 import settingsRouter from "./routes/settings.js";
 import discordRouter from "./routes/discord.js";
+import authRouter from "./routes/auth.js";
 
 /**
  * Build the Express application.
@@ -84,6 +85,7 @@ export const createApp = (): Express => {
   app.use("/api/access", accessRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/discord", discordRouter);
+  app.use("/api/auth", authRouter);
 
   // Root ping so hitting the bare host is informative rather than a 404 page.
   app.get("/", (_req, res) => {

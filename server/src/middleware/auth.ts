@@ -5,13 +5,13 @@ import { env } from "../config/env.js";
 import { userRepository } from "../repositories/userRepository.js";
 import { settingsService } from "../services/settingsService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { getSessionUserFromRequest } from "../utils/session.js";
 
 /**
  * Access control.
  *
- * The app is single-user/local today, but every privileged route already goes
- * through real middleware, so swapping in sessions/JWT in Phase 4 is a change to
- * this file only — not to the routes.
+ * The app supports session/JWT authentication and falls back to local-admin
+ * for machine callers and headless tests.
  *
  * Two independent checks are supported:
  *   1. {@link attachUser} / {@link requireRole} — role-based.
@@ -44,13 +44,29 @@ export const requireUser = (req: Request): UserRecord => {
 /**
  * Resolve the acting user onto `req.user`.
  *
- * Phase 4 replaces the body of this function with a session/JWT lookup; the
- * routes downstream only ever read `req.user`.
+ * Checks session cookie / bearer token first. If not found, falls back
+ * to local-admin record.
  */
 export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) => {
-  req.user = await userRepository.findByDiscordId("local-admin");
-  // Must hand off explicitly: without this the router never reaches the
-  // handler and the request hangs until the client times out.
+  const sessionUser = getSessionUserFromRequest(req);
+  if (sessionUser) {
+    const dbUser = await userRepository.findByDiscordId(sessionUser.id);
+    if (dbUser) {
+      req.user = dbUser;
+    } else {
+      req.user = {
+        id: 0,
+        discord_id: sessionUser.id,
+        username: sessionUser.username,
+        avatar: sessionUser.avatar ?? null,
+        role: (sessionUser.role as UserRole) || "editor",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+  } else {
+    req.user = await userRepository.findByDiscordId("local-admin");
+  }
   next();
 });
 
@@ -84,7 +100,7 @@ export const requireAdminKey: RequestHandler = (req, _res, next) => {
 };
 
 /**
- * Require either a valid master `x-admin-key` OR an `x-staff-id` header
+ * Require either a valid master `x-admin-key` OR an authenticated session / `x-staff-id` header
  * matching an authorized Head Admin in DB settings or env.ownerDiscordIds.
  */
 export const requireHeadAdmin: RequestHandler = asyncHandler(async (req, _res, next) => {
@@ -94,7 +110,19 @@ export const requireHeadAdmin: RequestHandler = asyncHandler(async (req, _res, n
     return next();
   }
 
-  const staffId = req.get("x-staff-id");
+  const sessionUser = getSessionUserFromRequest(req);
+  if (sessionUser) {
+    const isHead =
+      (await settingsService.isHeadAdmin(sessionUser.id)) ||
+      env.ownerDiscordIds.includes(sessionUser.id) ||
+      sessionUser.role === "admin";
+    if (isHead) {
+      req.staffContext = { isAdmin: true, staffId: sessionUser.id };
+      return next();
+    }
+  }
+
+  const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");
   if (staffId && /^\d{17,20}$/.test(staffId)) {
     const isHead = await settingsService.isHeadAdmin(staffId);
     if (isHead) {

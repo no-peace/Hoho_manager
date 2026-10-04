@@ -12,6 +12,7 @@ import {
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { Select, TextField } from "../ui/Field";
+import { api } from "../../api/client";
 import { useProfileStore } from "../../store/profileStore";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
@@ -176,33 +177,61 @@ export const BotDispatchModal: React.FC<{
     setSendResult(null);
     try {
       const payload = useMessageStore.getState().getPayload();
+      const attachedFiles = useMessageStore.getState().attachedFiles;
       const flows = useActionStore.getState().toRegistrations();
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
+
+      // Local files ride as multipart `files`; external URL attachments are
+      // resolved and downloaded by the server before forwarding to Discord.
+      const localFiles = attachedFiles.filter(
+        (f): f is typeof f & { file: File } => f.file instanceof File,
+      );
+      const urlAttachments = attachedFiles
+        .filter((f) => !f.file && typeof f.url === "string")
+        .map((f, index) => ({
+          id: `url-${index}`,
+          filename: f.spoiler ? `SPOILER_${f.name}` : f.name,
+          url: f.url as string,
+          is_spoiler: Boolean(f.spoiler),
+          ...(f.description ? { description: f.description } : {}),
+        }));
 
       let successCount = 0;
       let firstFailure: string | null = null;
       for (const cId of selectedChannels) {
-        const res = await fetch(`${baseUrl}/api/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-          body: JSON.stringify({
-            mode: "bot",
-            payload,
-            channelId: cId,
-            profileId: botProfileId,
-            flows,
-            editMessageId: mode === "edit" ? targetMessageId : undefined,
-          }),
-        });
-        const result = await res.json().catch(() => null);
-        if (res.ok) {
+        try {
+          if (localFiles.length > 0) {
+            const formData = new FormData();
+            const sendBody = {
+              mode: "bot",
+              payload,
+              channelId: cId,
+              profileId: botProfileId ?? undefined,
+              flows,
+              editMessageId: mode === "edit" ? targetMessageId : undefined,
+              ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+            };
+            formData.append("payload_json", JSON.stringify(sendBody));
+            for (const fileItem of localFiles) {
+              const filename = fileItem.spoiler ? `SPOILER_${fileItem.name}` : fileItem.name;
+              formData.append("files", fileItem.file, filename);
+            }
+            await api.send(formData);
+          } else {
+            await api.send({
+              mode: "bot",
+              payload,
+              channelId: cId,
+              profileId: botProfileId ?? undefined,
+              flows,
+              editMessageId: mode === "edit" ? targetMessageId : undefined,
+              ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+            });
+          }
           successCount++;
-        } else if (firstFailure === null) {
-          firstFailure =
-            result && typeof result.error === "string"
-              ? result.error
-              : `Request failed (${res.status})`;
+        } catch (err) {
+          if (firstFailure === null) {
+            firstFailure = err instanceof Error ? err.message : String(err);
+          }
         }
       }
 

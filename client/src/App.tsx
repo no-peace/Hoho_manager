@@ -355,17 +355,20 @@ export const App: React.FC = () => {
   const webhookRef = useRef<HTMLDivElement>(null);
   const botRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard shortcut listener: Ctrl+B / Cmd+B to toggle sidebar
+  // Keyboard shortcut listener: Ctrl+B / Cmd+B to toggle sidebar, Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
         toggleSidebar();
       }
+      if (e.key === "Escape" && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  }, [toggleSidebar, isSidebarOpen, setIsSidebarOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -382,6 +385,13 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     void fetchActionTypes();
+    void useGlobalStore.getState().fetchCurrentUser();
+
+    if (typeof window !== "undefined" && window.location.search.includes("login=success")) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
     // Auto-fetch bot identity on load and update global store
     const fetchIdentity = async () => {
       try {
@@ -448,7 +458,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
-      <Header />
+      <Header onOpenBackups={() => setBackupsOpen(true)} />
 
       {/* Mobile Switcher (only for screens < 768px) */}
       <div className="md:hidden flex bg-[#2b2d31] border-b border-[#1e1f22] shrink-0 p-1.5 gap-1">
@@ -497,37 +507,32 @@ export const App: React.FC = () => {
       </div>
 
       <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        {/* Mobile Drawer Overlay Backdrop */}
+        {/* Off-Canvas Drawer Overlay Backdrop */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/60 z-30 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
             aria-hidden="true"
           />
         )}
 
-        {/* Collapsible Sidebar: Overlay Drawer on Mobile, Docked Collapsible on Desktop */}
+        {/* Off-Canvas Overlay Drawer */}
         <div
-          className={`
-            fixed inset-y-0 left-0 z-40 md:static md:z-auto
-            h-full shrink-0 flex-col bg-[#2b2d31] border-r border-[#1e1f22]
-            transition-[width,transform] duration-200 ease-in-out
-            ${
-              isSidebarOpen
-                ? "w-72 flex translate-x-0"
-                : "w-0 -translate-x-full md:translate-x-0 md:hidden"
-            }
-            ${mobileView === "sidebar" ? "!flex !w-72 !translate-x-0" : ""}
-          `}
+          className={`fixed inset-y-0 left-0 z-50 h-full w-80 max-w-[calc(100vw-3rem)] shadow-2xl bg-[#2b2d31] border-r border-[#1e1f22] transition-transform duration-200 ease-in-out flex flex-col ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Toolbox Drawer"
         >
-          <Sidebar />
+          <Sidebar onClose={() => setIsSidebarOpen(false)} />
         </div>
 
         {/* Center & Right Panes: SplitPane hosting Editor & Live Preview */}
         <div
           className={`
             ${mobileView === "sidebar" ? "hidden" : "flex"}
-            md:flex flex-1 min-w-0 h-full
+            md:flex flex-1 min-w-0 h-full w-full
           `}
         >
           <SplitPane

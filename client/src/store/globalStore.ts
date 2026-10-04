@@ -6,6 +6,16 @@ export interface BotIdentity {
   avatar: string | null;
 }
 
+export interface CurrentUser {
+  id: string;
+  username: string;
+  global_name?: string | null;
+  avatar: string | null;
+  avatarUrl?: string;
+  role?: string;
+  isAdmin?: boolean;
+}
+
 interface GlobalState {
   selectedGuildId: string | null;
   setSelectedGuildId: (id: string | null) => void;
@@ -15,12 +25,19 @@ interface GlobalState {
   setIsSidebarOpen: (open: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  currentUser: CurrentUser | null;
+  authLoading: boolean;
+  setCurrentUser: (user: CurrentUser | null) => void;
+  setAuthLoading: (loading: boolean) => void;
+  fetchCurrentUser: () => Promise<CurrentUser | null>;
+  logout: () => Promise<void>;
 }
 
 const STORAGE_KEY = "hoho_global_state";
 const BOT_IDENTITY_CACHE_KEY = "bot_identity_cache";
 
 const loadInitialState = (): { selectedGuildId: string | null; isSidebarOpen: boolean } => {
+  const isNarrow = typeof window !== "undefined" && window.innerWidth <= 1100;
   try {
     if (typeof localStorage !== "undefined") {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -29,7 +46,7 @@ const loadInitialState = (): { selectedGuildId: string | null; isSidebarOpen: bo
         if (parsed && typeof parsed === "object") {
           return {
             selectedGuildId: typeof parsed.selectedGuildId === "string" ? parsed.selectedGuildId : null,
-            isSidebarOpen: Boolean(parsed.isSidebarOpen),
+            isSidebarOpen: isNarrow ? false : Boolean(parsed.isSidebarOpen),
           };
         }
       }
@@ -140,6 +157,36 @@ export const useGlobalStore = create<GlobalState>((set) => {
         }
         return { botIdentity: identity };
       }),
+    currentUser: null,
+    authLoading: false,
+    setCurrentUser: (user) => set({ currentUser: user }),
+    setAuthLoading: (loading) => set({ authLoading: loading }),
+    fetchCurrentUser: async () => {
+      set({ authLoading: true });
+      try {
+        const { default: api } = await import("../api/client");
+        const res = await api.auth.me();
+        const user = res?.user ?? null;
+        set({ currentUser: user, authLoading: false });
+        return user;
+      } catch {
+        set({ currentUser: null, authLoading: false });
+        return null;
+      }
+    },
+    logout: async () => {
+      try {
+        const { default: api } = await import("../api/client");
+        await api.auth.logout();
+      } catch {
+        // Ignore network errors on logout
+      } finally {
+        set({ currentUser: null });
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("staff_id");
+        }
+      }
+    },
   };
 });
 

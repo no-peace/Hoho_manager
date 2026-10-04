@@ -49,17 +49,39 @@ export interface LoadDocumentInput {
   targets?: TargetData[];
 }
 
+export interface AttachedFile {
+  id: string;
+  /** Present for locally-uploaded files; absent for external URL attachments. */
+  file?: File;
+  /** Present for external URL attachments; absent for local files. */
+  url?: string;
+  name: string;
+  size: number;
+  type: string;
+  previewUrl: string;
+  spoiler?: boolean;
+  description?: string;
+}
+
 export interface MessageState {
   mode: EditorMode;
   data: MessageData;
   targets: TargetData[];
   selection: Selection;
   send: SendState;
+  attachedFiles: AttachedFile[];
 
   setMode(mode: EditorMode): void;
 
   setField<K extends keyof MessageData>(key: K, value: MessageData[K]): void;
   setContent(content: string): void;
+
+  addFiles(files: File[]): void;
+  addUrlAttachment(url: string): void;
+  removeFile(id: string): void;
+  toggleFileSpoiler(id: string): void;
+  updateFileDescription(id: string, description: string): void;
+  clearFiles(): void;
 
   addEmbed(): void;
   updateEmbed(id: string, patch: Partial<EmbedData>): void;
@@ -143,6 +165,121 @@ export const useMessageStore = create<MessageState>()(
       targets: [{ url: "" }],
       selection: null,
       send: idleSendState(),
+      attachedFiles: [],
+
+      /* ── File Attachments ──────────────────────────────────────────────── */
+
+      addFiles: (files) => {
+        const MAX_FILES = 10;
+        const current = get().attachedFiles;
+        const availableSlots = Math.max(0, MAX_FILES - current.length);
+        const toAdd = files.slice(0, availableSlots).map((file) => {
+          let previewUrl = "";
+          try {
+            previewUrl = URL.createObjectURL(file);
+          } catch {
+            previewUrl = "";
+          }
+          return {
+            id: uid(),
+            file,
+            name: file.name,
+            size: file.size,
+            type: file.type || "application/octet-stream",
+            previewUrl,
+            spoiler: false,
+          };
+        });
+        set({ attachedFiles: [...current, ...toAdd] });
+      },
+
+      addUrlAttachment: (rawUrl) => {
+        const MAX_FILES = 10;
+        const current = get().attachedFiles;
+        if (current.length >= MAX_FILES) return;
+        const trimmed = rawUrl.trim();
+        if (!/^https?:\/\//i.test(trimmed)) return;
+
+        // Best-effort filename + MIME guess from the URL so the card and the
+        // Discord payload have something meaningful to show.
+        let name = "attachment";
+        try {
+          const parsed = new URL(trimmed);
+          const last = parsed.pathname.split("/").filter(Boolean).pop();
+          if (last) name = decodeURIComponent(last);
+        } catch {
+          // Keep the default name
+        }
+
+        const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
+        const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "svg"];
+        const VIDEO_EXTS = ["mp4", "mov", "webm", "mkv", "avi"];
+        const AUDIO_EXTS = ["mp3", "wav", "ogg", "m4a", "flac"];
+        const type = IMAGE_EXTS.includes(ext)
+          ? `image/${ext === "jpg" ? "jpeg" : ext}`
+          : VIDEO_EXTS.includes(ext)
+            ? `video/${ext}`
+            : AUDIO_EXTS.includes(ext)
+              ? `audio/${ext}`
+              : "application/octet-stream";
+
+        set({
+          attachedFiles: [
+            ...current,
+            {
+              id: uid(),
+              url: trimmed,
+              name,
+              size: 0,
+              type,
+              previewUrl: trimmed,
+              spoiler: false,
+            },
+          ],
+        });
+      },
+
+      removeFile: (id) => {
+        const target = get().attachedFiles.find((f) => f.id === id);
+        // Only local files own a blob URL that needs revoking.
+        if (target?.file && target.previewUrl) {
+          try {
+            URL.revokeObjectURL(target.previewUrl);
+          } catch {
+            // Ignore revoke error
+          }
+        }
+        set({ attachedFiles: get().attachedFiles.filter((f) => f.id !== id) });
+      },
+
+      toggleFileSpoiler: (id) => {
+        set({
+          attachedFiles: get().attachedFiles.map((f) =>
+            f.id === id ? { ...f, spoiler: !f.spoiler } : f,
+          ),
+        });
+      },
+
+      updateFileDescription: (id, description) => {
+        set({
+          attachedFiles: get().attachedFiles.map((f) =>
+            f.id === id ? { ...f, description } : f,
+          ),
+        });
+      },
+
+      clearFiles: () => {
+        for (const file of get().attachedFiles) {
+          if (file.file && file.previewUrl) {
+            try {
+              URL.revokeObjectURL(file.previewUrl);
+            } catch {
+              // Ignore revoke error
+            }
+          }
+        }
+        set({ attachedFiles: [] });
+      },
 
       /* ── Mode ─────────────────────────────────────────────────────────── */
 
@@ -368,14 +505,25 @@ export const useMessageStore = create<MessageState>()(
 
       /* ── Whole-document operations ────────────────────────────────────── */
 
-      reset: () =>
+      reset: () => {
+        for (const file of get().attachedFiles) {
+          if (file.previewUrl) {
+            try {
+              URL.revokeObjectURL(file.previewUrl);
+            } catch {
+              // Ignore
+            }
+          }
+        }
         set({
           mode: EDITOR_MODES.CLASSIC,
           data: emptyData(),
           targets: [{ url: "" }],
           selection: null,
           send: idleSendState(),
-        }),
+          attachedFiles: [],
+        });
+      },
 
       /** Replace the document (after importing a backup). */
       load: ({ data, mode, targets }) =>

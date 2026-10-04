@@ -93,9 +93,14 @@ export const toDiscordPayload = (
 
 /**
  * A message must carry something. Discord rejects an entirely empty payload,
- * and an empty V2 message is almost always a mistake rather than intent.
+ * but an attachment-only message is completely valid.
  */
-export const isPayloadEmpty = (payload: DiscordMessagePayload): boolean =>
+export const isPayloadEmpty = (
+  payload: DiscordMessagePayload,
+  hasAttachments: boolean = false,
+): boolean =>
+  !hasAttachments &&
+  !(payload.attachments && payload.attachments.length > 0) &&
   !payload.content &&
   !(payload.embeds && payload.embeds.length > 0) &&
   !(payload.components && payload.components.length > 0);

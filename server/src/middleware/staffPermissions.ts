@@ -20,6 +20,7 @@ import { settingsService } from "../services/settingsService.js";
 import { auditLog } from "../services/auditLog.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
+import { getSessionUserFromRequest } from "../utils/session.js";
 
 const log = logger.child("staffPermissions");
 
@@ -48,15 +49,33 @@ const isAdmin = (req: Request): boolean => {
 
 /**
  * Returns a middleware that:
- *  1. Lets admins (x-admin-key) through with no restrictions.
- *  2. For `x-staff-id` callers: checks the full permission matrix.
- *  3. Blocks everyone else.
+ *  1. Lets admins (x-admin-key or authenticated Head Admin) through with no restrictions.
+ *  2. Enforces anti-spoofing when authenticated session user is present.
+ *  3. For `x-staff-id` callers: checks the full permission matrix.
+ *  4. Blocks everyone else.
  */
 export const requireStaffPermission = (action: StaffAction): RequestHandler =>
   asyncHandler(async (req, _res, next) => {
     const requestId = crypto.randomUUID().slice(0, 8);
     const ip = req.ip ?? req.socket.remoteAddress ?? "?";
-    const staffId = req.get("x-staff-id");
+
+    const sessionUser = getSessionUserFromRequest(req);
+    const headerStaffId = req.get("x-staff-id");
+
+    // Anti-spoofing enforcement:
+    // If session is present and client sent mismatched x-staff-id, reject immediately
+    if (sessionUser && headerStaffId && headerStaffId !== sessionUser.id) {
+      auditLog({
+        event: "STAFF_ACCESS_DENIED",
+        actorDiscordId: sessionUser.id,
+        reason: `Spoofing attempt: claimed ${headerStaffId} but authenticated as ${sessionUser.id}`,
+        ip,
+        requestId,
+      });
+      return next(ApiError.forbidden("Provided x-staff-id does not match authenticated user session"));
+    }
+
+    const staffId = sessionUser ? sessionUser.id : headerStaffId;
 
     // --- Admin & Head Admin fast-path ---
     if (isAdmin(req)) {
@@ -64,7 +83,17 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       return next();
     }
 
-    if (staffId && /^\d{17,20}$/.test(staffId) && await settingsService.isHeadAdmin(staffId)) {
+    if (
+      sessionUser &&
+      ((await settingsService.isHeadAdmin(sessionUser.id)) ||
+        env.ownerDiscordIds.includes(sessionUser.id) ||
+        sessionUser.role === "admin")
+    ) {
+      req.staffContext = { isAdmin: true, staffId: sessionUser.id };
+      return next();
+    }
+
+    if (staffId && /^\d{17,20}$/.test(staffId) && (await settingsService.isHeadAdmin(staffId))) {
       req.staffContext = { isAdmin: true, staffId };
       return next();
     }

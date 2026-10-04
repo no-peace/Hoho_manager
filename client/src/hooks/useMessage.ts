@@ -23,6 +23,7 @@ export interface MessageView {
 export const useMessage = (): MessageView => {
   const mode = useMessageStore((state) => state.mode);
   const data = useMessageStore((state) => state.data);
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
 
   const payload = useMemo(
     () => useMessageStore.getState().getPayload(),
@@ -37,7 +38,7 @@ export const useMessage = (): MessageView => {
     data,
     payload,
     problems,
-    isEmpty: isPayloadEmpty(payload),
+    isEmpty: isPayloadEmpty(payload, attachedFiles.length > 0),
     embedCount: data.embeds.length,
     componentCount: data.components.length,
   };

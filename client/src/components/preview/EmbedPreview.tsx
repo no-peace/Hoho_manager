@@ -1,6 +1,7 @@
 import type { EmbedData, EmbedField } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { decimalToHex } from "../../utils/discord";
+import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Discord-style embed preview.
@@ -42,6 +43,19 @@ export interface EmbedPreviewProps {
 export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   const accent = embed.color == null ? "#4f545c" : decimalToHex(embed.color);
   const rows = groupFields(embed.fields);
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
+
+  const resolveAttachmentUrl = (url?: string): string | undefined => {
+    if (!url) return undefined;
+    if (url.startsWith("attachment://")) {
+      const filename = url.slice("attachment://".length);
+      const match = attachedFiles.find(
+        (f) => f.name === filename || `SPOILER_${f.name}` === filename,
+      );
+      if (match) return match.previewUrl;
+    }
+    return url;
+  };
 
   return (
     <div
@@ -51,7 +65,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       {embed.author?.name && (
         <div className="mb-1 flex items-center gap-2">
           {embed.author.icon_url && (
-            <img src={embed.author.icon_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+            <img src={resolveAttachmentUrl(embed.author.icon_url)} alt="" className="h-6 w-6 rounded-full object-cover" />
           )}
           {embed.author.url ? (
             <a
@@ -92,7 +106,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
 
         {embed.thumbnail?.url && (
           <img
-            src={embed.thumbnail.url}
+            src={resolveAttachmentUrl(embed.thumbnail.url)}
             alt=""
             className="h-20 max-w-[80px] shrink-0 self-start rounded object-cover"
           />
@@ -118,14 +132,14 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       )}
 
       {embed.image?.url && (
-        <img src={embed.image.url} alt="" className="mt-2 max-h-72 w-full rounded object-cover" />
+        <img src={resolveAttachmentUrl(embed.image.url)} alt="" className="mt-2 max-h-72 w-full rounded object-cover" />
       )}
 
       {(embed.footer?.text || embed.timestamp) && (
         <div className="mt-2 flex items-center gap-2 text-xs font-medium text-[#949ba4]">
           {embed.footer?.icon_url && (
             <img
-              src={embed.footer.icon_url}
+              src={resolveAttachmentUrl(embed.footer.icon_url)}
               alt=""
               className="h-5 w-5 rounded-full object-cover"
             />

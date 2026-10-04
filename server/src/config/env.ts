@@ -44,6 +44,9 @@ export interface DiscordEnv {
   readonly publicKey: string | undefined;
   readonly applicationId: string | undefined;
   readonly botToken: string | undefined;
+  readonly clientId: string | undefined;
+  readonly clientSecret: string | undefined;
+  readonly redirectUri: string;
 }
 
 export interface RateLimitEnv {
@@ -60,6 +63,7 @@ export interface Env {
   readonly databaseUrl: string;
   readonly discord: DiscordEnv;
   readonly adminApiKey: string;
+  readonly sessionSecret: string;
   readonly encryptionKey: string | undefined;
   readonly rateLimit: RateLimitEnv;
   /** Discord channel ID for audit logs. Bot posts structured embeds here. */
@@ -91,8 +95,12 @@ export const env: Env = Object.freeze({
     publicKey: str("DISCORD_PUBLIC_KEY"),
     applicationId: str("DISCORD_APPLICATION_ID"),
     botToken: str("DISCORD_BOT_TOKEN"),
+    clientId: str("DISCORD_CLIENT_ID", str("DISCORD_APPLICATION_ID")),
+    clientSecret: str("DISCORD_CLIENT_SECRET"),
+    redirectUri: str("DISCORD_REDIRECT_URI", "http://localhost:3001/api/auth/discord/callback")!,
   }),
   adminApiKey: str("ADMIN_API_KEY", "dev-admin-key") ?? "dev-admin-key",
+  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", "dev-session-secret")) ?? "dev-session-secret",
   encryptionKey: str("ENCRYPTION_KEY"),
   rateLimit: Object.freeze({
     windowMs: int("RATE_LIMIT_WINDOW_MS", 60_000),

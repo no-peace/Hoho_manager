@@ -4,26 +4,36 @@ import {
   FolderOpen,
   FileText,
   RefreshCw,
-  ChevronLeft,
+  X,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { ComponentPalette } from "../editor/ComponentPalette";
 import { LayersPanel } from "../editor/LayersPanel";
 import { useGlobalStore } from "../../store/globalStore";
 import { useTemplates } from "../../hooks/useTemplates";
 
-export const Sidebar = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<"elements" | "templates">("elements");
-  const [paletteOpen, setPaletteOpen] = useState(true);
   const [layersOpen, setLayersOpen] = useState(true);
 
   const setIsSidebarOpen = useGlobalStore((state) => state.setIsSidebarOpen);
   const { templates, currentId, loadTemplate, refresh } = useTemplates();
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
-    <div className="h-full bg-[#2b2d31] border-r border-[#1e1f22] w-72 shrink-0 flex flex-col font-sans select-none z-10 shadow-lg">
-      {/* Header with Title and Collapse Button */}
+    <div className="h-full bg-[#2b2d31] w-full flex flex-col font-sans select-none z-10 shadow-lg">
+      {/* Header with Title and Close Button */}
       <div className="p-3 border-b border-[#1e1f22] bg-[#1e1f22] shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Blocks size={16} className="text-[#5865f2]" />
@@ -33,12 +43,12 @@ export const Sidebar = () => {
         </div>
         <button
           type="button"
-          onClick={() => setIsSidebarOpen(false)}
-          className="p-1 rounded text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] transition-colors"
-          title="Collapse sidebar"
-          aria-label="Collapse sidebar"
+          onClick={handleClose}
+          className="p-1 rounded text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] transition-colors"
+          title="Close Toolbox"
+          aria-label="Close Toolbox"
         >
-          <ChevronLeft size={16} />
+          <X size={16} />
         </button>
       </div>
 
@@ -72,28 +82,8 @@ export const Sidebar = () => {
       <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
         {activeTab === "elements" && (
           <div className="p-3 space-y-3">
-            {/* Component Palette Collapsible Accordion */}
-            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setPaletteOpen(!paletteOpen)}
-                className="w-full flex items-center justify-between p-2.5 bg-[#1e1f22]/60 hover:bg-[#1e1f22] transition-colors text-left"
-              >
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
-                  Component Palette
-                </span>
-                {paletteOpen ? (
-                  <ChevronDown size={14} className="text-[#949ba4]" />
-                ) : (
-                  <ChevronRight size={14} className="text-[#949ba4]" />
-                )}
-              </button>
-              {paletteOpen && (
-                <div className="p-2.5 border-t border-[#1e1f22]">
-                  <ComponentPalette />
-                </div>
-              )}
-            </div>
+            {/* The Component Palette lives inline in the editor pane now — the drawer
+                keeps the layer tree (and templates). */}
 
             {/* Layers & Hierarchy Collapsible Accordion */}
             <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">

@@ -153,7 +153,11 @@ const apiRequest = async <T>(
   let attempt = 0;
 
   for (;;) {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    const headers: Record<string, string> = {};
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
     if (token) headers.Authorization = `${auth} ${token}`;
 
     let response: Response;
@@ -161,7 +165,7 @@ const apiRequest = async <T>(
       response = await fetch(url, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: isFormData ? (body as FormData) : body === undefined ? undefined : JSON.stringify(body),
       });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
@@ -218,10 +222,43 @@ const apiRequest = async <T>(
 
 /* ── Webhooks (no bot token required) ─────────────────────────────────────── */
 
+export interface DiscordAttachmentFile {
+  file: File | Blob;
+  filename: string;
+  key?: string;
+}
+
 export interface WebhookSendOptions {
   wait?: boolean;
   threadId?: string | null;
+  files?: DiscordAttachmentFile[];
 }
+
+const buildMultipartPayload = (
+  payload: DiscordMessagePayload,
+  files: DiscordAttachmentFile[],
+): FormData => {
+  const fd = new FormData();
+  const finalPayload: DiscordMessagePayload = {
+    ...payload,
+    allowed_mentions: payload.allowed_mentions ?? { parse: [] },
+  };
+
+  if (!finalPayload.attachments || finalPayload.attachments.length === 0) {
+    finalPayload.attachments = files.map((f, idx) => ({
+      id: idx,
+      filename: f.filename,
+    }));
+  }
+
+  fd.append("payload_json", JSON.stringify(finalPayload));
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const key = f.key || `files[${i}]`;
+    fd.append(key, f.file, f.filename);
+  }
+  return fd;
+};
 
 /**
  * POST a message through a webhook URL.
@@ -232,7 +269,7 @@ export interface WebhookSendOptions {
 export const sendWebhook = async (
   webhookUrl: string,
   payload: DiscordMessagePayload,
-  { wait = true, threadId }: WebhookSendOptions = {},
+  { wait = true, threadId, files }: WebhookSendOptions = {},
 ): Promise<DiscordMessage | null> => {
   const parsed = parseWebhookUrl(webhookUrl);
   if (!parsed) throw ApiError.badRequest("Not a valid Discord webhook URL");
@@ -246,8 +283,13 @@ export const sendWebhook = async (
     query ? `?${query}` : ""
   }`;
 
+  const hasFiles = files && files.length > 0;
+  const body = hasFiles
+    ? buildMultipartPayload(payload, files)
+    : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
+
   const message = await apiRequest<DiscordMessage>("POST", null, {
-    body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+    body,
     absoluteUrl,
   });
 
@@ -269,19 +311,25 @@ export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
 
 export interface BotSendOptions {
   profileId?: number | null;
+  files?: DiscordAttachmentFile[];
 }
 
 /** Send a message to a channel as the bot. */
 export const sendChannelMessage = async (
   channelId: string,
   payload: DiscordMessagePayload,
-  { profileId = null }: BotSendOptions = {},
+  { profileId = null, files }: BotSendOptions = {},
 ): Promise<DiscordMessage | null> => {
   const token = await resolveBotToken(profileId);
 
+  const hasFiles = files && files.length > 0;
+  const body = hasFiles
+    ? buildMultipartPayload(payload, files)
+    : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
+
   const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
     token,
-    body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+    body,
   });
 
   log.info(`Bot sent message ${message?.id} to channel ${channelId}`);
@@ -292,10 +340,16 @@ export const sendChannelMessageWithToken = async (
   channelId: string,
   payload: DiscordMessagePayload,
   token: string,
+  files?: DiscordAttachmentFile[],
 ): Promise<DiscordMessage | null> => {
+  const hasFiles = files && files.length > 0;
+  const body = hasFiles
+    ? buildMultipartPayload(payload, files)
+    : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
+
   const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
     token,
-    body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+    body,
   });
   log.info(`Bot sent message ${message?.id} to channel ${channelId}`);
   return message;
@@ -305,15 +359,20 @@ export const editChannelMessage = async (
   channelId: string,
   messageId: string,
   payload: DiscordMessagePayload,
-  { profileId = null }: BotSendOptions = {},
+  { profileId = null, files }: BotSendOptions = {},
 ): Promise<DiscordMessage | null> => {
   const token = await resolveBotToken(profileId);
+  const hasFiles = files && files.length > 0;
+  const body = hasFiles
+    ? buildMultipartPayload(payload, files)
+    : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
+
   return apiRequest<DiscordMessage>(
     "PATCH",
     `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`,
     {
       token,
-      body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
+      body,
     },
   );
 };
@@ -368,21 +427,52 @@ export const searchGuildMembers = async (
   query: string,
   profileId: number | string | null = null,
 ): Promise<DiscordMemberSummary[]> => {
+  const trimmed = (query ?? "").trim();
+  if (!trimmed) return [];
+
   const pid = profileId != null ? Number(profileId) : null;
   const token = await resolveBotToken(pid);
-  const rawMembers = await apiRequest<any[]>(
-    "GET",
-    `/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(query)}&limit=25`,
-    { token },
-  );
-  if (!rawMembers) return [];
-  return rawMembers.map((m) => ({
-    id: m.user?.id ?? m.id,
-    username: m.user?.username ?? m.username ?? "",
-    global_name: m.user?.global_name ?? null,
-    nickname: m.nick ?? null,
-    avatar: m.user?.avatar ?? m.avatar ?? null,
-  }));
+
+  // If query is a snowflake ID, attempt direct member lookup via REST API
+  if (/^\d{17,20}$/.test(trimmed)) {
+    try {
+      const member = await apiRequest<any>(
+        "GET",
+        `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(trimmed)}`,
+        { token },
+      );
+      if (member) {
+        return [{
+          id: member.user?.id ?? trimmed,
+          username: member.user?.username ?? member.username ?? "",
+          global_name: member.user?.global_name ?? member.global_name ?? null,
+          nickname: member.nick ?? member.nickname ?? null,
+          avatar: member.user?.avatar ?? member.avatar ?? null,
+        }];
+      }
+    } catch {
+      // Not found by ID or user not in guild, fall through to name search
+    }
+  }
+
+  try {
+    const rawMembers = await apiRequest<any[]>(
+      "GET",
+      `/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(trimmed)}&limit=25`,
+      { token },
+    );
+    if (!rawMembers || !Array.isArray(rawMembers)) return [];
+    return rawMembers.map((m) => ({
+      id: m.user?.id ?? m.id,
+      username: m.user?.username ?? m.username ?? "",
+      global_name: m.user?.global_name ?? null,
+      nickname: m.nick ?? null,
+      avatar: m.user?.avatar ?? m.avatar ?? null,
+    }));
+  } catch (err) {
+    log.warn(`Member search failed for guild ${guildId}: ${err instanceof Error ? err.message : String(err)}`);
+    return [];
+  }
 };
 
 export const getChannelMessages = async (
