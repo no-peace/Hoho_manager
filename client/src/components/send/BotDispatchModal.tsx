@@ -144,13 +144,9 @@ export const BotDispatchModal: React.FC<{
   };
 
   const toggleChannel = (id: string) => {
-    if (mode === "edit") {
-      setSelectedChannels([id]);
-    } else {
-      setSelectedChannels((prev) =>
-        prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-      );
-    }
+    setSelectedChannels((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
   };
 
   // Loads the chosen message into the message store and live preview
@@ -197,7 +193,13 @@ export const BotDispatchModal: React.FC<{
 
       let successCount = 0;
       let firstFailure: string | null = null;
-      for (const cId of selectedChannels) {
+      
+      const targetMessageIds = targetMessageId.split(",").map(id => id.trim()).filter(Boolean);
+
+      for (let i = 0; i < selectedChannels.length; i++) {
+        const cId = selectedChannels[i];
+        const currentTargetId = targetMessageIds[i] || targetMessageIds[0];
+        
         try {
           if (localFiles.length > 0) {
             const formData = new FormData();
@@ -207,7 +209,7 @@ export const BotDispatchModal: React.FC<{
               channelId: cId,
               profileId: botProfileId ?? undefined,
               flows,
-              editMessageId: mode === "edit" ? targetMessageId : undefined,
+              editMessageId: mode === "edit" ? currentTargetId : undefined,
               ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
             };
             formData.append("payload_json", JSON.stringify(sendBody));
@@ -223,7 +225,7 @@ export const BotDispatchModal: React.FC<{
               channelId: cId,
               profileId: botProfileId ?? undefined,
               flows,
-              editMessageId: mode === "edit" ? targetMessageId : undefined,
+              editMessageId: mode === "edit" ? currentTargetId : undefined,
               ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
             });
           }
@@ -355,26 +357,24 @@ export const BotDispatchModal: React.FC<{
           <div>
             <div className="flex justify-between items-end mb-2">
               <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
-                2. Select Target Channel{mode === "send" ? "s" : ""}
+                2. Select Target Channel(s)
               </h4>
-              {mode === "send" && (
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedChannels(channels.map((c) => c.id))}
-                    className="text-[11px] font-bold text-[#5865f2] hover:underline uppercase tracking-wide"
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedChannels([])}
-                    className="text-[11px] font-bold text-[#f28b8b] hover:underline uppercase tracking-wide"
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedChannels(channels.map((c) => c.id))}
+                  className="text-[11px] font-bold text-[#5865f2] hover:underline uppercase tracking-wide"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedChannels([])}
+                  className="text-[11px] font-bold text-[#f28b8b] hover:underline uppercase tracking-wide"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
 
             <div className="bg-[#1e1f22] border border-[#111214] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar shrink-0">
@@ -447,12 +447,17 @@ export const BotDispatchModal: React.FC<{
                 <div className="flex-1 w-full flex gap-1.5">
                   <TextField
                     value={targetMessageId}
-                    placeholder="Or paste Message ID/Link"
+                    placeholder="Paste ID/Link (comma separated for multi-channel)"
                     onChange={(e) => {
                       const val = e.target.value;
-                      const urlMatch = val.match(/\/channels\/\d+\/\d+\/(\d+)/);
-                      const id = urlMatch ? urlMatch[1] : val;
-                      setTargetMessageId(id);
+                      // Don't auto-extract if they are typing multiple IDs with commas
+                      if (val.includes(",")) {
+                        setTargetMessageId(val);
+                      } else {
+                        const urlMatch = val.match(/\/channels\/\d+\/\d+\/(\d+)/);
+                        const id = urlMatch ? urlMatch[1] : val;
+                        setTargetMessageId(id);
+                      }
                     }}
                   />
                   <Button

@@ -1,21 +1,38 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Copy, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Plus, Trash2,  } from "lucide-react";
 import type { EmbedData } from "@dmb/shared";
 import { Limits } from "@dmb/shared";
-import { Button, IconButton } from "../ui/Button";
+import { Button } from "../ui/Button";
 import { Checkbox, TextArea, TextField } from "../ui/Field";
 import { ColorPicker } from "../ui/ColorPicker";
 import { embedCharCount } from "../../utils/discord";
 import { useMessageStore } from "../../store/messageStore";
 
-/**
- * Editor for one classic embed.
- *
- * Collapsed by default so a message with several embeds stays scannable, and
- * expanded automatically when it is the selected embed. The character counter
- * uses Discord's real aggregate limit (6000 across the whole embed), which is the
- * constraint people actually hit.
- */
+const EmbedEditorSection = ({ name, children, defaultOpen = false }: { name: string, children: React.ReactNode, defaultOpen?: boolean }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="border-b border-[#1e1f22] last:border-b-0">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(!open);
+        }}
+        className="w-full flex items-center justify-between py-2 px-3 text-[#949ba4] hover:bg-[#35373c]/30 transition-colors focus-visible:outline-none"
+      >
+        <span className="text-xs font-bold uppercase tracking-wide">{name}</span>
+        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </button>
+      {open && (
+        <div className="p-3 pt-1 space-y-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export interface EmbedEditorProps {
   embed: EmbedData;
   index: number;
@@ -25,7 +42,6 @@ export const EmbedEditor = ({ embed, index }: EmbedEditorProps) => {
   const updateEmbed = useMessageStore((state) => state.updateEmbed);
   const removeEmbed = useMessageStore((state) => state.removeEmbed);
   const duplicateEmbed = useMessageStore((state) => state.duplicateEmbed);
-  const moveEmbed = useMessageStore((state) => state.moveEmbed);
   const addEmbedField = useMessageStore((state) => state.addEmbedField);
   const updateEmbedField = useMessageStore((state) => state.updateEmbedField);
   const removeEmbedField = useMessageStore((state) => state.removeEmbedField);
@@ -38,203 +54,84 @@ export const EmbedEditor = ({ embed, index }: EmbedEditorProps) => {
   const used = embedCharCount(embed);
 
   return (
-    <div className={`panel ${active ? "border-blurple" : ""}`}>
+    <div className={`border rounded-lg bg-[#2b2d31] shadow-sm transition-colors border-[#1e1f22] relative overflow-hidden ${active ? 'ring-1 ring-[#5865f2]' : ''}`}>
+      {embed.color && (
+        <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: `#${embed.color.toString(16).padStart(6, '0')}` }} />
+      )}
       <div
-        className="panel-header cursor-pointer"
+        className="flex items-center justify-between p-2 pl-4 text-[#dbdee1] cursor-pointer hover:bg-[#35373c]/50 transition-colors bg-[#232428] border-b border-[#1e1f22]"
         onClick={() => select({ kind: "embed", id })}
       >
-        <div className="flex items-center gap-1.5">
-          <IconButton
-            icon={open ? ChevronDown : ChevronRight}
-            label={open ? "Collapse" : "Expand"}
-            onClick={(event) => {
-              event.stopPropagation();
-              setOpen((value) => !value);
-            }}
-          />
-          <span className="text-xs font-semibold text-ink">
+        <div className="flex items-center gap-1.5 grow" onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
+          {open ? <ChevronDown size={16} className="text-[#949ba4]" /> : <ChevronRight size={16} className="text-[#949ba4]" />}
+          <span className="text-sm font-semibold">
             Embed {index + 1}
-            {embed.title ? ` — ${embed.title}` : ""}
+            {embed.title ? <span className="text-[#949ba4] font-normal ml-1">- {embed.title}</span> : ""}
           </span>
         </div>
 
-        <div className="flex items-center gap-0.5">
-          <span
-            className={`mr-1 text-[11px] tabular-nums ${
-              used > Limits.embed.total ? "text-danger" : "text-ink-faint"
-            }`}
-          >
-            {used}/{Limits.embed.total}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className={`mr-2 text-xs tabular-nums font-medium ${used > Limits.embed.total ? "text-[#da373c]" : "text-[#949ba4]"}`}>
+            {used} / {Limits.embed.total}
           </span>
-          <IconButton
-            icon={Copy}
-            label="Duplicate embed"
-            size={13}
-            onClick={(event) => {
-              event.stopPropagation();
-              duplicateEmbed(id);
-            }}
-          />
-          <IconButton
-            icon={Trash2}
-            label="Delete embed"
-            size={13}
-            onClick={(event) => {
-              event.stopPropagation();
-              removeEmbed(id);
-            }}
-          />
+          <button type="button" className="p-1 hover:text-[#dbdee1] text-[#949ba4] transition-colors rounded" onClick={(e) => { e.stopPropagation(); duplicateEmbed(id); }}>
+            <Copy size={14} />
+          </button>
+          <button type="button" className="p-1 hover:text-[#da373c] text-[#f28b8b] transition-colors rounded" onClick={(e) => { e.stopPropagation(); removeEmbed(id); }}>
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
       {open && (
-        <div className="space-y-3 p-3">
-          <TextField
-            label="Title"
-            limit={Limits.embed.title}
-            value={embed.title ?? ""}
-            placeholder="Announcement"
-            onChange={(event) => updateEmbed(id, { title: event.target.value })}
-          />
-
-          <TextField
-            label="Title URL"
-            value={embed.url ?? ""}
-            placeholder="https://example.com"
-            onChange={(event) => updateEmbed(id, { url: event.target.value })}
-          />
-
-          <TextArea
-            label="Description"
-            limit={Limits.embed.description}
-            rows={4}
-            value={embed.description ?? ""}
-            placeholder="Markdown is supported **here**."
-            onChange={(event) => updateEmbed(id, { description: event.target.value })}
-          />
-
-          <ColorPicker
-            value={embed.color ?? null}
-            onChange={(color) => updateEmbed(id, { color })}
-          />
-
-          {/* Fields */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="field-label !mb-0">Fields</span>
-              <Button size="sm" variant="ghost" icon={Plus} onClick={() => addEmbedField(id)}>
-                Add field
-              </Button>
-            </div>
-
+        <div className="flex flex-col bg-[#313338]">
+          <EmbedEditorSection name="Author" defaultOpen={!!embed.author?.name}>
+            <TextField label="Author name" limit={Limits.embed.authorName} value={embed.author?.name ?? ""} placeholder="John Doe" onChange={(e) => updateEmbed(id, { author: { ...embed.author, name: e.target.value } })} />
+            <TextField label="Author URL" value={embed.author?.url ?? ""} placeholder="https://example.com" onChange={(e) => updateEmbed(id, { author: { ...embed.author, url: e.target.value } })} />
+            <TextField label="Author icon URL" value={embed.author?.icon_url ?? ""} placeholder="https://." onChange={(e) => updateEmbed(id, { author: { ...embed.author, icon_url: e.target.value } })} />
+          </EmbedEditorSection>
+          
+          <EmbedEditorSection name="Body" defaultOpen={true}>
+            <TextField label="Title" limit={Limits.embed.title} value={embed.title ?? ""} placeholder="Announcement" onChange={(e) => updateEmbed(id, { title: e.target.value })} />
+            <TextField label="Title URL" value={embed.url ?? ""} placeholder="https://example.com" onChange={(e) => updateEmbed(id, { url: e.target.value })} />
+            <TextArea label="Description" limit={Limits.embed.description} rows={4} value={embed.description ?? ""} placeholder="Markdown is supported **here**." onChange={(e) => updateEmbed(id, { description: e.target.value })} />
+            <ColorPicker value={embed.color ?? null} onChange={(color) => updateEmbed(id, { color })} />
+          </EmbedEditorSection>
+          
+          <EmbedEditorSection name="Fields" defaultOpen={(embed.fields?.length || 0) > 0}>
             <div className="space-y-2">
-              {(embed.fields ?? []).map((field) => (
-                <div key={field._id} className="rounded border border-line-soft p-2">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <TextField
-                        label="Name"
-                        limit={Limits.embed.fieldName}
-                        value={field.name}
-                        onChange={(event) =>
-                          updateEmbedField(id, field._id ?? "", { name: event.target.value })
-                        }
-                      />
-                      <TextArea
-                        label="Value"
-                        limit={Limits.embed.fieldValue}
-                        rows={2}
-                        value={field.value}
-                        onChange={(event) =>
-                          updateEmbedField(id, field._id ?? "", { value: event.target.value })
-                        }
-                      />
-                    </div>
-                    <IconButton
-                      icon={Trash2}
-                      label="Remove field"
-                      size={13}
-                      onClick={() => removeEmbedField(id, field._id ?? "")}
-                    />
+              {embed.fields?.map((field, i) => (
+                <div key={field._id || i} className="border border-[#1e1f22] bg-[#2b2d31] rounded p-3 relative group">
+                  <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" className="p-1 hover:text-[#da373c] text-[#949ba4] rounded" onClick={() => field._id && removeEmbedField(id, field._id)}>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <Checkbox
-                    className="mt-2"
-                    label="Inline"
-                    checked={field.inline}
-                    onChange={(inline) => updateEmbedField(id, field._id ?? "", { inline })}
-                  />
+                  <div className="space-y-3">
+                    <TextField label={`Field ${i + 1} name`} limit={Limits.embed.fieldName} value={field.name} placeholder="Name" onChange={(e) => field._id && updateEmbedField(id, field._id, { name: e.target.value })} />
+                    <TextArea label="Value" limit={Limits.embed.fieldValue} rows={2} value={field.value} placeholder="Value" onChange={(e) => field._id && updateEmbedField(id, field._id, { value: e.target.value })} />
+                    <Checkbox label="Inline" checked={field.inline ?? false} onChange={(inline) => field._id && updateEmbedField(id, field._id, { inline })} />
+                  </div>
                 </div>
               ))}
+              <Button size="sm" variant="secondary" icon={Plus} disabled={(embed.fields?.length || 0) >= Limits.embed.fields} onClick={() => addEmbedField(id)}>
+                Add Field
+              </Button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <TextField
-              label="Author name"
-              limit={Limits.embed.authorName}
-              value={embed.author?.name ?? ""}
-              onChange={(event) =>
-                updateEmbed(id, { author: { ...embed.author, name: event.target.value } })
-              }
-            />
-            <TextField
-              label="Author icon URL"
-              value={embed.author?.icon_url ?? ""}
-              onChange={(event) =>
-                updateEmbed(id, { author: { ...embed.author, icon_url: event.target.value } })
-              }
-            />
-          </div>
-
-          <TextField
-            label="Footer text"
-            limit={Limits.embed.footerText}
-            value={embed.footer?.text ?? ""}
-            onChange={(event) =>
-              updateEmbed(id, { footer: { ...embed.footer, text: event.target.value } })
-            }
-          />
-
-          <div className="grid grid-cols-2 gap-2">
-            <TextField
-              label="Image URL"
-              value={embed.image?.url ?? ""}
-              onChange={(event) => updateEmbed(id, { image: { url: event.target.value } })}
-            />
-            <TextField
-              label="Thumbnail URL"
-              value={embed.thumbnail?.url ?? ""}
-              onChange={(event) => updateEmbed(id, { thumbnail: { url: event.target.value } })}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Checkbox
-              label="Timestamp"
-              checked={Boolean(embed.timestamp)}
-              onChange={(checked) =>
-                updateEmbed(id, { timestamp: checked ? new Date().toISOString() : null })
-              }
-            />
-            <div className="flex gap-1">
-              <IconButton
-                icon={ChevronRight}
-                label="Move up"
-                size={13}
-                onClick={() => moveEmbed(id, -1)}
-              />
-              <IconButton
-                icon={ChevronDown}
-                label="Move down"
-                size={13}
-                onClick={() => moveEmbed(id, 1)}
-              />
-            </div>
-          </div>
+          </EmbedEditorSection>
+          
+          <EmbedEditorSection name="Images" defaultOpen={!!embed.image?.url || !!embed.thumbnail?.url}>
+            <TextField label="Image URL" value={embed.image?.url ?? ""} placeholder="https://." onChange={(e) => updateEmbed(id, { image: { url: e.target.value } })} />
+            <TextField label="Thumbnail URL" value={embed.thumbnail?.url ?? ""} placeholder="https://." onChange={(e) => updateEmbed(id, { thumbnail: { url: e.target.value } })} />
+          </EmbedEditorSection>
+          
+          <EmbedEditorSection name="Footer" defaultOpen={!!embed.footer?.text}>
+            <TextArea label="Footer text" limit={Limits.embed.footerText} rows={2} value={embed.footer?.text ?? ""} placeholder="Footer" onChange={(e) => updateEmbed(id, { footer: { ...embed.footer, text: e.target.value } })} />
+            <TextField label="Footer icon URL" value={embed.footer?.icon_url ?? ""} placeholder="https://." onChange={(e) => updateEmbed(id, { footer: { ...embed.footer, icon_url: e.target.value } })} />
+            <TextField label="Timestamp" type="datetime-local" value={embed.timestamp ? new Date(embed.timestamp).toISOString().slice(0, 16) : ""} onChange={(e) => updateEmbed(id, { timestamp: e.target.value ? new Date(e.target.value).toISOString() : undefined })} />
+          </EmbedEditorSection>
         </div>
       )}
     </div>
   );
 };
-
-export default EmbedEditor;

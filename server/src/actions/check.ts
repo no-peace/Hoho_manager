@@ -119,12 +119,14 @@ export const evaluateCondition = (left: unknown, op: string, right: unknown): bo
  * accepted so users do not have to know which one they have.
  */
 const contains = (element: unknown, container: unknown): boolean => {
-  const target = element === undefined || element === null ? "" : String(element);
+  if (element === undefined || element === null || String(element).trim() === "") return false;
+  const target = String(element).trim();
 
   if (Array.isArray(container)) {
-    return container.some((entry) => String(entry) === target);
+    return container.some((entry) => String(entry).trim() === target);
   }
   if (typeof container === "string") {
+    if (container.trim() === "") return false;
     const list = container.split(",").map((entry) => entry.trim());
     return list.includes(target);
   }
@@ -136,6 +138,33 @@ export const evaluateCheck = (
   config: Record<string, unknown>,
   variables: Record<string, unknown>,
 ): boolean => {
+  // Support Discohook "Member has role" check
+  const checkType = config.checkType ?? config.type;
+  if (checkType === "member_has_role" || config.function === "member_has_role") {
+    const roleMode = config.roleMode ?? config.mode ?? "static";
+    let roleId: unknown = config.roleId ?? config.role ?? config.value;
+
+    if (roleMode === "adaptive" || roleMode === "mirror" || roleMode === "get") {
+      const trimmed = String(roleId ?? "").replace(/^\{+|\}+$/g, "").trim();
+      roleId = lookup(trimmed, variables);
+    } else if (typeof roleId === "string" && (roleId.startsWith("{{") || roleId.startsWith("{"))) {
+      roleId = resolve(roleId, variables);
+    }
+
+    const targetKey = config.target === "selected_member" ? "selected_member.role_ids" : "member.role_ids";
+    const memberRoles = lookup(targetKey, variables) ?? variables["member.roles"] ?? variables["member.role_ids"] ?? [];
+    return contains(roleId, memberRoles);
+  }
+
+  // Support Discohook's in-mask format
+  if (config.function === "in" && (config.array as any)?.value?.includes("role_ids")) {
+    const arrayKey = (config.array as any).value;
+    const memberRoles = lookup(arrayKey, variables) ?? [];
+    const elementVal = (config.element as any)?.value ?? config.element;
+    const resolvedRole = resolve(elementVal, variables);
+    return contains(resolvedRole, memberRoles);
+  }
+
   const conditions = toConditions(config.conditions);
   const test = (condition: CheckCondition): boolean =>
     equals(resolve(condition.a, variables), resolve(condition.b, variables), condition.loose === true);
@@ -168,7 +197,8 @@ export const run = async ({
   config,
   variables,
 }: ActionContext): Promise<ActionResponse | undefined> => {
-  const usesEditorCondition = ["left", "right", "op", "operator"].some((key) =>
+  const isMemberHasRole = config.checkType === "member_has_role" || config.function === "member_has_role";
+  const usesEditorCondition = !isMemberHasRole && ["left", "right", "op", "operator"].some((key) =>
     Object.hasOwn(config, key),
   );
   const passes = usesEditorCondition

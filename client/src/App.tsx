@@ -5,19 +5,18 @@ import {
   Bot,
   Copy,
   Trash2,
-  Share2,
-  FolderOpen,
+  Plus,
   Download,
   Upload,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
 import { Header } from "./components/layout/Header";
-import { Sidebar } from "./components/layout/Sidebar";
 import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
 import { DocsPage } from "./pages/DocsPage";
+import { Sidebar } from "./components/layout/Sidebar";
 import { useGlobalStore } from "./store/globalStore";
 
 import { FlowBuilder } from "./components/actions/FlowBuilder";
@@ -41,20 +40,29 @@ const Accordion = ({
   title,
   children,
   defaultOpen = false,
+  isOpen,
+  onToggle,
   badge,
 }: {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onToggle?: () => void;
   badge?: React.ReactNode;
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [innerOpen, setInnerOpen] = useState(defaultOpen);
+  const open = isOpen !== undefined ? isOpen : innerOpen;
+  const handleToggle = () => {
+    if (onToggle) onToggle();
+    else setInnerOpen(!innerOpen);
+  };
+
   return (
-    <div className="border-b border-[#1e1f22]">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[#35373c]/50 transition-colors text-left focus:outline-none"
+    <div className="border border-[#1e1f22] bg-[#2b2d31] rounded-lg overflow-hidden shadow-sm">
+      <div
+        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[#35373c]/50 transition-colors text-left cursor-pointer select-none"
+        onClick={handleToggle}
       >
         <div className="flex items-center gap-2">
           {open ? (
@@ -65,8 +73,8 @@ const Accordion = ({
           <span className="font-bold text-[13px] text-[#dbdee1]">{title}</span>
         </div>
         {badge}
-      </button>
-      {open && <div className="px-3 pb-3">{children}</div>}
+      </div>
+      {open && <div className="p-3 pt-1 border-t border-[#1e1f22] bg-[#313338]">{children}</div>}
     </div>
   );
 };
@@ -336,7 +344,7 @@ const ComponentEditorModal: React.FC = () => {
 export const App: React.FC = () => {
   const fetchActionTypes = useActionStore((state) => state.fetchActionTypes);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [mobileView, setMobileView] = useState<"sidebar" | "editor" | "preview">("editor");
+  const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
 
   const [backupsOpen, setBackupsOpen] = useState(false);
   const [botModalOpen, setBotModalOpen] = useState(false);
@@ -345,30 +353,23 @@ export const App: React.FC = () => {
   const [webhookDropOpen, setWebhookDropOpen] = useState(false);
   const [botDropOpen, setBotDropOpen] = useState(false);
 
-  const { isSidebarOpen, setIsSidebarOpen, toggleSidebar } = useGlobalStore();
-
   const webhookUrl = useProfileStore((state) => state.webhookUrl);
   const setWebhookUrl = useProfileStore((state) => state.setWebhookUrl);
   const setSendMode = useProfileStore((state) => state.setSendMode);
   const { sendMessage } = useSend();
 
+  const messages = useMessageStore((state) => state.messages);
+  const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex);
+  const addMessage = useMessageStore((state) => state.addMessage);
+  const removeMessage = useMessageStore((state) => state.removeMessage);
+  const duplicateMessage = useMessageStore((state) => state.duplicateMessage);
+  const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
+
+  const isSidebarOpen = useGlobalStore((state) => state.isSidebarOpen);
+  const setIsSidebarOpen = useGlobalStore((state) => state.setIsSidebarOpen);
+
   const webhookRef = useRef<HTMLDivElement>(null);
   const botRef = useRef<HTMLDivElement>(null);
-
-  // Keyboard shortcut listener: Ctrl+B / Cmd+B to toggle sidebar, Escape to close
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        toggleSidebar();
-      }
-      if (e.key === "Escape" && isSidebarOpen) {
-        setIsSidebarOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar, isSidebarOpen, setIsSidebarOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -464,26 +465,9 @@ export const App: React.FC = () => {
       <div className="md:hidden flex bg-[#2b2d31] border-b border-[#1e1f22] shrink-0 p-1.5 gap-1">
         <button
           type="button"
-          onClick={() => {
-            setMobileView("sidebar");
-            setIsSidebarOpen(true);
-          }}
+          onClick={() => setMobileView("editor")}
           className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-            isSidebarOpen || mobileView === "sidebar"
-              ? "bg-[#5865f2] text-white"
-              : "bg-[#35373c] text-[#b5bac1]"
-          }`}
-        >
-          Sidebar
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setMobileView("editor");
-            setIsSidebarOpen(false);
-          }}
-          className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-            !isSidebarOpen && mobileView === "editor"
+            mobileView === "editor"
               ? "bg-[#5865f2] text-white"
               : "bg-[#35373c] text-[#b5bac1]"
           }`}
@@ -492,12 +476,9 @@ export const App: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => {
-            setMobileView("preview");
-            setIsSidebarOpen(false);
-          }}
+          onClick={() => setMobileView("preview")}
           className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-            !isSidebarOpen && mobileView === "preview"
+            mobileView === "preview"
               ? "bg-[#5865f2] text-white"
               : "bg-[#35373c] text-[#b5bac1]"
           }`}
@@ -531,7 +512,6 @@ export const App: React.FC = () => {
         {/* Center & Right Panes: SplitPane hosting Editor & Live Preview */}
         <div
           className={`
-            ${mobileView === "sidebar" ? "hidden" : "flex"}
             md:flex flex-1 min-w-0 h-full w-full
           `}
         >
@@ -544,29 +524,29 @@ export const App: React.FC = () => {
                 } md:flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0`}
               >
                 {/* Action Bar */}
-                <div className="p-2.5 border-b border-[#1e1f22] flex flex-col gap-2 shrink-0 bg-[#2b2d31]">
+                <div className="p-3 border-b border-[#1e1f22] flex flex-col gap-2 shrink-0 bg-[#2b2d31]">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={handleShare}
-                        className="bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                        className="bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] px-3 py-1.5 rounded text-xs font-medium transition-colors"
                       >
-                        <Share2 size={12} /> Share
+                        Share
                       </button>
                       <button
                         type="button"
                         onClick={() => setBackupsOpen(true)}
-                        className="bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                        className="bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] px-3 py-1.5 rounded text-xs font-medium transition-colors"
                       >
-                        <FolderOpen size={12} /> Backups
+                        Backups
                       </button>
                       <button
                         type="button"
                         onClick={handleClearAll}
-                        className="bg-[#35373c] hover:bg-[#da373c] text-[#dbdee1] hover:text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                        className="bg-[#35373c] hover:bg-[#da373c] text-[#dbdee1] hover:text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
                       >
-                        <Trash2 size={12} /> Clear
+                        Clear All
                       </button>
                     </div>
 
@@ -641,10 +621,48 @@ export const App: React.FC = () => {
                 </div>
 
                 {/* Editor Workspace */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  <Accordion title="Message 1" defaultOpen={true}>
-                    <MessageEditor />
-                  </Accordion>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+                  {(messages || []).map((_, index) => (
+                    <Accordion
+                      key={index}
+                      title={`Message ${index + 1}`}
+                      isOpen={index === activeMessageIndex}
+                      onToggle={() => setActiveMessageIndex(index)}
+                      badge={
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => duplicateMessage(index)}
+                            className="p-1 text-[#949ba4] hover:text-[#dbdee1] rounded hover:bg-[#35373c] transition-colors"
+                            title="Duplicate Message"
+                          >
+                            <Copy size={13} />
+                          </button>
+                          {messages.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeMessage(index)}
+                              className="p-1 text-[#949ba4] hover:text-[#f28b8b] rounded hover:bg-[#da373c]/20 transition-colors"
+                              title="Delete Message"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      }
+                    >
+                      <MessageEditor />
+                    </Accordion>
+                  ))}
+                  <button 
+                    type="button"
+                    className="w-full bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] font-semibold py-2 px-3 rounded text-xs transition-colors flex items-center justify-center gap-1.5 border border-[#1e1f22]"
+                    onClick={() => addMessage()}
+                    disabled={messages.length >= 10}
+                    title="Add Message (Multi-message)"
+                  >
+                    <Plus size={14} /> Add Message
+                  </button>
                 </div>
               </div>
             }

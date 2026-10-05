@@ -27,7 +27,8 @@ const formatBytes = (bytes: number): string => {
 };
 
 export const FileAttachmentsSection: React.FC = () => {
-  const [open, setOpen] = useState(true);
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
+  const [open, setOpen] = useState(attachedFiles.length > 0);
   const [isDragging, setIsDragging] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [urlOpen, setUrlOpen] = useState(false);
@@ -35,7 +36,6 @@ export const FileAttachmentsSection: React.FC = () => {
   const [urlError, setUrlError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const addFiles = useMessageStore((state) => state.addFiles);
   const addUrlAttachment = useMessageStore((state) => state.addUrlAttachment);
   const removeFile = useMessageStore((state) => state.removeFile);
@@ -138,6 +138,7 @@ export const FileAttachmentsSection: React.FC = () => {
                   e.stopPropagation();
                   setUrlOpen((v) => !v);
                   setUrlError(null);
+                  setOpen(true);
                 }}
                 className="text-[11px] font-semibold text-[#5865f2] hover:underline cursor-pointer normal-case flex items-center gap-1"
               >
@@ -158,6 +159,19 @@ export const FileAttachmentsSection: React.FC = () => {
         </div>
       </button>
 
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          setOpen(true);
+          e.target.value = ""; // Reset so same file can be re-selected if deleted
+        }}
+      />
+
       {open && (
         <div className="p-3 pt-0 border-t border-[#111214] space-y-3 mt-1">
           {errorMsg && (
@@ -166,18 +180,6 @@ export const FileAttachmentsSection: React.FC = () => {
               <span>{errorMsg}</span>
             </div>
           )}
-
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              handleFiles(e.target.files);
-              e.target.value = ""; // Reset so same file can be re-selected if deleted
-            }}
-          />
 
           {/* Add Attachment by External URL (Discohook-style) */}
           {urlOpen && (

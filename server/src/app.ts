@@ -85,6 +85,7 @@ export const createApp = (): Express => {
   app.use("/api/access", accessRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/discord", discordRouter);
+  app.use("/api/v1", discordRouter);
   app.use("/api/auth", authRouter);
 
   // Root ping so hitting the bare host is informative rather than a 404 page.

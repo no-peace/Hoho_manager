@@ -50,6 +50,8 @@ export const useSend = (): UseSendReturn => {
 
     try {
       let result: unknown;
+      const isMulti = store.messages && store.messages.length > 1;
+      const allPayloads = isMulti ? store.getAllPayloads() : [rawPayload];
       const payload = { ...rawPayload };
 
       // Local files ride as multipart `files`; external URL attachments are
@@ -72,7 +74,8 @@ export const useSend = (): UseSendReturn => {
         const formData = new FormData();
         const sendBody = {
           mode: sendMode === SEND_MODES.BOT ? "bot" : "webhook",
-          payload,
+          payload: isMulti ? undefined : payload,
+          messages: isMulti ? allPayloads : undefined,
           channelId: sendMode === SEND_MODES.BOT ? channelId : undefined,
           webhookUrl: sendMode === SEND_MODES.BOT ? undefined : webhookUrl,
           threadId: threadId || undefined,
@@ -90,7 +93,8 @@ export const useSend = (): UseSendReturn => {
       } else if (sendMode === SEND_MODES.BOT) {
         result = await api.send({
           mode: "bot",
-          payload,
+          payload: isMulti ? undefined : payload,
+          messages: isMulti ? allPayloads : undefined,
           channelId,
           profileId: botProfileId ?? undefined,
           flows: useActionStore.getState().toRegistrations(),
@@ -102,13 +106,21 @@ export const useSend = (): UseSendReturn => {
         // webhook send with URL attachments is proxied through the API.
         result = await api.send({
           mode: "webhook",
-          payload,
+          payload: isMulti ? undefined : payload,
+          messages: isMulti ? allPayloads : undefined,
           webhookUrl,
           threadId: threadId || undefined,
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
           attachments: urlAttachments,
         });
+      } else if (isMulti) {
+        const results = [];
+        for (const p of allPayloads) {
+          const res = await sendWebhookDirect(webhookUrl, p, { threadId: threadId || undefined });
+          results.push(res);
+        }
+        result = results[0];
       } else {
         result = await sendWebhookDirect(webhookUrl, payload, { threadId: threadId || undefined });
       }

@@ -197,9 +197,13 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
 
 /* ── Interactive ──────────────────────────────────────────────────────────── */
 
+import { useMessageStore } from '../../store/messageStore';
+
 const ButtonForm = ({ component, update }: ComponentFormProps) => {
   const isLink = component.style === ButtonStyle.Link;
   const isPremium = component.style === ButtonStyle.Premium;
+  const isV2 = useMessageStore((state) => state.mode) === "v2";
+  const styleOptions = Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => ({ value, label })).filter((opt) => isV2 || Number(opt.value) === ButtonStyle.Link);
 
   return (
     <>
@@ -214,7 +218,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
         label="Style"
         value={String(component.style ?? ButtonStyle.Primary)}
         onChange={(event) => update(buttonStylePatch(component, Number(event.target.value)))}
-        options={Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => ({ value, label }))}
+        options={styleOptions}
       />
 
       {isLink ? (

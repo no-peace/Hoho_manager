@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
   Image as ImageIcon,
   Plus,
-  User,
+  Sliders,
+  Flag,
+  AtSign,
 } from "lucide-react";
 import { Limits } from "@dmb/shared";
 import { Button } from "../ui/Button";
@@ -14,6 +16,8 @@ import { EmbedEditor } from "./EmbedEditor";
 import { DiscohookComponentsEditor } from "./DiscohookComponentsEditor";
 import { ComponentPalette } from "./ComponentPalette";
 import { FileAttachmentsSection } from "./FileAttachmentsSection";
+import { FlagsModal } from "./FlagsModal";
+import { AllowedMentionsModal } from "./AllowedMentionsModal";
 import { useMessage } from "../../hooks/useMessage";
 import { useMessageStore } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
@@ -25,22 +29,40 @@ export const MessageEditor = () => {
   const setField = useMessageStore((state) => state.setField);
   const addEmbed = useMessageStore((state) => state.addEmbed);
   const [identityOpen, setIdentityOpen] = useState(false);
+  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
+  const [flagsOpen, setFlagsOpen] = useState(false);
+  const [mentionsOpen, setMentionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
 
-  const identitySection = (
-    <section className="bg-[#232428] rounded border border-[#1e1f22]">
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+        setOptionsMenuOpen(false);
+      }
+    };
+    if (optionsMenuOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [optionsMenuOpen]);
+
+  const profileSection = (
+    <div className="border border-[#1e1f22] rounded-lg bg-[#2b2d31] shadow-sm transition-colors overflow-hidden">
       <button
         type="button"
         onClick={() => setIdentityOpen(!identityOpen)}
-        className="w-full flex items-center justify-between p-2.5 text-left text-xs font-bold text-[#949ba4] hover:text-[#dbdee1] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+        className="w-full flex items-center justify-between p-3 text-left text-xs font-bold text-[#949ba4] hover:bg-[#35373c]/30 hover:text-[#dbdee1] transition-colors focus-visible:outline-none"
       >
-        <span className="flex items-center gap-1.5 uppercase tracking-wide text-[11px]">
-          <User size={13} /> Message Identity (Optional)
+        <span className="flex items-center gap-1.5 uppercase tracking-wide text-xs font-bold">
+          Profile
         </span>
-        {identityOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        {identityOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
       </button>
       {identityOpen && (
-        <div className="p-2.5 pt-0 border-t border-[#1e1f22] space-y-2 mt-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-3 bg-[#313338]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <TextField
               label="Username"
               placeholder="Webhook name override"
@@ -49,7 +71,7 @@ export const MessageEditor = () => {
             />
             <TextField
               label="Avatar URL"
-              placeholder="https://…"
+              placeholder="https://."
               value={data.avatar_url || ""}
               onChange={(e) => setField("avatar_url", e.target.value)}
             />
@@ -62,45 +84,96 @@ export const MessageEditor = () => {
           />
         </div>
       )}
-    </section>
+    </div>
   );
 
   return (
     <div className="space-y-3">
-      {/* Editor Mode Tabs */}
-      <div
-        className="flex rounded-lg bg-[#1e1f22] p-1 border border-[#111214]"
-        role="tablist"
-        aria-label="Editor Mode"
-      >
-        <button
-          type="button"
-          role="tab"
-          id="editor-tab-classic"
-          aria-selected={mode === EDITOR_MODES.CLASSIC}
-          onClick={() => setMode(EDITOR_MODES.CLASSIC)}
-          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
-            mode === EDITOR_MODES.CLASSIC
-              ? "bg-[#5865f2] text-white shadow-sm"
-              : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]/50"
-          }`}
+      {/* Editor Mode Tabs & Options */}
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className="flex-1 flex rounded-lg bg-[#1e1f22] p-1 border border-[#111214]"
+          role="tablist"
+          aria-label="Editor Mode"
         >
-          Classic
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="editor-tab-v2"
-          aria-selected={mode === EDITOR_MODES.V2}
-          onClick={() => setMode(EDITOR_MODES.V2)}
-          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
-            mode === EDITOR_MODES.V2
-              ? "bg-[#5865f2] text-white shadow-sm"
-              : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]/50"
-          }`}
-        >
-          Components V2
-        </button>
+          <button
+            type="button"
+            role="tab"
+            id="editor-tab-classic"
+            aria-selected={mode === EDITOR_MODES.CLASSIC}
+            onClick={() => setMode(EDITOR_MODES.CLASSIC)}
+            className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
+              mode === EDITOR_MODES.CLASSIC
+                ? "bg-[#5865f2] text-white shadow-sm"
+                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]/50"
+            }`}
+          >
+            Classic
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="editor-tab-v2"
+            aria-selected={mode === EDITOR_MODES.V2}
+            onClick={() => setMode(EDITOR_MODES.V2)}
+            className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
+              mode === EDITOR_MODES.V2
+                ? "bg-[#5865f2] text-white shadow-sm"
+                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]/50"
+            }`}
+          >
+            Components V2
+          </button>
+        </div>
+
+        {/* Options Dropdown */}
+        <div className="relative" ref={optionsRef}>
+          <button
+            type="button"
+            onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1f22] hover:bg-[#35373c] border border-[#111214] rounded-lg text-xs font-semibold text-[#dbdee1] transition-colors"
+            title="Message Options (Flags, Allowed Mentions)"
+          >
+            <Sliders size={13} className="text-[#949ba4]" />
+            <span>Options</span>
+            <ChevronDown size={12} className="text-[#949ba4]" />
+          </button>
+
+          {optionsMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 w-48 bg-[#1e1f22] border border-[#111214] rounded-lg shadow-2xl py-1 z-30 space-y-0.5">
+              <button
+                type="button"
+                onClick={() => { setOptionsMenuOpen(false); setFlagsOpen(true); }}
+                className="w-full text-left px-3 py-1.5 text-xs text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Flag size={13} />
+                  <span>Flags</span>
+                </div>
+                {Boolean(data.flags) && (
+                  <span className="text-[10px] bg-[#5865f2] text-white px-1.5 py-0.2 rounded font-mono">
+                    {data.flags}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOptionsMenuOpen(false); setMentionsOpen(true); }}
+                className="w-full text-left px-3 py-1.5 text-xs text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <AtSign size={13} />
+                  <span>Allowed Mentions</span>
+                </div>
+                {Boolean(data.allowed_mentions) && (
+                  <span className="text-[10px] bg-[#23a55a] text-white px-1.5 py-0.2 rounded">
+                    Active
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {problems.length > 0 && (
@@ -119,7 +192,7 @@ export const MessageEditor = () => {
 
       {mode === EDITOR_MODES.V2 ? (
         <>
-          {identitySection}
+          {profileSection}
           <FileAttachmentsSection />
           <section className="pt-1">
             <DiscohookComponentsEditor />
@@ -148,7 +221,7 @@ export const MessageEditor = () => {
             />
           </section>
 
-          {identitySection}
+          {profileSection}
 
           {/* File Attachments */}
           <FileAttachmentsSection />
@@ -185,6 +258,9 @@ export const MessageEditor = () => {
           </section>
         </>
       )}
+
+      <FlagsModal open={flagsOpen} onClose={() => setFlagsOpen(false)} />
+      <AllowedMentionsModal open={mentionsOpen} onClose={() => setMentionsOpen(false)} />
     </div>
   );
 };

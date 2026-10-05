@@ -1,15 +1,17 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
   Plus,
   Trash2,
+  Shield,
 } from "lucide-react";
 import { AdaptiveFields, SetVariableModes } from "@dmb/shared";
 import type { ActionConfig, FlowStep } from "@dmb/shared";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
+import { useGlobalStore } from "../../store/globalStore";
 
 interface ConfigField {
   key: string;
@@ -159,6 +161,58 @@ export const DiscordModalPreview = ({
   );
 };
 
+export const RoleSelect: React.FC<{
+  guildId: string | null;
+  value: string;
+  onChange: (val: string) => void;
+}> = ({ guildId, value, onChange }) => {
+  const [roles, setRoles] = useState<Array<{ id: string; name: string; color: number }>>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!guildId) return;
+    let cancelled = false;
+    setLoading(true);
+    import("../../api/client").then(({ api }) => {
+      api.discord.roles(guildId)
+        .then((res) => {
+          if (!cancelled && res?.roles) setRoles(res.roles);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
+    return () => { cancelled = true; };
+  }, [guildId]);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-semibold text-[#dbdee1]">Discord Role</label>
+        {loading && <span className="text-[10px] text-[#5865f2] animate-pulse">Loading roles...</span>}
+      </div>
+      {roles.length > 0 && (
+        <Select
+          label="Server Role"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          options={[
+            { value: "", label: "-- Select a role --" },
+            ...roles.map((r) => ({ value: r.id, label: `@${r.name}` })),
+          ]}
+        />
+      )}
+      <TextField
+        label={roles.length > 0 ? "Or enter Role ID manually" : "Role ID"}
+        value={value}
+        placeholder="123456789012345678"
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+};
+
 export interface StepListProps {
   steps: FlowStep[];
   onChange: (steps: FlowStep[]) => void;
@@ -168,6 +222,7 @@ export interface StepListProps {
 export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const [addingType, setAddingType] = useState<string>("add_role");
   const nested = depth > 0;
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
   const actionTypes = useActionStore((state) => state.actionTypes);
   const typeOptions = useMemo(
@@ -464,6 +519,11 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
     }
 
     if (step.type === CHECK_KEY) {
+      const isMemberHasRole = config.checkType === "member_has_role" || config.function === "member_has_role";
+      const roleMode = asText(config.roleMode || config.mode) || "static";
+      const roleId = asText(config.roleId || config.role || config.value);
+      const target = asText(config.target) || "member";
+
       const left = asText(config.left);
       const op = asText(config.op || config.operator) || "==";
       const right = asText(config.right);
@@ -481,48 +541,125 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
       return (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            <TextField
-              label="Left side"
-              value={left}
-              placeholder="{user.id}"
-              onChange={(e) => patchConfig(index, { ...config, left: e.target.value })}
-            />
-            <Select
-              label="Condition"
-              value={op}
-              onChange={(e) => patchConfig(index, { ...config, op: e.target.value, operator: e.target.value })}
-              options={[
-                { value: "==", label: "equals (==)" },
-                { value: "!=", label: "not equals (!=)" },
-                { value: ">", label: "greater than (>)" },
-                { value: ">=", label: "greater or equal (>=)" },
-                { value: "<", label: "less than (<)" },
-                { value: "<=", label: "less or equal (<=)" },
-                { value: "includes", label: "includes" },
-                { value: "starts_with", label: "starts with" },
-                { value: "ends_with", label: "ends with" },
-                { value: "is_empty", label: "is empty" },
-                { value: "is_not_empty", label: "is not empty" },
-              ]}
-            />
-            <TextField
-              label="Right side"
-              value={right}
-              placeholder="123456789"
-              onChange={(e) => patchConfig(index, { ...config, right: e.target.value })}
-            />
+          {/* Check Type Toggle */}
+          <div className="flex items-center gap-1 bg-[#1e1f22] p-1 rounded border border-[#111214]">
+            <button
+              type="button"
+              onClick={() => patchConfig(index, { ...config, checkType: "member_has_role", function: "member_has_role" })}
+              className={`flex-1 py-1 px-2 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                isMemberHasRole ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"
+              }`}
+            >
+              <Shield size={13} /> Member has role
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = { ...config };
+                delete next.checkType;
+                if (next.function === "member_has_role") delete next.function;
+                patchConfig(index, next);
+              }}
+              className={`flex-1 py-1 px-2 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                !isMemberHasRole ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"
+              }`}
+            >
+              Comparison (A == B)
+            </button>
           </div>
 
+          {isMemberHasRole ? (
+            <div className="space-y-3 bg-[#1e1f22] p-3 rounded-lg border border-[#2b2d31]">
+              <div className="grid grid-cols-2 gap-2">
+                <Select
+                  label="Target Member"
+                  value={target}
+                  onChange={(e) => patchConfig(index, { ...config, target: e.target.value })}
+                  options={[
+                    { value: "member", label: "Triggering User (Clicker)" },
+                    { value: "selected_member", label: "Selected User / Context" },
+                  ]}
+                />
+                <Select
+                  label="Role Selection Mode"
+                  value={roleMode}
+                  onChange={(e) => patchConfig(index, { ...config, roleMode: e.target.value, mode: e.target.value })}
+                  options={[
+                    { value: "static", label: "Static (Guild Role / ID)" },
+                    { value: "adaptive", label: "Adaptive ({variable})" },
+                    { value: "mirror", label: "Mirror / Get (from user)" },
+                  ]}
+                />
+              </div>
+
+              {roleMode === "static" ? (
+                <RoleSelect
+                  guildId={selectedGuildId}
+                  value={roleId}
+                  onChange={(val) => patchConfig(index, { ...config, roleId: val, role: val, value: val })}
+                />
+              ) : roleMode === "adaptive" ? (
+                <TextField
+                  label="Role Variable (Adaptive)"
+                  value={roleId}
+                  placeholder="selected_role or {target_role_id}"
+                  hint="Reads role ID dynamically from flow variable"
+                  onChange={(e) => patchConfig(index, { ...config, roleId: e.target.value, role: e.target.value, value: e.target.value })}
+                />
+              ) : (
+                <TextField
+                  label="Mirror Source Variable"
+                  value={roleId}
+                  placeholder="author.roles or target.role_id"
+                  hint="Mirrors role from external context or variable"
+                  onChange={(e) => patchConfig(index, { ...config, roleId: e.target.value, role: e.target.value, value: e.target.value })}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              <TextField
+                label="Left side"
+                value={left}
+                placeholder="{user.id}"
+                onChange={(e) => patchConfig(index, { ...config, left: e.target.value })}
+              />
+              <Select
+                label="Condition"
+                value={op}
+                onChange={(e) => patchConfig(index, { ...config, op: e.target.value, operator: e.target.value })}
+                options={[
+                  { value: "==", label: "equals (==)" },
+                  { value: "!=", label: "not equals (!=)" },
+                  { value: ">", label: "greater than (>)" },
+                  { value: ">=", label: "greater or equal (>=)" },
+                  { value: "<", label: "less than (<)" },
+                  { value: "<=", label: "less or equal (<=)" },
+                  { value: "includes", label: "includes" },
+                  { value: "starts_with", label: "starts with" },
+                  { value: "ends_with", label: "ends with" },
+                  { value: "is_empty", label: "is empty" },
+                  { value: "is_not_empty", label: "is not empty" },
+                ]}
+              />
+              <TextField
+                label="Right side"
+                value={right}
+                placeholder="123456789"
+                onChange={(e) => patchConfig(index, { ...config, right: e.target.value })}
+              />
+            </div>
+          )}
+
           <BranchEditor
-            label="Condition Passed (Then)"
+            label={isMemberHasRole ? "Has Role (Then)" : "Condition Passed (Then)"}
             steps={passSteps}
             depth={depth + 1}
             onChange={(nextPass) => patchConfig(index, { ...config, pass: nextPass, then: nextPass })}
           />
 
           <BranchEditor
-            label="Condition Failed (Else)"
+            label={isMemberHasRole ? "Does Not Have Role (Else)" : "Condition Failed (Else)"}
             steps={failSteps}
             depth={depth + 1}
             onChange={(nextFail) => patchConfig(index, { ...config, fail: nextFail, else: nextFail })}

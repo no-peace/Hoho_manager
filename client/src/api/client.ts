@@ -257,6 +257,52 @@ export const api = {
       }>(
         `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
       ),
+    auditLogs: (guildId: string, params?: { limit?: number; page?: number; action?: string; channelId?: string; webhookId?: string; userId?: string }) => {
+      const sp = new URLSearchParams();
+      if (params?.limit) sp.set("limit", String(params.limit));
+      if (params?.page) sp.set("page", String(params.page));
+      if (params?.action) sp.set("action", params.action);
+      if (params?.channelId) sp.set("channelId", params.channelId);
+      if (params?.webhookId) sp.set("webhookId", params.webhookId);
+      if (params?.userId) sp.set("userId", params.userId);
+      const query = sp.toString() ? `?${sp.toString()}` : "";
+      return request<{
+        entries: Array<{
+          id: string;
+          guild_id: string;
+          channel_id?: string | null;
+          user_id?: string | null;
+          user_name?: string | null;
+          type: string;
+          reason?: string | null;
+          details?: string | null;
+          created_at: string;
+        }>;
+        total: number;
+        query: { limit: number; page: number };
+      }>(`/api/discord/guilds/${guildId}/audit-logs${query}`);
+    },
+    sessions: (guildId: string, params?: { channelId?: string; cursor?: number }) => {
+      const sp = new URLSearchParams();
+      if (params?.channelId) sp.set("channelId", params.channelId);
+      if (params?.cursor !== undefined) sp.set("cursor", String(params.cursor));
+      const query = sp.toString() ? `?${sp.toString()}` : "";
+      return request<{
+        cursor: number;
+        channelId: string | null;
+        results: Array<{
+          tokenId: string;
+          createdAt: number;
+          expiresAt: number;
+          permissions: string;
+          owner: boolean;
+          me: boolean;
+          channelId?: string | null;
+        }>;
+      }>(`/api/discord/guilds/${guildId}/sessions${query}`);
+    },
+    revokeSession: (guildId: string, tokenId: string) =>
+      request<{ ok: boolean; revoked: number }>(`/api/discord/guilds/${guildId}/sessions/${tokenId}`, { method: "DELETE" }),
   },
 
   auth: {

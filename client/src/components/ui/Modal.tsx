@@ -21,19 +21,22 @@ export const Modal: React.FC<ModalProps> = ({
   width = "max-w-md",
 }) => {
   useEffect(() => {
+    if (typeof document === "undefined" || !document.body) return;
     if (open) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = "unset";
+      if (typeof document !== "undefined" && document.body) {
+        document.body.style.overflow = "unset";
+      }
     };
   }, [open]);
 
   if (!open) return null;
 
-  return createPortal(
+  const modalContent = (
     <div 
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onClick={onClose}
@@ -70,9 +73,14 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   );
+
+  if (typeof document === "undefined" || !document.body) {
+    return modalContent;
+  }
+
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;

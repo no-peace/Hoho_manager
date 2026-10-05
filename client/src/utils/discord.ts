@@ -74,7 +74,7 @@ export const toDiscordPayload = (
     // Components V2 carries its own text; classic content/embeds are invalid
     // alongside it, so only `components` and the flag are sent.
     payload.components = stripInternal(data.components ?? []) as ComponentNode[];
-    payload.flags = MessageFlags.IsComponentsV2;
+    payload.flags = (data.flags ?? 0) | MessageFlags.IsComponentsV2;
   } else {
     if (data.content) payload.content = data.content;
     if (data.embeds.length > 0) {
@@ -86,6 +86,13 @@ export const toDiscordPayload = (
     if (classicComponents.length > 0) {
       payload.components = stripInternal(classicComponents) as ComponentNode[];
     }
+    if (data.flags) {
+      payload.flags = data.flags;
+    }
+  }
+
+  if (data.allowed_mentions) {
+    payload.allowed_mentions = data.allowed_mentions;
   }
 
   return payload;

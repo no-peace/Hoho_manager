@@ -193,5 +193,43 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE staff_access ADD COLUMN granular_rate_limits TEXT NOT NULL DEFAULT '{}';
     `,
   },
+  {
+    id: "006_audit_and_sessions",
+    sql: `
+      CREATE TABLE IF NOT EXISTS audit_log_entries (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id     TEXT    NOT NULL,
+        channel_id   TEXT,
+        message_id   TEXT,
+        webhook_id   TEXT,
+        thread_id    TEXT,
+        user_id      TEXT,
+        user_name    TEXT,
+        user_avatar  TEXT,
+        type         TEXT    NOT NULL,
+        reason       TEXT,
+        details      TEXT,
+        created_at   INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_log_guild ON audit_log_entries(guild_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_type ON audit_log_entries(type);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_channel ON audit_log_entries(channel_id);
+
+      CREATE TABLE IF NOT EXISTS active_sessions (
+        id           TEXT PRIMARY KEY,
+        guild_id     TEXT NOT NULL,
+        user_id      TEXT NOT NULL,
+        permissions  TEXT NOT NULL DEFAULT '0',
+        channel_id   TEXT,
+        created_at   INTEGER NOT NULL,
+        expires_at   INTEGER NOT NULL,
+        is_active    INTEGER NOT NULL DEFAULT 1
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_sessions_guild ON active_sessions(guild_id);
+      CREATE INDEX IF NOT EXISTS idx_sessions_user ON active_sessions(user_id);
+    `,
+  },
 ];
 

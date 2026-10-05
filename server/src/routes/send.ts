@@ -32,19 +32,15 @@ router.post(
   sendLimiter,
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
-    const { mode, payload: rawPayload, channelId, webhookUrl, threadId, profileId: rawProfileId, editMessageId, ...body } = req.body;
+    const { mode, payload: rawPayload, messages: rawMessages, channelId, webhookUrl, threadId, profileId: rawProfileId, editMessageId, ...body } = req.body;
     const profileId = parseProfileId(rawProfileId);
 
     if (mode !== "bot" && mode !== "webhook") {
       throw ApiError.badRequest('`mode` must be "bot" or "webhook"');
     }
 
-    // STRICT SANITIZATION: Remove internal IDs and empty arrays that cause Invalid Form Body
-    const message = validateMessagePayload(rawPayload);
-    if (message.embeds && message.embeds.length === 0) delete message.embeds;
-    if (message.components && message.components.length === 0) delete message.components;
-    if (message.flags === 0) delete message.flags;
-    
+    const staffCtx = req.staffContext;
+
     // Cleanse UI-only _id properties recursively
     const cleanseIds = (obj: any): any => {
       if (Array.isArray(obj)) return obj.map(cleanseIds);
@@ -57,28 +53,44 @@ router.post(
       }
       return obj;
     };
-    const sanitizedMessage = cleanseIds(message);
 
-    // For staff sends (x-staff-id present), scrub disallowed mentions and log
-    const staffCtx = req.staffContext;
-    let finalMessage = sanitizedMessage;
-    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-      const { scrubMentions, sanitizeAllowedMentions } = await import("../utils/mentionScrubber.js");
-      const { payload: scrubbed, stripped } = scrubMentions(sanitizedMessage, staffCtx.record);
-      finalMessage = sanitizeAllowedMentions(scrubbed, staffCtx.record);
-      if (stripped.length > 0) {
-        const { auditLog } = await import("../services/auditLog.js");
-        auditLog({
-          event: "MENTION_BLOCKED",
-          actorDiscordId: staffCtx.staffId ?? undefined,
-          channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
-          reason: `Stripped disallowed mentions: ${stripped.join(", ")}`,
-          ip: req.ip,
-        });
+    const processMessage = async (raw: unknown) => {
+      const message = validateMessagePayload(raw);
+      if (message.embeds && message.embeds.length === 0) delete message.embeds;
+      if (message.components && message.components.length === 0) delete message.components;
+      if (message.flags === 0) delete message.flags;
+
+      const sanitizedMessage = cleanseIds(message);
+
+      if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+        const { scrubMentions, sanitizeAllowedMentions } = await import("../utils/mentionScrubber.js");
+        const { payload: scrubbed, stripped } = scrubMentions(sanitizedMessage, staffCtx.record);
+        const finalMsg = sanitizeAllowedMentions(scrubbed, staffCtx.record);
+        if (stripped.length > 0) {
+          const { auditLog } = await import("../services/auditLog.js");
+          auditLog({
+            event: "MENTION_BLOCKED",
+            actorDiscordId: staffCtx.staffId ?? undefined,
+            channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+            reason: `Stripped disallowed mentions: ${stripped.join(", ")}`,
+            ip: req.ip,
+          });
+        }
+        return finalMsg;
       }
-    } else {
-      finalMessage = sanitizedMessage;
+      return sanitizedMessage;
+    };
+
+    const isMulti = Array.isArray(rawMessages) && rawMessages.length > 0;
+    if (isMulti && rawMessages.length > 10) {
+      throw ApiError.badRequest("Too many messages: maximum 10 allowed");
     }
+    if (!isMulti && (!rawPayload || typeof rawPayload !== "object")) {
+      throw ApiError.badRequest("Message payload is required");
+    }
+    const messagesToProcess = isMulti ? rawMessages : [rawPayload];
+    const finalMessages = await Promise.all(messagesToProcess.map(processMessage));
+    const firstMessage = finalMessages[0];
 
     const rawFlows = parseFlowRegistrations(body.flows);
     let flows = rawFlows;
@@ -126,36 +138,44 @@ router.post(
       if (typeof webhookUrl !== "string") {
         throw ApiError.badRequest('`webhookUrl` is required when mode is "webhook"');
       }
-      const sent = await discord.sendWebhook(webhookUrl, finalMessage, {
-        wait: true,
-        threadId: typeof threadId === "string" ? threadId : null,
-        files,
-      });
-      await registerMessageFlows(sent);
+      const sentList = [];
+      for (const msg of finalMessages) {
+        const sent = await discord.sendWebhook(webhookUrl, msg, {
+          wait: true,
+          threadId: typeof threadId === "string" ? threadId : null,
+          files,
+        });
+        await registerMessageFlows(sent);
+        sentList.push(sent);
+      }
       log.info(`Webhook send by user ${req.user?.id ?? "?"}`);
-      return res.json({ ok: true, mode, message: sent });
+      return res.json({ ok: true, mode, message: sentList[0], messages: sentList });
     }
 
     if (typeof channelId !== "string") {
       throw ApiError.badRequest('`channelId` is required when mode is "bot"');
     }
 
-    let sent;
+    const sentList = [];
     if (typeof editMessageId === "string" && editMessageId.trim() !== "") {
-      sent = await discord.editChannelMessage(channelId, editMessageId, finalMessage, {
+      const sent = await discord.editChannelMessage(channelId, editMessageId, firstMessage, {
         profileId,
         files,
       });
+      await registerMessageFlows(sent);
+      sentList.push(sent);
       log.info(`Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`);
     } else {
-      sent = await discord.sendChannelMessage(channelId, finalMessage, {
-        profileId,
-        files,
-      });
+      for (const msg of finalMessages) {
+        const sent = await discord.sendChannelMessage(channelId, msg, {
+          profileId,
+          files,
+        });
+        await registerMessageFlows(sent);
+        sentList.push(sent);
+      }
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }
-
-    await registerMessageFlows(sent);
 
     // Audit log for staff sends
     if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
@@ -170,7 +190,7 @@ router.post(
       });
     }
 
-    return res.json({ ok: true, mode, message: sent });
+    return res.json({ ok: true, mode, message: sentList[0], messages: sentList });
   }),
 );
 

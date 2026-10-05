@@ -157,6 +157,24 @@ export const auditLog = (ctx: AuditContext): void => {
       const logChannelId = await settingsService.getEffectiveLogChannelId(ctx.guildId);
       const botToken = env.discord.botToken;
 
+      if (ctx.guildId) {
+        try {
+          const { auditLogRepository } = await import("../repositories/auditLogRepository.js");
+          await auditLogRepository.create({
+            guildId: ctx.guildId,
+            channelId: ctx.channelId,
+            messageId: ctx.messageId,
+            userId: ctx.actorDiscordId,
+            userName: ctx.actorUsername,
+            type: ctx.event.toLowerCase(),
+            reason: ctx.reason,
+            details: ctx.details,
+          });
+        } catch {
+          // DB persistence failure should not interrupt execution
+        }
+      }
+
       if (!logChannelId || !botToken) {
         // Log locally when no channel is configured — still useful during dev.
         log.info(`[AUDIT] ${ctx.event} actor=${ctx.actorDiscordId ?? "?"} reason=${ctx.reason ?? "-"}`);

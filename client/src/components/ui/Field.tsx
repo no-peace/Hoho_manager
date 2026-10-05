@@ -1,6 +1,5 @@
 import { Check } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useRef } from "react";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export const VARIABLES = [
@@ -29,97 +28,6 @@ export const VARIABLES = [
   { tag: "{now.unix}", label: "1698144000", desc: "Raw Unix timestamp number" },
 ];
 
-const VariablePicker = ({ onSelect }: { onSelect: (tag: string) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-const toggleDropdown = () => {
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const dropWidth = 256; // 64rem (w-64 in Tailwind)
-      const dropHeight = 300; // max-h constraint
-      
-      // Calculate Top/Bottom
-      let top = rect.bottom + 4;
-      if (top + dropHeight > window.innerHeight) {
-        top = rect.top - dropHeight - 4; // Flip upwards if too close to bottom
-      }
-      
-      // Calculate Left/Right with STRICT screen edge clamping
-      let left = rect.right - dropWidth;
-      
-      // FIX: If the left coordinate is less than 10px from the screen edge, force it to 10px!
-      if (left < 10) {
-        left = 10;
-      }
-      // If the right edge bleeds off the screen, pin it to the right edge
-      if (left + dropWidth > window.innerWidth) {
-        left = window.innerWidth - dropWidth - 10;
-      }
-      
-      setCoords({ top, left });
-    }
-    setIsOpen(!isOpen);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-          buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    
-    const handleScroll = (e: Event) => {
-      if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) return;
-      setIsOpen(false);
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      window.addEventListener("scroll", handleScroll, true);
-    }
-    
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [isOpen]);
-
-  return (
-    <>
-      <button ref={buttonRef} type="button" onClick={toggleDropdown} className="absolute right-2 top-1.5 z-10 flex h-[22px] items-center justify-center rounded bg-[#2b2d31] px-2 text-[11px] font-mono font-bold text-[#b5bac1] hover:bg-[#5865f2] hover:text-white transition-colors border border-[#1e1f22] shadow-sm" title="Insert Variable">
-        {"{ }"}
-      </button>
-      
-      {isOpen && createPortal(
-        <div ref={dropdownRef} style={{ top: coords.top, left: coords.left }} className="fixed w-64 rounded-md border border-[#1e1f22] bg-[#2b2d31] shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[300px]">
-          <div className="p-2 border-b border-[#1e1f22] shrink-0 bg-[#2b2d31]">
-            <p className="text-[11px] font-bold uppercase text-[#b5bac1] tracking-wider mb-1">Search Variables</p>
-            <p className="text-[10px] text-[#949ba4]">Filled in dynamically on click.</p>
-          </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-1">
-            {VARIABLES.map((v, i) => v.group ? (
-              <div key={`group-${i}`} className="px-2 pt-3 pb-1 text-[10px] font-bold uppercase text-[#949ba4] tracking-wider border-b border-[#1e1f22]/50 mb-1 mt-1 first:mt-0">{v.group}</div>
-            ) : (
-              <button key={v.tag} type="button" onClick={() => { onSelect(v.tag!); setIsOpen(false); }} className="flex flex-col items-start justify-center rounded px-2 py-1.5 w-full hover:bg-[#5865f2] hover:text-white group transition-colors text-left mb-0.5">
-                <div className="flex w-full items-baseline justify-between">
-                  <span className="font-mono text-[11px] font-bold text-[#5865f2] group-hover:text-white">{v.tag}</span>
-                  <span className="text-[10px] text-[#949ba4] group-hover:text-indigo-200">{v.label}</span>
-                </div>
-                <span className="text-[10px] text-[#b5bac1] group-hover:text-indigo-100 line-clamp-1">{v.desc}</span>
-              </button>
-            ))}
-          </div>
-        </div>,
-        document.body
-      )}
-    </>
-  );
-};
-
 interface FieldShellProps { label?: ReactNode; hint?: ReactNode; counterValue?: string; limit?: number; className?: string; children: ReactNode; }
 
 const FieldShell = ({ label, hint, counterValue = "", limit, className = "", children }: FieldShellProps) => (
@@ -139,6 +47,8 @@ const asText = (value: unknown): string => typeof value === "string" ? value : v
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; hint?: ReactNode; limit?: number; }
 
+import { QuickMentionBox } from "./QuickMentionBox";
+
 export const TextField = ({ label, hint, limit, className, ...props }: TextFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleInsertVariable = (tag: string) => {
@@ -156,7 +66,7 @@ export const TextField = ({ label, hint, limit, className, ...props }: TextField
     <FieldShell label={label ?? (limit !== undefined ? label : undefined)} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
         <input ref={inputRef} className="field w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]" {...props} />
-        <VariablePicker onSelect={handleInsertVariable} />
+        <QuickMentionBox onSelect={handleInsertVariable} />
       </div>
     </FieldShell>
   );
@@ -181,7 +91,7 @@ export const TextArea = ({ label, hint, limit, rows = 4, className, ...props }: 
     <FieldShell label={label} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
         <textarea ref={textAreaRef} rows={rows} className="field resize-y w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] py-2" {...props} />
-        <VariablePicker onSelect={handleInsertVariable} />
+        <QuickMentionBox onSelect={handleInsertVariable} />
       </div>
     </FieldShell>
   );

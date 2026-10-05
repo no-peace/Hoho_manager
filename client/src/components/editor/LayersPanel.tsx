@@ -102,7 +102,7 @@ export const LayersPanel = () => {
   if (components.length === 0) {
     return (
       <p className="rounded border border-dashed border-line px-2.5 py-3 text-[11px] text-ink-faint">
-        No components yet. Add one from the Component Palette in the editor.
+        No components yet. Add one in the editor.
       </p>
     );
   }

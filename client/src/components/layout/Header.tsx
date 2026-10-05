@@ -11,11 +11,15 @@ import {
   Copy,
   Check,
   Shield,
+  ScrollText,
+  Key,
 } from "lucide-react";
-import { IconButton } from "../ui/Button";
+
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { SettingsModal } from "./SettingsModal";
+import { AuditLogsModal } from "./AuditLogsModal";
+import { SessionsModal } from "./SessionsModal";
 import { useMessageStore } from "../../store/messageStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { EDITOR_MODES } from "../../utils/constants";
@@ -80,11 +84,13 @@ const ModeToggle: React.FC = () => {
 export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [auditLogsOpen, setAuditLogsOpen] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { selectedGuildId, setSelectedGuildId, isSidebarOpen, toggleSidebar, currentUser, logout } = useGlobalStore();
+  const { selectedGuildId, setSelectedGuildId, currentUser, logout, toggleSidebar } = useGlobalStore();
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -134,16 +140,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
       <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b-2 border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
         {/* Left: Logo + Toolbox/Drawer button (PanelLeft) + HoHo Manager */}
         <div className="flex items-center gap-2.5">
-          <IconButton
-            icon={PanelLeft}
-            label="Toggle Toolbox (Ctrl+B)"
+          <button
+            type="button"
             onClick={toggleSidebar}
-            className={`transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
-              isSidebarOpen
-                ? "bg-[#5865f2] text-white hover:bg-[#4752c4] shadow-sm"
-                : "text-[#b5bac1] hover:text-white hover:bg-[#35373c]"
-            }`}
-          />
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] text-[#949ba4] hover:text-white transition-colors"
+            title="Toggle Toolbox (Ctrl+B)"
+            aria-label="Toggle Toolbox (Ctrl+B)"
+          >
+            <PanelLeft size={16} />
+          </button>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865f2] text-white shadow-sm">
             <Sparkles size={18} />
           </div>
@@ -164,6 +169,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
               placeholder="Select Server..."
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setAuditLogsOpen(true)}
+            className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+            title="Audit Logs"
+          >
+            <ScrollText size={14} className="text-[#949ba4]" />
+            <span className="hidden lg:inline">Audit Logs</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSessionsOpen(true)}
+            className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+            title="Active Sessions"
+          >
+            <Key size={14} className="text-[#949ba4]" />
+            <span className="hidden lg:inline">Sessions</span>
+          </button>
 
           <button
             type="button"
@@ -265,6 +290,22 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                   <div className="space-y-1">
                     <button
                       type="button"
+                      onClick={() => { setUserMenuOpen(false); setAuditLogsOpen(true); }}
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                    >
+                      <ScrollText size={14} className="text-[#949ba4]" />
+                      <span>Audit Logs</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setUserMenuOpen(false); setSessionsOpen(true); }}
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                    >
+                      <Key size={14} className="text-[#949ba4]" />
+                      <span>Active Sessions</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => { setUserMenuOpen(false); setAccessOpen(true); }}
                       className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
@@ -339,6 +380,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
       {/* Settings Modal */}
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Audit Logs Modal */}
+      <AuditLogsModal open={auditLogsOpen} onClose={() => setAuditLogsOpen(false)} guildId={selectedGuildId} />
+
+      {/* Sessions Modal */}
+      <SessionsModal open={sessionsOpen} onClose={() => setSessionsOpen(false)} guildId={selectedGuildId} />
 
       {/* Staff Access Modal */}
       <Modal open={accessOpen} onClose={() => setAccessOpen(false)} title="Staff Access Controls" width="max-w-4xl">

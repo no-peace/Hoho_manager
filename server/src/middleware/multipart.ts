@@ -44,7 +44,7 @@ export const multipartParser = async (req: Request, _res: Response, next: NextFu
       try {
         const parsed = JSON.parse(payloadJsonStr);
         if (parsed && typeof parsed === "object") {
-          if ("payload" in parsed || "mode" in parsed) {
+          if ("payload" in parsed || "mode" in parsed || "messages" in parsed) {
             req.body = { ...parsed, ...req.body };
           } else {
             req.body = { ...req.body, payload: parsed };

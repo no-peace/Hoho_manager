@@ -106,12 +106,21 @@ export interface MessageState {
   removeTarget(index: number): void;
 
   setSendState(patch: Partial<SendState>): void;
-  resetSendState(): void;
+  messages: MessageData[];
+  activeMessageIndex: number;
+
+  addMessage(initial?: Partial<MessageData>): void;
+  removeMessage(index: number): void;
+  duplicateMessage(index: number): void;
+  setActiveMessageIndex(index: number): void;
+  setMessageFlags(flags: number): void;
+  setAllowedMentions(allowedMentions?: MessageData["allowed_mentions"]): void;
 
   reset(): void;
   load(input: LoadDocumentInput): void;
 
   getPayload(): DiscordMessagePayload;
+  getAllPayloads(): DiscordMessagePayload[];
   getValidationErrors(): string[];
 }
 
@@ -137,7 +146,16 @@ const emptyData = (): MessageData => ({
   username: "",
   avatar_url: "",
   thread_name: "",
+  flags: 0,
+  allowed_mentions: undefined,
 });
+
+const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
+  const nextMessages = state.messages && state.messages.length > 0 ? [...state.messages] : [nextData];
+  const idx = Math.max(0, Math.min(state.activeMessageIndex ?? 0, nextMessages.length - 1));
+  nextMessages[idx] = nextData;
+  return { data: nextData, messages: nextMessages };
+};
 
 const idleSendState = (): SendState => ({ status: "idle", error: null, result: null });
 
@@ -162,6 +180,8 @@ export const useMessageStore = create<MessageState>()(
       /* ── State ────────────────────────────────────────────────────────── */
       mode: EDITOR_MODES.CLASSIC,
       data: emptyData(),
+      messages: [emptyData()],
+      activeMessageIndex: 0,
       targets: [{ url: "" }],
       selection: null,
       send: idleSendState(),
@@ -287,7 +307,11 @@ export const useMessageStore = create<MessageState>()(
 
       /* ── Scalar fields ────────────────────────────────────────────────── */
 
-      setField: (key, value) => set((state) => ({ data: { ...state.data, [key]: value } })),
+      setField: (key, value) =>
+        set((state) => {
+          const nextData = { ...state.data, [key]: value };
+          return syncDataToMessages(nextData, state);
+        }),
 
       setContent: (content) => get().setField("content", content),
 
@@ -296,30 +320,35 @@ export const useMessageStore = create<MessageState>()(
       addEmbed: () =>
         set((state) => {
           const embed = newEmbed();
+          const nextData = { ...state.data, embeds: [...state.data.embeds, embed] };
           return {
-            data: { ...state.data, embeds: [...state.data.embeds, embed] },
+            ...syncDataToMessages(nextData, state),
             selection: { kind: "embed", id: embed._id as string },
           };
         }),
 
       updateEmbed: (id, patch) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const nextData = {
             ...state.data,
             embeds: state.data.embeds.map((embed) =>
               embed._id === id ? { ...embed, ...patch } : embed,
             ),
-          },
-        })),
+          };
+          return syncDataToMessages(nextData, state);
+        }),
 
       removeEmbed: (id) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const nextData = {
             ...state.data,
             embeds: state.data.embeds.filter((embed) => embed._id !== id),
-          },
-          selection: state.selection?.id === id ? null : state.selection,
-        })),
+          };
+          return {
+            ...syncDataToMessages(nextData, state),
+            selection: state.selection?.id === id ? null : state.selection,
+          };
+        }),
 
       duplicateEmbed: (id) =>
         set((state) => {
@@ -335,8 +364,9 @@ export const useMessageStore = create<MessageState>()(
 
           const embeds = [...state.data.embeds];
           embeds.splice(index + 1, 0, copy);
+          const nextData = { ...state.data, embeds };
           return {
-            data: { ...state.data, embeds },
+            ...syncDataToMessages(nextData, state),
             selection: { kind: "embed", id: copy._id as string },
           };
         }),
@@ -353,24 +383,26 @@ export const useMessageStore = create<MessageState>()(
 
           embeds[index] = b;
           embeds[target] = a;
-          return { data: { ...state.data, embeds } };
+          const nextData = { ...state.data, embeds };
+          return syncDataToMessages(nextData, state);
         }),
 
       addEmbedField: (embedId) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const nextData = {
             ...state.data,
             embeds: state.data.embeds.map((embed) =>
               embed._id === embedId
                 ? { ...embed, fields: [...(embed.fields ?? []), newEmbedField()] }
                 : embed,
             ),
-          },
-        })),
+          };
+          return syncDataToMessages(nextData, state);
+        }),
 
       updateEmbedField: (embedId, fieldId, patch) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const nextData = {
             ...state.data,
             embeds: state.data.embeds.map((embed) =>
               embed._id === embedId
@@ -382,20 +414,22 @@ export const useMessageStore = create<MessageState>()(
                   }
                 : embed,
             ),
-          },
-        })),
+          };
+          return syncDataToMessages(nextData, state);
+        }),
 
       removeEmbedField: (embedId, fieldId) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const nextData = {
             ...state.data,
             embeds: state.data.embeds.map((embed) =>
               embed._id === embedId
                 ? { ...embed, fields: (embed.fields ?? []).filter((field) => field._id !== fieldId) }
                 : embed,
             ),
-          },
-        })),
+          };
+          return syncDataToMessages(nextData, state);
+        }),
 
       /* ── Components ───────────────────────────────────────────────────── */
 
@@ -407,8 +441,9 @@ export const useMessageStore = create<MessageState>()(
         set((state) => {
           const component = createComponent(type);
           const { components } = insertComponent(state.data.components, parentId, component);
+          const nextData = { ...state.data, components };
           return {
-            data: { ...state.data, components },
+            ...syncDataToMessages(nextData, state),
             selection: { kind: "component", id: component._id as string },
           };
         }),
@@ -418,8 +453,9 @@ export const useMessageStore = create<MessageState>()(
         set((state) => {
           const child = type === ComponentType.Button ? newButton() : createComponent(type);
           const { components } = insertComponent(state.data.components, parentId, child);
+          const nextData = { ...state.data, components };
           return {
-            data: { ...state.data, components },
+            ...syncDataToMessages(nextData, state),
             selection: { kind: "component", id: child._id as string },
           };
         }),
@@ -427,7 +463,8 @@ export const useMessageStore = create<MessageState>()(
       updateComponentById: (id, patch) =>
         set((state) => {
           const { components } = updateInTree(state.data.components, id, () => patch);
-          return { data: { ...state.data, components } };
+          const nextData = { ...state.data, components };
+          return syncDataToMessages(nextData, state);
         }),
 
       removeComponentById: (id) =>
@@ -438,8 +475,9 @@ export const useMessageStore = create<MessageState>()(
             !findComponent(components, state.selection.id)
               ? null
               : state.selection;
+          const nextData = { ...state.data, components };
           return {
-            data: { ...state.data, components },
+            ...syncDataToMessages(nextData, state),
             selection,
           };
         }),
@@ -452,7 +490,9 @@ export const useMessageStore = create<MessageState>()(
             direction,
             parentId,
           );
-          return found ? { data: { ...state.data, components } } : {};
+          if (!found) return {};
+          const nextData = { ...state.data, components };
+          return syncDataToMessages(nextData, state);
         }),
 
       /**
@@ -476,8 +516,9 @@ export const useMessageStore = create<MessageState>()(
             components = insertComponent(list, null, copy).components;
           }
 
+          const nextData = { ...state.data, components };
           return {
-            data: { ...state.data, components },
+            ...syncDataToMessages(nextData, state),
             selection: { kind: "component", id: copy._id as string },
           };
         }),
@@ -503,6 +544,76 @@ export const useMessageStore = create<MessageState>()(
       setSendState: (patch) => set((state) => ({ send: { ...state.send, ...patch } })),
       resetSendState: () => set({ send: idleSendState() }),
 
+      /* ── Multi-message Operations ────────────────────────────────────── */
+
+      addMessage: (initial) =>
+        set((state) => {
+          if (state.messages.length >= 10) return state;
+          const newMsg: MessageData = { ...emptyData(), ...initial };
+          const nextMessages = [...state.messages, newMsg];
+          return {
+            messages: nextMessages,
+            activeMessageIndex: nextMessages.length - 1,
+            data: newMsg,
+            selection: null,
+          };
+        }),
+
+      removeMessage: (index) =>
+        set((state) => {
+          if (state.messages.length <= 1) {
+            const resetMsg = emptyData();
+            return { messages: [resetMsg], activeMessageIndex: 0, data: resetMsg, selection: null };
+          }
+          const nextMessages = state.messages.filter((_, idx) => idx !== index);
+          const nextIdx = Math.max(0, Math.min(state.activeMessageIndex, nextMessages.length - 1));
+          return {
+            messages: nextMessages,
+            activeMessageIndex: nextIdx,
+            data: nextMessages[nextIdx],
+            selection: null,
+          };
+        }),
+
+      duplicateMessage: (index) =>
+        set((state) => {
+          if (state.messages.length >= 10) return state;
+          const source = state.messages[index] ?? state.data;
+          const cloned: MessageData = structuredClone(source);
+          if (cloned.embeds) {
+            cloned.embeds = cloned.embeds.map((emb) => ({
+              ...emb,
+              _id: uid(),
+              fields: emb.fields?.map((f) => ({ ...f, _id: uid() })),
+            }));
+          }
+          if (cloned.components) {
+            cloned.components = cloned.components.map(reid);
+          }
+          const nextMessages = [...state.messages];
+          nextMessages.splice(index + 1, 0, cloned);
+          return {
+            messages: nextMessages,
+            activeMessageIndex: index + 1,
+            data: cloned,
+            selection: null,
+          };
+        }),
+
+      setActiveMessageIndex: (index) =>
+        set((state) => {
+          if (index < 0 || index >= state.messages.length) return state;
+          return {
+            activeMessageIndex: index,
+            data: state.messages[index],
+            selection: null,
+          };
+        }),
+
+      setMessageFlags: (flags) => get().setField("flags", flags),
+
+      setAllowedMentions: (allowedMentions) => get().setField("allowed_mentions", allowedMentions),
+
       /* ── Whole-document operations ────────────────────────────────────── */
 
       reset: () => {
@@ -515,9 +626,12 @@ export const useMessageStore = create<MessageState>()(
             }
           }
         }
+        const blank = emptyData();
         set({
           mode: EDITOR_MODES.CLASSIC,
-          data: emptyData(),
+          data: blank,
+          messages: [blank],
+          activeMessageIndex: 0,
           targets: [{ url: "" }],
           selection: null,
           send: idleSendState(),
@@ -526,18 +640,37 @@ export const useMessageStore = create<MessageState>()(
       },
 
       /** Replace the document (after importing a backup). */
-      load: ({ data, mode, targets }) =>
+      load: ({ data, mode, targets }) => {
+        const inputMessages = (data as any)?.messages;
+        let initialMessages: MessageData[] = [];
+        if (Array.isArray(inputMessages) && inputMessages.length > 0) {
+          initialMessages = inputMessages.map((m: any) => ({
+            ...emptyData(),
+            ...(m.data || m),
+          }));
+        } else {
+          initialMessages = [{ ...emptyData(), ...data }];
+        }
         set({
           mode: mode ?? EDITOR_MODES.CLASSIC,
-          data: { ...emptyData(), ...data },
+          data: initialMessages[0],
+          messages: initialMessages,
+          activeMessageIndex: 0,
           targets: targets && targets.length > 0 ? targets : [{ url: "" }],
           selection: null,
-        }),
+        });
+      },
 
       /* ── Derived values ───────────────────────────────────────────────── */
 
       /** The exact body to send to Discord. */
       getPayload: () => toDiscordPayload(get().data, get().mode),
+
+      /** All message payloads for multi-message payloads. */
+      getAllPayloads: () => {
+        const mode = get().mode;
+        return get().messages.map((msg) => toDiscordPayload(msg, mode));
+      },
 
       /** Problems that would make Discord reject the message. */
       getValidationErrors: () => validateMessage(get().data, get().mode),
@@ -549,6 +682,8 @@ export const useMessageStore = create<MessageState>()(
       partialize: (state) => ({
         mode: state.mode,
         data: state.data,
+        messages: state.messages,
+        activeMessageIndex: state.activeMessageIndex,
         targets: state.targets,
       }),
       version: 1,

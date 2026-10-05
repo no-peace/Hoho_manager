@@ -116,6 +116,13 @@ export interface MessageData {
   username: string;
   avatar_url: string;
   thread_name: string;
+  flags?: number;
+  allowed_mentions?: {
+    parse?: ("everyone" | "roles" | "users")[];
+    roles?: string[];
+    users?: string[];
+    replied_user?: boolean;
+  };
 }
 
 /** A destination a document can be sent to. */
@@ -399,7 +406,8 @@ export type SendMode = "webhook" | "bot";
 
 export interface SendRequestBody {
   mode: SendMode;
-  payload: DiscordMessagePayload;
+  payload?: DiscordMessagePayload;
+  messages?: DiscordMessagePayload[];
   channelId?: string;
   webhookUrl?: string;
   profileId?: number | null;
@@ -418,6 +426,7 @@ export interface SendSuccessResponse {
   ok: true;
   mode: SendMode;
   message: unknown;
+  messages?: unknown[];
 }
 
 /* ── Settings API ─────────────────────────────────────────────────────────── */

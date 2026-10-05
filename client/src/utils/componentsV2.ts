@@ -193,7 +193,7 @@ export const COMPONENT_DEFS: readonly ComponentDef[] = [
     description: "Markdown text — headings, lists, code blocks.",
     group: "Content",
     topLevel: true,
-    create: () => newTextDisplay("Hello **world**"),
+    create: () => newTextDisplay(""),
   },
   {
     type: ComponentType.Section,
