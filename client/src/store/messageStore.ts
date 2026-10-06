@@ -20,18 +20,6 @@ import {
   updateComponent as updateInTree,
 } from "../utils/tree";
 
-/**
- * The message document — the single source of truth for both the editor and the
- * live preview.
- *
- * The shape mirrors Discord closely, with one editor-only addition: every embed
- * and component carries an `_id`. React keys, selection and updates all key off
- * it, so reordering components never causes an edit to land on the wrong element.
- * `stripInternal()` removes those ids at the payload boundary.
- *
- * Persisted to localStorage so a refresh (or a crash) never loses work.
- */
-
 export type Selection =
   | { kind: "embed"; id: string }
   | { kind: "component"; id: string }
@@ -43,17 +31,9 @@ export interface SendState {
   result: unknown;
 }
 
-export interface LoadDocumentInput {
-  data: MessageData;
-  mode?: EditorMode;
-  targets?: TargetData[];
-}
-
 export interface AttachedFile {
   id: string;
-  /** Present for locally-uploaded files; absent for external URL attachments. */
   file?: File;
-  /** Present for external URL attachments; absent for local files. */
   url?: string;
   name: string;
   size: number;
@@ -66,13 +46,14 @@ export interface AttachedFile {
 export interface MessageState {
   mode: EditorMode;
   data: MessageData;
+  messages: MessageData[];
+  activeMessageIndex: number;
   targets: TargetData[];
   selection: Selection;
   send: SendState;
   attachedFiles: AttachedFile[];
 
   setMode(mode: EditorMode): void;
-
   setField<K extends keyof MessageData>(key: K, value: MessageData[K]): void;
   setContent(content: string): void;
 
@@ -100,29 +81,39 @@ export interface MessageState {
   duplicateComponentById(id: string): void;
 
   select(selection: Selection): void;
-
   setTargetUrl(index: number, url: string): void;
   addTarget(): void;
   removeTarget(index: number): void;
 
   setSendState(patch: Partial<SendState>): void;
-  messages: MessageData[];
-  activeMessageIndex: number;
+  resetSendState(): void;
 
   addMessage(initial?: Partial<MessageData>): void;
   removeMessage(index: number): void;
   duplicateMessage(index: number): void;
+  moveMessage(index: number, direction: number): void;
   setActiveMessageIndex(index: number): void;
   setMessageFlags(flags: number): void;
   setAllowedMentions(allowedMentions?: MessageData["allowed_mentions"]): void;
 
   reset(): void;
-  load(input: LoadDocumentInput): void;
+  load(input: { data: any; mode?: EditorMode; targets?: TargetData[] }): void;
 
   getPayload(): DiscordMessagePayload;
   getAllPayloads(): DiscordMessagePayload[];
   getValidationErrors(): string[];
 }
+
+export const createEmptyMessage = (): MessageData => ({
+  content: "",
+  embeds: [],
+  components: [],
+  username: "",
+  avatar_url: "",
+  thread_name: "",
+  flags: 0,
+  allowed_mentions: undefined,
+});
 
 const newEmbed = (): EmbedData => ({
   _id: uid(),
@@ -139,27 +130,8 @@ const newEmbedField = (): EmbedField => ({
   inline: false,
 });
 
-const emptyData = (): MessageData => ({
-  content: "",
-  embeds: [],
-  components: [],
-  username: "",
-  avatar_url: "",
-  thread_name: "",
-  flags: 0,
-  allowed_mentions: undefined,
-});
-
-const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
-  const nextMessages = state.messages && state.messages.length > 0 ? [...state.messages] : [nextData];
-  const idx = Math.max(0, Math.min(state.activeMessageIndex ?? 0, nextMessages.length - 1));
-  nextMessages[idx] = nextData;
-  return { data: nextData, messages: nextMessages };
-};
-
 const idleSendState = (): SendState => ({ status: "idle", error: null, result: null });
 
-/** Deep-copy a component tree with fresh editor ids. */
 const reid = (component: ComponentNode): ComponentNode => ({
   ...(structuredClone(component) as ComponentNode),
   _id: uid(),
@@ -174,20 +146,63 @@ const reid = (component: ComponentNode): ComponentNode => ({
     : {}),
 });
 
+const duplicateInTree =(
+  list: ComponentNode[],
+  targetId: string,
+): {updated: ComponentNode[]; duplicated: ComponentNode | null} => {
+  const index = list.findIndex((c) => c._id === targetId);
+  if(index !== -1){
+    const copy = reid(list[index]);
+    const next = [...list];
+    next.splice(index +1,0,copy);
+    return {updated: next, duplicated: copy};
+  }
+
+  let duplicated: ComponentNode | null = null;
+  const next = list.map((item) => {
+    if (item.components && !duplicated) {
+      const result = duplicateInTree(item.components,targetId);
+      if (result.duplicated) {
+        duplicated = result.duplicated;
+        return {...item, components: result.updated };
+      }
+    }
+    return item;
+  });
+
+  return {updated: next, duplicated};
+};
+
+const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
+  const nextMessages = state.messages && state.messages.length > 0 ? [...state.messages] : [nextData];
+  const idx = Math.max(0, Math.min(state.activeMessageIndex ?? 0, nextMessages.length - 1));
+  nextMessages[idx] = nextData;
+  return { data: nextData, messages: nextMessages };
+};
+
+const defaultInitial = createEmptyMessage();
+
 export const useMessageStore = create<MessageState>()(
   persist(
     (set, get) => ({
-      /* ── State ────────────────────────────────────────────────────────── */
       mode: EDITOR_MODES.CLASSIC,
-      data: emptyData(),
-      messages: [emptyData()],
+      data: defaultInitial,
+      messages: [defaultInitial],
       activeMessageIndex: 0,
       targets: [{ url: "" }],
       selection: null,
       send: idleSendState(),
       attachedFiles: [],
 
-      /* ── File Attachments ──────────────────────────────────────────────── */
+      setMode: (mode) => set({ mode }),
+
+      setField: (key, value) =>
+        set((state) => {
+          const nextData = { ...(state.data ?? createEmptyMessage()), [key]: value };
+          return syncDataToMessages(nextData, state);
+        }),
+
+      setContent: (content) => get().setField("content", content),
 
       addFiles: (files) => {
         const MAX_FILES = 10;
@@ -220,28 +235,12 @@ export const useMessageStore = create<MessageState>()(
         const trimmed = rawUrl.trim();
         if (!/^https?:\/\//i.test(trimmed)) return;
 
-        // Best-effort filename + MIME guess from the URL so the card and the
-        // Discord payload have something meaningful to show.
         let name = "attachment";
         try {
           const parsed = new URL(trimmed);
           const last = parsed.pathname.split("/").filter(Boolean).pop();
           if (last) name = decodeURIComponent(last);
-        } catch {
-          // Keep the default name
-        }
-
-        const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
-        const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "svg"];
-        const VIDEO_EXTS = ["mp4", "mov", "webm", "mkv", "avi"];
-        const AUDIO_EXTS = ["mp3", "wav", "ogg", "m4a", "flac"];
-        const type = IMAGE_EXTS.includes(ext)
-          ? `image/${ext === "jpg" ? "jpeg" : ext}`
-          : VIDEO_EXTS.includes(ext)
-            ? `video/${ext}`
-            : AUDIO_EXTS.includes(ext)
-              ? `audio/${ext}`
-              : "application/octet-stream";
+        } catch {}
 
         set({
           attachedFiles: [
@@ -251,7 +250,7 @@ export const useMessageStore = create<MessageState>()(
               url: trimmed,
               name,
               size: 0,
-              type,
+              type: "application/octet-stream",
               previewUrl: trimmed,
               spoiler: false,
             },
@@ -260,14 +259,11 @@ export const useMessageStore = create<MessageState>()(
       },
 
       removeFile: (id) => {
-        const target = get().attachedFiles.find((f) => f.id === id);
-        // Only local files own a blob URL that needs revoking.
-        if (target?.file && target.previewUrl) {
+        const file = get().attachedFiles.find((f) => f.id === id);
+        if (file?.previewUrl && file.file) {
           try {
-            URL.revokeObjectURL(target.previewUrl);
-          } catch {
-            // Ignore revoke error
-          }
+            URL.revokeObjectURL(file.previewUrl);
+          } catch {}
         }
         set({ attachedFiles: get().attachedFiles.filter((f) => f.id !== id) });
       },
@@ -290,170 +286,139 @@ export const useMessageStore = create<MessageState>()(
 
       clearFiles: () => {
         for (const file of get().attachedFiles) {
-          if (file.file && file.previewUrl) {
+          if (file.previewUrl && file.file) {
             try {
               URL.revokeObjectURL(file.previewUrl);
-            } catch {
-              // Ignore revoke error
-            }
+            } catch {}
           }
         }
         set({ attachedFiles: [] });
       },
 
-      /* ── Mode ─────────────────────────────────────────────────────────── */
-
-      setMode: (mode) => set({ mode, selection: null }),
-
-      /* ── Scalar fields ────────────────────────────────────────────────── */
-
-      setField: (key, value) =>
-        set((state) => {
-          const nextData = { ...state.data, [key]: value };
-          return syncDataToMessages(nextData, state);
-        }),
-
-      setContent: (content) => get().setField("content", content),
-
-      /* ── Embeds ───────────────────────────────────────────────────────── */
-
       addEmbed: () =>
         set((state) => {
-          const embed = newEmbed();
-          const nextData = { ...state.data, embeds: [...state.data.embeds, embed] };
-          return {
-            ...syncDataToMessages(nextData, state),
-            selection: { kind: "embed", id: embed._id as string },
-          };
+          const embeds = [...(state.data?.embeds ?? []), newEmbed()];
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
+          return syncDataToMessages(nextData, state);
         }),
 
       updateEmbed: (id, patch) =>
         set((state) => {
-          const nextData = {
-            ...state.data,
-            embeds: state.data.embeds.map((embed) =>
-              embed._id === id ? { ...embed, ...patch } : embed,
-            ),
-          };
+          const embeds = (state.data?.embeds ?? []).map((embed) =>
+            embed._id === id ? { ...embed, ...patch } : embed,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),
 
       removeEmbed: (id) =>
         set((state) => {
-          const nextData = {
-            ...state.data,
-            embeds: state.data.embeds.filter((embed) => embed._id !== id),
-          };
+          const embeds = (state.data?.embeds ?? []).filter((embed) => embed._id !== id);
+          const selection =
+            state.selection?.kind === "embed" && state.selection.id === id
+              ? null
+              : state.selection;
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return {
             ...syncDataToMessages(nextData, state),
-            selection: state.selection?.id === id ? null : state.selection,
+            selection,
           };
         }),
 
       duplicateEmbed: (id) =>
         set((state) => {
-          const index = state.data.embeds.findIndex((embed) => embed._id === id);
-          const source = state.data.embeds[index];
-          if (index === -1 || !source) return {};
-
-          const copy: EmbedData = {
+          const list = state.data?.embeds ?? [];
+          const index = list.findIndex((embed) => embed._id === id);
+          if (index === -1) return {};
+          const source = list[index];
+          const cloned: EmbedData = {
             ...(structuredClone(source) as EmbedData),
             _id: uid(),
-            fields: (source.fields ?? []).map((field) => ({ ...field, _id: uid() })),
+            fields: source.fields?.map((field) => ({ ...field, _id: uid() })) ?? [],
           };
-
-          const embeds = [...state.data.embeds];
-          embeds.splice(index + 1, 0, copy);
-          const nextData = { ...state.data, embeds };
-          return {
-            ...syncDataToMessages(nextData, state),
-            selection: { kind: "embed", id: copy._id as string },
-          };
+          const embeds = [...list];
+          embeds.splice(index + 1, 0, cloned);
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
+          return syncDataToMessages(nextData, state);
         }),
 
-      /** `direction` is -1 for up, +1 for down. */
       moveEmbed: (id, direction) =>
         set((state) => {
-          const embeds = [...state.data.embeds];
+          const embeds = [...(state.data?.embeds ?? [])];
           const index = embeds.findIndex((embed) => embed._id === id);
           const target = index + direction;
-          const a = embeds[index];
-          const b = embeds[target];
-          if (index === -1 || !a || !b) return {};
-
-          embeds[index] = b;
-          embeds[target] = a;
-          const nextData = { ...state.data, embeds };
+          if (index === -1 || target < 0 || target >= embeds.length) return {};
+          const [moved] = embeds.splice(index, 1);
+          embeds.splice(target, 0, moved);
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),
 
       addEmbedField: (embedId) =>
         set((state) => {
-          const nextData = {
-            ...state.data,
-            embeds: state.data.embeds.map((embed) =>
-              embed._id === embedId
-                ? { ...embed, fields: [...(embed.fields ?? []), newEmbedField()] }
-                : embed,
-            ),
-          };
+          const embeds = (state.data?.embeds ?? []).map((embed) =>
+            embed._id === embedId
+              ? { ...embed, fields: [...(embed.fields ?? []), newEmbedField()] }
+              : embed,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),
 
       updateEmbedField: (embedId, fieldId, patch) =>
         set((state) => {
-          const nextData = {
-            ...state.data,
-            embeds: state.data.embeds.map((embed) =>
-              embed._id === embedId
-                ? {
-                    ...embed,
-                    fields: (embed.fields ?? []).map((field) =>
-                      field._id === fieldId ? { ...field, ...patch } : field,
-                    ),
-                  }
-                : embed,
-            ),
-          };
+          const embeds = (state.data?.embeds ?? []).map((embed) =>
+            embed._id === embedId
+              ? {
+                  ...embed,
+                  fields: (embed.fields ?? []).map((field) =>
+                    field._id === fieldId ? { ...field, ...patch } : field,
+                  ),
+                }
+              : embed,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),
 
       removeEmbedField: (embedId, fieldId) =>
         set((state) => {
-          const nextData = {
-            ...state.data,
-            embeds: state.data.embeds.map((embed) =>
-              embed._id === embedId
-                ? { ...embed, fields: (embed.fields ?? []).filter((field) => field._id !== fieldId) }
-                : embed,
-            ),
-          };
+          const embeds = (state.data?.embeds ?? []).map((embed) =>
+            embed._id === embedId
+              ? {
+                  ...embed,
+                  fields: (embed.fields ?? []).filter((field) => field._id !== fieldId),
+                }
+              : embed,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),
 
-      /* ── Components ───────────────────────────────────────────────────── */
-
-      /**
-       * Add a component from the palette.
-       * @param parentId nest inside this component, else the top level
-       */
       addComponent: (type, parentId = null) =>
         set((state) => {
-          const component = createComponent(type);
-          const { components } = insertComponent(state.data.components, parentId, component);
-          const nextData = { ...state.data, components };
+          const created = createComponent(type);
+          const { components } = insertComponent(
+            state.data?.components ?? [],
+            parentId,
+            created,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return {
             ...syncDataToMessages(nextData, state),
-            selection: { kind: "component", id: component._id as string },
+            selection: { kind: "component", id: created._id as string },
           };
         }),
 
-      /** Add a button or select into a specific ActionRow. */
       addActionRowChild: (parentId, type = ComponentType.Button) =>
         set((state) => {
           const child = type === ComponentType.Button ? newButton() : createComponent(type);
-          const { components } = insertComponent(state.data.components, parentId, child);
-          const nextData = { ...state.data, components };
+          const { components } = insertComponent(
+            state.data?.components ?? [],
+            parentId,
+            child,
+          );
+          const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return {
             ...syncDataToMessages(nextData, state),
             selection: { kind: "component", id: child._id as string },
@@ -462,20 +427,20 @@ export const useMessageStore = create<MessageState>()(
 
       updateComponentById: (id, patch) =>
         set((state) => {
-          const { components } = updateInTree(state.data.components, id, () => patch);
-          const nextData = { ...state.data, components };
+          const { components } = updateInTree(state.data?.components ?? [], id, () => patch);
+          const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return syncDataToMessages(nextData, state);
         }),
 
       removeComponentById: (id) =>
         set((state) => {
-          const { components } = removeFromTree(state.data.components, id);
+          const { components } = removeFromTree(state.data?.components ?? [], id);
           const selection =
             state.selection?.kind === "component" &&
             !findComponent(components, state.selection.id)
               ? null
               : state.selection;
-          const nextData = { ...state.data, components };
+          const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return {
             ...syncDataToMessages(nextData, state),
             selection,
@@ -485,45 +450,30 @@ export const useMessageStore = create<MessageState>()(
       moveComponentById: (id, direction, parentId = null) =>
         set((state) => {
           const { components, found } = moveInTree(
-            state.data.components,
+            state.data?.components ?? [],
             id,
             direction,
             parentId,
           );
           if (!found) return {};
-          const nextData = { ...state.data, components };
+          const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return syncDataToMessages(nextData, state);
         }),
+      
+      
 
-      /**
-       * Duplicate a component (and any children) with fresh ids, inserting it
-       * directly after the original.
-       */
       duplicateComponentById: (id) =>
         set((state) => {
-          const source = findComponent(state.data.components, id);
-          if (!source) return {};
+          const list = state.data?.components ?? [];
+          const {updated, duplicated } = duplicateInTree(list, id);
+          if (!duplicated) return {};
 
-          const copy = reid(source);
-          const list = state.data.components;
-          const index = list.findIndex((component) => component._id === id);
-
-          let components: ComponentNode[];
-          if (index !== -1) {
-            components = [...list];
-            components.splice(index + 1, 0, copy);
-          } else {
-            components = insertComponent(list, null, copy).components;
-          }
-
-          const nextData = { ...state.data, components };
+          const nextData = { ...(state.data ?? createEmptyMessage()), components: updated };
           return {
             ...syncDataToMessages(nextData, state),
-            selection: { kind: "component", id: copy._id as string },
+            selection: { kind: "component", id: duplicated._id as string },
           };
         }),
-
-      /* ── Selection & targets ──────────────────────────────────────────── */
 
       select: (selection) => set({ selection }),
 
@@ -539,17 +489,13 @@ export const useMessageStore = create<MessageState>()(
       removeTarget: (index) =>
         set((state) => ({ targets: state.targets.filter((_, i) => i !== index) })),
 
-      /* ── Send state ───────────────────────────────────────────────────── */
-
       setSendState: (patch) => set((state) => ({ send: { ...state.send, ...patch } })),
       resetSendState: () => set({ send: idleSendState() }),
-
-      /* ── Multi-message Operations ────────────────────────────────────── */
 
       addMessage: (initial) =>
         set((state) => {
           if (state.messages.length >= 10) return state;
-          const newMsg: MessageData = { ...emptyData(), ...initial };
+          const newMsg: MessageData = { ...createEmptyMessage(), ...initial };
           const nextMessages = [...state.messages, newMsg];
           return {
             messages: nextMessages,
@@ -562,7 +508,7 @@ export const useMessageStore = create<MessageState>()(
       removeMessage: (index) =>
         set((state) => {
           if (state.messages.length <= 1) {
-            const resetMsg = emptyData();
+            const resetMsg = createEmptyMessage();
             return { messages: [resetMsg], activeMessageIndex: 0, data: resetMsg, selection: null };
           }
           const nextMessages = state.messages.filter((_, idx) => idx !== index);
@@ -578,7 +524,7 @@ export const useMessageStore = create<MessageState>()(
       duplicateMessage: (index) =>
         set((state) => {
           if (state.messages.length >= 10) return state;
-          const source = state.messages[index] ?? state.data;
+          const source = state.messages[index] ?? state.data ?? createEmptyMessage();
           const cloned: MessageData = structuredClone(source);
           if (cloned.embeds) {
             cloned.embeds = cloned.embeds.map((emb) => ({
@@ -600,6 +546,20 @@ export const useMessageStore = create<MessageState>()(
           };
         }),
 
+      moveMessage: (index, direction) =>
+        set((state) => {
+          const target = index + direction;
+          if (target < 0 || target >= state.messages.length) return state;
+          const nextMessages = [...state.messages];
+          const [moved] = nextMessages.splice(index, 1);
+          nextMessages.splice(target, 0, moved);
+          return {
+            messages: nextMessages,
+            activeMessageIndex: target,
+            data: nextMessages[target],
+          };
+        }),
+
       setActiveMessageIndex: (index) =>
         set((state) => {
           if (index < 0 || index >= state.messages.length) return state;
@@ -611,22 +571,11 @@ export const useMessageStore = create<MessageState>()(
         }),
 
       setMessageFlags: (flags) => get().setField("flags", flags),
-
       setAllowedMentions: (allowedMentions) => get().setField("allowed_mentions", allowedMentions),
 
-      /* ── Whole-document operations ────────────────────────────────────── */
-
       reset: () => {
-        for (const file of get().attachedFiles) {
-          if (file.previewUrl) {
-            try {
-              URL.revokeObjectURL(file.previewUrl);
-            } catch {
-              // Ignore
-            }
-          }
-        }
-        const blank = emptyData();
+        get().clearFiles();
+        const blank = createEmptyMessage();
         set({
           mode: EDITOR_MODES.CLASSIC,
           data: blank,
@@ -635,22 +584,47 @@ export const useMessageStore = create<MessageState>()(
           targets: [{ url: "" }],
           selection: null,
           send: idleSendState(),
-          attachedFiles: [],
         });
       },
 
-      /** Replace the document (after importing a backup). */
       load: ({ data, mode, targets }) => {
-        const inputMessages = (data as any)?.messages;
         let initialMessages: MessageData[] = [];
-        if (Array.isArray(inputMessages) && inputMessages.length > 0) {
-          initialMessages = inputMessages.map((m: any) => ({
-            ...emptyData(),
+        if (data?.backups && Array.isArray(data.backups) && data.backups.length > 0) {
+          const b = data.backups[0];
+          if (Array.isArray(b.messages) && b.messages.length > 0) {
+            initialMessages = b.messages.map((m: any) => ({
+              ...createEmptyMessage(),
+              ...(m.data || m),
+            }));
+          }
+        } else if (Array.isArray(data?.messages) && data.messages.length > 0) {
+          initialMessages = data.messages.map((m: any) => ({
+            ...createEmptyMessage(),
             ...(m.data || m),
           }));
+        } else if (data && typeof data === "object") {
+          initialMessages = [{ ...createEmptyMessage(), ...data }];
         } else {
-          initialMessages = [{ ...emptyData(), ...data }];
+          initialMessages = [createEmptyMessage()];
         }
+
+        initialMessages.forEach((msg) => {
+          if (msg.embeds) {
+            msg.embeds = msg.embeds.map((e) => ({
+              ...e,
+              _id: e._id || uid(),
+              fields: (e.fields || []).map((f) => ({ ...f, _id: f._id || uid() })),
+            }));
+          }
+          if (msg.components) {
+            msg.components = msg.components.map((c) => ({
+              ...c,
+              _id: c._id || uid(),
+              components: (c.components || []).map((child) => ({ ...child, _id: child._id || uid() })),
+            }));
+          }
+        });
+
         set({
           mode: mode ?? EDITOR_MODES.CLASSIC,
           data: initialMessages[0],
@@ -661,24 +635,15 @@ export const useMessageStore = create<MessageState>()(
         });
       },
 
-      /* ── Derived values ───────────────────────────────────────────────── */
-
-      /** The exact body to send to Discord. */
       getPayload: () => toDiscordPayload(get().data, get().mode),
-
-      /** All message payloads for multi-message payloads. */
       getAllPayloads: () => {
         const mode = get().mode;
         return get().messages.map((msg) => toDiscordPayload(msg, mode));
       },
-
-      /** Problems that would make Discord reject the message. */
       getValidationErrors: () => validateMessage(get().data, get().mode),
     }),
     {
       name: "dmb:message",
-      // Only the document is worth persisting; transient send/selection state
-      // should reset on reload.
       partialize: (state) => ({
         mode: state.mode,
         data: state.data,

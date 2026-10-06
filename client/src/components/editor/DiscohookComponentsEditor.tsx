@@ -48,27 +48,38 @@ export const DiscohookComponentsEditor: React.FC = () => {
 
   const [selectMenuDropdownRow, setSelectMenuDropdownRow] = useState<string | null>(null);
 
-  // Collect top-level action rows and container-nested action rows
+  // Group entries with sibling index tracking
   interface RowEntry {
     row: ComponentNode;
     containerId: string | null;
     containerLabel?: string;
+    siblingIndex: number;
+    siblingCount: number;
   }
 
   const rowEntries: RowEntry[] = [];
+  const topLevelRows = components.filter((c) => c.type === ComponentType.ActionRow);
+  topLevelRows.forEach((row, idx) => {
+    rowEntries.push({
+      row,
+      containerId: null,
+      siblingIndex: idx,
+      siblingCount: topLevelRows.length,
+    });
+  });
+
   for (const comp of components) {
-    if (comp.type === ComponentType.ActionRow) {
-      rowEntries.push({ row: comp, containerId: null });
-    } else if (comp.type === ComponentType.Container && Array.isArray(comp.components)) {
-      for (const child of comp.components) {
-        if (child.type === ComponentType.ActionRow) {
-          rowEntries.push({
-            row: child,
-            containerId: comp._id ?? null,
-            containerLabel: "Container Row",
-          });
-        }
-      }
+    if (comp.type === ComponentType.Container && Array.isArray(comp.components)) {
+      const containerRows = comp.components.filter((c) => c.type === ComponentType.ActionRow);
+      containerRows.forEach((child, idx) =>{ 
+        rowEntries.push({ 
+          row: child, 
+          containerId: comp._id ?? null,
+          containerLabel: "Container Row",
+          siblingIndex: idx,
+          siblingCount: containerRows.length, 
+        });
+      });
     }
   }
 
@@ -168,7 +179,7 @@ export const DiscohookComponentsEditor: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      disabled={rowIndex === rowEntries.length - 1}
+                      disabled={entry.siblingIndex === entry.siblingCount -1}
                       onClick={() => row._id && moveComponentById(row._id, 1, containerId)}
                       className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-30 disabled:hover:bg-transparent"
                       title="Move Row Down"

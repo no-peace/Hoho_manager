@@ -124,7 +124,7 @@ router.post(
 
     try {
       await discord.createInteractionResponse(
-        interaction.application_id,
+        interaction.id,
         interaction.token,
         response,
       );

@@ -19,7 +19,7 @@ export interface ExecuteResult {
 
 const replaceVariables = (obj: any, vars: Record<string, any>): any => {
   if (typeof obj === "string") {
-    return obj.replace(/\{([^}]+)\}/g, (match, key) => {
+    return obj.replace(/\{\{\s*([^{}]+?)\s*\}\}|\{\s*([^{}]+?)\s*\}/g, (match, key) => {
       return vars[key] !== undefined ? String(vars[key]) : match;
     });
   }
@@ -47,7 +47,8 @@ export const executeCustomId = async (
 ): Promise<ExecuteResult> => {
   // Support standard action IDs or stored modal IDs
   const parsed = parseCustomId(customId);
-  const stored = await actionRepository.findByCustomId(customId);
+  const messageId = interaction.message?.id;
+  const stored = await actionRepository.findByCustomId(customId,messageId);
 
   if (!parsed && stored.length === 0) {
     return { response: undefined, handled: false, type: null };

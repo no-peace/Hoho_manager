@@ -37,13 +37,11 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
     }
   }, [open]);
 
+  const portalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (containerRef.current && !containerRef.current.contains(target)) {
-        // Allow clicks inside the floating dropdown
-        const floater = document.getElementById("discord-select-portal");
-        if (floater && floater.contains(target)) return;
+      if (containerRef.current && !containerRef.current.contains(target) && portalRef.current && !portalRef.current.contains(target)) {
         setOpen(false);
       }
     };
@@ -180,7 +178,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
       {open && dropdownRect && createPortal(
         <div
-          id="discord-select-portal"
+          ref ={portalRef}
           style={{
             position: "fixed",
             top: dropdownRect.bottom + 4,

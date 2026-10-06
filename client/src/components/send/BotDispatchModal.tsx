@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { request } from "../../api/client";
 import {
   Bot,
   CheckSquare,
@@ -105,17 +106,11 @@ export const BotDispatchModal: React.FC<{
     void fetchChannels(id);
   };
 
-  const fetchChannels = async (profileId: number | null = botProfileId) => {
+const fetchChannels = async (profileId: number | null = botProfileId) => {
     setIsLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
       const query = profileId === null ? "" : `?profileId=${encodeURIComponent(String(profileId))}`;
-      const res = await fetch(`${baseUrl}/api/send/channels${query}`, {
-        headers: { "x-admin-key": adminKey },
-      });
-      if (!res.ok) throw new Error(`Could not load channels (${res.status})`);
-      const data = await res.json();
+      const data = await request<{ id: string; name: string }[]>(`/api/send/channels${query}`);
       if (Array.isArray(data)) setChannels(data);
     } catch (e) {
       console.error(e);
@@ -127,14 +122,10 @@ export const BotDispatchModal: React.FC<{
   const fetchRecentMessages = async (cId: string, profileId: number | null = botProfileId) => {
     setIsLoadingMessages(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
       const query = profileId === null ? "" : `?profileId=${encodeURIComponent(String(profileId))}`;
-      const res = await fetch(`${baseUrl}/api/send/channels/${encodeURIComponent(cId)}/messages${query}`, {
-        headers: { "x-admin-key": adminKey },
-      });
-      if (!res.ok) throw new Error(`Could not load messages (${res.status})`);
-      const data = await res.json();
+      const data = await request<any[]>(
+        `/api/send/channels/${encodeURIComponent(cId)}/messages${query}`
+      );
       if (Array.isArray(data)) setBotMessages(data);
     } catch (e) {
       console.error(e);

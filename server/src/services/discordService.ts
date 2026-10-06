@@ -583,11 +583,11 @@ export const createThreadFromMessage = async (
  * it expires 15 minutes after the interaction was created.
  */
 export const createInteractionResponse = async (
-  applicationId: string,
+  interactionId: string,
   interactionToken: string,
   response: InteractionResponse,
 ): Promise<unknown> =>
-  apiRequest("POST", `/interactions/${applicationId}/${interactionToken}/callback`, {
+  apiRequest("POST", `/interactions/${interactionId}/${interactionToken}/callback`, {
     auth: "",
     body: response,
   });
