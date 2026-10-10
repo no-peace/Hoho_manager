@@ -1,22 +1,13 @@
-import { Plus, Trash2 } from "lucide-react";
-// Aliased because `ComponentType` below is Discord's numeric component enum.
 import type { ComponentType as ReactComponentType } from "react";
 import type { ComponentNode, GalleryItem, SelectOption } from "@dmb/shared";
 import { ButtonStyle, ComponentType, Limits } from "@dmb/shared";
 import { Button, IconButton } from "../ui/Button";
-import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
+import { Checkbox, Select, TextField } from "../ui/Field";
 import { ColorPicker } from "../ui/ColorPicker";
+import { DiscordMentionInput } from "./DiscordMentionInput";
 import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
 import { buttonStylePatch, newGalleryItem } from "../../utils/componentsV2";
-
-/**
- * Property forms, one per component type.
- *
- * `COMPONENT_FORMS` maps a Discord component type to the form that edits it, so
- * the property panel is a single lookup rather than a long conditional. Every
- * form edits through an `update` callback the panel supplies, which routes to
- * `updateComponentById` and walks the tree by `_id`.
- */
+import { Plus, Trash2 } from "lucide-react";
 
 export interface ComponentFormProps {
   component: ComponentNode;
@@ -26,13 +17,13 @@ export interface ComponentFormProps {
 /* ── Content ──────────────────────────────────────────────────────────────── */
 
 const TextDisplayForm = ({ component, update }: ComponentFormProps) => (
-  <TextArea
+  <DiscordMentionInput
     label="Content"
-    limit={Limits.components.textDisplay}
+    maxLength={Limits.components.textDisplay}
     rows={5}
     value={component.content ?? ""}
-    placeholder="**Bold**, *italic*, # heading, - lists — markdown is supported."
-    onChange={(event) => update({ content: event.target.value })}
+    placeholder="**Bold**, *italic*, # heading, - lists — markdown and mentions (@, #, :) are supported."
+    onChange={(content) => update({ content })}
   />
 );
 
@@ -44,8 +35,6 @@ const SectionForm = ({ component, update }: ComponentFormProps) => (
       placeholder="https://…"
       onChange={(event) =>
         update({
-          // Rebuilt rather than spread, so the accessory always keeps a `type`
-          // even when the section was imported without one.
           accessory: {
             _id: component.accessory?._id ?? uid(),
             type: component.accessory?.type ?? ComponentType.Thumbnail,
@@ -54,9 +43,9 @@ const SectionForm = ({ component, update }: ComponentFormProps) => (
         })
       }
     />
-    <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
-      Section text is edited in the component tree on the left. A section holds up to three
-      text displays plus one accessory.
+    <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
+      Section text items are individual TextDisplay components. Click on any TextDisplay child in
+      the tree to edit its markdown, mentions, or timestamps.
     </p>
   </>
 );
@@ -75,7 +64,9 @@ const MediaGalleryForm = ({ component, update }: ComponentFormProps) => {
   return (
     <>
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="field-label !mb-0">Gallery items</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+          Gallery items
+        </span>
         <Button
           size="sm"
           variant="ghost"
@@ -87,7 +78,7 @@ const MediaGalleryForm = ({ component, update }: ComponentFormProps) => {
       </div>
 
       {items.length === 0 && (
-        <p className="text-[11px] text-ink-faint">No images yet. Add one to start the gallery.</p>
+        <p className="text-[11px] text-[#949ba4]">No images yet. Add one to start the gallery.</p>
       )}
 
       <div className="space-y-2">
@@ -130,9 +121,9 @@ const ContainerForm = ({ component, update }: ComponentFormProps) => (
       value={component.accent_color ?? null}
       onChange={(accent_color) => update({ accent_color })}
     />
-    <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
-      {component.components?.length ?? 0} child component(s). Use the palette on the left to add
-      more while this container is selected.
+    <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
+      {component.components?.length ?? 0} child component(s). Use the inline "+ Add Component to
+      Container" button on the canvas to add elements into this container.
     </p>
   </>
 );
@@ -158,33 +149,37 @@ const SeparatorForm = ({ component, update }: ComponentFormProps) => (
 
 const ActionRowForm = ({ component, update }: ComponentFormProps) => {
   const children = component.components ?? [];
-  
+
   const addChild = (type: number) => {
     update({
       components: [
         ...children,
-        { _id: uid(), type, config: {} } as ComponentNode
-      ]
+        { _id: uid(), type, config: {} } as ComponentNode,
+      ],
     });
   };
 
   return (
     <>
-      <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint mb-2">
-        {children.length} control(s). An action row holds up to {Limits.components.actionRowButtons} buttons, or a single select menu.
+      <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4] mb-2">
+        {children.length} control(s). An action row holds up to {Limits.components.actionRowButtons}{" "}
+        buttons, or a single select menu.
       </p>
       <div className="flex gap-2">
-        <Button 
-          size="sm" 
-          variant="secondary" 
-          disabled={children.length >= Limits.components.actionRowButtons || children.some(c => c.type !== ComponentType.Button)}
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={
+            children.length >= Limits.components.actionRowButtons ||
+            children.some((c) => c.type !== ComponentType.Button)
+          }
           onClick={() => addChild(ComponentType.Button)}
         >
           Add Button
         </Button>
-        <Button 
-          size="sm" 
-          variant="secondary" 
+        <Button
+          size="sm"
+          variant="secondary"
           disabled={children.length > 0}
           onClick={() => addChild(ComponentType.StringSelect)}
         >
@@ -195,15 +190,11 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
   );
 };
 
-/* ── Interactive ──────────────────────────────────────────────────────────── */
-
-import { useMessageStore } from '../../store/messageStore';
+/* ── Interactive (Strict Plain Text Labels) ────────────────────────────────── */
 
 const ButtonForm = ({ component, update }: ComponentFormProps) => {
   const isLink = component.style === ButtonStyle.Link;
   const isPremium = component.style === ButtonStyle.Premium;
-  const isV2 = useMessageStore((state) => state.mode) === "v2";
-  const styleOptions = Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => ({ value, label })).filter((opt) => isV2 || Number(opt.value) === ButtonStyle.Link);
 
   return (
     <>
@@ -211,6 +202,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
         label="Label"
         limit={Limits.components.label}
         value={component.label ?? ""}
+        placeholder="Button Text"
         onChange={(event) => update({ label: event.target.value })}
       />
 
@@ -218,7 +210,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
         label="Style"
         value={String(component.style ?? ButtonStyle.Primary)}
         onChange={(event) => update(buttonStylePatch(component, Number(event.target.value)))}
-        options={styleOptions}
+        options={Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => ({ value, label }))}
       />
 
       {isLink ? (
@@ -236,9 +228,8 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
           onChange={(event) => update({ sku_id: event.target.value })}
         />
       ) : (
-        <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
-          What this button does is configured on the <span className="text-ink">Flow</span> tab
-          above.
+        <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
+          What this button executes is configured on the <span className="text-white font-semibold">Flow</span> tab above.
         </p>
       )}
 
@@ -268,11 +259,14 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         label="Placeholder"
         limit={Limits.components.placeholder}
         value={component.placeholder ?? ""}
+        placeholder="Choose an option…"
         onChange={(event) => update({ placeholder: event.target.value })}
       />
 
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="field-label !mb-0">Options</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+          Options
+        </span>
         <Button
           size="sm"
           variant="ghost"
@@ -333,9 +327,8 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         />
       </div>
 
-      <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
-        What this select does is configured on the <span className="text-ink">Flow</span> tab
-        above.
+      <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
+        What this select triggers is configured on the <span className="text-white font-semibold">Flow</span> tab above.
       </p>
     </>
   );
@@ -369,16 +362,12 @@ const EntitySelectForm = ({ component, update }: ComponentFormProps) => (
       />
     </div>
 
-    <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
+    <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
       Discord supplies the available users, roles, or channels when this menu opens.
     </p>
   </>
 );
 
-/**
- * Selection menus share one form: the placeholder/action fields are identical,
- * and the option list only applies to string selects.
- */
 export const COMPONENT_FORMS: Record<number, ReactComponentType<ComponentFormProps>> = {
   [ComponentType.TextDisplay]: TextDisplayForm,
   [ComponentType.Section]: SectionForm,

@@ -138,6 +138,22 @@ router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, asyncHandler(
 }));
 
 /**
+ * GET /api/discord/guilds/:guildId/emojis
+ * Returns custom emojis for the specified guild.
+ * Zero server-side caching.
+ */
+router.get("/guilds/:guildId/emojis", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+  const { guildId } = req.params;
+  if (!guildId || typeof guildId !== "string") {
+    throw ApiError.badRequest("`guildId` is required");
+  }
+
+  const profileId = parseProfileId(req.query.profileId);
+  const emojis = await discord.getGuildEmojis(guildId, profileId);
+  return res.json({ emojis });
+}));
+
+/**
  * GET /api/discord/identity
  * Auto-fetch bot identity on client load.
  */

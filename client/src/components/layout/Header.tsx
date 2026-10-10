@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   FolderOpen,
-  PanelLeft,
   Sparkles,
   ShieldAlert,
   Settings,
@@ -11,18 +10,12 @@ import {
   Copy,
   Check,
   Shield,
-  ScrollText,
-  Key,
+  ArrowLeft,
 } from "lucide-react";
-
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { SettingsModal } from "./SettingsModal";
-import { AuditLogsModal } from "./AuditLogsModal";
-import { SessionsModal } from "./SessionsModal";
-import { useMessageStore } from "../../store/messageStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { EDITOR_MODES } from "../../utils/constants";
 import { AccessPanel } from "./AccessPanel";
 
 export const getDiscordAvatarUrl = (user: { id: string; avatar?: string | null }, size: number = 64): string => {
@@ -48,49 +41,16 @@ interface HeaderProps {
   onOpenBackups?: () => void;
 }
 
-const ModeToggle: React.FC = () => {
-  const mode = useMessageStore((state) => state.mode);
-  const setMode = useMessageStore((state) => state.setMode);
-
-  return (
-    <div
-      className="flex items-center rounded-lg bg-[#1e1f22] p-0.5 border border-[#111214]"
-      role="tablist"
-      aria-label="Editor mode"
-    >
-      {[
-        { id: EDITOR_MODES.CLASSIC, label: "Classic" },
-        { id: EDITOR_MODES.V2, label: "Components V2" },
-      ].map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          role="tab"
-          aria-selected={mode === option.id}
-          onClick={() => setMode(option.id)}
-          className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] ${
-            mode === option.id
-              ? "bg-[#5865f2] text-white shadow-sm"
-              : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]/50"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-};
-
 export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [auditLogsOpen, setAuditLogsOpen] = useState(false);
-  const [sessionsOpen, setSessionsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { selectedGuildId, setSelectedGuildId, currentUser, logout, toggleSidebar } = useGlobalStore();
+  const { selectedGuildId, setSelectedGuildId, currentUser, logout } = useGlobalStore();
+
+  const isSubRoute = typeof window !== "undefined" && (window.location.pathname.startsWith("/bots/") || window.location.pathname !== "/");
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -115,7 +75,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   };
 
   const handleStaffClick = () => {
-    // If Shift is pressed or dev clicks, allow manual staff ID entry
     const current = localStorage.getItem("staff_id");
     if (current) {
       if (confirm(`Log out of manual Staff ID ${current}?`)) {
@@ -138,17 +97,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   return (
     <>
       <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b-2 border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
-        {/* Left: Logo + Toolbox/Drawer button (PanelLeft) + HoHo Manager */}
+        {/* Left: Dashboard Back link (if on sub-url) + Logo + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] text-[#949ba4] hover:text-white transition-colors"
-            title="Toggle Toolbox (Ctrl+B)"
-            aria-label="Toggle Toolbox (Ctrl+B)"
-          >
-            <PanelLeft size={16} />
-          </button>
+          {isSubRoute && (
+            <a
+              href="/"
+              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-2 py-1 rounded transition-colors mr-1"
+              title="Return to Dashboard"
+            >
+              <ArrowLeft size={13} />
+              <span className="hidden sm:inline">Dashboard</span>
+            </a>
+          )}
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865f2] text-white shadow-sm">
             <Sparkles size={18} />
           </div>
@@ -157,10 +117,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
           </span>
         </div>
 
-        {/* Center: ModeToggle pill tabs, Server Select dropdown, Settings button, Backups/History button */}
+        {/* Center: Server Select dropdown, Settings button, Backups/History button */}
         <div className="flex items-center gap-2.5">
-          <ModeToggle />
-
           <div className="w-44 sm:w-48 relative">
             <SearchableDiscordSelect
               type="guild"
@@ -169,26 +127,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
               placeholder="Select Server..."
             />
           </div>
-
-          <button
-            type="button"
-            onClick={() => setAuditLogsOpen(true)}
-            className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-            title="Audit Logs"
-          >
-            <ScrollText size={14} className="text-[#949ba4]" />
-            <span className="hidden lg:inline">Audit Logs</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSessionsOpen(true)}
-            className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-            title="Active Sessions"
-          >
-            <Key size={14} className="text-[#949ba4]" />
-            <span className="hidden lg:inline">Sessions</span>
-          </button>
 
           <button
             type="button"
@@ -290,22 +228,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                   <div className="space-y-1">
                     <button
                       type="button"
-                      onClick={() => { setUserMenuOpen(false); setAuditLogsOpen(true); }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
-                    >
-                      <ScrollText size={14} className="text-[#949ba4]" />
-                      <span>Audit Logs</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setUserMenuOpen(false); setSessionsOpen(true); }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
-                    >
-                      <Key size={14} className="text-[#949ba4]" />
-                      <span>Active Sessions</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => { setUserMenuOpen(false); setAccessOpen(true); }}
                       className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
@@ -353,7 +275,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                 <span className="sm:hidden">Login</span>
               </button>
 
-              {/* Dev manual fallback (or if manual staffId already stored) */}
               {staffId && (
                 <button
                   type="button"
@@ -380,12 +301,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
       {/* Settings Modal */}
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-
-      {/* Audit Logs Modal */}
-      <AuditLogsModal open={auditLogsOpen} onClose={() => setAuditLogsOpen(false)} guildId={selectedGuildId} />
-
-      {/* Sessions Modal */}
-      <SessionsModal open={sessionsOpen} onClose={() => setSessionsOpen(false)} guildId={selectedGuildId} />
 
       {/* Staff Access Modal */}
       <Modal open={accessOpen} onClose={() => setAccessOpen(false)} title="Staff Access Controls" width="max-w-4xl">

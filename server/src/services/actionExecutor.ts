@@ -19,8 +19,9 @@ export interface ExecuteResult {
 
 const replaceVariables = (obj: any, vars: Record<string, any>): any => {
   if (typeof obj === "string") {
-    return obj.replace(/\{\{\s*([^{}]+?)\s*\}\}|\{\s*([^{}]+?)\s*\}/g, (match, key) => {
-      return vars[key] !== undefined ? String(vars[key]) : match;
+    return obj.replace(/\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g, (match, key) => {
+      const trimmedKey = key.trim();
+      return vars[trimmedKey] !== undefined ? String(vars[trimmedKey]) : match;
     });
   }
   if (Array.isArray(obj)) return obj.map((v) => replaceVariables(v, vars));
@@ -170,9 +171,17 @@ export const executeCustomId = async (
       let response: ActionResponse | undefined;
       try {
         const parsedConfig = replaceVariables(step.config, variables);
-        response = await handler.run({ ...context, config: parsedConfig });
-      } catch (error) {
-        log.error(`Action "${step.type}" error:`, error);
+        const stepProfileId = typeof parsedConfig.profileId === "number" ? parsedConfig.profileId : null;
+        const stepBotToken = stepProfileId ? await discord.resolveBotToken(stepProfileId).catch(()=> botToken) : botToken;
+        response = await handler.run({
+          ...context,
+          botToken: stepBotToken,
+          config: parsedConfig
+        });
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        const stack = err instanceof Error ? err.stack : undefined;
+        log.error(`Action "${step.type}" threw: ${reason}`, stack);
         response = actionFailed("Something went wrong running that action.");
       }
 

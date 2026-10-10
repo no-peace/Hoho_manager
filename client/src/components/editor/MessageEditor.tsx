@@ -1,261 +1,413 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  AlertTriangle,
   ChevronDown,
   ChevronRight,
-  Image as ImageIcon,
+  Copy,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
   Plus,
-  Sliders,
-  Flag,
-  AtSign,
-  Rows,
+  Link,
+  Edit2,
+  Check,
+  LayoutGrid,
 } from "lucide-react";
-import { Limits } from "@dmb/shared";
-import { Button } from "../ui/Button";
-import { TextArea, TextField } from "../ui/Field";
+import { ComponentType } from "@dmb/shared";
 import { EmbedEditor } from "./EmbedEditor";
 import { DiscohookComponentsEditor } from "./DiscohookComponentsEditor";
-import { ComponentPalette } from "./ComponentPalette";
+import { DiscordMentionInput } from "./DiscordMentionInput";
 import { FileAttachmentsSection } from "./FileAttachmentsSection";
-import { FlagsModal } from "./FlagsModal";
-import { AllowedMentionsModal } from "./AllowedMentionsModal";
-import { useMessage } from "../../hooks/useMessage";
 import { useMessageStore } from "../../store/messageStore";
-import { EDITOR_MODES } from "../../utils/constants";
 
-export const MessageEditor: React.FC = () => {
-  const { data, problems } = useMessage();
-  const mode = useMessageStore((state) => state.mode);
+export interface MessageEditorProps {
+  index: number;
+}
+
+export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
+  const messages = useMessageStore((state) => state.messages);
+  const data = useMessageStore((state) => state.data);
+  const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
+  const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
+  const duplicateMessage = useMessageStore((state) => state.duplicateMessage);
+  const removeMessage = useMessageStore((state) => state.removeMessage);
+  const moveMessage = useMessageStore((state) => state.moveMessage);
   const setField = useMessageStore((state) => state.setField);
   const addEmbed = useMessageStore((state) => state.addEmbed);
   const addComponent = useMessageStore((state) => state.addComponent);
 
-  const [identityOpen, setIdentityOpen] = useState(false);
-  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
-  const [flagsOpen, setFlagsOpen] = useState(false);
-  const [mentionsOpen, setMentionsOpen] = useState(false);
-  const optionsRef = useRef<HTMLDivElement>(null);
+  const message = (messages && messages[index]) || (index === 0 ? data : messages?.[0]) || data;
+  const isActive = activeMessageIndex === index;
 
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
-        setOptionsMenuOpen(false);
-      }
-    };
-    if (optionsMenuOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [optionsMenuOpen]);
+  const [isOpen, setIsOpen] = useState(true);
+  const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name));
+  const [profileOpen, setProfileOpen] = useState(Boolean(message.username || message.avatar_url));
 
-  const profileSection = (
-    <div className="border border-[#1e1f22] rounded-lg bg-[#2b2d31] shadow-sm transition-colors overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIdentityOpen(!identityOpen)}
-        className="w-full flex items-center justify-between p-3 text-left text-xs font-bold text-[#949ba4] hover:bg-[#35373c]/30 hover:text-[#dbdee1] transition-colors focus-visible:outline-none"
-      >
-        <span className="flex items-center gap-1.5 uppercase tracking-wide text-xs font-bold">
-          Profile Override
-        </span>
-        {identityOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-      </button>
-      {identityOpen && (
-        <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-3 bg-[#313338]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TextField
-              label="Username"
-              placeholder="Webhook username override"
-              value={data.username || ""}
-              onChange={(e) => setField("username", e.target.value)}
-            />
-            <TextField
-              label="Avatar URL"
-              placeholder="https://..."
-              value={data.avatar_url || ""}
-              onChange={(e) => setField("avatar_url", e.target.value)}
-            />
-          </div>
-          <TextField
-            label="Thread name"
-            hint="Only used when sending to forum channels"
-            value={data.thread_name || ""}
-            onChange={(e) => setField("thread_name", e.target.value)}
-          />
-        </div>
-      )}
-    </div>
-  );
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [customName, setCustomName] = useState("");
+
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [messageLinkInput, setMessageLinkInput] = useState("");
 
   return (
-    <div className="space-y-3">
-      {/* Top Options Bar (Flags & Allowed Mentions) */}
-      <div className="flex items-center justify-end" ref={optionsRef}>
-        <div className="relative">
+    <div
+      onClick={() => setActiveMessageIndex?.(index)}
+      className={`rounded-lg bg-[#292b2f] border transition-all overflow-hidden ${
+        isActive
+          ? "border-[#5865f2] shadow-[0_0_12px_rgba(88,101,242,0.25)]"
+          : "border-[#202225] hover:border-[#36393f]"
+      }`}
+    >
+      <div className="flex items-center justify-between px-3 py-2.5 bg-[#202225] select-none">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1f22] hover:bg-[#35373c] border border-[#111214] rounded-lg text-xs font-semibold text-[#dbdee1] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+            className="text-[#949ba4] hover:text-white"
           >
-            <Sliders size={13} className="text-[#949ba4]" />
-            <span>Options</span>
-            <ChevronDown size={12} className="text-[#949ba4]" />
+            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
 
-          {optionsMenuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-[#1e1f22] border border-[#111214] rounded-lg shadow-2xl py-1 z-30 space-y-0.5">
+          {isEditingName ? (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder={`Message ${index + 1}`}
+                className="rounded bg-[#1e1f22] px-2 py-0.5 text-xs text-white outline-none ring-1 ring-[#5865f2]"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setIsEditingName(false);
+                }}
+              />
               <button
                 type="button"
-                onClick={() => {
-                  setOptionsMenuOpen(false);
-                  setFlagsOpen(true);
-                }}
-                className="w-full text-left px-3 py-1.5 text-xs text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center justify-between transition-colors"
+                onClick={() => setIsEditingName(false)}
+                className="p-1 text-[#5865f2] hover:text-[#4752c4]"
               >
-                <div className="flex items-center gap-2">
-                  <Flag size={13} />
-                  <span>Message Flags</span>
-                </div>
-                {Boolean(data.flags) && (
-                  <span className="text-[10px] bg-[#5865f2] text-white px-1.5 py-0.2 rounded font-mono">
-                    {data.flags}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setOptionsMenuOpen(false);
-                  setMentionsOpen(true);
-                }}
-                className="w-full text-left px-3 py-1.5 text-xs text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center justify-between transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <AtSign size={13} />
-                  <span>Allowed Mentions</span>
-                </div>
-                {Boolean(data.allowed_mentions) && (
-                  <span className="text-[10px] bg-[#23a55a] text-white px-1.5 py-0.2 rounded">
-                    Active
-                  </span>
-                )}
+                <Check size={14} />
               </button>
             </div>
+          ) : (
+            <span
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setIsEditingName(true);
+              }}
+              className="text-sm font-semibold text-white flex items-center gap-1.5 cursor-pointer"
+            >
+              {customName || `Message ${index + 1}`}
+              <Edit2
+                size={12}
+                className="text-[#949ba4] opacity-0 group-hover:opacity-100 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingName(true);
+                }}
+              />
+            </span>
           )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            title="Move Up"
+            disabled={index === 0}
+            onClick={(e) => {
+              e.stopPropagation();
+              moveMessage?.(index, -1);
+            }}
+            className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 disabled:hover:text-[#949ba4]"
+          >
+            <ArrowUp size={14} />
+          </button>
+          <button
+            type="button"
+            title="Move Down"
+            disabled={index === (messages?.length ?? 1) - 1}
+            onClick={(e) => {
+              e.stopPropagation();
+              moveMessage?.(index, 1);
+            }}
+            className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 disabled:hover:text-[#949ba4]"
+          >
+            <ArrowDown size={14} />
+          </button>
+          <button
+            type="button"
+            title="Duplicate Message"
+            onClick={(e) => {
+              e.stopPropagation();
+              duplicateMessage?.(index);
+            }}
+            className="p-1 text-[#949ba4] hover:text-white"
+          >
+            <Copy size={14} />
+          </button>
+          <button
+            type="button"
+            title="Delete Message"
+            disabled={(messages?.length ?? 1) <= 1}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeMessage?.(index);
+            }}
+            className="p-1 text-[#da373c] hover:text-[#f23f43] disabled:opacity-30"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
-      {/* Validation Banner */}
-      {problems.length > 0 && (
-        <div className="rounded border border-[#da373c]/40 bg-[#da373c]/10 p-2.5 text-xs">
-          <p className="flex items-center gap-1.5 font-semibold text-[#f28b8b]">
-            <AlertTriangle size={13} />
-            {problems.length} problem{problems.length === 1 ? "" : "s"} to fix
-          </p>
-          <ul className="mt-1 list-inside list-disc text-[11px] text-[#949ba4]">
-            {problems.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
+      {isOpen && (
+        <div className="p-4 space-y-4">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <label className="font-semibold uppercase tracking-wider text-[#949ba4]">
+                Content
+              </label>
+              <span
+                className={`text-[11px] font-mono ${
+                  (message.content?.length ?? 0) > 2000
+                    ? "text-[#da373c]"
+                    : "text-[#949ba4]"
+                }`}
+              >
+                {message.content?.length ?? 0}/2000
+              </span>
+            </div>
+
+            <DiscordMentionInput
+              value={message.content || ""}
+              onChange={(val) => setField("content", val)}
+              placeholder="Message content (supports markdown, @mentions, #channels, :emojis)"
+              rows={4}
+              maxLength={2000}
+            />
+          </div>
+
+          {/* Thread Collapsible */}
+          <div className="rounded border border-[#202225] bg-[#202225]/40 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setThreadOpen(!threadOpen)}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold text-[#949ba4] hover:text-white"
+            >
+              <span>Thread</span>
+              {threadOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+            {threadOpen && (
+              <div className="p-3 border-t border-[#202225] space-y-2">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#949ba4] mb-1">
+                    Thread Name
+                  </label>
+                  <input
+                    type="text"
+                    value={message.thread_name || ""}
+                    onChange={(e) => setField("thread_name", e.target.value)}
+                    placeholder="Provide a name to create a forum post or start a thread"
+                    className="w-full rounded bg-[#1e1f22] px-3 py-1.5 text-xs text-white placeholder-[#949ba4]/50 outline-none ring-1 ring-[#202225] focus:ring-[#5865f2]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Profile Collapsible */}
+          <div className="rounded border border-[#202225] bg-[#202225]/40 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold text-[#949ba4] hover:text-white"
+            >
+              <span>Profile</span>
+              {profileOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+            {profileOpen && (
+              <div className="p-3 border-t border-[#202225] space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#949ba4] mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={message.username || ""}
+                    onChange={(e) => setField("username", e.target.value)}
+                    placeholder="Override webhook bot username"
+                    className="w-full rounded bg-[#1e1f22] px-3 py-1.5 text-xs text-white placeholder-[#949ba4]/50 outline-none ring-1 ring-[#202225] focus:ring-[#5865f2]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#949ba4] mb-1">
+                    Avatar URL
+                  </label>
+                  <input
+                    type="text"
+                    value={message.avatar_url || ""}
+                    onChange={(e) => setField("avatar_url", e.target.value)}
+                    placeholder="https://..."
+                    className="w-full rounded bg-[#1e1f22] px-3 py-1.5 text-xs text-white placeholder-[#949ba4]/50 outline-none ring-1 ring-[#202225] focus:ring-[#5865f2]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Files Section */}
+          <FileAttachmentsSection />
+
+          {/* Embeds Studio */}
+          {message.embeds && message.embeds.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#949ba4]">
+                  Embeds ({message.embeds.length}/10)
+                </span>
+              </div>
+              {message.embeds.map((embed, i) => (
+                <EmbedEditor key={embed._id || i} embed={embed} index={i} />
+              ))}
+            </div>
+          )}
+
+          {/* Components V2 Studio */}
+          <div className="pt-2">
+            <DiscohookComponentsEditor />
+          </div>
+
+          {/* Bottom Toolbar */}
+          <div className="flex items-center gap-2 pt-3 border-t border-[#202225] relative">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowAddMenu(!showAddMenu)}
+                className="flex items-center gap-1.5 rounded bg-[#35373c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#404249]"
+              >
+                <span>Add</span>
+                <ChevronDown size={14} />
+              </button>
+
+              {showAddMenu && (
+                <div
+                  className="absolute left-0 bottom-full mb-1 w-44 rounded bg-[#1e1f22] p-1 shadow-lg ring-1 ring-black/40 z-30"
+                  onClick={() => setShowAddMenu(false)}
+                >
+                  <button
+                    type="button"
+                    disabled={(message.embeds?.length ?? 0) >= 10}
+                    onClick={() => addEmbed()}
+                    className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-[#dbdee1] hover:bg-[#35373c] disabled:opacity-40"
+                  >
+                    <Plus size={14} className="text-[#5865f2]" />
+                    <span>Add Embed</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addComponent(ComponentType.ActionRow)}
+                    className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-[#dbdee1] hover:bg-[#35373c]"
+                  >
+                    <LayoutGrid size={14} className="text-[#5865f2]" />
+                    <span>Add Action Row</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowLinkModal(true)}
+              className="flex items-center gap-1.5 rounded bg-[#35373c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#404249]"
+            >
+              <Link size={13} />
+              <span>Set Link</span>
+            </button>
+
+            <div className="relative ml-auto">
+              <button
+                type="button"
+                onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                className="flex items-center gap-1.5 rounded bg-[#35373c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#404249]"
+              >
+                <span>Options</span>
+                <ChevronDown size={14} />
+              </button>
+
+              {showOptionsMenu && (
+                <div
+                  className="absolute right-0 bottom-full mb-1 w-48 rounded bg-[#1e1f22] p-1 shadow-lg ring-1 ring-black/40 z-30"
+                  onClick={() => setShowOptionsMenu(false)}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (message.content) {
+                        navigator.clipboard.writeText(message.content);
+                      }
+                    }}
+                    className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-[#dbdee1] hover:bg-[#35373c]"
+                  >
+                    <Copy size={13} />
+                    <span>Copy Content</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setField("content", "");
+                    }}
+                    className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-[#da373c] hover:bg-[#35373c]"
+                  >
+                    <Trash2 size={13} />
+                    <span>Clear Content</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Mode-Specific Content */}
-      {mode === EDITOR_MODES.V2 ? (
-        <>
-          {profileSection}
-          <FileAttachmentsSection />
-
-          {/* V2 Component Tree & Palette */}
-          <section className="bg-[#232428] rounded-lg border border-[#1e1f22] p-3 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-[#949ba4] flex items-center gap-1.5">
-              <Rows size={13} /> Interactive Layout & Action Rows
-            </h3>
-            <DiscohookComponentsEditor />
-          </section>
-
-          <section className="bg-[#232428] rounded-lg border border-[#1e1f22] p-3 space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-[#949ba4]">
-              Component Palette
-            </h3>
-            <ComponentPalette />
-          </section>
-        </>
-      ) : (
-        <>
-          {/* Classic Message Content */}
-          <section className="bg-[#232428] rounded-lg border border-[#1e1f22] p-3">
-            <TextArea
-              label="Content"
-              limit={Limits.content}
-              rows={4}
-              value={data.content || ""}
-              placeholder="Say something... (supports markdown, spoilers ||text||, and mentions)"
-              onChange={(e) => setField("content", e.target.value)}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg bg-[#2b2d31] p-5 shadow-xl border border-[#1e1f22]">
+            <h3 className="text-sm font-semibold text-white mb-2">Set Message Link</h3>
+            <p className="text-xs text-[#949ba4] mb-3">
+              Enter an existing Discord message link to target it for editing:
+            </p>
+            <input
+              type="text"
+              value={messageLinkInput}
+              onChange={(e) => setMessageLinkInput(e.target.value)}
+              placeholder="https://discord.com/channels/..."
+              className="w-full rounded bg-[#1e1f22] px-3 py-2 text-xs text-white placeholder-[#949ba4]/50 outline-none ring-1 ring-[#1e1f22] focus:ring-[#5865f2] mb-4"
             />
-          </section>
-
-          {profileSection}
-          <FileAttachmentsSection />
-
-          {/* Embeds Section */}
-          <section className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-[#949ba4] flex items-center gap-1.5">
-                <ImageIcon size={13} /> Embeds
-                <span className="text-[#949ba4] text-[11px]">
-                  {(data.embeds || []).length}/{Limits.embed.embedsPerMessage}
-                </span>
-              </h3>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Plus}
-                onClick={addEmbed}
-                disabled={(data.embeds || []).length >= Limits.embed.embedsPerMessage}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="rounded px-3 py-1.5 text-xs font-medium text-[#949ba4] hover:text-white"
               >
-                Add embed
-              </Button>
-            </div>
-
-            {!data.embeds || data.embeds.length === 0 ? (
-              <p className="rounded border border-dashed border-[#35373c] px-3 py-3 text-center text-xs text-[#949ba4]">
-                No embeds yet. Click "Add embed" to create one.
-              </p>
-            ) : (
-              data.embeds.map((embed, index) => (
-                <EmbedEditor key={embed._id} embed={embed} index={index} />
-              ))
-            )}
-          </section>
-
-          {/* Action Rows in Classic Mode (Buttons & Select Menus) */}
-          <section className="bg-[#232428] rounded-lg border border-[#1e1f22] p-3 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-[#949ba4] flex items-center gap-1.5">
-                <Rows size={13} /> Action Rows (Buttons & Menus)
-              </h3>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Plus}
-                onClick={() => addComponent(1)} // 1 = ComponentType.ActionRow
-                disabled={
-                  (data.components || []).filter((c) => c.type === 1).length >= 5
-                }
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLinkModal(false);
+                }}
+                className="rounded bg-[#5865f2] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#4752c4]"
               >
-                Add Row
-              </Button>
+                Save
+              </button>
             </div>
-            <DiscohookComponentsEditor />
-          </section>
-        </>
+          </div>
+        </div>
       )}
-
-      <FlagsModal open={flagsOpen} onClose={() => setFlagsOpen(false)} />
-      <AllowedMentionsModal open={mentionsOpen} onClose={() => setMentionsOpen(false)} />
     </div>
   );
 };

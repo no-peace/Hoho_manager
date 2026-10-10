@@ -257,6 +257,17 @@ export const api = {
       }>(
         `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
       ),
+    emojis: (guildId: string, profileId?: number) =>
+      request<{
+        emojis: Array<{
+          id: string;
+          name: string;
+          animated?: boolean;
+          available?: boolean;
+        }>;
+      }>(
+        `/api/discord/guilds/${guildId}/emojis${profileId ? `?profileId=${profileId}` : ""}`
+      ),
     auditLogs: (guildId: string, params?: { limit?: number; page?: number; action?: string; channelId?: string; webhookId?: string; userId?: string }) => {
       const sp = new URLSearchParams();
       if (params?.limit) sp.set("limit", String(params.limit));

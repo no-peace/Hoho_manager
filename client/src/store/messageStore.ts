@@ -649,7 +649,7 @@ export const useMessageStore = create<MessageState>()(
         data: state.data,
         messages: state.messages,
         activeMessageIndex: state.activeMessageIndex,
-        targets: state.targets,
+        // targets: state.targets,
       }),
       version: 1,
     },

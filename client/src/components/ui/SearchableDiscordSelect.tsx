@@ -30,6 +30,22 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   const [memberResults, setMemberResults] = useState<{ id: string; name: string }[]>([]);
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const updateRect = () => {
+    if (containerRef.current) {
+      setDropdownRect(containerRef.current.getBoundingClientRect());
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    updateRect();
+    window.addEventListener("scroll", updateRect, true);
+    window.addEventListener("resize", updateRect);
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open && containerRef.current) {

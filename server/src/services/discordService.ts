@@ -75,6 +75,13 @@ export interface DiscordMessageRecord {
   [key: string]: unknown;
 }
 
+export interface DiscordEmojiSummary {
+  id: string;
+  name: string;
+  animated?: boolean;
+  available?: boolean;
+}
+
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const asRecord = (value: unknown): Record<string, unknown> =>
@@ -308,6 +315,26 @@ export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
 };
 
 /* ── Bot (token required, server-side only) ───────────────────────────────── */
+
+export const getGuildEmojis = async (
+  guildId: string,
+  profileId: number | string | null = null,
+): Promise<DiscordEmojiSummary[]> => {
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
+  const emojis = await apiRequest<DiscordEmojiSummary[]>(
+    "GET",
+    `/guilds/${encodeURIComponent(guildId)}/emojis`,
+    { token },
+  );
+  if (!emojis) return [];
+  return emojis.map((e) => ({
+    id: e.id,
+    name: e.name,
+    animated: Boolean(e.animated),
+    available: e.available !== false,
+  }));
+};
 
 export interface BotSendOptions {
   profileId?: number | null;
@@ -610,11 +637,11 @@ export const editOriginalResponse = async (
 
 /** Defer a response so we still have time to do slow work before replying. */
 export const deferResponse = async (
-  applicationId: string,
+  interactionId: string,
   interactionToken: string,
   { ephemeral = false }: { ephemeral?: boolean } = {},
 ): Promise<unknown> =>
-  createInteractionResponse(applicationId, interactionToken, {
+  createInteractionResponse(interactionId, interactionToken, {
     type: InteractionResponseType.DeferredChannelMessageWithSource,
     data: ephemeral ? { flags: MessageFlags.Ephemeral } : {},
   });
@@ -630,6 +657,7 @@ export default {
   getBotGuilds,
   getGuildChannels,
   getGuildRoles,
+  getGuildEmojis,
   searchGuildMembers,
   getChannelMessages,
   getBotIdentity,
