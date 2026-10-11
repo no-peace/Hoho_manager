@@ -1,44 +1,65 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Eye, Info, Paperclip, MessageSquare } from "lucide-react";
-import {
-  ComponentType,
-  EDITOR_MODES,
-  MessageFlags,
-  type ActionRowNode,
-  type ComponentNode,
-} from "@dmb/shared";
-import { useMessageStore, type AttachedFile } from "../../store/messageStore";
-import { useGlobalStore } from "../../store/globalStore";
+import React, { useEffect, useState, useMemo } from "react";
+import { Bot, Eye, Info, FileText, Link2, Music } from "lucide-react";
+import type { ComponentNode } from "@dmb/shared";
+import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { EmbedPreview } from "./EmbedPreview";
+import { ContainerPreview } from "./ContainerPreview";
+import { AutoComponent } from "./ComponentPreview";
 import { ActionRowPreview } from "./ActionRowPreview";
-import { ComponentPreview } from "./ComponentPreview";
+import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore, type AttachedFile } from "../../store/messageStore";
+import { EDITOR_MODES } from "../../utils/constants";
 
-const TopLevelComponent = ({ component }: { component: ComponentNode }) => {
-  if (component.type === ComponentType.ActionRow) {
-    return <ActionRowPreview component={component as ActionRowNode} />;
-  }
-  return <ComponentPreview component={component} />;
+const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
+  component.type === ComponentType.Container ? (
+    <ContainerPreview component={component} />
+  ) : (
+    <AutoComponent component={component} />
+  );
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const AttachmentPreviewItem: React.FC<{ file: AttachedFile }> = ({ file }) => {
+const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
+  const [spoilerHidden, setSpoilerHidden] = useState(Boolean(file.spoiler));
+  const isUrl = Boolean(file.url && !file.file);
   const isImage = file.type.startsWith("image/");
-  const isAudio = file.type.startsWith("audio/");
   const isVideo = file.type.startsWith("video/");
+  const isAudio = file.type.startsWith("audio/");
 
   if (isImage) {
     return (
-      <div className="relative inline-block max-w-[400px] overflow-hidden rounded-lg border border-[#2b2d31] bg-[#1e1f22]">
-        <img
-          src={file.url}
-          alt={file.name}
-          className="max-h-[300px] w-auto object-contain"
-        />
-        {file.spoiler && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <span className="rounded bg-black/60 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-white">
-              SPOILER
+      <div className="relative inline-block max-w-sm rounded-lg overflow-hidden border border-[#232428] bg-[#2b2d31]">
+        {spoilerHidden ? (
+          <div
+            onClick={() => setSpoilerHidden(false)}
+            className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+              Spoiler
             </span>
+            <span className="text-[11px] text-[#949ba4] mt-2">Click to view</span>
+          </div>
+        ) : (
+          <div className="relative group">
+            <img
+              src={file.previewUrl}
+              alt={file.name}
+              className="max-h-72 max-w-full rounded-md object-contain"
+            />
+            {file.spoiler && (
+              <button
+                type="button"
+                onClick={() => setSpoilerHidden(true)}
+                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Hide
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -47,28 +68,39 @@ const AttachmentPreviewItem: React.FC<{ file: AttachedFile }> = ({ file }) => {
 
   if (isVideo) {
     return (
-      <div className="relative max-w-[400px] overflow-hidden rounded-lg border border-[#2b2d31]">
-        <video src={file.url} controls className="max-h-[300px] w-full" />
-      </div>
-    );
-  }
-
-  if (isAudio) {
-    return (
-      <div className="w-full max-w-[400px] rounded-lg border border-[#2b2d31] bg-[#2b2d31] p-2">
-        <p className="mb-1 truncate text-xs text-[#dbdee1]">{file.name}</p>
-        <audio src={file.url} controls className="w-full" />
+      <div className="relative inline-block max-w-sm rounded-lg overflow-hidden border border-[#232428] bg-[#2b2d31]">
+        {spoilerHidden ? (
+          <div
+            onClick={() => setSpoilerHidden(false)}
+            className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+              Spoiler
+            </span>
+            <span className="text-[11px] text-[#949ba4] mt-2">Click to view video</span>
+          </div>
+        ) : (
+          <video
+            src={file.previewUrl}
+            controls
+            className="max-h-72 max-w-full rounded-md"
+          />
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-[#2b2d31] bg-[#2b2d31] p-3 text-xs text-[#dbdee1] max-w-[320px]">
-      <Paperclip size={18} className="text-[#949ba4] shrink-0" />
+    <div className="relative flex items-center gap-3 p-3 rounded-lg bg-[#2b2d31] border border-[#1e1f22] max-w-sm">
+      <div className="p-2.5 rounded-md bg-[#1e1f22] text-[#949ba4] shrink-0">
+        {isUrl ? <Link2 size={22} /> : isAudio ? <Music size={22} /> : <FileText size={22} />}
+      </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{file.name}</p>
-        <p className="text-[10px] text-[#949ba4]">
-          {(file.size / 1024).toFixed(1)} KB
+        <p className="text-xs font-semibold text-[#5865f2] truncate" title={file.url ?? file.name}>
+          {file.spoiler ? `SPOILER_${file.name}` : file.name}
+        </p>
+        <p className="text-[11px] text-[#949ba4] mt-0.5">
+          {isUrl ? "External URL" : formatBytes(file.size)}
         </p>
       </div>
     </div>
@@ -83,9 +115,8 @@ export const MessagePreview = () => {
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const botIdentity = useGlobalStore((state) => state.botIdentity);
-  const [now, setNow] = useState(() => new Date());
-
   const displayMessages = useMemo(() => (messages && messages.length > 0 ? messages : [data]), [messages, data]);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -127,134 +158,130 @@ export const MessagePreview = () => {
             <Info size={13} /> Nothing to preview yet.
           </p>
         ) : (
-          displayMessages.map((msg, index) => {
+          displayMessages.map((message, index) => {
             const isActive = index === activeMessageIndex;
             const effectiveAvatar =
-              msg.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
+              message.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
             const effectiveUsername =
-              msg.username || botIdentity?.username || "Message Builder";
+              message.username || botIdentity?.username || "Message Builder";
 
-            const prevMsg = index > 0 ? displayMessages[index - 1] : undefined;
+            const prevMessage = index > 0 ? displayMessages[index - 1] : undefined;
             const prevAvatar =
-              prevMsg?.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
-            const isGrouped =
-              index > 0 &&
-              (prevMsg?.username || botIdentity?.username) === effectiveUsername &&
-              prevAvatar === effectiveAvatar;
+              prevMessage?.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
+            const prevUsername =
+              prevMessage?.username || botIdentity?.username || "Message Builder";
 
-            const actionRows =
-              msg.components?.filter((c) => c.type === ComponentType.ActionRow) ?? [];
+            const isConsecutive =
+              index > 0 &&
+              effectiveUsername === prevUsername &&
+              effectiveAvatar === prevAvatar;
+
+            const actionRows = (message.components || []).filter(
+              (c) => c.type === ComponentType.ActionRow,
+            );
 
             return (
               <div
                 key={index}
                 onClick={() => setActiveMessageIndex?.(index)}
-                className={`group relative rounded-md p-2 transition-all cursor-pointer ${
+                className={`group relative flex gap-3 p-2.5 rounded-lg transition-all cursor-pointer ${
                   isActive
                     ? "ring-2 ring-[#5865f2] bg-[#5865f2]/5 shadow-sm"
                     : "hover:bg-[#2b2d31]/40"
+                } ${
+                  isConsecutive ? "pl-14 -mt-1" : "mt-2 first:mt-0"
                 }`}
+                title={`Message ${index + 1}${isActive ? " (Active)" : " - Click to edit"}`}
               >
-                {displayMessages.length > 1 && (
-                  <div className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-medium text-[#949ba4] opacity-40 group-hover:opacity-100 transition-opacity">
-                    <MessageSquare size={12} />
-                    <span>Message {index + 1}</span>
+                {!isConsecutive && (
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865f2]">
+                    {effectiveAvatar ? (
+                      <img
+                        src={effectiveAvatar}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          if (
+                            defaultDiscordAvatar &&
+                            e.currentTarget.src !== defaultDiscordAvatar
+                          ) {
+                            e.currentTarget.src = defaultDiscordAvatar;
+                          } else {
+                            e.currentTarget.style.display = "none";
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center">
+                        <Bot size={18} className="text-white" />
+                      </span>
+                    )}
                   </div>
                 )}
 
-                {msg.thread_name && index === 0 && (
-                  <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-[#dbdee1] border-b border-[#3f4147] pb-1">
-                    <span className="text-[#949ba4]">Thread:</span>
-                    <span>{msg.thread_name}</span>
-                  </div>
-                )}
+                <div className="min-w-0 flex-1">
+                  {!isConsecutive && (
+                    <p className="flex items-center gap-2">
+                      <span className="text-[15px] font-medium text-[#f2f3f5]">
+                        {effectiveUsername}
+                      </span>
+                      <span className="rounded bg-[#5865f2] px-1 py-px text-[10px] font-semibold text-white">
+                        APP
+                      </span>
+                      <span className="text-xs text-[#949ba4]">
+                        Today at{" "}
+                        {now.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </p>
+                  )}
 
-                <div className="flex gap-4">
-                  <div className="w-10 shrink-0">
-                    {!isGrouped && (
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-[#5865f2] select-none">
-                        {effectiveAvatar ? (
-                          <img
-                            src={effectiveAvatar}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = "none";
-                            }}
+                  <div className="mt-0.5 space-y-2">
+                    {isV2 ? (
+                      <>
+                        {message.components &&
+                          message.components.map((component) => (
+                            <div key={component._id}>
+                              <TopLevelComponent component={component} />
+                            </div>
+                          ))}
+                        <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
+                          flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        {message.content && (
+                          <Markdown
+                            content={message.content}
+                            className="text-[15px] text-[#dbdee1]"
                           />
-                        ) : (
-                          <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-white">
-                            {effectiveUsername.charAt(0).toUpperCase()}
-                          </span>
                         )}
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="min-w-0 flex-1">
-                    {!isGrouped && (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-[15px] font-medium text-white hover:underline cursor-pointer">
-                          {effectiveUsername}
-                        </span>
-                        <span className="rounded bg-[#5865f2] px-1 py-0.2 text-[10px] font-semibold text-white">
-                          BOT
-                        </span>
-                        <time className="text-xs text-[#949ba4]">
-                          Today at{" "}
-                          {now.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </time>
-                      </div>
-                    )}
-
-                    <div className="mt-0.5 space-y-2">
-                      {isV2 ? (
-                        <>
-                          {msg.components &&
-                            msg.components.map((component) => (
-                              <div key={component._id}>
-                                <TopLevelComponent component={component} />
-                              </div>
+                        {index === activeMessageIndex && attachedFiles.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1 pb-1">
+                            {attachedFiles.map((file) => (
+                              <AttachmentPreviewItem key={file.id} file={file} />
                             ))}
-                          <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
-                            flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          {msg.content && (
-                            <Markdown
-                              content={msg.content}
-                              className="text-[15px] text-[#dbdee1]"
-                            />
-                          )}
+                          </div>
+                        )}
 
-                          {index === activeMessageIndex && attachedFiles.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1 pb-1">
-                              {attachedFiles.map((file) => (
-                                <AttachmentPreviewItem key={file.id} file={file} />
-                              ))}
-                            </div>
-                          )}
+                        {message.embeds &&
+                          message.embeds.map((embed) => (
+                            <EmbedPreview key={embed._id} embed={embed} />
+                          ))}
 
-                          {msg.embeds &&
-                            msg.embeds.map((embed) => (
-                              <EmbedPreview key={embed._id} embed={embed} />
+                        {actionRows.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            {actionRows.map((row) => (
+                              <ActionRowPreview key={row._id} component={row} />
                             ))}
-
-                          {actionRows.length > 0 && (
-                            <div className="space-y-1.5 pt-1">
-                              {actionRows.map((row) => (
-                                <ActionRowPreview key={row._id} component={row} />
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -266,4 +293,4 @@ export const MessagePreview = () => {
   );
 };
 
-export default MessagePreview;
+export default React.memo(MessagePreview);

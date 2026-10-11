@@ -19,7 +19,7 @@ import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 
-export const BotDispatchModal: React.FC<{
+const BotDispatchModalComponent: React.FC<{
   open: boolean;
   onClose: () => void;
   initialMode?: "send" | "edit";
@@ -106,7 +106,7 @@ export const BotDispatchModal: React.FC<{
     void fetchChannels(id);
   };
 
-const fetchChannels = async (profileId: number | null = botProfileId) => {
+  const fetchChannels = async (profileId: number | null = botProfileId) => {
     setIsLoading(true);
     try {
       const query = profileId === null ? "" : `?profileId=${encodeURIComponent(String(profileId))}`;
@@ -521,4 +521,5 @@ const fetchChannels = async (profileId: number | null = botProfileId) => {
   );
 };
 
+export const BotDispatchModal = React.memo(BotDispatchModalComponent);
 export default BotDispatchModal;

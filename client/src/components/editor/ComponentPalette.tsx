@@ -1,3 +1,4 @@
+import React from "react";
 import {
   AlignLeft,
   AtSign,
@@ -51,7 +52,8 @@ const ICONS: Record<number, IconComponent> = {
 export const ComponentPalette = () => {
   const addComponent = useMessageStore((state) => state.addComponent);
   const selection = useMessageStore((state) => state.selection);
-  const components = useMessageStore((state) => state.data.components);
+  const data = useMessageStore((state) => state.data);
+  const components = data.components || [];
 
   // Only a component selection can act as a nesting target.
   const selected =
@@ -128,4 +130,4 @@ export const ComponentPalette = () => {
   );
 };
 
-export default ComponentPalette;
+export default React.memo(ComponentPalette);

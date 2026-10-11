@@ -260,7 +260,7 @@ export const App: React.FC = () => {
   // Direct 1:1 state selectors
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
-  const activeMessages = useMemo(
+  const displayMessages = useMemo(
     () => (messages && messages.length > 0 ? messages : [data]),
     [messages, data]
   );
@@ -437,17 +437,17 @@ export const App: React.FC = () => {
 
                 {/* Multi-Message Workspace (Discohook layout) */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-                  {activeMessages.map((_, idx) => (
-                    <MessageEditor key={idx} index={idx} />
+                  {displayMessages.map((_, index) => (
+                    <MessageEditor key={index} index={index} />
                   ))}
 
                   <button
                     type="button"
                     onClick={() => addMessage()}
-                    disabled={activeMessages.length >= 10}
+                    disabled={displayMessages.length >= 10}
                     className="w-full py-2.5 mt-2 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
                   >
-                    <Plus size={15} /> Add Message ({activeMessages.length}/10)
+                    <Plus size={15} /> Add Message ({displayMessages.length}/10)
                   </button>
                 </div>
               </div>

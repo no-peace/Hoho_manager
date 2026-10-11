@@ -12,7 +12,6 @@ import {
   Film,
   Link2,
   Music,
-  Plus,
   X,
 } from "lucide-react";
 import { useMessageStore, type AttachedFile } from "../../store/messageStore";
@@ -27,29 +26,29 @@ const formatBytes = (bytes: number): string => {
 };
 
 export const FileAttachmentsSection: React.FC = () => {
-  const attachedFiles = useMessageStore((state) => state.attachedFiles);
-  const [open, setOpen] = useState(attachedFiles.length > 0);
+  const [isOpen, setIsOpen] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState("");
-  const [urlError, setUrlError] = useState<string | null>(null);
+  const [urlErrorMessage, setUrlErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const addFiles = useMessageStore((state) => state.addFiles);
   const addUrlAttachment = useMessageStore((state) => state.addUrlAttachment);
   const removeFile = useMessageStore((state) => state.removeFile);
   const toggleFileSpoiler = useMessageStore((state) => state.toggleFileSpoiler);
 
   const handleAddUrl = () => {
-    setUrlError(null);
+    setUrlErrorMessage(null);
     const value = urlValue.trim();
     if (!/^https?:\/\//i.test(value)) {
-      setUrlError("Enter a valid http(s) URL.");
+      setUrlErrorMessage("Enter a valid http(s) URL.");
       return;
     }
     if (attachedFiles.length >= MAX_FILES) {
-      setUrlError(`Maximum ${MAX_FILES} attachments allowed per message.`);
+      setUrlErrorMessage(`Maximum ${MAX_FILES} attachments allowed per message.`);
       return;
     }
     addUrlAttachment(value);
@@ -59,17 +58,17 @@ export const FileAttachmentsSection: React.FC = () => {
 
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
-    setErrorMsg(null);
+    setErrorMessage(null);
     const files = Array.from(fileList);
 
     if (attachedFiles.length + files.length > MAX_FILES) {
-      setErrorMsg(`Maximum ${MAX_FILES} attachments allowed per message.`);
+      setErrorMessage(`Maximum ${MAX_FILES} attachments allowed per message.`);
       return;
     }
 
     const oversized = files.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
     if (oversized.length > 0) {
-      setErrorMsg(`File "${oversized[0].name}" exceeds the 25 MB limit.`);
+      setErrorMessage(`File "${oversized[0].name}" exceeds the 25 MB limit.`);
       return;
     }
 
@@ -77,158 +76,143 @@ export const FileAttachmentsSection: React.FC = () => {
   };
 
   const renderFileThumbnail = (file: AttachedFile) => {
-    if (file.type.startsWith("image/")) {
+    const isUrl = Boolean(file.url && !file.file);
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    const isAudio = file.type.startsWith("audio/");
+
+    if (isImage) {
       return (
         <img
           src={file.previewUrl}
           alt={file.name}
-          className="object-contain w-full h-full max-h-full rounded m-auto select-none"
+          className="h-full w-full object-cover rounded"
         />
       );
     }
-    if (file.url) {
+    if (isVideo) {
       return (
-        <div className="flex flex-col items-center justify-center text-[#949ba4] gap-1">
-          <Link2 size={26} />
-          <span className="text-[9px] uppercase font-bold">URL</span>
+        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+          <Film size={24} />
         </div>
       );
     }
-    if (file.type.startsWith("video/")) {
+    if (isAudio) {
       return (
-        <div className="flex flex-col items-center justify-center text-[#949ba4] gap-1">
-          <Film size={26} />
-          <span className="text-[9px] uppercase font-bold">Video</span>
+        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+          <Music size={24} />
         </div>
       );
     }
-    if (file.type.startsWith("audio/")) {
+    if (isUrl) {
       return (
-        <div className="flex flex-col items-center justify-center text-[#949ba4] gap-1">
-          <Music size={26} />
-          <span className="text-[9px] uppercase font-bold">Audio</span>
+        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+          <Link2 size={24} />
         </div>
       );
     }
     return (
-      <div className="flex flex-col items-center justify-center text-[#949ba4] gap-1">
-        <FileText size={26} />
-        <span className="text-[9px] uppercase font-bold">Document</span>
+      <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+        <FileText size={24} />
       </div>
     );
   };
 
   return (
-    <section className="bg-[#1e1f22] rounded-lg border border-[#111214] overflow-hidden">
-      {/* Section Header */}
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-3 text-left text-xs font-bold text-[#949ba4] hover:text-[#dbdee1] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-      >
-        <span className="flex items-center gap-2 uppercase tracking-wider text-[11px] text-[#dbdee1]">
-          <Paperclip size={14} className="text-[#5865f2]" />
-          <span>Files ({attachedFiles.length}/{MAX_FILES})</span>
-        </span>
-        <div className="flex items-center gap-2">
-          {attachedFiles.length < MAX_FILES && (
-            <>
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setUrlOpen((v) => !v);
-                  setUrlError(null);
-                  setOpen(true);
-                }}
-                className="text-[11px] font-semibold text-[#5865f2] hover:underline cursor-pointer normal-case flex items-center gap-1"
-              >
-                <Link2 size={11} /> Add URL
-              </span>
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="text-[11px] font-semibold text-[#5865f2] hover:underline cursor-pointer normal-case"
-              >
-                + Add File
-              </span>
-            </>
+    <section className="rounded-lg border border-[#202225] bg-[#202225]/40 overflow-hidden text-xs">
+      {/* ── Section Trigger Header ── */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#202225]">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-[#dbdee1] hover:text-white"
+        >
+          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>Files</span>
+          {attachedFiles.length > 0 && (
+            <span className="rounded bg-[#5865f2] px-1.5 py-0.2 text-[10px] font-bold text-white">
+              {attachedFiles.length}
+            </span>
           )}
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setUrlOpen(!urlOpen)}
+            className="flex items-center gap-1 rounded bg-[#35373c] px-2 py-1 text-[11px] font-medium text-[#dbdee1] hover:bg-[#404249] hover:text-white transition-colors"
+          >
+            <Link2 size={12} />
+            <span>Add URL</span>
+          </button>
+          <button
+            type="button"
+            disabled={attachedFiles.length >= MAX_FILES}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1 rounded bg-[#5865f2] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#4752c4] disabled:opacity-40 transition-colors"
+          >
+            <Upload size={12} />
+            <span>Upload</span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              handleFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </div>
-      </button>
+      </div>
 
-      {/* Hidden File Input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          handleFiles(e.target.files);
-          setOpen(true);
-          e.target.value = ""; // Reset so same file can be re-selected if deleted
-        }}
-      />
-
-      {open && (
-        <div className="p-3 pt-0 border-t border-[#111214] space-y-3 mt-1">
-          {errorMsg && (
-            <div className="flex items-center gap-2 p-2.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
-              <AlertCircle size={15} className="shrink-0" />
-              <span>{errorMsg}</span>
+      {isOpen && (
+        <div className="p-3 space-y-3">
+          {/* External URL attachment bar */}
+          {urlOpen && (
+            <div className="flex items-center gap-2 rounded bg-[#1e1f22] p-2 border border-[#2b2d31]">
+              <input
+                type="url"
+                value={urlValue}
+                onChange={(e) => setUrlValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddUrl();
+                }}
+                placeholder="https://example.com/image.png"
+                className="flex-1 rounded bg-[#2b2d31] px-2 py-1 text-xs text-[#dbdee1] placeholder-[#949ba4]/50 outline-none ring-1 ring-transparent focus:ring-[#5865f2]"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleAddUrl}
+                className="rounded bg-[#5865f2] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#4752c4]"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUrlOpen(false);
+                  setUrlErrorMessage(null);
+                }}
+                className="p-1 text-[#949ba4] hover:text-white"
+              >
+                <X size={14} />
+              </button>
             </div>
           )}
 
-          {/* Add Attachment by External URL (Discohook-style) */}
-          {urlOpen && (
-            <div className="space-y-1.5">
-              <div className="flex gap-1.5 items-center">
-                <Link2 size={14} className="text-[#949ba4] shrink-0" />
-                <input
-                  autoFocus
-                  type="text"
-                  value={urlValue}
-                  onChange={(e) => setUrlValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddUrl();
-                    if (e.key === "Escape") setUrlOpen(false);
-                  }}
-                  placeholder="https://example.com/image.png"
-                  className="flex-1 min-w-0 bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded outline-none focus:border-[#5865f2] placeholder-[#6d6f78]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddUrl}
-                  disabled={urlValue.trim() === ""}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                >
-                  <Plus size={13} /> Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUrlOpen(false);
-                    setUrlValue("");
-                    setUrlError(null);
-                  }}
-                  className="p-1.5 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors shrink-0"
-                  title="Cancel"
-                  aria-label="Cancel adding URL"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-              {urlError && (
-                <p className="text-[11px] text-red-400 flex items-center gap-1.5">
-                  <AlertCircle size={12} /> {urlError}
-                </p>
-              )}
-              <p className="text-[10px] text-[#6d6f78]">
-                External URLs are downloaded by the server and forwarded to Discord as real attachments.
-              </p>
-            </div>
+          {urlErrorMessage && (
+            <p className="flex items-center gap-1 text-[11px] text-[#da373c]">
+              <AlertCircle size={12} /> {urlErrorMessage}
+            </p>
+          )}
+
+          {errorMessage && (
+            <p className="flex items-center gap-1 text-[11px] text-[#da373c]">
+              <AlertCircle size={12} /> {errorMessage}
+            </p>
           )}
 
           {/* Drag & Drop Zone */}
@@ -244,44 +228,34 @@ export const FileAttachmentsSection: React.FC = () => {
               handleFiles(e.dataTransfer.files);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-3.5 text-center cursor-pointer transition-all ${
+            className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
               isDragging
                 ? "border-[#5865f2] bg-[#5865f2]/10"
-                : "border-[#35373c] hover:border-[#4e5058] bg-[#2b2d31]/40 hover:bg-[#2b2d31]/80"
+                : "border-[#35373c] bg-[#1e1f22]/50 hover:border-[#4e5058] hover:bg-[#1e1f22]"
             }`}
           >
-            <Upload size={18} className="mx-auto text-[#949ba4] mb-1.5" />
+            <Paperclip size={20} className="mb-1 text-[#949ba4]" />
             <p className="text-xs font-medium text-[#dbdee1]">
-              Drag & drop files here, or <span className="text-[#5865f2] hover:underline">browse</span>
+              Drop files here or <span className="text-[#5865f2]">browse</span>
             </p>
-            <p className="text-[10px] text-[#949ba4] mt-0.5">
-              Images, videos, audio, or documents up to 25 MB each (up to 10 files).
+            <p className="mt-0.5 text-[10px] text-[#949ba4]">
+              Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
             </p>
           </div>
 
-          {/* Attached Files List (Horizontal scroll cards) */}
+          {/* Attachments List */}
           {attachedFiles.length > 0 && (
-            <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 custom-scrollbar">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {attachedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="relative group rounded-lg bg-[#2b2d31] border border-[#35373c] p-2 w-32 shrink-0 flex flex-col justify-between hover:border-[#4e5058] transition-colors"
+                  className="group relative flex flex-col rounded border border-[#2b2d31] bg-[#1e1f22] p-2"
                 >
-                  {/* Media Thumbnail Container */}
-                  <div className="w-full aspect-[1.15/1] rounded bg-[#1e1f22] flex relative overflow-hidden items-center justify-center p-1">
+                  <div className="relative aspect-video w-full overflow-hidden rounded bg-[#111214]">
                     {renderFileThumbnail(file)}
 
-                    {/* Spoiler Overlay */}
-                    {file.spoiler && (
-                      <div className="absolute inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
-                        <span className="text-[9px] font-bold text-white uppercase tracking-wider bg-black/70 px-2 py-0.5 rounded-full border border-white/20">
-                          Spoiler
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Action buttons (top right overlay) */}
-                    <div className="absolute top-1 right-1 flex gap-1 bg-[#1e1f22]/90 rounded p-0.5 opacity-90 group-hover:opacity-100 transition-opacity z-20">
+                    {/* Action buttons overlay */}
+                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -289,10 +263,10 @@ export const FileAttachmentsSection: React.FC = () => {
                           toggleFileSpoiler(file.id);
                         }}
                         title={file.spoiler ? "Remove spoiler" : "Mark as spoiler"}
-                        className={`p-1 rounded transition-colors ${
+                        className={`rounded p-1 text-white shadow backdrop-blur-sm transition-colors ${
                           file.spoiler
-                            ? "text-[#5865f2] hover:text-[#4752c4]"
-                            : "text-[#949ba4] hover:text-white"
+                            ? "bg-[#5865f2] hover:bg-[#4752c4]"
+                            : "bg-black/60 hover:bg-black/80"
                         }`}
                       >
                         {file.spoiler ? <EyeOff size={12} /> : <Eye size={12} />}
@@ -303,12 +277,20 @@ export const FileAttachmentsSection: React.FC = () => {
                           e.stopPropagation();
                           removeFile(file.id);
                         }}
-                        title="Delete file"
-                        className="p-1 rounded text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/15 transition-colors"
+                        title="Remove file"
+                        className="rounded bg-black/60 p-1 text-white shadow backdrop-blur-sm hover:bg-[#da373c] transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>
                     </div>
+
+                    {file.spoiler && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/70 pointer-events-none">
+                        <span className="rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white uppercase">
+                          SPOILER
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Metadata labels */}
@@ -339,4 +321,4 @@ export const FileAttachmentsSection: React.FC = () => {
   );
 };
 
-export default FileAttachmentsSection;
+export default React.memo(FileAttachmentsSection);

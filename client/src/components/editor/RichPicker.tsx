@@ -4,7 +4,6 @@ import {
   Shield,
   User,
   Clock,
-  Smile,
   Plus,
   Search,
   X,
@@ -14,6 +13,7 @@ import {
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
+import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
 
 export interface RichPickerProps {
   onInsert: (text: string) => void;
@@ -30,93 +30,30 @@ interface CustomEmoji {
   animated?: boolean;
 }
 
-const COMMON_UNICODE_EMOJIS: Record<string, { name: string; char: string }[]> = {
-  "Smileys & Emotion": [
-    { name: "grinning", char: "😀" },
-    { name: "smiley", char: "😃" },
-    { name: "smile", char: "😄" },
-    { name: "grin", char: "😁" },
-    { name: "laughing", char: "😆" },
-    { name: "sweat_smile", char: "😅" },
-    { name: "rofl", char: "🤣" },
-    { name: "joy", char: "😂" },
-    { name: "slightly_smiling_face", char: "🙂" },
-    { name: "upside_down_face", char: "🙃" },
-    { name: "wink", char: "😉" },
-    { name: "blush", char: "😊" },
-    { name: "innocent", char: "😇" },
-    { name: "heart_eyes", char: "😍" },
-    { name: "star_struck", char: "🤩" },
-    { name: "kissing_heart", char: "😘" },
-    { name: "yum", char: "😋" },
-    { name: "stuck_out_tongue", char: "😛" },
-    { name: "sunglasses", char: "😎" },
-    { name: "thinking", char: "🤔" },
-    { name: "neutral_face", char: "😐" },
-    { name: "expressionless", char: "😑" },
-    { name: "smirk", char: "😏" },
-    { name: "unamused", char: "😒" },
-    { name: "pensive", char: "😔" },
-    { name: "sob", char: "😭" },
-    { name: "cry", char: "😢" },
-    { name: "rage", char: "😡" },
-    { name: "fire", char: "🔥" },
-    { name: "sparkles", char: "✨" },
-    { name: "heart", char: "❤️" },
-    { name: "purple_heart", char: "💜" },
-  ],
-  "Gestures & People": [
-    { name: "thumbsup", char: "👍" },
-    { name: "thumbsdown", char: "👎" },
-    { name: "clap", char: "👏" },
-    { name: "wave", char: "👋" },
-    { name: "pray", char: "🙏" },
-    { name: "raised_hands", char: "🙌" },
-    { name: "eyes", char: "👀" },
-    { name: "muscle", char: "💪" },
-    { name: "point_up", char: "☝️" },
-    { name: "point_down", char: "👇" },
-  ],
-  "Objects & Symbols": [
-    { name: "white_check_mark", char: "✅" },
-    { name: "x", char: "❌" },
-    { name: "warning", char: "⚠️" },
-    { name: "no_entry", char: "⛔" },
-    { name: "bell", char: "🔔" },
-    { name: "mega", char: "📣" },
-    { name: "zap", char: "⚡" },
-    { name: "star", char: "⭐" },
-    { name: "tada", char: "🎉" },
-    { name: "trophy", char: "🏆" },
-    { name: "gift", char: "🎁" },
-    { name: "link", char: "🔗" },
-    { name: "pin", char: "📌" },
-    { name: "lock", char: "🔒" },
-    { name: "key", char: "🔑" },
-  ],
-};
-
+const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
+const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
 const CUSTOM_EMOJI_STORAGE_KEY = "hoho_custom_external_emojis";
 
-export const RichPicker: React.FC<RichPickerProps> = ({
+const RichPickerComponent: React.FC<RichPickerProps> = ({
   onInsert,
   onClose,
   guildId: propGuildId,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("mentions");
-  const storeGuildId = useGlobalStore((s) => s.selectedGuildId);
-  const effectiveGuildId = propGuildId || storeGuildId;
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const effectiveGuildId = propGuildId || selectedGuildId;
 
-  const channels = useDiscordCacheStore((s) =>
-    effectiveGuildId ? s.channels[effectiveGuildId] || [] : []
-  );
-  const roles = useDiscordCacheStore((s) =>
-    effectiveGuildId ? s.roles[effectiveGuildId] || [] : []
-  );
-  const fetchChannels = useDiscordCacheStore((s) => s.fetchChannels);
-  const fetchRoles = useDiscordCacheStore((s) => s.fetchRoles);
+  // Cache store with direct 1:1 state property selectors
+  const channels = useDiscordCacheStore((state) => state.channels);
+  const roles = useDiscordCacheStore((state) => state.roles);
+  const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
+  const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
+  const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
+  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
 
+  // Emojis state
   const [serverEmojis, setServerEmojis] = useState<CustomEmoji[]>([]);
+
   const [customSavedEmojis, setCustomSavedEmojis] = useState<CustomEmoji[]>(() => {
     try {
       const saved = localStorage.getItem(CUSTOM_EMOJI_STORAGE_KEY);
@@ -125,11 +62,12 @@ export const RichPicker: React.FC<RichPickerProps> = ({
       return [];
     }
   });
-  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [addCustomModalOpen, setAddCustomModalOpen] = useState(false);
   const [newEmojiName, setNewEmojiName] = useState("");
   const [newEmojiId, setNewEmojiId] = useState("");
   const [newEmojiAnimated, setNewEmojiAnimated] = useState(false);
 
+  // Mentions tab state
   const [mentionFilter, setMentionFilter] = useState<MentionFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [memberResults, setMemberResults] = useState<
@@ -143,34 +81,42 @@ export const RichPicker: React.FC<RichPickerProps> = ({
   >([]);
   const [isSearchingMembers, setIsSearchingMembers] = useState(false);
 
+  // Time tab state
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     return now.toISOString().split("T")[0];
   });
   const [selectedTime, setSelectedTime] = useState(() => {
     const now = new Date();
-    return now.toTimeString().split(" ")[0].slice(0, 5);
+    return now.toTimeString().split(" ")[0].slice(0, 5); // HH:mm
   });
 
+  // Hovered emoji preview
   const [hoveredEmoji, setHoveredEmoji] = useState<{ name: string; icon: React.ReactNode } | null>(
     null
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Load guild data
   useEffect(() => {
     if (effectiveGuildId) {
       fetchChannels(effectiveGuildId);
       fetchRoles(effectiveGuildId);
+      // Fetch emojis
+      // Fetch emojis
       (api.discord as any)
         .emojis?.(effectiveGuildId)
         .then((res: { emojis: CustomEmoji[] }) => {
-          if (res?.emojis) setServerEmojis(res.emojis);
+          if (res?.emojis) {
+            setServerEmojis(res.emojis);
+          }
         })
         .catch(() => {});
     }
   }, [effectiveGuildId, fetchChannels, fetchRoles]);
 
+  // Member search debouncing
   useEffect(() => {
     if (!effectiveGuildId || !searchQuery.trim() || mentionFilter === "channels" || mentionFilter === "roles") {
       setMemberResults([]);
@@ -190,6 +136,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     return () => clearTimeout(timer);
   }, [effectiveGuildId, searchQuery, mentionFilter]);
 
+  // Click outside listener
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -200,6 +147,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
+  // Insert handler with shiftKey check
   const handleInsert = (text: string, e?: React.MouseEvent) => {
     onInsert(text);
     if (!e?.shiftKey) {
@@ -207,6 +155,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     }
   };
 
+  // Add custom emoji to local storage
   const handleSaveCustomEmoji = () => {
     if (!newEmojiName.trim() || !newEmojiId.trim()) return;
     const newEmoji: CustomEmoji = {
@@ -222,20 +171,22 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     setNewEmojiName("");
     setNewEmojiId("");
     setNewEmojiAnimated(false);
-    setShowAddCustomModal(false);
+    setAddCustomModalOpen(false);
   };
 
+  // Filtered lists for mentions
   const q = searchQuery.toLowerCase().trim();
   const filteredChannels = useMemo(() => {
-    if (!channels) return [];
-    return channels.filter((c) => !q || c.name.toLowerCase().includes(q));
-  }, [channels, q]);
+    if (!guildChannels) return [];
+    return guildChannels.filter((c) => !q || c.name.toLowerCase().includes(q));
+  }, [guildChannels, q]);
 
   const filteredRoles = useMemo(() => {
-    if (!roles) return [];
-    return roles.filter((r) => !q || r.name.toLowerCase().includes(q));
-  }, [roles, q]);
+    if (!guildRoles) return [];
+    return guildRoles.filter((r) => !q || r.name.toLowerCase().includes(q));
+  }, [guildRoles, q]);
 
+  // Computed unix timestamp for time tab
   const computedUnix = useMemo(() => {
     try {
       const [year, month, day] = selectedDate.split("-").map(Number);
@@ -308,7 +259,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     {
       format: "R",
       label: "Relative Time",
-      example: "Relative (e.g. in 2 hours / 3 minutes ago)",
+      example: "Relative (e.g. 2 hours ago / in 5 minutes)",
     },
   ];
 
@@ -371,6 +322,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
         {/* TAB 1: MENTIONS */}
         {activeTab === "mentions" && (
           <div className="space-y-3">
+            {/* Search and Filters */}
             <div className="space-y-1.5">
               <div className="relative">
                 <Search
@@ -454,6 +406,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
                   <Shield size={11} /> Roles
                 </div>
                 <div className="space-y-0.5 max-h-36 overflow-y-auto">
+                  {/* Default special mentions */}
                   {(!q || "@everyone".includes(q)) && (
                     <button
                       type="button"
@@ -629,6 +582,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
         {/* TAB 3: EMOJIS */}
         {activeTab === "emojis" && (
           <div className="space-y-3">
+            {/* Search */}
             <div className="relative">
               <Search
                 size={14}
@@ -643,28 +597,32 @@ export const RichPicker: React.FC<RichPickerProps> = ({
               />
             </div>
 
+            {/* Custom Server & Saved Emojis */}
             <div>
               <div className="flex items-center justify-between text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1.5">
                 <span>Custom Emojis</span>
                 <button
                   type="button"
-                  onClick={() => setShowAddCustomModal(true)}
+                  onClick={() => setAddCustomModalOpen(true)}
                   className="flex items-center gap-1 text-[#5865f2] hover:text-[#7983f5] font-semibold lowercase"
                 >
                   <Plus size={11} /> add emoji
                 </button>
               </div>
 
+              {/* Grid of custom emojis */}
               <div className="grid grid-cols-8 gap-1.5 bg-[#1e1f22] p-2 rounded border border-[#232428] max-h-36 overflow-y-auto">
+                {/* "+" tile */}
                 <button
                   type="button"
-                  onClick={() => setShowAddCustomModal(true)}
+                  onClick={() => setAddCustomModalOpen(true)}
                   className="w-8 h-8 rounded border border-dashed border-[#4e5058] hover:border-white text-[#949ba4] hover:text-white flex items-center justify-center transition-colors"
                   title="Add custom external emoji"
                 >
                   <Plus size={14} />
                 </button>
 
+                {/* Server emojis */}
                 {serverEmojis
                   .filter((e) => !q || e.name.toLowerCase().includes(q))
                   .map((e) => {
@@ -692,6 +650,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
                     );
                   })}
 
+                {/* User saved custom emojis */}
                 {customSavedEmojis
                   .filter((e) => !q || e.name.toLowerCase().includes(q))
                   .map((e) => {
@@ -721,6 +680,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
               </div>
             </div>
 
+            {/* Unicode Emojis Categories */}
             {Object.entries(COMMON_UNICODE_EMOJIS).map(([catName, list]) => {
               const matched = list.filter(
                 (e) => !q || e.name.toLowerCase().includes(q) || e.char.includes(q)
@@ -758,6 +718,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
         )}
       </div>
 
+      {/* Bottom Hover Preview Bar for Emojis */}
       {activeTab === "emojis" && hoveredEmoji && (
         <div className="px-3 py-1.5 bg-[#111214] border-t border-[#1e1f22] flex items-center gap-2 text-xs">
           {hoveredEmoji.icon}
@@ -765,7 +726,8 @@ export const RichPicker: React.FC<RichPickerProps> = ({
         </div>
       )}
 
-      {showAddCustomModal && (
+      {/* Add Custom Emoji Modal Overlay */}
+      {addCustomModalOpen && (
         <div className="absolute inset-0 bg-[#1e1f22]/95 z-50 p-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -774,7 +736,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
               </h4>
               <button
                 type="button"
-                onClick={() => setShowAddCustomModal(false)}
+                onClick={() => setAddCustomModalOpen(false)}
                 className="text-[#949ba4] hover:text-white"
               >
                 <X size={14} />
@@ -824,7 +786,7 @@ export const RichPicker: React.FC<RichPickerProps> = ({
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#313338]">
             <button
               type="button"
-              onClick={() => setShowAddCustomModal(false)}
+              onClick={() => setAddCustomModalOpen(false)}
               className="px-3 py-1.5 text-xs text-[#949ba4] hover:text-white"
             >
               Cancel
@@ -843,3 +805,6 @@ export const RichPicker: React.FC<RichPickerProps> = ({
     </div>
   );
 };
+
+export const RichPicker = React.memo(RichPickerComponent);
+export default RichPicker;

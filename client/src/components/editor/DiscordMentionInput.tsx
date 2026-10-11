@@ -9,7 +9,7 @@ import { RichPicker } from "./RichPicker";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
-
+import { UNICODE_EMOJI_LIST as COMMON_EMOJIS_LIST } from "../../utils/unicodeEmojis";
 export interface DiscordMentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -36,37 +36,7 @@ interface AutocompleteItem {
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
 
-const COMMON_EMOJIS_LIST = [
-  { name: "grinning", char: "😀" },
-  { name: "smiley", char: "😃" },
-  { name: "smile", char: "😄" },
-  { name: "grin", char: "😁" },
-  { name: "laughing", char: "😆" },
-  { name: "sweat_smile", char: "😅" },
-  { name: "rofl", char: "🤣" },
-  { name: "joy", char: "😂" },
-  { name: "wink", char: "😉" },
-  { name: "blush", char: "😊" },
-  { name: "innocent", char: "😇" },
-  { name: "heart_eyes", char: "😍" },
-  { name: "star_struck", char: "🤩" },
-  { name: "sunglasses", char: "😎" },
-  { name: "thinking", char: "🤔" },
-  { name: "fire", char: "🔥" },
-  { name: "sparkles", char: "✨" },
-  { name: "heart", char: "❤️" },
-  { name: "thumbsup", char: "👍" },
-  { name: "thumbsdown", char: "👎" },
-  { name: "clap", char: "👏" },
-  { name: "wave", char: "👋" },
-  { name: "white_check_mark", char: "✅" },
-  { name: "x", char: "❌" },
-  { name: "warning", char: "⚠️" },
-  { name: "bell", char: "🔔" },
-  { name: "tada", char: "🎉" },
-];
-
-export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
+const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   value,
   onChange,
   placeholder = "Say something…",
@@ -90,17 +60,17 @@ export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Guild info from store
-  const storeGuildId = useGlobalStore((s) => s.selectedGuildId);
-  const effectiveGuildId = propGuildId || storeGuildId;
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const effectiveGuildId = propGuildId || selectedGuildId;
 
   // Use stable selectors to avoid returning new array references
-  const allChannels = useDiscordCacheStore((s) => s.channels);
-  const allRoles = useDiscordCacheStore((s) => s.roles);
-  const channels = (effectiveGuildId && allChannels[effectiveGuildId]) || EMPTY_CHANNELS;
-  const roles = (effectiveGuildId && allRoles[effectiveGuildId]) || EMPTY_ROLES;
+  const channels = useDiscordCacheStore((state) => state.channels);
+  const roles = useDiscordCacheStore((state) => state.roles);
+  const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
+  const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
 
-  const fetchChannels = useDiscordCacheStore((s) => s.fetchChannels);
-  const fetchRoles = useDiscordCacheStore((s) => s.fetchRoles);
+  const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
+  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
 
   // Server emojis
   const [serverEmojis, setServerEmojis] = useState<
@@ -225,7 +195,7 @@ export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
       }
 
       // Roles
-      roles
+      guildRoles
         .filter((r) => !q || r.name.toLowerCase().includes(q))
         .slice(0, 5)
         .forEach((r) => {
@@ -269,7 +239,7 @@ export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
     }
 
     if (acType === "channel") {
-      return channels
+      return guildChannels
         .filter((c) => !q || c.name.toLowerCase().includes(q))
         .slice(0, 15)
         .map((c) => ({
@@ -325,7 +295,7 @@ export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
     }
 
     return [];
-  }, [acType, acQuery, roles, memberResults, channels, serverEmojis]);
+  }, [acType, acQuery, guildRoles, memberResults, guildChannels, serverEmojis]);
 
   // Insert replacement into text
   const applyReplacement = useCallback(
@@ -547,3 +517,6 @@ export const DiscordMentionInput: React.FC<DiscordMentionInputProps> = ({
     </div>
   );
 };
+
+export const DiscordMentionInput = React.memo(DiscordMentionInputComponent);
+export default DiscordMentionInput;

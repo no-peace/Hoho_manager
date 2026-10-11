@@ -4,14 +4,6 @@ import { IconButton } from "../ui/Button";
 import { componentLabel } from "../../utils/componentsV2";
 import { useMessageStore } from "../../store/messageStore";
 
-/**
- * The component tree.
- *
- * Rendering is recursive so any nesting depth works, and each row edits by `_id`
- * rather than index — reordering is therefore safe. Nested rows are visually
- * indented, mirroring how the structure reads in the preview.
- */
-
 interface LayerRowProps {
   component: ComponentNode;
   depth: number;
@@ -21,9 +13,9 @@ interface LayerRowProps {
 const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
   const selection = useMessageStore((state) => state.selection);
   const select = useMessageStore((state) => state.select);
-  const moveComponent = useMessageStore((state) => state.moveComponentById);
-  const removeComponent = useMessageStore((state) => state.removeComponentById);
-  const duplicateComponent = useMessageStore((state) => state.duplicateComponentById);
+  const moveComponentById = useMessageStore((state) => state.moveComponentById);
+  const removeComponentById = useMessageStore((state) => state.removeComponentById);
+  const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
 
   const active = selection?.kind === "component" && selection.id === component._id;
   const children = component.components ?? [];
@@ -43,7 +35,6 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
       >
         <span className="truncate">{componentLabel(component)}</span>
 
-        {/* Row actions stay hidden until hover to keep the list calm. */}
         <span className="ml-auto flex items-center opacity-0 transition-opacity group-hover:opacity-100">
           <IconButton
             icon={ChevronUp}
@@ -51,7 +42,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
             size={12}
             onClick={(event) => {
               event.stopPropagation();
-              if (component._id) moveComponent(component._id, -1, parentId);
+              if (component._id) moveComponentById(component._id, -1, parentId);
             }}
           />
           <IconButton
@@ -60,7 +51,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
             size={12}
             onClick={(event) => {
               event.stopPropagation();
-              if (component._id) moveComponent(component._id, 1, parentId);
+              if (component._id) moveComponentById(component._id, 1, parentId);
             }}
           />
           <IconButton
@@ -69,7 +60,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
             size={12}
             onClick={(event) => {
               event.stopPropagation();
-              if (component._id) duplicateComponent(component._id);
+              if (component._id) duplicateComponentById(component._id);
             }}
           />
           <IconButton
@@ -78,7 +69,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
             size={12}
             onClick={(event) => {
               event.stopPropagation();
-              if (component._id) removeComponent(component._id);
+              if (component._id) removeComponentById(component._id);
             }}
           />
         </span>
@@ -97,12 +88,13 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
 };
 
 export const LayersPanel = () => {
-  const components = useMessageStore((state) => state.data.components);
+  const data = useMessageStore((state) => state.data);
+  const components = data.components || [];
 
   if (components.length === 0) {
     return (
       <p className="rounded border border-dashed border-line px-2.5 py-3 text-[11px] text-ink-faint">
-        No components yet. Add one in the editor.
+        No components yet. Add one from the Component Palette in the editor.
       </p>
     );
   }
