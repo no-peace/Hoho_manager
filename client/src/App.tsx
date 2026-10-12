@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   Bot,
   Plus,
-  Send,
   Edit3,
   Download,
   Upload,
@@ -13,16 +12,15 @@ import { Header } from "./components/layout/Header";
 import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
+import { PropertyPanel } from "./components/editor/PropertyPanel";
 import { DocsPage } from "./pages/DocsPage";
 import { JsonModal } from "./components/editor/JsonModal";
 import { BotDispatchModal } from "./components/send/BotDispatchModal";
 import { useMessageStore } from "./store/messageStore";
-import { useProfileStore } from "./store/profileStore";
 import { useActionStore } from "./store/actionStore";
 import { useTemplateStore } from "./store/templateStore";
 import { useTemplates } from "./hooks/useTemplates";
 import { downloadJson, parseImportedJson } from "./utils/exportImport";
-import { useSend } from "./hooks/useSend";
 import { copyTextToClipboard } from "./utils/clipboard";
 
 // Backups Modal
@@ -170,72 +168,14 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   );
 };
 
-// Edit Webhook Message Dialog Modal
-const EditWebhookModal: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  onExecuteEdit: (messageId: string) => Promise<void>;
-}> = ({ open, onClose, onExecuteEdit }) => {
-  const [editInput, setEditInput] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  if (!open) return null;
-
-  const handleEdit = async () => {
-    const trimmed = editInput.trim();
-    if (!trimmed) return alert("Please enter a Discord Message ID or message link.");
-    const idMatch = trimmed.match(/\d{17,20}/);
-    const targetId = idMatch ? idMatch[0] : trimmed;
-    setSubmitting(true);
-    try {
-      await onExecuteEdit(targetId);
-      onClose();
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Edit Existing Webhook Message"
-      width="max-w-md"
-      footer={
-        <div className="flex items-center justify-end gap-2">
-          <Button size="sm" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button size="sm" variant="primary" loading={submitting} onClick={handleEdit}>
-            Update Message
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-3">
-        <p className="text-xs text-[#949ba4] leading-relaxed">
-          Provide the 17–20 digit Snowflake ID of the message sent by this webhook, or paste its full Discord message link.
-        </p>
-        <input
-          type="text"
-          placeholder="Message ID or Link (e.g. 1363426163892162591)"
-          value={editInput}
-          onChange={(e) => setEditInput(e.target.value)}
-          className="w-full bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-3 py-2 rounded-lg outline-none focus:border-[#5865f2]"
-        />
-      </div>
-    </Modal>
-  );
-};
-
 export const App: React.FC = () => {
   const [backupsOpen, setBackupsOpen] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
-  const [editWebhookModalOpen, setEditWebhookModalOpen] = useState(false);
   const [botModalOpen, setBotModalOpen] = useState(false);
   const [botModalMode, setBotModalMode] = useState<"send" | "edit">("send");
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
 
+  // Route path support: /bots/webhook
   const [currentPath, setCurrentPath] = useState(() =>
     typeof window !== "undefined" ? window.location.pathname : "/bots/webhook"
   );
@@ -251,13 +191,6 @@ export const App: React.FC = () => {
     fetchActionTypes();
   }, [fetchActionTypes]);
 
-  // Profiles and Sending State
-  const webhookUrl = useProfileStore((state) => state.webhookUrl);
-  const setWebhookUrl = useProfileStore((state) => state.setWebhookUrl);
-  const threadId = useProfileStore((state) => state.threadId);
-  const setThreadId = useProfileStore((state) => state.setThreadId);
-
-  // Direct 1:1 state selectors
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const displayMessages = useMemo(
@@ -266,14 +199,6 @@ export const App: React.FC = () => {
   );
 
   const addMessage = useMessageStore((state) => state.addMessage);
-  const send = useMessageStore((state) => state.send);
-  const isSending = send?.status === "sending";
-  const { sendMessage } = useSend();
-
-  const handleExecuteWebhookEdit = async (messageId: string) => {
-    const res = await sendMessage(messageId);
-    if (res.ok) alert("Webhook message updated successfully!");
-  };
 
   const openBotModal = (actionMode: "send" | "edit") => {
     setBotModalMode(actionMode);
@@ -335,8 +260,8 @@ export const App: React.FC = () => {
                   mobileView === "editor" ? "flex" : "hidden"
                 } md:flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0`}
               >
-                {/* Top Action Bar (Discohook style) */}
-                <div className="p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0 space-y-2.5">
+                {/* Top Action Bar */}
+                <div className="p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -373,72 +298,31 @@ export const App: React.FC = () => {
                       </Button>
                     </div>
 
-                    {/* Dispatch Buttons */}
-                    <div className="flex items-center gap-2">
-                      {/* Webhook Send / Edit */}
-                      <div className="inline-flex rounded-lg overflow-hidden border border-[#3c45a5] shadow-sm">
-                        <button
-                          type="button"
-                          onClick={() => sendMessage()}
-                          disabled={isSending}
-                          className="bg-[#5865f2] hover:bg-[#4752c4] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#4752c4] disabled:opacity-40"
-                        >
-                          <Send size={12} /> Send
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditWebhookModalOpen(true)}
-                          className="bg-[#4752c4] hover:bg-[#3c45a5] text-white px-2 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
-                          title="Edit existing webhook message"
-                        >
-                          <Edit3 size={11} /> Edit
-                        </button>
-                      </div>
-
-                      {/* Bot Token Dispatch */}
-                      <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
-                        <button
-                          type="button"
-                          onClick={() => openBotModal("send")}
-                          className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
-                        >
-                          <Bot size={13} /> Bot Send
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openBotModal("edit")}
-                          className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
-                          title="Edit message via bot token"
-                        >
-                          <Edit3 size={11} /> Edit
-                        </button>
-                      </div>
+                    {/* Bot Token Dispatch Only */}
+                    <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => openBotModal("send")}
+                        className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                      >
+                        <Bot size={13} /> Bot Send
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openBotModal("edit")}
+                        className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
+                        title="Edit message via bot token"
+                      >
+                        <Edit3 size={11} /> Edit
+                      </button>
                     </div>
-                  </div>
-
-                  {/* Webhook URL & Thread ID Inputs */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                    <input
-                      type="url"
-                      placeholder="Discord Webhook URL (https://discord.com/api/webhooks/...)"
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      className="sm:col-span-2 bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-[#5865f2]"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Thread ID (optional)"
-                      value={threadId}
-                      onChange={(e) => setThreadId(e.target.value)}
-                      className="bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-[#5865f2]"
-                    />
                   </div>
                 </div>
 
                 {/* Multi-Message Workspace (Discohook layout) */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-                  {displayMessages.map((_, index) => (
-                    <MessageEditor key={index} index={index} />
+                  {displayMessages.map((_, idx) => (
+                    <MessageEditor key={idx} index={idx} />
                   ))}
 
                   <button
@@ -463,15 +347,13 @@ export const App: React.FC = () => {
             }
           />
         </div>
+
+        {/* Selected Component Property & Flow Builder Panel */}
+        <PropertyPanel />
       </main>
 
       <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />
-      <EditWebhookModal
-        open={editWebhookModalOpen}
-        onClose={() => setEditWebhookModalOpen(false)}
-        onExecuteEdit={handleExecuteWebhookEdit}
-      />
       <BotDispatchModal
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}

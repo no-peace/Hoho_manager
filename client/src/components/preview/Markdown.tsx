@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { useState } from "react";
 
 export interface MarkdownProps {
   content: string;
@@ -41,17 +41,17 @@ const renderInline = (text: string): React.ReactNode => {
   }
 
   // 2. Custom Discord Emojis: <:name:id> or <a:name:id>
-  const emojiRegex = /<(a?):([a-zA-Z0-9_~]+):(\d{17,20})>/g;
+  const emojiRegex = /<(a?):([a-zA-Z0-9_~]+):(\d+)>/g;
   if (emojiRegex.test(text)) {
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     text.replace(emojiRegex, (match, animated, name, id, offset) => {
       if (offset > lastIndex) parts.push(renderInline(text.slice(lastIndex, offset)));
-      const ext = animated ? "gif" : "png";
+      const ext = animated ? "gif" : "webp";
       parts.push(
         <img
-          key={offset}
-          src={`[https://cdn.discordapp.com/emojis/$](https://cdn.discordapp.com/emojis/$){id}.${ext}?size=48`}
+          key={`emoji-${id}-${offset}`}
+          src={`https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless`}
           alt={`:${name}:`}
           title={`:${name}:`}
           className="inline-block h-5 w-5 object-contain align-text-bottom mx-0.5"
@@ -65,18 +65,18 @@ const renderInline = (text: string): React.ReactNode => {
   }
 
   // 3. Mentions: User <@id>, Role <@&id>, Channel <#id>
-  const mentionRegex = /<(@[!&]?|#)(\d{17,20})>/g;
+  const mentionRegex = /<(@[!&]?|#)\d{17,20}>/g;
   if (mentionRegex.test(text)) {
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
-    text.replace(mentionRegex, (match, type, id, offset) => {
+    text.replace(mentionRegex, (match, type, offset) => {
       if (offset > lastIndex) parts.push(renderInline(text.slice(lastIndex, offset)));
       const isChannel = type === "#";
       const isRole = type === "@&";
       parts.push(
         <span
           key={offset}
-          className="bg-[#5865f2]/15 text-[#c9cdfb] hover:bg-[#5865f2]/30 px-1 py-0.2 rounded font-medium text-[13px] transition-colors cursor-pointer select-none inline-block mx-0.5"
+          className="bg-[#5865f2]/15 text-[#c9cdfb] hover:bg-[#5865f2]/30 px-1 py-0.5 rounded font-medium text-[13px] transition-colors cursor-pointer select-none inline-block mx-0.5"
         >
           {isChannel ? "#channel" : isRole ? "@role" : "@user"}
         </span>
@@ -116,7 +116,15 @@ const renderInline = (text: string): React.ReactNode => {
     const parts = text.split(/\*\*\*([^*]+)\*\*\*/);
     return (
       <>
-        {parts.map((part, i) => (i % 2 === 1 ? <strong key={i}><em>{part}</em></strong> : renderInline(part)))}
+        {parts.map((part, i) =>
+          i % 2 === 1 ? (
+            <strong key={i}>
+              <em>{part}</em>
+            </strong>
+          ) : (
+            renderInline(part)
+          )
+        )}
       </>
     );
   }
@@ -126,7 +134,15 @@ const renderInline = (text: string): React.ReactNode => {
     const parts = text.split(/\*\*([^*]+)\*\*/);
     return (
       <>
-        {parts.map((part, i) => (i % 2 === 1 ? <strong key={i} className="font-bold text-white">{part}</strong> : renderInline(part)))}
+        {parts.map((part, i) =>
+          i % 2 === 1 ? (
+            <strong key={i} className="font-bold text-white">
+              {part}
+            </strong>
+          ) : (
+            renderInline(part)
+          )
+        )}
       </>
     );
   }
@@ -136,7 +152,9 @@ const renderInline = (text: string): React.ReactNode => {
     const parts = text.split(/__([^_]+)__/);
     return (
       <>
-        {parts.map((part, i) => (i % 2 === 1 ? <u key={i}>{part}</u> : renderInline(part)))}
+        {parts.map((part, i) =>
+          i % 2 === 1 ? <u key={i}>{part}</u> : renderInline(part)
+        )}
       </>
     );
   }
@@ -146,17 +164,27 @@ const renderInline = (text: string): React.ReactNode => {
     const parts = text.split(/~~([^~]+)~~/);
     return (
       <>
-        {parts.map((part, i) => (i % 2 === 1 ? <del key={i} className="opacity-70">{part}</del> : renderInline(part)))}
+        {parts.map((part, i) =>
+          i % 2 === 1 ? (
+            <del key={i} className="opacity-70">
+              {part}
+            </del>
+          ) : (
+            renderInline(part)
+          )
+        )}
       </>
     );
   }
 
-  // Italic *text* or _text_
+  // Italic *text*
   if (/\*([^*]+)\*/.test(text)) {
     const parts = text.split(/\*([^*]+)\*/);
     return (
       <>
-        {parts.map((part, i) => (i % 2 === 1 ? <em key={i}>{part}</em> : renderInline(part)))}
+        {parts.map((part, i) =>
+          i % 2 === 1 ? <em key={i}>{part}</em> : renderInline(part)
+        )}
       </>
     );
   }
@@ -189,7 +217,7 @@ const renderInline = (text: string): React.ReactNode => {
   return text;
 };
 
-export const Markdown: React.FC<MarkdownProps> = ({ content, className = "" }) => {
+const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" }) => {
   if (!content) return null;
 
   const lines = content.split("\n");
@@ -197,7 +225,6 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = "" }) =
 
   let inCodeBlock = false;
   let codeBlockBuffer: string[] = [];
-  let codeBlockLang = "";
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -215,10 +242,8 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = "" }) =
         );
         inCodeBlock = false;
         codeBlockBuffer = [];
-        codeBlockLang = "";
       } else {
         inCodeBlock = true;
-        codeBlockLang = line.trim().slice(3).trim();
       }
       continue;
     }
@@ -300,4 +325,5 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = "" }) =
   return <div className={`space-y-0.5 ${className}`}>{renderedElements}</div>;
 };
 
+export const Markdown = React.memo(MarkdownComponent);
 export default Markdown;

@@ -9,7 +9,7 @@ import { RichPicker } from "./RichPicker";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
-import { UNICODE_EMOJI_LIST as COMMON_EMOJIS_LIST } from "../../utils/unicodeEmojis";
+
 export interface DiscordMentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -36,6 +36,36 @@ interface AutocompleteItem {
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
 
+const COMMON_EMOJIS_LIST = [
+  { name: "grinning", char: "😀" },
+  { name: "smiley", char: "😃" },
+  { name: "smile", char: "😄" },
+  { name: "grin", char: "😁" },
+  { name: "laughing", char: "😆" },
+  { name: "sweat_smile", char: "😅" },
+  { name: "rofl", char: "🤣" },
+  { name: "joy", char: "😂" },
+  { name: "wink", char: "😉" },
+  { name: "blush", char: "😊" },
+  { name: "innocent", char: "😇" },
+  { name: "heart_eyes", char: "😍" },
+  { name: "star_struck", char: "🤩" },
+  { name: "sunglasses", char: "😎" },
+  { name: "thinking", char: "🤔" },
+  { name: "fire", char: "🔥" },
+  { name: "sparkles", char: "✨" },
+  { name: "heart", char: "❤️" },
+  { name: "thumbsup", char: "👍" },
+  { name: "thumbsdown", char: "👎" },
+  { name: "clap", char: "👏" },
+  { name: "wave", char: "👋" },
+  { name: "white_check_mark", char: "✅" },
+  { name: "x", char: "❌" },
+  { name: "warning", char: "⚠️" },
+  { name: "bell", char: "🔔" },
+  { name: "tada", char: "🎉" },
+];
+
 const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   value,
   onChange,
@@ -51,13 +81,39 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [showRichPicker, setShowRichPicker] = useState(false);
+  const pickerContainerRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
 
+  
   // Autocomplete state
   const [acType, setAcType] = useState<AutocompleteType>(null);
   const [acQuery, setAcQuery] = useState("");
   const [acCursorStart, setAcCursorStart] = useState(-1);
   const [acCursorEnd, setAcCursorEnd] = useState(-1);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  
+  // Dynamic dropdown positioning: flip downward if textarea is too close to top of viewport
+  useEffect(() => {
+    if (acType && textareaRef.current) {
+      const rect = textareaRef.current.getBoundingClientRect();
+      setDropdownPosition(rect.top < 260 ? "bottom" : "top");
+    }
+  }, [acType]);
+
+  // Click-outside listener to auto-close RichPicker
+  useEffect(() => {
+    if (!showRichPicker) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        pickerContainerRef.current &&
+        !pickerContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowRichPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showRichPicker]);
 
   // Guild info from store
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
@@ -419,8 +475,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         ) : <div />}
       </div>
 
-      {/* Input container - Discohook styled textarea with bottom-right quick mention button */}
-      <div className="relative">
+      {/* Input container - Discohook styled textarea with dedicated padding and safe-positioned quick mention trigger */}
+      <div className="relative w-full">
         <textarea
           ref={textareaRef}
           value={value || ""}
@@ -431,23 +487,23 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           rows={rows}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full bg-[#1e1f22] text-[#dbdee1] placeholder-[#949ba4] text-sm p-3 pr-10 rounded-lg border border-[#232428] hover:border-[#35373c] focus:border-[#5865f2] focus:outline-none transition-colors resize-y leading-relaxed font-sans"
+          className="w-full block bg-[#1e1f22] text-[#dbdee1] placeholder-[#949ba4] text-sm p-3 pb-8 pr-12 rounded-lg border border-[#232428] hover:border-[#35373c] focus:border-[#5865f2] focus:outline-none transition-colors resize-y leading-relaxed font-sans"
           style={{ minHeight: `${rows * 26}px` }}
         />
 
-        {/* Bottom-right Quick Mentions / Rich Picker Trigger */}
-        <div className="absolute right-2.5 bottom-2.5 z-10 flex items-center gap-1">
+        {/* Quick Mentions / Rich Picker Trigger positioned safely away from native resize handle */}
+        <div ref={pickerContainerRef} className="absolute right-6 bottom-2 z-10 flex items-center gap-1">
           <button
             type="button"
             onClick={() => setShowRichPicker(!showRichPicker)}
             className={`p-1.5 rounded transition-colors ${
               showRichPicker
-                ? "bg-[#5865f2] text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c]"
+                ? "bg-[#5865f2] text-white shadow-sm"
+                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] bg-[#2b2d31]/80 backdrop-blur-sm border border-[#1e1f22]"
             }`}
             title="Quick Mentions, Timestamps & Emojis"
           >
-            <Keyboard size={16} />
+            <Keyboard size={15} />
           </button>
 
           {/* Floating Rich Picker Popover */}
@@ -463,7 +519,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
           <div
-            className="absolute bottom-full left-0 mb-1 w-72 sm:w-80 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75"
+            className={`absolute left-0 w-72 sm:w-80 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
+              dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
+            }`}
             style={{ maxHeight: "240px" }}
           >
             <div className="px-2.5 py-1.5 bg-[#1e1f22] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#313338] flex items-center justify-between">
