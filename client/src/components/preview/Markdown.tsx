@@ -228,7 +228,27 @@ const formatRelativeTime = (targetMs: number, nowMs: number): string => {
         month: "long",
         day: "numeric",
         year: "numeric",
-      })} ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`; break; }  return ( <span title={date.toLocaleString()} className="inline-flex items-center gap-1 rounded-[3px] bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none" > <Clock size={11} className="text-[#949ba4] shrink-0" /> <span>{formatted}</span> </span> ); };  const CustomEmojiImg: React.FC<{ id: string; name: string; animated: boolean; jumbo?: boolean; }> = ({ id, name, animated, jumbo = false }) => { const [extIndex, setExtIndex] = useState(0); const exts = animated ? ["gif", "webp", "png"] : ["webp", "png", "gif"]; const currentExt = exts[extIndex] \vert{}\vert{} "png";  return ( <img src={`https://cdn.discordapp.com/emojis/${id}.${currentExt}?size=${
+      })} ${date.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      })}`;
+      break;
+    }
+    return (
+    <span title={date.toLocaleString()}
+      className="inline-flex items-center gap-1 rounded-[3px] bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none" >
+        <Clock size={11} className="text-[#949ba4] shrink-0" />
+        <span>{formatted}</span>
+      </span> ); };
+      const CustomEmojiImg: React.FC<{
+        id: string;
+        name: string; 
+        animated: boolean; 
+        jumbo?: boolean; 
+      }> = ({ id, name, animated, jumbo = false }) => { 
+        const [extIndex, setExtIndex] = useState(0); 
+        const exts = animated ? ["gif", "webp", "png"] : ["webp", "png", "gif"]; 
+        const currentExt = exts[extIndex] || "png";  return ( <img src={`https://cdn.discordapp.com/emojis/${id}.${currentExt}?size=${
         jumbo ? 96 : 48
       }&quality=lossless`}
       alt={`:${name}:`} title={`:${name}:`}
