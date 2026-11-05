@@ -475,7 +475,8 @@ export const searchGuildMembers = async (
           global_name: member.user?.global_name ?? member.global_name ?? null,
           nickname: member.nick ?? member.nickname ?? null,
           avatar: member.user?.avatar ?? member.avatar ?? null,
-        }];
+          roles: Array.isArray(member.roles) ? member.roles : [],
+        } as any];
       }
     } catch {
       // Not found by ID or user not in guild, fall through to name search
@@ -495,6 +496,7 @@ export const searchGuildMembers = async (
       global_name: m.user?.global_name ?? null,
       nickname: m.nick ?? null,
       avatar: m.user?.avatar ?? m.avatar ?? null,
+      roles: Array.isArray(m.roles) ? m.roles : [],
     }));
   } catch (err) {
     log.warn(`Member search failed for guild ${guildId}: ${err instanceof Error ? err.message : String(err)}`);

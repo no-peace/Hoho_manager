@@ -35,7 +35,12 @@ const SELECT_TYPE_MAP: Record<
   [ComponentType.MentionableSelect]: { label: "Mentionable Select", icon: AtSign },
 };
 
-export const DiscohookComponentsEditor: React.FC = () => {
+export interface DiscohookComponentsEditorProps {
+  parentId?: string | null;
+}
+export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps> = ({
+  parentId = null,
+}) => {
   const data = useMessageStore((state) => state.data);
   const components = data.components || [];
   const addComponent = useMessageStore((state) => state.addComponent);
@@ -59,29 +64,32 @@ export const DiscohookComponentsEditor: React.FC = () => {
   }
 
   const rowEntries: RowEntry[] = [];
-  const topLevelRows = components.filter((c) => c.type === ComponentType.ActionRow);
-  topLevelRows.forEach((row, idx) => {
-    rowEntries.push({
-      row,
-      containerId: null,
-      siblingIndex: idx,
-      siblingCount: topLevelRows.length,
-    });
-  });
-
-  for (const comp of components) {
-    if (comp.type === ComponentType.Container && Array.isArray(comp.components)) {
-      const containerRows = comp.components.filter((c) => c.type === ComponentType.ActionRow);
-      containerRows.forEach((child, idx) => {
-        rowEntries.push({
-          row: child,
-          containerId: comp._id ?? null,
-          containerLabel: "Container Row",
-          siblingIndex: idx,
-          siblingCount: containerRows.length,
-        });
+  if (parentId === null) {
+    const topLevelRows = components.filter((c) => c.type === ComponentType.ActionRow);
+    topLevelRows.forEach((row, idx) => {
+      rowEntries.push({
+        row,
+        containerId: null,
+        siblingIndex: idx,
+        siblingCount: topLevelRows.length,
       });
-    }
+    });
+  } else {
+    const parentContainer = components.find(
+      (c) => c.type === ComponentType.Container && c._id === parentId
+    );
+    const containerRows = (parentContainer?.components || []).filter(
+      (c) => c.type === ComponentType.ActionRow
+    );
+    containerRows.forEach((child, idx) => {
+      rowEntries.push({
+        row: child,
+        containerId: parentId,
+        containerLabel: "Container Row",
+        siblingIndex: idx,
+        siblingCount: containerRows.length,
+      });
+    });
   }
 
   const getStyleBadge = (style?: number) => {

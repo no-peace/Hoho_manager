@@ -174,6 +174,7 @@ export const App: React.FC = () => {
   const [botModalOpen, setBotModalOpen] = useState(false);
   const [botModalMode, setBotModalMode] = useState<"send" | "edit">("send");
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
+  const [addMsgMenuOpen, setAddMsgMenuOpen] = useState(false);
 
   // Route path support: /bots/webhook
   const [currentPath, setCurrentPath] = useState(() =>
@@ -325,14 +326,72 @@ export const App: React.FC = () => {
                     <MessageEditor key={idx} index={idx} />
                   ))}
 
-                  <button
-                    type="button"
-                    onClick={() => addMessage()}
-                    disabled={displayMessages.length >= 10}
-                    className="w-full py-2.5 mt-2 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
-                  >
-                    <Plus size={15} /> Add Message ({displayMessages.length}/10)
-                  </button>
+                  <div className="relative mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setAddMsgMenuOpen((prev) => !prev)}
+                      disabled={displayMessages.length >= 10}
+                      className="w-full py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
+                    >
+                      <Plus size={15} /> Add Message ({displayMessages.length}/10)
+                    </button>
+
+                    {addMsgMenuOpen && (
+                      <div className="mt-2 rounded-lg bg-[#232428] border border-[#1e1f22] p-2 space-y-2 shadow-2xl">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addMessage({ flags: 0 });
+                            setAddMsgMenuOpen(false);
+                          }}
+                          className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
+                        >
+                          <div className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">
+                            TXT
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-white">Standard Message (Classic)</p>
+                            <p className="text-[11px] text-[#949ba4] mt-0.5">
+                              Classic message with content, embeds, attachments, and action rows.
+                            </p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addMessage({
+                              flags: 32768,
+                              components: [
+                                {
+                                  _id: Math.random().toString(36).slice(2, 10),
+                                  type: 10,
+                                  content: "",
+                                },
+                              ],
+                            });
+                            setAddMsgMenuOpen(false);
+                          }}
+                          className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
+                        >
+                          <div className="p-2 rounded bg-[#5865f2]/20 text-[#5865f2] font-mono text-xs font-bold shrink-0">
+                            V2
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold text-white">Components V2 Message</p>
+                              <span className="rounded-full bg-[#5865f2] px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                                New
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#949ba4] mt-0.5">
+                              Build rich layouts with containers, text blocks, galleries, files, separators, and action rows.
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             }

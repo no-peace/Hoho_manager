@@ -54,6 +54,7 @@ export interface MessageState {
   attachedFiles: AttachedFile[];
 
   setMode(mode: EditorMode): void;
+  setMessageMode(index: number, mode: EditorMode): void;
   setField<K extends keyof MessageData>(key: K, value: MessageData[K]): void;
   setContent(content: string): void;
 
@@ -146,31 +147,31 @@ const reid = (component: ComponentNode): ComponentNode => ({
     : {}),
 });
 
-const duplicateInTree =(
+const duplicateInTree = (
   list: ComponentNode[],
   targetId: string,
-): {updated: ComponentNode[]; duplicated: ComponentNode | null} => {
+): { updated: ComponentNode[]; duplicated: ComponentNode | null } => {
   const index = list.findIndex((c) => c._id === targetId);
-  if(index !== -1){
+  if (index !== -1) {
     const copy = reid(list[index]);
     const next = [...list];
-    next.splice(index +1,0,copy);
-    return {updated: next, duplicated: copy};
+    next.splice(index + 1, 0, copy);
+    return { updated: next, duplicated: copy };
   }
 
   let duplicated: ComponentNode | null = null;
   const next = list.map((item) => {
     if (item.components && !duplicated) {
-      const result = duplicateInTree(item.components,targetId);
+      const result = duplicateInTree(item.components, targetId);
       if (result.duplicated) {
         duplicated = result.duplicated;
-        return {...item, components: result.updated };
+        return { ...item, components: result.updated };
       }
     }
     return item;
   });
 
-  return {updated: next, duplicated};
+  return { updated: next, duplicated };
 };
 
 const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
@@ -181,6 +182,14 @@ const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
 };
 
 const defaultInitial = createEmptyMessage();
+
+const resolveMessageMode = (message?: Partial<MessageData> | null, fallback: EditorMode = EDITOR_MODES.CLASSIC): EditorMode => {
+  if (!message) return fallback;
+  const flags = message.flags ?? 0;
+  if ((flags & 32768) !== 0) return EDITOR_MODES.V2;
+  if ((message as any).mode === EDITOR_MODES.V2) return EDITOR_MODES.V2;
+  return EDITOR_MODES.CLASSIC;
+};
 
 export const useMessageStore = create<MessageState>()(
   persist(
@@ -194,7 +203,35 @@ export const useMessageStore = create<MessageState>()(
       send: idleSendState(),
       attachedFiles: [],
 
-      setMode: (mode) => set({ mode }),
+      setMode: (mode) => {
+        const activeIdx = get().activeMessageIndex ?? 0;
+        get().setMessageMode(activeIdx, mode);
+      },
+
+      setMessageMode: (index, mode) =>
+        set((state) => {
+          if (index < 0 || index >= state.messages.length) return state;
+          const isV2 = mode === EDITOR_MODES.V2;
+          const targetMsg = state.messages[index] ?? state.data ?? createEmptyMessage();
+          const currentFlags = targetMsg.flags ?? 0;
+          const nextFlags = isV2 ? currentFlags | 32768 : currentFlags & ~32768;
+
+          const updatedMsg: MessageData = {
+            ...targetMsg,
+            flags: nextFlags,
+          };
+          (updatedMsg as any).mode = mode;
+
+          const nextMessages = [...state.messages];
+          nextMessages[index] = updatedMsg;
+
+          const isCurrent = index === (state.activeMessageIndex ?? 0);
+          return {
+            messages: nextMessages,
+            data: isCurrent ? updatedMsg : state.data,
+            mode: isCurrent ? mode : state.mode,
+          };
+        }),
 
       setField: (key, value) =>
         set((state) => {
@@ -459,13 +496,11 @@ export const useMessageStore = create<MessageState>()(
           const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return syncDataToMessages(nextData, state);
         }),
-      
-      
 
       duplicateComponentById: (id) =>
         set((state) => {
           const list = state.data?.components ?? [];
-          const {updated, duplicated } = duplicateInTree(list, id);
+          const { updated, duplicated } = duplicateInTree(list, id);
           if (!duplicated) return {};
 
           const nextData = { ...(state.data ?? createEmptyMessage()), components: updated };
@@ -497,10 +532,13 @@ export const useMessageStore = create<MessageState>()(
           if (state.messages.length >= 10) return state;
           const newMsg: MessageData = { ...createEmptyMessage(), ...initial };
           const nextMessages = [...state.messages, newMsg];
+          const newIdx = nextMessages.length - 1;
+          const newMode = resolveMessageMode(newMsg);
           return {
             messages: nextMessages,
-            activeMessageIndex: nextMessages.length - 1,
+            activeMessageIndex: newIdx,
             data: newMsg,
+            mode: newMode,
             selection: null,
           };
         }),
@@ -509,14 +547,22 @@ export const useMessageStore = create<MessageState>()(
         set((state) => {
           if (state.messages.length <= 1) {
             const resetMsg = createEmptyMessage();
-            return { messages: [resetMsg], activeMessageIndex: 0, data: resetMsg, selection: null };
+            return {
+              messages: [resetMsg],
+              activeMessageIndex: 0,
+              data: resetMsg,
+              mode: EDITOR_MODES.CLASSIC,
+              selection: null,
+            };
           }
           const nextMessages = state.messages.filter((_, idx) => idx !== index);
           const nextIdx = Math.max(0, Math.min(state.activeMessageIndex, nextMessages.length - 1));
+          const nextData = nextMessages[nextIdx];
           return {
             messages: nextMessages,
             activeMessageIndex: nextIdx,
-            data: nextMessages[nextIdx],
+            data: nextData,
+            mode: resolveMessageMode(nextData),
             selection: null,
           };
         }),
@@ -538,10 +584,12 @@ export const useMessageStore = create<MessageState>()(
           }
           const nextMessages = [...state.messages];
           nextMessages.splice(index + 1, 0, cloned);
+          const newIdx = index + 1;
           return {
             messages: nextMessages,
-            activeMessageIndex: index + 1,
+            activeMessageIndex: newIdx,
             data: cloned,
+            mode: resolveMessageMode(cloned),
             selection: null,
           };
         }),
@@ -553,19 +601,26 @@ export const useMessageStore = create<MessageState>()(
           const nextMessages = [...state.messages];
           const [moved] = nextMessages.splice(index, 1);
           nextMessages.splice(target, 0, moved);
+          const targetMsg = nextMessages[target];
           return {
             messages: nextMessages,
             activeMessageIndex: target,
-            data: nextMessages[target],
+            data: targetMsg,
+            mode: resolveMessageMode(targetMsg),
           };
         }),
 
       setActiveMessageIndex: (index) =>
         set((state) => {
           if (index < 0 || index >= state.messages.length) return state;
+          if (index === state.activeMessageIndex && state.data === state.messages[index]){ 
+            return state;
+          }
+          const currentMsg = state.messages[index];
           return {
             activeMessageIndex: index,
-            data: state.messages[index],
+            data: currentMsg,
+            mode: resolveMessageMode(currentMsg, state.mode),
             selection: null,
           };
         }),
@@ -623,10 +678,15 @@ export const useMessageStore = create<MessageState>()(
               components: (c.components || []).map((child) => ({ ...child, _id: child._id || uid() })),
             }));
           }
+          const isV2 = resolveMessageMode(msg, mode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
+          msg.flags = isV2 ? (msg.flags ?? 0) | 32768 : (msg.flags ?? 0) & ~32768;
+          (msg as any).mode = isV2 ? EDITOR_MODES.V2 : EDITOR_MODES.CLASSIC;
         });
 
+        const activeMode = resolveMessageMode(initialMessages[0], mode || EDITOR_MODES.CLASSIC);
+
         set({
-          mode: mode ?? EDITOR_MODES.CLASSIC,
+          mode: activeMode,
           data: initialMessages[0],
           messages: initialMessages,
           activeMessageIndex: 0,
@@ -635,12 +695,24 @@ export const useMessageStore = create<MessageState>()(
         });
       },
 
-      getPayload: () => toDiscordPayload(get().data, get().mode),
-      getAllPayloads: () => {
-        const mode = get().mode;
-        return get().messages.map((msg) => toDiscordPayload(msg, mode));
+      getPayload: () => {
+        const activeData = get().data;
+        const msgMode = resolveMessageMode(activeData, get().mode);
+        return toDiscordPayload(activeData, msgMode);
       },
-      getValidationErrors: () => validateMessage(get().data, get().mode),
+
+      getAllPayloads: () => {
+        return get().messages.map((msg) => {
+          const msgMode = resolveMessageMode(msg, get().mode);
+          return toDiscordPayload(msg, msgMode);
+        });
+      },
+
+      getValidationErrors: () => {
+        const activeData = get().data;
+        const msgMode = resolveMessageMode(activeData, get().mode);
+        return validateMessage(activeData, msgMode);
+      },
     }),
     {
       name: "dmb:message",
@@ -649,7 +721,6 @@ export const useMessageStore = create<MessageState>()(
         data: state.data,
         messages: state.messages,
         activeMessageIndex: state.activeMessageIndex,
-        // targets: state.targets,
       }),
       version: 1,
     },

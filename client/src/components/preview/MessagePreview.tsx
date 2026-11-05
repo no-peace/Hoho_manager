@@ -108,14 +108,16 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
 };
 
 export const MessagePreview = () => {
-  const mode = useMessageStore((state) => state.mode);
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const botIdentity = useGlobalStore((state) => state.botIdentity);
-  const displayMessages = useMemo(() => (messages && messages.length > 0 ? messages : [data]), [messages, data]);
+  const displayMessages = useMemo(
+    () => (messages && messages.length > 0 ? messages : [data]),
+    [messages, data]
+  );
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -132,7 +134,11 @@ export const MessagePreview = () => {
     }
   })();
 
-  const isV2 = mode === EDITOR_MODES.V2;
+  const activeMessage = displayMessages[activeMessageIndex] ?? data;
+  const activeIsV2 =
+    Boolean((activeMessage?.flags ?? 0) & MessageFlags.IsComponentsV2) ||
+    (activeMessage as any)?.mode === EDITOR_MODES.V2;
+
   const isAllEmpty = displayMessages.every(
     (m) =>
       !m.content &&
@@ -148,7 +154,7 @@ export const MessagePreview = () => {
           <Eye size={14} className="text-[#5865f2]" /> Preview
         </h2>
         <span className="rounded-md bg-[#1e1f22] px-2 py-0.5 text-[10px] font-medium text-[#949ba4]">
-          {isV2 ? "Components V2" : "Classic"}
+          Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
         </span>
       </div>
 
@@ -160,6 +166,10 @@ export const MessagePreview = () => {
         ) : (
           displayMessages.map((message, index) => {
             const isActive = index === activeMessageIndex;
+            const isMsgV2 =
+              Boolean((message.flags ?? 0) & MessageFlags.IsComponentsV2) ||
+              (message as any).mode === EDITOR_MODES.V2;
+
             const effectiveAvatar =
               message.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
             const effectiveUsername =
@@ -239,7 +249,7 @@ export const MessagePreview = () => {
                   )}
 
                   <div className="mt-0.5 space-y-2">
-                    {isV2 ? (
+                    {isMsgV2 ? (
                       <>
                         {message.components &&
                           message.components.map((component) => (
