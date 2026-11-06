@@ -1,5 +1,7 @@
+// client/src/store/discordCacheStore.ts
 import { create } from "zustand";
-import api from "../api/client";
+import api, { request } from "../api/client";
+
 export interface DiscordEmoji {
   id: string;
   name: string;
@@ -140,14 +142,11 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
 
     inFlightWeaoPromise = (async () => {
       try {
-        const res = await fetch("/api/weao/exploits");
-        if (!res.ok) {
-          throw new Error(`WEAO endpoint returned HTTP ${res.status}`);
-        }
-        const data = (await res.json()) as {
+        const data = await request<{
           exploits?: WeaoExploitItem[];
           meta?: WeaoMetaInfo;
-        };
+        }>("/api/weao/exploits");
+
         if (Array.isArray(data?.exploits)) {
           weaoLastFetchedAt = Date.now();
           try {

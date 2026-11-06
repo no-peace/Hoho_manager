@@ -1,3 +1,4 @@
+// server/src/routes/weao.ts
 import { Router } from "express";
 import { ComponentType, ButtonStyle } from "@dmb/shared";
 import type { DiscordMessagePayload } from "@dmb/shared";
@@ -8,7 +9,7 @@ import {
   findExploitByName,
   getExploitSuncDetails,
   interpolateWeaoPlaceholders,
- // getWeaoRateLimitStatus,
+  getWeaoRateLimitStatus,
   type WeaoExploitRecord,
 } from "../services/weaoService.js";
 import {
@@ -136,7 +137,7 @@ router.get(
 
     let exploits: WeaoExploitRecord[] = [];
     let templates: TemplateSummary[] = [];
-    
+
     try {
       exploits = await getAllExploits();
     } catch (err) {

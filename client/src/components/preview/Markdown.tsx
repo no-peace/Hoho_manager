@@ -1,103 +1,13 @@
+// client/src/components/preview/Markdown.tsx
 import React, { useState, useEffect } from "react";
 import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
 import { useGlobalStore } from "../../store/globalStore";
-import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import {
+  useDiscordCacheStore,
+  type WeaoExploitItem,
+} from "../../store/discordCacheStore";
 import api from "../../api/client";
-// import { useMessageStore } from "../../store/messageStore";
 
-//let weaoExploitsPreviewCache: any[] = [];
-// let weaoPreviewLoaded = false;
-
-/*
-const ensureWeaoPreviewLoaded = () => {
-  if (weaoPreviewLoaded) return;
-  weaoPreviewLoaded = true;
-  fetch("/api/weao/exploits")
-    .then((r) => (r.ok ? r.json() : null))
-    .then((data) => {
-      if (Array.isArray(data?.exploits)) {
-        weaoExploitsPreviewCache = data.exploits;
-        notifyMemberListeners();
-      }
-    })
-    .catch(() => {});
-};
-*/
-
-/*
-const resolveWeaoPreviewText = (text: string, defaultExploitName?: string): string => {
-  if (!text.includes("{")) return text;
-  ensureWeaoPreviewLoaded();
-
-  return text.replace(/\{([a-zA-Z0-9_.: -]+)\}/g, (full, rawToken: string) => {
-    let targetName = (defaultExploitName || "Delta").trim();
-    let field = rawToken.trim();
-
-    if (field.toLowerCase().startsWith("exploit:")) {
-      const parts = field.split(":");
-      targetName = (parts[1] || targetName).trim();
-      field = parts.slice(2).join(":").trim() || "status";
-    }
-
-    const found =
-      weaoExploitsPreviewCache.find(
-        (e) => e.title?.toLowerCase() === targetName.toLowerCase(),
-      ) ??
-      weaoExploitsPreviewCache.find((e) =>
-        e.title?.toLowerCase().includes(targetName.toLowerCase()),
-      );
-
-    const k = field.toLowerCase();
-    if (!found) {
-      if (k === "status") return "🟢 Updated";
-      if (k === "statuscircle" || k === "circle") return "🟢";
-      if (k === "sunc") return "100%";
-      if (k === "unc") return "99%";
-      return full;
-    }
-
-    switch (k) {
-      case "title":
-      case "name":
-        return found.title || targetName;
-      case "status":
-        return found.updateStatus ? "🟢 Updated" : "🔴 Outdated";
-      case "statuscircle":
-      case "circle":
-        return found.updateStatus ? "🟢" : "🔴";
-      case "statustext":
-        return found.updateStatus ? "Updated" : "Outdated";
-      case "sunc":
-        return typeof found.suncPercentage === "number" ? `${found.suncPercentage}%` : "N/A";
-      case "unc":
-        return typeof found.uncPercentage === "number" ? `${found.uncPercentage}%` : "N/A";
-      case "version":
-        return found.version || "Unknown";
-      case "rbxversion":
-        return found.rbxversion || "Unknown";
-      case "updateddate":
-      case "updated":
-        return found.updatedDate || "Unknown";
-      case "detected":
-        return found.detected ? "⚠️ Detected" : "🛡️ Undetected";
-      case "free":
-      case "price":
-      case "cost":
-        return found.free ? "Free" : found.cost || "Paid";
-      case "platform":
-        return found.platform || "Windows";
-      case "decompiler":
-        return found.decompiler ? "✅ Yes" : "❌ No";
-      case "multiinject":
-        return found.multiInject ? "✅ Yes" : "❌ No";
-      case "keysystem":
-        return found.keysystem ? "🔑 Key System" : "🔓 Keyless";
-      default:
-        return full;
-    }
-  });
-};
-*/
 export interface MarkdownProps {
   content: string;
   className?: string;
@@ -152,7 +62,14 @@ const fetchMemberById = (guildId: string, userId: string): Promise<CachedMember 
 const getDefaultAvatar = (userId: string): string => {
   try {
     const idx = (BigInt(userId) >> 22n) % 6n;
-    return `https://cdn.discordapp.com/embed/avatars/${idx}.png`; } catch { return "https://cdn.discordapp.com/embed/avatars/0.png"; } };  const intToRgb = (color: number): { r: number; g: number; b: number; hex: string } => { const hex = `#${color.toString(16).padStart(6, "0")}`;
+    return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
+  } catch {
+    return "https://cdn.discordapp.com/embed/avatars/0.png";
+  }
+};
+
+const intToRgb = (color: number): { r: number; g: number; b: number; hex: string } => {
+  const hex = `#${color.toString(16).padStart(6, "0")}`;
   const r = (color >> 16) & 0xff;
   const g = (color >> 8) & 0xff;
   const b = color & 0xff;
@@ -203,7 +120,7 @@ const UserMention: React.FC<{ id: string }> = ({ id }) => {
   let roleColor: { r: number; g: number; b: number; hex: string } | null = null;
   if (member?.roles && member.roles.length > 0 && guildRoles.length > 0) {
     const matchingColored = guildRoles.filter(
-      (r) => member.roles!.includes(r.id) && r.color > 0
+      (r) => member.roles!.includes(r.id) && r.color > 0,
     );
     if (matchingColored.length > 0) {
       roleColor = intToRgb(matchingColored[0].color);
@@ -212,14 +129,20 @@ const UserMention: React.FC<{ id: string }> = ({ id }) => {
 
   const displayName = member
     ? member.nickname || member.global_name || member.username
-    : `user-${id.slice(-4)}`;  const avatarUrl = member?.avatar ? `https://cdn.discordapp.com/avatars/${id}/${member.avatar}.${
+    : `user-${id.slice(-4)}`;
+  const avatarUrl = member?.avatar
+    ? `https://cdn.discordapp.com/avatars/${id}/${member.avatar}.${
         member.avatar.startsWith("a_") ? "gif" : "webp"
       }?size=32`
     : getDefaultAvatar(id);
 
   return (
     <span
-      title={`<@${id}>`} style={ roleColor ? { backgroundColor: `rgba(${roleColor.r}, ${roleColor.g},${roleColor.b}, 0.18)`,
+      title={`<@${id}>`}
+      style={
+        roleColor
+          ? {
+              backgroundColor: `rgba(${roleColor.r}, ${roleColor.g}, ${roleColor.b}, 0.18)`,
               color: roleColor.hex,
             }
           : undefined
@@ -267,12 +190,20 @@ const RoleMention: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <span
-      title={`<@&${id}>`} style={ rgb ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g},${rgb.b}, 0.18)`,
+      title={`<@&${id}>`}
+      style={
+        rgb
+          ? {
+              backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.18)`,
               color: rgb.hex,
             }
           : undefined
       }
-      className={`inline-flex items-center px-1 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 ${ rgb ? "hover:brightness-110" : "bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40" }`} > @{role ? role.name : `role-${id.slice(-4)}`}
+      className={`inline-flex items-center px-1 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 ${
+        rgb ? "hover:brightness-110" : "bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40"
+      }`}
+    >
+      @{role ? role.name : `role-${id.slice(-4)}`}
     </span>
   );
 };
@@ -302,7 +233,11 @@ const ChannelMention: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <span
-      title={`<#${id}>`} className="inline-flex items-center gap-0.5 bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40 hover:text-white px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 align-baseline" > <Icon size={13} className="inline-block shrink-0" /> <span>{channel ? channel.name : `channel-${id.slice(-4)}`}</span>
+      title={`<#${id}>`}
+      className="inline-flex items-center gap-0.5 bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40 hover:text-white px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 align-baseline"
+    >
+      <Icon size={13} className="inline-block shrink-0" />
+      <span>{channel ? channel.name : `channel-${id.slice(-4)}`}</span>
     </span>
   );
 };
@@ -313,39 +248,114 @@ const formatRelativeTime = (targetMs: number, nowMs: number): string => {
   const isFuture = diffSec > 0;
 
   const fmt = (n: number, unit: string) => {
-    const label = `${n}${unit}${n === 1 ? "" : "s"}`; return isFuture ? `in ${label}` : `${label} ago`; };  if (absSec < 45) return isFuture ? "in a few seconds" : "a few seconds ago"; const mins = Math.round(absSec / 60); if (mins < 60) return fmt(mins, "minute"); const hours = Math.round(absSec / 3600); if (hours < 24) return fmt(hours, "hour"); const days = Math.round(absSec / 86400); if (days < 30) return fmt(days, "day"); const months = Math.round(absSec / (86400 * 30)); if (months < 12) return fmt(months, "month"); const years = Math.round(absSec / (86400 * 365)); return fmt(years, "year"); };  const TimestampMention: React.FC<{ unix: number; format?: string }> = ({ unix, format = "f", }) => { const [nowMs, setNowMs] = useState(() => Date.now());  useEffect(() => { if (format !== "R") return; const timer = setInterval(() => setNowMs(Date.now()), 30_000); return () => clearInterval(timer); }, [format]);  const date = new Date(unix * 1000); if (Number.isNaN(date.getTime())) { return <span>{`<t:${unix}:${format}>`}</span>; }  let formatted = ""; switch (format) { case "t": formatted = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); break; case "T": formatted = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit", }); break; case "d": formatted = date.toLocaleDateString(); break; case "D": formatted = date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric", }); break; case "F": formatted = `${date.toLocaleDateString([], {
+    const label = `${n} ${unit}${n === 1 ? "" : "s"}`;
+    return isFuture ? `in ${label}` : `${label} ago`;
+  };
+
+  if (absSec < 45) return isFuture ? "in a few seconds" : "a few seconds ago";
+  const mins = Math.round(absSec / 60);
+  if (mins < 60) return fmt(mins, "minute");
+  const hours = Math.round(absSec / 3600);
+  if (hours < 24) return fmt(hours, "hour");
+  const days = Math.round(absSec / 86400);
+  if (days < 30) return fmt(days, "day");
+  const months = Math.round(absSec / (86400 * 30));
+  if (months < 12) return fmt(months, "month");
+  const years = Math.round(absSec / (86400 * 365));
+  return fmt(years, "year");
+};
+
+const TimestampMention: React.FC<{ unix: number; format?: string }> = ({
+  unix,
+  format = "f",
+}) => {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (format !== "R") return;
+    const timer = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, [format]);
+
+  const date = new Date(unix * 1000);
+  if (Number.isNaN(date.getTime())) {
+    return <span>{`<t:${unix}:${format}>`}</span>;
+  }
+
+  let formatted = "";
+  switch (format) {
+    case "t":
+      formatted = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      break;
+    case "T":
+      formatted = date.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      break;
+    case "d":
+      formatted = date.toLocaleDateString();
+      break;
+    case "D":
+      formatted = date.toLocaleDateString([], {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+      break;
+    case "F":
+      formatted = `${date.toLocaleDateString([], {
         weekday: "long",
         month: "long",
         day: "numeric",
         year: "numeric",
-      })} ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`; break; case "R": formatted = formatRelativeTime(date.getTime(), nowMs); break; case "f": default: formatted = `${date.toLocaleDateString([], {
+      })} ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      break;
+    case "R":
+      formatted = formatRelativeTime(date.getTime(), nowMs);
+      break;
+    case "f":
+    default:
+      formatted = `${date.toLocaleDateString([], {
         month: "long",
         day: "numeric",
         year: "numeric",
       })} ${date.toLocaleTimeString([], {
         hour: "numeric",
-        minute: "2-digit"
+        minute: "2-digit",
       })}`;
       break;
-    }
-    return (
-    <span title={date.toLocaleString()}
-      className="inline-flex items-center gap-1 rounded-[3px] bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none" >
-        <Clock size={11} className="text-[#949ba4] shrink-0" />
-        <span>{formatted}</span>
-      </span> ); };
-      const CustomEmojiImg: React.FC<{
-        id: string;
-        name: string; 
-        animated: boolean; 
-        jumbo?: boolean; 
-      }> = ({ id, name, animated, jumbo = false }) => { 
-        const [extIndex, setExtIndex] = useState(0); 
-        const exts = animated ? ["gif", "webp", "png"] : ["webp", "png", "gif"]; 
-        const currentExt = exts[extIndex] || "png";  return ( <img src={`https://cdn.discordapp.com/emojis/${id}.${currentExt}?size=${
+  }
+
+  return (
+    <span
+      title={date.toLocaleString()}
+      className="inline-flex items-center gap-1 rounded-[3px] bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none"
+    >
+      <Clock size={11} className="text-[#949ba4] shrink-0" />
+      <span>{formatted}</span>
+    </span>
+  );
+};
+
+const CustomEmojiImg: React.FC<{
+  id: string;
+  name: string;
+  animated: boolean;
+  jumbo?: boolean;
+}> = ({ id, name, animated, jumbo = false }) => {
+  const [extIndex, setExtIndex] = useState(0);
+  const exts = animated ? ["gif", "webp", "png"] : ["webp", "png", "gif"];
+  const currentExt = exts[extIndex] || "png";
+
+  return (
+    <img
+      src={`https://cdn.discordapp.com/emojis/${id}.${currentExt}?size=${
         jumbo ? 96 : 48
       }&quality=lossless`}
-      alt={`:${name}:`} title={`:${name}:`}
+      alt={`:${name}:`}
+      title={`:${name}:`}
       onError={() => {
         if (extIndex < exts.length - 1) {
           setExtIndex(extIndex + 1);
@@ -414,7 +424,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
           className="bg-[#1e1f22] text-[#e0e1e5] px-1.5 py-0.5 rounded text-[13px] font-mono border border-[#111214]"
         >
           {code}
-        </code>
+        </code>,
       );
       lastIndex = offset + match.length;
       return match;
@@ -437,7 +447,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
           name={name}
           animated={Boolean(animated)}
           jumbo={jumbo}
-        />
+        />,
       );
       lastIndex = offset + match.length;
       return match;
@@ -458,7 +468,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
           key={`ts-${offset}`}
           unix={Number(unixStr)}
           format={fmt || "f"}
-        />
+        />,
       );
       lastIndex = offset + match.length;
       return match;
@@ -501,7 +511,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
           className="bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40 px-1 py-0.5 rounded font-medium text-[14px] mx-0.5 select-none"
         >
           {token}
-        </span>
+        </span>,
       );
       lastIndex = offset + match.length;
       return match;
@@ -522,7 +532,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
             </strong>
           ) : (
             renderInline(part, jumbo)
-          )
+          ),
         )}
       </>
     );
@@ -539,7 +549,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
             </strong>
           ) : (
             renderInline(part, jumbo)
-          )
+          ),
         )}
       </>
     );
@@ -550,7 +560,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
     return (
       <>
         {parts.map((part, i) =>
-          i % 2 === 1 ? <u key={i}>{renderInline(part, jumbo)}</u> : renderInline(part, jumbo)
+          i % 2 === 1 ? <u key={i}>{renderInline(part, jumbo)}</u> : renderInline(part, jumbo),
         )}
       </>
     );
@@ -567,7 +577,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
             </del>
           ) : (
             renderInline(part, jumbo)
-          )
+          ),
         )}
       </>
     );
@@ -578,7 +588,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
     return (
       <>
         {parts.map((part, i) =>
-          i % 2 === 1 ? <em key={i}>{renderInline(part, jumbo)}</em> : renderInline(part, jumbo)
+          i % 2 === 1 ? <em key={i}>{renderInline(part, jumbo)}</em> : renderInline(part, jumbo),
         )}
       </>
     );
@@ -600,7 +610,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
           className="text-[#00a8fc] hover:underline"
         >
           {label}
-        </a>
+        </a>,
       );
       lastIndex = offset + match.length;
       return match;
@@ -613,7 +623,7 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
 };
 
 const formatWeaoFieldForPreview = (
-  found: any | undefined,
+  found: WeaoExploitItem | undefined,
   field: string,
   fullToken: string,
 ): string => {
@@ -656,6 +666,12 @@ const formatWeaoFieldForPreview = (
       return found.multiInject ? "✅ Yes" : "❌ No";
     case "keysystem":
       return found.keysystem ? "🔑 Key System" : "🔓 Keyless";
+    case "suncpassed":
+      return found.sunc?.suncScrap ? "Live (/api/sunc)" : "N/A";
+    case "suncfailed":
+      return found.sunc?.suncScrap ? "Live (/api/sunc)" : "N/A";
+    case "sunctime":
+      return found.sunc?.suncScrap ? "Live (/api/sunc)" : "N/A";
     case "websitelink":
     case "website":
       return found.websitelink || "";
@@ -704,10 +720,6 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       })
     : content;
 
-  //const exploitName = useMessageStore(
-    //(state) => (state.data as any)?.exploit_name as string | undefined,
-  //);
-  //const resolvedContent = resolveWeaoPreviewText(content, exploitName); 
   const lines = resolvedContent.split("\n");
   const renderedElements: React.ReactNode[] = [];
 
@@ -726,7 +738,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
             className="my-1.5 overflow-x-auto rounded bg-[#1e1f22] border border-[#111214] p-3 font-mono text-[13px] text-[#dbdee1]"
           >
             <code>{codeBlockBuffer.join("\n")}</code>
-          </pre>
+          </pre>,
         );
         inCodeBlock = false;
         codeBlockBuffer = [];
@@ -746,7 +758,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       renderedElements.push(
         <p key={i} className="text-xs text-[#949ba4] leading-normal my-0.5">
           {renderInline(line.slice(3))}
-        </p>
+        </p>,
       );
       continue;
     }
@@ -756,7 +768,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       renderedElements.push(
         <h1 key={i} className="text-xl font-bold text-white mt-2 mb-1">
           {renderInline(line.slice(2))}
-        </h1>
+        </h1>,
       );
       continue;
     }
@@ -764,7 +776,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       renderedElements.push(
         <h2 key={i} className="text-lg font-bold text-white mt-1.5 mb-0.5">
           {renderInline(line.slice(3))}
-        </h2>
+        </h2>,
       );
       continue;
     }
@@ -772,7 +784,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       renderedElements.push(
         <h3 key={i} className="text-base font-bold text-white mt-1 mb-0.5">
           {renderInline(line.slice(4))}
-        </h3>
+        </h3>,
       );
       continue;
     }
@@ -785,7 +797,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
           className="my-1 border-l-4 border-[#4f545c] pl-3 text-[#dbdee1]"
         >
           {renderInline(line.slice(2))}
-        </blockquote>
+        </blockquote>,
       );
       continue;
     }
@@ -796,7 +808,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
     renderedElements.push(
       <p key={i} className="min-h-[1.25rem] whitespace-pre-wrap break-words leading-relaxed">
         {renderInline(line, jumbo)}
-      </p>
+      </p>,
     );
   }
 
@@ -808,7 +820,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
         className="my-1.5 overflow-x-auto rounded bg-[#1e1f22] border border-[#111214] p-3 font-mono text-[13px] text-[#dbdee1]"
       >
         <code>{codeBlockBuffer.join("\n")}</code>
-      </pre>
+      </pre>,
     );
   }
 

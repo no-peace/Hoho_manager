@@ -1,3 +1,4 @@
+// server/src/services/weaoService.ts
 import type { DiscordMessagePayload } from "@dmb/shared";
 import { logger } from "../utils/logger.js";
 
@@ -75,12 +76,40 @@ interface WeaoRateLimitPayload {
   };
 }
 
+export interface WeaoRateLimitStatus {
+  rateLimited: boolean;
+  rateLimitedUntilMs: number;
+  resetTime?: number;
+  cooldownRemainingSec: number;
+  cachedCount: number;
+  cacheAgeMs: number | null;
+  stale: boolean;
+}
+
 let exploitsCache: { data: WeaoExploitRecord[]; fetchedAt: number } | null = null;
 let inFlightExploitsPromise: Promise<WeaoExploitRecord[]> | null = null;
 const suncCache = new Map<string, { data: WeaoSuncData; fetchedAt: number }>();
 const inFlightSuncPromises = new Map<string, Promise<WeaoSuncData | null>>();
 
 let rateLimitedUntilMs = 0;
+
+export const getWeaoRateLimitStatus = (): WeaoRateLimitStatus => {
+  const now = Date.now();
+  const rateLimited = now < rateLimitedUntilMs;
+  const cacheAgeMs = exploitsCache ? now - exploitsCache.fetchedAt : null;
+
+  return {
+    rateLimited,
+    rateLimitedUntilMs: rateLimited ? rateLimitedUntilMs : 0,
+    resetTime: rateLimited ? rateLimitedUntilMs : undefined,
+    cooldownRemainingSec: rateLimited
+      ? Math.ceil((rateLimitedUntilMs - now) / 1000)
+      : 0,
+    cachedCount: exploitsCache?.data.length ?? 0,
+    cacheAgeMs,
+    stale: cacheAgeMs !== null ? cacheAgeMs > EXPLOITS_CACHE_TTL_MS : false,
+  };
+};
 
 const fetchWeaoJson = async <T>(pathWithQuery: string): Promise<T> => {
   const now = Date.now();
@@ -389,7 +418,7 @@ export const interpolateWeaoPlaceholders = async (
     );
   }
 
-  // Pre-resolve sUNC data for any `{exploit.<Name>.<Field>}` tokens in the message
+  // Pre-resolve sUNC data for any `{exploit.<Name>.<Field>}` or `{exploit:<Name>:<Field>}` tokens
   const allTokenMatches = Array.from(serialized.matchAll(PLACEHOLDER_REGEX));
   for (const match of allTokenMatches) {
     const rawInner = match[1];
@@ -447,86 +476,8 @@ export const interpolateWeaoPlaceholders = async (
     return node;
   };
 
-
-  const scopedMatches = Array.from(
-    serialized.matchAll(/\{exploit:([^:}]+):([^}]+)\}/gi),
-  );
-  for (const match of scopedMatches) {
-    const targetName = match[1]?.trim().toLowerCase();
-    if (!targetName || suncMap.has(targetName)) continue;
-    const found =
-      allExploits.find((e) => e.title.toLowerCase() === targetName) ??
-      allExploits.find((e) => e.title.toLowerCase().includes(targetName));
-    if (found && needsDetailedSunc) {
-      suncMap.set(found.title.toLowerCase(), await getExploitSuncDetails(found));
-    }
-  }
-
-  /*
-  const interpolateString = (text: string): string =>
-    text.replace(PLACEHOLDER_REGEX, (fullMatch, inner: string) => {
-      if (inner.toLowerCase().startsWith("exploit:")) {
-        const parts = inner.split(":");
-        const targetName = parts[1]?.trim() || "";
-        const fieldName = parts.slice(2).join(":").trim() || "status";
-        const target =
-          allExploits.find(
-            (e) => e.title.toLowerCase() === targetName.toLowerCase(),
-          ) ??
-          allExploits.find((e) =>
-            e.title.toLowerCase().includes(targetName.toLowerCase()),
-          );
-        if (!target) return fullMatch;
-        return formatExploitField(
-          target,
-          fieldName,
-          suncMap.get(target.title.toLowerCase()),
-        );
-      }
-
-      if (!primaryExploit) return fullMatch;
-      return formatExploitField(
-        primaryExploit,
-        inner,
-        suncMap.get(primaryExploit.title.toLowerCase()),
-      );
-    });
-
-  const walk = (node: unknown): unknown => {
-    if (typeof node === "string") return interpolateString(node);
-    if (Array.isArray(node)) return node.map(walk);
-    if (node !== null && typeof node === "object") {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-        out[k] = walk(v);
-      }
-      return out;
-    }
-    return node;
-  };
-  */
-
-  export interface WeaoRateLimitStatus {
-    rateLimited: boolean;
-    resetTime?: number;
-    cooldownRemainingSec?: number;
-  }
-  export const getWeaoRateLimitStatus = (): WeaoRateLimitStatus => {
-    const now = Date.now();
-    const rateLimited: now < rateLimitedUntilMs;
-    return {
-      rateLimited,
-      resetTime: rateLimited ? rateLimitedUntilMs : undefined,
-      cooldownRemainingSec: rateLimited
-        ? Math.ceil((rateLimitedUntilMs - now) / 1000)
-        : 0,
-    };
-  };
-
-
   return {
     payload: walk(payload) as DiscordMessagePayload,
     primaryExploit,
   };
 };
-
