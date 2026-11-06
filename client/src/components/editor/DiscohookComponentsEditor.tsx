@@ -14,6 +14,8 @@ import {
   Shield,
   Hash,
   AtSign,
+  Sliders,
+  Zap,
 } from "lucide-react";
 import { ButtonStyle, ComponentType, type ComponentNode } from "@dmb/shared";
 import { useMessageStore } from "../../store/messageStore";
@@ -38,12 +40,12 @@ const SELECT_TYPE_MAP: Record<
 export interface DiscohookComponentsEditorProps {
   parentId?: string | null;
 }
+
 export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps> = ({
   parentId = null,
 }) => {
   const data = useMessageStore((state) => state.data);
   const components = data.components || [];
-  const addComponent = useMessageStore((state) => state.addComponent);
   const addActionRowChild = useMessageStore((state) => state.addActionRowChild);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const moveComponentById = useMessageStore((state) => state.moveComponentById);
@@ -54,11 +56,9 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
   const [selectMenuDropdownRow, setSelectMenuDropdownRow] = useState<string | null>(null);
 
-  // Group entries with sibling index tracking
   interface RowEntry {
     row: ComponentNode;
     containerId: string | null;
-    containerLabel?: string;
     siblingIndex: number;
     siblingCount: number;
   }
@@ -76,367 +76,324 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
     });
   } else {
     const parentContainer = components.find(
-      (c) => c.type === ComponentType.Container && c._id === parentId
+      (c) => c.type === ComponentType.Container && c._id === parentId,
     );
     const containerRows = (parentContainer?.components || []).filter(
-      (c) => c.type === ComponentType.ActionRow
+      (c) => c.type === ComponentType.ActionRow,
     );
     containerRows.forEach((child, idx) => {
       rowEntries.push({
         row: child,
         containerId: parentId,
-        containerLabel: "Container Row",
         siblingIndex: idx,
         siblingCount: containerRows.length,
       });
     });
   }
 
-  const getStyleBadge = (style?: number) => {
+  const getDiscordButtonClasses = (style?: number, isSelected?: boolean) => {
+    const ring = isSelected ? "ring-2 ring-white shadow-lg" : "hover:brightness-110";
     switch (style) {
       case ButtonStyle.Primary:
-        return { bg: "bg-[#5865f2]", label: "Primary" };
+        return `bg-[#5865f2] text-white border-[#4752c4] ${ring}`;
       case ButtonStyle.Secondary:
-        return { bg: "bg-[#4e5058]", label: "Secondary" };
+        return `bg-[#4e5058] text-white border-[#3f4147] ${ring}`;
       case ButtonStyle.Success:
-        return { bg: "bg-[#23a55a]", label: "Success" };
+        return `bg-[#248046] text-white border-[#1a6334] ${ring}`;
       case ButtonStyle.Danger:
-        return { bg: "bg-[#da373c]", label: "Danger" };
+        return `bg-[#da373c] text-white border-[#a1282c] ${ring}`;
       case ButtonStyle.Link:
-        return { bg: "bg-[#4e5058]", label: "Link" };
+        return `bg-[#4e5058] text-[#dbdee1] border-[#3f4147] ${ring}`;
       default:
-        return { bg: "bg-[#5865f2]", label: "Button" };
+        return `bg-[#5865f2] text-white border-[#4752c4] ${ring}`;
     }
   };
 
-  const getFlowBadge = (child: ComponentNode) => {
-    if (isLinkButton(child)) {
-      return { label: "🔗 Link", color: "bg-[#4e5058] text-[#dbdee1]" };
-    }
-    const customId = child.custom_id || child._action_custom_id;
-    const stepList = customId ? flows[customId] : undefined;
-    if (stepList && stepList.length > 0) {
-      const hasModal = stepList.some((s) => s.type === "open_modal");
-      if (hasModal) {
-        return { label: "📋 Modal", color: "bg-[#5865f2] text-white" };
-      }
-      return { label: "⚡ Flow", color: "bg-[#23a55a] text-white" };
-    }
-    return { label: "No Action", color: "bg-[#35373c] text-[#949ba4]" };
+  const getFlowStepCount = (child: ComponentNode): number => {
+    if (isLinkButton(child)) return 0;
+    const customId = child.custom_id ?? "";
+    const flowSteps = flows[customId] || [];
+    if (flowSteps.length > 0) return flowSteps.length;
+    if (customId && customId !== "action:dud") return 1;
+    return 0;
   };
+
+  if (rowEntries.length === 0) return null;
 
   return (
-    <div className="space-y-4 font-sans">
-      <div className="flex items-center justify-between pb-1 border-b border-[#1e1f22]">
-        <div className="flex items-center gap-2">
-          <Layers size={15} className="text-[#5865f2]" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#dbdee1]">
-            Action Rows & Components
-          </h3>
-        </div>
-        <span className="text-[11px] font-semibold text-[#949ba4] bg-[#1e1f22] px-2 py-0.5 rounded">
-          {rowEntries.length} / 5 Rows
-        </span>
-      </div>
+    <div className="space-y-2.5">
+      {rowEntries.map(({ row, containerId, siblingIndex, siblingCount }) => {
+        const rowId = row._id ?? "";
+        const children = row.components ?? [];
+        const hasSelect = children.some((c) => c.type !== ComponentType.Button);
+        const canAddButton = !hasSelect && children.length < 5;
+        const canAddSelect = children.length === 0;
+        const capacityLabel = hasSelect ? "1/1 Select Menu" : `${children.length}/5 Buttons`;
 
-      {rowEntries.length === 0 ? (
-        <div className="p-6 border border-dashed border-[#35373c] rounded-lg text-center space-y-2">
-          <p className="text-xs text-[#949ba4]">
-            No Action Rows yet. Add an Action Row to begin placing interactive buttons or select menus.
-          </p>
-          <button
-            type="button"
-            onClick={() => addComponent(ComponentType.ActionRow, null)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold transition-colors shadow-sm"
+        return (
+          <div
+            key={rowId}
+            className="rounded-lg bg-[#232428] border border-[#1e1f22] shadow-sm transition-colors hover:border-[#313338]"
           >
-            <Plus size={14} /> Add Action Row
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {rowEntries.map((entry, rowIndex) => {
-            const { row, containerId, containerLabel } = entry;
-            const rowChildren = row.components || [];
-            const isFull = rowChildren.length >= 5;
-            const hasSelectMenu = rowChildren.some((c) => c.type in SELECT_TYPE_MAP);
+            {/* ── Action Row Header ── */}
+            <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1f22]/70 border-b border-[#1e1f22] rounded-t-lg select-none">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#dbdee1] uppercase tracking-wider">
+                  <Layers size={12} className="text-[#5865f2]" />
+                  Action Row #{siblingIndex + 1}
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#2b2d31] text-[#949ba4] border border-[#313338]">
+                  {capacityLabel}
+                </span>
+              </div>
 
-            return (
-              <div
-                key={row._id}
-                className="bg-[#232428] border border-[#1e1f22] rounded-lg p-3 space-y-3 shadow-sm"
-              >
-                {/* Row Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white tracking-wide">
-                      {containerLabel ? `${containerLabel} #${rowIndex + 1}` : `Action Row #${rowIndex + 1}`}
-                    </span>
-                    <span className="text-[10px] text-[#949ba4] bg-[#1e1f22] px-1.5 py-0.5 rounded">
-                      {hasSelectMenu ? "1/1 Select Menu" : `${rowChildren.length}/5 buttons`}
-                    </span>
-                  </div>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  title="Move Row Up"
+                  disabled={siblingIndex === 0}
+                  onClick={() => moveComponentById(rowId, -1, containerId)}
+                  className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 rounded hover:bg-[#35373c]"
+                >
+                  <ChevronUp size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Move Row Down"
+                  disabled={siblingIndex === siblingCount - 1}
+                  onClick={() => moveComponentById(rowId, 1, containerId)}
+                  className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 rounded hover:bg-[#35373c]"
+                >
+                  <ChevronDown size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Duplicate Row"
+                  onClick={() => duplicateComponentById(rowId)}
+                  className="p-1 text-[#949ba4] hover:text-white rounded hover:bg-[#35373c]"
+                >
+                  <Copy size={12} />
+                </button>
+                <button
+                  type="button"
+                  title="Delete Row"
+                  onClick={() => removeComponentById(rowId)}
+                  className="p-1 text-[#f28b8b] hover:text-white hover:bg-[#da373c] rounded ml-0.5 transition-colors"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled={rowIndex === 0}
-                      onClick={() => row._id && moveComponentById(row._id, -1, containerId)}
-                      className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-30 disabled:hover:bg-transparent"
-                      title="Move Row Up"
-                    >
-                      <ChevronUp size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={entry.siblingIndex === entry.siblingCount - 1}
-                      onClick={() => row._id && moveComponentById(row._id, 1, containerId)}
-                      className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-30 disabled:hover:bg-transparent"
-                      title="Move Row Down"
-                    >
-                      <ChevronDown size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => row._id && duplicateComponentById(row._id)}
-                      className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c]"
-                      title="Duplicate Row"
-                    >
-                      <Copy size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => row._id && removeComponentById(row._id)}
-                      className="p-1 rounded text-[#f28b8b] hover:bg-[#da373c]/20"
-                      title="Delete Row"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
+            {/* ── Action Row Body ── */}
+            <div className="p-3 space-y-2.5">
+              {children.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {children.map((child, childIdx) => {
+                    const childId = child._id ?? "";
+                    const isSelected =
+                      selection?.kind === "component" && selection.id === childId;
+                    const isButton = child.type === ComponentType.Button;
+                    const stepCount = getFlowStepCount(child);
+                    const selectMeta = SELECT_TYPE_MAP[child.type];
 
-                {/* Items in this Row */}
-                <div className="space-y-2">
-                  {hasSelectMenu ? (
-                    /* Dedicated Select Menu Card */
-                    rowChildren.map((child: ComponentNode) => {
-                      const isSelected =
-                        selection?.kind === "component" && selection.id === child._id;
-                      const selectMeta = SELECT_TYPE_MAP[child.type] || {
-                        label: "Select Menu",
-                        icon: ListFilter,
-                      };
-                      const IconComp = selectMeta.icon;
-                      const flowBadge = getFlowBadge(child);
-
+                    if (isButton) {
                       return (
                         <div
-                          key={child._id}
-                          onClick={() => child._id && select({ kind: "component", id: child._id })}
-                          className={`group p-3 rounded-lg border cursor-pointer select-none transition-all flex items-center justify-between gap-3 ${
-                            isSelected
-                              ? "bg-[#5865f2]/20 border-[#5865f2] shadow-sm"
-                              : "bg-[#1e1f22] hover:bg-[#2b2d31] border-[#111214] hover:border-[#383a40]"
-                          }`}
+                          key={childId}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            select({ kind: "component", id: childId });
+                          }}
+                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-[5px] border text-xs font-semibold cursor-pointer transition-all select-none ${getDiscordButtonClasses(
+                            child.style,
+                            isSelected,
+                          )} ${child.disabled ? "opacity-50" : ""}`}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-1.5 rounded bg-[#35373c] text-white">
-                              <IconComp size={15} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-white">
-                                  {selectMeta.label}
-                                </span>
-                                <span
-                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${flowBadge.color}`}
-                                >
-                                  {flowBadge.label}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-[#949ba4] truncate mt-0.5">
-                                {child.placeholder || "No placeholder set"}
-                              </p>
-                            </div>
-                          </div>
+                          <span className="truncate max-w-[150px]">
+                            {child.label || "Button"}
+                          </span>
 
-                          <div className="flex items-center gap-1.5">
+                          {isLinkButton(child) ? (
+                            <ExternalLink size={12} className="opacity-80 shrink-0" />
+                          ) : stepCount > 0 ? (
+                            <span
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[10px] font-mono"
+                              title={`${stepCount} Flow Action(s)`}
+                            >
+                              <Zap size={10} className="text-[#f0b232]" />
+                              {stepCount}
+                            </span>
+                          ) : null}
+
+                          <Sliders size={11} className="opacity-60 group-hover:opacity-100" />
+
+                          {/* Compact floating controls on hover */}
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="hidden group-hover:flex items-center gap-0.5 absolute -top-6 right-0 bg-[#111214] border border-[#2b2d31] rounded px-1 py-0.5 shadow-lg z-20"
+                          >
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (child._id) removeComponentById(child._id);
-                              }}
-                              className="p-1 text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/20 rounded transition-colors"
-                              title="Delete Select Menu"
+                              disabled={childIdx === 0}
+                              onClick={() => moveComponentById(childId, -1, rowId)}
+                              className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-30"
+                              title="Move Left"
                             >
-                              <Trash2 size={13} />
+                              <ChevronLeft size={11} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={childIdx === children.length - 1}
+                              onClick={() => moveComponentById(childId, 1, rowId)}
+                              className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-30"
+                              title="Move Right"
+                            >
+                              <ChevronRight size={11} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => duplicateComponentById(childId)}
+                              className="p-0.5 text-[#949ba4] hover:text-white"
+                              title="Duplicate"
+                            >
+                              <Copy size={10} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeComponentById(childId)}
+                              className="p-0.5 text-[#f28b8b] hover:text-white"
+                              title="Remove"
+                            >
+                              <Trash2 size={10} />
                             </button>
                           </div>
                         </div>
                       );
-                    })
-                  ) : (
-                    /* Horizontal Buttons List with Left/Right Reordering & Badges */
-                    <div className="flex flex-wrap gap-2">
-                      {rowChildren.map((child: ComponentNode, childIndex: number) => {
-                        const isSelected =
-                          selection?.kind === "component" && selection.id === child._id;
-                        const styleInfo = getStyleBadge(child.style);
-                        const isLink = isLinkButton(child);
-                        const flowBadge = getFlowBadge(child);
+                    }
 
-                        return (
-                          <div
-                            key={child._id}
-                            onClick={() =>
-                              child._id && select({ kind: "component", id: child._id })
-                            }
-                            className={`group relative flex items-center gap-2 pl-2 pr-1.5 py-1.5 rounded-md border cursor-pointer select-none transition-all ${
-                              isSelected
-                                ? "bg-[#5865f2]/20 border-[#5865f2] shadow-sm"
-                                : "bg-[#2b2d31] hover:bg-[#35373c] border-[#1e1f22] hover:border-[#383a40]"
-                            }`}
-                          >
-                            {/* Horizontal Reordering Controls */}
-                            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                type="button"
-                                disabled={childIndex === 0}
-                                onClick={() =>
-                                  child._id &&
-                                  row._id &&
-                                  moveComponentById(child._id, -1, row._id)
-                                }
-                                className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-20 transition-colors"
-                                title="Move Left"
-                              >
-                                <ChevronLeft size={12} />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={childIndex === rowChildren.length - 1}
-                                onClick={() =>
-                                  child._id &&
-                                  row._id &&
-                                  moveComponentById(child._id, 1, row._id)
-                                }
-                                className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-20 transition-colors"
-                                title="Move Right"
-                              >
-                                <ChevronRight size={12} />
-                              </button>
+                    // Select Menu Full-Width Discord Bar
+                    return (
+                      <div
+                        key={childId}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          select({ kind: "component", id: childId });
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-[#1e1f22] border cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-[#5865f2] ring-1 ring-[#5865f2]"
+                            : "border-[#111214] hover:border-[#3f4147]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {selectMeta?.icon && (
+                            <selectMeta.icon size={14} className="text-[#5865f2] shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-[#dbdee1] truncate">
+                              {child.placeholder || componentLabel(child)}
                             </div>
-
-                            {/* Style Color Pill */}
-                            <div
-                              className={`w-3.5 h-3.5 rounded flex items-center justify-center text-white text-[9px] ${styleInfo.bg}`}
-                              title={styleInfo.label}
-                            >
-                              {isLink && <ExternalLink size={9} />}
+                            <div className="text-[10px] text-[#949ba4] flex items-center gap-2">
+                              <span>{selectMeta?.label || "Select Menu"}</span>
+                              {child.type === ComponentType.StringSelect && (
+                                <span>• {(child.options || []).length} option(s)</span>
+                              )}
+                              {stepCount > 0 && (
+                                <span className="text-[#f0b232]">• ⚡ {stepCount} flow step(s)</span>
+                              )}
                             </div>
-
-                            {/* Label */}
-                            <span className="text-xs font-semibold text-white max-w-[120px] truncate">
-                              {child.label || componentLabel(child) || "Untitled Button"}
-                            </span>
-
-                            {/* Flow / Modal Badge */}
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${flowBadge.color}`}
-                            >
-                              {flowBadge.label}
-                            </span>
-
-                            {/* Quick Delete */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (child._id) removeComponentById(child._id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-[#f28b8b] text-[#949ba4] transition-opacity"
-                              title="Remove button"
-                            >
-                              <Trash2 size={12} />
-                            </button>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </div>
 
-                {/* Add Item Actions for this Row */}
-                {!hasSelectMenu && (
-                  <div className="flex items-center gap-2 pt-1 border-t border-[#1e1f22] relative">
+                        <div
+                          className="flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => select({ kind: "component", id: childId })}
+                            className="px-2 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[11px] text-[#dbdee1]"
+                          >
+                            Edit Options & Flow
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeComponentById(childId)}
+                            className="p-1 text-[#f28b8b] hover:text-white hover:bg-[#da373c] rounded"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── Add Button / Add Select Menu Controls ── */}
+              {(canAddButton || canAddSelect) && (
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  {canAddButton && (
                     <button
                       type="button"
-                      disabled={isFull}
-                      onClick={() => row._id && addActionRowChild(row._id, ComponentType.Button)}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#35373c] hover:bg-[#4752c4] hover:text-white text-xs text-[#dbdee1] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addActionRowChild(rowId, ComponentType.Button);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
                     >
-                      <Plus size={13} /> Add Button
+                      <Plus size={12} /> Add Button
                     </button>
+                  )}
 
+                  {canAddSelect && (
                     <div className="relative">
                       <button
                         type="button"
-                        disabled={rowChildren.length > 0}
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectMenuDropdownRow(
-                            selectMenuDropdownRow === row._id ? null : (row._id ?? null)
-                          )
-                        }
-                        className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#35373c] hover:bg-[#4752c4] hover:text-white text-xs text-[#dbdee1] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={
-                          rowChildren.length > 0
-                            ? "Select menus must be the only item in their action row"
-                            : "Add Select Menu"
-                        }
+                            selectMenuDropdownRow === rowId ? null : rowId,
+                          );
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
                       >
-                        <Plus size={13} /> Add Select Menu <ChevronDown size={11} />
+                        <ListFilter size={12} /> Add Select Menu ▾
                       </button>
 
-                      {selectMenuDropdownRow === row._id && (
-                        <div className="absolute top-full left-0 mt-1 w-44 bg-[#1e1f22] border border-[#111214] rounded shadow-2xl z-50 py-1">
-                          {Object.entries(SELECT_TYPE_MAP).map(([typeNum, meta]) => (
-                            <button
-                              key={typeNum}
-                              type="button"
-                              onClick={() => {
-                                if (row._id) {
-                                  addActionRowChild(row._id, Number(typeNum));
-                                }
-                                setSelectMenuDropdownRow(null);
-                              }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[#dbdee1] hover:bg-[#5865f2] hover:text-white transition-colors flex items-center gap-2"
-                            >
-                              <meta.icon size={13} /> {meta.label}
-                            </button>
-                          ))}
+                      {selectMenuDropdownRow === rowId && (
+                        <div className="absolute left-0 bottom-full mb-1 w-48 rounded-md bg-[#111214] border border-[#2b2d31] shadow-xl py-1 z-40 text-xs">
+                          {Object.entries(SELECT_TYPE_MAP).map(([typeNum, meta]) => {
+                            const IconComponent = meta.icon;
+                            return (
+                              <button
+                                key={typeNum}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addActionRowChild(rowId, Number(typeNum));
+                                  setSelectMenuDropdownRow(null);
+                                }}
+                                className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2"
+                              >
+                                <IconComponent size={13} />
+                                {meta.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Add Another Action Row */}
-          {rowEntries.length < 5 && (
-            <button
-              type="button"
-              onClick={() => addComponent(ComponentType.ActionRow, null)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[#35373c] hover:border-[#5865f2] hover:bg-[#35373c]/30 text-xs font-bold text-[#b5bac1] hover:text-white transition-all"
-            >
-              <Plus size={14} /> Add Action Row ({rowEntries.length}/5)
-            </button>
-          )}
-        </div>
-      )}
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-export default React.memo(DiscohookComponentsEditor);
+export default DiscohookComponentsEditor;

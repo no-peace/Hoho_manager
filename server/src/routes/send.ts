@@ -32,7 +32,17 @@ router.post(
   sendLimiter,
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
-    const { mode, payload: rawPayload, messages: rawMessages, channelId, webhookUrl, threadId, profileId: rawProfileId, editMessageId, ...body } = req.body;
+    const {
+      mode,
+      payload: rawPayload,
+      messages: rawMessages,
+      channelId,
+      webhookUrl,
+      threadId,
+      profileId: rawProfileId,
+      editMessageId,
+      ...body
+    } = req.body;
     const profileId = parseProfileId(rawProfileId);
 
     if (mode !== "bot" && mode !== "webhook") {
@@ -41,13 +51,13 @@ router.post(
 
     const staffCtx = req.staffContext;
 
-    // Cleanse UI-only _id properties recursively
+    // Cleanse UI-only _id and exploit_name properties recursively
     const cleanseIds = (obj: any): any => {
       if (Array.isArray(obj)) return obj.map(cleanseIds);
-      if (obj !== null && typeof obj === 'object') {
+      if (obj !== null && typeof obj === "object") {
         const newObj: any = {};
         for (const [k, v] of Object.entries(obj)) {
-          if (k !== '_id') newObj[k] = cleanseIds(v);
+          if (k !== "_id" && k !== "exploit_name") newObj[k] = cleanseIds(v);
         }
         return newObj;
       }
@@ -55,6 +65,13 @@ router.post(
     };
 
     const processMessage = async (raw: unknown) => {
+      const exploitHint =
+        raw !== null &&
+        typeof raw === "object" &&
+        typeof (raw as Record<string, unknown>).exploit_name === "string"
+          ? ((raw as Record<string, unknown>).exploit_name as string)
+          : undefined;
+
       const message = validateMessagePayload(raw);
       if (message.embeds && message.embeds.length === 0) delete message.embeds;
       if (message.components && message.components.length === 0) delete message.components;
@@ -62,9 +79,23 @@ router.post(
 
       const sanitizedMessage = cleanseIds(message);
 
+      let weaoInterpolated = sanitizedMessage;
+      try {
+        const { interpolateWeaoPlaceholders } = await import("../services/weaoService.js");
+        const result = await interpolateWeaoPlaceholders(sanitizedMessage, exploitHint);
+        weaoInterpolated = result.payload;
+      } catch {
+        // Fallback to uninterpolated message if WEAO is unreachable
+      }
+
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-        const { scrubMentions, sanitizeAllowedMentions } = await import("../utils/mentionScrubber.js");
-        const { payload: scrubbed, stripped } = scrubMentions(sanitizedMessage, staffCtx.record);
+        const { scrubMentions, sanitizeAllowedMentions } = await import(
+          "../utils/mentionScrubber.js"
+        );
+        const { payload: scrubbed, stripped } = scrubMentions(
+          weaoInterpolated,
+          staffCtx.record,
+        );
         const finalMsg = sanitizeAllowedMentions(scrubbed, staffCtx.record);
         if (stripped.length > 0) {
           const { auditLog } = await import("../services/auditLog.js");
@@ -78,7 +109,7 @@ router.post(
         }
         return finalMsg;
       }
-      return sanitizedMessage;
+      return weaoInterpolated;
     };
 
     const isMulti = Array.isArray(rawMessages) && rawMessages.length > 0;
@@ -96,7 +127,10 @@ router.post(
     let flows = rawFlows;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       const { scrubFlows } = await import("../utils/mentionScrubber.js");
-      const { flows: scrubbedFlows, stripped: strippedFlows } = scrubFlows(rawFlows, staffCtx.record);
+      const { flows: scrubbedFlows, stripped: strippedFlows } = scrubFlows(
+        rawFlows,
+        staffCtx.record,
+      );
       flows = scrubbedFlows;
       if (strippedFlows.length > 0) {
         const { auditLog } = await import("../services/auditLog.js");
@@ -164,7 +198,9 @@ router.post(
       });
       await registerMessageFlows(sent);
       sentList.push(sent);
-      log.info(`Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`);
+      log.info(
+        `Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`,
+      );
     } else {
       for (const msg of finalMessages) {
         const sent = await discord.sendChannelMessage(channelId, msg, {
@@ -177,11 +213,13 @@ router.post(
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }
 
-    // Audit log for staff sends
     if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
       const { auditLog } = await import("../services/auditLog.js");
       auditLog({
-        event: (typeof editMessageId === "string" && editMessageId.trim() !== "") ? "EDIT_MESSAGE" : "SEND_MESSAGE",
+        event:
+          typeof editMessageId === "string" && editMessageId.trim() !== ""
+            ? "EDIT_MESSAGE"
+            : "SEND_MESSAGE",
         actorDiscordId: staffCtx.staffId,
         actorUsername: staffCtx.record?.discord_username,
         channelId: typeof channelId === "string" ? channelId : undefined,
@@ -194,69 +232,107 @@ router.post(
   }),
 );
 
-// ... KEEP YOUR EXISTING GET ROUTES BELOW THIS
+router.get(
+  "/channels",
+  attachUser,
+  requireStaffPermission("send"),
+  asyncHandler(async (req, res) => {
+    const profileId = parseProfileId(req.query.profileId);
+    const queryGuildId =
+      typeof req.query.guildId === "string" && req.query.guildId.trim()
+        ? req.query.guildId.trim()
+        : undefined;
 
-router.get("/channels", attachUser, requireStaffPermission("send"), asyncHandler(async (req, res) => {
-  const profileId = parseProfileId(req.query.profileId);
-  const queryGuildId = typeof req.query.guildId === "string" && req.query.guildId.trim()
-    ? req.query.guildId.trim()
-    : undefined;
-
-  let targetGuildId = queryGuildId;
-  if (!targetGuildId) {
-    const [guild] = await discord.getBotGuilds(profileId);
-    targetGuildId = guild?.id;
-  }
-  if (!targetGuildId) return res.json([]);
-
-  const channels = await discord.getGuildChannels(targetGuildId, profileId);
-  
-  let filteredChannels = channels;
-  const staffCtx = req.staffContext;
-  if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-    try {
-      const allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
-      const allAllowed = allowed.includes("*");
-      if (!allAllowed) {
-        filteredChannels = channels.filter((c: any) => allowed.includes(c.id));
-      }
-    } catch {
-      filteredChannels = [];
+    let targetGuildId = queryGuildId;
+    if (!targetGuildId) {
+      const [guild] = await discord.getBotGuilds(profileId);
+      targetGuildId = guild?.id;
     }
-  }
+    if (!targetGuildId) return res.json([]);
 
-  res.json(
-    filteredChannels
-      .filter((channel: any) => channel.type === 0 || channel.type === 5)
-      .map(({ id, name }: any) => ({ id, name })),
-  );
-}));
+    const channels = await discord.getGuildChannels(targetGuildId, profileId);
+
+    let filteredChannels = channels;
+    const staffCtx = req.staffContext;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      try {
+        const allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
+        const allAllowed = allowed.includes("*");
+        if (!allAllowed) {
+          filteredChannels = channels.filter((c: any) => allowed.includes(c.id));
+        }
+      } catch {
+        filteredChannels = [];
+      }
+    }
+
+    res.json(
+      filteredChannels
+        .filter((channel: any) => channel.type === 0 || channel.type === 5)
+        .map(({ id, name }: any) => ({ id, name })),
+    );
+  }),
+);
 
 // GET /api/send/channels/:channelId/messages - Fetches recent messages sent by the bot
-router.get("/channels/:channelId/messages", attachUser, requireStaffPermission("edit"), asyncHandler(async (req, res) => {
-  const profileId = parseProfileId(req.query.profileId);
-  const channelId = req.params.channelId;
-  if (typeof channelId !== "string") {
-    throw ApiError.badRequest("`channelId` must be a string");
-  }
-  const token = await discord.resolveBotToken(profileId);
-  const me = await discord.getBotIdentity(token);
-  if (!me?.id) return res.json([]);
+router.get(
+  "/channels/:channelId/messages",
+  attachUser,
+  requireStaffPermission("edit"),
+  asyncHandler(async (req, res) => {
+    const profileId = parseProfileId(req.query.profileId);
+    const channelId = req.params.channelId;
+    if (typeof channelId !== "string") {
+      throw ApiError.badRequest("`channelId` must be a string");
+    }
+    const token = await discord.resolveBotToken(profileId);
+    const me = await discord.getBotIdentity(token);
+    if (!me?.id) return res.json([]);
 
-  const messages = await discord.getChannelMessages(channelId, profileId);
+    const messages = await discord.getChannelMessages(channelId, profileId);
 
-  // NEW: Filter out slash command interactions so they don't clutter the Edit dropdown
-  const botMessages = messages
-    .filter((message: any) => message.author?.id === me.id && !message.interaction && !message.interaction_metadata)
-    .map((message: any) => ({
-      id: message.id,
-      content: message.content || "Embed / Component Message",
-      timestamp: message.timestamp,
-      raw: message,
-    }));
+    const botMessages = messages
+      .filter(
+        (message: any) =>
+          message.author?.id === me.id &&
+          !message.interaction &&
+          !message.interaction_metadata,
+      )
+      .map((message: any) => ({
+        id: message.id,
+        content: message.content || "Embed / Component Message",
+        timestamp: message.timestamp,
+        raw: message,
+      }));
 
-  res.json(botMessages);
-}));
+    res.json(botMessages);
+  }),
+);
+
+// GET /api/send/channels/:channelId/messages/:messageId - Fetch a specific message by link
+router.get(
+  "/channels/:channelId/messages/:messageId",
+  attachUser,
+  requireStaffPermission("edit"),
+  asyncHandler(async (req, res) => {
+    const profileId = parseProfileId(req.query.profileId);
+    const channelId = req.params.channelId;
+    const messageId = req.params.messageId;
+    if (typeof channelId !== "string" || typeof messageId !== "string") {
+      throw ApiError.badRequest("`channelId` and `messageId` must be strings");
+    }
+    const messages = await discord.getChannelMessages(channelId, profileId);
+    const found = messages.find((m: any) => m.id === messageId);
+    if (!found) {
+      throw ApiError.notFound("Message not found in that channel (check bot permissions)");
+    }
+    res.json({
+      id: found.id,
+      content: found.content || "",
+      raw: found,
+    });
+  }),
+);
 
 // Auto-Fetch Bot Identity for the Frontend
 router.get(
@@ -264,17 +340,18 @@ router.get(
   attachUser,
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
-    // Safely parse the query ID, ensuring we pass exactly 1 or 0 arguments
     const profileId = parseProfileId(req.query.profileId);
     const token = await discord.resolveBotToken(profileId);
     const data = await discord.getBotIdentity(token);
     if (!data || !data.id) return res.json(null);
-    
+
     return res.json({
       name: data.username,
-      avatar: data.avatar ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png` : ""
+      avatar: data.avatar
+        ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
+        : "",
     });
-  })
+  }),
 );
 
 export default router;

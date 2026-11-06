@@ -22,6 +22,7 @@ import { useTemplateStore } from "./store/templateStore";
 import { useTemplates } from "./hooks/useTemplates";
 import { downloadJson, parseImportedJson } from "./utils/exportImport";
 import { copyTextToClipboard } from "./utils/clipboard";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 // Backups Modal
 const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
@@ -221,7 +222,18 @@ export const App: React.FC = () => {
     }
   };
 
-  if (currentPath === "/docs") return <DocsPage />;
+  if (currentPath === "/docs") {
+    return <DocsPage />;
+  }
+
+  const isStudioRoute = currentPath === "/" ||
+  currentPath === "" ||
+  currentPath === "/bots/webhook" ||
+  currentPath === "/studio";
+
+  if (!isStudioRoute) {
+    return <NotFoundPage />;
+  }
 
   return (
     <div className="flex h-screen flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">

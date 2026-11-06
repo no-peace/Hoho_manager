@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   FolderOpen,
-  Sparkles,
   ShieldAlert,
   Settings,
   BookOpen,
@@ -18,7 +17,13 @@ import { SettingsModal } from "./SettingsModal";
 import { useGlobalStore } from "../../store/globalStore";
 import { AccessPanel } from "./AccessPanel";
 
-export const getDiscordAvatarUrl = (user: { id: string; avatar?: string | null }, size: number = 64): string => {
+const HOHO_LOGO_URL =
+  "https://github.com/acsu123/HohoV2/blob/main/BloxFruit/keysystem/hoho_logo.png?raw=true";
+
+export const getDiscordAvatarUrl = (
+  user: { id: string; avatar?: string | null },
+  size: number = 64,
+): string => {
   if (user.avatar) {
     const ext = user.avatar.startsWith("a_") ? "gif" : "png";
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=${size}`;
@@ -31,8 +36,18 @@ export const getDiscordAvatarUrl = (user: { id: string; avatar?: string | null }
   }
 };
 
-const DiscordIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+const DiscordIcon: React.FC<{ size?: number; className?: string }> = ({
+  size = 16,
+  className = "",
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
     <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.08-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z" />
   </svg>
 );
@@ -50,7 +65,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
   const { selectedGuildId, setSelectedGuildId, currentUser, logout } = useGlobalStore();
 
-  const isSubRoute = typeof window !== "undefined" && (window.location.pathname.startsWith("/bots/") || window.location.pathname !== "/");
+  const isSubRoute =
+    typeof window !== "undefined" &&
+    (window.location.pathname.startsWith("/bots/") || window.location.pathname !== "/");
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -82,7 +99,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
         window.location.reload();
       }
     } else {
-      const id = prompt("Enter your Discord User ID to authenticate as Staff (manual fallback):");
+      const id = prompt(
+        "Enter your Discord User ID to authenticate as Staff (manual fallback):",
+      );
       if (id && /^\d{17,20}$/.test(id)) {
         localStorage.setItem("staff_id", id);
         window.location.reload();
@@ -97,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   return (
     <>
       <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b-2 border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
-        {/* Left: Dashboard Back link (if on sub-url) + Logo + HoHo Manager title */}
+        {/* Left: Dashboard Back link (if on sub-url) + HoHo Logo + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
             <a
@@ -109,12 +128,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
               <span className="hidden sm:inline">Dashboard</span>
             </a>
           )}
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865f2] text-white shadow-sm">
-            <Sparkles size={18} />
-          </div>
-          <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
-            HoHo Manager
-          </span>
+          <a
+            href="/"
+            className="flex items-center gap-2.5 group focus:outline-none"
+            title="HoHo Manager"
+          >
+            <img
+              src={HOHO_LOGO_URL}
+              alt="HoHo Manager"
+              className="h-8 w-8 rounded-lg object-cover bg-[#2b2d31] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform"
+            />
+            <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
+              HoHo Manager
+            </span>
+          </a>
         </div>
 
         {/* Center: Server Select dropdown, Settings button, Backups/History button */}
@@ -220,7 +247,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                       className="text-[#949ba4] hover:text-white p-0.5 transition-colors"
                       title="Copy Discord ID"
                     >
-                      {copiedId ? <Check size={13} className="text-[#57f287]" /> : <Copy size={13} />}
+                      {copiedId ? (
+                        <Check size={13} className="text-[#57f287]" />
+                      ) : (
+                        <Copy size={13} />
+                      )}
                     </button>
                   </div>
 
@@ -228,7 +259,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                   <div className="space-y-1">
                     <button
                       type="button"
-                      onClick={() => { setUserMenuOpen(false); setAccessOpen(true); }}
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setAccessOpen(true);
+                      }}
                       className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
                       <Shield size={14} className="text-[#949ba4]" />
@@ -236,7 +270,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setUserMenuOpen(false); setSettingsOpen(true); }}
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setSettingsOpen(true);
+                      }}
                       className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
                       <Settings size={14} className="text-[#949ba4]" />
@@ -266,7 +303,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => { window.location.href = "/api/auth/discord/login"; }}
+                onClick={() => {
+                  window.location.href = "/api/auth/discord/login";
+                }}
                 className="text-xs flex items-center gap-1.5 font-semibold bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white px-3 py-1.5 rounded transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
                 title="Login with Discord"
               >
@@ -303,7 +342,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Staff Access Modal */}
-      <Modal open={accessOpen} onClose={() => setAccessOpen(false)} title="Staff Access Controls" width="max-w-4xl">
+      <Modal
+        open={accessOpen}
+        onClose={() => setAccessOpen(false)}
+        title="Staff Access Controls"
+        width="max-w-4xl"
+      >
         <AccessPanel />
       </Modal>
     </>

@@ -7,30 +7,54 @@ import type {
 } from "@dmb/shared";
 import type { EditorMode } from "./constants";
 
-/**
- * Payload construction and validation.
- *
- * Editors keep two things the Discord API knows nothing about:
- *   - `_id` on every embed/component, so React keys survive reordering
- *   - UI-only fields (e.g. a component's action config)
- *
- * {@link toDiscordPayload} is the single boundary where those are stripped, so
- * "what the user sees" and "what Discord receives" can never drift.
- */
+export interface DiscordMessageReference {
+  message_id: string;
+  channel_id?: string;
+  guild_id?: string;
+  fail_if_not_exists?: boolean;
+}
+
+export interface ExtendedMessageData extends MessageData {
+  message_link?: string;
+  link_mode?: "edit" | "reply";
+  edit_channel_id?: string;
+  edit_message_id?: string;
+  message_reference?: DiscordMessageReference;
+  exploit_name?: string;
+}
+
+export interface ParsedDiscordMessageLink {
+  guildId: string;
+  channelId: string;
+  messageId: string;
+}
+
+/** Parse `https://discord.com/channels/{guildId}/{channelId}/{messageId}` */
+export const parseDiscordMessageLink = (
+  input: string,
+): ParsedDiscordMessageLink | null => {
+  const trimmed = (input || "").trim();
+  const match = trimmed.match(
+    /discord(?:app)?\.com\/channels\/(\d+|@me)\/(\d+)\/(\d+)/i,
+  );
+  if (!match) return null;
+  return {
+    guildId: match[1]!,
+    channelId: match[2]!,
+    messageId: match[3]!,
+  };
+};
 
 /* ── Colour helpers ───────────────────────────────────────────────────────── */
 
-/** `0x5865f2` -> `#5865f2` */
 export const decimalToHex = (decimal: number | null | undefined): string => {
   if (decimal === null || decimal === undefined) return "#000000";
   return `#${Number(decimal).toString(16).padStart(6, "0").slice(-6)}`;
 };
 
-/** `#5865f2` -> `5865f2` (as an integer). */
 export const hexToDecimal = (hex: string): number =>
   Number.parseInt(String(hex).replace("#", ""), 16) || 0;
 
-/** Parse user-typed hex, returning `null` when it is not a valid colour. */
 export const parseHexColor = (hex: string): number | null => {
   const cleaned = String(hex).replace("#", "").trim();
   if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) return null;
@@ -39,14 +63,13 @@ export const parseHexColor = (hex: string): number | null => {
 
 /* ── Sanitising ───────────────────────────────────────────────────────────── */
 
-/** Recursively drop editor-only keys (`_id`, and anything starting with `_`). */
 export const stripInternal = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(stripInternal);
   if (value === null || typeof value !== "object") return value;
 
   const output: Record<string, unknown> = {};
   for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-    if (key.startsWith("_")) continue; // `_id`, `_action`, ...
+    if (key.startsWith("_")) continue;
     if (nested === undefined) continue;
     output[key] = stripInternal(nested);
   }
@@ -55,53 +78,59 @@ export const stripInternal = (value: unknown): unknown => {
 
 /* ── Payload building ─────────────────────────────────────────────────────── */
 
-/**
- * Turn the editor's message document into a Discord message payload.
- *
- * @param data the store's `data` object
- */
 export const toDiscordPayload = (
   data: MessageData,
   mode: EditorMode,
 ): DiscordMessagePayload => {
-  const payload: DiscordMessagePayload = {};
+  const extData = data as ExtendedMessageData;
+  const payload: DiscordMessagePayload & {
+    message_reference?: DiscordMessageReference;
+    exploit_name?: string;
+  } = {};
 
-  if (data.username) payload.username = data.username;
-  if (data.avatar_url) payload.avatar_url = data.avatar_url;
-  if (data.thread_name) payload.thread_name = data.thread_name;
+  if (extData.thread_name) payload.thread_name = extData.thread_name;
+  if (extData.exploit_name) payload.exploit_name = extData.exploit_name;
 
   if (mode === "v2") {
-    // Components V2 carries its own text; classic content/embeds are invalid
-    // alongside it, so only `components` and the flag are sent.
-    payload.components = stripInternal(data.components ?? []) as ComponentNode[];
-    payload.flags = (data.flags ?? 0) | MessageFlags.IsComponentsV2;
+    payload.components = stripInternal(extData.components ?? []) as ComponentNode[];
+    payload.flags = (extData.flags ?? 0) | MessageFlags.IsComponentsV2;
   } else {
-    if (data.content) payload.content = data.content;
-    if (data.embeds.length > 0) {
-      payload.embeds = stripInternal(data.embeds) as EmbedData[];
+    if (extData.content) payload.content = extData.content;
+    if (extData.embeds.length > 0) {
+      payload.embeds = stripInternal(extData.embeds) as EmbedData[];
     }
-    const classicComponents = data.components.filter(
+    const classicComponents = extData.components.filter(
       (component) => component.type === ComponentType.ActionRow,
     );
     if (classicComponents.length > 0) {
       payload.components = stripInternal(classicComponents) as ComponentNode[];
     }
-    if (data.flags) {
-      payload.flags = data.flags;
+    if (extData.flags) {
+      payload.flags = extData.flags;
     }
   }
 
-  if (data.allowed_mentions) {
-    payload.allowed_mentions = data.allowed_mentions;
+  if (extData.link_mode === "reply" && extData.message_reference?.message_id) {
+    payload.message_reference = {
+      message_id: extData.message_reference.message_id,
+      ...(extData.message_reference.channel_id
+        ? { channel_id: extData.message_reference.channel_id }
+        : {}),
+      ...(extData.message_reference.guild_id &&
+      extData.message_reference.guild_id !== "@me"
+        ? { guild_id: extData.message_reference.guild_id }
+        : {}),
+      fail_if_not_exists: false,
+    };
+  }
+
+  if (extData.allowed_mentions) {
+    payload.allowed_mentions = extData.allowed_mentions;
   }
 
   return payload;
 };
 
-/**
- * A message must carry something. Discord rejects an entirely empty payload,
- * but an attachment-only message is completely valid.
- */
 export const isPayloadEmpty = (
   payload: DiscordMessagePayload,
   hasAttachments: boolean = false,
@@ -114,7 +143,6 @@ export const isPayloadEmpty = (
 
 /* ── Validation ───────────────────────────────────────────────────────────── */
 
-/** Total character usage of one embed, for the live counter in the editor. */
 export const embedCharCount = (embed: EmbedData): number =>
   (embed.title?.length ?? 0) +
   (embed.description?.length ?? 0) +
@@ -125,10 +153,6 @@ export const embedCharCount = (embed: EmbedData): number =>
     0,
   );
 
-/**
- * Validate the message document against Discord's documented limits.
- * Returns an array of human-readable problems; empty means valid.
- */
 export const validateMessage = (data: MessageData, mode: EditorMode): string[] => {
   const errors: string[] = [];
 
@@ -185,7 +209,9 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
           errors.push(`${componentPath}: Action Row needs at least one button or select menu`);
         }
         if (children.length > Limits.components.actionRowButtons) {
-          errors.push(`${componentPath}: Action Row allows at most ${Limits.components.actionRowButtons} controls`);
+          errors.push(
+            `${componentPath}: Action Row allows at most ${Limits.components.actionRowButtons} controls`,
+          );
         }
         const hasSelect = children.some((child) => child.type !== ComponentType.Button);
         if (hasSelect && children.length !== 1) {
@@ -204,16 +230,19 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
             errors.push(`${componentPath}: Minimum selections cannot exceed maximum selections`);
           }
         }
-        if (children.some((child) =>
-          ![
-            ComponentType.Button,
-            ComponentType.StringSelect,
-            ComponentType.UserSelect,
-            ComponentType.RoleSelect,
-            ComponentType.MentionableSelect,
-            ComponentType.ChannelSelect,
-          ].includes(child.type as never),
-        )) {
+        if (
+          children.some(
+            (child) =>
+              ![
+                ComponentType.Button,
+                ComponentType.StringSelect,
+                ComponentType.UserSelect,
+                ComponentType.RoleSelect,
+                ComponentType.MentionableSelect,
+                ComponentType.ChannelSelect,
+              ].includes(child.type as never),
+          )
+        ) {
           errors.push(`${componentPath}: Action Row children must be buttons or select menus`);
         }
       }
@@ -225,7 +254,9 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
       ) {
         errors.push(`${componentPath}: Button style must be a supported Discord style`);
       }
-      if (component.components) validateRows(component.components, `${componentPath}.components`, depth + 1);
+      if (component.components) {
+        validateRows(component.components, `${componentPath}.components`, depth + 1);
+      }
     });
   };
   validateRows(components, "components", 0);

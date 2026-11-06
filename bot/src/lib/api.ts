@@ -1,18 +1,6 @@
 import type { SendSuccessResponse } from "@dmb/shared";
 import { env } from "./env.js";
 
-/**
- * Thin client for the existing Express API.
- *
- * The gateway does **not** duplicate sending, validation or action execution —
- * it calls the same endpoints the web editor does. That means one implementation
- * of the payload rules, one place that holds the bot token, and no second SQLite
- * writer. Everything here is just HTTP.
- *
- * `x-admin-key` is the machine credential the API already expects
- * (`server/src/middleware/auth.ts`).
- */
-
 export class ApiError extends Error {
   readonly status: number | undefined;
 
@@ -25,9 +13,7 @@ export class ApiError extends Error {
 
 export interface RelayResult {
   ok: boolean;
-  /** True when this API posted the reply to Discord on our behalf. */
   delivered: boolean;
-  /** The `InteractionResponseType` that was sent. */
   type?: number;
 }
 
@@ -43,10 +29,19 @@ export interface HealthResponse {
   };
 }
 
+export interface WeaoExploitChoice {
+  title: string;
+  version: string;
+  updateStatus: boolean;
+  suncPercentage?: number;
+  platform?: string;
+  hasBackupTemplate?: boolean;
+  backupTemplateName?: string | null;
+}
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
-  /** No admin key: used for the public health endpoint. */
   anonymous?: boolean;
   signal?: AbortSignal;
 }
@@ -86,26 +81,36 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 };
 
+export const listWeaoExploits = async (query = ""): Promise<WeaoExploitChoice[]> => {
+  const qs = query ? `?q=${encodeURIComponent(query)}` : "";
+  const data = await request<{ exploits: WeaoExploitChoice[] }>(`/api/weao/exploits${qs}`);
+  return data?.exploits ?? [];
+};
+
+export const resolveWeaoExploit = async (
+  exploitName: string,
+): Promise<{
+  source: "backup_template" | "adaptive_default";
+  templateName: string | null;
+  exploit: WeaoExploitChoice;
+  payload: Record<string, unknown>;
+}> => {
+  return request("/api/weao/resolve-exploit", {
+    method: "POST",
+    body: { exploit: exploitName },
+  });
+};
+
 export const api = {
   health: (signal?: AbortSignal) =>
     request<HealthResponse>("/api/health", { anonymous: true, signal }),
 
-  /**
-   * Hand a gateway interaction to the API so it can execute the flow and reply.
-   *
-   * This is what lets the action system work on a host with **no public
-   * address**: Discord delivers the interaction over the gateway (an outbound
-   * WebSocket), and the API — which owns the flows and the bot token — posts the
-   * reply back to Discord using the interaction token. Nothing needs to be
-   * reachable from the internet.
-   *
-   * `interaction` is the raw `interaction.toJSON()` payload, forwarded as-is so
-   * the API sees the same shape Discord's webhook delivery would have given it.
-   */
   relayInteraction: (interaction: unknown) =>
-    request<RelayResult>("/api/interactions/relay", { method: "POST", body: interaction }),
+    request<RelayResult>("/api/interactions/relay", {
+      method: "POST",
+      body: interaction,
+    }),
 
-  /** Send a message as the bot. Mirrors `client/src/api/client.ts`. */
   sendMessage: (body: {
     content: string;
     channelId: string;
@@ -124,6 +129,9 @@ export const api = {
         },
       },
     }),
+
+  listWeaoExploits,
+  resolveWeaoExploit,
 };
 
 export default api;

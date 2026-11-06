@@ -32,8 +32,14 @@ import { FileAttachmentsSection } from "./FileAttachmentsSection";
 import { ColorPicker } from "../ui/ColorPicker";
 import { useMessageStore } from "../../store/messageStore";
 import { EDITOR_MODES, uid } from "../../utils/constants";
-import { decimalToHex } from "../../utils/discord";
+import {
+  decimalToHex,
+  parseDiscordMessageLink,
+  type ExtendedMessageData,
+} from "../../utils/discord";
 import { newGalleryItem, newButton, newThumbnail } from "../../utils/componentsV2";
+import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
+import { request } from "../../api/client";
 
 export interface MessageEditorProps {
   index: number;
@@ -66,6 +72,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const moveMessage = useMessageStore((state) => state.moveMessage);
   const setMessageMode = useMessageStore((state) => state.setMessageMode);
   const setField = useMessageStore((state) => state.setField);
+  const load = useMessageStore((state) => state.load);
   const addEmbed = useMessageStore((state) => state.addEmbed);
   const addComponent = useMessageStore((state) => state.addComponent);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
@@ -74,8 +81,15 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
   const selection = useMessageStore((state) => state.selection);
 
-  const message = (messages && messages[index]) || (index === 0 ? data : messages?.[0]) || data;
+  const rawMessage =
+    (messages && messages[index]) || (index === 0 ? data : messages?.[0]) || data;
+  const message = rawMessage as ExtendedMessageData;
   const isActive = activeMessageIndex === index;
+
+  // Helper to set extended fields without requiring @dmb/shared rebuild first
+  const setExtendedField = (key: keyof ExtendedMessageData, value: unknown) => {
+    (setField as (k: string, v: unknown) => void)(key as string, value);
+  };
 
   // Fixed per-message format determined from the message's own flags/mode
   const isV2 =
@@ -89,20 +103,24 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     }
   };
 
-  // Local collapsible section states matching Discohook
+  // Local collapsible section states matching Discohook (Profile Override removed)
   const [isOpen, setIsOpen] = useState(true);
   const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name));
-  const [profileOpen, setProfileOpen] = useState(Boolean(message.username || message.avatar_url));
 
   // Rename message state
   const [isEditingName, setIsEditingName] = useState(false);
   const [customName, setCustomName] = useState("");
 
-  // Dropdown states with outside-click handling
+  // Dropdown & modal states
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
-  const [messageLinkInput, setMessageLinkInput] = useState("");
+  const [messageLinkInput, setMessageLinkInput] = useState(message.message_link || "");
+  const [linkModeInput, setLinkModeInput] = useState<"edit" | "reply">(
+    message.link_mode || "reply",
+  );
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [isLoadingLinkedMsg, setIsLoadingLinkedMsg] = useState(false);
   const [openContainerAddId, setOpenContainerAddId] = useState<string | null>(null);
   const [openAccessoryMenuId, setOpenAccessoryMenuId] = useState<string | null>(null);
 
@@ -125,6 +143,80 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [addMenuOpen, optionsMenuOpen, openContainerAddId, openAccessoryMenuId]);
 
+  const handleSaveMessageLink = async (loadContentIntoEditor = false) => {
+    ensureActive();
+    const trimmed = messageLinkInput.trim();
+    if (!trimmed) {
+      setExtendedField("message_link", undefined);
+      setExtendedField("link_mode", undefined);
+      setExtendedField("edit_channel_id", undefined);
+      setExtendedField("edit_message_id", undefined);
+      setExtendedField("message_reference", undefined);
+      setLinkError(null);
+      setLinkModalOpen(false);
+      return;
+    }
+
+    const parsed = parseDiscordMessageLink(trimmed);
+    if (!parsed) {
+      setLinkError(
+        "Invalid link. Expected https://discord.com/channels/{guildId}/{channelId}/{messageId}",
+      );
+      return;
+    }
+
+    setLinkError(null);
+    setExtendedField("message_link", trimmed);
+    setExtendedField("link_mode", linkModeInput);
+
+    if (linkModeInput === "reply") {
+      setExtendedField("message_reference", {
+        guild_id: parsed.guildId,
+        channel_id: parsed.channelId,
+        message_id: parsed.messageId,
+        fail_if_not_exists: false,
+      });
+      setExtendedField("edit_channel_id", undefined);
+      setExtendedField("edit_message_id", undefined);
+    } else {
+      setExtendedField("edit_channel_id", parsed.channelId);
+      setExtendedField("edit_message_id", parsed.messageId);
+      setExtendedField("message_reference", undefined);
+
+      if (loadContentIntoEditor) {
+        setIsLoadingLinkedMsg(true);
+        try {
+          const res = await request<{ id: string; raw: any }>(
+            `/api/send/channels/${parsed.channelId}/messages/${parsed.messageId}`,
+          );
+          if (res?.raw) {
+            const hydrated = fromQueryData(res.raw) as ExtendedMessageData;
+            const detectedMode = getEditorModeForDiscordMessage(res.raw);
+            load({
+              data: {
+                ...hydrated,
+                message_link: trimmed,
+                link_mode: "edit",
+                edit_channel_id: parsed.channelId,
+                edit_message_id: parsed.messageId,
+              } as any,
+              mode: detectedMode,
+            });
+          }
+        } catch (err) {
+          setLinkError(
+            err instanceof Error ? err.message : "Could not load message from Discord",
+          );
+          setIsLoadingLinkedMsg(false);
+          return;
+        }
+        setIsLoadingLinkedMsg(false);
+      }
+    }
+
+    setLinkModalOpen(false);
+  };
+
   // Count V2 characters across all TextDisplay components
   const countV2Chars = (nodes: ComponentNode[]): number =>
     nodes.reduce((sum, n) => {
@@ -140,7 +232,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     comp: ComponentNode,
     compIdx: number,
     siblingCount: number,
-    parentId: string | null
+    parentId: string | null,
   ) => {
     const id = comp._id ?? "";
     const isSelected = selection?.kind === "component" && selection.id === id;
@@ -242,7 +334,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               maxLength={Limits.components.textDisplay}
               rows={3}
               value={comp.content || ""}
-              placeholder="Write markdown, @mentions, #channels, or :emojis:…"
+              placeholder="Write markdown, @mentions, #channels, :emojis:, or {status} / {sunc}…"
               onChange={(val) => {
                 ensureActive();
                 if (id) updateComponentById(id, { content: val });
@@ -261,7 +353,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 <Plus size={12} /> Add Accessory <ChevronDown size={12} />
               </button>
               {openAccessoryMenuId === id && (
-                <div className="absolute left-0 top-full mt-1 w-44 bg-[#1e1f22] border border-[#111214] rounded-lg shadow-2xl py-1 z-30 text-xs">
+                <div className="absolute left-0 bottom-full mb-1 w-44 bg-[#1e1f22] border border-[#111214] rounded-lg shadow-2xl py-1 z-30 text-xs">
                   <button
                     type="button"
                     onClick={() => {
@@ -354,7 +446,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] overflow-hidden"
+          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
         >
           {cardHeader}
           <div className="p-3 space-y-3">
@@ -368,7 +460,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   onChange={(val) => {
                     ensureActive();
                     const next = sectionTexts.map((item, i) =>
-                      i === tIdx ? { ...item, content: val } : item
+                      i === tIdx ? { ...item, content: val } : item,
                     );
                     if (id) updateComponentById(id, { components: next });
                   }}
@@ -492,7 +584,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] overflow-hidden"
+          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
         >
           {cardHeader}
           <div className="p-3 space-y-2.5">
@@ -581,7 +673,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] overflow-hidden"
+          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
         >
           {cardHeader}
           <div className="p-3 space-y-2">
@@ -612,7 +704,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] overflow-hidden"
+          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
         >
           {cardHeader}
           <div className="p-3 flex flex-wrap items-center justify-between gap-4">
@@ -720,7 +812,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             {/* Nested Components inside Container */}
             <div className="space-y-2.5 pl-2 border-l-2 border-[#1e1f22]">
               {children.map((child, childIdx) =>
-                renderV2ComponentCard(child, childIdx, children.length, id)
+                renderV2ComponentCard(child, childIdx, children.length, id),
               )}
             </div>
 
@@ -826,7 +918,10 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
         </div>
 
         {/* Action icons: Move Up, Move Down, Rename, Duplicate, Delete */}
-        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center gap-1 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           {index > 0 && (
             <button
               type="button"
@@ -886,7 +981,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       {/* ── Message Body Panel ── */}
       {isOpen && (
         <div className="p-3 space-y-3 bg-[#2b2d31]">
-          {/* Shared Collapsible Thread & Profile Sections (Discohook style) */}
+          {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
             {/* Thread Sub-Section */}
             <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
@@ -913,7 +1008,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                         Forum Thread Name
                       </label>
                       <span className="text-[10px] text-[#949ba4] font-mono">
-                        {(message.thread_name?.length || 0)}/100
+                        {message.thread_name?.length || 0}/100
                       </span>
                     </div>
                     <input
@@ -932,62 +1027,48 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               )}
             </div>
 
-            {/* Profile Override Sub-Section */}
-            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#dbdee1] hover:bg-[#282a2e] transition-colors"
-              >
-                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-[#949ba4]">
-                  {profileOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Profile Override
+            {/* WEAO Exploit Binding & Active Message Link Status Bar */}
+            <div className="rounded border border-[#1e1f22] bg-[#232428] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs text-[#dbdee1]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#949ba4]">
+                  WEAO Exploit:
                 </span>
-                {message.username && (
-                  <span className="text-[10px] text-[#949ba4] truncate max-w-[150px]">
-                    {message.username}
+                <input
+                  type="text"
+                  value={message.exploit_name || ""}
+                  placeholder="e.g. Delta, AWP.GG (for {status} & {sunc})"
+                  onChange={(e) => {
+                    ensureActive();
+                    setExtendedField("exploit_name", e.target.value);
+                  }}
+                  className="bg-[#1e1f22] text-xs text-white px-2 py-1 rounded border border-[#313338] focus:border-[#5865f2] focus:outline-none w-56"
+                />
+              </div>
+
+              {message.message_link && (
+                <div className="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc]">
+                  <Link size={12} />
+                  <span>
+                    {message.link_mode === "edit"
+                      ? `Editing Msg #${message.edit_message_id?.slice(-6)}`
+                      : `Replying to Msg #${message.message_reference?.message_id?.slice(-6)}`}
                   </span>
-                )}
-              </button>
-
-              {profileOpen && (
-                <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
-                        Name
-                      </label>
-                      <span className="text-[10px] text-[#949ba4] font-mono">
-                        {(message.username?.length || 0)}/80
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={message.username || ""}
-                      placeholder="Bot Name Override"
-                      onChange={(e) => {
-                        ensureActive();
-                        setField("username", e.target.value);
-                      }}
-                      className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
-                      Avatar URL
-                    </label>
-                    <input
-                      type="url"
-                      value={message.avatar_url || ""}
-                      placeholder="https://…"
-                      onChange={(e) => {
-                        ensureActive();
-                        setField("avatar_url", e.target.value);
-                      }}
-                      className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      ensureActive();
+                      setExtendedField("message_link", undefined);
+                      setExtendedField("link_mode", undefined);
+                      setExtendedField("edit_channel_id", undefined);
+                      setExtendedField("edit_message_id", undefined);
+                      setExtendedField("message_reference", undefined);
+                      setMessageLinkInput("");
+                    }}
+                    className="text-[#f28b8b] hover:text-white ml-1"
+                    title="Clear Link"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               )}
             </div>
@@ -1004,7 +1085,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 maxLength={Limits.content}
                 rows={4}
                 value={message.content || ""}
-                placeholder="Say something… (type @, #, or : for suggestions)"
+                placeholder="Say something… (type @, #, :, or {status} / {sunc})"
                 onChange={(val) => {
                   ensureActive();
                   setField("content", val);
@@ -1015,7 +1096,11 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               {message.embeds && message.embeds.length > 0 && (
                 <div className="space-y-2.5 pt-1">
                   {message.embeds.map((embed, embedIdx) => (
-                    <EmbedEditor key={embed._id || embedIdx} embed={embed} index={embedIdx} />
+                    <EmbedEditor
+                      key={embed._id || embedIdx}
+                      embed={embed}
+                      index={embedIdx}
+                    />
                   ))}
                 </div>
               )}
@@ -1035,8 +1120,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       totalV2Chars >= Limits.components.textDisplay
                         ? "text-[#f28b8b] font-bold"
                         : totalV2Chars / Limits.components.textDisplay >= 0.9
-                        ? "text-yellow-400"
-                        : "text-[#dbdee1]"
+                          ? "text-yellow-400"
+                          : "text-[#dbdee1]"
                     }
                   >
                     {totalV2Chars}
@@ -1048,7 +1133,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
               {v2TopComponents.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-[#35373c] p-4 text-center text-xs text-[#949ba4]">
-                  No V2 components yet. Click <span className="text-white font-semibold">+ Add</span> below to add Content, a Container, Media Gallery, File, Separator, or Action Row.
+                  No V2 components yet. Click{" "}
+                  <span className="text-white font-semibold">+ Add</span> below to add
+                  Content, a Container, Media Gallery, File, Separator, or Action Row.
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -1061,7 +1148,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       comp,
                       compIdx,
                       v2TopComponents.length,
-                      null
+                      null,
                     );
                   })}
                 </div>
@@ -1139,10 +1226,19 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             {/* Set Link Button */}
             <button
               type="button"
-              onClick={() => setLinkModalOpen(true)}
-              className="px-3 py-1.5 rounded bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              onClick={() => {
+                setMessageLinkInput(message.message_link || "");
+                setLinkModeInput(message.link_mode || "reply");
+                setLinkError(null);
+                setLinkModalOpen(true);
+              }}
+              className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                message.message_link
+                  ? "bg-[#5865f2]/20 text-[#dee0fc] border border-[#5865f2]/50 hover:bg-[#5865f2]/30"
+                  : "bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] hover:text-white"
+              }`}
             >
-              <Link size={13} /> Set Link
+              <Link size={13} /> {message.message_link ? "Edit Link" : "Set Link"}
             </button>
 
             {/* Options ▾ Button */}
@@ -1177,7 +1273,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     onClick={() => {
                       setMessageMode(
                         index,
-                        isV2 ? EDITOR_MODES.CLASSIC : EDITOR_MODES.V2
+                        isV2 ? EDITOR_MODES.CLASSIC : EDITOR_MODES.V2,
                       );
                       setOptionsMenuOpen(false);
                     }}
@@ -1192,13 +1288,22 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
         </div>
       )}
 
-      {/* Set Link Modal */}
+      {/* Set Link Modal (Reply or Edit Existing Message) */}
       {linkModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#2b2d31] rounded-lg border border-[#1e1f22] p-4 w-full max-w-sm space-y-3 shadow-2xl">
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLinkModalOpen(false);
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#2b2d31] rounded-lg border border-[#1e1f22] p-4 w-full max-w-md space-y-3.5 shadow-2xl"
+          >
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                Set Message Link / Reference
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Link size={14} className="text-[#5865f2]" /> Set Discord Message Link
               </h4>
               <button
                 type="button"
@@ -1208,17 +1313,59 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 <X size={14} />
               </button>
             </div>
-            <p className="text-[11px] text-[#949ba4]">
-              Enter a Discord message link to reply to or edit.
-            </p>
-            <input
-              type="text"
-              placeholder="https://discord.com/channels/..."
-              value={messageLinkInput}
-              onChange={(e) => setMessageLinkInput(e.target.value)}
-              className="w-full bg-[#1e1f22] text-xs text-white px-2.5 py-1.5 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none"
-            />
-            <div className="flex justify-end gap-2 pt-2">
+
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1e1f22] rounded-lg border border-[#111214]">
+              <button
+                type="button"
+                onClick={() => setLinkModeInput("reply")}
+                className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
+                  linkModeInput === "reply"
+                    ? "bg-[#5865f2] text-white"
+                    : "text-[#949ba4] hover:text-white"
+                }`}
+              >
+                ↩ Reply to Message
+              </button>
+              <button
+                type="button"
+                onClick={() => setLinkModeInput("edit")}
+                className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
+                  linkModeInput === "edit"
+                    ? "bg-[#faa61a] text-[#111214]"
+                    : "text-[#949ba4] hover:text-white"
+                }`}
+              >
+                ✎ Edit Existing Message
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold text-[#b5bac1]">
+                Discord Message URL
+              </label>
+              <input
+                type="text"
+                placeholder="https://discord.com/channels/guildId/channelId/messageId"
+                value={messageLinkInput}
+                onChange={(e) => {
+                  setMessageLinkInput(e.target.value);
+                  setLinkError(null);
+                }}
+                className="w-full bg-[#1e1f22] text-xs text-white px-2.5 py-2 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none font-mono"
+              />
+              <p className="text-[11px] text-[#949ba4]">
+                {linkModeInput === "reply"
+                  ? "When sent via Bot, this message will natively reply to the linked Discord message."
+                  : "Binds this message to the linked channel & message ID so Bot Dispatch updates it in-place."}
+              </p>
+              {linkError && (
+                <p className="text-[11px] text-[#f28b8b] bg-[#da373c]/10 border border-[#da373c]/30 rounded px-2.5 py-1.5">
+                  {linkError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e1f22]">
               <button
                 type="button"
                 onClick={() => setLinkModalOpen(false)}
@@ -1226,9 +1373,19 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               >
                 Cancel
               </button>
+              {linkModeInput === "edit" && (
+                <button
+                  type="button"
+                  disabled={isLoadingLinkedMsg}
+                  onClick={() => void handleSaveMessageLink(true)}
+                  className="px-3 py-1.5 rounded bg-[#35373c] hover:bg-[#404249] text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {isLoadingLinkedMsg ? "Loading…" : "Bind & Load Message"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setLinkModalOpen(false)}
+                onClick={() => void handleSaveMessageLink(false)}
                 className="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-xs font-semibold text-white"
               >
                 Save Link

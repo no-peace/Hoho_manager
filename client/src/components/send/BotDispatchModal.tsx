@@ -74,6 +74,18 @@ const BotDispatchModalComponent: React.FC<{
       void fetchProfiles();
       setSendResult(null);
       setLoadedMessageId(null);
+
+      // check if active message has bound set link for editing
+      const activeData = useMessageStore.getState().data as any;
+      if (
+        activeData.link_mode === "edit" &&
+        activeData.edit_channel_id &&
+        activeData.edit_message_id
+      ) {
+        setMode("edit");
+        setSelectedChannels([activeData.edit_channel_id]);
+        setTargetMessageId(activeData.edit_message_id);
+      }
       const cachedBot = localStorage.getItem("bot_selected_profile");
       const cachedProfile = cachedBot && cachedBot !== "default" ? Number(cachedBot) : null;
       const restoredProfileId =

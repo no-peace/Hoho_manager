@@ -108,6 +108,12 @@ export interface ComponentNode {
   options?: SelectOption[];
 }
 
+export interface DiscordMessageReference {
+  message_id: string;
+  channel_id?: string;
+  guild_id?: string;
+  fail_if_not_exists?: boolean;
+}
 /** The editor's always-populated message document. */
 export interface MessageData {
   content: string;
@@ -117,6 +123,15 @@ export interface MessageData {
   avatar_url: string;
   thread_name: string;
   flags?: number;
+  /**Discord message link for editing or replying. */
+  message_link?: string;
+  /** Whether the linked message should be edited in-place or replied to. */
+  link_mode?: "edit" | "reply";
+  edit_channel_id?: string;
+  edit_message_id?: string;
+  message_reference?: DiscordMessageReference;
+  /**WEAO exploit name bound to this message/backup (e.g. "Delta"). */
+  exploit_name?: string;
   allowed_mentions?: {
     parse?: ("everyone" | "roles" | "users")[];
     roles?: string[];
@@ -153,7 +168,13 @@ export interface DiscordMessagePayload {
   avatar_url?: string;
   thread_name?: string;
   flags?: number;
-  allowed_mentions?: { parse?: string[]; roles?: string[]; users?: string[] };
+  message_reference?: DiscordMessageReference;
+  allowed_mentions?: { 
+    parse?: string[]; 
+    roles?: string[]; 
+    users?: string[];
+    replied_user?: boolean;
+  };
   attachments?: DiscordAttachmentPayload[];
 }
 
