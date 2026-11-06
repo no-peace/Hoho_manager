@@ -504,14 +504,25 @@ export const interpolateWeaoPlaceholders = async (
     }
     return node;
   };
-
-  export const getWeaoRateLimitStatus = () => ({
-    rateLimited: Date.now() < rateLimitedUntilMs,
-    rateLimitedUntilMs,
-    cachedCount: exploitsCache?.data.length ?? 0,
-    cacheAgeMs: exploitsCache ? Date.now() - exploitsCache.fetchedAt : null,
-  });
   */
+
+  export interface WeaoRateLimitStatus {
+    rateLimited: boolean;
+    resetTime?: number;
+    cooldownRemainingSec?: number;
+  }
+  export const getWeaoRateLimitStatus = (): WeaoRateLimitStatus => {
+    const now = Date.now();
+    const rateLimited: now < rateLimitedUntilMs;
+    return {
+      rateLimited,
+      resetTime: rateLimited ? rateLimitedUntilMs : undefined,
+      cooldownRemainingSec: rateLimited
+        ? Math.ceil((rateLimitedUntilMs - now) / 1000)
+        : 0,
+    };
+  };
+
 
   return {
     payload: walk(payload) as DiscordMessagePayload,

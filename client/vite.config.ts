@@ -27,7 +27,7 @@ export default defineConfig({
     fs: { allow: [".."] },
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "[sus link removed]",
         changeOrigin: true,
       },
     },

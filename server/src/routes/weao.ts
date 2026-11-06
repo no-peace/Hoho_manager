@@ -8,7 +8,7 @@ import {
   findExploitByName,
   getExploitSuncDetails,
   interpolateWeaoPlaceholders,
-  getWeaoRateLimitStatus,
+ // getWeaoRateLimitStatus,
   type WeaoExploitRecord,
 } from "../services/weaoService.js";
 import {
@@ -16,7 +16,9 @@ import {
   type TemplateSummary,
 } from "../repositories/templateRepository.js";
 import { actionRepository } from "../repositories/actionRepository.js";
+import { logger } from "../utils/logger.js";
 
+const log = logger.child("weaoRoute");
 const router = Router();
 
 /** List all saved templates across users so `/exploit` can match any saved exploit backup. */
@@ -131,8 +133,25 @@ router.get(
   "/exploits",
   asyncHandler(async (req, res) => {
     const q = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
-    const exploits = await getAllExploits();
-    const templates = await listAllTemplateSummaries();
+
+    let exploits: WeaoExploitRecord[] = [];
+    let templates: TemplateSummary[] = [];
+    
+    try {
+      exploits = await getAllExploits();
+    } catch (err) {
+      log.warn(
+        `Failed to fetch exploits from WEAO: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+
+    try {
+      templates = await listAllTemplateSummaries();
+    } catch (err) {
+      log.warn("Failed to list templates from summaries:", err);
+    }
 
     const filtered = q
       ? exploits.filter((e) => e.title.toLowerCase().includes(q))

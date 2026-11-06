@@ -3,11 +3,12 @@ import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
-import { useMessageStore } from "../../store/messageStore";
+// import { useMessageStore } from "../../store/messageStore";
 
-let weaoExploitsPreviewCache: any[] = [];
-let weaoPreviewLoaded = false;
+//let weaoExploitsPreviewCache: any[] = [];
+// let weaoPreviewLoaded = false;
 
+/*
 const ensureWeaoPreviewLoaded = () => {
   if (weaoPreviewLoaded) return;
   weaoPreviewLoaded = true;
@@ -21,7 +22,9 @@ const ensureWeaoPreviewLoaded = () => {
     })
     .catch(() => {});
 };
+*/
 
+/*
 const resolveWeaoPreviewText = (text: string, defaultExploitName?: string): string => {
   if (!text.includes("{")) return text;
   ensureWeaoPreviewLoaded();
@@ -94,6 +97,7 @@ const resolveWeaoPreviewText = (text: string, defaultExploitName?: string): stri
     }
   });
 };
+*/
 export interface MarkdownProps {
   content: string;
   className?: string;

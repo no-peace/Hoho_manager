@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import api from "../api/client";
-
 export interface DiscordEmoji {
   id: string;
   name: string;
@@ -165,6 +164,7 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
           });
         }
       } catch (err) {
+        console.warn("Failed to fetch WEAO exploits:", err);
         set({
           weaoError:
             err instanceof Error ? err.message : "Unable to reach WEAO status service",
