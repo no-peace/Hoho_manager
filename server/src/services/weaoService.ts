@@ -323,6 +323,35 @@ export const formatExploitField = (
 
 const PLACEHOLDER_REGEX = /\{([a-zA-Z0-9_.: -]+)\}/g;
 
+const parseScopedExploitToken = (
+  inner: string,
+): { targetName: string; fieldName: string } | null => {
+  const trimmed = inner.trim();
+  const lower = trimmed.toLowerCase();
+
+  // New dot notation: `{exploit.Delta.status}` or `{exploit.AWP.GG.sunc}`
+  if (lower.startsWith("exploit.")) {
+    const rest = trimmed.slice("exploit.".length);
+    const lastDot = rest.lastIndexOf(".");
+    if (lastDot <= 0) return null;
+    const targetName = rest.slice(0, lastDot).trim();
+    const fieldName = rest.slice(lastDot + 1).trim();
+    if (!targetName || !fieldName) return null;
+    return { targetName, fieldName };
+  }
+
+  // Legacy colon notation: `{exploit:Delta:status}`
+  if (lower.startsWith("exploit:")) {
+    const parts = trimmed.split(":");
+    const targetName = parts[1]?.trim() || "";
+    const fieldName = parts.slice(2).join(":").trim() || "status";
+    if (!targetName) return null;
+    return { targetName, fieldName };
+  }
+
+  return null;
+};
+
 export const interpolateWeaoPlaceholders = async (
   payload: DiscordMessagePayload,
   defaultExploitName?: string,
@@ -350,7 +379,7 @@ export const interpolateWeaoPlaceholders = async (
     : null;
 
   const needsDetailedSunc =
-    /\{(?:exploit:[^:}]+:)?(suncPassed|suncFailed|suncTime|sunc)\}/i.test(serialized);
+    /suncPassed|suncFailed|suncTime|\.sunc\}|:sunc\}|\{sunc\}/i.test(serialized);
 
   const suncMap = new Map<string, WeaoSuncData | null>();
   if (primaryExploit && needsDetailedSunc) {
@@ -359,6 +388,65 @@ export const interpolateWeaoPlaceholders = async (
       await getExploitSuncDetails(primaryExploit),
     );
   }
+
+  // Pre-resolve sUNC data for any `{exploit.<Name>.<Field>}` tokens in the message
+  const allTokenMatches = Array.from(serialized.matchAll(PLACEHOLDER_REGEX));
+  for (const match of allTokenMatches) {
+    const rawInner = match[1];
+    if (!rawInner) continue;
+    const scoped = parseScopedExploitToken(rawInner);
+    if (!scoped) continue;
+
+    const keyLower = scoped.targetName.toLowerCase();
+    if (suncMap.has(keyLower)) continue;
+    const found =
+      allExploits.find((e) => e.title.toLowerCase() === keyLower) ??
+      allExploits.find((e) => e.title.toLowerCase().includes(keyLower));
+    if (found && needsDetailedSunc) {
+      suncMap.set(found.title.toLowerCase(), await getExploitSuncDetails(found));
+    }
+  }
+
+  const interpolateString = (text: string): string =>
+    text.replace(PLACEHOLDER_REGEX, (fullMatch, inner: string) => {
+      const scoped = parseScopedExploitToken(inner);
+      if (scoped) {
+        const target =
+          allExploits.find(
+            (e) => e.title.toLowerCase() === scoped.targetName.toLowerCase(),
+          ) ??
+          allExploits.find((e) =>
+            e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
+          );
+        if (!target) return fullMatch;
+        return formatExploitField(
+          target,
+          scoped.fieldName,
+          suncMap.get(target.title.toLowerCase()),
+        );
+      }
+
+      if (!primaryExploit) return fullMatch;
+      return formatExploitField(
+        primaryExploit,
+        inner,
+        suncMap.get(primaryExploit.title.toLowerCase()),
+      );
+    });
+
+  const walk = (node: unknown): unknown => {
+    if (typeof node === "string") return interpolateString(node);
+    if (Array.isArray(node)) return node.map(walk);
+    if (node !== null && typeof node === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+        out[k] = walk(v);
+      }
+      return out;
+    }
+    return node;
+  };
+
 
   const scopedMatches = Array.from(
     serialized.matchAll(/\{exploit:([^:}]+):([^}]+)\}/gi),
@@ -374,6 +462,7 @@ export const interpolateWeaoPlaceholders = async (
     }
   }
 
+  /*
   const interpolateString = (text: string): string =>
     text.replace(PLACEHOLDER_REGEX, (fullMatch, inner: string) => {
       if (inner.toLowerCase().startsWith("exploit:")) {
@@ -416,15 +505,17 @@ export const interpolateWeaoPlaceholders = async (
     return node;
   };
 
+  export const getWeaoRateLimitStatus = () => ({
+    rateLimited: Date.now() < rateLimitedUntilMs,
+    rateLimitedUntilMs,
+    cachedCount: exploitsCache?.data.length ?? 0,
+    cacheAgeMs: exploitsCache ? Date.now() - exploitsCache.fetchedAt : null,
+  });
+  */
+
   return {
     payload: walk(payload) as DiscordMessagePayload,
     primaryExploit,
   };
 };
 
-export const getWeaoRateLimitStatus = () => ({
-  rateLimited: Date.now() < rateLimitedUntilMs,
-  rateLimitedUntilMs,
-  cachedCount: exploitsCache?.data.length ?? 0,
-  cacheAgeMs: exploitsCache ? Date.now() - exploitsCache.fetchedAt : null,
-});

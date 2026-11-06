@@ -1027,25 +1027,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               )}
             </div>
 
-            {/* WEAO Exploit Binding & Active Message Link Status Bar */}
-            <div className="rounded border border-[#1e1f22] bg-[#232428] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs text-[#dbdee1]">
+            {/* Active Message Link Status Bar (shown only when Set Link is active) */}
+            {/* Active Message Link Status Bar (shown only when Set Link is active) */}
+            {message.message_link && (
+              <div className="rounded border border-[#1e1f22] bg-[#232428] px-3 py-2 flex items-center justify-between gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#949ba4]">
-                  WEAO Exploit:
+                  Linked Discord Message
                 </span>
-                <input
-                  type="text"
-                  value={message.exploit_name || ""}
-                  placeholder="e.g. Delta, AWP.GG (for {status} & {sunc})"
-                  onChange={(e) => {
-                    ensureActive();
-                    setExtendedField("exploit_name", e.target.value);
-                  }}
-                  className="bg-[#1e1f22] text-xs text-white px-2 py-1 rounded border border-[#313338] focus:border-[#5865f2] focus:outline-none w-56"
-                />
-              </div>
-
-              {message.message_link && (
                 <div className="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc]">
                   <Link size={12} />
                   <span>
@@ -1070,8 +1058,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     <X size={12} />
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Files Sub-Section */}
             <FileAttachmentsSection />

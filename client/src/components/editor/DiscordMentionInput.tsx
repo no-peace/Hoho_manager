@@ -4,10 +4,13 @@ import {
   Volume2,
   Megaphone,
   Keyboard,
+  Cpu,
+  Sliders,
+  AlertTriangle,
 } from "lucide-react";
 import { RichPicker } from "./RichPicker";
 import { useGlobalStore } from "../../store/globalStore";
-import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
 import api from "../../api/client";
 
 export interface DiscordMentionInputProps {
@@ -22,7 +25,13 @@ export interface DiscordMentionInputProps {
   guildId?: string | null;
 }
 
-type AutocompleteType = "user" | "channel" | "emoji" | null;
+type AutocompleteType =
+  | "user"
+  | "channel"
+  | "emoji"
+  | "exploit_name"
+  | "exploit_field"
+  | null;
 
 interface AutocompleteItem {
   id: string;
@@ -30,9 +39,11 @@ interface AutocompleteItem {
   subtitle?: string;
   icon?: React.ReactNode;
   replacement: string;
+  /** When true, selecting this item keeps the dropdown open for the next chained step (e.g. `{exploit.Delta.`). */
+  keepOpen?: boolean;
+  disabled?: boolean;
 }
 
-// Module-level stable empty arrays to prevent React 18 getSnapshot infinite loop
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
 
@@ -66,6 +77,117 @@ const COMMON_EMOJIS_LIST = [
   { name: "tada", char: "🎉" },
 ];
 
+interface ExploitFieldOption {
+  key: string;
+  label: string;
+  getPreview: (exp?: WeaoExploitItem) => string;
+}
+
+const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
+  {
+    key: "status",
+    label: "Status Badge (🟢 Updated / 🔴 Outdated)",
+    getPreview: (e) => (e ? (e.updateStatus ? "🟢 Updated" : "🔴 Outdated") : "🟢 Updated"),
+  },
+  {
+    key: "circle",
+    label: "Status Circle Only (🟢 / 🔴)",
+    getPreview: (e) => (e ? (e.updateStatus ? "🟢" : "🔴") : "🟢"),
+  },
+  {
+    key: "statusText",
+    label: "Status Text Only (Updated / Outdated)",
+    getPreview: (e) => (e ? (e.updateStatus ? "Updated" : "Outdated") : "Updated"),
+  },
+  {
+    key: "sunc",
+    label: "sUNC Percentage",
+    getPreview: (e) =>
+      typeof e?.suncPercentage === "number" ? `${e.suncPercentage}%` : "100%",
+  },
+  {
+    key: "unc",
+    label: "UNC Percentage",
+    getPreview: (e) =>
+      typeof e?.uncPercentage === "number" ? `${e.uncPercentage}%` : "99%",
+  },
+  {
+    key: "version",
+    label: "Exploit Version",
+    getPreview: (e) => e?.version || "v1.0.0",
+  },
+  {
+    key: "rbxversion",
+    label: "Target Roblox Version",
+    getPreview: (e) => e?.rbxversion || "version-latest",
+  },
+  {
+    key: "updatedDate",
+    label: "Last Updated Timestamp (UTC)",
+    getPreview: (e) => e?.updatedDate || "Recently",
+  },
+  {
+    key: "detected",
+    label: "Detection Status",
+    getPreview: (e) => (e ? (e.detected ? "⚠️ Detected" : "🛡️ Undetected") : "🛡️ Undetected"),
+  },
+  {
+    key: "free",
+    label: "Pricing / Cost",
+    getPreview: (e) => (e ? (e.free ? "Free" : e.cost || "Paid") : "Free / Paid"),
+  },
+  {
+    key: "platform",
+    label: "Operating System / Platform",
+    getPreview: (e) => e?.platform || "Windows",
+  },
+  {
+    key: "decompiler",
+    label: "Decompiler Support",
+    getPreview: (e) => (e ? (e.decompiler ? "✅" : "❌") : "✅"),
+  },
+  {
+    key: "multiInject",
+    label: "Multi-Inject Support",
+    getPreview: (e) => (e ? (e.multiInject ? "✅" : "❌") : "✅"),
+  },
+  {
+    key: "keysystem",
+    label: "Key System Requirement",
+    getPreview: (e) => (e ? (e.keysystem ? "🔑 Key System" : "🔓 Keyless") : "🔑 / 🔓"),
+  },
+  {
+    key: "suncPassed",
+    label: "sUNC Passed Tests Count (Live Scrap)",
+    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
+  },
+  {
+    key: "suncFailed",
+    label: "sUNC Failed Tests Count (Live Scrap)",
+    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
+  },
+  {
+    key: "suncTime",
+    label: "sUNC Benchmark Duration (Seconds)",
+    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
+  },
+  {
+    key: "websitelink",
+    label: "Official Website URL",
+    getPreview: (e) => e?.websitelink || "https://...",
+  },
+  {
+    key: "discordlink",
+    label: "Official Discord Invite URL",
+    getPreview: (e) => e?.discordlink || "https://discord.gg/...",
+  },
+  {
+    key: "purchaselink",
+    label: "Official Purchase Link",
+    getPreview: (e) => e?.purchaselink || "https://...",
+  },
+];
+
 const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   value,
   onChange,
@@ -84,15 +206,14 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const pickerContainerRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
 
-  
   // Autocomplete state
   const [acType, setAcType] = useState<AutocompleteType>(null);
   const [acQuery, setAcQuery] = useState("");
+  const [acExploitTarget, setAcExploitTarget] = useState("");
   const [acCursorStart, setAcCursorStart] = useState(-1);
   const [acCursorEnd, setAcCursorEnd] = useState(-1);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  
-  // Dynamic dropdown positioning: flip downward if textarea is too close to top of viewport
+
   useEffect(() => {
     if (acType && textareaRef.current) {
       const rect = textareaRef.current.getBoundingClientRect();
@@ -100,7 +221,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     }
   }, [acType]);
 
-  // Click-outside listener to auto-close RichPicker
   useEffect(() => {
     if (!showRichPicker) return;
     const handleOutsideClick = (e: MouseEvent) => {
@@ -115,25 +235,25 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [showRichPicker]);
 
-  // Guild info from store
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const effectiveGuildId = propGuildId || selectedGuildId;
 
-  // Use stable selectors to avoid returning new array references
   const channels = useDiscordCacheStore((state) => state.channels);
   const roles = useDiscordCacheStore((state) => state.roles);
+  const weaoExploits = useDiscordCacheStore((state) => state.weaoExploits);
+  const weaoMeta = useDiscordCacheStore((state) => state.weaoMeta);
+  const weaoError = useDiscordCacheStore((state) => state.weaoError);
+  const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
+  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
+  const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
+
   const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
   const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
 
-  const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
-  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
-
-  // Server emojis
   const [serverEmojis, setServerEmojis] = useState<
     Array<{ id: string; name: string; animated?: boolean }>
   >([]);
 
-  // Member search results for @
   const [memberResults, setMemberResults] = useState<
     Array<{
       id: string;
@@ -144,7 +264,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     }>
   >([]);
 
-  // Fetch initial guild cache only when effectiveGuildId changes
   useEffect(() => {
     if (effectiveGuildId) {
       fetchChannels(effectiveGuildId);
@@ -158,7 +277,13 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     }
   }, [effectiveGuildId, fetchChannels, fetchRoles]);
 
-  // Live member search when @ query changes
+  // Pre-warm WEAO cache when user triggers exploit autocomplete
+  useEffect(() => {
+    if (acType === "exploit_name" || acType === "exploit_field") {
+      void fetchWeaoExploits();
+    }
+  }, [acType, fetchWeaoExploits]);
+
   useEffect(() => {
     if (acType !== "user" || !effectiveGuildId) {
       setMemberResults([]);
@@ -175,62 +300,215 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     return () => clearTimeout(timer);
   }, [acType, acQuery, effectiveGuildId]);
 
-  // Detect triggers (@, #, :) based on cursor position
+  /**
+   * Detect triggers:
+   * 1. `{exploit.<Name>.<Field>` (2-step chained WEAO autocomplete)
+   * 2. `@user` / `@role`
+   * 3. `#channel`
+   * 4. `:emoji:`
+   */
   const checkAutocomplete = useCallback(
     (text: string, cursorPos: number) => {
       const textBeforeCursor = text.slice(0, cursorPos);
 
-      // Check @ mention
+      // 1A. Check `{exploit.<anything>` (no closing brace yet on current line)
+      const openBraceIdx = textBeforeCursor.lastIndexOf("{");
+      if (openBraceIdx !== -1) {
+        const tokenSinceBrace = textBeforeCursor.slice(openBraceIdx);
+        // Only active if there is no `}` or newline between `{` and cursor
+        if (!/[}\n\r]/.test(tokenSinceBrace)) {
+          const lowerToken = tokenSinceBrace.toLowerCase();
+
+          // If user is typing `{e`, `{ex`, `{exp`, `{exploit` before the first dot
+          if (
+            lowerToken.length >= 2 &&
+            "{exploit.".startsWith(lowerToken) &&
+            !lowerToken.startsWith("{exploit.")
+          ) {
+            setAcType("exploit_name");
+            setAcExploitTarget("");
+            setAcQuery("");
+            setAcCursorStart(openBraceIdx);
+            setAcCursorEnd(cursorPos);
+            setSelectedIndex(0);
+            return;
+          }
+
+          // Once `{exploit.` is present
+          if (lowerToken.startsWith("{exploit.")) {
+            const afterPrefix = tokenSinceBrace.slice("{exploit.".length);
+
+            // Check if `afterPrefix` starts with a known exploit title + "."
+            // Sort by length descending so e.g. "AWP.GG." matches before "AWP."
+            const sortedKnown = [...weaoExploits].sort(
+              (a, b) => b.title.length - a.title.length,
+            );
+            const matchedKnown = sortedKnown.find((exp) =>
+              afterPrefix.toLowerCase().startsWith(`${exp.title.toLowerCase()}.`),
+            );
+
+            if (matchedKnown) {
+              const fieldPart = afterPrefix.slice(matchedKnown.title.length + 1);
+              if (!fieldPart.includes(".")) {
+                setAcType("exploit_field");
+                setAcExploitTarget(matchedKnown.title);
+                setAcQuery(fieldPart);
+                setAcCursorStart(openBraceIdx);
+                setAcCursorEnd(cursorPos);
+                setSelectedIndex(0);
+                return;
+              }
+            }
+
+            // Fallback if user typed a dot after an exploit name not yet in sortedKnown
+            const lastDotIdx = afterPrefix.lastIndexOf(".");
+            if (lastDotIdx > 0) {
+              const candidateName = afterPrefix.slice(0, lastDotIdx);
+              const fieldPart = afterPrefix.slice(lastDotIdx + 1);
+              // Only treat as field stage if candidateName isn't a partial prefix of a dotted exploit name like "AWP.GG"
+              const isPartialDottedExploit = sortedKnown.some(
+                (exp) =>
+                  exp.title.includes(".") &&
+                  exp.title.toLowerCase().startsWith(`${candidateName.toLowerCase()}.`) &&
+                  exp.title.toLowerCase() !== candidateName.toLowerCase(),
+              );
+              if (!isPartialDottedExploit) {
+                setAcType("exploit_field");
+                setAcExploitTarget(candidateName);
+                setAcQuery(fieldPart);
+                setAcCursorStart(openBraceIdx);
+                setAcCursorEnd(cursorPos);
+                setSelectedIndex(0);
+                return;
+              }
+            }
+
+            // Otherwise, still in Stage 1: selecting the exploit name!
+            setAcType("exploit_name");
+            setAcExploitTarget("");
+            setAcQuery(afterPrefix);
+            setAcCursorStart(openBraceIdx);
+            setAcCursorEnd(cursorPos);
+            setSelectedIndex(0);
+            return;
+          }
+        }
+      }
+
+      // 2. Check @ mention
       const mentionMatch = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
       if (mentionMatch) {
         const atIdx = textBeforeCursor.lastIndexOf("@");
         setAcType("user");
-        setAcQuery(mentionMatch[1]);
+        setAcQuery(mentionMatch[1] ?? "");
         setAcCursorStart(atIdx);
         setAcCursorEnd(cursorPos);
         setSelectedIndex(0);
         return;
       }
 
-      // Check # channel
+      // 3. Check # channel
       const channelMatch = textBeforeCursor.match(/(?:^|\s)#([a-zA-Z0-9_-]*)$/);
       if (channelMatch) {
         const hashIdx = textBeforeCursor.lastIndexOf("#");
         setAcType("channel");
-        setAcQuery(channelMatch[1]);
+        setAcQuery(channelMatch[1] ?? "");
         setAcCursorStart(hashIdx);
         setAcCursorEnd(cursorPos);
         setSelectedIndex(0);
         return;
       }
 
-      // Check : emoji
+      // 4. Check : emoji
       const emojiMatch = textBeforeCursor.match(/(?:^|\s):([a-zA-Z0-9_]{1,})$/);
       if (emojiMatch) {
         const colonIdx = textBeforeCursor.lastIndexOf(":");
         setAcType("emoji");
-        setAcQuery(emojiMatch[1]);
+        setAcQuery(emojiMatch[1] ?? "");
         setAcCursorStart(colonIdx);
         setAcCursorEnd(cursorPos);
         setSelectedIndex(0);
         return;
       }
 
-      // No trigger found
       setAcType(null);
       setAcQuery("");
     },
-    []
+    [weaoExploits],
   );
 
   // Compute autocomplete items
   const acItems = useMemo<AutocompleteItem[]>(() => {
-    const q = acQuery.toLowerCase();
+    const q = acQuery.toLowerCase().trim();
+
+    // STAGE 1: WEAO Exploit Name Picker (`{exploit.<Name>.`)
+    if (acType === "exploit_name") {
+      if (weaoExploits.length === 0) {
+        return [
+          {
+            id: "weao_loading_or_err",
+            title: weaoError
+              ? "⚠️ WEAO API unreachable — type exploit name manually"
+              : "Loading live exploits from WEAO…",
+            subtitle: weaoError || "Please wait",
+            icon: <AlertTriangle size={13} className="text-[#f0b232] shrink-0" />,
+            replacement: "{exploit.",
+            keepOpen: true,
+            disabled: true,
+          },
+        ];
+      }
+
+      return weaoExploits
+        .filter((exp) => !q || exp.title.toLowerCase().includes(q))
+        .slice(0, 25)
+        .map((exp) => {
+          const suncLabel =
+            typeof exp.suncPercentage === "number" ? ` • ${exp.suncPercentage}% sUNC` : "";
+          return {
+            id: `weao_exp_${exp._id || exp.title}`,
+            title: exp.title,
+            subtitle: `${exp.version || "v?"} • ${exp.platform || "Windows"}${suncLabel}`,
+            icon: (
+              <span className="text-xs shrink-0" title={exp.updateStatus ? "Updated" : "Outdated"}>
+                {exp.updateStatus ? "🟢" : "🔴"}
+              </span>
+            ),
+            replacement: `{exploit.${exp.title}.`,
+            keepOpen: true,
+          };
+        });
+    }
+
+    // STAGE 2: WEAO Exploit Property/Field Picker (`{exploit.<Name>.<Field>}`)
+    if (acType === "exploit_field") {
+      const matchedExploit =
+        weaoExploits.find(
+          (e) => e.title.toLowerCase() === acExploitTarget.toLowerCase(),
+        ) ??
+        weaoExploits.find((e) =>
+          e.title.toLowerCase().includes(acExploitTarget.toLowerCase()),
+        );
+      const canonicalTitle = matchedExploit?.title || acExploitTarget;
+
+      return EXPLOIT_FIELD_OPTIONS.filter(
+        (opt) =>
+          !q ||
+          opt.key.toLowerCase().includes(q) ||
+          opt.label.toLowerCase().includes(q),
+      ).map((opt) => ({
+        id: `weao_field_${opt.key}`,
+        title: `.${opt.key}`,
+        subtitle: `${opt.getPreview(matchedExploit)} — ${opt.label}`,
+        icon: <Sliders size={12} className="text-[#5865f2] shrink-0" />,
+        replacement: `{exploit.${canonicalTitle}.${opt.key}}`,
+        keepOpen: false,
+      }));
+    }
 
     if (acType === "user") {
       const items: AutocompleteItem[] = [];
 
-      // Everyone & Here
       if (!q || "@everyone".includes(q)) {
         items.push({
           id: "everyone",
@@ -250,7 +528,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         });
       }
 
-      // Roles
       guildRoles
         .filter((r) => !q || r.name.toLowerCase().includes(q))
         .slice(0, 5)
@@ -270,7 +547,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           });
         });
 
-      // Member search results
       memberResults.slice(0, 10).forEach((m) => {
         items.push({
           id: `member_${m.id}`,
@@ -301,7 +577,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         .map((c) => ({
           id: c.id,
           title: `#${c.name}`,
-          subtitle: c.type === 2 ? "Voice Channel" : c.type === 5 ? "Announcement" : "Text Channel",
+          subtitle:
+            c.type === 2 ? "Voice Channel" : c.type === 5 ? "Announcement" : "Text Channel",
           icon:
             c.type === 2 ? (
               <Volume2 size={13} className="text-[#949ba4] shrink-0" />
@@ -317,7 +594,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (acType === "emoji") {
       const items: AutocompleteItem[] = [];
 
-      // Server custom emojis
       serverEmojis
         .filter((e) => !q || e.name.toLowerCase().includes(q))
         .slice(0, 8)
@@ -334,7 +610,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           });
         });
 
-      // Unicode emojis
       COMMON_EMOJIS_LIST.filter((e) => !q || e.name.toLowerCase().includes(q))
         .slice(0, 10)
         .forEach((e) => {
@@ -351,34 +626,58 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     }
 
     return [];
-  }, [acType, acQuery, guildRoles, memberResults, guildChannels, serverEmojis]);
+  }, [
+    acType,
+    acQuery,
+    acExploitTarget,
+    weaoExploits,
+    weaoError,
+    guildRoles,
+    memberResults,
+    guildChannels,
+    serverEmojis,
+  ]);
 
-  // Insert replacement into text
+  // Insert replacement into text (supports chained keepOpen transitions)
   const applyReplacement = useCallback(
-    (replacement: string) => {
-      if (acCursorStart < 0 || acCursorEnd < 0) return;
+    (item: AutocompleteItem) => {
+      if (item.disabled || acCursorStart < 0 || acCursorEnd < 0) return;
 
       const before = value.slice(0, acCursorStart);
       const after = value.slice(acCursorEnd);
-      const insertText = replacement.endsWith(" ") ? replacement : `${replacement} `;
+      const insertText = item.keepOpen
+        ? item.replacement
+        : item.replacement.endsWith(" ")
+          ? item.replacement
+          : `${item.replacement} `;
       const nextValue = before + insertText + after;
+      const newPos = before.length + insertText.length;
 
       onChange(nextValue);
-      setAcType(null);
-      setAcQuery("");
 
-      setTimeout(() => {
-        if (textareaRef.current) {
-          const newPos = before.length + insertText.length;
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(newPos, newPos);
-        }
-      }, 0);
+      if (item.keepOpen) {
+        // Immediately transition to Step 2 (exploit_field) at the new cursor position
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(newPos, newPos);
+          }
+          checkAutocomplete(nextValue, newPos);
+        }, 0);
+      } else {
+        setAcType(null);
+        setAcQuery("");
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(newPos, newPos);
+          }
+        }, 0);
+      }
     },
-    [acCursorStart, acCursorEnd, value, onChange]
+    [acCursorStart, acCursorEnd, value, onChange, checkAutocomplete],
   );
 
-  // Insert text directly (from RichPicker)
   const insertDirect = useCallback(
     (textToInsert: string) => {
       const textarea = textareaRef.current;
@@ -402,7 +701,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         textarea.setSelectionRange(newPos, newPos);
       }, 0);
     },
-    [value, onChange]
+    [value, onChange],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -420,8 +719,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
         const item = acItems[selectedIndex];
-        if (item) {
-          applyReplacement(item.replacement);
+        if (item && !item.disabled) {
+          applyReplacement(item);
         }
         return;
       }
@@ -439,7 +738,12 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   };
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Enter") {
+    if (
+      e.key !== "ArrowUp" &&
+      e.key !== "ArrowDown" &&
+      e.key !== "Enter" &&
+      e.key !== "Tab"
+    ) {
       checkAutocomplete(e.currentTarget.value, e.currentTarget.selectionStart);
     }
   };
@@ -451,9 +755,35 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const charCount = value?.length || 0;
   const isOverLimit = maxLength ? charCount > maxLength : false;
 
+  const getHeaderLabel = () => {
+    if (acType === "exploit_name") {
+      return (
+        <span className="flex items-center gap-1.5">
+          <Cpu size={11} className="text-[#5865f2]" />
+          <span>WEAO Exploits — Step 1/2</span>
+          {weaoMeta?.rateLimited && (
+            <span className="text-[9px] px-1 py-0.2 rounded bg-[#f0b232]/20 text-[#f0b232]">
+              ⚡ Cached (429 Cooldown)
+            </span>
+          )}
+        </span>
+      );
+    }
+    if (acType === "exploit_field") {
+      return (
+        <span className="flex items-center gap-1.5">
+          <Sliders size={11} className="text-[#57f287]" />
+          <span>{acExploitTarget} Properties — Step 2/2</span>
+        </span>
+      );
+    }
+    if (acType === "user") return <span>Matching Users & Roles</span>;
+    if (acType === "channel") return <span>Matching Channels</span>;
+    return <span>Matching Emojis</span>;
+  };
+
   return (
     <div className={`space-y-1.5 ${className}`} ref={containerRef}>
-      {/* Header Label and Character Count */}
       <div className="flex items-center justify-between">
         {label ? (
           <label className="text-xs font-semibold text-[#dbdee1]">
@@ -464,18 +794,19 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
                   isOverLimit
                     ? "text-[#f28b8b] font-bold"
                     : charCount / maxLength >= 0.9
-                    ? "text-yellow-400"
-                    : "text-[#949ba4]"
+                      ? "text-yellow-400"
+                      : "text-[#949ba4]"
                 }`}
               >
                 {charCount}/{maxLength}
               </span>
             )}
           </label>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
       </div>
 
-      {/* Input container - Discohook styled textarea with dedicated padding and safe-positioned quick mention trigger */}
       <div className="relative w-full">
         <textarea
           ref={textareaRef}
@@ -491,8 +822,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           style={{ minHeight: `${rows * 26}px` }}
         />
 
-        {/* Quick Mentions / Rich Picker Trigger positioned safely away from native resize handle */}
-        <div ref={pickerContainerRef} className="absolute right-6 bottom-2 z-10 flex items-center gap-1">
+        <div
+          ref={pickerContainerRef}
+          className="absolute right-6 bottom-2 z-10 flex items-center gap-1"
+        >
           <button
             type="button"
             onClick={() => setShowRichPicker(!showRichPicker)}
@@ -506,7 +839,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             <Keyboard size={15} />
           </button>
 
-          {/* Floating Rich Picker Popover */}
           {showRichPicker && (
             <RichPicker
               onInsert={insertDirect}
@@ -519,37 +851,34 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
           <div
-            className={`absolute left-0 w-72 sm:w-80 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
+            className={`absolute left-0 w-80 sm:w-96 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
               dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
             }`}
-            style={{ maxHeight: "240px" }}
+            style={{ maxHeight: "260px" }}
           >
             <div className="px-2.5 py-1.5 bg-[#1e1f22] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#313338] flex items-center justify-between">
-              <span>
-                {acType === "user"
-                  ? "Matching Users & Roles"
-                  : acType === "channel"
-                  ? "Matching Channels"
-                  : "Matching Emojis"}
-              </span>
+              {getHeaderLabel()}
               <span className="text-[9px] lowercase font-normal text-[#949ba4]">
                 tab or enter to select
               </span>
             </div>
 
-            <div className="overflow-y-auto max-h-48 p-1 space-y-0.5 custom-scrollbar">
+            <div className="overflow-y-auto max-h-52 p-1 space-y-0.5 custom-scrollbar">
               {acItems.map((item, idx) => {
                 const isSelected = idx === selectedIndex;
                 return (
                   <button
                     key={item.id}
                     type="button"
+                    disabled={item.disabled}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    onClick={() => applyReplacement(item.replacement)}
+                    onClick={() => applyReplacement(item)}
                     className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between gap-2 transition-colors ${
-                      isSelected
-                        ? "bg-[#5865f2] text-white"
-                        : "text-[#dbdee1] hover:bg-[#35373c] hover:text-white"
+                      item.disabled
+                        ? "opacity-70 cursor-default text-[#949ba4]"
+                        : isSelected
+                          ? "bg-[#5865f2] text-white"
+                          : "text-[#dbdee1] hover:bg-[#35373c] hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -558,8 +887,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
                     </div>
                     {item.subtitle && (
                       <span
-                        className={`text-[10px] truncate shrink-0 ${
-                          isSelected ? "text-white/80" : "text-[#949ba4]"
+                        className={`text-[10px] truncate shrink-0 max-w-[190px] ${
+                          isSelected ? "text-white/85" : "text-[#949ba4]"
                         }`}
                       >
                         {item.subtitle}

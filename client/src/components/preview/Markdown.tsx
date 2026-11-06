@@ -3,7 +3,97 @@ import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
+import { useMessageStore } from "../../store/messageStore";
 
+let weaoExploitsPreviewCache: any[] = [];
+let weaoPreviewLoaded = false;
+
+const ensureWeaoPreviewLoaded = () => {
+  if (weaoPreviewLoaded) return;
+  weaoPreviewLoaded = true;
+  fetch("/api/weao/exploits")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (Array.isArray(data?.exploits)) {
+        weaoExploitsPreviewCache = data.exploits;
+        notifyMemberListeners();
+      }
+    })
+    .catch(() => {});
+};
+
+const resolveWeaoPreviewText = (text: string, defaultExploitName?: string): string => {
+  if (!text.includes("{")) return text;
+  ensureWeaoPreviewLoaded();
+
+  return text.replace(/\{([a-zA-Z0-9_.: -]+)\}/g, (full, rawToken: string) => {
+    let targetName = (defaultExploitName || "Delta").trim();
+    let field = rawToken.trim();
+
+    if (field.toLowerCase().startsWith("exploit:")) {
+      const parts = field.split(":");
+      targetName = (parts[1] || targetName).trim();
+      field = parts.slice(2).join(":").trim() || "status";
+    }
+
+    const found =
+      weaoExploitsPreviewCache.find(
+        (e) => e.title?.toLowerCase() === targetName.toLowerCase(),
+      ) ??
+      weaoExploitsPreviewCache.find((e) =>
+        e.title?.toLowerCase().includes(targetName.toLowerCase()),
+      );
+
+    const k = field.toLowerCase();
+    if (!found) {
+      if (k === "status") return "🟢 Updated";
+      if (k === "statuscircle" || k === "circle") return "🟢";
+      if (k === "sunc") return "100%";
+      if (k === "unc") return "99%";
+      return full;
+    }
+
+    switch (k) {
+      case "title":
+      case "name":
+        return found.title || targetName;
+      case "status":
+        return found.updateStatus ? "🟢 Updated" : "🔴 Outdated";
+      case "statuscircle":
+      case "circle":
+        return found.updateStatus ? "🟢" : "🔴";
+      case "statustext":
+        return found.updateStatus ? "Updated" : "Outdated";
+      case "sunc":
+        return typeof found.suncPercentage === "number" ? `${found.suncPercentage}%` : "N/A";
+      case "unc":
+        return typeof found.uncPercentage === "number" ? `${found.uncPercentage}%` : "N/A";
+      case "version":
+        return found.version || "Unknown";
+      case "rbxversion":
+        return found.rbxversion || "Unknown";
+      case "updateddate":
+      case "updated":
+        return found.updatedDate || "Unknown";
+      case "detected":
+        return found.detected ? "⚠️ Detected" : "🛡️ Undetected";
+      case "free":
+      case "price":
+      case "cost":
+        return found.free ? "Free" : found.cost || "Paid";
+      case "platform":
+        return found.platform || "Windows";
+      case "decompiler":
+        return found.decompiler ? "✅ Yes" : "❌ No";
+      case "multiinject":
+        return found.multiInject ? "✅ Yes" : "❌ No";
+      case "keysystem":
+        return found.keysystem ? "🔑 Key System" : "🔓 Keyless";
+      default:
+        return full;
+    }
+  });
+};
 export interface MarkdownProps {
   content: string;
   className?: string;
@@ -518,10 +608,103 @@ const renderInline = (text: string, jumbo = false): React.ReactNode => {
   return text;
 };
 
+const formatWeaoFieldForPreview = (
+  found: any | undefined,
+  field: string,
+  fullToken: string,
+): string => {
+  const k = field.trim().toLowerCase();
+  if (!found) return fullToken;
+
+  switch (k) {
+    case "title":
+    case "name":
+      return found.title || fullToken;
+    case "status":
+      return found.updateStatus ? "🟢 Updated" : "🔴 Outdated";
+    case "statuscircle":
+    case "circle":
+      return found.updateStatus ? "🟢" : "🔴";
+    case "statustext":
+      return found.updateStatus ? "Updated" : "Outdated";
+    case "sunc":
+      return typeof found.suncPercentage === "number" ? `${found.suncPercentage}%` : "N/A";
+    case "unc":
+      return typeof found.uncPercentage === "number" ? `${found.uncPercentage}%` : "N/A";
+    case "version":
+      return found.version || "Unknown";
+    case "rbxversion":
+      return found.rbxversion || "Unknown";
+    case "updateddate":
+    case "updated":
+      return found.updatedDate || "Unknown";
+    case "detected":
+      return found.detected ? "⚠️ Detected" : "🛡️ Undetected";
+    case "free":
+    case "price":
+    case "cost":
+      return found.free ? "Free" : found.cost || "Paid";
+    case "platform":
+      return found.platform || "Windows";
+    case "decompiler":
+      return found.decompiler ? "✅ Yes" : "❌ No";
+    case "multiinject":
+      return found.multiInject ? "✅ Yes" : "❌ No";
+    case "keysystem":
+      return found.keysystem ? "🔑 Key System" : "🔓 Keyless";
+    case "websitelink":
+    case "website":
+      return found.websitelink || "";
+    case "discordlink":
+    case "discord":
+      return found.discordlink || "";
+    case "purchaselink":
+    case "purchase":
+      return found.purchaselink || "";
+    default:
+      return fullToken;
+  }
+};
+
 const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" }) => {
+  const weaoExploits = useDiscordCacheStore((state) => state.weaoExploits);
+  const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
+
+  useEffect(() => {
+    if (content && /\{exploit[.:]/i.test(content)) {
+      void fetchWeaoExploits();
+    }
+  }, [content, fetchWeaoExploits]);
+
   if (!content) return null;
 
-  const lines = content.split("\n");
+  // Interpolate `{exploit.<Name>.<Field>}` and `{exploit:<Name>:<Field>}` in live preview
+  const resolvedContent = content.includes("{")
+    ? content.replace(/\{exploit([.:])([^{}\n]+)\}/gi, (full, sep: string, rest: string) => {
+        let targetName = "";
+        let fieldName = "";
+        if (sep === ".") {
+          const lastDot = rest.lastIndexOf(".");
+          if (lastDot <= 0) return full;
+          targetName = rest.slice(0, lastDot).trim();
+          fieldName = rest.slice(lastDot + 1).trim();
+        } else {
+          const parts = rest.split(":");
+          targetName = (parts[0] || "").trim();
+          fieldName = parts.slice(1).join(":").trim() || "status";
+        }
+        const found =
+          weaoExploits.find((e) => e.title.toLowerCase() === targetName.toLowerCase()) ??
+          weaoExploits.find((e) => e.title.toLowerCase().includes(targetName.toLowerCase()));
+        return formatWeaoFieldForPreview(found, fieldName, full);
+      })
+    : content;
+
+  //const exploitName = useMessageStore(
+    //(state) => (state.data as any)?.exploit_name as string | undefined,
+  //);
+  //const resolvedContent = resolveWeaoPreviewText(content, exploitName); 
+  const lines = resolvedContent.split("\n");
   const renderedElements: React.ReactNode[] = [];
 
   let inCodeBlock = false;
