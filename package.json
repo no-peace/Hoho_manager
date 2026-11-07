@@ -22,7 +22,7 @@
     "build": "npm run build:shared && npm run build:client && npm run build:server && npm run build:bot",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "start": "npm run start --workspace server",
+    "start": "concurrently -n server,bot -c blue,green \"npm run start --workspace server\" \"npm run start --workspace bot\"",
     "start:bot": "npm run start --workspace bot",
     "migrate": "npm run migrate --workspace server",
     "pm2:start": "pm2 start ecosystem.config.cjs --env production",

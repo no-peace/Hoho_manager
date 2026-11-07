@@ -1,10 +1,11 @@
+// server/src/app.ts
 import express, { type Express } from "express";
+import fs from "node:fs";
+import path from "node:path";
 import cors from "cors";
 import helmet from "helmet";
 import { env, serverRoot } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-import fs from "node:fs";
-import path from "node:path";
 import { apiLimiter } from "./middleware/rateLimit.js";
 import configRouter from "./routes/config.js";
 import healthRouter from "./routes/health.js";
@@ -74,17 +75,17 @@ export const createApp = (): Express => {
   app.use("/api/auth", authRouter);
   app.use("/api/weao", weaoRouter);
 
-  // Serve the frontend web if client/dist exists.
+  // Serve built frontend if client/dist exists (Express 5 compatible SPA fallback)
   const clientDist = path.resolve(serverRoot, "../client/dist");
   if (fs.existsSync(clientDist)) {
     app.use(express.static(clientDist));
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith("/api/")) return next();
+    app.use((req, res, next) => {
+      if (req.method !== "GET" || req.path.startsWith("/api")) return next();
       res.sendFile(path.join(clientDist, "index.html"));
     });
   } else {
     app.get("/", (_req, res) => {
-      res.json({ name: "discord-message-builder", api:"/api/health" });
+      res.json({ name: "discord-message-builder", api: "/api/health" });
     });
   }
 
