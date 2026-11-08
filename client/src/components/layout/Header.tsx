@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   FolderOpen,
-  ShieldAlert,
   Settings,
   BookOpen,
   ChevronDown,
@@ -11,23 +10,12 @@ import {
   Shield,
   ArrowLeft,
   KeyRound,
-  Code2,
-  Share2,
-  RotateCcw,
-  Send,
-  Edit3,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { SettingsModal } from "./SettingsModal";
 import { useGlobalStore } from "../../store/globalStore";
-import { useMessageStore } from "../../store/messageStore";
 import { AccessPanel } from "./AccessPanel";
-
-const HOHO_LOGO_URL =
-  "https://github.com/acsu123/HohoV2/blob/main/BloxFruit/keysystem/hoho_logo.png?raw=true";
 
 export const getDiscordAvatarUrl = (
   user: { id: string; avatar?: string | null },
@@ -53,28 +41,21 @@ export interface HeaderProps {
   onOpenSend?: (mode: "send" | "edit") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onOpenBackups,
-  onOpenJson,
-  onShare,
-  onClearAll,
-  onOpenSend,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { selectedGuildId, setSelectedGuildId, currentUser, logout, setConfigModalOpen } =
-    useGlobalStore();
-
-  const data = useMessageStore((state) => state.data);
-  const mode = useMessageStore((state) => state.mode);
-  const validationErrors = React.useMemo(
-    () => useMessageStore.getState().getValidationErrors(),
-    [data, mode],
-  );
+  const {
+    selectedGuildId,
+    setSelectedGuildId,
+    currentUser,
+    logout,
+    setConfigModalOpen,
+    showToast,
+  } = useGlobalStore();
 
   const isSubRoute =
     typeof window !== "undefined" &&
@@ -98,6 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(id);
       setCopiedId(true);
+      showToast("Discord ID copied to clipboard", "info");
       setTimeout(() => setCopiedId(false), 2000);
     }
   };
@@ -107,59 +89,39 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 left-0 z-30 bg-[#18191c] border-b border-[#111214] w-full px-3 sm:px-4 h-13 flex items-center justify-between gap-2 font-sans shrink-0">
-        {/* Left: Brand + Validation Status Pill */}
-        <div className="flex items-center gap-2.5 min-w-0">
+      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b border-[#111214] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
+        {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
+        <div className="flex items-center gap-2.5">
           {isSubRoute && (
             <a
               href="/"
-              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#232428] hover:bg-[#2b2d31] border border-[#2b2d31] px-2 py-1.5 rounded-lg transition-colors"
-              title="Return to Studio"
+              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-2 py-1 rounded transition-colors mr-1"
+              title="Return to Dashboard"
             >
               <ArrowLeft size={13} />
+              <span className="hidden sm:inline">Dashboard</span>
             </a>
           )}
           <a
             href="/"
-            className="flex items-center gap-2.5 group focus:outline-none shrink-0"
-            title="HoHo Manager Studio"
+            className="flex items-center gap-2.5 group focus:outline-none"
+            title="HoHo Manager"
           >
-            <img
-              src={HOHO_LOGO_URL}
-              alt="HoHo Manager"
-              className="h-8 w-8 rounded-lg object-cover bg-[#232428] border border-[#2b2d31] shadow-sm"
-            />
-            <div className="hidden sm:flex flex-col">
-              <span className="text-sm font-bold text-white leading-tight tracking-tight">
-                HoHo Studio
-              </span>
-              <span className="text-[10px] font-medium text-[#949ba4] leading-tight">
-                Discord Message Builder
-              </span>
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5865f2] to-[#23a55a] p-[1px] shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
+              <div className="h-full w-full rounded-[7px] bg-[#1e1f22] flex items-center justify-center font-extrabold text-[10px] text-[#5865f2]">
+                HoHo
+              </div>
             </div>
+            <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
+              HoHo Manager
+            </span>
           </a>
-
-          {/* Validation Badge (Desktop) */}
-          <div className="hidden xl:flex items-center pl-2 border-l border-[#2b2d31]">
-            {validationErrors.length === 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#23a559]/10 border border-[#23a559]/25 text-[11px] font-semibold text-[#57f287]">
-                <CheckCircle2 size={12} /> Ready
-              </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#f0b232]/10 border border-[#f0b232]/30 text-[11px] font-semibold text-[#f0b232]"
-                title={validationErrors.join("\n")}
-              >
-                <AlertCircle size={12} /> {validationErrors.length} issue{validationErrors.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
         </div>
 
-        {/* Center: Server Selector & Unified Studio Toolbar (Desktop >= 1024px) */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-[#232428] p-1 rounded-lg border border-[#111214]">
+        {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
+        <div className="flex items-center gap-2.5">
           {hasDefaultBotAccess && (
-            <div className="w-44 pr-1 border-r border-[#2b2d31]">
+            <div className="w-44 sm:w-48 relative">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
@@ -169,175 +131,124 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {onOpenBackups && (
-            <button
-              type="button"
-              onClick={onOpenBackups}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
-              title="Saved Templates & Backups"
-            >
-              <FolderOpen size={13} className="text-[#949ba4]" />
-              <span>Templates</span>
-            </button>
-          )}
-
-          {onOpenJson && (
-            <button
-              type="button"
-              onClick={onOpenJson}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
-              title="Inspect or Edit Raw JSON Payload"
-            >
-              <Code2 size={13} className="text-[#949ba4]" />
-              <span>JSON</span>
-            </button>
-          )}
-
-          {onShare && (
-            <button
-              type="button"
-              onClick={onShare}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
-              title="Copy JSON Payload to Clipboard"
-            >
-              <Share2 size={13} className="text-[#949ba4]" />
-              <span>Copy</span>
-            </button>
-          )}
-
-          {onClearAll && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="h-7 px-2 rounded-md text-xs font-semibold text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-1 transition-colors"
-              title="Reset Workspace"
-            >
-              <RotateCcw size={12} />
-              <span>Reset</span>
-            </button>
-          )}
-        </div>
-
-        {/* Right: Primary Publish Button + Admin/Bot Config + User Profile */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Desktop Publish / Edit Action Group */}
-          {onOpenSend && (
-            <div className="hidden sm:inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
-              <button
-                type="button"
-                onClick={() => onOpenSend("send")}
-                className="bg-[#23a559] hover:bg-[#1d8a4a] text-white px-3 h-8 text-xs font-bold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
-              >
-                <Send size={12} />
-                <span>Publish</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenSend("edit")}
-                className="bg-[#1e2622] hover:bg-[#27332d] text-[#57f287] px-2.5 h-8 text-xs font-semibold transition-colors flex items-center gap-1"
-                title="Edit an existing bot message"
-              >
-                <Edit3 size={11} />
-                <span>Edit</span>
-              </button>
-            </div>
-          )}
-
           {isAdmin ? (
             <button
               type="button"
-              onClick={() => setAccessOpen(true)}
-              className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:bg-[#f0b232]/15 border border-[#f0b232]/30 bg-[#f0b232]/10 transition-colors"
-              title="Staff Access Controls"
+              onClick={() => setSettingsOpen(true)}
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
+              title="Head Admin Settings"
             >
-              <ShieldAlert size={13} />
-              <span className="hidden md:inline">Access</span>
+              <Settings size={14} className="text-[#949ba4]" />
+              <span className="hidden md:inline">Settings</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
               title="Configure Custom Bot Token"
             >
-              <KeyRound size={13} className="text-[#f0b232]" />
-              <span className="hidden md:inline">Bot Token</span>
+              <KeyRound size={14} className="text-[#f0b232]" />
+              <span className="hidden md:inline">Bot Config</span>
             </button>
           )}
 
-          <a
-            href="/docs"
-            className="h-8 px-2.5 rounded-lg text-xs font-semibold text-[#949ba4] hover:text-white border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors hidden md:flex items-center gap-1"
-            title="Documentation"
-          >
-            <BookOpen size={13} />
-            <span className="hidden xl:inline">Docs</span>
-          </a>
+          {onOpenBackups && (
+            <button
+              type="button"
+              onClick={onOpenBackups}
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
+              title="Saved Templates & Backups"
+            >
+              <FolderOpen size={14} className="text-[#949ba4]" />
+              <span className="hidden md:inline">Backups</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right: Staff Access + Authenticated User Profile + Docs */}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setAccessOpen(true)}
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 px-2.5 py-1.5 rounded transition-colors"
+              title="Staff Access Controls"
+            >
+              <Shield size={14} />
+              <span className="hidden lg:inline">Staff Access</span>
+            </button>
+          )}
 
           {currentUser && (
             <div className="relative" ref={userMenuRef}>
               <button
                 type="button"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 h-8 pl-1 pr-2 rounded-full border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors"
-                title={`Logged in as ${currentUser.username}`}
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] rounded-full pl-1 pr-2.5 py-1 transition-colors"
+                title="Account & Session Info"
               >
                 <img
-                  src={getDiscordAvatarUrl(currentUser, 48)}
+                  src={currentUser.avatarUrl || getDiscordAvatarUrl(currentUser, 64)}
                   alt={currentUser.username}
-                  className="w-6 h-6 rounded-full object-cover bg-[#1e1f22]"
+                  className="h-6 w-6 rounded-full object-cover bg-[#5865f2]"
                 />
-                <span className="text-xs font-semibold text-[#dbdee1] max-w-[90px] truncate hidden sm:inline">
+                <span className="text-xs font-semibold text-[#f2f3f5] max-w-[110px] truncate hidden sm:inline">
                   {currentUser.global_name || currentUser.username}
                 </span>
-                <ChevronDown size={13} className="text-[#949ba4]" />
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    hasDefaultBotAccess ? "bg-[#23a55a]" : "bg-[#f0b232]"
+                  }`}
+                />
+                <ChevronDown size={12} className="text-[#949ba4]" />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-10 w-64 rounded-xl bg-[#18191c] border border-[#2b2d31] shadow-2xl p-3 z-50 text-[#dbdee1] space-y-3">
-                  <div className="flex items-center gap-3 border-b border-[#2b2d31] pb-3">
+                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#111214] border border-[#2b2d31] shadow-2xl p-3 z-50 text-xs space-y-2.5">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#2b2d31]">
                     <img
-                      src={getDiscordAvatarUrl(currentUser, 64)}
+                      src={currentUser.avatarUrl || getDiscordAvatarUrl(currentUser, 64)}
                       alt={currentUser.username}
-                      className="w-10 h-10 rounded-full object-cover bg-[#232428] border border-[#35373c]"
+                      className="h-10 w-10 rounded-full object-cover bg-[#5865f2] shrink-0"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-white truncate">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-white truncate text-sm">
                         {currentUser.global_name || currentUser.username}
-                      </div>
-                      <div className="text-xs text-[#949ba4] truncate">
+                      </p>
+                      <p className="text-[11px] text-[#949ba4] truncate">
                         @{currentUser.username}
-                      </div>
-                      {isAdmin ? (
-                        <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f0b232] bg-[#f0b232]/10 px-1.5 py-0.2 rounded">
-                          Head Admin
-                        </span>
-                      ) : hasDefaultBotAccess ? (
-                        <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#57f287] bg-[#57f287]/10 px-1.5 py-0.2 rounded">
-                          Authorized Staff
-                        </span>
-                      ) : (
-                        <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.2 rounded">
-                          Custom Bot Mode
-                        </span>
-                      )}
+                      </p>
+                      <span
+                        className={`inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                          isAdmin
+                            ? "bg-[#f0b232]/15 text-[#f0b232] border border-[#f0b232]/30"
+                            : hasDefaultBotAccess
+                              ? "bg-[#23a55a]/15 text-[#57f287] border border-[#23a55a]/30"
+                              : "bg-[#5865f2]/15 text-[#dee0fc] border border-[#5865f2]/30"
+                        }`}
+                      >
+                        {isAdmin
+                          ? "Head Admin"
+                          : hasDefaultBotAccess
+                            ? "Authorized Staff"
+                            : "Custom Bot Mode"}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-[#232428] px-2.5 py-1.5 rounded-lg text-xs">
-                    <span className="font-mono text-[#949ba4] truncate text-[11px]">
-                      {currentUser.id}
-                    </span>
+                  <div className="flex items-center justify-between bg-[#1e1f22] px-2.5 py-1.5 rounded-lg border border-[#2b2d31]">
+                    <span className="text-[11px] text-[#949ba4]">Discord ID:</span>
                     <button
                       type="button"
                       onClick={() => handleCopyId(currentUser.id)}
-                      className="text-[#949ba4] hover:text-white p-0.5 transition-colors"
-                      title="Copy Discord ID"
+                      className="flex items-center gap-1 font-mono text-[11px] text-[#dbdee1] hover:text-white"
                     >
+                      <span>{currentUser.id}</span>
                       {copiedId ? (
-                        <Check size={13} className="text-[#57f287]" />
+                        <Check size={12} className="text-[#57f287]" />
                       ) : (
-                        <Copy size={13} />
+                        <Copy size={12} className="text-[#949ba4]" />
                       )}
                     </button>
                   </div>
@@ -349,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setUserMenuOpen(false);
                         setConfigModalOpen(true);
                       }}
-                      className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Configuration</span>
@@ -363,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
                             setUserMenuOpen(false);
                             setAccessOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                         >
                           <Shield size={14} className="text-[#949ba4]" />
                           <span>Staff Access</span>
@@ -374,7 +285,7 @@ export const Header: React.FC<HeaderProps> = ({
                             setUserMenuOpen(false);
                             setSettingsOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                         >
                           <Settings size={14} className="text-[#949ba4]" />
                           <span>Head Admin Settings</span>
@@ -390,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setUserMenuOpen(false);
                         await logout();
                       }}
-                      className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-2 transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-2 transition-colors"
                     >
                       <LogOut size={14} />
                       <span>Log Out</span>
@@ -400,6 +311,15 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
           )}
+
+          <a
+            href="/docs"
+            className="text-xs font-semibold text-[#949ba4] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
+            title="Documentation"
+          >
+            <BookOpen size={13} />
+            <span>Docs</span>
+          </a>
         </div>
       </header>
 
