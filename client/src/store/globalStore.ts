@@ -30,6 +30,23 @@ export interface CurrentUser {
   needsBotConfig?: boolean;
 }
 
+export type ToastVariant = "success" | "error" | "warning" | "info";
+
+export interface ToastItem {
+  id: string;
+  message: string;
+  variant: ToastVariant;
+}
+
+export interface ConfirmDialogState {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  onConfirm: (() => void | Promise<void>) | null;
+}
+
 interface GlobalState {
   selectedGuildId: string | null;
   setSelectedGuildId: (id: string | null) => void;
@@ -47,6 +64,20 @@ interface GlobalState {
   setAuthLoading: (loading: boolean) => void;
   fetchCurrentUser: () => Promise<CurrentUser | null>;
   logout: () => Promise<void>;
+
+  // In-App Toast & Confirmation Modal System (Replaces window.alert / window.confirm)
+  toasts: ToastItem[];
+  showToast: (message: string, variant?: ToastVariant) => void;
+  dismissToast: (id: string) => void;
+  confirmDialog: ConfirmDialogState;
+  openConfirm: (options: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    danger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }) => void;
+  closeConfirm: () => void;
 }
 
 const STORAGE_KEY = "hoho_global_state";
@@ -61,7 +92,8 @@ const loadInitialState = (): { selectedGuildId: string | null; isSidebarOpen: bo
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
           return {
-            selectedGuildId: typeof parsed.selectedGuildId === "string" ? parsed.selectedGuildId : null,
+            selectedGuildId:
+              typeof parsed.selectedGuildId === "string" ? parsed.selectedGuildId : null,
             isSidebarOpen: isNarrow ? false : Boolean(parsed.isSidebarOpen),
           };
         }
@@ -205,5 +237,46 @@ export const useGlobalStore = create<GlobalState>((set) => {
         }
       }
     },
+
+    toasts: [],
+    showToast: (message, variant = "info") => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      set((state) => ({
+        toasts: [...state.toasts.slice(-4), { id, message, variant }],
+      }));
+      setTimeout(() => {
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      }, 4000);
+    },
+    dismissToast: (id) =>
+      set((state) => ({
+        toasts: state.toasts.filter((t) => t.id !== id),
+      })),
+
+    confirmDialog: {
+      open: false,
+      title: "",
+      message: "",
+      confirmLabel: "Confirm",
+      danger: false,
+      onConfirm: null,
+    },
+    openConfirm: ({ title, message, confirmLabel = "Confirm", danger = false, onConfirm }) =>
+      set({
+        confirmDialog: {
+          open: true,
+          title,
+          message,
+          confirmLabel,
+          danger,
+          onConfirm,
+        },
+      }),
+    closeConfirm: () =>
+      set((state) => ({
+        confirmDialog: { ...state.confirmDialog, open: false, onConfirm: null },
+      })),
   };
 });
