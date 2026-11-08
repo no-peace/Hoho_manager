@@ -10,6 +10,7 @@ import {
   Check,
   Shield,
   ArrowLeft,
+  KeyRound,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
@@ -63,7 +64,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { selectedGuildId, setSelectedGuildId, currentUser, logout } = useGlobalStore();
+  const { selectedGuildId, setSelectedGuildId, currentUser, logout, setConfigModalOpen } =
+    useGlobalStore();
 
   const isSubRoute =
     typeof window !== "undefined" &&
@@ -91,32 +93,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
     }
   };
 
-  const handleStaffClick = () => {
-    const current = localStorage.getItem("staff_id");
-    if (current) {
-      if (confirm(`Log out of manual Staff ID ${current}?`)) {
-        localStorage.removeItem("staff_id");
-        window.location.reload();
-      }
-    } else {
-      const id = prompt(
-        "Enter your Discord User ID to authenticate as Staff (manual fallback):",
-      );
-      if (id && /^\d{17,20}$/.test(id)) {
-        localStorage.setItem("staff_id", id);
-        window.location.reload();
-      } else if (id) {
-        alert("Invalid Discord ID format. Must be 17-20 digits.");
-      }
-    }
-  };
-
-  const staffId = typeof localStorage !== "undefined" ? localStorage.getItem("staff_id") : null;
+  const isAdmin = Boolean(currentUser?.isAdmin);
+  const hasDefaultBotAccess = Boolean(currentUser?.hasDefaultBotAccess || isAdmin);
 
   return (
     <>
       <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b-2 border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
-        {/* Left: Dashboard Back link (if on sub-url) + HoHo Logo + HoHo Manager title */}
+        {/* Left: Dashboard Back link + HoHo Logo + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
             <a
@@ -144,26 +127,40 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
           </a>
         </div>
 
-        {/* Center: Server Select dropdown, Settings button, Backups/History button */}
+        {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center gap-2.5">
-          <div className="w-44 sm:w-48 relative">
-            <SearchableDiscordSelect
-              type="guild"
-              value={selectedGuildId || ""}
-              onChange={(val) => setSelectedGuildId(val as string)}
-              placeholder="Select Server..."
-            />
-          </div>
+          {hasDefaultBotAccess && (
+            <div className="w-44 sm:w-48 relative">
+              <SearchableDiscordSelect
+                type="guild"
+                value={selectedGuildId || ""}
+                onChange={(val) => setSelectedGuildId(val as string)}
+                placeholder="Select Server..."
+              />
+            </div>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-            title="Settings"
-          >
-            <Settings size={14} className="text-[#949ba4]" />
-            <span className="hidden md:inline">Settings</span>
-          </button>
+          {isAdmin ? (
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+              title="Head Admin Settings"
+            >
+              <Settings size={14} className="text-[#949ba4]" />
+              <span className="hidden md:inline">Settings</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfigModalOpen(true)}
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+              title="Configure Custom Bot Token"
+            >
+              <KeyRound size={14} className="text-[#f0b232]" />
+              <span className="hidden md:inline">Bot Config</span>
+            </button>
+          )}
 
           {onOpenBackups && (
             <button
@@ -180,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
         {/* Right: User Profile / Discord Login */}
         <div className="flex items-center gap-2">
-          {import.meta.env.VITE_ADMIN_API_KEY && (
+          {isAdmin && (
             <button
               type="button"
               onClick={() => setAccessOpen(true)}
@@ -228,9 +225,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                       <div className="text-xs text-[#949ba4] truncate">
                         @{currentUser.username}
                       </div>
-                      {currentUser.isAdmin && (
+                      {isAdmin ? (
                         <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f0b232] bg-[#f0b232]/10 px-1.5 py-0.2 rounded">
                           Head Admin
+                        </span>
+                      ) : hasDefaultBotAccess ? (
+                        <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#57f287] bg-[#57f287]/10 px-1.5 py-0.2 rounded">
+                          Authorized Staff
+                        </span>
+                      ) : (
+                        <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.2 rounded">
+                          Custom Bot Mode
                         </span>
                       )}
                     </div>
@@ -261,24 +266,40 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                       type="button"
                       onClick={() => {
                         setUserMenuOpen(false);
-                        setAccessOpen(true);
+                        setConfigModalOpen(true);
                       }}
                       className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
-                      <Shield size={14} className="text-[#949ba4]" />
-                      <span>Staff Access</span>
+                      <KeyRound size={14} className="text-[#f0b232]" />
+                      <span>Bot Configuration</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        setSettingsOpen(true);
-                      }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
-                    >
-                      <Settings size={14} className="text-[#949ba4]" />
-                      <span>Settings</span>
-                    </button>
+
+                    {isAdmin && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setAccessOpen(true);
+                          }}
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                        >
+                          <Shield size={14} className="text-[#949ba4]" />
+                          <span>Staff Access</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setSettingsOpen(true);
+                          }}
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                        >
+                          <Settings size={14} className="text-[#949ba4]" />
+                          <span>Head Admin Settings</span>
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   {/* Log Out Button */}
@@ -299,37 +320,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
               )}
             </div>
           ) : (
-            /* Unauthenticated: Login with Discord Button */
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = "/api/auth/discord/login";
-                }}
-                className="text-xs flex items-center gap-1.5 font-semibold bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white px-3 py-1.5 rounded transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-                title="Login with Discord"
-              >
-                <DiscordIcon size={14} />
-                <span className="hidden sm:inline">Login with Discord</span>
-                <span className="sm:hidden">Login</span>
-              </button>
-
-              {staffId && (
-                <button
-                  type="button"
-                  onClick={handleStaffClick}
-                  className="text-xs flex items-center gap-1 font-semibold px-2 py-1.5 rounded text-[#5865f2] border border-[#5865f2]/40 bg-[#5865f2]/10 hover:bg-[#5865f2]/20 transition-colors"
-                  title={`Manual Staff ID: ${staffId}`}
-                >
-                  <span>Staff: {staffId.slice(-4)}</span>
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/api/auth/discord/login";
+              }}
+              className="text-xs flex items-center gap-1.5 font-semibold bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white px-3 py-1.5 rounded transition-colors shadow-sm"
+              title="Login with Discord"
+            >
+              <DiscordIcon size={14} />
+              <span className="hidden sm:inline">Login with Discord</span>
+              <span className="sm:hidden">Login</span>
+            </button>
           )}
 
           <a
             href="/docs"
-            className="text-xs font-semibold text-[#949ba4] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] hidden sm:flex items-center gap-1"
+            className="text-xs font-semibold text-[#949ba4] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
             title="Documentation"
           >
             <BookOpen size={13} />
@@ -338,18 +345,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
         </div>
       </header>
 
-      {/* Settings Modal */}
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {/* Settings Modal (Head Admin only) */}
+      {isAdmin && <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
-      {/* Staff Access Modal */}
-      <Modal
-        open={accessOpen}
-        onClose={() => setAccessOpen(false)}
-        title="Staff Access Controls"
-        width="max-w-4xl"
-      >
-        <AccessPanel />
-      </Modal>
+      {/* Staff Access Modal (Head Admin only) */}
+      {isAdmin && (
+        <Modal
+          open={accessOpen}
+          onClose={() => setAccessOpen(false)}
+          title="Staff Access Controls"
+          width="max-w-4xl"
+        >
+          <AccessPanel />
+        </Modal>
+      )}
     </>
   );
 };

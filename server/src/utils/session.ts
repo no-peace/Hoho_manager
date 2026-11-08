@@ -25,16 +25,36 @@ export interface SessionUser {
 export const SESSION_TTL_SECONDS = 24 * 60 * 60;
 export const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 
+/**
+ * In-memory revocation floor per Discord user ID (and global floor).
+ * Any JWT issued at or before `userRevokedAtMs.get(userId)` is rejected immediately.
+ */
+const userRevokedAtMs = new Map<string, number>();
+let globalRevokedAtMs = 0;
+
+/** Immediately invalidate all existing JWT sessions for a specific Discord user ID. */
+export const revokeUserSessions = (discordUserId: string): void => {
+  if (!discordUserId) return;
+  userRevokedAtMs.set(discordUserId, Date.now());
+};
+
+/** Immediately invalidate all existing JWT sessions across all users. */
+export const revokeAllSessions = (): void => {
+  globalRevokedAtMs = Date.now();
+};
+
 const getSecret = (): string => env.sessionSecret || env.adminApiKey || "default-session-secret";
 
 export const createSessionToken = (user: SessionUser): string => {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowMs = Date.now();
+  const nowSec = Math.floor(nowMs / 1000);
   const payload = Buffer.from(
     JSON.stringify({
       ...user,
       exp: nowSec + SESSION_TTL_SECONDS,
       iat: nowSec,
+      iatMs: nowMs,
     }),
   ).toString("base64url");
   const sig = crypto.createHmac("sha256", getSecret()).update(`${header}.${payload}`).digest("base64url");
@@ -55,8 +75,24 @@ export const verifySessionToken = (token: string): SessionUser | null => {
     if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
     if (!data.id || !data.username) return null;
 
+    const userId = String(data.id);
+    const tokenIssuedMs =
+      typeof data.iatMs === "number"
+        ? data.iatMs
+        : typeof data.iat === "number"
+          ? data.iat * 1000
+          : 0;
+
+    if (globalRevokedAtMs > 0 && tokenIssuedMs <= globalRevokedAtMs) {
+      return null;
+    }
+    const userRevokedMs = userRevokedAtMs.get(userId);
+    if (userRevokedMs !== undefined && tokenIssuedMs <= userRevokedMs) {
+      return null;
+    }
+
     return {
-      id: String(data.id),
+      id: userId,
       username: String(data.username),
       global_name: data.global_name ?? null,
       avatar: data.avatar ?? null,

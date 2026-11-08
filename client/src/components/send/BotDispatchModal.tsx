@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { request } from "../../api/client";
+import { request, api } from "../../api/client";
 import {
   Bot,
   CheckSquare,
@@ -7,16 +7,14 @@ import {
   Square,
   Edit3,
   Send,
-  Download,
-  CheckCircle2,
+  KeyRound,
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
-import { Select, TextField } from "../ui/Field";
-import { api } from "../../api/client";
 import { useProfileStore } from "../../store/profileStore";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
+import { useGlobalStore } from "../../store/globalStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 
 const BotDispatchModalComponent: React.FC<{
@@ -28,6 +26,10 @@ const BotDispatchModalComponent: React.FC<{
   const fetchProfiles = useProfileStore((state) => state.fetchProfiles);
   const botProfileId = useProfileStore((state) => state.botProfileId);
   const setBotProfileId = useProfileStore((state) => state.setBotProfileId);
+
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
+  const canUseDefaultBot = Boolean(currentUser?.isAdmin || currentUser?.hasDefaultBotAccess);
 
   const [mode, setMode] = useState<"send" | "edit">(initialMode);
   const [channels, setChannels] = useState<{ id: string; name: string }[]>([]);
@@ -71,44 +73,49 @@ const BotDispatchModalComponent: React.FC<{
 
   useEffect(() => {
     if (open) {
-      void fetchProfiles();
-      setSendResult(null);
-      setLoadedMessageId(null);
+      void (async () => {
+        await fetchProfiles();
+        setSendResult(null);
+        setLoadedMessageId(null);
 
-      // check if active message has bound set link for editing
-      const activeData = useMessageStore.getState().data as any;
-      if (
-        activeData.link_mode === "edit" &&
-        activeData.edit_channel_id &&
-        activeData.edit_message_id
-      ) {
-        setMode("edit");
-        setSelectedChannels([activeData.edit_channel_id]);
-        setTargetMessageId(activeData.edit_message_id);
-      }
-      const cachedBot = localStorage.getItem("bot_selected_profile");
-      const cachedProfile = cachedBot && cachedBot !== "default" ? Number(cachedBot) : null;
-      const restoredProfileId =
-        cachedProfile !== null && Number.isSafeInteger(cachedProfile) && cachedProfile > 0
-          ? cachedProfile
-          : null;
-      const activeProfileId = botProfileId ?? restoredProfileId;
-      if (cachedBot !== null && botProfileId === null) {
-        setBotProfileId(restoredProfileId);
-      }
-      void fetchChannels(activeProfileId);
+        const activeData = useMessageStore.getState().data as any;
+        if (
+          activeData.link_mode === "edit" &&
+          activeData.edit_channel_id &&
+          activeData.edit_message_id
+        ) {
+          setMode("edit");
+          setSelectedChannels([activeData.edit_channel_id]);
+          setTargetMessageId(activeData.edit_message_id);
+        }
+
+        const latestProfiles = useProfileStore.getState().botProfiles;
+        let activeProfileId = useProfileStore.getState().botProfileId;
+
+        if (!canUseDefaultBot && activeProfileId === null) {
+          activeProfileId = latestProfiles[0]?.id ?? null;
+          setBotProfileId(activeProfileId);
+        }
+
+        if (canUseDefaultBot || activeProfileId !== null) {
+          void fetchChannels(activeProfileId);
+        } else {
+          setChannels([]);
+        }
+      })();
     }
-  }, [open]);
+  }, [open, canUseDefaultBot]);
 
   useEffect(() => {
-    if (mode === "edit" && selectedChannels.length === 1) {
-      fetchRecentMessages(selectedChannels[0], botProfileId);
+    if (mode === "edit" && selectedChannels.length === 1 && (canUseDefaultBot || botProfileId !== null)) {
+      void fetchRecentMessages(selectedChannels[0], botProfileId);
     } else {
       setBotMessages([]);
     }
-  }, [mode, selectedChannels, botProfileId]);
+  }, [mode, selectedChannels, botProfileId, canUseDefaultBot]);
 
   const handleBotSelect = (id: number | null) => {
+    if (id === null && !canUseDefaultBot) return;
     setBotProfileId(id);
     localStorage.setItem("bot_selected_profile", id === null ? "default" : String(id));
     setCachedBotInfo(null);
@@ -119,6 +126,10 @@ const BotDispatchModalComponent: React.FC<{
   };
 
   const fetchChannels = async (profileId: number | null = botProfileId) => {
+    if (profileId === null && !canUseDefaultBot) {
+      setChannels([]);
+      return;
+    }
     setIsLoading(true);
     try {
       const query = profileId === null ? "" : `?profileId=${encodeURIComponent(String(profileId))}`;
@@ -126,6 +137,7 @@ const BotDispatchModalComponent: React.FC<{
       if (Array.isArray(data)) setChannels(data);
     } catch (e) {
       console.error(e);
+      setChannels([]);
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +148,7 @@ const BotDispatchModalComponent: React.FC<{
     try {
       const query = profileId === null ? "" : `?profileId=${encodeURIComponent(String(profileId))}`;
       const data = await request<any[]>(
-        `/api/send/channels/${encodeURIComponent(cId)}/messages${query}`
+        `/api/send/channels/${encodeURIComponent(cId)}/messages${query}`,
       );
       if (Array.isArray(data)) setBotMessages(data);
     } catch (e) {
@@ -148,11 +160,10 @@ const BotDispatchModalComponent: React.FC<{
 
   const toggleChannel = (id: string) => {
     setSelectedChannels((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
-  // Loads the chosen message into the message store and live preview
   const loadMessageIntoEditor = (msgId: string) => {
     setTargetMessageId(msgId);
     if (!msgId) return;
@@ -171,6 +182,10 @@ const BotDispatchModalComponent: React.FC<{
   const handleDispatch = async () => {
     if (selectedChannels.length === 0) return;
     if (mode === "edit" && !targetMessageId) return;
+    if (!canUseDefaultBot && botProfileId === null) {
+      setSendResult("Please configure and select your own Custom Bot first.");
+      return;
+    }
 
     setIsSending(true);
     setSendResult(null);
@@ -179,8 +194,6 @@ const BotDispatchModalComponent: React.FC<{
       const attachedFiles = useMessageStore.getState().attachedFiles;
       const flows = useActionStore.getState().toRegistrations();
 
-      // Local files ride as multipart `files`; external URL attachments are
-      // resolved and downloaded by the server before forwarding to Discord.
       const localFiles = attachedFiles.filter(
         (f): f is typeof f & { file: File } => f.file instanceof File,
       );
@@ -196,13 +209,16 @@ const BotDispatchModalComponent: React.FC<{
 
       let successCount = 0;
       let firstFailure: string | null = null;
-      
-      const targetMessageIds = targetMessageId.split(",").map(id => id.trim()).filter(Boolean);
+
+      const targetMessageIds = targetMessageId
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
 
       for (let i = 0; i < selectedChannels.length; i++) {
         const cId = selectedChannels[i];
         const currentTargetId = targetMessageIds[i] || targetMessageIds[0];
-        
+
         try {
           if (localFiles.length > 0) {
             const formData = new FormData();
@@ -267,7 +283,6 @@ const BotDispatchModalComponent: React.FC<{
   return (
     <Modal open={open} onClose={onClose} title="Dispatch via Bot" width="max-w-2xl">
       <div className="flex flex-col" style={{ maxHeight: "calc(100vh - 120px)" }}>
-        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-5 min-h-0">
           {/* Mode Toggles */}
           <div className="flex bg-[#1e1f22] p-1 rounded-md border border-[#111214] shrink-0 mt-1">
@@ -301,36 +316,48 @@ const BotDispatchModalComponent: React.FC<{
               <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
                 1. Select Bot Identity
               </h4>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setConfigModalOpen(true);
+                }}
+                className="text-[11px] font-bold text-[#5865f2] hover:underline flex items-center gap-1"
+              >
+                <KeyRound size={12} /> + Add Custom Bot
+              </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
-              <div
-                onClick={() => handleBotSelect(null)}
-                className={`p-3 rounded-lg border cursor-pointer flex items-center gap-3 transition-all ${
-                  botProfileId === null
-                    ? "border-[#5865f2] bg-[#5865f2]/10"
-                    : "border-[#1e1f22] bg-[#1e1f22] hover:border-[#35373c]"
-                }`}
-              >
-                {cachedBotInfo?.avatar ? (
-                  <img
-                    src={cachedBotInfo.avatar}
-                    alt="Bot"
-                    className="w-10 h-10 rounded-full shadow-sm object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white shrink-0 shadow-sm">
-                    <Server size={20} />
+              {canUseDefaultBot && (
+                <div
+                  onClick={() => handleBotSelect(null)}
+                  className={`p-3 rounded-lg border cursor-pointer flex items-center gap-3 transition-all ${
+                    botProfileId === null
+                      ? "border-[#5865f2] bg-[#5865f2]/10"
+                      : "border-[#1e1f22] bg-[#1e1f22] hover:border-[#35373c]"
+                  }`}
+                >
+                  {cachedBotInfo?.avatar ? (
+                    <img
+                      src={cachedBotInfo.avatar}
+                      alt="Bot"
+                      className="w-10 h-10 rounded-full shadow-sm object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white shrink-0 shadow-sm">
+                      <Server size={20} />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-white truncate">
+                      {cachedBotInfo ? cachedBotInfo.name : "Server Default"}
+                    </p>
+                    <p className="text-[11px] text-[#949ba4] truncate">
+                      Authorized Staff / Admin Bot
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-white truncate">
-                    {cachedBotInfo ? cachedBotInfo.name : "Server Default"}
-                  </p>
-                  <p className="text-[11px] text-[#949ba4] truncate">
-                    {cachedBotInfo ? "Cached locally" : "Uses primary .env token"}
-                  </p>
                 </div>
-              </div>
+              )}
 
               {botProfiles.map((p) => (
                 <div
@@ -353,6 +380,27 @@ const BotDispatchModalComponent: React.FC<{
                   </div>
                 </div>
               ))}
+
+              {!canUseDefaultBot && botProfiles.length === 0 && (
+                <div className="col-span-full p-4 rounded-lg bg-[#1e1f22] border border-[#f0b232]/40 text-center space-y-2">
+                  <p className="text-xs text-[#dbdee1] font-semibold">
+                    No Custom Bot Configured Yet
+                  </p>
+                  <p className="text-[11px] text-[#949ba4]">
+                    You don't have access to the Server Default bot. Click below to add your own Bot Token.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => {
+                      onClose();
+                      setConfigModalOpen(true);
+                    }}
+                  >
+                    Configure Custom Bot
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -421,91 +469,73 @@ const BotDispatchModalComponent: React.FC<{
             </div>
           </div>
 
-          {/* 3. Select Message to Edit (With Live Auto-Load) */}
+          {/* 3. Message Target Selector (Edit Mode Only) */}
           {mode === "edit" && (
-            <div className="bg-[#2b2d31] rounded-lg shrink-0 pb-2">
-              <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase mb-2">
-                3. Select Message to Edit
-              </h4>
-              <div className="flex flex-col sm:flex-row gap-2 items-start">
-                <div className="flex-1 w-full">
-                  <Select
-                    value={targetMessageId}
-                    onChange={(e) => loadMessageIntoEditor(e.target.value)}
-                    options={
-                      isLoadingMessages
-                        ? [{ value: "", label: "Fetching recent messages..." }]
-                        : botMessages.length === 0
-                        ? [{ value: "", label: "No recent messages found." }]
-                        : [
-                            { value: "", label: "Select a message to load & edit..." },
-                            ...botMessages.map((m) => ({
-                              value: m.id,
-                              label: `${m.content.substring(0, 32)} (${m.id})`,
-                            })),
-                          ]
-                    }
-                  />
-                </div>
-                <div className="flex-1 w-full flex gap-1.5">
-                  <TextField
-                    value={targetMessageId}
-                    placeholder="Paste ID/Link (comma separated for multi-channel)"
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      // Don't auto-extract if they are typing multiple IDs with commas
-                      if (val.includes(",")) {
-                        setTargetMessageId(val);
-                      } else {
-                        const urlMatch = val.match(/\/channels\/\d+\/\d+\/(\d+)/);
-                        const id = urlMatch ? urlMatch[1] : val;
-                        setTargetMessageId(id);
-                      }
-                    }}
-                  />
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    icon={Download}
-                    onClick={() => loadMessageIntoEditor(targetMessageId)}
-                    disabled={!targetMessageId}
-                    className="shrink-0 bg-[#1e1f22] text-[#dbdee1] hover:text-white border-[#111214]"
-                    title="Load message into site editor"
-                  >
-                    Load
-                  </Button>
-                </div>
+            <div className="space-y-3 bg-[#1e1f22] p-3 rounded-lg border border-[#111214]">
+              <div>
+                <label className="block text-[11px] font-bold text-[#b5bac1] uppercase mb-1">
+                  3. Target Message ID(s)
+                </label>
+                <input
+                  type="text"
+                  value={targetMessageId}
+                  onChange={(e) => setTargetMessageId(e.target.value)}
+                  placeholder="Enter message ID or select a recent bot message below..."
+                  className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded px-3 py-1.5 text-xs font-mono outline-none focus:border-[#5865f2]"
+                />
               </div>
 
-              {loadedMessageId && (
-                <div className="mt-2 p-2 rounded bg-[#23a55a]/10 border border-[#23a55a]/30 flex items-center gap-2 text-xs text-[#23a55a]">
-                  <CheckCircle2 size={15} />
-                  <span>
-                    Loaded message <strong>{loadedMessageId}</strong> into the editor & live preview!
-                  </span>
+              {selectedChannels.length === 1 && (
+                <div>
+                  <p className="text-[11px] font-bold text-[#949ba4] uppercase mb-1.5">
+                    Recent Bot Messages in Selected Channel
+                  </p>
+                  {isLoadingMessages ? (
+                    <p className="text-xs text-[#949ba4]">Loading messages...</p>
+                  ) : botMessages.length === 0 ? (
+                    <p className="text-xs text-[#949ba4]">No recent bot messages found.</p>
+                  ) : (
+                    <div className="space-y-1 max-h-36 overflow-y-auto custom-scrollbar">
+                      {botMessages.map((m) => (
+                        <div
+                          key={m.id}
+                          onClick={() => loadMessageIntoEditor(m.id)}
+                          className={`p-2 rounded text-xs cursor-pointer flex items-center justify-between ${
+                            targetMessageId === m.id
+                              ? "bg-[#5865f2]/20 border border-[#5865f2]"
+                              : "bg-[#2b2d31] hover:bg-[#35373c]"
+                          }`}
+                        >
+                          <span className="truncate flex-1 mr-2 text-[#dbdee1]">
+                            {m.content}
+                          </span>
+                          <span className="font-mono text-[10px] text-[#949ba4] shrink-0">
+                            {loadedMessageId === m.id ? "Loaded ✓" : m.id.slice(-6)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
-        </div>
 
-        {/* Fixed Footer */}
-        <div className="flex items-center justify-between border-t border-[#1e1f22] pt-4 mt-2 shrink-0 bg-[#313338]">
-          <div className="text-[12px] font-medium text-[#23a559] truncate pr-4">
-            {sendResult}
-          </div>
-          <div className="flex gap-2 ml-auto shrink-0">
-            <Button
-              variant="secondary"
-              onClick={onClose}
-              className="bg-[#1e1f22] text-[#b5bac1] hover:text-white border-[#111214]"
-            >
+          {sendResult && (
+            <div className="p-3 rounded bg-[#1e1f22] border border-[#35373c] text-xs text-[#dbdee1]">
+              {sendResult}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-[#1e1f22]">
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
             <Button
+              variant="primary"
               className={`${
                 mode === "edit"
-                  ? "bg-[#faa61a] hover:bg-[#e09415]"
+                  ? "bg-[#faa61a] hover:bg-[#d88c0e]"
                   : "bg-[#5865f2] hover:bg-[#4752c4]"
               } text-white border-none flex items-center gap-2`}
               onClick={handleDispatch}
@@ -513,7 +543,8 @@ const BotDispatchModalComponent: React.FC<{
               disabled={
                 selectedChannels.length === 0 ||
                 isSending ||
-                (mode === "edit" && !targetMessageId)
+                (mode === "edit" && !targetMessageId) ||
+                (!canUseDefaultBot && botProfileId === null)
               }
             >
               {mode === "edit" ? (

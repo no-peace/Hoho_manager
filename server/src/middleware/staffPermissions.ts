@@ -66,15 +66,16 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
 
     const staffId = sessionUser ? sessionUser.id : headerStaffId;
 
-    // 4. Head Admin / Instance Owner fast-path
-    if (
-      sessionUser &&
-      ((await settingsService.isHeadAdmin(sessionUser.id)) ||
+    // 4. Head Admin / Instance Owner fast-path (always checked live against DB/env in production)
+    if (sessionUser) {
+      const isLiveHeadAdmin =
         env.ownerDiscordIds.includes(sessionUser.id) ||
-        sessionUser.role === "admin")
-    ) {
-      req.staffContext = { isAdmin: true, staffId: sessionUser.id };
-      return next();
+        (await settingsService.isHeadAdmin(sessionUser.id)) ||
+        (!env.isProd && sessionUser.role === "admin");
+      if (isLiveHeadAdmin) {
+        req.staffContext = { isAdmin: true, staffId: sessionUser.id };
+        return next();
+      }
     }
 
     if (!env.isProd && staffId && /^\d{17,20}$/.test(staffId) && (await settingsService.isHeadAdmin(staffId))) {
@@ -89,7 +90,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
         ? Number(rawProfileId)
         : null;
 
-    if (sessionUser && parsedProfileId && Number.isSafeInteger(parsedProfileId) && parsedProfileId > 0) {
+    if (sessionUser && parsedProfileId !== null && Number.isSafeInteger(parsedProfileId) && parsedProfileId > 0) {
       const [dbUser, botProfile] = await Promise.all([
         userRepository.findByDiscordId(sessionUser.id),
         botProfileRepository.findById(parsedProfileId),
@@ -100,7 +101,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       if (!dbUser || botProfile.user_id !== dbUser.id) {
         return next(ApiError.forbidden("That custom bot profile belongs to another user"));
       }
-      // User is dispatching/reading via their own verified custom bot token
+      // User is dispatching/reading strictly via their own verified custom bot token
       req.staffContext = { isAdmin: false, staffId: sessionUser.id };
       return next();
     }
@@ -110,16 +111,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       return next();
     }
 
-    // 6. Default Bot protection: if sessionUser has no mutual server / default bot access, block default bot usage
-    if (sessionUser && sessionUser.hasDefaultBotAccess === false) {
-      return next(
-        ApiError.forbidden(
-          "You do not share an authorized server/role with the default bot. Please configure and select your own Custom Bot Token or Webhook.",
-        ),
-      );
-    }
-
-    // 7. Standard Staff Access table check for default bot
+    // 6. Standard Staff Access table check for the Server Default Bot (NEVER fail open!)
     if (!staffId || !/^\d{17,20}$/.test(staffId)) {
       auditLog({
         event: "STAFF_ACCESS_DENIED",
@@ -130,21 +122,37 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       return next(ApiError.unauthorized("x-staff-id header or OAuth login required for staff access"));
     }
 
-    const record = await staffRepository.findByDiscordId(staffId);
-    if (!record) {
-      if (sessionUser && sessionUser.hasDefaultBotAccess === true) {
-        // User was granted default bot access via mutual server Admin/Owner permissions
-        req.staffContext = { isAdmin: false, staffId: sessionUser.id };
-        return next();
-      }
+    // In production, non-admin staff MUST also share at least 1 mutual server with the default bot
+    if (env.isProd && sessionUser && Array.isArray(sessionUser.mutualGuilds) && sessionUser.mutualGuilds.length === 0) {
       auditLog({
         event: "STAFF_ACCESS_DENIED",
         actorDiscordId: staffId,
-        reason: "No staff record found",
+        reason: "No mutual server with default bot",
         ip,
         requestId,
       });
-      return next(ApiError.forbidden("You do not have staff access to the default bot. Add your own custom Bot Token in Bot Config."));
+      return next(
+        ApiError.forbidden(
+          "You do not share a common server with the default bot. Add your own Custom Bot Token in Bot Config.",
+        ),
+      );
+    }
+
+    // CRITICAL: Always require a live, active row in staff_access. Never trust sessionUser.hasDefaultBotAccess!
+    const record = await staffRepository.findByDiscordId(staffId);
+    if (!record) {
+      auditLog({
+        event: "STAFF_ACCESS_DENIED",
+        actorDiscordId: staffId,
+        reason: "No staff record found (revoked or never granted)",
+        ip,
+        requestId,
+      });
+      return next(
+        ApiError.forbidden(
+          "You do not have staff access to the default bot. Add your own Custom Bot Token in Bot Config, or ask a Head Admin to grant staff access.",
+        ),
+      );
     }
 
     if (!record.is_active) {

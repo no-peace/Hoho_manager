@@ -25,6 +25,23 @@ const parseProfileId = (value: unknown): number | null => {
   return profileId;
 };
 
+const assertStaffChannelAllowed = (
+  staffCtx: Express.Request["staffContext"],
+  channelId: string,
+): void => {
+  if (!staffCtx || staffCtx.isAdmin || !staffCtx.record) return;
+  let allowed: string[] = [];
+  try {
+    allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
+  } catch {
+    allowed = [];
+  }
+  const allAllowed = allowed.includes("*");
+  if (!allAllowed && (allowed.length === 0 || !allowed.includes(channelId))) {
+    throw ApiError.forbidden(`You are not allowed to access channel ${channelId}`);
+  }
+};
+
 router.post(
   "/",
   multipartParser,
@@ -51,7 +68,16 @@ router.post(
 
     const staffCtx = req.staffContext;
 
-    // Cleanse UI-only _id and exploit_name properties recursively
+    // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
+    if (mode === "bot" && profileId === null) {
+      if (!staffCtx?.isAdmin && !staffCtx?.record) {
+        throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
+      }
+      if (typeof channelId === "string") {
+        assertStaffChannelAllowed(staffCtx, channelId);
+      }
+    }
+
     const cleanseIds = (obj: any): any => {
       if (Array.isArray(obj)) return obj.map(cleanseIds);
       if (obj !== null && typeof obj === "object") {
@@ -192,6 +218,9 @@ router.post(
 
     const sentList = [];
     if (typeof editMessageId === "string" && editMessageId.trim() !== "") {
+      if (staffCtx && !staffCtx.isAdmin && staffCtx.record && !staffCtx.record.can_edit_messages) {
+        throw ApiError.forbidden("You do not have permission to perform: edit");
+      }
       const sent = await discord.editChannelMessage(channelId, editMessageId, firstMessage, {
         profileId,
         files,
@@ -238,6 +267,12 @@ router.get(
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     const profileId = parseProfileId(req.query.profileId);
+    const staffCtx = req.staffContext;
+
+    if (profileId === null && !staffCtx?.isAdmin && !staffCtx?.record) {
+      throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
+    }
+
     const queryGuildId =
       typeof req.query.guildId === "string" && req.query.guildId.trim()
         ? req.query.guildId.trim()
@@ -253,7 +288,6 @@ router.get(
     const channels = await discord.getGuildChannels(targetGuildId, profileId);
 
     let filteredChannels = channels;
-    const staffCtx = req.staffContext;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       try {
         const allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
@@ -274,7 +308,6 @@ router.get(
   }),
 );
 
-// GET /api/send/channels/:channelId/messages - Fetches recent messages sent by the bot
 router.get(
   "/channels/:channelId/messages",
   attachUser,
@@ -285,6 +318,13 @@ router.get(
     if (typeof channelId !== "string") {
       throw ApiError.badRequest("`channelId` must be a string");
     }
+    if (profileId === null) {
+      if (!req.staffContext?.isAdmin && !req.staffContext?.record) {
+        throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
+      }
+      assertStaffChannelAllowed(req.staffContext, channelId);
+    }
+
     const token = await discord.resolveBotToken(profileId);
     const me = await discord.getBotIdentity(token);
     if (!me?.id) return res.json([]);
@@ -309,7 +349,6 @@ router.get(
   }),
 );
 
-// GET /api/send/channels/:channelId/messages/:messageId - Fetch a specific message by link
 router.get(
   "/channels/:channelId/messages/:messageId",
   attachUser,
@@ -321,6 +360,13 @@ router.get(
     if (typeof channelId !== "string" || typeof messageId !== "string") {
       throw ApiError.badRequest("`channelId` and `messageId` must be strings");
     }
+    if (profileId === null) {
+      if (!req.staffContext?.isAdmin && !req.staffContext?.record) {
+        throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
+      }
+      assertStaffChannelAllowed(req.staffContext, channelId);
+    }
+
     const messages = await discord.getChannelMessages(channelId, profileId);
     const found = messages.find((m: any) => m.id === messageId);
     if (!found) {
@@ -334,7 +380,6 @@ router.get(
   }),
 );
 
-// Auto-Fetch Bot Identity for the Frontend
 router.get(
   "/identity",
   attachUser,

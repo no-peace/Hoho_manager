@@ -146,7 +146,6 @@ router.get(
     const commonRaw = userGuilds.filter((ug) => botGuildIds.has(ug.id));
 
     const mutualGuilds: MutualGuildInfo[] = [];
-    let hasMutualGuildAdminOrRole = false;
 
     for (const ug of commonRaw.slice(0, 10)) {
       let memberRoles: string[] = [];
@@ -161,24 +160,6 @@ router.get(
         }
       }
 
-      // Check if user is Guild Owner or has Administrator (0x8) / Manage Guild (0x20) bit in that mutual guild
-      let hasManagePerms = Boolean(ug.owner);
-      if (ug.permissions) {
-        try {
-          const permBits = BigInt(ug.permissions);
-          if ((permBits & 0x8n) !== 0n || (permBits & 0x20n) !== 0n) {
-            hasManagePerms = true;
-          }
-        } catch {
-          // Ignore malformed permission string
-        }
-      }
-
-      const isGuildHeadAdmin = await settingsService.isHeadAdmin(discordUser.id, ug.id);
-      if (hasManagePerms || isGuildHeadAdmin) {
-        hasMutualGuildAdminOrRole = true;
-      }
-
       mutualGuilds.push({
         id: ug.id,
         name: ug.name,
@@ -188,7 +169,7 @@ router.get(
       });
     }
 
-    // 3. Check Head Admin, Owner, and Staff Access records
+    // 3. Check Head Admin, Owner, and explicit Staff Access records ONLY (never auto-elevate from guild permissions)
     const existingDbUser = await userRepository.findByDiscordId(discordUser.id);
     const isFirstLogin = !existingDbUser;
 
@@ -202,13 +183,10 @@ router.get(
         (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
     );
 
-    // User can use the Server Default Bot ONLY if:
-    // - They are an instance Owner / Global Head Admin, OR
-    // - They share at least 1 common server with the bot AND have an active Staff record or Server Admin/Owner role
     const hasDefaultBotAccess =
       isOwner ||
       isHead ||
-      (mutualGuilds.length > 0 && (hasActiveStaffRecord || hasMutualGuildAdminOrRole));
+      (mutualGuilds.length > 0 && hasActiveStaffRecord);
 
     const role: UserRole = isHead || isOwner ? "admin" : "editor";
     const displayName = discordUser.global_name || discordUser.username;
@@ -237,7 +215,7 @@ router.get(
       httpOnly: true,
       secure: env.isProd,
       sameSite: "lax",
-      maxAge: SESSION_TTL_MS, // 24 hours
+      maxAge: SESSION_TTL_MS,
       path: "/",
     });
 
@@ -258,7 +236,7 @@ router.get(
 
     const isHead = await settingsService.isHeadAdmin(user.id);
     const isOwner = env.ownerDiscordIds.includes(user.id);
-    const isAdmin = isHead || isOwner || user.role === "admin";
+    const isAdmin = isHead || isOwner || (!env.isProd && user.role === "admin");
 
     const staffRecord = await staffRepository.findByDiscordId(user.id);
     const hasActiveStaffRecord = Boolean(
@@ -268,10 +246,9 @@ router.get(
     );
 
     const mutualGuilds = user.mutualGuilds ?? [];
+    // Always compute live from DB — never trust stale user.hasDefaultBotAccess from the JWT
     const hasDefaultBotAccess =
-      isAdmin ||
-      user.hasDefaultBotAccess === true ||
-      (hasActiveStaffRecord && mutualGuilds.length > 0);
+      isAdmin || (hasActiveStaffRecord && (mutualGuilds.length > 0 || !env.isProd));
 
     let customBotCount = 0;
     let customWebhookCount = 0;
@@ -305,7 +282,7 @@ router.get(
         global_name: user.global_name ?? null,
         avatar: user.avatar,
         avatarUrl,
-        role: user.role,
+        role: isAdmin ? "admin" : "editor",
         isAdmin,
         hasDefaultBotAccess,
         isFirstLogin: Boolean(user.isFirstLogin),
@@ -355,7 +332,6 @@ router.post(
       global_name: uname,
       avatar: avatar ?? null,
       role,
-      hasDefaultBotAccess: true,
     };
 
     const token = createSessionToken(sessionUser);

@@ -7,18 +7,6 @@ import { settingsService } from "../services/settingsService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 
-/**
- * Access control.
- *
- * The app supports session/JWT authentication and falls back to local-admin
- * for machine callers and headless tests.
- *
- * Two independent checks are supported:
- *   1. {@link attachUser} / {@link requireRole} — role-based.
- *   2. {@link requireAdminKey} — a shared secret header, used for machine callers
- *      and as a stopgap until logins exist.
- */
-
 /** Constant-time string comparison so we don't leak the secret via timing. */
 const safeEqual = (a: unknown, b: unknown): boolean => {
   const bufA = Buffer.from(String(a ?? ""));
@@ -27,15 +15,6 @@ const safeEqual = (a: unknown, b: unknown): boolean => {
   return crypto.timingSafeEqual(bufA, bufB);
 };
 
-/**
- * The acting user, guaranteed.
- *
- * `req.user` is optional by type because not every route attaches one. Calling
- * this in a handler that is preceded by `attachUser` narrows it once, instead of
- * sprinkling non-null assertions through the route bodies.
- *
- * @throws ApiError 401 when no user was attached.
- */
 export const requireUser = (req: Request): UserRecord => {
   if (!req.user) throw ApiError.unauthorized();
   return req.user;
@@ -44,27 +23,30 @@ export const requireUser = (req: Request): UserRecord => {
 /**
  * Resolve the acting user onto `req.user`.
  *
- * Checks session cookie / bearer token first. If not found, falls back
- * to local-admin record.
+ * In production, never falls back to `local-admin` unless a valid `x-admin-key` header is supplied.
  */
 export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) => {
   const sessionUser = getSessionUserFromRequest(req);
   if (sessionUser) {
-    const dbUser = await userRepository.findByDiscordId(sessionUser.id);
-    if (dbUser) {
-      req.user = dbUser;
-    } else {
-      req.user = {
-        id: 0,
-        discord_id: sessionUser.id,
-        username: sessionUser.username,
+    let dbUser = await userRepository.findByDiscordId(sessionUser.id);
+    if (!dbUser) {
+      dbUser = await userRepository.upsert({
+        discordId: sessionUser.id,
+        username: sessionUser.global_name || sessionUser.username,
         avatar: sessionUser.avatar ?? null,
         role: (sessionUser.role as UserRole) || "editor",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      });
     }
-  } else {
+    if (dbUser) {
+      req.user = dbUser;
+    }
+    return next();
+  }
+
+  const adminKey = req.get("x-admin-key");
+  const hasValidAdminKey = Boolean(adminKey && safeEqual(adminKey, env.adminApiKey));
+
+  if (!env.isProd || hasValidAdminKey) {
     req.user = await userRepository.findByDiscordId("local-admin");
   }
   next();
@@ -76,7 +58,6 @@ export const requireRole =
   (req, _res, next) => {
     if (!req.user) return next(ApiError.unauthorized());
 
-    // An 'admin' implicitly satisfies every role check.
     const allowed = req.user.role === "admin" || roles.includes(req.user.role);
     if (!allowed) {
       return next(ApiError.forbidden(`Requires role: ${roles.join(" or ")}`));
@@ -84,13 +65,8 @@ export const requireRole =
     return next();
   };
 
-/** Alias for the most common case. */
 export const requireAdmin: RequestHandler = requireRole("admin");
 
-/**
- * Require the shared `x-admin-key` header. Used for privileged machine-to-machine
- * calls (e.g. sending with a bot token while no login session exists yet).
- */
 export const requireAdminKey: RequestHandler = (req, _res, next) => {
   const provided = req.get("x-admin-key");
   if (!provided || !safeEqual(provided, env.adminApiKey)) {
@@ -115,27 +91,29 @@ export const requireHeadAdmin: RequestHandler = asyncHandler(async (req, _res, n
     const isHead =
       (await settingsService.isHeadAdmin(sessionUser.id)) ||
       env.ownerDiscordIds.includes(sessionUser.id) ||
-      sessionUser.role === "admin";
+      (!env.isProd && sessionUser.role === "admin");
     if (isHead) {
       req.staffContext = { isAdmin: true, staffId: sessionUser.id };
       return next();
     }
+    return next(ApiError.forbidden("Access denied: Requires authorized Head Admin credentials"));
   }
 
-  const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");
-  if (staffId && /^\d{17,20}$/.test(staffId)) {
-    const isHead = await settingsService.isHeadAdmin(staffId);
-    if (isHead) {
-      req.staffContext = { isAdmin: true, staffId };
-      return next();
+  if (!env.isProd) {
+    const staffId = req.get("x-staff-id");
+    if (staffId && /^\d{17,20}$/.test(staffId)) {
+      const isHead = await settingsService.isHeadAdmin(staffId);
+      if (isHead) {
+        req.staffContext = { isAdmin: true, staffId };
+        return next();
+      }
+      return next(ApiError.forbidden("Access denied: Requires authorized Head Admin credentials"));
     }
-    return next(ApiError.forbidden("Access denied: Requires authorized Head Admin credentials"));
   }
 
   if (adminKey) {
     return next(ApiError.forbidden("Access denied: Invalid admin key"));
   }
 
-  return next(ApiError.unauthorized("A valid x-admin-key or authorized x-staff-id header is required"));
+  return next(ApiError.unauthorized("A valid x-admin-key or authorized Head Admin session is required"));
 });
-
