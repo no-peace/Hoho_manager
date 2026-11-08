@@ -19,7 +19,7 @@ import type {
  */
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY ?? "";
+const ADMIN_KEY = import.meta.env.DEV ? (import.meta.env.VITE_ADMIN_API_KEY ?? "") : "";
 const ENV_STAFF_ID = import.meta.env.VITE_STAFF_DISCORD_ID ?? "";
 
 /** Thrown for any non-2xx response; carries the server's error code. */

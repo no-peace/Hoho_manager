@@ -1,17 +1,34 @@
-import { Router } from "express";
-import { attachUser, requireHeadAdmin, requireRole, requireUser } from "../middleware/auth.js";
+import { Router, type RequestHandler } from "express";
+import { attachUser, requireUser } from "../middleware/auth.js";
+import { env } from "../config/env.js";
 import { botProfileService, webhookProfileService } from "../services/profileService.js";
-import { asyncHandler } from "../utils/errors.js";
+import { getSessionUserFromRequest } from "../utils/session.js";
+import { ApiError, asyncHandler } from "../utils/errors.js";
 import { optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
 
 const router = Router();
 
-router.use(attachUser, requireHeadAdmin);
+/**
+ * In production, require either an authenticated Discord OAuth session or valid admin key.
+ * Each user's custom bot & webhook profiles are strictly isolated by `user_id` in the DB.
+ */
+const requireAuthenticatedProfileUser: RequestHandler = (req, _res, next) => {
+  if (env.isProd) {
+    const sessionUser = getSessionUserFromRequest(req);
+    const adminKey = req.get("x-admin-key");
+    if (!sessionUser && adminKey !== env.adminApiKey) {
+      return next(ApiError.unauthorized("Please log in with Discord to manage bot or webhook profiles"));
+    }
+  }
+  return next();
+};
+
+router.use(attachUser, requireAuthenticatedProfileUser);
 
 const readBody = (body: unknown): Record<string, unknown> =>
   (body ?? {}) as Record<string, unknown>;
 
-/* ── Webhook profiles ─────────────────────────────────────────────────────── */
+/* ── Webhook profiles (scoped to requireUser(req).id) ─────────────────────── */
 
 router.get(
   "/webhooks",
@@ -73,11 +90,10 @@ router.delete(
   }),
 );
 
-/* ── Bot profiles (admin only — these hold credentials) ───────────────────── */
+/* ── Bot profiles (scoped to requireUser(req).id, encrypted at rest) ──────── */
 
 router.get(
   "/bots",
-  requireRole("admin"),
   asyncHandler(async (req, res) => {
     res.json({ profiles: await botProfileService.list(requireUser(req).id) });
   }),
@@ -85,7 +101,6 @@ router.get(
 
 router.post(
   "/bots",
-  requireRole("admin"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
     requireStrings(body, ["name", "token", "applicationId", "publicKey"]);
@@ -103,7 +118,6 @@ router.post(
 
 router.patch(
   "/bots/:id",
-  requireRole("admin"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
     const profile = await botProfileService.update(
@@ -124,7 +138,6 @@ router.patch(
 
 router.delete(
   "/bots/:id",
-  requireRole("admin"),
   asyncHandler(async (req, res) => {
     await botProfileService.remove(requireId(req.params.id), requireUser(req).id);
     res.status(204).end();

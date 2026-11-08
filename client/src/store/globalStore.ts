@@ -6,6 +6,14 @@ export interface BotIdentity {
   avatar: string | null;
 }
 
+export interface MutualGuildInfo {
+  id: string;
+  name: string;
+  icon: string | null;
+  roles: string[];
+  isOwner?: boolean;
+}
+
 export interface CurrentUser {
   id: string;
   username: string;
@@ -14,6 +22,12 @@ export interface CurrentUser {
   avatarUrl?: string;
   role?: string;
   isAdmin?: boolean;
+  hasDefaultBotAccess?: boolean;
+  isFirstLogin?: boolean;
+  mutualGuilds?: MutualGuildInfo[];
+  customBotCount?: number;
+  customWebhookCount?: number;
+  needsBotConfig?: boolean;
 }
 
 interface GlobalState {
@@ -27,6 +41,8 @@ interface GlobalState {
   toggleSidebar: () => void;
   currentUser: CurrentUser | null;
   authLoading: boolean;
+  configModalOpen: boolean;
+  setConfigModalOpen: (open: boolean) => void;
   setCurrentUser: (user: CurrentUser | null) => void;
   setAuthLoading: (loading: boolean) => void;
   fetchCurrentUser: () => Promise<CurrentUser | null>;
@@ -84,6 +100,8 @@ export const useGlobalStore = create<GlobalState>((set) => {
     selectedGuildId: initial.selectedGuildId,
     isSidebarOpen: initial.isSidebarOpen,
     botIdentity: loadInitialBotIdentity(),
+    configModalOpen: false,
+    setConfigModalOpen: (open) => set({ configModalOpen: open }),
     setSelectedGuildId: (id) =>
       set((state) => {
         const updated = { selectedGuildId: id };
@@ -91,7 +109,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
           if (typeof localStorage !== "undefined") {
             localStorage.setItem(
               STORAGE_KEY,
-              JSON.stringify({ selectedGuildId: id, isSidebarOpen: state.isSidebarOpen })
+              JSON.stringify({ selectedGuildId: id, isSidebarOpen: state.isSidebarOpen }),
             );
           }
         } catch {
@@ -105,7 +123,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
           if (typeof localStorage !== "undefined") {
             localStorage.setItem(
               STORAGE_KEY,
-              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: open })
+              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: open }),
             );
           }
         } catch {
@@ -119,7 +137,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
           if (typeof localStorage !== "undefined") {
             localStorage.setItem(
               STORAGE_KEY,
-              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: open })
+              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: open }),
             );
           }
         } catch {
@@ -134,7 +152,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
           if (typeof localStorage !== "undefined") {
             localStorage.setItem(
               STORAGE_KEY,
-              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: next })
+              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: next }),
             );
           }
         } catch {
@@ -158,7 +176,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
         return { botIdentity: identity };
       }),
     currentUser: null,
-    authLoading: false,
+    authLoading: true,
     setCurrentUser: (user) => set({ currentUser: user }),
     setAuthLoading: (loading) => set({ authLoading: loading }),
     fetchCurrentUser: async () => {
@@ -181,7 +199,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
       } catch {
         // Ignore network errors on logout
       } finally {
-        set({ currentUser: null });
+        set({ currentUser: null, configModalOpen: false });
         if (typeof localStorage !== "undefined") {
           localStorage.removeItem("staff_id");
         }
@@ -189,4 +207,3 @@ export const useGlobalStore = create<GlobalState>((set) => {
     },
   };
 });
-

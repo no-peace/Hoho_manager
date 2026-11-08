@@ -3,9 +3,14 @@ import crypto from "node:crypto";
 import type { UserRole } from "@dmb/shared";
 import { env } from "../config/env.js";
 import { userRepository } from "../repositories/userRepository.js";
+import { staffRepository } from "../repositories/staffRepository.js";
+import { botProfileRepository, webhookProfileRepository } from "../repositories/profileRepository.js";
 import { settingsService } from "../services/settingsService.js";
+import * as discord from "../services/discordService.js";
 import {
+  type MutualGuildInfo,
   type SessionUser,
+  SESSION_TTL_MS,
   createSessionToken,
   getSessionUserFromRequest,
   parseCookies,
@@ -15,6 +20,14 @@ import { logger } from "../utils/logger.js";
 
 const router = Router();
 const log = logger.child("auth");
+
+interface DiscordUserGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+  owner?: boolean;
+  permissions?: string;
+}
 
 // GET /api/auth/discord/login
 router.get("/discord/login", (_req, res) => {
@@ -36,7 +49,7 @@ router.get("/discord/login", (_req, res) => {
     client_id: clientId,
     response_type: "code",
     redirect_uri: env.discord.redirectUri,
-    scope: "identify",
+    scope: "identify guilds",
     state,
     prompt: "consent",
   });
@@ -61,8 +74,9 @@ router.get(
     }
 
     const cookies = parseCookies(req.headers.cookie);
-    if (cookies.oauth_state && state && cookies.oauth_state !== state) {
-      log.warn("OAuth state parameter mismatch");
+    if (env.isProd && (!state || !cookies.oauth_state || cookies.oauth_state !== state)) {
+      log.warn("OAuth state parameter mismatch or missing");
+      return res.redirect(`${clientBase}/?error=invalid_oauth_state`);
     }
 
     const clientId = env.discord.clientId || env.discord.applicationId || "";
@@ -88,6 +102,7 @@ router.get(
 
     const tokenData = (await tokenRes.json()) as { access_token: string };
 
+    // 1. Fetch authenticated user's Discord identity
     const userRes = await fetch("https://discord.com/api/v10/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
@@ -104,10 +119,98 @@ router.get(
       avatar?: string | null;
     };
 
+    // 2. Fetch user's guilds via OAuth token & cross-check with the Default Bot's guilds + roles
+    let userGuilds: DiscordUserGuild[] = [];
+    try {
+      const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      if (guildsRes.ok) {
+        const parsed = await guildsRes.json();
+        if (Array.isArray(parsed)) userGuilds = parsed as DiscordUserGuild[];
+      }
+    } catch (err) {
+      log.warn(`Could not fetch user OAuth guilds: ${err}`);
+    }
+
+    let botGuilds: discord.DiscordGuildSummary[] = [];
+    if (env.discord.botToken) {
+      try {
+        botGuilds = await discord.getBotGuilds(null);
+      } catch (err) {
+        log.warn(`Could not fetch default bot guilds during login: ${err}`);
+      }
+    }
+
+    const botGuildIds = new Set(botGuilds.map((g) => g.id));
+    const commonRaw = userGuilds.filter((ug) => botGuildIds.has(ug.id));
+
+    const mutualGuilds: MutualGuildInfo[] = [];
+    let hasMutualGuildAdminOrRole = false;
+
+    for (const ug of commonRaw.slice(0, 10)) {
+      let memberRoles: string[] = [];
+      if (env.discord.botToken) {
+        try {
+          const member = await discord.getGuildMember(ug.id, discordUser.id, env.discord.botToken);
+          if (Array.isArray(member?.roles)) {
+            memberRoles = member.roles;
+          }
+        } catch {
+          // User member lookup failed in guild
+        }
+      }
+
+      // Check if user is Guild Owner or has Administrator (0x8) / Manage Guild (0x20) bit in that mutual guild
+      let hasManagePerms = Boolean(ug.owner);
+      if (ug.permissions) {
+        try {
+          const permBits = BigInt(ug.permissions);
+          if ((permBits & 0x8n) !== 0n || (permBits & 0x20n) !== 0n) {
+            hasManagePerms = true;
+          }
+        } catch {
+          // Ignore malformed permission string
+        }
+      }
+
+      const isGuildHeadAdmin = await settingsService.isHeadAdmin(discordUser.id, ug.id);
+      if (hasManagePerms || isGuildHeadAdmin) {
+        hasMutualGuildAdminOrRole = true;
+      }
+
+      mutualGuilds.push({
+        id: ug.id,
+        name: ug.name,
+        icon: ug.icon ?? null,
+        roles: memberRoles,
+        isOwner: Boolean(ug.owner),
+      });
+    }
+
+    // 3. Check Head Admin, Owner, and Staff Access records
+    const existingDbUser = await userRepository.findByDiscordId(discordUser.id);
+    const isFirstLogin = !existingDbUser;
+
     const isHead = await settingsService.isHeadAdmin(discordUser.id);
     const isOwner = env.ownerDiscordIds.includes(discordUser.id);
-    const role: UserRole = isHead || isOwner ? "admin" : "editor";
 
+    const staffRecord = await staffRepository.findByDiscordId(discordUser.id);
+    const hasActiveStaffRecord = Boolean(
+      staffRecord &&
+        staffRecord.is_active &&
+        (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
+    );
+
+    // User can use the Server Default Bot ONLY if:
+    // - They are an instance Owner / Global Head Admin, OR
+    // - They share at least 1 common server with the bot AND have an active Staff record or Server Admin/Owner role
+    const hasDefaultBotAccess =
+      isOwner ||
+      isHead ||
+      (mutualGuilds.length > 0 && (hasActiveStaffRecord || hasMutualGuildAdminOrRole));
+
+    const role: UserRole = isHead || isOwner ? "admin" : "editor";
     const displayName = discordUser.global_name || discordUser.username;
 
     await userRepository.upsert({
@@ -123,6 +226,9 @@ router.get(
       global_name: discordUser.global_name ?? null,
       avatar: discordUser.avatar ?? null,
       role,
+      hasDefaultBotAccess,
+      isFirstLogin,
+      mutualGuilds,
     };
 
     const sessionToken = createSessionToken(sessionUser);
@@ -131,12 +237,13 @@ router.get(
       httpOnly: true,
       secure: env.isProd,
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: SESSION_TTL_MS, // 24 hours
       path: "/",
     });
 
     res.clearCookie("oauth_state", { path: "/" });
-    res.redirect(`${clientBase}/?login=success`);
+    const needsSetup = isFirstLogin || !hasDefaultBotAccess;
+    res.redirect(`${clientBase}/?login=success${needsSetup ? "&setup=1" : ""}`);
   }),
 );
 
@@ -152,6 +259,31 @@ router.get(
     const isHead = await settingsService.isHeadAdmin(user.id);
     const isOwner = env.ownerDiscordIds.includes(user.id);
     const isAdmin = isHead || isOwner || user.role === "admin";
+
+    const staffRecord = await staffRepository.findByDiscordId(user.id);
+    const hasActiveStaffRecord = Boolean(
+      staffRecord &&
+        staffRecord.is_active &&
+        (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
+    );
+
+    const mutualGuilds = user.mutualGuilds ?? [];
+    const hasDefaultBotAccess =
+      isAdmin ||
+      user.hasDefaultBotAccess === true ||
+      (hasActiveStaffRecord && mutualGuilds.length > 0);
+
+    let customBotCount = 0;
+    let customWebhookCount = 0;
+    const dbUser = await userRepository.findByDiscordId(user.id);
+    if (dbUser) {
+      const [bots, webhooks] = await Promise.all([
+        botProfileRepository.listByUser(dbUser.id).catch(() => []),
+        webhookProfileRepository.listByUser(dbUser.id).catch(() => []),
+      ]);
+      customBotCount = bots.length;
+      customWebhookCount = webhooks.length;
+    }
 
     let avatarUrl: string;
     if (user.avatar) {
@@ -175,6 +307,12 @@ router.get(
         avatarUrl,
         role: user.role,
         isAdmin,
+        hasDefaultBotAccess,
+        isFirstLogin: Boolean(user.isFirstLogin),
+        mutualGuilds,
+        customBotCount,
+        customWebhookCount,
+        needsBotConfig: !hasDefaultBotAccess && customBotCount === 0 && customWebhookCount === 0,
       },
     });
   }),
@@ -217,6 +355,7 @@ router.post(
       global_name: uname,
       avatar: avatar ?? null,
       role,
+      hasDefaultBotAccess: true,
     };
 
     const token = createSessionToken(sessionUser);
@@ -224,7 +363,7 @@ router.post(
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: SESSION_TTL_MS,
       path: "/",
     });
 

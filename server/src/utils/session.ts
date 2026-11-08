@@ -2,23 +2,39 @@ import crypto from "node:crypto";
 import type { Request } from "express";
 import { env } from "../config/env.js";
 
+export interface MutualGuildInfo {
+  id: string;
+  name: string;
+  icon: string | null;
+  roles: string[];
+  isOwner?: boolean;
+}
+
 export interface SessionUser {
   id: string;
   username: string;
   global_name?: string | null;
   avatar?: string | null;
   role: string;
+  hasDefaultBotAccess?: boolean;
+  isFirstLogin?: boolean;
+  mutualGuilds?: MutualGuildInfo[];
 }
+
+/** 24-hour session lifetime — users must re-authenticate daily. */
+export const SESSION_TTL_SECONDS = 24 * 60 * 60;
+export const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 
 const getSecret = (): string => env.sessionSecret || env.adminApiKey || "default-session-secret";
 
 export const createSessionToken = (user: SessionUser): string => {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const nowSec = Math.floor(Date.now() / 1000);
   const payload = Buffer.from(
     JSON.stringify({
       ...user,
-      exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
-      iat: Math.floor(Date.now() / 1000),
+      exp: nowSec + SESSION_TTL_SECONDS,
+      iat: nowSec,
     }),
   ).toString("base64url");
   const sig = crypto.createHmac("sha256", getSecret()).update(`${header}.${payload}`).digest("base64url");
@@ -45,6 +61,10 @@ export const verifySessionToken = (token: string): SessionUser | null => {
       global_name: data.global_name ?? null,
       avatar: data.avatar ?? null,
       role: data.role ?? "editor",
+      hasDefaultBotAccess:
+        typeof data.hasDefaultBotAccess === "boolean" ? data.hasDefaultBotAccess : undefined,
+      isFirstLogin: typeof data.isFirstLogin === "boolean" ? data.isFirstLogin : undefined,
+      mutualGuilds: Array.isArray(data.mutualGuilds) ? data.mutualGuilds : undefined,
     };
   } catch {
     return null;
