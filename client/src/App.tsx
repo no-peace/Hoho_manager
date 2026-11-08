@@ -10,6 +10,13 @@ import {
   KeyRound,
   CheckCircle2,
   Trash2,
+  Eye,
+  Sliders,
+  FolderOpen,
+  Send,
+  Code2,
+  Sparkles,
+  FileText,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
@@ -27,6 +34,7 @@ import { useTemplateStore } from "./store/templateStore";
 import { useGlobalStore } from "./store/globalStore";
 import { useProfileStore } from "./store/profileStore";
 import { useTemplates } from "./hooks/useTemplates";
+import { EDITOR_MODES } from "./utils/constants";
 import { downloadJson, parseImportedJson } from "./utils/exportImport";
 import { copyTextToClipboard } from "./utils/clipboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -97,7 +105,10 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
       setPublicKey("");
       setSuccessMsg("Custom Bot verified with Discord, encrypted, and set as your active bot!");
     } catch (err: any) {
-      setError(err?.message || "Discord rejected those bot credentials. Check your Token, Application ID, and Public Key.");
+      setError(
+        err?.message ||
+          "Discord rejected those bot credentials. Check your Token, Application ID, and Public Key.",
+      );
     } finally {
       setSaving(false);
     }
@@ -119,7 +130,6 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
   return (
     <Modal open={open} onClose={onClose} title="Workspace & Bot Configuration" width="max-w-xl">
       <div className="space-y-4 text-xs text-[#dbdee1]">
-        {/* User & Mutual Server Verification Banner */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e1f22] border border-[#111214]">
           <div className="flex items-center gap-3">
             <img
@@ -149,7 +159,6 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </div>
         </div>
 
-        {/* Status Explanation */}
         {!hasDefaultAccess ? (
           <div className="p-3 rounded-lg bg-[#f0b232]/10 border border-[#f0b232]/30 flex items-start gap-2.5">
             <AlertTriangle size={16} className="text-[#f0b232] shrink-0 mt-0.5" />
@@ -157,10 +166,10 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
               <p className="font-bold text-white">
                 {mutualGuilds.length === 0
                   ? "No Common Server Found with HoHo Default Bot"
-                  : "No Staff / Admin Role Found in Common Server"}
+                  : "No Staff Access Found on Default Bot"}
               </p>
               <p className="text-[11px] text-[#dbdee1] leading-relaxed">
-                You can still use the full HoHo Manager studio! To send or edit Discord messages, add your own Bot Token below (encrypted with AES-256-GCM and scoped strictly to your account).
+                You can use the full HoHo Studio! To send or edit Discord messages, add your own Bot Token below (encrypted with AES-256-GCM and scoped strictly to your account).
               </p>
             </div>
           </div>
@@ -168,23 +177,28 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
           <div className="p-3 rounded-lg bg-[#23a559]/10 border border-[#23a559]/30 flex items-start gap-2.5">
             <CheckCircle2 size={16} className="text-[#57f287] shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-white">Verified Server & Role Access</p>
+              <p className="font-bold text-white">Verified Server & Staff Access</p>
               <p className="text-[11px] text-[#dbdee1]">
-                You can use the Server Default Bot{mutualGuilds.length > 0 ? ` across ${mutualGuilds.map((g) => g.name).join(", ")}` : ""}, or optionally add your own custom Bot Profile below.
+                You can use the Server Default Bot
+                {mutualGuilds.length > 0 ? ` (${mutualGuilds.map((g) => g.name).join(", ")})` : ""}, or add your own custom Bot Profile below.
               </p>
             </div>
           </div>
         )}
 
-        {/* Custom Bot Configuration Form */}
-        <form onSubmit={(e) => void handleSaveCustomBot(e)} className="space-y-3 bg-[#1e1f22] p-3.5 rounded-lg border border-[#111214]">
+        <form
+          onSubmit={(e) => void handleSaveCustomBot(e)}
+          className="space-y-3 bg-[#1e1f22] p-3.5 rounded-lg border border-[#111214]"
+        >
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#b5bac1]">
             Add Your Own Discord Bot Token
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">Bot Display Name</label>
+              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
+                Bot Display Name
+              </label>
               <input
                 type="text"
                 required
@@ -195,7 +209,9 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">Application ID (Client ID)</label>
+              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
+                Application ID (Client ID)
+              </label>
               <input
                 type="text"
                 required
@@ -208,7 +224,9 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">Bot Token (from Discord Dev Portal → Bot)</label>
+            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
+              Bot Token (from Discord Dev Portal → Bot)
+            </label>
             <input
               type="password"
               required
@@ -220,7 +238,9 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">Public Key (64-char hex from General Information)</label>
+            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
+              Public Key (64-char hex from General Information)
+            </label>
             <input
               type="text"
               required
@@ -241,7 +261,6 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </div>
         </form>
 
-        {/* Saved Custom Bots for this User */}
         {botProfiles.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
@@ -298,7 +317,7 @@ const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = (
   );
 };
 
-// Backups Modal
+// Templates & Backups Modal
 const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
   onClose,
@@ -476,7 +495,6 @@ export const App: React.FC = () => {
 
       fetchActionTypes();
 
-      // Open config modal automatically if first login, setup=1 query param, or no default bot access & no custom bot saved yet
       const params = new URLSearchParams(window.location.search);
       if (params.get("setup") === "1" || user.isFirstLogin || user.needsBotConfig) {
         setConfigModalOpen(true);
@@ -502,12 +520,18 @@ export const App: React.FC = () => {
 
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
+  const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
+  const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
+  const setMessageMode = useMessageStore((state) => state.setMessageMode);
+  const addMessage = useMessageStore((state) => state.addMessage);
+
   const displayMessages = useMemo(
     () => (messages && messages.length > 0 ? messages : [data]),
     [messages, data],
   );
 
-  const addMessage = useMessageStore((state) => state.addMessage);
+  const activeMsg = displayMessages[activeMessageIndex] || data;
+  const isActiveV2 = Boolean(((activeMsg?.flags ?? 0) & 32768) !== 0);
 
   const openBotModal = (actionMode: "send" | "edit") => {
     setBotModalMode(actionMode);
@@ -529,6 +553,25 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSwitchFormat = (targetMode: "classic" | "v2") => {
+    const nextIsV2 = targetMode === "v2";
+    if (nextIsV2 === isActiveV2) return;
+    if (
+      nextIsV2 &&
+      ((activeMsg?.content && activeMsg.content.trim().length > 0) ||
+        (activeMsg?.embeds && activeMsg.embeds.length > 0))
+    ) {
+      if (
+        !confirm(
+          "Switch to Components V2? Note: Discord's Components V2 flag (32768) disables classic text content and embeds, and cannot be removed from a message after sending.",
+        )
+      ) {
+        return;
+      }
+    }
+    setMessageMode(activeMessageIndex, nextIsV2 ? EDITOR_MODES.V2 : EDITOR_MODES.CLASSIC);
+  };
+
   if (currentPath === "/docs") {
     return <DocsPage />;
   }
@@ -543,10 +586,10 @@ export const App: React.FC = () => {
     return <NotFoundPage />;
   }
 
-  // Mandatory Login Gate: require Discord OAuth login before studio loads
+  // Mandatory Login Gate
   if (authLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#1e1f22] text-[#dbdee1] font-sans">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#18191c] text-[#dbdee1] font-sans">
         <div className="flex flex-col items-center gap-3">
           <img src={HOHO_LOGO_URL} alt="HoHo Manager" className="w-12 h-12 rounded-xl animate-pulse" />
           <p className="text-xs font-semibold text-[#949ba4]">Verifying Discord session...</p>
@@ -562,15 +605,15 @@ export const App: React.FC = () => {
         : null;
 
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#1e1f22] text-[#dbdee1] font-sans p-4">
-        <div className="w-full max-w-md rounded-2xl bg-[#2b2d31] border border-[#111214] shadow-2xl p-6 space-y-5 text-center">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#18191c] text-[#dbdee1] font-sans p-4">
+        <div className="w-full max-w-md rounded-2xl bg-[#232428] border border-[#2b2d31] shadow-2xl p-6 space-y-5 text-center">
           <div className="flex flex-col items-center gap-2">
             <img
               src={HOHO_LOGO_URL}
               alt="HoHo Manager"
               className="w-16 h-16 rounded-2xl object-cover border border-[#35373c] shadow-md"
             />
-            <h1 className="text-xl font-bold text-white mt-1">HoHo Manager Studio</h1>
+            <h1 className="text-xl font-bold text-white mt-1">HoHo Studio</h1>
             <p className="text-xs text-[#949ba4] max-w-xs">
               Sign in with Discord to verify your mutual servers and roles. Sessions expire every 24 hours for security.
             </p>
@@ -595,8 +638,8 @@ export const App: React.FC = () => {
             <span>Login with Discord</span>
           </button>
 
-          <div className="pt-3 border-t border-[#1e1f22] text-[11px] text-[#949ba4] space-y-1">
-            <p>• Checks mutual servers & staff roles with the default bot</p>
+          <div className="pt-3 border-t border-[#2b2d31] text-[11px] text-[#949ba4] space-y-1">
+            <p>• Verifies mutual servers & staff access automatically</p>
             <p>• No shared server? Bring your own Bot Token after login</p>
           </div>
         </div>
@@ -605,216 +648,223 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
-      <Header onOpenBackups={() => setBackupsOpen(true)} />
+    <div className="flex h-screen flex-col bg-[#1e1f22] text-[#dbdee1] font-sans overflow-hidden">
+      <Header
+        onOpenBackups={() => setBackupsOpen(true)}
+        onOpenJson={() => setJsonModalOpen(true)}
+        onShare={handleShare}
+        onClearAll={handleClearAll}
+        onOpenSend={openBotModal}
+      />
 
-      {/* Banner if user has no default bot access and hasn't configured a custom bot yet */}
+      {/* Custom Bot Mode Banner */}
       {!currentUser.hasDefaultBotAccess && !currentUser.isAdmin && (
-        <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-4 py-1.5 flex items-center justify-between text-xs">
-          <span className="text-[#dbdee1]">
-            <strong className="text-[#f0b232]">Custom Bot Mode:</strong> You don't share an authorized server/role with the default bot. Use your own Bot Profile to dispatch messages.
+        <div className="bg-[#f0b232]/10 border-b border-[#f0b232]/25 px-4 py-1.5 flex items-center justify-between text-xs shrink-0">
+          <span className="text-[#dbdee1] truncate mr-2">
+            <strong className="text-[#f0b232]">Custom Bot Mode:</strong> Configure your own Bot Token to send messages.
           </span>
           <button
             type="button"
             onClick={() => setConfigModalOpen(true)}
-            className="px-2.5 py-0.5 rounded bg-[#f0b232] text-[#111214] font-bold hover:bg-[#f0b232]/90 transition-colors"
+            className="px-2.5 py-0.5 rounded bg-[#f0b232] text-[#111214] font-bold hover:bg-[#f0b232]/90 transition-colors shrink-0"
           >
-            Configure Bot Token
+            Configure Bot
           </button>
         </div>
       )}
 
-      {/* Mobile Switcher (< 768px) */}
-      <div className="md:hidden flex bg-[#2b2d31] border-b border-[#1e1f22] shrink-0 p-1.5 gap-1">
-        <button
-          type="button"
-          onClick={() => setMobileView("editor")}
-          className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-            mobileView === "editor" ? "bg-[#5865f2] text-white" : "bg-[#35373c] text-[#b5bac1]"
-          }`}
-        >
-          Editor
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileView("preview")}
-          className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-            mobileView === "preview" ? "bg-[#5865f2] text-white" : "bg-[#35373c] text-[#b5bac1]"
-          }`}
-        >
-          Preview
-        </button>
-      </div>
-
+      {/* Main Studio Area */}
       <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        <div className="flex min-h-0 flex-1">
-          <SplitPane
-            initialRatio={0.48}
-            minRatio={0.3}
-            maxRatio={0.7}
-            left={
-              <div
-                className={`${
-                  mobileView === "editor" ? "flex" : "hidden"
-                } md:flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0`}
-              >
-                {/* Top Action Bar */}
-                <div className="p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={handleShare}
-                        className="text-xs"
-                      >
-                        Share
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setBackupsOpen(true)}
-                        className="text-xs"
-                      >
-                        Backups
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setJsonModalOpen(true)}
-                        className="text-xs"
-                      >
-                        JSON
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setConfigModalOpen(true)}
-                        className="text-xs text-[#5865f2] hover:bg-[#5865f2]/15"
-                      >
-                        Bot Config
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleClearAll}
-                        className="text-xs text-[#f28b8b] hover:bg-[#da373c]/20"
-                      >
-                        Clear All
-                      </Button>
-                    </div>
-
-                    {/* Bot Token Dispatch Only */}
-                    <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+        <SplitPane
+          initialRatio={0.48}
+          minRatio={0.3}
+          maxRatio={0.7}
+          mobileActivePane={mobileView === "editor" ? "left" : "right"}
+          left={
+            <div className="flex flex-col h-full bg-[#232428] w-full min-w-0">
+              {/* Sub-Header: Message Tabs + Classic vs Components V2 Format Switch */}
+              <div className="px-3 py-2 bg-[#18191c] border-b border-[#111214] flex flex-wrap items-center justify-between gap-2 shrink-0">
+                {/* Message Tabs */}
+                <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
+                  {displayMessages.map((_, idx) => {
+                    const active = idx === activeMessageIndex;
+                    return (
                       <button
+                        key={idx}
                         type="button"
-                        onClick={() => openBotModal("send")}
-                        className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                        onClick={() => setActiveMessageIndex(idx)}
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors shrink-0 ${
+                          active
+                            ? "bg-[#5865f2] text-white shadow-sm"
+                            : "bg-[#232428] text-[#949ba4] hover:text-white hover:bg-[#2b2d31]"
+                        }`}
                       >
-                        <Bot size={13} /> Bot Send
+                        Msg {idx + 1}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => openBotModal("edit")}
-                        className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
-                        title="Edit message via bot token"
-                      >
-                        <Edit3 size={11} /> Edit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Multi-Message Workspace (Discohook layout) */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-                  {displayMessages.map((_, idx) => (
-                    <MessageEditor key={idx} index={idx} />
-                  ))}
-
-                  <div className="relative mt-2">
+                    );
+                  })}
+                  {displayMessages.length < 10 && (
                     <button
                       type="button"
                       onClick={() => setAddMsgMenuOpen((prev) => !prev)}
-                      disabled={displayMessages.length >= 10}
-                      className="w-full py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
+                      className="px-2 py-1 rounded-md text-xs font-bold bg-[#232428] text-[#949ba4] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1 shrink-0"
+                      title="Add another message to batch"
                     >
-                      <Plus size={15} /> Add Message ({displayMessages.length}/10)
+                      <Plus size={12} />
                     </button>
+                  )}
+                </div>
 
-                    {addMsgMenuOpen && (
-                      <div className="mt-2 rounded-lg bg-[#232428] border border-[#1e1f22] p-2 space-y-2 shadow-2xl">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addMessage({ flags: 0 });
-                            setAddMsgMenuOpen(false);
-                          }}
-                          className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
-                        >
-                          <div className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">
-                            TXT
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-white">Standard Message (Classic)</p>
-                            <p className="text-[11px] text-[#949ba4] mt-0.5">
-                              Classic message with content, embeds, attachments, and action rows.
-                            </p>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addMessage({
-                              flags: 32768,
-                              components: [
-                                {
-                                  _id: Math.random().toString(36).slice(2, 10),
-                                  type: 10,
-                                  content: "",
-                                },
-                              ],
-                            });
-                            setAddMsgMenuOpen(false);
-                          }}
-                          className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
-                        >
-                          <div className="p-2 rounded bg-[#5865f2]/20 text-[#5865f2] font-mono text-xs font-bold shrink-0">
-                            V2
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-white">Components V2 Message</p>
-                              <span className="rounded-full bg-[#5865f2] px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                                New
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-[#949ba4] mt-0.5">
-                              Build rich layouts with containers, text blocks, galleries, files, separators, and action rows.
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                {/* Format Switch: Classic vs Components V2 */}
+                <div className="flex items-center bg-[#232428] p-0.5 rounded-lg border border-[#111214] shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchFormat("classic")}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 transition-colors ${
+                      !isActiveV2
+                        ? "bg-[#35373c] text-white shadow-sm"
+                        : "text-[#949ba4] hover:text-[#dbdee1]"
+                    }`}
+                  >
+                    <FileText size={11} />
+                    <span>Classic</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchFormat("v2")}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 transition-colors ${
+                      isActiveV2
+                        ? "bg-[#5865f2] text-white shadow-sm"
+                        : "text-[#949ba4] hover:text-[#dbdee1]"
+                    }`}
+                  >
+                    <Sparkles size={11} />
+                    <span>Components V2</span>
+                  </button>
                 </div>
               </div>
-            }
-            right={
-              <div
-                className={`${
-                  mobileView === "preview" ? "flex" : "hidden"
-                } md:flex flex-col h-full bg-[#313338] w-full min-w-0`}
-              >
-                <MessagePreview />
-              </div>
-            }
-          />
-        </div>
 
-        {/* Selected Component Property & Flow Builder Panel */}
+              {/* Quick Add Message Dropdown (when + is clicked) */}
+              {addMsgMenuOpen && (
+                <div className="mx-3 mt-2 rounded-xl bg-[#18191c] border border-[#2b2d31] p-2 grid grid-cols-1 sm:grid-cols-2 gap-2 shadow-xl shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addMessage({ flags: 0 });
+                      setAddMsgMenuOpen(false);
+                    }}
+                    className="rounded-lg bg-[#232428] hover:bg-[#2b2d31] border border-[#2b2d31] hover:border-[#5865f2] p-2.5 text-left transition-all flex items-start gap-2.5"
+                  >
+                    <div className="p-1.5 rounded bg-[#18191c] text-[#dbdee1] font-mono text-[10px] font-bold shrink-0">
+                      TXT
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Standard (Classic)</p>
+                      <p className="text-[10px] text-[#949ba4]">Content, embeds & button rows</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addMessage({
+                        flags: 32768,
+                        components: [
+                          {
+                            _id: Math.random().toString(36).slice(2, 10),
+                            type: 10,
+                            content: "",
+                          },
+                        ],
+                      });
+                      setAddMsgMenuOpen(false);
+                    }}
+                    className="rounded-lg bg-[#232428] hover:bg-[#2b2d31] border border-[#2b2d31] hover:border-[#5865f2] p-2.5 text-left transition-all flex items-start gap-2.5"
+                  >
+                    <div className="p-1.5 rounded bg-[#5865f2]/20 text-[#5865f2] font-mono text-[10px] font-bold shrink-0">
+                      V2
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Components V2</p>
+                      <p className="text-[10px] text-[#949ba4]">Containers, sections & galleries</p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Scrollable Message Editor List */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar pb-20 lg:pb-4">
+                {displayMessages.map((_, idx) => (
+                  <MessageEditor key={idx} index={idx} />
+                ))}
+              </div>
+            </div>
+          }
+          right={
+            <div className="flex flex-col h-full bg-[#313338] w-full min-w-0 pb-16 lg:pb-0">
+              <MessagePreview />
+            </div>
+          }
+        />
+
+        {/* Docked Right Inspector (Desktop) / Slide-Up Bottom Sheet (Mobile & Tablet) */}
         <PropertyPanel />
       </main>
+
+      {/* Dedicated Mobile & Tablet Bottom Navigation Bar (< 1024px) */}
+      <nav
+        aria-label="Mobile studio navigation"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 h-14 bg-[#18191c] border-t border-[#2b2d31] px-2 flex items-center justify-around shadow-2xl"
+      >
+        <button
+          type="button"
+          onClick={() => setMobileView("editor")}
+          className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+            mobileView === "editor" ? "text-[#5865f2]" : "text-[#949ba4] hover:text-white"
+          }`}
+        >
+          <Sliders size={16} />
+          <span>Build</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileView("preview")}
+          className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+            mobileView === "preview" ? "text-[#5865f2]" : "text-[#949ba4] hover:text-white"
+          }`}
+        >
+          <Eye size={16} />
+          <span>Preview</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setBackupsOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg text-[11px] font-bold text-[#949ba4] hover:text-white transition-colors"
+        >
+          <FolderOpen size={16} />
+          <span>Templates</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setJsonModalOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg text-[11px] font-bold text-[#949ba4] hover:text-white transition-colors"
+        >
+          <Code2 size={16} />
+          <span>JSON</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openBotModal("send")}
+          className="flex items-center gap-1.5 bg-[#23a559] hover:bg-[#1d8a4a] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition-colors"
+        >
+          <Send size={14} />
+          <span>Publish</span>
+        </button>
+      </nav>
 
       <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />

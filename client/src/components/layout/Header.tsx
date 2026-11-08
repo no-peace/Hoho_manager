@@ -11,11 +11,19 @@ import {
   Shield,
   ArrowLeft,
   KeyRound,
+  Code2,
+  Share2,
+  RotateCcw,
+  Send,
+  Edit3,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { SettingsModal } from "./SettingsModal";
 import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore } from "../../store/messageStore";
 import { AccessPanel } from "./AccessPanel";
 
 const HOHO_LOGO_URL =
@@ -37,27 +45,21 @@ export const getDiscordAvatarUrl = (
   }
 };
 
-const DiscordIcon: React.FC<{ size?: number; className?: string }> = ({
-  size = 16,
-  className = "",
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className={className}
-    aria-hidden="true"
-  >
-    <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.08-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z" />
-  </svg>
-);
-
-interface HeaderProps {
+export interface HeaderProps {
   onOpenBackups?: () => void;
+  onOpenJson?: () => void;
+  onShare?: () => void;
+  onClearAll?: () => void;
+  onOpenSend?: (mode: "send" | "edit") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenBackups,
+  onOpenJson,
+  onShare,
+  onClearAll,
+  onOpenSend,
+}) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -66,6 +68,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
   const { selectedGuildId, setSelectedGuildId, currentUser, logout, setConfigModalOpen } =
     useGlobalStore();
+
+  const data = useMessageStore((state) => state.data);
+  const mode = useMessageStore((state) => state.mode);
+  const validationErrors = React.useMemo(
+    () => useMessageStore.getState().getValidationErrors(),
+    [data, mode],
+  );
 
   const isSubRoute =
     typeof window !== "undefined" &&
@@ -98,39 +107,59 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
 
   return (
     <>
-      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b-2 border-[#1E1F22] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
-        {/* Left: Dashboard Back link + HoHo Logo + HoHo Manager title */}
-        <div className="flex items-center gap-2.5">
+      <header className="sticky top-0 left-0 z-30 bg-[#18191c] border-b border-[#111214] w-full px-3 sm:px-4 h-13 flex items-center justify-between gap-2 font-sans shrink-0">
+        {/* Left: Brand + Validation Status Pill */}
+        <div className="flex items-center gap-2.5 min-w-0">
           {isSubRoute && (
             <a
               href="/"
-              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-2 py-1 rounded transition-colors mr-1"
-              title="Return to Dashboard"
+              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#232428] hover:bg-[#2b2d31] border border-[#2b2d31] px-2 py-1.5 rounded-lg transition-colors"
+              title="Return to Studio"
             >
               <ArrowLeft size={13} />
-              <span className="hidden sm:inline">Dashboard</span>
             </a>
           )}
           <a
             href="/"
-            className="flex items-center gap-2.5 group focus:outline-none"
-            title="HoHo Manager"
+            className="flex items-center gap-2.5 group focus:outline-none shrink-0"
+            title="HoHo Manager Studio"
           >
             <img
               src={HOHO_LOGO_URL}
               alt="HoHo Manager"
-              className="h-8 w-8 rounded-lg object-cover bg-[#2b2d31] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform"
+              className="h-8 w-8 rounded-lg object-cover bg-[#232428] border border-[#2b2d31] shadow-sm"
             />
-            <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
-              HoHo Manager
-            </span>
+            <div className="hidden sm:flex flex-col">
+              <span className="text-sm font-bold text-white leading-tight tracking-tight">
+                HoHo Studio
+              </span>
+              <span className="text-[10px] font-medium text-[#949ba4] leading-tight">
+                Discord Message Builder
+              </span>
+            </div>
           </a>
+
+          {/* Validation Badge (Desktop) */}
+          <div className="hidden xl:flex items-center pl-2 border-l border-[#2b2d31]">
+            {validationErrors.length === 0 ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#23a559]/10 border border-[#23a559]/25 text-[11px] font-semibold text-[#57f287]">
+                <CheckCircle2 size={12} /> Ready
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#f0b232]/10 border border-[#f0b232]/30 text-[11px] font-semibold text-[#f0b232]"
+                title={validationErrors.join("\n")}
+              >
+                <AlertCircle size={12} /> {validationErrors.length} issue{validationErrors.length > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
-        <div className="flex items-center gap-2.5">
+        {/* Center: Server Selector & Unified Studio Toolbar (Desktop >= 1024px) */}
+        <div className="hidden lg:flex items-center gap-1.5 bg-[#232428] p-1 rounded-lg border border-[#111214]">
           {hasDefaultBotAccess && (
-            <div className="w-44 sm:w-48 relative">
+            <div className="w-44 pr-1 border-r border-[#2b2d31]">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
@@ -140,62 +169,117 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             </div>
           )}
 
+          {onOpenBackups && (
+            <button
+              type="button"
+              onClick={onOpenBackups}
+              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
+              title="Saved Templates & Backups"
+            >
+              <FolderOpen size={13} className="text-[#949ba4]" />
+              <span>Templates</span>
+            </button>
+          )}
+
+          {onOpenJson && (
+            <button
+              type="button"
+              onClick={onOpenJson}
+              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
+              title="Inspect or Edit Raw JSON Payload"
+            >
+              <Code2 size={13} className="text-[#949ba4]" />
+              <span>JSON</span>
+            </button>
+          )}
+
+          {onShare && (
+            <button
+              type="button"
+              onClick={onShare}
+              className="h-7 px-2.5 rounded-md text-xs font-semibold text-[#dbdee1] hover:text-white hover:bg-[#2b2d31] flex items-center gap-1.5 transition-colors"
+              title="Copy JSON Payload to Clipboard"
+            >
+              <Share2 size={13} className="text-[#949ba4]" />
+              <span>Copy</span>
+            </button>
+          )}
+
+          {onClearAll && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="h-7 px-2 rounded-md text-xs font-semibold text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-1 transition-colors"
+              title="Reset Workspace"
+            >
+              <RotateCcw size={12} />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right: Primary Publish Button + Admin/Bot Config + User Profile */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Desktop Publish / Edit Action Group */}
+          {onOpenSend && (
+            <div className="hidden sm:inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+              <button
+                type="button"
+                onClick={() => onOpenSend("send")}
+                className="bg-[#23a559] hover:bg-[#1d8a4a] text-white px-3 h-8 text-xs font-bold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+              >
+                <Send size={12} />
+                <span>Publish</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenSend("edit")}
+                className="bg-[#1e2622] hover:bg-[#27332d] text-[#57f287] px-2.5 h-8 text-xs font-semibold transition-colors flex items-center gap-1"
+                title="Edit an existing bot message"
+              >
+                <Edit3 size={11} />
+                <span>Edit</span>
+              </button>
+            </div>
+          )}
+
           {isAdmin ? (
             <button
               type="button"
-              onClick={() => setSettingsOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-              title="Head Admin Settings"
+              onClick={() => setAccessOpen(true)}
+              className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:bg-[#f0b232]/15 border border-[#f0b232]/30 bg-[#f0b232]/10 transition-colors"
+              title="Staff Access Controls"
             >
-              <Settings size={14} className="text-[#949ba4]" />
-              <span className="hidden md:inline">Settings</span>
+              <ShieldAlert size={13} />
+              <span className="hidden md:inline">Access</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+              className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors"
               title="Configure Custom Bot Token"
             >
-              <KeyRound size={14} className="text-[#f0b232]" />
-              <span className="hidden md:inline">Bot Config</span>
+              <KeyRound size={13} className="text-[#f0b232]" />
+              <span className="hidden md:inline">Bot Token</span>
             </button>
           )}
 
-          {onOpenBackups && (
-            <button
-              type="button"
-              onClick={onOpenBackups}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-              title="Saved Templates & Backups"
-            >
-              <FolderOpen size={14} className="text-[#949ba4]" />
-              <span className="hidden md:inline">Backups</span>
-            </button>
-          )}
-        </div>
+          <a
+            href="/docs"
+            className="h-8 px-2.5 rounded-lg text-xs font-semibold text-[#949ba4] hover:text-white border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors hidden md:flex items-center gap-1"
+            title="Documentation"
+          >
+            <BookOpen size={13} />
+            <span className="hidden xl:inline">Docs</span>
+          </a>
 
-        {/* Right: User Profile / Discord Login */}
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setAccessOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 px-2.5 py-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-              title="Staff Access Controls"
-            >
-              <ShieldAlert size={14} />
-              <span className="hidden sm:inline">Staff Access</span>
-            </button>
-          )}
-
-          {currentUser ? (
-            /* Authenticated User Menu */
+          {currentUser && (
             <div className="relative" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-full border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                className="flex items-center gap-2 h-8 pl-1 pr-2 rounded-full border border-[#2b2d31] bg-[#232428] hover:bg-[#2b2d31] transition-colors"
                 title={`Logged in as ${currentUser.username}`}
               >
                 <img
@@ -203,20 +287,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                   alt={currentUser.username}
                   className="w-6 h-6 rounded-full object-cover bg-[#1e1f22]"
                 />
-                <span className="text-xs font-semibold text-[#dbdee1] max-w-[100px] truncate hidden sm:inline">
+                <span className="text-xs font-semibold text-[#dbdee1] max-w-[90px] truncate hidden sm:inline">
                   {currentUser.global_name || currentUser.username}
                 </span>
                 <ChevronDown size={13} className="text-[#949ba4]" />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-9 w-64 rounded-lg bg-[#1e1f22] border border-[#111214] shadow-2xl p-3 z-50 text-[#dbdee1] space-y-3">
-                  {/* User Profile Header */}
+                <div className="absolute right-0 top-10 w-64 rounded-xl bg-[#18191c] border border-[#2b2d31] shadow-2xl p-3 z-50 text-[#dbdee1] space-y-3">
                   <div className="flex items-center gap-3 border-b border-[#2b2d31] pb-3">
                     <img
                       src={getDiscordAvatarUrl(currentUser, 64)}
                       alt={currentUser.username}
-                      className="w-10 h-10 rounded-full object-cover bg-[#2b2d31] border border-[#35373c]"
+                      className="w-10 h-10 rounded-full object-cover bg-[#232428] border border-[#35373c]"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-white truncate">
@@ -241,8 +324,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                     </div>
                   </div>
 
-                  {/* Snowflake ID Pill with Copy */}
-                  <div className="flex items-center justify-between bg-[#2b2d31] px-2.5 py-1.5 rounded text-xs">
+                  <div className="flex items-center justify-between bg-[#232428] px-2.5 py-1.5 rounded-lg text-xs">
                     <span className="font-mono text-[#949ba4] truncate text-[11px]">
                       {currentUser.id}
                     </span>
@@ -260,7 +342,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                     </button>
                   </div>
 
-                  {/* Quick Action Links */}
                   <div className="space-y-1">
                     <button
                       type="button"
@@ -268,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                         setUserMenuOpen(false);
                         setConfigModalOpen(true);
                       }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
                     >
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Configuration</span>
@@ -282,7 +363,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                             setUserMenuOpen(false);
                             setAccessOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
                         >
                           <Shield size={14} className="text-[#949ba4]" />
                           <span>Staff Access</span>
@@ -293,7 +374,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                             setUserMenuOpen(false);
                             setSettingsOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-[#232428] flex items-center gap-2 text-[#dbdee1] transition-colors"
                         >
                           <Settings size={14} className="text-[#949ba4]" />
                           <span>Head Admin Settings</span>
@@ -302,7 +383,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                     )}
                   </div>
 
-                  {/* Log Out Button */}
                   <div className="border-t border-[#2b2d31] pt-2">
                     <button
                       type="button"
@@ -310,7 +390,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                         setUserMenuOpen(false);
                         await logout();
                       }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-2 transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2.5 py-1.5 rounded-lg text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-2 transition-colors"
                     >
                       <LogOut size={14} />
                       <span>Log Out</span>
@@ -319,36 +399,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
                 </div>
               )}
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/api/auth/discord/login";
-              }}
-              className="text-xs flex items-center gap-1.5 font-semibold bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white px-3 py-1.5 rounded transition-colors shadow-sm"
-              title="Login with Discord"
-            >
-              <DiscordIcon size={14} />
-              <span className="hidden sm:inline">Login with Discord</span>
-              <span className="sm:hidden">Login</span>
-            </button>
           )}
-
-          <a
-            href="/docs"
-            className="text-xs font-semibold text-[#949ba4] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
-            title="Documentation"
-          >
-            <BookOpen size={13} />
-            <span>Docs</span>
-          </a>
         </div>
       </header>
 
-      {/* Settings Modal (Head Admin only) */}
       {isAdmin && <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
-      {/* Staff Access Modal (Head Admin only) */}
       {isAdmin && (
         <Modal
           open={accessOpen}
