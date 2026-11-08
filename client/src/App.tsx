@@ -19,6 +19,7 @@ import { BotDispatchModal } from "./components/send/BotDispatchModal";
 import { useMessageStore } from "./store/messageStore";
 import { useActionStore } from "./store/actionStore";
 import { useTemplateStore } from "./store/templateStore";
+import { useGlobalStore } from "./store/globalStore";
 import { useTemplates } from "./hooks/useTemplates";
 import { downloadJson, parseImportedJson } from "./utils/exportImport";
 import { copyTextToClipboard } from "./utils/clipboard";
@@ -191,6 +192,23 @@ export const App: React.FC = () => {
   const fetchActionTypes = useActionStore((state) => state.fetchActionTypes);
   useEffect(() => {
     fetchActionTypes();
+    
+    // Auto fetch discord bot identity on app load
+    void (async () => {
+      try {
+        const { default: api } = await import("./api/client");
+        const res = await api.discord.identity();
+        if (res && res.id) {
+          useGlobalStore.getState().setBotIdentity({
+            id: res.id,
+            username: res.username || "HoHo Bot",
+            avatar: res.avatar,
+          });
+        }
+      } catch {
+        // fallback to local cache if offline
+      }
+    })(); 
   }, [fetchActionTypes]);
 
   const messages = useMessageStore((state) => state.messages);

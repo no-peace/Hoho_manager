@@ -346,7 +346,9 @@ router.get(
     if (!data || !data.id) return res.json(null);
 
     return res.json({
+      id: data.id,
       name: data.username,
+      username: data.username,
       avatar: data.avatar
         ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
         : "",
