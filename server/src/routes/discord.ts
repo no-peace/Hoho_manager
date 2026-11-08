@@ -5,6 +5,7 @@ import { env } from "../config/env.js";
 import { staffRepository } from "../repositories/staffRepository.js";
 import { auditLogRepository } from "../repositories/auditLogRepository.js";
 import { sessionRepository } from "../repositories/sessionRepository.js";
+import { getSessionUserFromRequest } from "../utils/session.js";
 import { settingsService } from "../services/settingsService.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
@@ -36,13 +37,31 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
     return next();
   }
 
-  const staffId = req.get("x-staff-id");
+  const sessionUser = getSessionUserFromRequest(req);
+  const headerStaffId = req.get("x-staff-id");
+
+  if (sessionUser && headerStaffId && headerStaffId !== sessionUser.id) {
+    return next(ApiError.forbidden("Provided x-staff-id does not match the authenticated session user ID"));
+  }
+
+  const staffId = sessionUser ? sessionUser.id : headerStaffId;
+
+  if (
+    sessionUser &&
+    ((await settingsService.isHeadAdmin(sessionUser.id)) ||
+      env.ownerDiscordIds.includes(sessionUser.id) ||
+      sessionUser.role === "admin")
+  ) {
+    req.staffContext = { isAdmin: true, staffId: sessionUser.id };
+    return next();
+  }
+
   if (staffId && /^\d{17,20}$/.test(staffId)) {
-    if (await settingsService.isHeadAdmin(staffId)) {
+    if ((await settingsService.isHeadAdmin(staffId)) || env.ownerDiscordIds.includes(staffId)) {
       req.staffContext = { isAdmin: true, staffId };
       return next();
     }
-
+    
     const staff = await staffRepository.findByDiscordId(staffId);
     if (staff && staff.is_active) {
       if (!staff.expires_at || new Date(staff.expires_at) >= new Date()) {

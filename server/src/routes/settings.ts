@@ -3,6 +3,7 @@ import { requireHeadAdmin } from "../middleware/auth.js";
 import { settingsService } from "../services/settingsService.js";
 import { auditLog } from "../services/auditLog.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { getSessionUserFromRequest } from "../utils/session.js";
 import { env } from "../config/env.js";
 
 const router = Router();
@@ -16,10 +17,15 @@ router.get("/auth", asyncHandler(async (req, res) => {
   const adminKey = req.get("x-admin-key");
   const isAdminKey = !!adminKey && adminKey === env.adminApiKey;
 
-  const staffId = req.get("x-staff-id");
+  const sessionUser = getSessionUserFromRequest(req);
+  const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");
+
   let isHeadAdminUser = false;
-  if (staffId && /^\d{17,20}$/.test(staffId)) {
-    isHeadAdminUser = await settingsService.isHeadAdmin(staffId);
+  if (sessionUser && (env.ownerDiscordIds.includes(sessionUser.id) || sessionUser.role === "admin")) {
+    isHeadAdminUser = true;
+  } else if (staffId && /^\d{17,20}$/.test(staffId)) {
+    isHeadAdminUser =
+      env.ownerDiscordIds.includes(staffId) || (await settingsService.isHeadAdmin(staffId));
   }
 
   const isHeadAdmin = isAdminKey || isHeadAdminUser;
