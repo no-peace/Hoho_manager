@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import { useProfileStore } from "../../store/profileStore";
 import api from "../../api/client";
 import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
 
@@ -50,6 +51,22 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const roles = useDiscordCacheStore((state) => state.roles);
   const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
   const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const botProfileId = useProfileStore((state) => state.botProfileId);
+
+  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin || botProfileId !== null);
+  const staffPerms = currentUser?.staffPermissions;
+  const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);
+  const canPingHere = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_here);
+
+  const mentionableRoles = useMemo(() => {
+    if (isUnrestrictedMentions) return guildRoles;
+    if (!staffPerms?.can_mention_roles) return EMPTY_ROLES;
+    const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
+    if (allowedIds.includes("*")) return guildRoles;
+    return guildRoles.filter((r) => allowedIds.includes(r.id));
+  }, [guildRoles, isUnrestrictedMentions, staffPerms]);
+
   const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
   const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
 
@@ -184,9 +201,9 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   }, [guildChannels, q]);
 
   const filteredRoles = useMemo(() => {
-    if (!guildRoles) return [];
-    return guildRoles.filter((r) => !q || r.name.toLowerCase().includes(q));
-  }, [guildRoles, q]);
+    if (!mentionableRoles) return [];
+    return mentionableRoles.filter((r) => !q || r.name.toLowerCase().includes(q));
+  }, [mentionableRoles, q]);
 
   // Computed unix timestamp for time tab
   const computedUnix = useMemo(() => {
@@ -411,7 +428,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                 </div>
                 <div className="space-y-0.5 max-h-36 overflow-y-auto">
                   {/* Default special mentions */}
-                  {(!q || "@everyone".includes(q)) && (
+                  {canPingEveryone && (!q || "@everyone".includes(q)) && (
                     <button
                       type="button"
                       onClick={(e) => handleInsert("@everyone", e)}
@@ -426,7 +443,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                       </span>
                     </button>
                   )}
-                  {(!q || "@here".includes(q)) && (
+                  {canPingHere && (!q || "@here".includes(q)) && (
                     <button
                       type="button"
                       onClick={(e) => handleInsert("@here", e)}

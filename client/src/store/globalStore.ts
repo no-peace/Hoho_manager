@@ -14,6 +14,13 @@ export interface MutualGuildInfo {
   isOwner?: boolean;
 }
 
+export interface StaffMentionPermissions {
+  can_mention_everyone: boolean;
+  can_mention_here: boolean;
+  can_mention_roles: boolean;
+  allowed_role_mention_ids: string[];
+}
+
 export interface CurrentUser {
   id: string;
   username: string;
@@ -28,6 +35,7 @@ export interface CurrentUser {
   customBotCount?: number;
   customWebhookCount?: number;
   needsBotConfig?: boolean;
+  staffPermissions?: StaffMentionPermissions | null;
 }
 
 export type ToastVariant = "success" | "error" | "warning" | "info";

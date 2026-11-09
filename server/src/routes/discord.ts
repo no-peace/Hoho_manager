@@ -114,8 +114,9 @@ router.get("/guilds/:guildId/channels", requireStaffOrAdmin, asyncHandler(async 
   }
 
   const profileId = parseProfileId(req.query.profileId);
-  let channels = await discord.getGuildChannels(guildId, profileId);
+  const channels = await discord.getGuildChannels(guildId, profileId);
 
+  /*
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
     let allowed: string[] = [];
@@ -130,6 +131,7 @@ router.get("/guilds/:guildId/channels", requireStaffOrAdmin, asyncHandler(async 
       channels = channels.filter((c) => allowed.includes(c.id));
     }
   }
+  */
 
   return res.json({ channels });
 }));

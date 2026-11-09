@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { RichPicker } from "./RichPicker";
 import { useGlobalStore } from "../../store/globalStore";
+import { useProfileStore } from "../../store/profileStore";
 import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
 import api from "../../api/client";
 
@@ -249,6 +250,23 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
   const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
   const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const botProfileId = useProfileStore((state) => state.botProfileId);
+
+  // Unrestricted if Head Admin or using a Custom Bot profile
+  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin || botProfileId !== null);
+  const staffPerms = currentUser?.staffPermissions;
+
+  const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);
+  const canPingHere = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_here);
+
+  const mentionableRoles = useMemo(() => {
+    if (isUnrestrictedMentions) return guildRoles;
+    if (!staffPerms?.can_mention_roles) return EMPTY_ROLES;
+    const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
+    if (allowedIds.includes("*")) return guildRoles;
+    return guildRoles.filter((r) => allowedIds.includes(r.id));
+  }, [guildRoles, isUnrestrictedMentions, staffPerms]);
 
   const [serverEmojis, setServerEmojis] = useState<
     Array<{ id: string; name: string; animated?: boolean }>
@@ -509,7 +527,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (acType === "user") {
       const items: AutocompleteItem[] = [];
 
-      if (!q || "@everyone".includes(q)) {
+      if (canPingEveryone && (!q || "@everyone".includes(q))) {
         items.push({
           id: "everyone",
           title: "@everyone",
@@ -518,7 +536,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           replacement: "@everyone",
         });
       }
-      if (!q || "@here".includes(q)) {
+      if (canPingHere && (!q || "@here".includes(q))) {
         items.push({
           id: "here",
           title: "@here",
@@ -528,7 +546,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         });
       }
 
-      guildRoles
+      mentionableRoles
         .filter((r) => !q || r.name.toLowerCase().includes(q))
         .slice(0, 5)
         .forEach((r) => {
@@ -632,7 +650,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     acExploitTarget,
     weaoExploits,
     weaoError,
-    guildRoles,
+    mentionableRoles,
+    canPingEveryone,
+    canPingHere,
     memberResults,
     guildChannels,
     serverEmojis,

@@ -183,6 +183,16 @@ router.get(
         (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
     );
 
+    let allowedRoleMentionIds: string[] = [];
+    if (staffRecord?.allowed_role_mention_ids) {
+      try {
+        const parsed = JSON.parse(staffRecord.allowed_role_mention_ids);
+        if (Array.isArray(parsed)) allowedRoleMentionIds = parsed.map(String);
+      } catch {
+        allowedRoleMentionIds = [];
+      }
+    }
+
     const hasDefaultBotAccess =
       isOwner ||
       isHead ||
@@ -245,8 +255,18 @@ router.get(
         (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
     );
 
+    let allowedRoleMentionIds: string[] = [];
+    if (staffRecord?.allowed_role_mention_ids) {
+      try {
+        const parsed = JSON.parse(staffRecord.allowed_role_mention_ids);
+        if (Array.isArray(parsed)) allowedRoleMentionIds = parsed.map(String);
+      } catch {
+        allowedRoleMentionIds = [];
+      }
+    }
+
     const mutualGuilds = user.mutualGuilds ?? [];
-    // Always compute live from DB  never trust stale user.hasDefaultBotAccess from the JWT
+    // Always compute live from DB — never trust stale user.hasDefaultBotAccess from the JWT
     const hasDefaultBotAccess =
       isAdmin || (hasActiveStaffRecord && (mutualGuilds.length > 0 || !env.isProd));
 
@@ -290,6 +310,15 @@ router.get(
         customBotCount,
         customWebhookCount,
         needsBotConfig: !hasDefaultBotAccess && customBotCount === 0 && customWebhookCount === 0,
+        staffPermissions:
+          hasActiveStaffRecord && staffRecord
+            ? {
+                can_mention_everyone: staffRecord.can_mention_everyone === 1,
+                can_mention_here: staffRecord.can_mention_here === 1,
+                can_mention_roles: staffRecord.can_mention_roles === 1,
+                allowed_role_mention_ids: allowedRoleMentionIds,
+              }
+            : null,
       },
     });
   }),
