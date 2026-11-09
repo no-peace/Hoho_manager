@@ -286,6 +286,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
           ) : (
             <TextField
               label={mode === "get" ? "Variable to copy" : "Value"}
+              variables
               value={asText(config.value)}
               placeholder={mode === "get" ? "userId" : "member"}
               onChange={(event) => patchConfig(index, { ...config, value: event.target.value })}
@@ -620,6 +621,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             <div className="grid grid-cols-3 gap-2">
               <TextField
                 label="Left side"
+                variables
                 value={left}
                 placeholder="{user.id}"
                 onChange={(e) => patchConfig(index, { ...config, left: e.target.value })}
@@ -644,6 +646,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               />
               <TextField
                 label="Right side"
+                variables
                 value={right}
                 placeholder="123456789"
                 onChange={(e) => patchConfig(index, { ...config, right: e.target.value })}
@@ -687,6 +690,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               key={field.key}
               label={field.label}
               type={field.type}
+              variables={field.type !== "number"}
               value={asText(config[field.key])}
               placeholder={field.placeholder}
               onChange={(event) =>

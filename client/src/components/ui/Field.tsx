@@ -9,23 +9,35 @@ export const VARIABLES = [
   { tag: "{user.displayname}", label: "Ada L.", desc: "Server nickname or global name" },
   { tag: "{user.id}", label: "123456789", desc: "The user's numeric ID" },
   { tag: "{user.avatar}", label: "https://...", desc: "Link to user's profile picture" },
-  { tag: "{user.created}", label: "Oct 24, 2015", desc: "When the account was created" },
-  { tag: "{user.joined}", label: "2 years ago", desc: "When they joined the server" },
-  
-  { group: "Server" },
+  { tag: "{user.roles}", label: "@Role1 @Role2", desc: "All roles the clicker holds" },
+  { tag: "{user.clantag}", label: "HOHO", desc: "Prefix tag inside [TAG] or (TAG)" },
+  { tag: "{user.created}", label: "Oct 24, 2019", desc: "When the account was created" },
+  { tag: "{user.created.relative}", label: "5 years ago", desc: "Account age (Relative)" },
+  { tag: "{user.joined}", label: "2 years ago", desc: "When they joined the server (Relative)" },
+  { tag: "{user.joined.date}", label: "Jun 15, 2024", desc: "Server join date (Short date)" },
+
+  { group: "Server, Channel & Bot" },
   { tag: "{server.id}", label: "987654321", desc: "ID of the current server" },
-  
-  { group: "Channel & Bot" },
+  { tag: "{server.name}", label: "HoHo Hub", desc: "Name of the current server" },
+  { tag: "{server.icon}", label: "https://...", desc: "Server icon URL" },
   { tag: "{channel.mention}", label: "#general", desc: "Mentions the current channel" },
   { tag: "{channel.id}", label: "456789123", desc: "ID of the current channel" },
   { tag: "{bot.mention}", label: "@Bot", desc: "Mentions the bot" },
   { tag: "{bot.id}", label: "11223344", desc: "The bot's ID" },
+  { tag: "{message.id}", label: "129384756", desc: "ID of the message with the button" },
+  { tag: "{message.url}", label: "https://discord.com/...", desc: "Jump link to the message" },
 
   { group: "Time & Date" },
   { tag: "{now}", label: "12:00 PM", desc: "Current time (Dynamic to reader)" },
   { tag: "{now.relative}", label: "2 mins ago", desc: "Relative time (Dynamic to reader)" },
   { tag: "{now.long}", label: "Tuesday, Oct 24", desc: "Long format date (Dynamic)" },
   { tag: "{now.unix}", label: "1698144000", desc: "Raw Unix timestamp number" },
+
+  { group: "Select Menus & Modals" },
+  { tag: "{selected}", label: "option_1, option_2", desc: "Values chosen in a Select Menu" },
+  { tag: "{selected.0}", label: "option_1", desc: "First value chosen in a Select Menu" },
+  { tag: "{input.field_1}", label: "Answer", desc: "Modal input value by Custom ID" },
+  { tag: "{modal.field_1}", label: "Answer", desc: "Modal input value alias" },
 ];
 
 interface FieldShellProps { label?: ReactNode; hint?: ReactNode; counterValue?: string; limit?: number; className?: string; children: ReactNode; }

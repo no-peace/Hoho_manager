@@ -192,6 +192,36 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
 
 /* ── Interactive (Strict Plain Text Labels) ────────────────────────────────── */
 
+const parseEmojiInput = (
+  raw: string,
+): { id?: string; name: string; animated?: boolean } | undefined => {
+  const val = raw.trim();
+  if (!val) return undefined;
+  const match = val.match(/^<(a?):([a-zA-Z0-9_]+):(\d+)>$/);
+  if (match) {
+    return {
+      animated: match[1] === "a",
+      name: match[2],
+      id: match[3],
+    };
+  }
+  return { name: val };
+};
+
+const formatEmojiInput = (
+  emoji?: {
+    id?: string | null;
+    name?: string | null;
+    animated?: boolean | null;
+  } | null,
+): string => {
+  if (!emoji) return "";
+  if (emoji.id && emoji.name) {
+    return `<${emoji.animated ? "a" : ""}:${emoji.name}:${emoji.id}>`;
+  }
+  return emoji.name ?? "";
+};
+
 const ButtonForm = ({ component, update }: ComponentFormProps) => {
   const isLink = component.style === ButtonStyle.Link;
   const isPremium = component.style === ButtonStyle.Premium;
@@ -209,11 +239,10 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
 
       <TextField
         label="Emoji (Optional)"
-        value={component.emoji?.name ?? ""}
-        placeholder="e.g. ⭐ or :fire:"
+        value={formatEmojiInput(component.emoji)}
+        placeholder="e.g. ⭐ or <:name:123456789>"
         onChange={(event) => {
-          const val = event.target.value.trim();
-          update({ emoji: val ? { name: val } : undefined });
+          update({ emoji: parseEmojiInput(event.target.value) });
         }}
       />
 
@@ -346,11 +375,10 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               />
               <TextField
                 label="Emoji"
-                value={option.emoji?.name ?? ""}
-                placeholder="⭐ or :fire:"
+                value={formatEmojiInput(option.emoji)}
+                placeholder="⭐ or <:name:123456789>"
                 onChange={(event) => {
-                  const val = event.target.value.trim();
-                  replaceOption(index, { emoji: val ? { name: val } : undefined });
+                  replaceOption(index, { emoji: parseEmojiInput(event.target.value) });
                 }}
               />
             </div>

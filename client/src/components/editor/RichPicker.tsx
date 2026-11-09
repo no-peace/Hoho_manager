@@ -10,6 +10,7 @@ import {
   Volume2,
   Megaphone,
 } from "lucide-react";
+import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useProfileStore } from "../../store/profileStore";
@@ -23,7 +24,7 @@ export interface RichPickerProps {
   position?: "top" | "bottom";
 }
 
-type TabType = "mentions" | "time" | "emojis";
+type TabType = "mentions" | "time" | "emojis" | "variables";
 type MentionFilter = "all" | "channels" | "roles" | "members";
 
 interface CustomEmoji {
@@ -325,6 +326,17 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             }`}
           >
             Emojis
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("variables")}
+            className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+              activeTab === "variables"
+                ? "bg-[#35373c] text-white"
+                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#2b2d31]"
+            }`}
+          >
+            Variables
           </button>
         </div>
 
@@ -747,6 +759,79 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
         </div>
       )}
 
+      {/* TAB 4: VARIABLES */}
+      {activeTab === "variables" && (
+        <div className="space-y-2.5">
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
+            />
+            <input
+              type="text"
+              placeholder="Search {user.mention}, {now}, {selected}…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#1e1f22] text-xs text-white pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={(ev) => handleInsert("{exploit.", ev)}
+              className="w-full text-left px-2.5 py-1.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] group transition-colors border border-[#232428] flex items-center justify-between"
+            >
+              <span className="font-mono text-xs font-bold text-[#57f287] group-hover:text-white">
+                {"{exploit.<Name>.<Field>}"}
+              </span>
+              <span className="text-[10px] text-[#949ba4] group-hover:text-white/90">
+                Live WEAO Tag
+              </span>
+            </button>
+
+            {VARIABLES.filter((v) => {
+              if (!searchQuery.trim()) return true;
+              if (v.group) return false;
+              const sq = searchQuery.toLowerCase();
+              return (
+                v.tag?.toLowerCase().includes(sq) ||
+                v.label?.toLowerCase().includes(sq) ||
+                v.desc?.toLowerCase().includes(sq)
+              );
+            }).map((v, i) =>
+              v.group ? (
+                <div
+                  key={`grp-${i}`}
+                  className="pt-2 pb-0.5 px-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22]"
+                >
+                  {v.group}
+                </div>
+              ) : (
+                <button
+                  key={v.tag}
+                  type="button"
+                  onClick={(ev) => handleInsert(v.tag!, ev)}
+                  className="w-full text-left px-2 py-1.5 rounded hover:bg-[#5865f2] group transition-colors flex flex-col"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-mono text-xs font-bold text-[#5865f2] group-hover:text-white">
+                      {v.tag}
+                    </span>
+                    <span className="text-[10px] text-[#949ba4] group-hover:text-white/80">
+                      {v.label}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#b5bac1] group-hover:text-white/90">
+                    {v.desc}
+                  </span>
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Add Custom Emoji Modal Overlay */}
       {addCustomModalOpen && (
         <div className="absolute inset-0 bg-[#1e1f22]/95 z-50 p-4 flex flex-col justify-between">

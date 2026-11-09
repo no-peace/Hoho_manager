@@ -8,6 +8,7 @@ import type {
   MessageData,
   TargetData,
 } from "@dmb/shared";
+import { useActionStore } from "./actionStore.js"
 import { ComponentType, DEFAULT_EMBED_COLOR, EDITOR_MODES, uid } from "../utils/constants";
 import type { EditorMode } from "../utils/constants";
 import { createComponent, newButton } from "../utils/componentsV2";
@@ -137,10 +138,21 @@ const idleSendState = (): SendState => ({ status: "idle", error: null, result: n
 
 const reid = (component: ComponentNode): ComponentNode => {
   const clone = structuredClone(component) as ComponentNode;
+  const newId = uid();
+  let nextCustomId: string | undefined;
+
+  if (clone.custom_id) {
+    nextCustomId = `action:dud:{"_id":"${newId}"}`;
+    const existingFlow = useActionStore.getState().flows[clone.custom_id];
+    if (existingFlow && existingFlow.length > 0) {
+      useActionStore.getState().setFlow(nextCustomId, structuredClone(existingFlow));
+    }
+  }
+
   return {
     ...clone,
-    _id: uid(),
-    ...(clone.custom_id ? { custom_id: uid() } : {}),
+    _id: newId,
+    ...(nextCustomId ? { custom_id: nextCustomId } : {}),
     ...(clone.accessory ? { accessory: reid(clone.accessory) } : {}),
     ...(Array.isArray(clone.components)
       ? { components: clone.components.map(reid) }

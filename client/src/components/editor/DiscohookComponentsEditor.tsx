@@ -39,13 +39,17 @@ const SELECT_TYPE_MAP: Record<
 
 export interface DiscohookComponentsEditorProps {
   parentId?: string | null;
+  rowId?: string;
+  componentsOverride?: ComponentNode[];
 }
 
 export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps> = ({
   parentId = null,
+  rowId: targetRowId,
+  componentsOverride,
 }) => {
   const data = useMessageStore((state) => state.data);
-  const components = data.components || [];
+  const components = componentsOverride ?? data.components ?? [];
   const addActionRowChild = useMessageStore((state) => state.addActionRowChild);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const moveComponentById = useMessageStore((state) => state.moveComponentById);
@@ -74,26 +78,33 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
   if (parentId === null) {
     const topLevelRows = components.filter((c) => c.type === ComponentType.ActionRow);
     topLevelRows.forEach((row, idx) => {
+      if (targetRowId && row._id !== targetRowId) return;
+      const actualIdx = targetRowId ? components.findIndex((c) => c._id === row._id) : idx;
       rowEntries.push({
         row,
         containerId: null,
-        siblingIndex: idx,
-        siblingCount: topLevelRows.length,
+        siblingIndex: actualIdx !== -1 ? actualIdx : idx,
+        siblingCount: targetRowId ? components.length : topLevelRows.length,
       });
     });
   } else {
     const parentContainer = components.find(
       (c) => c.type === ComponentType.Container && c._id === parentId,
     );
-    const containerRows = (parentContainer?.components || []).filter(
+    const containerChildren = parentContainer?.components || [];
+    const containerRows = containerChildren.filter(
       (c) => c.type === ComponentType.ActionRow,
     );
     containerRows.forEach((child, idx) => {
+      if (targetRowId && child._id !== targetRowId) return;
+      const actualIdx = targetRowId
+        ? containerChildren.findIndex((c) => c._id === child._id)
+        : idx;
       rowEntries.push({
         row: child,
         containerId: parentId,
-        siblingIndex: idx,
-        siblingCount: containerRows.length,
+        siblingIndex: actualIdx !== -1 ? actualIdx : idx,
+        siblingCount: targetRowId ? containerChildren.length : containerRows.length,
       });
     });
   }
@@ -121,7 +132,13 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
     const customId = child.custom_id ?? "";
     const flowSteps = flows[customId] || [];
     if (flowSteps.length > 0) return flowSteps.length;
-    if (customId && customId !== "action:dud") return 1;
+    if (
+      customId &&
+      customId !== "action:dud" &&
+      !customId.startsWith("action:dud:")
+    ) {
+      return 1;
+    }
     return 0;
   };
 

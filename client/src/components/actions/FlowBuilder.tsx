@@ -51,7 +51,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
     if (stored && stored.length > 0) return stored;
 
     const parsed = parseCustomId(customId);
-    if (!parsed) return [];
+    if (!parsed || parsed.type === "dud") return [];
     return [{ _id: "inline", type: parsed.type as FlowStep["type"], config: parsed.params }];
   }, [flows, customId]);
 
@@ -85,7 +85,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
         );
       }
     } else {
-      nextCustomId = "action:dud";
+      nextCustomId = `action:dud:{"_id":"${componentId || Math.random().toString(36).slice(2, 10)}"}`;
     }
 
     if (nextCustomId === customId) {

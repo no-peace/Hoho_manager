@@ -769,7 +769,11 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             ensureActive();
           }}
         >
-          <DiscohookComponentsEditor parentId={parentId} />
+          <DiscohookComponentsEditor
+            parentId={parentId}
+            rowId={id}
+            componentsOverride={v2TopComponents}
+          />
         </div>
       );
     }
@@ -861,7 +865,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
   // Deduplicate top-level ActionRow rendering in V2 so DiscohookComponentsEditor renders once for top-level rows
   const v2TopComponents = message.components || [];
-  let renderedTopActionRows = false;
 
   return (
     <div
@@ -1100,7 +1103,10 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
               {/* Classic Action Rows */}
               <div className="pt-1">
-                <DiscohookComponentsEditor parentId={null} />
+                <DiscohookComponentsEditor
+                  parentId={null}
+                  componentsOverride={message.components || []}
+                />
               </div>
             </>
           ) : (
@@ -1132,18 +1138,14 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {v2TopComponents.map((comp, compIdx) => {
-                    if (comp.type === ComponentType.ActionRow) {
-                      if (renderedTopActionRows) return null;
-                      renderedTopActionRows = true;
-                    }
-                    return renderV2ComponentCard(
+                  {v2TopComponents.map((comp, compIdx) =>
+                    renderV2ComponentCard(
                       comp,
                       compIdx,
                       v2TopComponents.length,
                       null,
-                    );
-                  })}
+                    ),
+                  )}
                 </div>
               )}
             </>

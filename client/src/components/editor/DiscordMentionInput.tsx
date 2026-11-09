@@ -7,8 +7,10 @@ import {
   Cpu,
   Sliders,
   AlertTriangle,
+  Code,
 } from "lucide-react";
 import { RichPicker } from "./RichPicker";
+import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
 import { useProfileStore } from "../../store/profileStore";
 import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
@@ -30,6 +32,7 @@ type AutocompleteType =
   | "user"
   | "channel"
   | "emoji"
+  | "variable"
   | "exploit_name"
   | "exploit_field"
   | null;
@@ -329,7 +332,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     (text: string, cursorPos: number) => {
       const textBeforeCursor = text.slice(0, cursorPos);
 
-      // 1A. Check `{exploit.<anything>` (no closing brace yet on current line)
+      // 1A. Check `{` for Dynamic Variables (`{user.*`, `{now.*`, etc.) & WEAO (`{exploit.<Name>.<Field>`)
       const openBraceIdx = textBeforeCursor.lastIndexOf("{");
       if (openBraceIdx !== -1) {
         const tokenSinceBrace = textBeforeCursor.slice(openBraceIdx);
@@ -337,27 +340,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         if (!/[}\n\r]/.test(tokenSinceBrace)) {
           const lowerToken = tokenSinceBrace.toLowerCase();
 
-          // If user is typing `{e`, `{ex`, `{exp`, `{exploit` before the first dot
-          if (
-            lowerToken.length >= 2 &&
-            "{exploit.".startsWith(lowerToken) &&
-            !lowerToken.startsWith("{exploit.")
-          ) {
-            setAcType("exploit_name");
-            setAcExploitTarget("");
-            setAcQuery("");
-            setAcCursorStart(openBraceIdx);
-            setAcCursorEnd(cursorPos);
-            setSelectedIndex(0);
-            return;
-          }
-
-          // Once `{exploit.` is present
+          // Once `{exploit.` is present -> Stage 1 (Exploit Name) or Stage 2 (Exploit Field)
           if (lowerToken.startsWith("{exploit.")) {
             const afterPrefix = tokenSinceBrace.slice("{exploit.".length);
 
-            // Check if `afterPrefix` starts with a known exploit title + "."
-            // Sort by length descending so e.g. "AWP.GG." matches before "AWP."
             const sortedKnown = [...weaoExploits].sort(
               (a, b) => b.title.length - a.title.length,
             );
@@ -378,12 +364,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               }
             }
 
-            // Fallback if user typed a dot after an exploit name not yet in sortedKnown
             const lastDotIdx = afterPrefix.lastIndexOf(".");
             if (lastDotIdx > 0) {
               const candidateName = afterPrefix.slice(0, lastDotIdx);
               const fieldPart = afterPrefix.slice(lastDotIdx + 1);
-              // Only treat as field stage if candidateName isn't a partial prefix of a dotted exploit name like "AWP.GG"
               const isPartialDottedExploit = sortedKnown.some(
                 (exp) =>
                   exp.title.includes(".") &&
@@ -401,10 +385,21 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               }
             }
 
-            // Otherwise, still in Stage 1: selecting the exploit name!
             setAcType("exploit_name");
             setAcExploitTarget("");
             setAcQuery(afterPrefix);
+            setAcCursorStart(openBraceIdx);
+            setAcCursorEnd(cursorPos);
+            setSelectedIndex(0);
+            return;
+          }
+
+          // Any other `{...` token (including `{`, `{u`, `{user.`, `{ex`, `{now`)
+          const varQuery = tokenSinceBrace.slice(1);
+          if (!/\s/.test(varQuery)) {
+            setAcType("variable");
+            setAcExploitTarget("");
+            setAcQuery(varQuery);
             setAcCursorStart(openBraceIdx);
             setAcCursorEnd(cursorPos);
             setSelectedIndex(0);
@@ -459,7 +454,44 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const acItems = useMemo<AutocompleteItem[]>(() => {
     const q = acQuery.toLowerCase().trim();
 
-    // STAGE 1: WEAO Exploit Name Picker (`{exploit.<Name>.`)
+    if (acType === "variable") {
+      const items: AutocompleteItem[] = [];
+
+      if (!q || "exploit.".includes(q) || "weao".includes(q)) {
+        items.push({
+          id: "var_weao_chain",
+          title: "{exploit.<Name>.<Field>}",
+          subtitle: "Live WEAO Exploit Status, sUNC, Version…",
+          icon: <Cpu size={13} className="text-[#57f287] shrink-0" />,
+          replacement: "{exploit.",
+          keepOpen: true,
+        });
+      }
+
+      VARIABLES.forEach((v) => {
+        if (!v.tag) return;
+        const cleanTag = v.tag.slice(1, -1).toLowerCase();
+        if (
+          !q ||
+          cleanTag.includes(q) ||
+          v.tag.toLowerCase().includes(q) ||
+          (v.desc && v.desc.toLowerCase().includes(q))
+        ) {
+          items.push({
+            id: `var_${v.tag}`,
+            title: v.tag,
+            subtitle: `${v.label} — ${v.desc}`,
+            icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
+            replacement: v.tag,
+            keepOpen: false,
+          });
+        }
+      });
+
+      return items.slice(0, 20);
+    }
+
+    // WEAO Exploit Name Picker (`{exploit.<Name>.`)
     if (acType === "exploit_name") {
       if (weaoExploits.length === 0) {
         return [
@@ -776,11 +808,19 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const isOverLimit = maxLength ? charCount > maxLength : false;
 
   const getHeaderLabel = () => {
+    if (acType === "variable") {
+      return (
+        <span className="flex items-center gap-1.5">
+          <Code size={11} className="text-[#5865f2]" />
+          <span>Variables</span>
+        </span>
+      );
+    }
     if (acType === "exploit_name") {
       return (
         <span className="flex items-center gap-1.5">
           <Cpu size={11} className="text-[#5865f2]" />
-          <span>WEAO Exploits</span>
+          <span>WEAO</span>
           {weaoMeta?.rateLimited && (
             <span className="text-[9px] px-1 py-0.2 rounded bg-[#f0b232]/20 text-[#f0b232]">
               Cached (429 Cooldown)

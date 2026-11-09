@@ -84,10 +84,13 @@ export const newButton = (style: number = ButtonStyle.Primary): ComponentNode =>
     ? { url: "https://discord.com" }
     : style === ButtonStyle.Premium
       ? { sku_id: "" }
-      : { custom_id: "action:dud" }),
+      : { custom_id: `action:dud:{"_id":"${uid()}"}` }),
 });
 
-export const buttonStylePatch = (component: ComponentNode, style: number): Partial<ComponentNode> => {
+export const buttonStylePatch = (
+  component: ComponentNode,
+  style: number,
+): Partial<ComponentNode> => {
   const actionId = component._action_custom_id ?? component.custom_id;
   if (style === ButtonStyle.Link) {
     return {
@@ -109,7 +112,10 @@ export const buttonStylePatch = (component: ComponentNode, style: number): Parti
   }
   return {
     style,
-    custom_id: actionId ?? "action:dud",
+    custom_id:
+      actionId && actionId !== "action:dud"
+        ? actionId
+        : `action:dud:{"_id":"${component._id || uid()}"}`,
     _action_custom_id: undefined,
     url: undefined,
     sku_id: undefined,
@@ -125,7 +131,7 @@ export const newSelectOption = (index: number): SelectOption => ({
 export const newStringSelect = (): ComponentNode => ({
   _id: uid(),
   type: ComponentType.StringSelect,
-  custom_id: "action:dud",
+  custom_id: `action:dud:{"_id":"${uid()}"}`,
   placeholder: "Select an option",
   options: [newSelectOption(1)],
 });
@@ -133,7 +139,7 @@ export const newStringSelect = (): ComponentNode => ({
 export const newUserSelect = (): ComponentNode => ({
   _id: uid(),
   type: ComponentType.UserSelect,
-  custom_id: "action:dud",
+  custom_id: `action:dud:{"_id":"${uid()}"}`,
   placeholder: "Select a user",
   min_values: 1,
   max_values: 1,
@@ -142,7 +148,7 @@ export const newUserSelect = (): ComponentNode => ({
 export const newRoleSelect = (): ComponentNode => ({
   _id: uid(),
   type: ComponentType.RoleSelect,
-  custom_id: "action:dud",
+  custom_id: `action:dud:{"_id":"${uid()}"}`,
   placeholder: "Select a role",
   min_values: 1,
   max_values: 1,
@@ -151,7 +157,7 @@ export const newRoleSelect = (): ComponentNode => ({
 export const newMentionableSelect = (): ComponentNode => ({
   _id: uid(),
   type: ComponentType.MentionableSelect,
-  custom_id: "action:dud",
+  custom_id: `action:dud:{"_id":"${uid()}"}`,
   placeholder: "Select a user or role",
   min_values: 1,
   max_values: 1,
@@ -160,7 +166,7 @@ export const newMentionableSelect = (): ComponentNode => ({
 export const newChannelSelect = (): ComponentNode => ({
   _id: uid(),
   type: ComponentType.ChannelSelect,
-  custom_id: "action:dud",
+  custom_id: `action:dud:{"_id":"${uid()}"}`,
   placeholder: "Select a channel",
   min_values: 1,
   max_values: 1,

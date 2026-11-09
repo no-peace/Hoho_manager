@@ -1,5 +1,6 @@
 import { parseCustomId } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
+import { interpolateWeaoPlaceholders } from "./weaoService.js";
 import { getActionHandler } from "../actions/index.js";
 import { actionFailed } from "../actions/responses.js";
 import type { ActionContext, ActionResponse } from "../actions/types.js";
@@ -80,31 +81,58 @@ export const executeCustomId = async (
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
   const joinedAt = member?.joined_at ? Math.floor(new Date(member.joined_at).getTime() / 1000) : unixNow;
 
+  const memberRoles: string[] = Array.isArray(member?.roles) ? member.roles : [];
+  const selectedValues: string[] = Array.isArray(interaction.data?.values)
+    ? interaction.data.values.map(String)
+    : [];
+
   // Master variable dictionary
   const variables: Record<string, unknown> = {
     // User
     "user.mention": `<@${userId}>`,
     "user.name": username,
+    "user.tag": username,
     "user.displayname": displayname,
     "user.id": userId,
-    "user.avatar": user?.avatar ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png` : "",
+    "user.avatar": user?.avatar
+      ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png`
+      : "",
+    "user.roles":
+      memberRoles.length > 0 ? memberRoles.map((r) => `<@&${r}>`).join(" ") : "None",
     "user.created": `<t:${userCreated}:d>`,
+    "user.created.relative": `<t:${userCreated}:R>`,
     "user.joined": `<t:${joinedAt}:R>`,
+    "user.joined.date": `<t:${joinedAt}:d>`,
     "user.clantag": clantag,
+
+    // Role arrays for Check -> "Member has role"
+    "member.role_ids": memberRoles,
+    "member.roles": memberRoles,
 
     // Server
     "server.id": interaction.guild_id ?? "unknown",
     "server.name": "Your Server",
-    "server.icon": interaction.guild_id ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/icon.png` : "",
+    "server.icon": interaction.guild_id
+      ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/icon.png`
+      : "",
 
-    // Channel & Bot
+    // Channel, Bot & Message
     "channel.id": interaction.channel_id ?? "unknown",
     "channel.mention": interaction.channel_id ? `<#${interaction.channel_id}>` : "unknown",
     "bot.id": interaction.application_id ?? "unknown",
     "bot.mention": interaction.application_id ? `<@${interaction.application_id}>` : "unknown",
+    "message.id": messageId ?? "unknown",
+    "message.url":
+      interaction.guild_id && interaction.channel_id && messageId
+        ? `https://discord.com/channels/${interaction.guild_id}/${interaction.channel_id}/${messageId}`
+        : "",
+
+    // Select Menu values
+    selected: selectedValues.join(", "),
+    ...Object.fromEntries(selectedValues.map((val, idx) => [`selected.${idx}`, val])),
 
     // Time
-    "now": `<t:${unixNow}:t>`,
+    now: `<t:${unixNow}:t>`,
     "now.relative": `<t:${unixNow}:R>`,
     "now.long": `<t:${unixNow}:F>`,
     "now.unix": unixNow,
@@ -160,7 +188,14 @@ export const executeCustomId = async (
 
       // Conditional check step with branching
       if (step.type === "check" && hasBranches(step.config)) {
-        const parsedConfig = replaceVariables(step.config, variables);
+        //const parsedConfig = replaceVariables(step.config, variables);
+        let parsedConfig = replaceVariables(step.config, variables);
+        if (JSON.stringify(parsedConfig).includes("{exploit")) {
+          const { payload: weaoResolved } = await interpolateWeaoPlaceholders(
+            parsedConfig as any,
+          );
+          parsedConfig = weaoResolved as Record<string, any>;
+        }
         const branch = selectBranch(parsedConfig, variables);
         const nested = await runSteps(branch, depth + 1);
         await logStep(step, nested, started);
@@ -170,7 +205,13 @@ export const executeCustomId = async (
 
       let response: ActionResponse | undefined;
       try {
-        const parsedConfig = replaceVariables(step.config, variables);
+        let parsedConfig = replaceVariables(step.config, variables);
+        if (JSON.stringify(parsedConfig).includes("{exploit")) {
+          const { payload: weaoResolved } = await interpolateWeaoPlaceholders(
+            parsedConfig as any,
+          );
+          parsedConfig = weaoResolved as Record<string, any>;
+        }
         const stepProfileId = typeof parsedConfig.profileId === "number" ? parsedConfig.profileId : null;
         const stepBotToken = stepProfileId ? await discord.resolveBotToken(stepProfileId).catch(()=> botToken) : botToken;
         response = await handler.run({
