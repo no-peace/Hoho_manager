@@ -22,14 +22,14 @@ export const PropertyPanel = () => {
   if (!selection || selection.kind !== "component") return null;
 
   const component = findComponent(components, selection.id);
-  if (!component || !isInteractiveComponent(component)) return null;
+  if (!component) return null;
 
   const Form = COMPONENT_FORMS[component.type];
   if (!Form) return null;
 
   const isLinkButton =
     component.type === ComponentType.Button && component.style === ButtonStyle.Link;
-  const hasFlow = !isLinkButton;
+  const hasFlow = isInteractiveComponent(component) && !isLinkButton;
 
   return (
     <>

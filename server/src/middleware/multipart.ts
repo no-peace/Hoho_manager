@@ -19,6 +19,8 @@ export const multipartParser = async (req: Request, _res: Response, next: NextFu
     return next();
   }
 
+  req.body = req.body || {};
+
   try {
     const host = req.headers.host || "localhost";
     const headers = new Headers();

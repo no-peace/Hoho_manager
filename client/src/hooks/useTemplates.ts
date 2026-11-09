@@ -3,7 +3,7 @@ import type { TemplateDetailResponse, TemplateSummary } from "../api/client";
 import { useActionStore } from "../store/actionStore";
 import { useMessageStore } from "../store/messageStore";
 import { useTemplateStore } from "../store/templateStore";
-import { fromQueryData, toQueryData, type QueryData } from "../utils/exportImport";
+import { toQueryData, type QueryData } from "../utils/exportImport";
 
 /**
  * Bridges the template store, the message store and the action store.
@@ -38,9 +38,10 @@ export const useTemplates = (): UseTemplatesReturn => {
   }, [fetchTemplates]);
 
   const saveCurrent = useCallback(async (): Promise<TemplateDetailResponse["template"]> => {
-    const { data, targets, mode } = useMessageStore.getState();
+    const { data, messages, targets, mode } = useMessageStore.getState();
     const actions = useActionStore.getState().toList();
-    const document = toQueryData(data, targets, mode);
+    const messagesToSave = messages && messages.length > 0 ? messages : [data];
+    const document = toQueryData(messagesToSave, targets, mode);
 
     return useTemplateStore.getState().save({ data: document, actions });
   }, []);
@@ -53,11 +54,10 @@ export const useTemplates = (): UseTemplatesReturn => {
       const document = template.data as QueryData;
       const legacyData = document.messages?.[0]?.data;
       const legacyTargets = legacyData && "targets" in legacyData
-        ? legacyData.targets
+        ? (legacyData as any).targets
         : undefined;
-      const restored = fromQueryData(document);
       useMessageStore.getState().load({
-        data: restored,
+        data: document,
         targets: document.targets ?? legacyTargets,
         mode: document.mode,
       });

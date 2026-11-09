@@ -23,6 +23,13 @@ export const findComponent = (
 ): ComponentNode | null => {
   for (const component of components ?? []) {
     if (component._id === id) return component;
+    if (component.accessory) {
+      if (component.accessory._id === id) return component.accessory;
+      if (Array.isArray(component.accessory.components)) {
+        const nested = findComponent(component.accessory.components, id);
+        if (nested) return nested;
+      }
+    }
     if (Array.isArray(component.components)) {
       const nested = findComponent(component.components, id);
       if (nested) return nested;
@@ -43,6 +50,25 @@ export const updateComponent = (
     if (component._id === id) {
       found = true;
       return { ...component, ...updater(component) };
+    }
+    if (component.accessory) {
+      if (component.accessory._id === id) {
+        found = true;
+        return {
+          ...component,
+          accessory: { ...component.accessory, ...updater(component.accessory) },
+        };
+      }
+      if (Array.isArray(component.accessory.components)) {
+        const result = updateComponent(component.accessory.components, id, updater);
+        if (result.found) {
+          found = true;
+          return {
+            ...component,
+            accessory: { ...component.accessory, components: result.components },
+          };
+        }
+      }
     }
     if (Array.isArray(component.components)) {
       const result = updateComponent(component.components, id, updater);
@@ -69,6 +95,25 @@ export const removeComponent = (
     if (component._id === id) {
       found = true;
       continue;
+    }
+    if (component.accessory) {
+      if (component.accessory._id === id) {
+        found = true;
+        const { accessory, ...rest } = component;
+        next.push(rest as ComponentNode);
+        continue;
+      }
+      if (Array.isArray(component.accessory.components)) {
+        const result = removeComponent(component.accessory.components, id);
+        if (result.found) {
+          found = true;
+          next.push({
+            ...component,
+            accessory: { ...component.accessory, components: result.components },
+          });
+          continue;
+        }
+      }
     }
     if (Array.isArray(component.components)) {
       const result = removeComponent(component.components, id);

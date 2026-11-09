@@ -71,24 +71,28 @@ export const fromQueryData = (parsed: any): MessageData => {
 };
 
 export const toQueryData = (
-  payload: MessageData,
+  payload: MessageData | MessageData[],
   targets?: TargetData[],
   mode?: EditorMode,
 ): QueryData => {
+  const msgs = Array.isArray(payload) ? payload : [payload];
   return {
-    messages: [{ data: payload }],
+    messages: msgs.map((m) => ({ data: m })),
     ...(targets ? { targets } : {}),
     ...(mode ? { mode } : {}),
   };
 };
 
-export const parseImportedJson = (text: string): MessageData => {
+export const parseImportedJson = (text: string): any => {
   const parsed = JSON.parse(text);
-  return fromQueryData(parsed);
+  return parsed;
 };
 
 export const downloadJson = (payload: any, filename: string): void => {
-  const queryData = toQueryData(payload);
+  const queryData =
+    payload && typeof payload === "object" && Array.isArray(payload.messages)
+      ? payload
+      : toQueryData(payload);
   const blob = new Blob([JSON.stringify(queryData, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

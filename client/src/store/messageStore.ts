@@ -73,6 +73,8 @@ export interface MessageState {
   addEmbedField(embedId: string): void;
   updateEmbedField(embedId: string, fieldId: string, patch: Partial<EmbedField>): void;
   removeEmbedField(embedId: string, fieldId: string): void;
+  moveEmbedField(embedId: string, fieldId: string, direction: number): void;
+  duplicateEmbedField(embedId: string, fieldId: string): void;
 
   addComponent(type: number, parentId?: string | null): void;
   addActionRowChild(parentId: string, type?: number): void;
@@ -133,19 +135,24 @@ const newEmbedField = (): EmbedField => ({
 
 const idleSendState = (): SendState => ({ status: "idle", error: null, result: null });
 
-const reid = (component: ComponentNode): ComponentNode => ({
-  ...(structuredClone(component) as ComponentNode),
-  _id: uid(),
-  ...(Array.isArray(component.components)
-    ? { components: component.components.map(reid) }
-    : {}),
-  ...(Array.isArray(component.options)
-    ? { options: component.options.map((option) => ({ ...option, _id: uid() })) }
-    : {}),
-  ...(Array.isArray(component.items)
-    ? { items: component.items.map((item) => ({ ...item, _id: uid() })) }
-    : {}),
-});
+const reid = (component: ComponentNode): ComponentNode => {
+  const clone = structuredClone(component) as ComponentNode;
+  return {
+    ...clone,
+    _id: uid(),
+    ...(clone.custom_id ? { custom_id: uid() } : {}),
+    ...(clone.accessory ? { accessory: reid(clone.accessory) } : {}),
+    ...(Array.isArray(clone.components)
+      ? { components: clone.components.map(reid) }
+      : {}),
+    ...(Array.isArray(clone.options)
+      ? { options: clone.options.map((option) => ({ ...option, _id: uid() })) }
+      : {}),
+    ...(Array.isArray(clone.items)
+      ? { items: clone.items.map((item) => ({ ...item, _id: uid() })) }
+      : {}),
+  };
+};
 
 const duplicateInTree = (
   list: ComponentNode[],
@@ -166,6 +173,13 @@ const duplicateInTree = (
       if (result.duplicated) {
         duplicated = result.duplicated;
         return { ...item, components: result.updated };
+      }
+    }
+    if (item.accessory?.components && !duplicated) {
+      const result = duplicateInTree(item.accessory.components, targetId);
+      if (result.duplicated) {
+        duplicated = result.duplicated;
+        return { ...item, accessory: { ...item.accessory, components: result.updated } };
       }
     }
     return item;
@@ -428,6 +442,44 @@ export const useMessageStore = create<MessageState>()(
                 }
               : embed,
           );
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
+          return syncDataToMessages(nextData, state);
+        }),
+
+      moveEmbedField: (embedId, fieldId, direction) =>
+        set((state) => {
+          const embeds = (state.data?.embeds ?? []).map((embed) => {
+            if (embed._id !== embedId) return embed;
+            const fields = [...(embed.fields ?? [])];
+            const idx = fields.findIndex((f) => f._id === fieldId);
+            if (idx === -1) return embed;
+            const target = idx + direction;
+            if (target < 0 || target >= fields.length) return embed;
+            const current = fields[idx];
+            const swap = fields[target];
+            if (!current || !swap) return embed;
+            fields[idx] = swap;
+            fields[target] = current;
+            return { ...embed, fields };
+          });
+          const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
+          return syncDataToMessages(nextData, state);
+        }),
+
+      duplicateEmbedField: (embedId, fieldId) =>
+        set((state) => {
+          const embeds = (state.data?.embeds ?? []).map((embed) => {
+            if (embed._id !== embedId) return embed;
+            const fields = [...(embed.fields ?? [])];
+            const idx = fields.findIndex((f) => f._id === fieldId);
+            if (idx === -1) return embed;
+            const copy: EmbedField = {
+              ...structuredClone(fields[idx]),
+              _id: uid(),
+            };
+            fields.splice(idx + 1, 0, copy);
+            return { ...embed, fields };
+          });
           const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
         }),

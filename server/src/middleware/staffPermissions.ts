@@ -282,9 +282,6 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
     }
 
     req.staffContext = { isAdmin: false, staffId, record };
-    if (req.method !== "GET") {
-      await staffRepository.upsertCooldown(staffId, action);
-    }
     log.info(`Staff ${staffId} (${record.discord_username}) passed ${action} check`);
     return next();
   });

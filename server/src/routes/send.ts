@@ -199,14 +199,19 @@ router.post(
         throw ApiError.badRequest('`webhookUrl` is required when mode is "webhook"');
       }
       const sentList = [];
-      for (const msg of finalMessages) {
+      for (let i = 0; i < finalMessages.length; i++) {
+        const msg = finalMessages[i];
         const sent = await discord.sendWebhook(webhookUrl, msg, {
           wait: true,
           threadId: typeof threadId === "string" ? threadId : null,
-          files,
+          files: i === 0 ? files : [],
         });
         await registerMessageFlows(sent);
         sentList.push(sent);
+      }
+      if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
+        const { staffRepository } = await import("../repositories/staffRepository.js");
+        await staffRepository.upsertCooldown(staffCtx.staffId, "send");
       }
       log.info(`Webhook send by user ${req.user?.id ?? "?"}`);
       return res.json({ ok: true, mode, message: sentList[0], messages: sentList });
@@ -231,10 +236,11 @@ router.post(
         `Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`,
       );
     } else {
-      for (const msg of finalMessages) {
+      for (let i = 0; i < finalMessages.length; i++) {
+        const msg = finalMessages[i];
         const sent = await discord.sendChannelMessage(channelId, msg, {
           profileId,
-          files,
+          files: i === 0 ? files : [],
         });
         await registerMessageFlows(sent);
         sentList.push(sent);
@@ -243,6 +249,10 @@ router.post(
     }
 
     if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
+      const { staffRepository } = await import("../repositories/staffRepository.js");
+      const actionName = typeof editMessageId === "string" && editMessageId.trim() !== "" ? "edit" : "send";
+      await staffRepository.upsertCooldown(staffCtx.staffId, actionName);
+
       const { auditLog } = await import("../services/auditLog.js");
       auditLog({
         event:
@@ -367,8 +377,15 @@ router.get(
       assertStaffChannelAllowed(req.staffContext, channelId);
     }
 
-    const messages = await discord.getChannelMessages(channelId, profileId);
-    const found = messages.find((m: any) => m.id === messageId);
+    let found: discord.DiscordMessageRecord | null = null;
+    try {
+      found = await discord.getChannelMessage(channelId, messageId, profileId);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        throw ApiError.notFound("Message not found in that channel (check bot permissions)");
+      }
+      throw err;
+    }
     if (!found) {
       throw ApiError.notFound("Message not found in that channel (check bot permissions)");
     }

@@ -6,7 +6,7 @@ import { Checkbox, Select, TextField } from "../ui/Field";
 import { ColorPicker } from "../ui/ColorPicker";
 import { DiscordMentionInput } from "./DiscordMentionInput";
 import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
-import { buttonStylePatch, newGalleryItem } from "../../utils/componentsV2";
+import { buttonStylePatch, createComponent, newGalleryItem } from "../../utils/componentsV2";
 import { Plus, Trash2 } from "lucide-react";
 
 export interface ComponentFormProps {
@@ -154,7 +154,7 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
     update({
       components: [
         ...children,
-        { _id: uid(), type, config: {} } as ComponentNode,
+        createComponent(type),
       ],
     });
   };
@@ -205,6 +205,16 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
         value={component.label ?? ""}
         placeholder="Button Text"
         onChange={(event) => update({ label: event.target.value })}
+      />
+
+      <TextField
+        label="Emoji (Optional)"
+        value={component.emoji?.name ?? ""}
+        placeholder="e.g. ⭐ or :fire:"
+        onChange={(event) => {
+          const val = event.target.value.trim();
+          update({ emoji: val ? { name: val } : undefined });
+        }}
       />
 
       <Select
@@ -285,28 +295,65 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {options.map((option, index) => (
-          <div key={option._id} className="flex items-end gap-2">
-            <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+          <div key={option._id} className="p-2.5 rounded-lg border border-[#111214] bg-[#1e1f22] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#b5bac1] uppercase">Option {index + 1}</span>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 text-[11px] text-[#dbdee1] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(option.default)}
+                    onChange={(e) => replaceOption(index, { default: e.target.checked })}
+                    className="rounded bg-[#2b2d31] border-[#383a40] text-[#5865f2] focus:ring-0"
+                  />
+                  Default
+                </label>
+                <IconButton
+                  icon={Trash2}
+                  size={12}
+                  label="Remove option"
+                  onClick={() => update({ options: options.filter((entry) => entry._id !== option._id) })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <TextField
-                label={`Option ${index + 1} label`}
+                label="Label"
                 limit={Limits.components.selectOptionLabel}
                 value={option.label}
+                placeholder="Option label"
                 onChange={(event) => replaceOption(index, { label: event.target.value })}
               />
               <TextField
                 label="Value"
                 limit={Limits.components.selectOptionLabel}
                 value={option.value}
+                placeholder="option_value"
                 onChange={(event) => replaceOption(index, { value: event.target.value })}
               />
             </div>
-            <IconButton
-              icon={Trash2}
-              label="Remove option"
-              onClick={() => update({ options: options.filter((entry) => entry._id !== option._id) })}
-            />
+
+            <div className="grid grid-cols-2 gap-2">
+              <TextField
+                label="Description"
+                limit={100}
+                value={option.description ?? ""}
+                placeholder="Short description..."
+                onChange={(event) => replaceOption(index, { description: event.target.value || undefined })}
+              />
+              <TextField
+                label="Emoji"
+                value={option.emoji?.name ?? ""}
+                placeholder="⭐ or :fire:"
+                onChange={(event) => {
+                  const val = event.target.value.trim();
+                  replaceOption(index, { emoji: val ? { name: val } : undefined });
+                }}
+              />
+            </div>
           </div>
         ))}
       </div>

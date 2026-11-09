@@ -79,7 +79,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
 
   return (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
-      <div className="flex gap-4 h-[60vh]">
+      <div className="flex flex-col sm:flex-row gap-4 h-[60vh]">
         {/* Sidebar */}
         <div className="w-full sm:w-44 bg-[#1e1f22] border border-[#111214] rounded p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0">
           <button

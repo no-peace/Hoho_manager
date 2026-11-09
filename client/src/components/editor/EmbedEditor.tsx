@@ -27,6 +27,8 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
   const addEmbedField = useMessageStore((state) => state.addEmbedField);
   const updateEmbedField = useMessageStore((state) => state.updateEmbedField);
   const removeEmbedField = useMessageStore((state) => state.removeEmbedField);
+  const moveEmbedField = useMessageStore((state) => state.moveEmbedField);
+  const duplicateEmbedField = useMessageStore((state) => state.duplicateEmbedField);
   const selection = useMessageStore((state) => state.selection);
   const select = useMessageStore((state) => state.select);
 
@@ -53,7 +55,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   return (
     <div
-      className={`rounded-lg bg-[#2b2d31] border transition-all ${
+      className={`rounded-lg overflow-hidden bg-[#2b2d31] border transition-all ${
         active ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2]" : "border-[#1e1f22]"
       }`}
       style={{
@@ -63,7 +65,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       onClick={() => id && select({ kind: "embed", id })}
     >
       {/* ── Embed Card Header (Title & Global Actions) ── */}
-      <div className={`flex items-center justify-between px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${isOpen ? "rounded-t-[7px] border-b border-[#1e1f22]" :"rounded-[7px]"}`}>
+      <div className={`flex items-center justify-between px-3 py-2 bg-[#232428] select-none ${isOpen ? "border-b border-[#1e1f22]" : ""}`}>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -409,6 +411,34 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                               />
                               Inline
                             </label>
+                            {fieldIdx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => moveEmbedField(id, fieldId, -1)}
+                                className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                                title="Move Field Up"
+                              >
+                                <ChevronUp size={12} />
+                              </button>
+                            )}
+                            {fieldIdx < (embed.fields?.length ?? 0) - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => moveEmbedField(id, fieldId, 1)}
+                                className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                                title="Move Field Down"
+                              >
+                                <ChevronDown size={12} />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => duplicateEmbedField(id, fieldId)}
+                              className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                              title="Duplicate Field"
+                            >
+                              <Copy size={12} />
+                            </button>
                             <button
                               type="button"
                               onClick={() => removeEmbedField(id, fieldId)}
@@ -581,12 +611,41 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                       />
                       Include Timestamp
                     </label>
-                    {embed.timestamp && (
-                      <span className="text-[10px] text-[#949ba4] font-mono">
-                        {new Date(embed.timestamp).toLocaleString()}
-                      </span>
-                    )}
                   </div>
+                  {embed.timestamp && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="datetime-local"
+                        value={(() => {
+                          try {
+                            const d = new Date(embed.timestamp);
+                            if (isNaN(d.getTime())) return "";
+                            const tzOffset = d.getTimezoneOffset() * 60000;
+                            return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+                          } catch {
+                            return "";
+                          }
+                        })()}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const d = new Date(e.target.value);
+                            if (!isNaN(d.getTime())) {
+                              updateEmbed(id, { timestamp: d.toISOString() });
+                            }
+                          }
+                        }}
+                        className="field text-xs !py-1 font-mono flex-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateEmbed(id, { timestamp: new Date().toISOString() })}
+                        className="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[11px] text-[#dbdee1] border border-[#111214] shrink-0"
+                        title="Reset to current time"
+                      >
+                        Now
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

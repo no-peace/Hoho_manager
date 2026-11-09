@@ -204,7 +204,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
               Math.max(8, dropdownRect.left),
               window.innerWidth - Math.max(dropdownRect.width, 220) - 8
             ),
-            width: Math.max((dropdownRect.width, 220), window.innerWidth - 16),
+            width: Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16),
             zIndex: 99999,
           }}
           className="bg-[#2b2d31] border border-[#1e1f22] rounded shadow-2xl max-h-64 flex flex-col"

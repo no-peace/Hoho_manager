@@ -89,8 +89,13 @@ const asRecord = (value: unknown): Record<string, unknown> =>
 
 /** Pull Discord's own error message out of an error body, with a fallback. */
 const readErrorMessage = (data: unknown, status: number): string => {
-  const message = asRecord(data).message;
-  return typeof message === "string" ? message : `Discord responded with ${status}`;
+  const record = asRecord(data);
+  const message = record.message;
+  const code = record.code;
+  if (typeof message === "string") {
+    return code ? `${message} (code ${code})` : message;
+  }
+  return `Discord responded with ${status}`;
 };
 
 /**
@@ -217,13 +222,26 @@ const apiRequest = async <T>(
       throw new ApiError(401, `Discord rejected the credentials: ${message}`, {
         code: "discord_unauthorized",
         details: data,
+        expose: true,
       });
     }
 
-    throw ApiError.upstream(`Discord error: ${message}`, {
-      status: response.status,
-      discord: data,
-    });
+    if (response.status >= 400 && response.status < 500) {
+      throw new ApiError(response.status, `Discord error: ${message}`, {
+        code: "discord_bad_request",
+        details: data,
+        expose: true,
+      });
+    }
+
+    throw ApiError.upstream(
+      `Discord error: ${message}`,
+      {
+        status: response.status,
+        discord: data,
+      },
+      true,
+    );
   }
 };
 
@@ -284,6 +302,9 @@ export const sendWebhook = async (
   const params = new URLSearchParams();
   if (wait) params.set("wait", "true");
   if (threadId) params.set("thread_id", threadId);
+  if (payload.components && payload.components.length > 0) {
+    params.set("with_components", "true");
+  }
 
   const query = params.toString();
   const absoluteUrl = `${DISCORD_API_BASE}/webhooks/${parsed.id}/${parsed.token}${
@@ -515,6 +536,19 @@ export const getChannelMessages = async (
       `/channels/${encodeURIComponent(channelId)}/messages?limit=50`,
       { token },
     )) ?? []
+  );
+};
+
+export const getChannelMessage = async (
+  channelId: string,
+  messageId: string,
+  profileId: number | null = null,
+): Promise<DiscordMessageRecord | null> => {
+  const token = await resolveBotToken(profileId);
+  return apiRequest<DiscordMessageRecord>(
+    "GET",
+    `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`,
+    { token },
   );
 };
 

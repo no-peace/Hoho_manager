@@ -34,7 +34,7 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
       if (parsed && typeof parsed === "object") {
         if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
           load({
-            data: parsed.messages[0]?.data ?? parsed.messages[0],
+            data: parsed,
             targets: parsed.targets,
           });
         } else if (parsed.data) {

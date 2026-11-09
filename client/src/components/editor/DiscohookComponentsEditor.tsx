@@ -212,7 +212,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             e.stopPropagation();
                             select({ kind: "component", id: childId });
                           }}
-                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-[5px] border text-xs font-semibold cursor-pointer transition-all select-none ${getDiscordButtonClasses(
+                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold cursor-pointer transition-all select-none ${getDiscordButtonClasses(
                             child.style,
                             isSelected,
                           )} ${child.disabled ? "opacity-50" : ""}`}

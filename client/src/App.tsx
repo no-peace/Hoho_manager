@@ -17,6 +17,7 @@ import {
   EyeOff,
   Clock,
   Lock,
+  Webhook,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
@@ -97,6 +98,7 @@ const ToastAndConfirmHost: React.FC = () => {
           onClose={() => !confirmBusy && closeConfirm()}
           title={confirmDialog.title}
           width="max-w-md"
+          zIndex="z-[9999]"
           footer={
             <>
               <Button variant="ghost" disabled={confirmBusy} onClick={closeConfirm}>
@@ -490,8 +492,10 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   };
 
   const handleExportJson = () => {
-    const payload = useMessageStore.getState().getPayload();
-    downloadJson(payload, `${currentName.trim() || "discohook-message"}.json`);
+    const store = useMessageStore.getState();
+    const isMulti = store.messages && store.messages.length > 1;
+    const toExport = isMulti ? store.messages : store.getPayload();
+    downloadJson(toExport, `${currentName.trim() || "discohook-message"}.json`);
     showToast("Exported JSON file", "info");
   };
 
@@ -846,7 +850,7 @@ export const App: React.FC = () => {
   const [backupsOpen, setBackupsOpen] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [botModalOpen, setBotModalOpen] = useState(false);
-  const [botModalMode, setBotModalMode] = useState<"send" | "edit">("send");
+  const [botModalMode, setBotModalMode] = useState<"send" | "edit" | "webhook">("send");
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
   const [addMsgMenuOpen, setAddMsgMenuOpen] = useState(false);
 
@@ -909,7 +913,7 @@ export const App: React.FC = () => {
 
   const addMessage = useMessageStore((state) => state.addMessage);
 
-  const openBotModal = (actionMode: "send" | "edit") => {
+  const openBotModal = (actionMode: "send" | "edit" | "webhook") => {
     setBotModalMode(actionMode);
     setBotModalOpen(true);
   };
@@ -1068,23 +1072,34 @@ export const App: React.FC = () => {
                       </Button>
                     </div>
 
-                    {/* Bot Token Dispatch Only */}
-                    <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+                    {/* Send & Dispatch Controls */}
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => openBotModal("send")}
-                        className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                        onClick={() => openBotModal("webhook")}
+                        className="bg-[#248046] hover:bg-[#1a6334] text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm border border-[#1a6334]"
+                        title="Send directly via Discord Webhook URL"
                       >
-                        <Bot size={13} /> Bot Send
+                        <Webhook size={13} /> Webhook
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => openBotModal("edit")}
-                        className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
-                        title="Edit message via bot token"
-                      >
-                        <Edit3 size={11} /> Edit
-                      </button>
+
+                      <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => openBotModal("send")}
+                          className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                        >
+                          <Bot size={13} /> Bot Send
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openBotModal("edit")}
+                          className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
+                          title="Edit message via bot token"
+                        >
+                          <Edit3 size={11} /> Edit
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

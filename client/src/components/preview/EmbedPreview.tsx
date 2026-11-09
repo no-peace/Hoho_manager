@@ -121,9 +121,9 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               className={row.length > 1 ? `grid gap-2 ${INLINE_COLS[row.length] ?? ""}` : ""}
             >
               {row.map((field) => (
-                <div key={field._id ?? field.name}>
-                  <p className="text-sm font-semibold text-[#f2f3f5]">{field.name || "\u00a0"}</p>
-                  {field.value && <Markdown content={field.value} className="text-sm" />}
+                <div key={field._id ?? field.name} className="min-w-0 break-words">
+                  <p className="text-sm font-semibold text-[#f2f3f5] break-words">{field.name || "\u00a0"}</p>
+                  {field.value && <Markdown content={field.value} className="text-sm break-words" />}
                 </div>
               ))}
             </div>

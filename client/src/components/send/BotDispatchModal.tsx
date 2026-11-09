@@ -8,6 +8,7 @@ import {
   Edit3,
   Send,
   KeyRound,
+  Webhook,
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
@@ -20,7 +21,7 @@ import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/expor
 const BotDispatchModalComponent: React.FC<{
   open: boolean;
   onClose: () => void;
-  initialMode?: "send" | "edit";
+  initialMode?: "send" | "edit" | "webhook";
 }> = ({ open, onClose, initialMode = "send" }) => {
   const botProfiles = useProfileStore((state) => state.botProfiles);
   const fetchProfiles = useProfileStore((state) => state.fetchProfiles);
@@ -31,7 +32,16 @@ const BotDispatchModalComponent: React.FC<{
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
   const canUseDefaultBot = Boolean(currentUser?.isAdmin || currentUser?.hasDefaultBotAccess);
 
-  const [mode, setMode] = useState<"send" | "edit">(initialMode);
+  const [mode, setMode] = useState<"send" | "edit" | "webhook">(initialMode);
+  const [webhookUrl, setWebhookUrl] = useState(() => {
+    try {
+      const targets = useMessageStore.getState().targets;
+      return targets?.[0]?.url || localStorage.getItem("last_webhook_url") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [webhookThreadId, setWebhookThreadId] = useState("");
   const [channels, setChannels] = useState<{ id: string; name: string }[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<string[]>(() => {
     try {
@@ -180,18 +190,28 @@ const BotDispatchModalComponent: React.FC<{
   };
 
   const handleDispatch = async () => {
-    if (selectedChannels.length === 0) return;
-    if (mode === "edit" && !targetMessageId) return;
-    if (!canUseDefaultBot && botProfileId === null) {
-      setSendResult("Please configure and select your own Custom Bot first.");
-      return;
+    if (mode === "webhook") {
+      if (!webhookUrl.trim().startsWith("https://discord.com/api/webhooks/")) {
+        setSendResult("Please provide a valid Discord webhook URL (starts with https://discord.com/api/webhooks/)");
+        return;
+      }
+    } else {
+      if (selectedChannels.length === 0) return;
+      if (mode === "edit" && !targetMessageId) return;
+      if (!canUseDefaultBot && botProfileId === null) {
+        setSendResult("Please configure and select your own Custom Bot first.");
+        return;
+      }
     }
 
     setIsSending(true);
     setSendResult(null);
     try {
-      const payload = useMessageStore.getState().getPayload();
-      const attachedFiles = useMessageStore.getState().attachedFiles;
+      const store = useMessageStore.getState();
+      const payload = store.getPayload();
+      const isMulti = store.messages && store.messages.length > 1;
+      const allPayloads = isMulti ? store.getAllPayloads() : [payload];
+      const attachedFiles = store.attachedFiles;
       const flows = useActionStore.getState().toRegistrations();
 
       const localFiles = attachedFiles.filter(
@@ -206,6 +226,45 @@ const BotDispatchModalComponent: React.FC<{
           is_spoiler: Boolean(f.spoiler),
           ...(f.description ? { description: f.description } : {}),
         }));
+
+      if (mode === "webhook") {
+        try {
+          localStorage.setItem("last_webhook_url", webhookUrl.trim());
+          useMessageStore.getState().setTargetUrl(0, webhookUrl.trim());
+        } catch {}
+
+        if (localFiles.length > 0) {
+          const formData = new FormData();
+          const sendBody = {
+            mode: "webhook",
+            webhookUrl: webhookUrl.trim(),
+            threadId: webhookThreadId.trim() || undefined,
+            payload: isMulti ? undefined : payload,
+            messages: isMulti ? allPayloads : undefined,
+            flows,
+            ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+          };
+          formData.append("payload_json", JSON.stringify(sendBody));
+          for (const fileItem of localFiles) {
+            const filename = fileItem.spoiler ? `SPOILER_${fileItem.name}` : fileItem.name;
+            formData.append("files", fileItem.file, filename);
+          }
+          await api.send(formData);
+        } else {
+          await api.send({
+            mode: "webhook",
+            webhookUrl: webhookUrl.trim(),
+            threadId: webhookThreadId.trim() || undefined,
+            payload: isMulti ? undefined : payload,
+            messages: isMulti ? allPayloads : undefined,
+            flows,
+            ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+          });
+        }
+        setSendResult("Webhook message dispatched successfully!");
+        setTimeout(() => onClose(), 2000);
+        return;
+      }
 
       let successCount = 0;
       let firstFailure: string | null = null;
@@ -224,7 +283,8 @@ const BotDispatchModalComponent: React.FC<{
             const formData = new FormData();
             const sendBody = {
               mode: "bot",
-              payload,
+              payload: isMulti ? undefined : payload,
+              messages: isMulti ? allPayloads : undefined,
               channelId: cId,
               profileId: botProfileId ?? undefined,
               flows,
@@ -240,7 +300,8 @@ const BotDispatchModalComponent: React.FC<{
           } else {
             await api.send({
               mode: "bot",
-              payload,
+              payload: isMulti ? undefined : payload,
+              messages: isMulti ? allPayloads : undefined,
               channelId: cId,
               profileId: botProfileId ?? undefined,
               flows,
@@ -284,7 +345,7 @@ const BotDispatchModalComponent: React.FC<{
     <Modal
       open={open}
       onClose={onClose}
-      title="Dispatch via Bot"
+      title={mode === "webhook" ? "Dispatch via Webhook" : "Dispatch via Bot"}
       width="max-w-2xl"
       footer={
         <>
@@ -294,20 +355,28 @@ const BotDispatchModalComponent: React.FC<{
           <Button
             variant="primary"
             className={`${
-              mode === "edit"
-                ? "bg-[#faa61a] hover:bg-[#d88c0e]"
-                : "bg-[#5865f2] hover:bg-[#4752c4]"
+              mode === "webhook"
+                ? "bg-[#23a55a] hover:bg-[#1f8b4c]"
+                : mode === "edit"
+                  ? "bg-[#faa61a] hover:bg-[#d88c0e]"
+                  : "bg-[#5865f2] hover:bg-[#4752c4]"
             } text-white border-none flex items-center gap-2`}
             onClick={() => void handleDispatch()}
             loading={isSending}
             disabled={
-              selectedChannels.length === 0 ||
               isSending ||
-              (mode === "edit" && !targetMessageId) ||
-              (!canUseDefaultBot && botProfileId === null)
+              (mode === "webhook"
+                ? !webhookUrl.trim().startsWith("https://discord.com/api/webhooks/")
+                : selectedChannels.length === 0 ||
+                  (mode === "edit" && !targetMessageId) ||
+                  (!canUseDefaultBot && botProfileId === null))
             }
           >
-            {mode === "edit" ? (
+            {mode === "webhook" ? (
+              <>
+                <Send size={16} /> Send Webhook
+              </>
+            ) : mode === "edit" ? (
               <>
                 <Edit3 size={16} /> Update Message
               </>
@@ -332,7 +401,7 @@ const BotDispatchModalComponent: React.FC<{
                 : "text-[#b5bac1] hover:bg-[#2b2d31]"
             }`}
           >
-            <Send size={14} /> Send New Message
+            <Send size={14} /> Send Message
           </button>
           <button
             type="button"
@@ -345,9 +414,55 @@ const BotDispatchModalComponent: React.FC<{
           >
             <Edit3 size={14} /> Edit Existing
           </button>
+          <button
+            type="button"
+            onClick={() => setMode("webhook")}
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-all ${
+              mode === "webhook"
+                ? "bg-[#23a55a] text-white shadow-sm"
+                : "text-[#b5bac1] hover:bg-[#2b2d31]"
+            }`}
+          >
+            <Webhook size={14} /> Webhook
+          </button>
         </div>
 
-        {/* 1. Bot Identity Selector */}
+        {mode === "webhook" ? (
+          <div className="space-y-4 bg-[#1e1f22] p-4 rounded-lg border border-[#111214]">
+            <div>
+              <label className="block text-[11px] font-bold text-[#b5bac1] uppercase mb-1">
+                Discord Webhook URL
+              </label>
+              <input
+                type="url"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/123456789/token..."
+                className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#5865f2]"
+              />
+              <p className="mt-1 text-[11px] text-[#949ba4]">
+                Paste your channel webhook URL from Server Settings &gt; Integrations &gt; Webhooks.
+              </p>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#b5bac1] uppercase mb-1">
+                Thread ID (Optional)
+              </label>
+              <input
+                type="text"
+                value={webhookThreadId}
+                onChange={(e) => setWebhookThreadId(e.target.value)}
+                placeholder="17-20 digit Thread ID..."
+                className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#5865f2]"
+              />
+              <p className="mt-1 text-[11px] text-[#949ba4]">
+                If sending to an active thread or forum post, specify its ID here.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* 1. Bot Identity Selector */}
         <div>
           <div className="flex justify-between items-end mb-2">
             <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
@@ -557,6 +672,8 @@ const BotDispatchModalComponent: React.FC<{
             )}
           </div>
         )}
+        </>
+      )}
 
         {sendResult && (
           <div className="p-3 rounded bg-[#1e1f22] border border-[#35373c] text-xs text-[#dbdee1]">

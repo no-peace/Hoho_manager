@@ -112,8 +112,9 @@ export const api = {
     }),
 
   sendMessage: (body: {
-    content: string;
     channelId: string;
+    payload?: Record<string, unknown>;
+    content?: string;
     username?: string;
     avatarUrl?: string;
   }) =>
@@ -122,8 +123,8 @@ export const api = {
       body: {
         mode: "bot",
         channelId: body.channelId,
-        payload: {
-          content: body.content,
+        payload: body.payload ?? {
+          content: body.content ?? "",
           ...(body.username ? { username: body.username } : {}),
           ...(body.avatarUrl ? { avatar_url: body.avatarUrl } : {}),
         },

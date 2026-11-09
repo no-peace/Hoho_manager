@@ -106,10 +106,10 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
       }
 
       let left = rect.right - dropWidth;
-      if (left < 10) left = 10;
       if (left + dropWidth > window.innerWidth) {
         left = window.innerWidth - dropWidth - 10;
       }
+      if (left < 8) left = 8;
 
       setCoords({ top, left });
     }
@@ -247,7 +247,7 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
             ref={dropdownRef}
             style={{ top: coords.top, left: coords.left }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed w-80 rounded-lg border border-[#111214] bg-[#2b2d31] shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[380px] font-sans text-xs text-[#dbdee1]"
+            className="fixed w-80 max-w-[calc(100vw-1rem)] rounded-lg border border-[#111214] bg-[#2b2d31] shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[380px] font-sans text-xs text-[#dbdee1]"
           >
             {/* Tab navigation */}
             <div className="flex border-b border-[#1e1f22] bg-[#1e1f22] p-1 gap-1">

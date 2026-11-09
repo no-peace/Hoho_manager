@@ -117,7 +117,7 @@ module.exports = {
     // {
     //   ...base,
     //   name: "dmb-tunnel",
-    //   script: "/usr/local/bin/cloudflared",
+    //   script: process.platform === "win32" ? "cloudflared.exe" : "cloudflared",
     //   interpreter: "none",
     //   args: "tunnel --config /etc/cloudflared/config.yml run",
     //   max_memory_restart: "150M",

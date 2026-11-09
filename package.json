@@ -8,7 +8,8 @@
     "shared",
     "server",
     "client",
-    "bot"
+    "bot",
+    "tunnel"
   ],
 "scripts": {
     "dev": "npm run build:shared && concurrently -n server,client,bot -c blue,magenta,green \"npm:dev:server\" \"npm:dev:client\" \"npm:dev:bot\"",

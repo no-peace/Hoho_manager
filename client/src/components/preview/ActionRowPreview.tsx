@@ -60,7 +60,7 @@ const renderEmoji = (emoji: any) => {
   return null;
 };
 
-const ButtonPreview = ({ button }: { button: ComponentNode }) => {
+export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
   const emojiNode = renderEmoji((button as any).emoji);
 
@@ -75,16 +75,16 @@ const ButtonPreview = ({ button }: { button: ComponentNode }) => {
       ].join(" ")}
     >
       {emojiNode}
-      {isLink && <ExternalLink size={14} />}
-      {button.label ?? (isLink ? "Link" : "Button")}
+      {isLink && <ExternalLink size={14} className="shrink-0" />}
+      <span className="truncate max-w-[200px]">{button.label ?? (isLink ? "Link" : "Button")}</span>
     </button>
   );
 };
 
 const SelectPreview = ({ select }: { select: ComponentNode }) => (
-  <div className="flex h-10 w-full max-w-[400px] items-center justify-between rounded border border-[#3f4147] bg-[#1e1f22] px-3 text-sm text-[#949ba4]">
-    <span>{select.placeholder ?? "Make a selection"}</span>
-    <ChevronDown size={16} />
+  <div className="flex h-10 w-full max-w-[400px] items-center justify-between gap-2 rounded border border-[#3f4147] bg-[#1e1f22] px-3 text-sm text-[#949ba4]">
+    <span className="truncate">{select.placeholder ?? "Make a selection"}</span>
+    <ChevronDown size={16} className="shrink-0" />
   </div>
 );
 

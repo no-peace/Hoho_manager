@@ -17,6 +17,7 @@ import {
   Box,
   FileText,
   Minus,
+  User,
 } from "lucide-react";
 import {
   Limits,
@@ -124,6 +125,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const [isLoadingLinkedMsg, setIsLoadingLinkedMsg] = useState(false);
   const [openContainerAddId, setOpenContainerAddId] = useState<string | null>(null);
   const [openAccessoryMenuId, setOpenAccessoryMenuId] = useState<string | null>(null);
+  const [profileOverrideOpen, setProfileOverrideOpen] = useState(Boolean(message.username || message.avatar_url));
 
   const addMenuRef = useRef<HTMLDivElement>(null);
   const optionsMenuRef = useRef<HTMLDivElement>(null);
@@ -866,7 +868,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   return (
     <div
       onClick={() => ensureActive()}
-      className={`rounded-lg bg-[#292b2f] border transition-all ${
+      className={`rounded-lg overflow-hidden bg-[#292b2f] border transition-all ${
         isActive
           ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_4px_16px_rgba(0,0,0,0.25)]"
           : "border-[#1e1f22] hover:border-[#383a40]"
@@ -875,7 +877,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       {/* ── Message Collapsible Trigger Header (Discohook style) ── */}
       <div
         className={`flex items-center justify-between px-3 py-2.5 bg-[#232428] select-none ${
-          isOpen ? "rounded-t-[7px] border-b border-[#1e1f22]" : "rounded-[7px]"
+          isOpen ? "border-b border-[#1e1f22]" : ""
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -985,7 +987,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
       {/* ── Message Body Panel ── */}
       {isOpen && (
-        <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-[7px]">
+        <div className="p-3 space-y-3 bg-[#2b2d31]">
           {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
             {/* Thread Sub-Section */}
@@ -1068,6 +1070,66 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
             {/* Files Sub-Section */}
             <FileAttachmentsSection />
+
+            {/* Profile Overrides (Webhook / Author) */}
+            <div className="rounded-lg border border-[#1e1f22] bg-[#2b2d31] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setProfileOverrideOpen(!profileOverrideOpen)}
+                className="w-full flex items-center justify-between p-2.5 text-xs font-bold uppercase tracking-wider text-[#949ba4] hover:text-[#dbdee1] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <User size={14} />
+                  <span>Profile Overrides (Webhook / Author)</span>
+                </div>
+                {profileOverrideOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {profileOverrideOpen && (
+                <div className="p-3 pt-0 border-t border-[#1e1f22] space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <label className="field-label">Username</label>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={message.username || ""}
+                        placeholder="Custom webhook name..."
+                        onChange={(e) => {
+                          ensureActive();
+                          setField("username", e.target.value);
+                        }}
+                        className="field text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="field-label">Avatar URL</label>
+                      <div className="flex items-center gap-2">
+                        {message.avatar_url && (
+                          <img
+                            src={message.avatar_url}
+                            alt="Avatar"
+                            className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#111214]"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        )}
+                        <input
+                          type="url"
+                          value={message.avatar_url || ""}
+                          placeholder="https://..."
+                          onChange={(e) => {
+                            ensureActive();
+                            setField("avatar_url", e.target.value);
+                          }}
+                          className="field text-xs flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {!isV2 ? (

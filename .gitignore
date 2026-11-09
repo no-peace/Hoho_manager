@@ -13,6 +13,9 @@ node_modules/
 dist/
 build/
 .vite/
+client/src/utils/__tests__/
+server/tests/
+tunnel/package.json
 
 # Database (SQLite files & journals)
 server/data/
@@ -36,3 +39,5 @@ Thumbs.db
 
 # Reference source (third-party, keep out of the tree)
 discohook_src/
+.agents/
+AUDIT_AND_REMEDIATION_PLAN.md

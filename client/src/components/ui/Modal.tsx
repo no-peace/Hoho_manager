@@ -10,6 +10,7 @@ export interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   width?: string;
+  zIndex?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,17 +20,17 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   width = "max-w-md",
+  zIndex = "z-[9990]",
 }) => {
   useEffect(() => {
     if (typeof document === "undefined" || !document.body) return;
+    const prevOverflow = document.body.style.overflow;
     if (open) {
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
     }
     return () => {
       if (typeof document !== "undefined" && document.body) {
-        document.body.style.overflow = "unset";
+        document.body.style.overflow = prevOverflow || "hidden";
       }
     };
   }, [open]);
@@ -38,7 +39,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+      className={`fixed inset-0 ${zIndex} flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150`}
       onClick={onClose}
     >
       <div

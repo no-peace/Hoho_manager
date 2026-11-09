@@ -2,7 +2,7 @@ import { FileText } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType } from "@dmb/shared";
 import { Markdown } from "./Markdown";
-import { ActionRowPreview } from "./ActionRowPreview";
+import { ActionRowPreview, ButtonPreview } from "./ActionRowPreview";
 
 /**
  * Previews for the components that can sit inside a container (plus action rows,
@@ -29,16 +29,22 @@ const SeparatorPreview = ({ component }: { component: ComponentNode }) =>
 
 const SectionPreview = ({ component }: { component: ComponentNode }) => {
   const thumbnail = component.accessory?.media?.url;
+  const isButton = component.accessory?.type === ComponentType.Button;
 
   return (
-    <div className="flex items-start gap-3">
-      <div className="min-w-0 flex-1 space-y-1">
+    <div className="flex items-start gap-3 max-w-[520px]">
+      <div className="min-w-0 flex-1 space-y-1 break-words">
         {(component.components ?? []).map((child) => (
           <AutoComponent key={child._id} component={child} />
         ))}
       </div>
       {thumbnail && (
         <img src={thumbnail} alt="" className="h-20 w-20 shrink-0 rounded object-cover" />
+      )}
+      {isButton && component.accessory && (
+        <div className="shrink-0">
+          <ButtonPreview button={component.accessory} />
+        </div>
       )}
     </div>
   );
@@ -95,6 +101,8 @@ export const AutoComponent = ({ component }: AutoComponentProps) => {
       return <FilePreview component={component} />;
     case ComponentType.ActionRow:
       return <ActionRowPreview component={component} />;
+    case ComponentType.Button:
+      return <ButtonPreview button={component} />;
     default:
       return null;
   }

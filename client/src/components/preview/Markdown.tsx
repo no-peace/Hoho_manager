@@ -331,7 +331,7 @@ const TimestampMention: React.FC<{ unix: number; format?: string }> = ({
   return (
     <span
       title={date.toLocaleString()}
-      className="inline-flex items-center gap-1 rounded-[3px] bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none"
+      className="inline-flex items-center gap-1 rounded bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none"
     >
       <Clock size={11} className="text-[#949ba4] shrink-0" />
       <span>{formatted}</span>

@@ -19,6 +19,9 @@ export class RawInteractionRelay extends Listener {
     // Slash commands (2) and Autocomplete (4) are handled in-process by Sapphire.
     if (rawInteraction?.type !== 3 && rawInteraction?.type !== 5) return;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2_200);
+
     try {
       const res = await fetch(`${env.apiBaseUrl}/api/interactions/relay`, {
         method: "POST",
@@ -29,6 +32,7 @@ export class RawInteractionRelay extends Listener {
         body: JSON.stringify(rawInteraction, (_, v) =>
           typeof v === "bigint" ? v.toString() : v,
         ),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -39,6 +43,8 @@ export class RawInteractionRelay extends Listener {
       }
     } catch (error) {
       this.container.logger.error(`Failed to reach the API at ${env.apiBaseUrl}`, error);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 }

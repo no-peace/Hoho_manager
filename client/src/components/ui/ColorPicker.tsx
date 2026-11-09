@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { EMBED_COLOR_PRESETS } from "../../utils/constants";
 import { decimalToHex, parseHexColor } from "../../utils/discord";
@@ -26,6 +27,11 @@ export const ColorPicker = ({
   allowClear = true,
 }: ColorPickerProps) => {
   const hex = value == null ? "#000000" : decimalToHex(value);
+  const [draftHex, setDraftHex] = useState(value == null ? "" : decimalToHex(value));
+
+  useEffect(() => {
+    setDraftHex(value == null ? "" : decimalToHex(value));
+  }, [value]);
 
   return (
     <div>
@@ -68,11 +74,20 @@ export const ColorPicker = ({
       <div className="mt-1.5 flex items-center gap-2">
         <input
           className="field !w-28 font-mono"
-          value={value == null ? "" : decimalToHex(value)}
+          value={draftHex}
           placeholder="#5865f2"
           onChange={(event) => {
-            const parsed = parseHexColor(event.target.value);
+            const text = event.target.value;
+            setDraftHex(text);
+            const parsed = parseHexColor(text);
             if (parsed !== null) onChange(parsed);
+          }}
+          onBlur={() => {
+            if (draftHex.trim() === "" && allowClear) {
+              onChange(null);
+            } else {
+              setDraftHex(value == null ? "" : decimalToHex(value));
+            }
           }}
         />
         <span className="font-mono text-[11px] text-ink-faint">

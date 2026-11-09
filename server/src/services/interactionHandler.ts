@@ -171,6 +171,10 @@ export const handleInteraction = async (
   }
 
   pendingLateResponses.set(interaction.id, execution);
+  const ttlTimer = setTimeout(() => {
+    pendingLateResponses.delete(interaction.id);
+  }, 60_000);
+  ttlTimer.unref?.();
   return deferred;
 };
 

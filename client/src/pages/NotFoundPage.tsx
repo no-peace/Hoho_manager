@@ -14,11 +14,11 @@ export const NotFoundPage: React.FC = () => {
           <img
             src={HOHO_LOGO_URL}
             alt="HoHo Manager"
-            className="relative w-16 h-16 rounded-xl object-cover border border-[#5865f2]/50 shadow-lg"
+            className="relative mx-auto w-16 h-16 rounded-xl object-cover border border-[#5865f2]/50 shadow-lg"
           />
 
         <div className="space-y-1.5">
-          <div className="inline-block items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#da373c]/15 border border-[#da373c]/30 text-[#f28b8b] text-P[11px] font-bold uppercase tracking-wider">
+          <div className="inline-block items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#da373c]/15 border border-[#da373c]/30 text-[#f28b8b] text-[11px] font-bold uppercase tracking-wider">
             Error 404 • Route Not Found
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">

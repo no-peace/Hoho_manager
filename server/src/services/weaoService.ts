@@ -10,6 +10,7 @@ const WEAO_USER_AGENT = "WEAO-3PService";
 
 const EXPLOITS_CACHE_TTL_MS = 60_000;
 const SUNC_CACHE_TTL_MS = 15 * 60_000;
+const MAX_SUNC_CACHE_ENTRIES = 250;
 const REQUEST_TIMEOUT_MS = 8_000;
 const SAFE_SCRAP_TOKEN_REGEX = /^[A-Za-z0-9_-]{4,128}$/;
 
@@ -245,6 +246,10 @@ export const getExploitSuncDetails = async (
       )}`;
       const data = await fetchWeaoJson<WeaoSuncData>(path);
       if (data && typeof data === "object") {
+        if (suncCache.size >= MAX_SUNC_CACHE_ENTRIES) {
+          const oldestKey = suncCache.keys().next().value;
+          if (oldestKey) suncCache.delete(oldestKey);
+        }
         suncCache.set(cacheKey, { data, fetchedAt: Date.now() });
         return data;
       }

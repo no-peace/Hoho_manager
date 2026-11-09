@@ -58,6 +58,7 @@ export interface SelectOption {
   value: string;
   description?: string;
   default?: boolean;
+  emoji?: { id?: string | null; name: string; animated?: boolean };
 }
 
 export interface GalleryItem {
@@ -98,6 +99,7 @@ export interface ComponentNode {
   /* Interactive */
   style?: number;
   label?: string;
+  emoji?: { id?: string | null; name: string; animated?: boolean };
   custom_id?: string;
   url?: string;
   sku_id?: string;

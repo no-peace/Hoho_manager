@@ -59,8 +59,8 @@ export class ApiError extends Error {
     return new ApiError(429, message, { code: "rate_limited" });
   }
 
-  static upstream(message: string, details?: unknown): ApiError {
-    return new ApiError(502, message, { code: "upstream_error", details });
+  static upstream(message: string, details?: unknown, expose = true): ApiError {
+    return new ApiError(502, message, { code: "upstream_error", details, expose });
   }
 }
 

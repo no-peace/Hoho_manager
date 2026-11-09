@@ -130,26 +130,14 @@ export const staffRepository = {
   async upsertCooldown(discordUserId: string, action: string): Promise<void> {
     const now = new Date().toISOString();
     const hourBucket = now.slice(0, 13);
-    const existing = await this.getCooldown(discordUserId, action);
-    if (!existing) {
-      await db.run(`
-        INSERT INTO staff_cooldowns (discord_user_id, action, last_at, count_this_hour, hour_bucket)
-        VALUES (?, ?, ?, 1, ?)
-      `, [discordUserId, action, now, hourBucket]);
-    } else {
-      const sameHour = existing.hour_bucket === hourBucket;
-      await db.run(`
-        UPDATE staff_cooldowns
-        SET last_at = ?, count_this_hour = ?, hour_bucket = ?
-        WHERE discord_user_id = ? AND action = ?
-      `, [
-        now,
-        sameHour ? existing.count_this_hour + 1 : 1,
-        hourBucket,
-        discordUserId,
-        action,
-      ]);
-    }
+    await db.run(`
+      INSERT INTO staff_cooldowns (discord_user_id, action, last_at, count_this_hour, hour_bucket)
+      VALUES (?, ?, ?, 1, ?)
+      ON CONFLICT(discord_user_id, action) DO UPDATE SET
+        last_at = excluded.last_at,
+        count_this_hour = CASE WHEN staff_cooldowns.hour_bucket = excluded.hour_bucket THEN staff_cooldowns.count_this_hour + 1 ELSE 1 END,
+        hour_bucket = excluded.hour_bucket
+    `, [discordUserId, action, now, hourBucket]);
   },
 
   async getHourlyCount(discordUserId: string, action: string): Promise<number> {

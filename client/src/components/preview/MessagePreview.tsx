@@ -250,7 +250,7 @@ export const MessagePreview = () => {
 
                   <div className="mt-0.5 space-y-2">
                     {isMsgV2 ? (
-                      <>
+                      <div className="space-y-2 max-w-[520px]">
                         {message.components &&
                           message.components.map((component) => (
                             <div key={component._id}>
@@ -260,7 +260,7 @@ export const MessagePreview = () => {
                         <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
                           flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
                         </p>
-                      </>
+                      </div>
                     ) : (
                       <>
                         {message.content && (

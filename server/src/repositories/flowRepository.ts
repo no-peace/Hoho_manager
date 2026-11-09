@@ -55,9 +55,10 @@ export class FlowRepository extends BaseRepository {
   }
 
   async get(token: string): Promise<FlowStateRecord | undefined> {
+    const now = new Date().toISOString();
     const row = await this.db.get<FlowRow>(
-      "SELECT * FROM flow_states WHERE token = @token AND expires_at > CURRENT_TIMESTAMP",
-      { token },
+      "SELECT * FROM flow_states WHERE token = @token AND expires_at > @now",
+      { token, now },
     );
     return hydrate(row);
   }
@@ -85,8 +86,10 @@ export class FlowRepository extends BaseRepository {
   }
 
   async pruneExpired(): Promise<number> {
+    const now = new Date().toISOString();
     const { changes } = await this.db.run(
-      "DELETE FROM flow_states WHERE expires_at <= CURRENT_TIMESTAMP",
+      "DELETE FROM flow_states WHERE expires_at <= @now",
+      { now },
     );
     return changes;
   }
