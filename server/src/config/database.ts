@@ -85,6 +85,7 @@ const executeTursoStatement = async (
 ): Promise<TursoExecuteResult> => {
   const res = await fetch(getTursoPipelineUrl(), {
     method: "POST",
+    signal: AbortSignal.timeout(10_000),
     headers: {
       Authorization: `Bearer ${tursoAuthToken}`,
       "Content-Type": "application/json",

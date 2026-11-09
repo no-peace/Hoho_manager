@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from "express";
+import crypto from "node:crypto";
 import { attachUser, requireUser } from "../middleware/auth.js";
 import { env } from "../config/env.js";
 import { botProfileService, webhookProfileService } from "../services/profileService.js";
@@ -16,7 +17,10 @@ const requireAuthenticatedProfileUser: RequestHandler = (req, _res, next) => {
   if (env.isProd) {
     const sessionUser = getSessionUserFromRequest(req);
     const adminKey = req.get("x-admin-key");
-    if (!sessionUser && adminKey !== env.adminApiKey) {
+    const bufA = Buffer.from(String(adminKey ?? ""));
+    const bufB = Buffer.from(String(env.adminApiKey ?? ""));
+    const isAdminKey = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+    if (!sessionUser && !isAdminKey) {
       return next(ApiError.unauthorized("Please log in with Discord to manage bot or webhook profiles"));
     }
   }

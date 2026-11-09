@@ -61,13 +61,11 @@ export const useProfileStore = create<ProfileState>()(
       fetchProfiles: async () => {
         set({ status: "loading" });
         try {
-          const [webhooks, bots] = await Promise.all([
-            api.profiles.listWebhooks(),
-            // Bot profiles are admin-only; a 403 here is expected and harmless.
-            api.profiles.listBots().catch(() => ({ profiles: [] as BotProfile[] })),
-          ]);
+          const bots = await api.profiles
+            .listBots()
+            .catch(() => ({ profiles: [] as BotProfile[] }));
           set({
-            webhookProfiles: webhooks.profiles,
+            webhookProfiles: [],
             botProfiles: bots.profiles,
             status: "idle",
             error: null,

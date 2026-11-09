@@ -34,7 +34,7 @@ import { useTemplateStore } from "./store/templateStore";
 import { useGlobalStore } from "./store/globalStore";
 import { useProfileStore } from "./store/profileStore";
 import { useTemplates } from "./hooks/useTemplates";
-import { downloadJson, parseImportedJson } from "./utils/exportImport";
+import { downloadJson, parseImportedJson, toQueryData } from "./utils/exportImport";
 import { copyTextToClipboard } from "./utils/clipboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import api from "./api/client";
@@ -490,8 +490,9 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   };
 
   const handleExportJson = () => {
-    const payload = useMessageStore.getState().getPayload();
-    downloadJson(payload, `${currentName.trim() || "discohook-message"}.json`);
+    const store = useMessageStore.getState();
+    const queryData = toQueryData(store.messages, store.targets, store.mode);
+    downloadJson(queryData, `${currentName.trim() || "hoho-messages"}.json`);
     showToast("Exported JSON file", "info");
   };
 
@@ -501,7 +502,7 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     try {
       const text = await file.text();
       const document = parseImportedJson(text);
-      useMessageStore.getState().load({ data: document });
+      useMessageStore.getState().load(document as any);
       setCurrentName(file.name.replace(/\.json$/i, ""));
       showToast("Imported JSON file into studio!", "success");
       onClose();

@@ -31,6 +31,15 @@ export const apiLimiter: RequestHandler = rateLimit({
   skip: () => env.nodeEnv === "test",
 });
 
+export const authLimiter: RequestHandler = rateLimit({
+  windowMs: 15 * 60 * 1000, //15 min
+  limit: 30, // 30 requests per 15 min per ip
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: json429,
+  skip: () => env.nodeEnv === "test,"
+});
+
 export const sendLimiter: RequestHandler = rateLimit({
   windowMs: env.rateLimit.windowMs,
   limit: Math.max(10, Math.floor(env.rateLimit.max / 2)),

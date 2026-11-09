@@ -190,8 +190,15 @@ const BotDispatchModalComponent: React.FC<{
     setIsSending(true);
     setSendResult(null);
     try {
-      const payload = useMessageStore.getState().getPayload();
-      const attachedFiles = useMessageStore.getState().attachedFiles;
+      const store = useMessageStore.getState();
+      const allPayloads = store.getAllPayloads();
+      const payloadsToSend =
+        mode === "edit"
+          ? [store.getPayload()]
+          : allPayloads.length > 0
+            ? allPayloads
+            : [store.getPayload()];
+      const attachedFiles = store.attachedFiles;
       const flows = useActionStore.getState().toRegistrations();
 
       const localFiles = attachedFiles.filter(
@@ -220,33 +227,38 @@ const BotDispatchModalComponent: React.FC<{
         const currentTargetId = targetMessageIds[i] || targetMessageIds[0];
 
         try {
-          if (localFiles.length > 0) {
-            const formData = new FormData();
-            const sendBody = {
-              mode: "bot",
-              payload,
-              channelId: cId,
-              profileId: botProfileId ?? undefined,
-              flows,
-              editMessageId: mode === "edit" ? currentTargetId : undefined,
-              ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
-            };
-            formData.append("payload_json", JSON.stringify(sendBody));
-            for (const fileItem of localFiles) {
-              const filename = fileItem.spoiler ? `SPOILER_${fileItem.name}` : fileItem.name;
-              formData.append("files", fileItem.file, filename);
+          for (let mIdx = 0; mIdx < payloadsToSend.length; mIdx++) {
+            const msgPayload = payloadsToSend[mIdx];
+            const includeFiles = mIdx === 0;
+
+            if (includeFiles && localFiles.length > 0) {
+              const formData = new FormData();
+              const sendBody = {
+                mode: "bot",
+                payload: msgPayload,
+                channelId: cId,
+                profileId: botProfileId ?? undefined,
+                flows,
+                editMessageId: mode === "edit" ? currentTargetId : undefined,
+                ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+              };
+              formData.append("payload_json", JSON.stringify(sendBody));
+              for (const fileItem of localFiles) {
+                const filename = fileItem.spoiler ? `SPOILER_${fileItem.name}` : fileItem.name;
+                formData.append("files", fileItem.file, filename);
+              }
+              await api.send(formData);
+            } else {
+              await api.send({
+                mode: "bot",
+                payload: msgPayload,
+                channelId: cId,
+                profileId: botProfileId ?? undefined,
+                flows,
+                editMessageId: mode === "edit" ? currentTargetId : undefined,
+                ...(includeFiles && urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
+              });
             }
-            await api.send(formData);
-          } else {
-            await api.send({
-              mode: "bot",
-              payload,
-              channelId: cId,
-              profileId: botProfileId ?? undefined,
-              flows,
-              editMessageId: mode === "edit" ? currentTargetId : undefined,
-              ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
-            });
           }
           successCount++;
         } catch (err) {

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "node:crypto";
 import { requireHeadAdmin } from "../middleware/auth.js";
 import { settingsService } from "../services/settingsService.js";
 import { auditLog } from "../services/auditLog.js";
@@ -15,7 +16,9 @@ const router = Router();
  */
 router.get("/auth", asyncHandler(async (req, res) => {
   const adminKey = req.get("x-admin-key");
-  const isAdminKey = !!adminKey && adminKey === env.adminApiKey;
+  const bufA = Buffer.from(String(adminKey ?? ""));
+  const bufB = Buffer.from(String(env.adminApiKey ?? ""));
+  const isAdminKey = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 
   const sessionUser = getSessionUserFromRequest(req);
   const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");

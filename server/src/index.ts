@@ -43,23 +43,31 @@ const start = async (): Promise<void> => {
   );
   cleanup.unref(); // don't hold the process open on its own
 
-  const shutdown = (signal: string): void => {
-    log.info(`${signal} received  shutting down`);
-    clearInterval(cleanup);
-
-    server.close(() => {
-      void db.close().then(() => process.exit(0));
-    });
-
-    // Don't hang forever if a connection refuses to drain.
-    setTimeout(() => process.exit(1), 10_000).unref();
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}. Shutting down gracefully...`);
+    if (server) {
+      server.close(() => {
+        logger.info("HTTP server closed.");
+      });
+    }
+    await db.close().catch(() => {});
+    process.exit(0);
   };
 
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-};
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
 
-start().catch((error: unknown) => {
-  log.error("Failed to start server", error);
-  process.exit(1);
-});
+  process.on("unhandledRejection", (reason) => {
+    logger.error("Unhandled Promise Rejection:", reason);
+  });
+
+  process.on("uncaughtException", (error) => {
+    logger.error("Uncaught Exception thrown:", error);
+    process.exit(1);
+  });
+
+  start().catch((error: unknown) => {
+    log.error("Failed to start server", error);
+    process.exit(1);
+  })
+};

@@ -6,7 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { env, serverRoot } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-import { apiLimiter } from "./middleware/rateLimit.js";
+import { apiLimiter, authLimiter } from "./middleware/rateLimit.js";
 import configRouter from "./routes/config.js";
 import healthRouter from "./routes/health.js";
 import interactionsRouter from "./routes/interactions.js";
@@ -29,6 +29,8 @@ export const createApp = (): Express => {
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
       contentSecurityPolicy: false,
+      frameguard: { action: "deny"},
+      xssFilter: true,
     }),
   );
 
@@ -52,15 +54,17 @@ export const createApp = (): Express => {
   // 3. Body parsers.
   app.use(
     express.json({
+      limit: "2mb",
       verify: (req, _res, buf) => {
         (req as any).rawBody = buf;
       },
     }),
   );
-  app.use(express.urlencoded({ extended: false }));
+  app.use(express.urlencoded({ extended: false, limit: "256kb" }));
 
   // 4. Rate limit the rest of the API.
   app.use("/api", apiLimiter);
+  app.use("/api/auth", authLimiter);
 
   // 5. Routes.
   app.use("/api/health", healthRouter);
