@@ -97,18 +97,18 @@ export const completeDeferredInteraction = async (
  * from *how the reply is delivered*. There are two deliveries, and they must
  * behave identically:
  *
- *   1. **Webhook** — Discord POSTs to `POST /api/interactions`; the body we return
+ *   1. **Webhook**  Discord POSTs to `POST /api/interactions`; the body we return
  *      here is the HTTP response, which Discord reads directly. Requires the app's
  *      Interactions Endpoint URL to be set (Cloudflare Tunnel, or any public
  *      HTTPS address).
- *   2. **Gateway relay** — the app has no public URL, so the gateway worker
+ *   2. **Gateway relay**  the app has no public URL, so the gateway worker
  *      receives `INTERACTION_CREATE` and forwards the payload to
  *      `POST /api/interactions/relay`; we then POST this body to Discord's
  *      callback endpoint using the interaction token. See
  *      {@link file://./../routes/interactions.ts}.
  *
  * Discord gives the app **3 seconds** to reply or the user sees "This
- * interaction failed", so no path may return without an answer — including the
+ * interaction failed", so no path may return without an answer  including the
  * error path, which is why the catch lives here rather than in a route.
  */
 export const handleInteraction = async (

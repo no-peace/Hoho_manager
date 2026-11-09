@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Visual Discord message builder — Vite + React + Tailwind + Zustand.",
+  "description": "Visual Discord message builder  Vite + React + Tailwind + Zustand.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

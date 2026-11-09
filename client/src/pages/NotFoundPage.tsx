@@ -1,31 +1,25 @@
 import React from "react";
-import { Compass, ArrowLeft, BookOpen, Terminal } from "lucide-react";
-
-const HOHO_LOGO_URL =
-  "https://github.com/acsu123/HohoV2/blob/main/BloxFruit/keysystem/hoho_logo.png?raw=true";
+import { ArrowLeft, BookOpen, Terminal } from "lucide-react";
+import { HOHO_LOGO_URL } from "../components/layout/Header";
 
 export const NotFoundPage: React.FC = () => {
   const currentPath =
     typeof window !== "undefined" ? window.location.pathname : "/unknown";
 
   return (
-    <div className="min-h-screen bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#5865f2]/10 blur-3xl" />
-
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-[#2b2d31] border border-[#111214] shadow-2xl p-8 text-center space-y-6">
-        <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-2xl bg-[#5865f2]/20 animate-pulse" />
+    <div className="min-h-screen bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center p-6 select-none">
+      {/* Ambient background glow */
+      /*<div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#5865f2]/10 blur-3xl" />*/}
+      <div className="w-full max-w-md rounded-xl bg-[#2b2d31] border border-[#111214] shadow-xl p-6 text-center space-y-5">
           <img
             src={HOHO_LOGO_URL}
             alt="HoHo Manager"
             className="relative w-16 h-16 rounded-xl object-cover border border-[#5865f2]/50 shadow-lg"
           />
-        </div>
 
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#da373c]/15 border border-[#da373c]/30 text-[#f28b8b] text-[11px] font-bold uppercase tracking-wider">
-            <Compass size={13} /> Error 404 • Route Not Found
+        <div className="space-y-1.5">
+          <div className="inline-block items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#da373c]/15 border border-[#da373c]/30 text-[#f28b8b] text-P[11px] font-bold uppercase tracking-wider">
+            Error 404 • Route Not Found
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Lost in the Grand Line?

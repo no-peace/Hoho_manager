@@ -12,7 +12,7 @@ import { BaseRepository, parseJson, parseJsonList } from "./baseRepository.js";
  * Action definitions + the execution audit log.
  *
  * A definition binds a component `custom_id` to a handler and its config.
- * Several definitions can share a `custom_id` — they run in `execution_order`,
+ * Several definitions can share a `custom_id`  they run in `execution_order`,
  * which is how multi-step flows are expressed.
  */
 

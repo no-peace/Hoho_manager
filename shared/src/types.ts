@@ -5,7 +5,7 @@
  * reasons: the app only touches a small slice of Discord's surface, and the
  * editor's shapes deliberately differ from the wire format (they carry `_id`s
  * and always-present fields). Where a type crosses the boundary that difference
- * is explicit — see {@link MessageData} (editor) vs {@link DiscordMessagePayload}
+ * is explicit  see {@link MessageData} (editor) vs {@link DiscordMessagePayload}
  * (wire).
  *
  * Adding `discord-api-types` later is a drop-in upgrade for the payload types if
@@ -73,7 +73,7 @@ export interface GalleryItem {
  * Every field after `type` is optional because a node's real shape depends on
  * its `type` (a TextDisplay has `content`, a Container has `components`). A
  * discriminated union would be more precise but would force a narrowing switch
- * at every edit — impractical for a builder that edits nodes generically. The
+ * at every edit  impractical for a builder that edits nodes generically. The
  * trade-off is deliberate: `type` plus optional fields, validated at the
  * payload boundary.
  */
@@ -159,7 +159,7 @@ export interface DiscordAttachmentPayload {
   is_spoiler?: boolean;
 }
 
-/** A message payload as Discord receives it — all fields optional. */
+/** A message payload as Discord receives it  all fields optional. */
 export interface DiscordMessagePayload {
   content?: string | null;
   embeds?: EmbedData[] | null;
@@ -189,7 +189,7 @@ export interface QueryDataTarget {
   url: string;
 }
 
-/** Discohook's second data format — what import/export reads and writes. */
+/** Discohook's second data format  what import/export reads and writes. */
 export interface QueryData {
   version?: QueryDataVersion;
   backup_id?: string;
@@ -224,10 +224,10 @@ export type ActionType =
  * How a `set_variable` step decides its value. Mirrors Discohook's
  * `FlowActionSetVariableType`.
  *
- * - `static`   — the literal string in `value`.
- * - `adaptive` — the `value` is a **field name of the previous step's result**
+ * - `static`    the literal string in `value`.
+ * - `adaptive`  the `value` is a **field name of the previous step's result**
  *                (e.g. `channel_id` after a `send_message`).
- * - `get`      — mirrors another variable by name.
+ * - `get`       mirrors another variable by name.
  */
 export type SetVariableMode = "static" | "adaptive" | "get";
 
@@ -238,7 +238,7 @@ export type CheckFunction = "equals" | "in" | "and" | "or" | "not";
 export interface CheckCondition {
   a: unknown;
   b: unknown;
-  /** `==` instead of `===` — opt-in, because the cast is lossy. */
+  /** `==` instead of `===`  opt-in, because the cast is lossy. */
   loose?: boolean;
 }
 
@@ -260,7 +260,7 @@ export interface ActionDefinition {
  *
  * A `check` step carries its own branches in `config.then` / `config.else`, each
  * of which is another `FlowStep[]`. They live in the config (as JSON) rather than
- * as sibling rows because the persistence layer is a flat ordered list — a tree
+ * as sibling rows because the persistence layer is a flat ordered list  a tree
  * cannot be expressed by `execution_order` alone.
  */
 export interface FlowStep {

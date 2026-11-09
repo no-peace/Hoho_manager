@@ -22,7 +22,7 @@ const TextDisplayForm = ({ component, update }: ComponentFormProps) => (
     maxLength={Limits.components.textDisplay}
     rows={5}
     value={component.content ?? ""}
-    placeholder="**Bold**, *italic*, # heading, - lists — markdown and mentions (@, #, :) are supported."
+    placeholder="**Bold**, *italic*, # heading, - lists  markdown and mentions (@, #, :) are supported."
     onChange={(content) => update({ content })}
   />
 );

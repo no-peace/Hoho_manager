@@ -19,7 +19,7 @@ const parseGranular = (raw?: string | null): Record<string, number> => {
   }
 };
 
-/** GET /api/access — list all staff records */
+/** GET /api/access  list all staff records */
 router.get(
   "/",
   requireHeadAdmin,
@@ -37,7 +37,7 @@ router.get(
   }),
 );
 
-/** GET /api/access/:discordUserId — get one record */
+/** GET /api/access/:discordUserId  get one record */
 router.get(
   "/:discordUserId",
   requireHeadAdmin,
@@ -54,7 +54,7 @@ router.get(
   }),
 );
 
-/** POST /api/access — grant access to a Discord user */
+/** POST /api/access  grant access to a Discord user */
 router.post(
   "/",
   requireHeadAdmin,
@@ -142,7 +142,7 @@ router.post(
   }),
 );
 
-/** PATCH /api/access/:discordUserId — update permissions */
+/** PATCH /api/access/:discordUserId  update permissions */
 router.patch(
   "/:discordUserId",
   requireHeadAdmin,
@@ -220,7 +220,7 @@ router.patch(
   }),
 );
 
-/** DELETE /api/access/:discordUserId — revoke access and invalidate active session */
+/** DELETE /api/access/:discordUserId  revoke access and invalidate active session */
 router.delete(
   "/:discordUserId",
   requireHeadAdmin,
@@ -245,7 +245,7 @@ router.delete(
   }),
 );
 
-/** GET /api/access/:discordUserId/check — staff self-check endpoint */
+/** GET /api/access/:discordUserId/check  staff self-check endpoint */
 router.get(
   "/:discordUserId/check",
   asyncHandler(async (req, res) => {

@@ -151,7 +151,7 @@ const BOT_UPDATABLE = [
  *
  * The token is encrypted with AES-256-GCM before it touches the database, and
  * every read strips it. Use {@link revealToken} when a request genuinely needs to
- * authenticate against Discord — never to return to a client.
+ * authenticate against Discord  never to return to a client.
  */
 export class BotProfileRepository extends BaseRepository {
   private toPublic(row: BotRow | undefined): PublicBotProfile | undefined {
@@ -192,7 +192,7 @@ export class BotProfileRepository extends BaseRepository {
     return this.toPublic(row);
   }
 
-  /** Raw row including the encrypted token — internal use only. */
+  /** Raw row including the encrypted token  internal use only. */
   async findRawById(id: number): Promise<BotRow | undefined> {
     return this.db.get<BotRow>("SELECT * FROM bot_profiles WHERE id = @id", { id });
   }

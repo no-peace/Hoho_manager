@@ -18,14 +18,14 @@ const log = logger.child("interactions");
  * Interaction delivery.
  *
  * Discord delivers interactions in exactly **one** of two ways, and which one is
- * determined by the app's *Interactions Endpoint URL* — the two are mutually
+ * determined by the app's *Interactions Endpoint URL*  the two are mutually
  * exclusive per application:
  *
  *   - **Endpoint URL set** → Discord POSTs to `POST /api/interactions`. This needs
  *     a public HTTPS address (a Cloudflare Tunnel, in the laptop setup).
  *   - **No endpoint URL** → Discord sends `INTERACTION_CREATE` over the gateway.
  *     The gateway worker then forwards the payload to `POST /api/interactions/relay`
- *     on this same server, which is a plain localhost call — so a machine with no
+ *     on this same server, which is a plain localhost call  so a machine with no
  *     public address and no tunnel can still run the action system.
  *
  * Both routes converge on {@link handleInteraction} so a flow behaves identically
@@ -38,7 +38,7 @@ const log = logger.child("interactions");
  * POST /api/interactions
  *
  * Pipeline:
- *   1. `express.raw` keeps the body as a Buffer — signatures cover the exact
+ *   1. `express.raw` keeps the body as a Buffer  signatures cover the exact
  *      bytes, so parsing first would break verification.
  *   2. `verifyDiscordSignature` validates the Ed25519 signature and parses the
  *      payload onto `req.interaction`.
@@ -46,7 +46,7 @@ const log = logger.child("interactions");
  *      whatever the first responding action returned.
  *
  * Discord requires a response within **3 seconds** or it shows the user
- * "This interaction failed", so every path here must reply — including errors.
+ * "This interaction failed", so every path here must reply  including errors.
  */
 
 router.post(
@@ -89,12 +89,12 @@ const isRelayable = (value: unknown): value is DiscordInteraction => {
  * We do **not** verify a signature here because there is none to verify: the
  * payload is re-serialised by the worker, and Discord's signature covers the
  * original bytes. The admin key plus the fact that the route is only ever
- * reached over the API's own port is the trust boundary — bind the API to
+ * reached over the API's own port is the trust boundary  bind the API to
  * localhost (or a private network) and it is not reachable from outside.
  *
  * The reply is delivered by *this* process via
  * `POST /interactions/{id}/{token}/callback`. That endpoint is authenticated by
- * the interaction token itself, which is exactly how the webhook path replies —
+ * the interaction token itself, which is exactly how the webhook path replies 
  * a gateway connection is not needed to answer a gateway-delivered interaction.
  *
  * The worker therefore has nothing to send back to Discord; it only needs to

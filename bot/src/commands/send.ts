@@ -4,7 +4,7 @@ import api from "../lib/api.js";
 import { commandRegistration } from "../lib/registration.js";
 
 /**
- * `/send` — post a message as the bot, through the builder's own API.
+ * `/send`  post a message as the bot, through the builder's own API.
  *
  * Why route through the API instead of calling Discord directly? The API owns the
  * bot token, the payload validation and the audit log. Sending from here would

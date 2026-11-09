@@ -15,7 +15,7 @@
  * two writers on one file is how you get `SQLITE_BUSY` and, eventually, a corrupt
  * database. So the API runs as exactly one forked process.
  *
- * Scale the API horizontally **only after** moving off SQLite onto Postgres —
+ * Scale the API horizontally **only after** moving off SQLite onto Postgres 
  * `server/src/repositories/` is the swap point (see docs/DEPLOYMENT.md §9).
  */
 
@@ -108,10 +108,10 @@ module.exports = {
     // ──────────────────────────────────────────────────────────────────────────
     // Optional: Cloudflare Tunnel, so the site is reachable on a real domain
     // without a public inbound port. Only usable where a `cloudflared`
-    // credential exists on this host — in this project's setup that is the
+    // credential exists on this host  in this project's setup that is the
     // laptop only, not the server. See docs/PTERODACTYL_DEPLOYMENT.md §7.
     //
-    // `cloudflared` is a Go binary, not a Node script — PM2 can still supervise
+    // `cloudflared` is a Go binary, not a Node script  PM2 can still supervise
     // it. Set `interpreter: "none"` so PM2 does not wrap it in Node.
     // ──────────────────────────────────────────────────────────────────────────
     // {

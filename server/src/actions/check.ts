@@ -12,7 +12,7 @@ export const description = "Branch or stop the flow based on a condition";
  *
  * **1. Branching (preferred, Discohook-compatible).** The step carries
  * `then` and `else` arrays of steps. `evaluateCheck` decides which one runs, and
- * the executor recurses into it — this handler is never called. Because the
+ * the executor recurses into it  this handler is never called. Because the
  * branches live in the step's own config they survive the flat
  * `action_definitions` table, which can only express one ordered list.
  *
@@ -192,7 +192,7 @@ export const evaluateCheck = (
   }
 };
 
-/** Legacy path: no branches configured — a failed check ends the chain. */
+/** Legacy path: no branches configured  a failed check ends the chain. */
 export const run = async ({
   config,
   variables,

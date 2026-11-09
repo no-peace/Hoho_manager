@@ -28,7 +28,7 @@ export const run = async ({
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`add_role failed for ${userId}: ${reason}`);
     return actionFailed(
-      "I couldn't add that role — check my permissions and that my role sits above it.",
+      "I couldn't add that role  check my permissions and that my role sits above it.",
     );
   }
 };

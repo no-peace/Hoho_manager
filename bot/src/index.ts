@@ -21,7 +21,7 @@ import { env, validateEnv } from "./lib/env.js";
  *
  * ── Scope ─────────────────────────────────────────────────────────────────────
  * Discord delivers button/select/modal interactions over HTTP to
- * `POST /api/interactions`, which the Express server already handles — a gateway
+ * `POST /api/interactions`, which the Express server already handles  a gateway
  * connection is *not* required for the action system to work. This worker exists
  * for the things only a persistent connection can do: slash commands, presence,
  * and (with the extra intents below) member/reaction events.
@@ -37,7 +37,7 @@ if (errors.length > 0) {
 const client = new SapphireClient({
   baseUserDirectory,
   // `Guilds` is all slash commands need. Member/reaction features would also
-  // require `GuildMembers` / `GuildMessageReactions` — both *privileged*, so
+  // require `GuildMembers` / `GuildMessageReactions`  both *privileged*, so
   // they must be switched on under "Privileged Gateway Intents" in the Developer
   // Portal first, and the bot will fail to log in if it asks for an intent that
   // is not enabled there.
@@ -53,7 +53,7 @@ const client = new SapphireClient({
  * shutdown finish, and PM2's `kill_timeout` covers anything that refuses to end.
  */
 const shutdown = async (signal: string): Promise<void> => {
-  console.log(`[bot] ${signal} received — shutting down`);
+  console.log(`[bot] ${signal} received  shutting down`);
   await client.destroy().catch(() => undefined);
 };
 

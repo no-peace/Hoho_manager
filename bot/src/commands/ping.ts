@@ -2,7 +2,7 @@ import { Command } from "@sapphire/framework";
 import { commandRegistration } from "../lib/registration.js";
 
 /**
- * `/ping` — the smallest useful Sapphire command.
+ * `/ping`  the smallest useful Sapphire command.
  *
  * Kept as a reference for the shape of every command in this worker:
  *   - the constructor supplies metadata,

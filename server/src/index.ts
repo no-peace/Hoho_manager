@@ -44,7 +44,7 @@ const start = async (): Promise<void> => {
   cleanup.unref(); // don't hold the process open on its own
 
   const shutdown = (signal: string): void => {
-    log.info(`${signal} received — shutting down`);
+    log.info(`${signal} received  shutting down`);
     clearInterval(cleanup);
 
     server.close(() => {

@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from "node:url";
  * Vitest config for the server.
  *
  * Mirrors tsconfig: `@dmb/shared` resolves to the shared **source**, so tests
- * run against the same code the server imports — no build step needed.
+ * run against the same code the server imports  no build step needed.
  */
 export default defineConfig({
   resolve: {

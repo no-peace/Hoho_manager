@@ -14,7 +14,7 @@ const main = async (): Promise<void> => {
 
   await initializeDatabase();
 
-  logger.info(`Database ready — ${await countUsers()} user(s) present.`);
+  logger.info(`Database ready  ${await countUsers()} user(s) present.`);
   await db.close();
 };
 

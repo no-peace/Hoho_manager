@@ -3,13 +3,13 @@ import { MessageFlags } from "discord.js";
 import { commandRegistration } from "../lib/registration.js";
 
 /**
- * `/server` — status of the server the command was run in.
+ * `/server`  status of the server the command was run in.
  *
  * The gateway is the only place this information exists: it arrives over the
  * WebSocket as guild cache, so the API cannot answer it. Kept ephemeral so a
  * status check does not clutter the channel.
  *
- * `Guilds` is the only intent this needs — `memberCount` is the *approximate*
+ * `Guilds` is the only intent this needs  `memberCount` is the *approximate*
  * count Discord ships with the guild object, so the privileged `GuildMembers`
  * intent stays switched off.
  */

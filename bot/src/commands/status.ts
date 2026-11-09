@@ -5,7 +5,7 @@ import { env } from "../lib/env.js";
 import { commandRegistration } from "../lib/registration.js";
 
 /**
- * `/status` — shows whether the API and its Discord integrations are configured.
+ * `/status`  shows whether the API and its Discord integrations are configured.
  *
  * This is the pattern for the worker's real purpose: the webhook/interaction
  * machinery lives in the Express API, and the gateway reads it over HTTP rather
@@ -36,7 +36,7 @@ export class StatusCommand extends Command {
         `${ok ? "\u2705" : "\u274c"} ${label}`;
 
       const body = [
-        `**API** \`${env.apiBaseUrl}\` — ${health.status} (${health.environment})`,
+        `**API** \`${env.apiBaseUrl}\`  ${health.status} (${health.environment})`,
         line("Database connected", health.database.connected),
         line("Bot token configured", health.discord.botTokenConfigured),
         line("Public key configured", health.discord.publicKeyConfigured),

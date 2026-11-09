@@ -9,7 +9,7 @@ import { fromQueryData, toQueryData, type QueryData } from "../utils/exportImpor
  * Bridges the template store, the message store and the action store.
  *
  * Saving needs data from three places, and loading has to write back to all
- * three — keeping that orchestration in a hook means the components stay
+ * three  keeping that orchestration in a hook means the components stay
  * declarative and the flow only exists once.
  */
 export interface UseTemplatesReturn {

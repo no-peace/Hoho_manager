@@ -92,7 +92,7 @@ export interface ActionContext {
    * `set_variable`) and later steps read from it.
    */
   variables: Record<string, unknown>;
-  /** Null when no bot token is configured — handlers must cope. */
+  /** Null when no bot token is configured  handlers must cope. */
   botToken: string | null;
   discord: DiscordApi;
   /** Only the persistence a handler genuinely needs, so it stays testable. */

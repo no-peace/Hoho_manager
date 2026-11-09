@@ -18,7 +18,7 @@ export class ReadyListener extends Listener {
   public override run(...args: unknown[]): void {
     const client = args[0] as Client<true>;
 
-    console.log(`[bot] ready as ${client.user.tag} — ${client.guilds.cache.size} guild(s)`);
+    console.log(`[bot] ready as ${client.user.tag}  ${client.guilds.cache.size} guild(s)`);
     console.log(
       env.devGuildId
         ? `[bot] application commands scoped to guild ${env.devGuildId}`

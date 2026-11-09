@@ -23,7 +23,7 @@ export const run = async ({
 
   if (seconds > ACK_BUDGET_SECONDS) {
     logger.warn(
-      `wait: ${seconds}s exceeds Discord's ${ACK_BUDGET_SECONDS}s ack window — make sure the flow defers first.`,
+      `wait: ${seconds}s exceeds Discord's ${ACK_BUDGET_SECONDS}s ack window  make sure the flow defers first.`,
     );
   }
 

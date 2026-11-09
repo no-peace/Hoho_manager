@@ -10,7 +10,7 @@ import { env } from "./env.js";
  *
  * Typed by inference on purpose: the value is passed straight to
  * `registry.registerChatInputCommand(...)`, so Sapphire's own option shape
- * validates it — no need to re-export their type here.
+ * validates it  no need to re-export their type here.
  */
 export const commandRegistration = env.devGuildId
   ? { guildIds: [env.devGuildId] }

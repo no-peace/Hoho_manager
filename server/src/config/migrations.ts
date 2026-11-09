@@ -2,7 +2,7 @@
  * Ordered, idempotent migrations.
  *
  * Each entry runs exactly once and is recorded in `schema_migrations`, so adding
- * a migration means appending an object here — never editing an applied one.
+ * a migration means appending an object here  never editing an applied one.
  *
  * The SQL sticks to a conservative SQLite subset (INTEGER/TEXT, explicit
  * indices, foreign keys) so it maps cleanly onto PostgreSQL later.

@@ -6,7 +6,7 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
  * Preview of an action row's controls.
  *
  * Buttons render with Discord's real colours so the preview communicates what a
- * click will *feel* like — a red "Danger" button reads very differently from a
+ * click will *feel* like  a red "Danger" button reads very differently from a
  * blurple primary one, and that matters during design.
  */
 

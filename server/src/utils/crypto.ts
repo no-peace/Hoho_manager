@@ -10,7 +10,7 @@ import { logger } from "./logger.js";
  *
  * If `ENCRYPTION_KEY` is unset we *derive* a key from `ADMIN_API_KEY` so local
  * development still never writes a plaintext token. Production must set a real
- * key — `validateEnv()` warns about the development default.
+ * key  `validateEnv()` warns about the development default.
  */
 
 const ALGORITHM = "aes-256-gcm";
@@ -22,7 +22,7 @@ const deriveKey = (): Buffer => {
   const secret = env.encryptionKey ?? env.adminApiKey;
   if (!env.encryptionKey) {
     logger.warn(
-      "ENCRYPTION_KEY is not set — deriving one from ADMIN_API_KEY. " +
+      "ENCRYPTION_KEY is not set  deriving one from ADMIN_API_KEY. " +
         "Set ENCRYPTION_KEY before deploying; rotating it will invalidate stored tokens.",
     );
   }

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Sapphire gateway worker — slash commands and gateway events, driving the same API the web editor uses.",
+  "description": "Sapphire gateway worker  slash commands and gateway events, driving the same API the web editor uses.",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

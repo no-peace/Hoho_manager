@@ -1,9 +1,9 @@
 # Production-style image: builds the SPA and serves `client/dist` with nginx.
-# (Local development does not need this image — `npm run dev` is faster.)
+# (Local development does not need this image  `npm run dev` is faster.)
 FROM node:22-bookworm-slim AS build
 
 # Base URL of the API, baked into the bundle at build time (Vite inlines all
-# VITE_* vars). Empty means same-origin — set it when API and SPA host apart.
+# VITE_* vars). Empty means same-origin  set it when API and SPA host apart.
 ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 

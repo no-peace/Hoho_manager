@@ -246,7 +246,7 @@ router.get(
     );
 
     const mutualGuilds = user.mutualGuilds ?? [];
-    // Always compute live from DB — never trust stale user.hasDefaultBotAccess from the JWT
+    // Always compute live from DB  never trust stale user.hasDefaultBotAccess from the JWT
     const hasDefaultBotAccess =
       isAdmin || (hasActiveStaffRecord && (mutualGuilds.length > 0 || !env.isProd));
 

@@ -10,7 +10,7 @@ import { StepList } from "./StepList";
  * Flow tab for a button or select.
  *
  * A flow is an ordered list of steps that run top to bottom when the component
- * is clicked — e.g. *add role → check → send DM*. The list is mirrored into two
+ * is clicked  e.g. *add role → check → send DM*. The list is mirrored into two
  * places:
  *
  *   1. The component's `custom_id`, which carries only the **first** step's
@@ -20,7 +20,7 @@ import { StepList } from "./StepList";
  *      registered with `/api/send` so longer chains can run server-side.
  *
  * `custom_id` is capped at 100 characters, so a long chain can never live
- * entirely in the id — that is exactly why the store exists.
+ * entirely in the id  that is exactly why the store exists.
  *
  * Editing itself lives in {@link StepList}, which renders one list and calls
  * itself for a `check` step's `then` / `else` branches. This component owns only
@@ -59,7 +59,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
    * Persist a new step list and keep the component's `custom_id` in step with it.
    * The id is derived from the first step only, both to stay unique per component
    * and to keep the inline fallback meaningful. Branch steps inside a `check` do
-   * not affect the id — they always execute server-side.
+   * not affect the id  they always execute server-side.
    */
   const commit = (nextSteps: FlowStep[]): void => {
     const store = useActionStore.getState();
@@ -72,7 +72,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
         nextCustomId = buildCustomId(first.type, config);
         setWarning(null);
       } catch {
-        // The params alone overflow 100 chars. Drop them from the id — the full
+        // The params alone overflow 100 chars. Drop them from the id  the full
         // config is still registered server-side, so the flow keeps working. A
         // webhook-only send would lose them, so say so.
         try {
@@ -114,13 +114,13 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
     <div className="space-y-3">
       <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-muted">
         <Wand2 size={12} className="text-blurple" />
-        Flow — steps run top to bottom when this is clicked
+        Flow  steps run top to bottom when this is clicked
       </p>
 
       <StepList steps={steps} onChange={commit} depth={0} />
 
       <p className="break-all font-mono text-[10px] text-ink-faint">
-        custom_id: {customId || "—"} ({customId.length}/100)
+        custom_id: {customId || ""} ({customId.length}/100)
       </p>
 
       {(steps.length > 1 || hasBranches) && (

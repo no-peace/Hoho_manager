@@ -8,7 +8,7 @@ import { ActionRowPreview } from "./ActionRowPreview";
  * Previews for the components that can sit inside a container (plus action rows,
  * which can also be top-level).
  *
- * Deliberately does **not** handle Container — containers are only legal at the
+ * Deliberately does **not** handle Container  containers are only legal at the
  * top level, and keeping them out of this file avoids a circular import between
  * the two preview modules.
  */

@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
         {activeTab === "elements" && (
           <div className="p-3 space-y-3">
-            {/* The Component Palette lives inline in the editor pane now — the drawer
+            {/* The Component Palette lives inline in the editor pane now  the drawer
                 keeps the layer tree (and templates). */}
 
             {/* Layers & Hierarchy Collapsible Accordion */}

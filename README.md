@@ -1,6 +1,6 @@
 # Discord Message Builder
 
-A full-featured Discord message builder website — Discohook-style visual editing for classic
+A full-featured Discord message builder website  Discohook-style visual editing for classic
 embeds **and** Components V2, plus a real action system so the buttons and selects you design
 actually *do* things (add roles, send DMs, open modals, start threads, chain multi-step flows).
 
@@ -34,7 +34,7 @@ a private/trusted frontend or a real authentication layer; webhook sends from th
 available without that key.
 
 Interactions (button/select/modal clicks) reach the action system one of two ways, and the two are
-**mutually exclusive per application** — Discord picks based on the app's *Interactions Endpoint
+**mutually exclusive per application**  Discord picks based on the app's *Interactions Endpoint
 URL*:
 
 | | Endpoint URL set | Endpoint URL empty |
@@ -44,13 +44,13 @@ URL*:
 | Handled by | the Express API, after Ed25519 signature verification | the `bot/` worker, which **relays** the click to `POST /api/interactions/relay` over localhost |
 
 Both routes converge on the same `handleInteraction()`, so a flow behaves identically either way.
-The relay exists for hosts with **no public address** — a Cloudflare Tunnel is not always available
+The relay exists for hosts with **no public address**  a Cloudflare Tunnel is not always available
 (it is laptop-only in this project's setup), and the gateway is an *outbound* WebSocket, so it works
 from anywhere.
 
 ## Action flows
 
-Every button and select can run an ordered **flow** — steps execute top to bottom and stop at the
+Every button and select can run an ordered **flow**  steps execute top to bottom and stop at the
 first one that produces a visible reply:
 
 ```
@@ -67,7 +67,7 @@ Three of those mirror Discohook closely:
 - **`check`** compares values (`equals`, `in`, `and`, `or`, `not`, with `{variable}` or
   `{{variable}}` and dotted paths) and holds two nested step lists, **Then** and **Else**. Branches nest arbitrarily; the
   executor refuses to recurse past 10 levels.
-- **`set_variable`** has three modes — `static` (a literal), `adaptive` (a field of the interaction,
+- **`set_variable`** has three modes  `static` (a literal), `adaptive` (a field of the interaction,
   e.g. `user.id` or the selected values), and `get` (mirror a variable by name).
 - **`stop`** ends the flow, optionally with a message. It is how a branch says "done" without
   falling through into whatever follows the check.
@@ -78,7 +78,7 @@ parameters ride inline there. Longer flows are registered on the server:
 - **Templates** persist their flows in `action_definitions` when you save.
 - **Ad-hoc sends** ship their flows with the request; `POST /api/send` registers them against the
   returned message ID before acknowledging the send (`mode: "bot"` only for the browser's direct
-  send path — direct webhook sends never touch your server).
+  send path  direct webhook sends never touch your server).
 
 That precedence matters: a flow registered at send time wins over a template's stored steps, so
 re-sending a template ad-hoc never doubles its actions.
@@ -134,7 +134,7 @@ Discord will immediately send a signed `PING`; the endpoint verifies the Ed25519
 your **Public Key** and replies with a `PONG`. If that fails, the URL is rejected.
 
 For local development, expose the server with a tunnel (e.g. `cloudflared tunnel --url
-http://localhost:3001`) and use that public URL — see
+http://localhost:3001`) and use that public URL  see
 [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md) for the full walkthrough.
 
 The `bot/` workspace is **optional if you have a public URL, required if you do not**. It provides
@@ -150,19 +150,19 @@ npm run dev:bot                  # or `npm run start:bot` after a build
 
 ## Guides
 
-- **New here?** Start with [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md) — a
+- **New here?** Start with [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md)  a
   from-zero guide to running and testing everything locally.
-- **Ready to go live?** [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — recommended hosts,
+- **Ready to go live?** [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md)  recommended hosts,
   environment variable checklist, and Discord Developer Portal setup.
 - **Running in a Pterodactyl container (or any host with one open port)?**
-  [`docs/PTERODACTYL_DEPLOYMENT.md`](./docs/PTERODACTYL_DEPLOYMENT.md) — PM2 supervision, the
+  [`docs/PTERODACTYL_DEPLOYMENT.md`](./docs/PTERODACTYL_DEPLOYMENT.md)  PM2 supervision, the
   gateway relay for hosts with **no** public address, and (as an alternative) a Cloudflare Tunnel.
 - **The gateway worker:** [`bot/README.md`](./bot/README.md).
 
 ## Phases
 
 Phase 1 (core editor, preview, webhook sending), the Phase 2 backend foundation
-(`/api/send`, `/api/interactions`, persistence) and the Phase 3 action system — including the
+(`/api/send`, `/api/interactions`, persistence) and the Phase 3 action system  including the
 Discohook-style multi-step **Flow** builder with branching (`check` / `stop` / `set_variable`), plus
-the gateway worker and its interaction relay — are implemented. See
+the gateway worker and its interaction relay  are implemented. See
 [`project_architecture_plan.md`](./project_architecture_plan.md) for the full roadmap.

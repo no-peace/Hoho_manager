@@ -11,7 +11,7 @@ import { config as loadDotenv } from "dotenv";
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-/** `server/` — the package root (config/ -> src/ -> server/). */
+/** `server/`  the package root (config/ -> src/ -> server/). */
 export const serverRoot = path.resolve(here, "../..");
 
 // Load `server/.env` explicitly so the app behaves the same no matter which
@@ -119,18 +119,18 @@ export const validateEnv = (): string[] => {
 
   if (!env.discord.publicKey) {
     warnings.push(
-      "DISCORD_PUBLIC_KEY is not set — /api/interactions will reject every request. " +
+      "DISCORD_PUBLIC_KEY is not set  /api/interactions will reject every request. " +
         "Set it before pointing Discord at this server.",
     );
   }
   if (!env.discord.botToken) {
     warnings.push(
-      "DISCORD_BOT_TOKEN is not set — bot-mode sending and all actions are disabled.",
+      "DISCORD_BOT_TOKEN is not set  bot-mode sending and all actions are disabled.",
     );
   }
   if (!env.discord.applicationId) {
     warnings.push(
-      "DISCORD_APPLICATION_ID is not set — application command routes are limited.",
+      "DISCORD_APPLICATION_ID is not set  application command routes are limited.",
     );
   }
   if (env.isProd && env.adminApiKey === "dev-admin-key") {

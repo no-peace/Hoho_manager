@@ -72,7 +72,7 @@ const buildAdaptiveExploitPayload = async (
   return {
     embeds: [
       {
-        title: `${exploit.updateStatus ? "🟢" : "🔴"} ${exploit.title} — Live Executor Status`,
+        title: `${exploit.updateStatus ? "🟢" : "🔴"} ${exploit.title}  Live Executor Status`,
         color: exploit.updateStatus ? 0x23a55a : 0xda373c,
         fields: [
           {

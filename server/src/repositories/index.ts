@@ -6,7 +6,7 @@
  * repositories) and makes swapping the storage backend a single-file change.
  *
  * The interface is declared explicitly rather than inferred so the emitted
- * declaration file stays nameable — an inferred `Object.freeze({...})` type would
+ * declaration file stays nameable  an inferred `Object.freeze({...})` type would
  * leak the classes' private members and break `declaration: true`.
  */
 import { actionRepository, ActionRepository } from "./actionRepository.js";

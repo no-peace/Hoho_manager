@@ -1,4 +1,4 @@
-# cloudflared configuration — locally-managed tunnel.
+# cloudflared configuration  locally-managed tunnel.
 #
 # Copy to `~/.cloudflared/config.yml` (or /etc/cloudflared/config.yml) and fill in
 # the UUID printed by `cloudflared tunnel create dmb`.

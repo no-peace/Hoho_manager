@@ -15,7 +15,7 @@ export const description = "Send a message as the bot";
  *
  * `config.message` is a raw Discord message object (content/embeds/components).
  * This runs as a follow-up rather than an interaction reply so the click can be
- * acknowledged instantly — interaction tokens stay valid for 15 minutes, which
+ * acknowledged instantly  interaction tokens stay valid for 15 minutes, which
  * is plenty for this.
  */
 export const run = async ({
@@ -40,7 +40,7 @@ export const run = async ({
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`send_message failed in ${channelId}: ${reason}`);
-    return actionFailed("I couldn't send that message — check my permissions there.");
+    return actionFailed("I couldn't send that message  check my permissions there.");
   }
 };
 

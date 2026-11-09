@@ -11,7 +11,7 @@ export const description = "Store a value for later steps";
  * Variables are the plumbing for multi-step flows: a later step can reference
  * `{{name}}` in its content, and `check` branches on it.
  *
- * Three modes, matching Discohook's names — though `adaptive` is scoped to what
+ * Three modes, matching Discohook's names  though `adaptive` is scoped to what
  * this bot can actually observe, because our handlers return a *response* rather
  * than a result object, so there is no "previous sent message" to read from:
  *

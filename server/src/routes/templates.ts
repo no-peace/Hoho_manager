@@ -13,7 +13,7 @@ router.use(attachUser);
 const readBody = (body: unknown): Record<string, unknown> =>
   (body ?? {}) as Record<string, unknown>;
 
-/** GET /api/templates?q=search — list the current user's templates. */
+/** GET /api/templates?q=search  list the current user's templates. */
 router.get(
   "/",
   asyncHandler(async (req, res) => {
@@ -22,7 +22,7 @@ router.get(
   }),
 );
 
-/** GET /api/templates/:id — full template document including its actions. */
+/** GET /api/templates/:id  full template document including its actions. */
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
@@ -34,7 +34,7 @@ router.get(
   }),
 );
 
-/** POST /api/templates — create a template (optionally with its action chain). */
+/** POST /api/templates  create a template (optionally with its action chain). */
 router.post(
   "/",
   asyncHandler(async (req, res) => {
@@ -53,7 +53,7 @@ router.post(
   }),
 );
 
-/** PUT /api/templates/:id — partial update; `actions` replaces the whole chain. */
+/** PUT /api/templates/:id  partial update; `actions` replaces the whole chain. */
 router.put(
   "/:id",
   asyncHandler(async (req, res) => {

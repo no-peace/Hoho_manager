@@ -4,7 +4,7 @@ import type { IconComponent } from "./icon";
 /**
  * Tabs.
  *
- * Purely presentational — the caller owns which tab is active, which keeps this
+ * Purely presentational  the caller owns which tab is active, which keeps this
  * usable for both the sidebar sections and the property panel's context tabs.
  */
 export interface TabDef {

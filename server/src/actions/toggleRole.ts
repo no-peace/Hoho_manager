@@ -34,7 +34,7 @@ export const run = async ({
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`toggle_role failed for ${userId}: ${reason}`);
-    return actionFailed("I couldn't update that role — check my permissions.");
+    return actionFailed("I couldn't update that role  check my permissions.");
   }
 };
 

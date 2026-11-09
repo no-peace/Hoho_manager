@@ -474,7 +474,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               <div className="rounded bg-[#232428] border border-[#1e1f22] p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
-                    Accessory —{" "}
+                    Accessory {" "}
                     {accessory.type === ComponentType.Thumbnail ? "Thumbnail" : "Button"}
                   </span>
                   <button

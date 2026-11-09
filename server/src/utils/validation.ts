@@ -149,8 +149,8 @@ const walkComponents = (
  * Validate a Components V2 tree against Discord's documented rules.
  *
  * This is deliberately a sanity net, not a full spec re-implementation: it
- * catches the mistakes that produce Discord's unhelpful "Invalid Form Body" —
- * nesting violations, missing labels, oversized text, bad select ranges — and
+ * catches the mistakes that produce Discord's unhelpful "Invalid Form Body" 
+ * nesting violations, missing labels, oversized text, bad select ranges  and
  * names the offending field so the user can fix it.
  */
 export const validateComponentsV2 = (components: unknown): string[] => {

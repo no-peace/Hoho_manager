@@ -9,10 +9,10 @@ It has two jobs, and the second one is the reason it is not optional everywhere.
 
 ### 1. Slash commands
 
-`/ping`, `/status`, `/server`, `/send` — things only a persistent gateway connection can do, plus
+`/ping`, `/status`, `/server`, `/send`  things only a persistent gateway connection can do, plus
 presence and (with the privileged intents enabled) member/reaction events.
 
-### 2. The interaction relay — for hosts with no public address
+### 2. The interaction relay  for hosts with no public address
 
 Discord delivers interactions in exactly one of two ways, decided by the application's
 *Interactions Endpoint URL*. **They are mutually exclusive per application:**
@@ -23,11 +23,11 @@ Discord delivers interactions in exactly one of two ways, decided by the applica
 | Needs a public HTTPS address | **yes** | **no** |
 | Who receives it | the Express API | this worker |
 
-A Cloudflare Tunnel gives you a public address — but it needs a `cloudflared` credential *on the
+A Cloudflare Tunnel gives you a public address  but it needs a `cloudflared` credential *on the
 machine running the app*, and in this project's setup that credential exists **only on the laptop**.
 On a server (e.g. a Pterodactyl container) there is no tunnel and no public URL, so Discord has
-nowhere to POST. That is the case this worker covers: it receives the click over the gateway — an
-**outbound** WebSocket, so no port is ever opened — and forwards it to the API on `localhost`.
+nowhere to POST. That is the case this worker covers: it receives the click over the gateway  an
+**outbound** WebSocket, so no port is ever opened  and forwards it to the API on `localhost`.
 
 The API then runs the flow and posts the reply back to Discord using the **interaction token**,
 which is itself the credential for `POST /interactions/{id}/{token}/callback`. So the reply path
@@ -64,7 +64,7 @@ Fill in:
 | -------- | ----- |
 | `DISCORD_BOT_TOKEN` | Same token the API uses |
 | `API_BASE_URL` | Origin of the Express API (default `http://localhost:3001`) |
-| `ADMIN_API_KEY` | Must match `server/.env` — sent as `x-admin-key` |
+| `ADMIN_API_KEY` | Must match `server/.env`  sent as `x-admin-key` |
 | `DEV_GUILD_ID` | Optional. Scopes command registration to one guild so changes appear instantly |
 | `NODE_ENV` | `production` in production (warns about the default admin key otherwise) |
 
@@ -97,7 +97,7 @@ src/
 
 Sapphire discovers `commands/` and `listeners/` relative to the entry file. `src/index.ts` sets
 `baseUserDirectory` from `import.meta.url`, so the **same code runs unbuilt (`src/`) and built
-(`dist/`)** with no build-specific branching — `npm run build` preserves the directory structure.
+(`dist/`)** with no build-specific branching  `npm run build` preserves the directory structure.
 
 ## Adding a command
 
@@ -133,11 +133,11 @@ intents`.
 Use this whenever the app has **no public HTTPS address**:
 
 1. Developer Portal → your app → **General Information** → **clear the Interactions Endpoint URL**.
-   While it is set, Discord keeps using HTTP and this worker sees no components at all — this is the
+   While it is set, Discord keeps using HTTP and this worker sees no components at all  this is the
    single most common reason the relay looks broken.
 2. `ADMIN_API_KEY` in `bot/.env` must match `server/.env`. It is the credential for the relay call.
 3. `API_BASE_URL` must point at the API (`http://localhost:3001` when both run on the same host).
-4. Start the API **before** the worker — the relay has nothing to talk to otherwise.
+4. Start the API **before** the worker  the relay has nothing to talk to otherwise.
 5. Invite the bot with the `bot` scope (plus *Manage Roles* if you use role actions).
 
 Verify with `/ping` (handled in-process) and then a real button click; see
@@ -146,5 +146,5 @@ means.
 
 ## Deployment
 
-See [`docs/PTERODACTYL_DEPLOYMENT.md`](../../docs/PTERODACTYL_DEPLOYMENT.md) §6 and §8 — including
+See [`docs/PTERODACTYL_DEPLOYMENT.md`](../../docs/PTERODACTYL_DEPLOYMENT.md) §6 and §8  including
 how to run this under PM2 as `dmb-gateway`.

@@ -2,16 +2,16 @@
  * Audit Log Service
  *
  * Posts structured Discord embeds to a configured log channel.
- * All events are fire-and-forget — a log failure never blocks a request.
+ * All events are fire-and-forget  a log failure never blocks a request.
  * The bot can read the channel history later for analysis.
  *
  * Events are colour-coded by severity:
- *   Green  #23A55A — successful send / grant
- *   Yellow #FAA61A — edit / cooldown hit
- *   Orange #FF6B35 — delete
- *   Red    #DA373C — blocked / revoked
- *   Blurple #5865F2 — admin actions
- *   Gray   #4F545C — info
+ *   Green  #23A55A  successful send / grant
+ *   Yellow #FAA61A  edit / cooldown hit
+ *   Orange #FF6B35  delete
+ *   Red    #DA373C  blocked / revoked
+ *   Blurple #5865F2  admin actions
+ *   Gray   #4F545C  info
  */
 
 import crypto from "node:crypto";
@@ -63,7 +63,7 @@ const EVENT_LABELS: Record<AuditEvent, string> = {
   STAFF_GRANTED:       "🔑 Staff Access Granted",
   STAFF_REVOKED:       "❌ Staff Access Revoked",
   STAFF_UPDATED:       "🔄 Staff Permissions Updated",
-  STAFF_ACCESS_DENIED: "🚫 Access Denied — Not Staff",
+  STAFF_ACCESS_DENIED: "🚫 Access Denied  Not Staff",
   CHANNEL_DENIED:      "🚫 Channel Not Allowed",
   PERMISSION_DENIED:   "🚫 Permission Denied",
 };
@@ -79,7 +79,7 @@ export interface AuditContext {
   messageId?: string;
   reason?: string;
   details?: Record<string, string | number | boolean | undefined>;
-  /** Raw request IP — will be hashed before storage */
+  /** Raw request IP  will be hashed before storage */
   ip?: string;
   requestId?: string;
 }
@@ -149,7 +149,7 @@ const buildEmbed = (ctx: AuditContext) => {
 
 /**
  * Fire-and-forget: post an audit embed to the configured log channel.
- * Never throws — a logging failure must never break the request.
+ * Never throws  a logging failure must never break the request.
  */
 export const auditLog = (ctx: AuditContext): void => {
   void (async () => {
@@ -176,7 +176,7 @@ export const auditLog = (ctx: AuditContext): void => {
       }
 
       if (!logChannelId || !botToken) {
-        // Log locally when no channel is configured — still useful during dev.
+        // Log locally when no channel is configured  still useful during dev.
         log.info(`[AUDIT] ${ctx.event} actor=${ctx.actorDiscordId ?? "?"} reason=${ctx.reason ?? "-"}`);
         return;
       }

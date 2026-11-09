@@ -15,8 +15,8 @@ import {
   Hash,
   AtSign,
   Sliders,
-  Zap,
 } from "lucide-react";
+import { useEffect } from "react";
 import { ButtonStyle, ComponentType, type ComponentNode } from "@dmb/shared";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
@@ -55,6 +55,13 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
   const flows = useActionStore((state) => state.flows);
 
   const [selectMenuDropdownRow, setSelectMenuDropdownRow] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectMenuDropdownRow) return;
+    const close = () => setSelectMenuDropdownRow(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [selectMenuDropdownRow]);
 
   interface RowEntry {
     row: ComponentNode;
@@ -221,7 +228,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[10px] font-mono"
                               title={`${stepCount} Flow Action(s)`}
                             >
-                              <Zap size={10} className="text-[#f0b232]" />
                               {stepCount}
                             </span>
                           ) : null}
@@ -300,7 +306,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                                 <span>• {(child.options || []).length} option(s)</span>
                               )}
                               {stepCount > 0 && (
-                                <span className="text-[#f0b232]">• ⚡ {stepCount} flow step(s)</span>
+                                <span className="text-[#f0b232]">• {stepCount} flow step(s)</span>
                               )}
                             </div>
                           </div>

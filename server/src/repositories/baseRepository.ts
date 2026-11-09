@@ -22,7 +22,7 @@ export abstract class BaseRepository {
  * Parse the given JSON columns on a row.
  *
  * The column genuinely changes type (`string` -> `object`), so this is the one
- * place where a cast is unavoidable — callers pass the domain type they expect.
+ * place where a cast is unavoidable  callers pass the domain type they expect.
  */
 export const parseJson = <T>(row: T | undefined, columns: readonly string[]): T | undefined => {
   if (!row) return undefined;

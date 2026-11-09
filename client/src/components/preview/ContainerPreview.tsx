@@ -6,7 +6,7 @@ import { decimalToHex } from "../../utils/discord";
  * Container preview.
  *
  * Discord renders containers as a rounded card with an optional solid accent bar
- * down the left edge — implemented here with an absolutely positioned element
+ * down the left edge  implemented here with an absolutely positioned element
  * rather than a border, because a border would be clipped by the rounded corners.
  */
 export interface ContainerPreviewProps {

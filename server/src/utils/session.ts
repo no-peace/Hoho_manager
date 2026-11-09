@@ -21,7 +21,7 @@ export interface SessionUser {
   mutualGuilds?: MutualGuildInfo[];
 }
 
-/** 24-hour session lifetime — users must re-authenticate daily. */
+/** 24-hour session lifetime  users must re-authenticate daily. */
 export const SESSION_TTL_SECONDS = 24 * 60 * 60;
 export const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 

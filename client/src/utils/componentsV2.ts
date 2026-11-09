@@ -11,7 +11,7 @@ import { DEFAULT_EMBED_COLOR, uid } from "./constants";
  * Components V2 model.
  *
  * Every component carries an `_id` so the editor can key React lists and target
- * updates by identity instead of array position — reordering then costs nothing
+ * updates by identity instead of array position  reordering then costs nothing
  * and never desynchronises the preview. `stripInternal()` removes these before
  * the payload is sent.
  *
@@ -190,7 +190,7 @@ export const COMPONENT_DEFS: readonly ComponentDef[] = [
   {
     type: ComponentType.TextDisplay,
     label: "Text Display",
-    description: "Markdown text — headings, lists, code blocks.",
+    description: "Markdown text  headings, lists, code blocks.",
     group: "Content",
     topLevel: true,
     create: () => newTextDisplay(""),

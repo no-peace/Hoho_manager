@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useGlobalStore } from "../../store/globalStore";
 import { Modal } from "../ui/Modal";
 import { api } from "../../api/client";
 import { RefreshCw, Trash2, Key, Check, Copy, AlertCircle, ShieldCheck } from "lucide-react";
@@ -55,19 +56,27 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
-  const handleRevoke = async (tokenId: string) => {
+  const handleRevoke = (tokenId: string) => {
     if (!guildId) return;
-    if (!confirm("Are you sure you want to revoke this session?")) return;
-
-    setRevokingId(tokenId);
-    try {
-      await api.discord.revokeSession(guildId, tokenId);
-      await fetchSessions();
-    } catch (err: any) {
-      alert(err?.message || "Failed to revoke session");
-    } finally {
-      setRevokingId(null);
-    }
+    const { openConfirm, showToast } = useGlobalStore.getState();
+    openConfirm({
+      title: "Revoke Session",
+      message: "Are you sure you want to revoke this active session?",
+      confirmLabel: "Revoke",
+      danger: true,
+      onConfirm: async () => {
+        setRevokingId(tokenId);
+        try {
+          await api.discord.revokeSession(guildId, tokenId);
+          await fetchSessions();
+          showToast("Session revoked.", "success");
+        } catch (err: any) {
+          showToast(err?.message || "Failed to revoke session", "error");
+        } finally {
+          setRevokingId(null);
+        }
+      },
+    });
   };
 
   return (

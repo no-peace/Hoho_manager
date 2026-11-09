@@ -12,7 +12,7 @@ import type { ActionConfig, ParsedCustomId } from "./types.js";
  * Imported by both the client (when a user builds a button) and the server (when
  * an interaction arrives), so the two can never drift apart.
  *
- * NOTE: Discord caps `custom_id` at 100 characters. Keep params short — pass an
+ * NOTE: Discord caps `custom_id` at 100 characters. Keep params short  pass an
  * id rather than an entire message payload.
  */
 
@@ -48,7 +48,7 @@ export const parseCustomId = (value: unknown): ParsedCustomId | null => {
   }
 
   const firstSplit = value.indexOf(ACTION_SEPARATOR, ACTION_PREFIX.length + 1);
-  // No second separator means a bare id with no params (e.g. `action:dud`) —
+  // No second separator means a bare id with no params (e.g. `action:dud`) 
   // that is exactly what buildCustomId produces for empty params, so it is
   // valid, not foreign. Only an EMPTY type is malformed.
   const type =

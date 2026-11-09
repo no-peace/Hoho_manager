@@ -129,7 +129,7 @@ const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
   {
     key: "detected",
     label: "Detection Status",
-    getPreview: (e) => (e ? (e.detected ? "⚠️ Detected" : "🛡️ Undetected") : "🛡️ Undetected"),
+    getPreview: (e) => (e ? (e.detected ? "Detected" : "Undetected") : "Undetected"),
   },
   {
     key: "free",
@@ -154,7 +154,7 @@ const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
   {
     key: "keysystem",
     label: "Key System Requirement",
-    getPreview: (e) => (e ? (e.keysystem ? "🔑 Key System" : "🔓 Keyless") : "🔑 / 🔓"),
+    getPreview: (e) => (e ? (e.keysystem ? "Key System" : "Keyless") : "🔑 / 🔓"),
   },
   {
     key: "suncPassed",
@@ -448,7 +448,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           {
             id: "weao_loading_or_err",
             title: weaoError
-              ? "⚠️ WEAO API unreachable — type exploit name manually"
+              ? "⚠️ WEAO API unreachable  type exploit name manually"
               : "Loading live exploits from WEAO…",
             subtitle: weaoError || "Please wait",
             icon: <AlertTriangle size={13} className="text-[#f0b232] shrink-0" />,
@@ -499,7 +499,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       ).map((opt) => ({
         id: `weao_field_${opt.key}`,
         title: `.${opt.key}`,
-        subtitle: `${opt.getPreview(matchedExploit)} — ${opt.label}`,
+        subtitle: `${opt.getPreview(matchedExploit)}  ${opt.label}`,
         icon: <Sliders size={12} className="text-[#5865f2] shrink-0" />,
         replacement: `{exploit.${canonicalTitle}.${opt.key}}`,
         keepOpen: false,
@@ -760,10 +760,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       return (
         <span className="flex items-center gap-1.5">
           <Cpu size={11} className="text-[#5865f2]" />
-          <span>WEAO Exploits — Step 1/2</span>
+          <span>WEAO Exploits</span>
           {weaoMeta?.rateLimited && (
             <span className="text-[9px] px-1 py-0.2 rounded bg-[#f0b232]/20 text-[#f0b232]">
-              ⚡ Cached (429 Cooldown)
+              Cached (429 Cooldown)
             </span>
           )}
         </span>
@@ -773,7 +773,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       return (
         <span className="flex items-center gap-1.5">
           <Sliders size={11} className="text-[#57f287]" />
-          <span>{acExploitTarget} Properties — Step 2/2</span>
+          <span>{acExploitTarget} Properties</span>
         </span>
       );
     }

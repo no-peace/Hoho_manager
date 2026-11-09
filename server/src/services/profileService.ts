@@ -83,7 +83,7 @@ export const webhookProfileService = {
 
     const info = await discord.getWebhookInfo(url).catch(() => null);
     if (!info) {
-      throw ApiError.badRequest("Discord rejected that webhook URL — check it is active");
+      throw ApiError.badRequest("Discord rejected that webhook URL  check it is active");
     }
 
     const { guildId, channelId } = readWebhookIds(info);
@@ -153,7 +153,7 @@ export const webhookProfileService = {
 };
 
 export const botProfileService = {
-  /** Never returns the token — only metadata plus `has_token`. */
+  /** Never returns the token  only metadata plus `has_token`. */
   async list(userId: number): Promise<PublicBotProfile[]> {
     return botProfileRepository.listByUser(userId);
   },

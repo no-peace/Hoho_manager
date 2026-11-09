@@ -34,7 +34,7 @@ export const validateEnv = (): string[] => {
   const errors: string[] = [];
 
   if (!env.token) {
-    errors.push("DISCORD_BOT_TOKEN is not set — the gateway worker cannot log in.");
+    errors.push("DISCORD_BOT_TOKEN is not set  the gateway worker cannot log in.");
   }
   if (env.isProd && env.adminApiKey === "dev-admin-key") {
     errors.push("ADMIN_API_KEY is still the development default. Change it before deploying.");

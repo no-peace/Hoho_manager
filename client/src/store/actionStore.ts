@@ -13,7 +13,7 @@ import { uid } from "../utils/constants";
  * Action flows, keyed by the component `custom_id` they belong to.
  *
  * A flow is an **ordered list of steps** (Discohook-style): a button can add a
- * role, then DM the user, then reply — all from one click. Two representations
+ * role, then DM the user, then reply  all from one click. Two representations
  * have to be kept in sync:
  *
  *   - In memory: `FlowStep[]`, with editor-only `_id`s so the list can reorder.
@@ -97,7 +97,7 @@ export const createStep = (type: ActionType = "dud"): FlowStep => ({
 export interface ActionState {
   actionTypes: ActionHandlerMeta[];
   typesLoaded: boolean;
-  /** `{ [customId]: FlowStep[] }` — the ordered chain for each component. */
+  /** `{ [customId]: FlowStep[] }`  the ordered chain for each component. */
   flows: Record<string, FlowStep[]>;
 
   fetchActionTypes(): Promise<void>;
@@ -149,7 +149,7 @@ const stripConfig = (config: Record<string, unknown>): Record<string, unknown> =
   return next;
 };
 
-/** Give every step — including nested branch steps — a fresh editor `_id`. */
+/** Give every step  including nested branch steps  a fresh editor `_id`. */
 const hydrateStep = (step: FlowStep): FlowStep => ({
   ...step,
   _id: step._id ?? uid(),

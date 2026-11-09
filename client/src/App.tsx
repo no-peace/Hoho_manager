@@ -15,10 +15,8 @@ import {
   X,
   Eye,
   EyeOff,
-  Sparkles,
   Clock,
   Lock,
-  Zap,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
@@ -611,7 +609,7 @@ const DEMO_SHOWCASES = [
     id: "v2",
     tabLabel: "Components V2",
     badge: "IS_COMPONENTS_V2 (32768)",
-    title: "Release v4.2 — Layout Containers & Sections",
+    title: "Release v4.2  Layout Containers & Sections",
     accent: "#5865f2",
     description:
       "Build nested V2 Containers, Thumbnails, Media Galleries, Separators, and interactive Action Rows.",
@@ -662,16 +660,13 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div className="min-h-screen w-full bg-[#111214] text-[#dbdee1] flex flex-col justify-between relative overflow-hidden p-4 sm:p-8 select-none">
-      <div className="pointer-events-none fixed -top-32 -left-32 w-96 h-96 rounded-full bg-[#5865f2]/15 blur-[120px]" />
-      <div className="pointer-events-none fixed -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#23a55a]/10 blur-[120px]" />
-
-      <div className="max-w-6xl w-full mx-auto flex items-center justify-between z-10">
+    <div className="min-h-screen w-full bg-[#1e1f22] text-[#dbdee1] flex flex-col justify-between p-4 sm:p-8 select-none">
+      <div className="max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HoHoLogoMark className="h-9 w-9" />
           <div>
-            <span className="text-base font-extrabold text-white tracking-tight block leading-none">
-              HoHo Manager Studio
+            <span className="text-base font-bold text-white tracking-tight block leading-none">
+              HoHo Manager
             </span>
             <span className="text-[11px] text-[#949ba4]">
               Discord Bot Message & Components V2 Builder
@@ -680,28 +675,28 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
         </div>
         <a
           href="/docs"
-          className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#1e1f22] hover:bg-[#2b2d31] border border-[#2b2d31] px-3.5 py-2 rounded-xl transition-colors"
+          className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-3.5 py-2 rounded-lg transition-colors"
         >
-          Documentation →
+          Documentation
         </a>
       </div>
 
-      <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8 z-10">
-        <div className="lg:col-span-5 bg-[#1e1f22]/90 backdrop-blur-md border border-[#2b2d31] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8">
+        <div className="lg:col-span-5 bg-[#2b2d31] border border-[#111214] rounded-xl p-6 sm:p-8 shadow-xl space-y-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#99a2ff] text-[11px] font-bold">
-              <Sparkles size={12} /> OAuth2 Verified Workspace
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
+              Discord OAuth2 Workspace
+            </span>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
               Sign in to launch the studio
             </h1>
             <p className="text-xs sm:text-sm text-[#949ba4] leading-relaxed">
-              Sign in with Discord to verify your mutual servers and staff roles, or connect your own Custom Bot Token after login.
+              Authenticate with Discord to verify your mutual servers and staff roles, or connect your own Bot Token after login.
             </p>
           </div>
 
           {authError && (
-            <div className="p-3 rounded-xl bg-[#da373c]/15 border border-[#da373c]/40 text-xs text-[#f28b8b] flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-[#da373c]/15 border border-[#da373c]/40 text-xs text-[#f28b8b] flex items-center gap-2">
               <AlertCircle size={15} className="shrink-0" />
               <span>Login failed: {authError}</span>
             </div>
@@ -712,7 +707,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             onClick={() => {
               window.location.href = "/api/auth/discord/login";
             }}
-            className="w-full py-3 px-4 rounded-xl bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-[#5865f2]/25 transition-all cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.08-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z" />
@@ -720,11 +715,11 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             <span>Login with Discord</span>
           </button>
 
-          <div className="space-y-2.5 pt-2 border-t border-[#2b2d31]">
+          <div className="space-y-2.5 pt-2 border-t border-[#1e1f22]">
             <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
               <ShieldCheck size={15} className="text-[#57f287] shrink-0 mt-0.5" />
               <span>
-                <strong className="text-white">Live Mutual-Guild & Role Check:</strong>{" "}
+                <strong className="text-white">Mutual-Guild & Role Check:</strong>{" "}
                 Verifies shared servers and active staff permissions on every request.
               </span>
             </div>
@@ -732,29 +727,24 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
               <Clock size={15} className="text-[#5865f2] shrink-0 mt-0.5" />
               <span>
                 <strong className="text-white">24-Hour Session Expiry:</strong>{" "}
-                Sessions automatically expire every 24 hours for security.
+                Sessions automatically expire every 24 hours.
               </span>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
               <Lock size={15} className="text-[#f0b232] shrink-0 mt-0.5" />
               <span>
                 <strong className="text-white">Custom Bot Mode:</strong>{" "}
-                No shared server? Bring your own encrypted Bot Token after login.
+                Connect your own AES-256-GCM encrypted Bot Token anytime.
               </span>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-[#2b2d31] border border-[#1e1f22] rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-          <div className="bg-[#1e1f22] px-4 py-3 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#da373c]/80" />
-              <span className="w-3 h-3 rounded-full bg-[#f0b232]/80" />
-              <span className="w-3 h-3 rounded-full bg-[#23a55a]/80" />
-              <span className="ml-2 text-xs font-bold text-[#949ba4]">
-                #announcements — Live Interactive Preview
-              </span>
-            </div>
+        <div className="lg:col-span-7 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
+          <div className="bg-[#1e1f22] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-bold text-[#949ba4]">
+              #announcements  Preview
+            </span>
             <div className="flex items-center gap-1 bg-[#111214] p-1 rounded-lg">
               {DEMO_SHOWCASES.map((item, idx) => (
                 <button
@@ -764,7 +754,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                     setActiveShowcase(idx);
                     setClickedBtn(null);
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${
                     activeShowcase === idx
                       ? "bg-[#5865f2] text-white"
                       : "text-[#949ba4] hover:text-white"
@@ -789,18 +779,18 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                 </div>
 
                 <div
-                  className="rounded-xl bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-all"
+                  className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-all"
                   style={{
                     borderLeftWidth: "4px",
                     borderLeftColor: currentDemo.accent,
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#99a2ff]">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#dee0fc]">
                       {currentDemo.badge}
                     </span>
-                    <span className="text-[11px] text-[#57f287] flex items-center gap-1 font-semibold">
-                      <Zap size={12} /> Bot Dispatch Ready
+                    <span className="text-[11px] text-[#57f287] font-semibold">
+                      Bot Dispatch
                     </span>
                   </div>
 
@@ -815,7 +805,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                         key={b.label}
                         type="button"
                         onClick={() => setClickedBtn(b.label)}
-                        className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-transform active:scale-95 ${b.style}`}
+                        className={`px-3.5 py-1.5 rounded text-xs font-semibold transition-colors ${b.style}`}
                       >
                         {b.label}
                       </button>
@@ -823,10 +813,9 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                   </div>
 
                   {clickedBtn && (
-                    <div className="mt-2 p-2.5 rounded-lg bg-[#1e1f22] border border-[#5865f2]/40 text-[11px] text-[#dee0fc] flex items-center justify-between">
+                    <div className="mt-2 p-2.5 rounded bg-[#1e1f22] border border-[#35373c] text-[11px] text-[#dbdee1] flex items-center justify-between">
                       <span>
-                        ⚡ Ephemeral Action Preview: Triggered{" "}
-                        <strong>&ldquo;{clickedBtn}&rdquo;</strong> workflow!
+                        Action triggered: <strong>{clickedBtn}</strong>
                       </span>
                       <button
                         type="button"
@@ -844,9 +833,9 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
         </div>
       </div>
 
-      <div className="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#949ba4] border-t border-[#1e1f22] pt-4 z-10">
-        <span>HoHo Manager — Discord Bot Message & Components V2 Studio</span>
-        <span>Uses Official Discord OAuth2 (`identify`, `guilds`) — Never asks for your Discord password</span>
+      <div className="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#949ba4] border-t border-[#2b2d31] pt-4">
+        <span>HoHo Manager  Discord Bot Message & Components V2 Studio</span>
+        <span>Official Discord OAuth2 (identify, guilds)</span>
       </div>
     </div>
   );
@@ -1010,41 +999,19 @@ export const App: React.FC = () => {
 
       {/* Banner if user has no default bot access and is in Custom Bot Mode */}
       {!currentUser.hasDefaultBotAccess && !currentUser.isAdmin && (
-        <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-4 py-1.5 flex items-center justify-between text-xs shrink-0">
-          <span className="text-[#dbdee1]">
-            <strong className="text-[#f0b232]">Custom Bot Mode:</strong> You don&apos;t share an authorized server/role with the default bot. Use your own Bot Profile to dispatch messages.
+        <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-3 py-1 flex items-center justify-between text-[11px] shrink-0">
+          <span className="text-[#dbdee1] truncate">
+            <strong className="text-[#f0b232]">Custom Bot Mode:</strong> Use your own Bot Profile to dispatch messages.
           </span>
           <button
             type="button"
             onClick={() => setConfigModalOpen(true)}
-            className="px-2.5 py-0.5 rounded bg-[#f0b232] text-[#111214] font-bold hover:bg-[#f0b232]/90 transition-colors shrink-0 ml-2"
+            className="px-2 py-0.5 rounded bg-[#f0b232] text-[#111214] font-bold hover:bg-[#f0b232]/90 transition-colors shrink-0 ml-2"
           >
-            Configure Bot Token
+            Configure Bot
           </button>
         </div>
       )}
-
-      {/* Mobile / Tablet Switcher (< 1024px) */}
-      <div className="lg:hidden flex bg-[#2b2d31] border-b border-[#1e1f22] shrink-0 p-1.5 gap-1">
-        <button
-          type="button"
-          onClick={() => setMobileView("editor")}
-          className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${
-            mobileView === "editor" ? "bg-[#5865f2] text-white" : "bg-[#35373c] text-[#b5bac1]"
-          }`}
-        >
-          Editor
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileView("preview")}
-          className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${
-            mobileView === "preview" ? "bg-[#5865f2] text-white" : "bg-[#35373c] text-[#b5bac1]"
-          }`}
-        >
-          Preview
-        </button>
-      </div>
 
       <main className="flex min-h-0 flex-1 overflow-hidden relative">
         <div className="flex min-h-0 flex-1">
@@ -1054,9 +1021,9 @@ export const App: React.FC = () => {
             maxRatio={0.7}
             mobileActivePane={mobileView === "editor" ? "left" : "right"}
             left={
-              <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0">
-                {/* Top Action Bar (1aa39ecf Style) */}
-                <div className="p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
+              <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
+                {/* Top Action Bar: scrolls away on mobile (<lg) so editor gets full height, pinned on desktop (lg+) */}
+                <div className="p-2.5 sm:p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Button
@@ -1123,12 +1090,12 @@ export const App: React.FC = () => {
                 </div>
 
                 {/* Multi-Message Workspace */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+                <div className="flex-1 lg:overflow-y-auto p-2.5 sm:p-3 space-y-3 custom-scrollbar">
                   {displayMessages.map((_, idx) => (
                     <MessageEditor key={idx} index={idx} />
                   ))}
 
-                  <div className="relative mt-2">
+                  <div className="relative mt-2 pb-4">
                     <button
                       type="button"
                       onClick={() => setAddMsgMenuOpen((prev) => !prev)}
@@ -1182,16 +1149,11 @@ export const App: React.FC = () => {
                             V2
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-white">
-                                Components V2 Message
-                              </p>
-                              <span className="rounded-full bg-[#5865f2] px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                                New
-                              </span>
-                            </div>
+                            <p className="text-xs font-bold text-white">
+                              Components V2 Message
+                            </p>
                             <p className="text-[11px] text-[#949ba4] mt-0.5">
-                              Build rich layouts with containers, text blocks, galleries, files, separators, and action rows.
+                              Build layouts with containers, text blocks, galleries, files, separators, and action rows.
                             </p>
                           </div>
                         </button>
@@ -1212,6 +1174,42 @@ export const App: React.FC = () => {
         {/* Selected Component Property & Flow Builder Panel */}
         <PropertyPanel />
       </main>
+
+      {/* Mobile / Tablet Bottom Navigation Bar (< 1024px) */}
+      <nav
+        aria-label="Mobile workspace navigation"
+        className="lg:hidden flex items-center bg-[#1e1f22] border-t border-[#111214] shrink-0 p-1.5 gap-1.5 z-30"
+      >
+        <button
+          type="button"
+          onClick={() => setMobileView("editor")}
+          className={`flex-1 py-2 rounded-md text-xs font-bold transition-colors ${
+            mobileView === "editor"
+              ? "bg-[#5865f2] text-white"
+              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white"
+          }`}
+        >
+          Editor ({displayMessages.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileView("preview")}
+          className={`flex-1 py-2 rounded-md text-xs font-bold transition-colors ${
+            mobileView === "preview"
+              ? "bg-[#5865f2] text-white"
+              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white"
+          }`}
+        >
+          Live Preview
+        </button>
+        <button
+          type="button"
+          onClick={() => openBotModal("send")}
+          className="px-3.5 py-2 rounded-md bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+        >
+          <Bot size={13} /> Send
+        </button>
+      </nav>
 
       <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />

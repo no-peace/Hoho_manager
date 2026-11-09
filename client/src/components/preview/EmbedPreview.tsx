@@ -8,8 +8,8 @@ import { useMessageStore } from "../../store/messageStore";
  *
  * Mirrors the real layout closely: a 4px accent bar on the left, an optional
  * thumbnail floated to the right, and fields laid out in inline rows of up to
- * three. The subtle part is that inline fields wrap *greedily* — three per row
- * only while each still fits — which is why fields are grouped before render.
+ * three. The subtle part is that inline fields wrap *greedily*  three per row
+ * only while each still fits  which is why fields are grouped before render.
  */
 
 /** Tailwind cannot generate classes from a template literal, so map explicitly. */

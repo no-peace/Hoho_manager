@@ -42,7 +42,7 @@ export const run = async ({
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`create_thread failed in ${channelId}: ${reason}`);
-    return actionFailed("I couldn't start a thread — check my permissions here.");
+    return actionFailed("I couldn't start a thread  check my permissions here.");
   }
 };
 

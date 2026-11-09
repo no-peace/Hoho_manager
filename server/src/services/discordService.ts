@@ -16,7 +16,7 @@ const log = logger.child("discord");
  *     the browser (they can only ever post to that one webhook).
  *   - **Bot calls** need the token, which is resolved server-side only.
  *
- * The token is *never* accepted from a request body — callers pass a profile id
+ * The token is *never* accepted from a request body  callers pass a profile id
  * or fall back to the environment variable.
  */
 
@@ -143,7 +143,7 @@ interface ApiRequestOptions {
  * Low-level fetch against the Discord API with retry/backoff.
  *
  * Discord signals throttling with 429 and a `retry_after` (seconds); transient
- * 5xx responses are also retried. 4xx is never retried — that is our bug.
+ * 5xx responses are also retried. 4xx is never retried  that is our bug.
  */
 const apiRequest = async <T>(
   method: string,
@@ -194,7 +194,7 @@ const apiRequest = async <T>(
 
     if (response.ok) return data as T;
 
-    // Throttled — honour Discord's own retry hint.
+    // Throttled  honour Discord's own retry hint.
     if (response.status === 429 && attempt < retries) {
       const retryAfter = asRecord(data).retry_after;
       const retryAfterMs = Math.ceil((typeof retryAfter === "number" ? retryAfter : 1) * 1000);
@@ -518,7 +518,7 @@ export const getChannelMessages = async (
   );
 };
 
-/** Resolve who a token belongs to — doubles as a validity check. */
+/** Resolve who a token belongs to  doubles as a validity check. */
 export const getBotIdentity = async (token: string): Promise<DiscordUser | null> =>
   apiRequest<DiscordUser>("GET", "/users/@me", { token });
 
@@ -608,7 +608,7 @@ export const createThreadFromMessage = async (
 /**
  * Respond to an interaction using its `application_id` + `token`.
  *
- * These calls need no bot token — the interaction token *is* the credential, and
+ * These calls need no bot token  the interaction token *is* the credential, and
  * it expires 15 minutes after the interaction was created.
  */
 export const createInteractionResponse = async (

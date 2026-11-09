@@ -8,8 +8,8 @@ import type { SendModeValue } from "../utils/constants";
  * Where a message is sent from, and the profiles available to send it with.
  *
  * Two modes exist side by side:
- *   - `webhook` — sent straight from the browser, no backend involved
- *   - `bot`     — proxied through `/api/send` so the token stays server-side
+ *   - `webhook`  sent straight from the browser, no backend involved
+ *   - `bot`      proxied through `/api/send` so the token stays server-side
  *
  * The webhook URL is persisted for convenience. It *is* a credential, so it only
  * ever lives in this browser's localStorage and is never sent anywhere except

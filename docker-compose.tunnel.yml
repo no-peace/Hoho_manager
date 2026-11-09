@@ -17,7 +17,7 @@
 #   command: tunnel --config /etc/cloudflared/config.yml --no-autoupdate run
 #
 # On Pterodactyl you run `cloudflared` directly inside the container rather than
-# through compose — see docs/PTERODACTYL_DEPLOYMENT.md.
+# through compose  see docs/PTERODACTYL_DEPLOYMENT.md.
 
 services:
   tunnel:
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN — see the comment at the top of this file}
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN  see the comment at the top of this file}
     depends_on:
       - server
       - client

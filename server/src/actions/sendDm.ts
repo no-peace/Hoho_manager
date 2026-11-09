@@ -33,7 +33,7 @@ export const run = async ({
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`send_dm failed for ${userId}: ${reason}`);
     return actionFailed(
-      "I couldn't DM you — your privacy settings may block direct messages.",
+      "I couldn't DM you  your privacy settings may block direct messages.",
     );
   }
 };

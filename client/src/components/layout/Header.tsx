@@ -106,25 +106,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
           )}
           <a
             href="/"
-            className="flex items-center gap-2.5 group focus:outline-none"
+            className="flex items-center gap-2.5 group focus:outline-none shrink-0"
             title="HoHo Manager"
           >
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5865f2] to-[#23a55a] p-[1px] shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
-              <a
-                href="/"
-                className="flex items-center gap-2.5 group focus:outline-none shrink-0"
-                title="HoHo Manager"
-              >
-                <img
-                  src={HOHO_LOGO_URL}
-                  alt="HoHo"
-                  className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
-                />
-                <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
-                  HoHo Manager
-                </span>
-              </a>
-            </div>
+            <img
+              src={HOHO_LOGO_URL}
+              alt="HoHo Manager"
+              className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
+            />
             <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
               HoHo Manager
             </span>

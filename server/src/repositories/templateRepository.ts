@@ -90,7 +90,7 @@ export class TemplateRepository extends BaseRepository {
     );
   }
 
-  /** Lightweight substring search — swap for FTS/`ILIKE` when moving to Postgres. */
+  /** Lightweight substring search  swap for FTS/`ILIKE` when moving to Postgres. */
   async search({
     userId,
     q,

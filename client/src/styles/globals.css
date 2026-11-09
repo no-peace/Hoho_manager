@@ -67,22 +67,22 @@
 
   /* ── Semantic UI tokens (used as Tailwind utilities) ─────────────────── */
   /* Discord dark-mode surface hierarchy */
-  --color-chrome:   #1E1F22;   /* bg-chrome  — darkest chrome/toolbar */
-  --color-sidebar:  #2B2D31;   /* bg-sidebar — left rail / panels */
-  --color-surface:  #313338;   /* bg-surface — main canvas */
-  --color-raised:   #383A40;   /* bg-raised  — elevated cards / popovers */
-  --color-hover:    #35373C;   /* bg-hover   — item hover state */
-  --color-input:    #1E1F22;   /* bg-input   — input backgrounds */
+  --color-chrome:   #1E1F22;   /* bg-chrome   darkest chrome/toolbar */
+  --color-sidebar:  #2B2D31;   /* bg-sidebar  left rail / panels */
+  --color-surface:  #313338;   /* bg-surface  main canvas */
+  --color-raised:   #383A40;   /* bg-raised   elevated cards / popovers */
+  --color-hover:    #35373C;   /* bg-hover    item hover state */
+  --color-input:    #1E1F22;   /* bg-input    input backgrounds */
 
   /* Border tones */
-  --color-line:      #1E1F22;  /* border-line      — subtle divider */
-  --color-line-soft: #2E3035;  /* border-line-soft — very soft divider */
+  --color-line:      #1E1F22;  /* border-line       subtle divider */
+  --color-line-soft: #2E3035;  /* border-line-soft  very soft divider */
 
   /* Text scales */
-  --color-ink:        #DBDEE1; /* text-ink       — body copy */
-  --color-ink-strong: #F2F3F5; /* text-ink-strong — headings */
-  --color-ink-muted:  #949BA4; /* text-ink-muted  — secondary text */
-  --color-ink-faint:  #5C6068; /* text-ink-faint  — disabled / hints */
+  --color-ink:        #DBDEE1; /* text-ink        body copy */
+  --color-ink-strong: #F2F3F5; /* text-ink-strong  headings */
+  --color-ink-muted:  #949BA4; /* text-ink-muted   secondary text */
+  --color-ink-faint:  #5C6068; /* text-ink-faint   disabled / hints */
 
   /* Status / accent */
   --color-warning:  #FAA61A;

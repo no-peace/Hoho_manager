@@ -4,7 +4,7 @@ import type { DiscordMessagePayload } from "@dmb/shared";
 /**
  * Direct Discord webhook sending from the browser.
  *
- * Webhook URLs are designed to be used client-side — anyone holding the URL can
+ * Webhook URLs are designed to be used client-side  anyone holding the URL can
  * post, which is exactly why the bot-token path instead goes through the backend
  * proxy. Sending directly here avoids a round trip through our server.
  *
@@ -97,7 +97,7 @@ export const sendWebhookDirect = async (
   if (response.status === 429) {
     const retryAfterMs = Math.ceil((data?.retry_after ?? 1) * 1000);
     throw new WebhookError(
-      `Rate limited by Discord — try again in ${Math.ceil(retryAfterMs / 1000)}s.`,
+      `Rate limited by Discord  try again in ${Math.ceil(retryAfterMs / 1000)}s.`,
       { status: 429, retryAfterMs },
     );
   }
