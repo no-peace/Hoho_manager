@@ -3,16 +3,10 @@ import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
 import { flowRepository, interactionReceiptRepository } from "./repositories/index.js";
 import { logger } from "./utils/logger.js";
+import type { Server } from "node:http";
 
 const log = logger.child("server");
 
-/**
- * Boot sequence:
- *   validate env -> connect + migrate -> start listening -> schedule cleanup.
- *
- * The server refuses to start if the database cannot be opened, because a
- * half-working API is harder to debug than a loud failure at boot.
- */
 const start = async (): Promise<void> => {
   log.info(`Starting in ${env.nodeEnv} mode`);
 
@@ -23,51 +17,58 @@ const start = async (): Promise<void> => {
 
   const app = createApp();
 
-  const server = app.listen(env.port, () => {
-    log.info(`API listening on http://localhost:${env.port}`);
-    log.info(`Health: http://localhost:${env.port}/api/health`);
-    log.info("Interactions endpoint (set this in the Discord Developer Portal): /api/interactions");
+  const server: Server = app.listen(env.port, () => {
+    log.info(`API listening on port ${env.port}`);
+    log.info(`Health check: http://localhost:${env.port}/api/health`);
   });
 
-  // Expired flow state is dead weight; sweep it periodically.
-  const cleanup = setInterval(
-    () => {
-      Promise.all([flowRepository.pruneExpired(), interactionReceiptRepository.pruneExpired()])
-        .catch((error: unknown) =>
-          log.warn(
-            `Flow state cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        );
-    },
-    10 * 60 * 1000,
-  );
-  cleanup.unref(); // don't hold the process open on its own
+  // Sweep expired flows and interaction receipts every 10 minutes
+  const cleanup = setInterval(() => {
+    Promise.all([
+      flowRepository.pruneExpired(),
+      interactionReceiptRepository.pruneExpired(),
+    ]).catch((error: unknown) => {
+      log.warn(
+        `Cleanup sweep error: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+  }, 10 * 60 * 1000);
+  cleanup.unref();
 
-  const shutdown = async (signal: string) => {
-    logger.info(`Received ${signal}. Shutting down gracefully...`);
-    if (server) {
-      server.close(() => {
-        logger.info("HTTP server closed.");
+  let isShuttingDown = false;
+  const gracefulShutdown = (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    log.info(`Received ${signal}. Starting graceful shutdown...`);
+    clearInterval(cleanup);
+
+    server.close(() => {
+      log.info("HTTP server closed.");
+      void db.close().finally(() => {
+        process.exit(0);
       });
-    }
-    await db.close().catch(() => {});
-    process.exit(0);
+    });
+
+    setTimeout(() => {
+      log.warn("Forceful shutdown timeout reached.");
+      process.exit(1);
+    }, 10_000).unref();
   };
 
-  process.on("SIGINT", () => void shutdown("SIGINT"));
-  process.on("SIGTERM", () => void shutdown("SIGTERM"));
-
-  process.on("unhandledRejection", (reason) => {
-    logger.error("Unhandled Promise Rejection:", reason);
-  });
-
-  process.on("uncaughtException", (error) => {
-    logger.error("Uncaught Exception thrown:", error);
-    process.exit(1);
-  });
-
-  start().catch((error: unknown) => {
-    log.error("Failed to start server", error);
-    process.exit(1);
-  })
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 };
+
+process.on("unhandledRejection", (reason) => {
+  log.error("Unhandled Promise Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  log.error("Uncaught Exception thrown:", error);
+  process.exit(1);
+});
+
+start().catch((error: unknown) => {
+  log.error("Failed to start server", error);
+  process.exit(1);
+});
