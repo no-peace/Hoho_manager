@@ -81,7 +81,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
       <div className="flex gap-4 h-[60vh]">
         {/* Sidebar */}
-        <div className="w-48 bg-[#1e1f22] border border-[#111214] rounded p-2 flex flex-col gap-1 shrink-0">
+        <div className="w-full sm:w-44 bg-[#1e1f22] border border-[#111214] rounded p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0">
           <button
             onClick={() => setTab("general")}
             className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#5865f2] text-white" : "text-[#b5bac1] hover:bg-[#35373c]"}`}

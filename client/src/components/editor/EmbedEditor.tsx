@@ -53,7 +53,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   return (
     <div
-      className={`rounded-lg bg-[#2b2d31] border transition-all overflow-hidden ${
+      className={`rounded-lg bg-[#2b2d31] border transition-all ${
         active ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2]" : "border-[#1e1f22]"
       }`}
       style={{
@@ -63,7 +63,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       onClick={() => id && select({ kind: "embed", id })}
     >
       {/* ── Embed Card Header (Title & Global Actions) ── */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none">
+      <div className={`flex items-center justify-between px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${isOpen ? "rounded-t-[7px] border-b border-[#1e1f22]" :"rounded-[7px]"}`}>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"

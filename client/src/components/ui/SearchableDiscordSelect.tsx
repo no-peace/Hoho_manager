@@ -197,9 +197,14 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           ref ={portalRef}
           style={{
             position: "fixed",
-            top: dropdownRect.bottom + 4,
-            left: dropdownRect.left,
-            width: Math.max(dropdownRect.width, 220),
+            top: dropdownRect.bottom + 260 > window.innerHeight && dropdownRect.top > 260
+              ? Math.max(8, dropdownRect.top - 260)
+              : dropdownRect.bottom + 4,
+            left: Math.min(
+              Math.max(8, dropdownRect.left),
+              window.innerWidth - Math.max(dropdownRect.width, 220) - 8
+            ),
+            width: Math.max((dropdownRect.width, 220), window.innerWidth - 16),
             zIndex: 99999,
           }}
           className="bg-[#2b2d31] border border-[#1e1f22] rounded shadow-2xl max-h-64 flex flex-col"

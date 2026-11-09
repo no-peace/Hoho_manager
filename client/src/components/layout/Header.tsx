@@ -110,13 +110,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             title="HoHo Manager"
           >
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5865f2] to-[#23a55a] p-[1px] shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
-              <div className="h-full w-full rounded-[7px] bg-[#1e1f22] flex items-center justify-center font-extrabold text-[10px] text-[#5865f2]">
+              <a
+                href="/"
+                className="flex items-center gap-2.5 group focus:outline-none shrink-0"
+                title="HoHo Manager"
+              >
                 <img
                   src={HOHO_LOGO_URL}
                   alt="HoHo"
-                  className="h-8 w-8 rounded-lg object-cover bg-[#2b2d31] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform"
+                  className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
                 />
-              </div>
+                <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
+                  HoHo Manager
+                </span>
+              </a>
             </div>
             <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
               HoHo Manager
@@ -125,9 +132,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
         </div>
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
           {hasDefaultBotAccess && (
-            <div className="w-44 sm:w-48 relative">
+            <div className="w-32 sm:w-48 relative shrink">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}

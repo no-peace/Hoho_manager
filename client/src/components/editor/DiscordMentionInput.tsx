@@ -215,11 +215,11 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    if (acType && textareaRef.current) {
+    if ((acType || showRichPicker) && textareaRef.current) {
       const rect = textareaRef.current.getBoundingClientRect();
-      setDropdownPosition(rect.top < 260 ? "bottom" : "top");
+      setDropdownPosition(rect.top < 430 ? "bottom" : "top");
     }
-  }, [acType]);
+  }, [acType, showRichPicker]);
 
   useEffect(() => {
     if (!showRichPicker) return;
@@ -844,6 +844,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               onInsert={insertDirect}
               onClose={() => setShowRichPicker(false)}
               guildId={effectiveGuildId}
+              position={dropdownPosition}
             />
           )}
         </div>

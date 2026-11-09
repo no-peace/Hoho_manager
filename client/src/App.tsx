@@ -999,7 +999,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
+    <div className="flex h-[100dvh] flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
       <Header
         onOpenBackups={() => setBackupsOpen(true)}
         onOpenJson={() => setJsonModalOpen(true)}

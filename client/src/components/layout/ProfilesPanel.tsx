@@ -169,3 +169,4 @@ export const ProfilesPanel = () => {
     </div>
   );
 };
+export default ProfilesPanel;

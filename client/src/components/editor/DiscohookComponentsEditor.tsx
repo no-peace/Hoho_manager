@@ -231,7 +231,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           {/* Compact floating controls on hover */}
                           <div
                             onClick={(e) => e.stopPropagation()}
-                            className="hidden group-hover:flex items-center gap-0.5 absolute -top-6 right-0 bg-[#111214] border border-[#2b2d31] rounded px-1 py-0.5 shadow-lg z-20"
+                            className={`${isSelected ? "flex" : "hidden group-hover:flex"} items-center gap-0.5 absolute -top-7 right-0 bg-[#111214] border border-[#2b2d31] rounded px-1 py-0.5 shadow-lg z-20`}
                           >
                             <button
                               type="button"
