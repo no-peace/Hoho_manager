@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
-import { Header, getDiscordAvatarUrl } from "./components/layout/Header";
+import { Header, getDiscordAvatarUrl, HOHO_LOGO_URL } from "./components/layout/Header";
 import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
@@ -42,13 +42,11 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import api from "./api/client";
 
 const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
-  <div
-    className={`${className} rounded-xl bg-gradient-to-br from-[#5865f2] to-[#23a55a] p-[1px] shadow-md shrink-0 flex items-center justify-center`}
-  >
-    <div className="h-full w-full rounded-[11px] bg-[#1e1f22] flex items-center justify-center font-extrabold text-xs text-[#5865f2]">
-      HoHo
-    </div>
-  </div>
+  <img
+    src={HOHO_LOGO_URL}
+    alt="HoHo Manager"
+    className={`${className} rounded-xl object-cover bg-[#1e1f22] border border-[#35373c] shadow-md shrink-0`}
+  />
 );
 
 /* ── Global In-App Toast & Confirmation Host (Replaces Browser alert/confirm) ── */

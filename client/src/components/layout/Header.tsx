@@ -17,6 +17,8 @@ import { SettingsModal } from "./SettingsModal";
 import { useGlobalStore } from "../../store/globalStore";
 import { AccessPanel } from "./AccessPanel";
 
+export const HOHO_LOGO_URL = "https://raw.githubusercontent.com/acsu123/HohoV2/main/BloxFruit/keysystem/hoho_logo.png";
+
 export const getDiscordAvatarUrl = (
   user: { id: string; avatar?: string | null },
   size: number = 64,
@@ -109,7 +111,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
           >
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5865f2] to-[#23a55a] p-[1px] shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
               <div className="h-full w-full rounded-[7px] bg-[#1e1f22] flex items-center justify-center font-extrabold text-[10px] text-[#5865f2]">
-                HoHo
+                <img
+                  src={HOHO_LOGO_URL}
+                  alt="HoHo"
+                  className="h-8 w-8 rounded-lg object-cover bg-[#2b2d31] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform"
+                />
               </div>
             </div>
             <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">

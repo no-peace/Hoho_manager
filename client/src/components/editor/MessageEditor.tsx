@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useGlobalStore } from "../../store/globalStore";
 import {
   ChevronDown,
   ChevronRight,
@@ -867,12 +868,16 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       onClick={() => ensureActive()}
       className={`rounded-lg bg-[#292b2f] border transition-all ${
         isActive
-          ? "border-[#5865f2] ring-1 ring-[#5865f2] shadow-md"
+          ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_4px_16px_rgba(0,0,0,0.25)]"
           : "border-[#1e1f22] hover:border-[#383a40]"
       }`}
     >
       {/* ── Message Collapsible Trigger Header (Discohook style) ── */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-[#232428] border-b border-[#1e1f22] select-none">
+      <div
+        className={`flex items-center justify-between px-3 py-2.5 bg-[#232428] select-none ${
+          isOpen ? "rounded-t-[7px] border-b border-[#1e1f22]" : "rounded-[7px]"
+        }`}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -980,7 +985,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
       {/* ── Message Body Panel ── */}
       {isOpen && (
-        <div className="p-3 space-y-3 bg-[#2b2d31]">
+        <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-[7px]">
           {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
             {/* Thread Sub-Section */}
@@ -1249,7 +1254,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     onClick={() => {
                       const text = JSON.stringify(message, null, 2);
                       navigator.clipboard.writeText(text);
-                      alert("Message JSON copied to clipboard!");
+                      useGlobalStore.getState().showToast("Message JSON copied to clipboard!", "success");
                       setOptionsMenuOpen(false);
                     }}
                     className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2"

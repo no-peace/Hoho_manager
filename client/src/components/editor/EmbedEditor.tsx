@@ -54,7 +54,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
   return (
     <div
       className={`rounded-lg bg-[#2b2d31] border transition-all overflow-hidden ${
-        active ? "border-[#5865f2] ring-1 ring-[#5865f2]" : "border-[#1e1f22]"
+        active ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2]" : "border-[#1e1f22]"
       }`}
       style={{
         borderLeftWidth: "4px",

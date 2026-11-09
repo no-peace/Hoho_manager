@@ -1,3 +1,4 @@
+import { useGlobalStore } from "../../store/globalStore";
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -91,7 +92,9 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
     setCustomEmojis(getStoredCustomEmojis());
   }, [isOpen]);
 
-  const toggleDropdown = () => {
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const dropWidth = 320;
@@ -125,7 +128,10 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
       }
     };
 
-    const handleScroll = () => {
+    const handleScroll = (e: Event) => {
+      if (dropdownRef.current && e.target && dropdownRef.current.contains(e.target as Node)) {
+        return;
+      }
       if (isOpen) setIsOpen(false);
     };
 
@@ -193,7 +199,7 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
       return;
     }
 
-    alert("Please enter custom emoji format: <:name:id> or name:id or Discord snowflake ID");
+    useGlobalStore.getState().showToast("Use format: <:name:id>, name:id, or Snowflake ID", "warning");
   };
 
   const handleRemoveCustomEmoji = (id: string) => {
@@ -206,7 +212,7 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
   const handleInsertMention = () => {
     const id = mentionId.trim();
     if (!id || !/^\d{17,20}$/.test(id)) {
-      alert("Please enter a valid 17-20 digit snowflake ID");
+      useGlobalStore.getState().showToast("Please enter a valid 17-20 digit Snowflake ID", "warning");
       return;
     }
     if (mentionType === "user") handleInsert(`<@${id}>`);
@@ -240,6 +246,7 @@ export const QuickMentionBox: React.FC<QuickMentionBoxProps> = ({ onSelect }) =>
           <div
             ref={dropdownRef}
             style={{ top: coords.top, left: coords.left }}
+            onClick={(e) => e.stopPropagation()}
             className="fixed w-80 rounded-lg border border-[#111214] bg-[#2b2d31] shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[380px] font-sans text-xs text-[#dbdee1]"
           >
             {/* Tab navigation */}

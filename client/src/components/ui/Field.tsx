@@ -31,7 +31,7 @@ export const VARIABLES = [
 interface FieldShellProps { label?: ReactNode; hint?: ReactNode; counterValue?: string; limit?: number; className?: string; children: ReactNode; }
 
 const FieldShell = ({ label, hint, counterValue = "", limit, className = "", children }: FieldShellProps) => (
-  <label className={`block ${className}`}>
+  <div className={`block ${className}`}>
     {(label !== undefined || limit !== undefined) && (
       <span className="mb-1 flex items-baseline justify-between gap-2">
         <span className="field-label !mb-0">{label}</span>
@@ -40,17 +40,23 @@ const FieldShell = ({ label, hint, counterValue = "", limit, className = "", chi
     )}
     {children}
     {hint && <span className="mt-1 block text-[11px] text-[#949ba4]">{hint}</span>}
-  </label>
+  </div>
 );
 
 const asText = (value: unknown): string => typeof value === "string" ? value : value == null ? "" : String(value);
 
-export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; hint?: ReactNode; limit?: number; }
+export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  hint?: ReactNode;
+  limit?: number;
+  variables?: boolean;
+}
 
 import { QuickMentionBox } from "./QuickMentionBox";
 
-export const TextField = ({ label, hint, limit, className, ...props }: TextFieldProps) => {
+export const TextField = ({ label, hint, limit, variables = false, className, ...props }: TextFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const showVars = Boolean(variables) && !props.disabled && (!props.type || props.type === "text");
   const handleInsertVariable = (tag: string) => {
     const input = inputRef.current;
     if (!input || !props.onChange) return;
@@ -60,13 +66,18 @@ export const TextField = ({ label, hint, limit, className, ...props }: TextField
     const newVal = currentVal.substring(0, start) + tag + currentVal.substring(end);
     const e = { target: { value: newVal } } as any;
     props.onChange(e);
-    setTimeout(() => { input.focus(); input.setSelectionRange(start + tag.length, start + tag.length); }, 0);
+    setTimeout(() => {
+      try {
+        input.focus();
+        input.setSelectionRange(start + tag.length, start + tag.length);
+      } catch {}
+    }, 0);
   };
   return (
     <FieldShell label={label ?? (limit !== undefined ? label : undefined)} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
-        <input ref={inputRef} className="field w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]" {...props} />
-        <QuickMentionBox onSelect={handleInsertVariable} />
+        <input ref={inputRef} className={`field w-full ${showVars ? "pr-12" : "pr-3"} bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]`} {...props} />
+        {showVars && <QuickMentionBox onSelect={handleInsertVariable} />}
       </div>
     </FieldShell>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Trash2, Save, Users } from "lucide-react";
 import { useProfileStore } from "../../store/profileStore";
+import { useGlobalStore } from "../../store/globalStore";
 
 export const ProfilesPanel = () => {
   const { botProfiles, fetchProfiles, status } = useProfileStore();
@@ -52,21 +53,28 @@ export const ProfilesPanel = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this bot profile?")) return;
-    try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
-      
-      await fetch(`${baseUrl}/api/profiles/bots/${id}`, {
-        method: "DELETE",
-        headers: { "x-admin-key": adminKey }
-      });
-      
-      void fetchProfiles();
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : String(error));
-    }
+  const handleDelete = (id: number) => {
+    useGlobalStore.getState().openConfirm({
+      title: "Delete Bot Profile",
+      message: "Are you sure you want to delete this bot profile?",
+      confirmLabel: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+          const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
+
+          await fetch(`${baseUrl}/api/profiles/bots/${id}`, {
+            method: "DELETE",
+            headers: { "x-admin-key": adminKey },
+          });
+
+          void fetchProfiles();
+        } catch (error) {
+          setSaveError(error instanceof Error ? error.message : String(error));
+        }
+      },
+    });
   };
 
   return (

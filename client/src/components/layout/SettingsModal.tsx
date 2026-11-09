@@ -61,9 +61,9 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
         method: "PATCH",
         body: data,
       });
-      alert("Settings saved!");
+      useGlobalStore.getState().showToast("Settings saved!","success");
     } catch (e) {
-      alert("Failed to save settings");
+      useGlobalStore.getState().showToast("Failed to save settings","error");
     } finally {
       setSaving(false);
     }

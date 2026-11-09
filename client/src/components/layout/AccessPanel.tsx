@@ -8,7 +8,7 @@ import { useStaffAccess, type StaffRecord } from "../../hooks/useStaffAccess";
 
 export const AccessPanel = () => {
   const { records, loading, error, fetchRecords, createRecord, updateRecord, deleteRecord } = useStaffAccess();
-  const { selectedGuildId, currentUser } = useGlobalStore();
+  const { selectedGuildId, currentUser, showToast, openConfirm } = useGlobalStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<StaffRecord>>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -57,7 +57,7 @@ export const AccessPanel = () => {
       
       if (isCreating) {
         if (!dataToSave.discord_user_id) {
-          return alert("User ID is required.");
+          return showToast("User ID is required.","warning");
         }
         await createRecord(dataToSave);
       } else if (editingId && editingId !== "new") {
@@ -65,17 +65,25 @@ export const AccessPanel = () => {
       }
       setEditingId(null);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message,"error");
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to revoke access for this user?")) return;
-    try {
-      await deleteRecord(id);
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const handleDelete = (id: string) => {
+    openConfirm({
+      title: "Revoke Staff Access",
+      message: "Are you sure you want to revoke access for this user?",
+      confirmLabel: "Revoke Access",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await deleteRecord(id);
+          showToast("Staff access revoked.", "success");
+        } catch (err: any) {
+          showToast(err.message, "error");
+        }
+      },
+    });
   };
 
   const updateForm = (updates: Partial<StaffRecord>) => {
