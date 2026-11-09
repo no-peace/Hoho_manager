@@ -183,16 +183,6 @@ router.get(
         (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
     );
 
-    let allowedRoleMentionIds: string[] = [];
-    if (staffRecord?.allowed_role_mention_ids) {
-      try {
-        const parsed = JSON.parse(staffRecord.allowed_role_mention_ids);
-        if (Array.isArray(parsed)) allowedRoleMentionIds = parsed.map(String);
-      } catch {
-        allowedRoleMentionIds = [];
-      }
-    }
-
     const hasDefaultBotAccess =
       isOwner ||
       isHead ||
