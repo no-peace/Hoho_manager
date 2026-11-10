@@ -4,6 +4,7 @@ import { EDITOR_MODES } from "./constants";
 import type { EditorMode } from "./constants";
 
 export interface QueryData {
+  version?: "d2" | string;
   messages: { data: MessageData | { data: MessageData; targets?: TargetData[] } }[];
   targets?: TargetData[];
   mode?: EditorMode;
@@ -32,41 +33,64 @@ const hydrateComponentNode = (c:any): ComponentNode => {
   return node;
 };
 
-export const fromQueryData = (parsed: any): MessageData => {
+const normalizeMessageData = (raw: any): MessageData => {
+  let item = raw !== null && typeof raw === "object" ? raw : {};
+  if (item.data !== null && typeof item.data === "object" && !Array.isArray(item.data)) {
+    item = item.data;
+  }
+  return {
+    content: item.content || "",
+    username: item.username || "",
+    avatar_url: item.avatar_url || "",
+    thread_name: item.thread_name || "",
+    embeds: (item.embeds || []).map((e: any): EmbedData => ({
+      ...e,
+      _id: e._id || genId(),
+      fields: (e.fields || []).map((f: any): EmbedField => ({ ...f, _id: f._id || genId() })),
+    })),
+    components: (item.components || []).map(hydrateComponentNode),
+  };
+};
+
+export interface ParsedQueryData extends MessageData {
+  messages: MessageData[];
+  targets?: TargetData[];
+}
+
+export const fromQueryData = (parsed: any): ParsedQueryData => {
   let rawData =
     parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+
+  let rawList: any[] = [];
+  let targets: TargetData[] | undefined = rawData.targets;
 
   // 1. Detect official Discohook full workspace backups (like backups-2026-09-30.json)
   if (rawData.backups && Array.isArray(rawData.backups) && rawData.backups.length > 0) {
     const backup = rawData.backups[0];
     if (backup.messages && Array.isArray(backup.messages) && backup.messages.length > 0) {
-      rawData = backup.messages[0].data;
+      rawList = backup.messages;
+      targets = backup.targets || targets;
     }
   }
-  // 2. Detect standard QueryData single-message exports
+  // 2. Detect standard QueryData multi-message / single-message exports
   else if (rawData.messages && Array.isArray(rawData.messages) && rawData.messages.length > 0) {
-    rawData = rawData.messages[0].data;
+    rawList = rawData.messages;
+  }
+  // 3. Raw single message object
+  else if (rawData && typeof rawData === "object" && Object.keys(rawData).length > 0) {
+    rawList = [rawData];
   }
 
-  if (rawData === null || typeof rawData !== "object" || Array.isArray(rawData)) rawData = {};
+  const allMessages: MessageData[] = rawList.length > 0
+    ? rawList.map(normalizeMessageData)
+    : [normalizeMessageData({})];
 
-  // Older template saves wrapped the message and targets inside messages[0].data.
-  if (rawData.data !== null && typeof rawData.data === "object") rawData = rawData.data;
-
-  // Fallback to empty object to prevent UI crashes if data is malformed
-  if (!rawData || typeof rawData !== 'object') rawData = {};
+  const primary = allMessages[0] || normalizeMessageData({});
 
   return {
-    content: rawData.content || "",
-    username: rawData.username || "",
-    avatar_url: rawData.avatar_url || "",
-    thread_name: rawData.thread_name || "",
-    embeds: (rawData.embeds || []).map((e: any): EmbedData => ({
-      ...e,
-      _id: e._id || genId(),
-      fields: (e.fields || []).map((f: any): EmbedField => ({ ...f, _id: f._id || genId() }))
-    })),
-    components: (rawData.components || []).map(hydrateComponentNode),
+    ...primary,
+    messages: allMessages,
+    ...(targets ? { targets } : {}),
   };
 };
 
@@ -77,6 +101,7 @@ export const toQueryData = (
 ): QueryData => {
   const msgs = Array.isArray(payload) ? payload : [payload];
   return {
+    version: "d2",
     messages: msgs.map((m) => ({ data: m })),
     ...(targets ? { targets } : {}),
     ...(mode ? { mode } : {}),

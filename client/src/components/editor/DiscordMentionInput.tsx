@@ -8,6 +8,14 @@ import {
   Sliders,
   AlertTriangle,
   Code,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  FileCode,
+  EyeOff,
+  Quote,
+  Clock,
 } from "lucide-react";
 import { RichPicker } from "./RichPicker";
 import { VARIABLES } from "../ui/Field";
@@ -26,6 +34,8 @@ export interface DiscordMentionInputProps {
   className?: string;
   disabled?: boolean;
   guildId?: string | null;
+  /** Controls toolbar visibility (defaults to true) */
+  showToolbar?: boolean;
 }
 
 type AutocompleteType =
@@ -202,6 +212,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   className = "",
   disabled = false,
   guildId: propGuildId,
+  showToolbar = true,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -480,7 +491,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           items.push({
             id: `var_${v.tag}`,
             title: v.tag,
-            subtitle: `${v.label} — ${v.desc}`,
+            subtitle: `${v.label}  ${v.desc}`,
             icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
             replacement: v.tag,
             keepOpen: false,
@@ -756,7 +767,128 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     [value, onChange],
   );
 
+  const formatSelection = useCallback(
+    (
+      prefix: string,
+      suffix: string = prefix,
+      defaultText: string = "",
+      isLinePrefix: boolean = false,
+    ) => {
+      const textarea = textareaRef.current;
+      if (!textarea || disabled) return;
+
+      const start = textarea.selectionStart ?? 0;
+      const end = textarea.selectionEnd ?? 0;
+      const currentValue = textarea.value ?? "";
+      const selectedText = currentValue.slice(start, end);
+
+      let replacement = "";
+      let newStart = start;
+      let newEnd = end;
+
+      if (isLinePrefix) {
+        if (selectedText.length > 0) {
+          const lines = selectedText.split("\n");
+          const allQuoted = lines.every((l) => l.startsWith(prefix));
+          if (allQuoted) {
+            // Toggle un-quote
+            replacement = lines.map((l) => l.slice(prefix.length)).join("\n");
+            newStart = start;
+            newEnd = start + replacement.length;
+          } else {
+            // Quote all lines
+            replacement = lines.map((l) => `${prefix}${l}`).join("\n");
+            newStart = start;
+            newEnd = start + replacement.length;
+          }
+        } else {
+          replacement = `${prefix}${defaultText}`;
+          newStart = start + prefix.length;
+          newEnd = newStart + defaultText.length;
+        }
+      } else {
+        if (selectedText.length > 0) {
+          // Toggle unwrap if already wrapped
+          const isWrapped =
+            selectedText.startsWith(prefix) &&
+            selectedText.endsWith(suffix) &&
+            selectedText.length >= prefix.length + suffix.length;
+
+          if (isWrapped) {
+            replacement = selectedText.slice(prefix.length, selectedText.length - suffix.length);
+            newStart = start;
+            newEnd = start + replacement.length;
+          } else {
+            replacement = `${prefix}${selectedText}${suffix}`;
+            newStart = start + prefix.length;
+            newEnd = newStart + selectedText.length;
+          }
+        } else {
+          replacement = `${prefix}${defaultText}${suffix}`;
+          if (defaultText.length > 0) {
+            newStart = start + prefix.length;
+            newEnd = newStart + defaultText.length;
+          } else {
+            newStart = start + prefix.length;
+            newEnd = newStart;
+          }
+        }
+      }
+
+      // Focus textarea and replace range with native undo stack preservation
+      textarea.focus();
+      textarea.setSelectionRange(start, end);
+
+      let insertSuccess = false;
+      try {
+        insertSuccess = document.execCommand("insertText", false, replacement);
+      } catch {
+        insertSuccess = false;
+      }
+
+      if (!insertSuccess) {
+        // Fallback for virtual DOM / non-execCommand environments
+        const before = currentValue.slice(0, start);
+        const after = currentValue.slice(end);
+        const nextValue = before + replacement + after;
+        onChange(nextValue);
+      }
+
+      // Restore caret / text selection
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(newStart, newEnd);
+        }
+      });
+    },
+    [disabled, onChange],
+  );
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        formatSelection("**", "**", "bold text");
+        return;
+      }
+      if (e.key === "i" || e.key === "I") {
+        e.preventDefault();
+        formatSelection("*", "*", "italic text");
+        return;
+      }
+      if (e.key === "u" || e.key === "U") {
+        e.preventDefault();
+        formatSelection("__", "__", "underlined text");
+        return;
+      }
+      if (e.key === "e" || e.key === "E") {
+        e.preventDefault();
+        formatSelection("`", "`", "code");
+        return;
+      }
+    }
+
     if (acType && acItems.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -867,7 +999,141 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         )}
       </div>
 
-      <div className="relative w-full">
+      {/* Integrated Editor Box with Attached Toolbar Ribbon */}
+      <div className="relative w-full rounded-lg border border-[#232428] hover:border-[#35373c] focus-within:border-[#5865f2] bg-[#1e1f22] transition-colors">
+        {showToolbar && (
+          <div
+            className="flex items-center gap-0.5 px-2 py-1 bg-[#18191c]/80 border-b border-[#232428] rounded-t-lg text-[#949ba4] overflow-x-auto select-none custom-scrollbar"
+            role="toolbar"
+            aria-label="Markdown formatting"
+          >
+            {/* Bold */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("**", "**", "bold text")}
+              title="Bold (**text**) • Ctrl+B"
+              aria-label="Bold"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Bold size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Italic */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("*", "*", "italic text")}
+              title="Italic (*text*) • Ctrl+I"
+              aria-label="Italic"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Italic size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Underline */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("__", "__", "underlined text")}
+              title="Underline (__text__) • Ctrl+U"
+              aria-label="Underline"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Underline size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Strikethrough */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("~~", "~~", "strikethrough text")}
+              title="Strikethrough (~~text~~)"
+              aria-label="Strikethrough"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Strikethrough size={13} strokeWidth={2.5} />
+            </button>
+
+            <div className="w-[1px] h-3.5 bg-[#35373c] mx-0.5 shrink-0" />
+
+            {/* Inline Code */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("`", "`", "code")}
+              title="Inline Code (`text`) • Ctrl+E"
+              aria-label="Inline Code"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Code size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Code Block */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("```\n", "\n```", "code block")}
+              title="Code Block (```lang\n...\n```)"
+              aria-label="Code Block"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <FileCode size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Spoiler */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("||", "||", "spoiler")}
+              title="Spoiler (||text||)"
+              aria-label="Spoiler"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <EyeOff size={13} strokeWidth={2.5} />
+            </button>
+
+            {/* Quote */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => formatSelection("> ", "", "quote", true)}
+              title="Quote (> text)"
+              aria-label="Quote"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Quote size={13} strokeWidth={2.5} />
+            </button>
+
+            <div className="w-[1px] h-3.5 bg-[#35373c] mx-0.5 shrink-0" />
+
+            {/* Timestamp Helper */}
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const now = Math.floor(Date.now() / 1000);
+                formatSelection(`<t:${now}:R>`, "", "");
+              }}
+              title="Relative Timestamp (<t:epoch:R>)"
+              aria-label="Relative Timestamp"
+              className="px-1.5 h-6 rounded flex items-center gap-1 text-[11px] font-mono hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
+            >
+              <Clock size={12} />
+              <span className="hidden sm:inline text-[10px]">time:R</span>
+            </button>
+          </div>
+        )}
+
         <textarea
           ref={textareaRef}
           value={value || ""}
@@ -878,7 +1144,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           rows={rows}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full block bg-[#1e1f22] text-[#dbdee1] placeholder-[#949ba4] text-sm p-3 pb-8 pr-12 rounded-lg border border-[#232428] hover:border-[#35373c] focus:border-[#5865f2] focus:outline-none transition-colors resize-y leading-relaxed font-sans"
+          className="w-full block bg-transparent text-[#dbdee1] placeholder-[#949ba4] text-sm p-3 pb-8 pr-12 focus:outline-none resize-y leading-relaxed font-sans border-0"
           style={{ minHeight: `${rows * 26}px` }}
         />
 
@@ -912,7 +1178,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
           <div
-            className={`absolute left-0 w-80 sm:w-96 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
+            className={`absolute left-0 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
               dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
             }`}
             style={{ maxHeight: "260px" }}

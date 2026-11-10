@@ -286,6 +286,7 @@ router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async
     permissions,
     channelId,
     expiresAt,
+    callerId: req.staffContext?.staffId ?? undefined,
   });
 
   return res.status(201).json({ ok: true, session });

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Modal } from "../ui/Modal";
 import { useGlobalStore } from "../../store/globalStore";
 import {
   ChevronDown,
@@ -17,6 +18,9 @@ import {
   Box,
   FileText,
   Minus,
+  User,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import {
   Limits,
@@ -63,6 +67,34 @@ const CONTAINER_CHILD_OPTIONS = [
   { label: "Action Row", type: ComponentType.ActionRow, icon: Layers },
 ] as const;
 
+const DISCORD_FORBIDDEN_USERNAMES = ["clyde", "discord", "system message"];
+
+/** Validate Discord webhook username rules (1-80 chars, no forbidden words, no backticks). */
+const validateWebhookUsername = (name: string): string | null => {
+  if (!name || !name.trim()) return null;
+  const trimmed = name.trim();
+  if (trimmed.length > 80) return "Username exceeds Discord limit of 80 characters.";
+  if (trimmed.includes("```")) return "Username cannot contain backticks.";
+  const lower = trimmed.toLowerCase();
+  for (const forbidden of DISCORD_FORBIDDEN_USERNAMES) {
+    if (lower.includes(forbidden)) {
+      return `Discord prohibits "${forbidden}" in webhook usernames.`;
+    }
+  }
+  return null;
+};
+
+/** Validate HTTP/HTTPS image URL format. */
+const isValidHttpUrl = (val: string): boolean => {
+  if (!val || !val.trim()) return true;
+  try {
+    const url = new URL(val.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
@@ -105,9 +137,17 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     }
   };
 
-  // Local collapsible section states matching Discohook (Profile Override removed)
+  // Local collapsible section states matching Discohook
   const [isOpen, setIsOpen] = useState(true);
   const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name));
+  const [profileOverrideOpen, setProfileOverrideOpen] = useState(
+    Boolean(message.username || message.avatar_url),
+  );
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [message.avatar_url]);
 
   // Rename message state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -1039,6 +1079,189 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
         <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-[7px]">
           {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
+            {/* ── Webhook Profile Override Sub-Section (UI-01) ── */}
+            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
+              <div
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setProfileOverrideOpen(!profileOverrideOpen);
+                  }
+                }}
+                onClick={() => setProfileOverrideOpen(!profileOverrideOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#dbdee1] hover:bg-[#282a2e] transition-colors cursor-pointer select-none"
+              >
+                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-[#949ba4]">
+                  {profileOverrideOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  <User size={13} className="text-[#5865f2]" /> Profile Override (Webhook)
+                </span>
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  {(message.username || message.avatar_url) ? (
+                    <div className="flex items-center gap-1.5 bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 rounded text-[10px] text-[#dee0fc]">
+                      {message.avatar_url && !avatarLoadError && (
+                        <img
+                          src={message.avatar_url}
+                          alt=""
+                          className="w-3.5 h-3.5 rounded-full object-cover"
+                        />
+                      )}
+                      <span className="font-semibold truncate max-w-[120px]">
+                        {message.username || "Custom Avatar"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          ensureActive();
+                          setField("username", "");
+                          setField("avatar_url", "");
+                        }}
+                        className="text-[#949ba4] hover:text-[#f28b8b] ml-0.5"
+                        title="Clear Profile Override"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-[#949ba4] font-normal">
+                      Default Bot Profile
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {profileOverrideOpen && (
+                <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-3">
+                  {/* Notice Banner */}
+                  <p className="text-[11px] text-[#949ba4] leading-relaxed">
+                    Custom author name and avatar applied when sending via Discord Webhook. Bot Token dispatch uses the Bot application's global identity.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Username Input */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
+                          Override Username
+                        </label>
+                        <span className={`text-[10px] font-mono ${
+                          (message.username?.length || 0) > 80 ? "text-[#f28b8b] font-bold" : "text-[#949ba4]"
+                        }`}>
+                          {message.username?.length || 0}/80
+                        </span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          maxLength={80}
+                          value={message.username || ""}
+                          placeholder="Announcements Bot"
+                          onChange={(e) => {
+                            ensureActive();
+                            setField("username", e.target.value);
+                          }}
+                          className={`w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-2.5 pr-7 py-1.5 rounded border transition-colors focus:outline-none ${
+                            validateWebhookUsername(message.username || "")
+                              ? "border-[#f28b8b] focus:border-[#f28b8b]"
+                              : "border-[#232428] focus:border-[#5865f2]"
+                          }`}
+                        />
+                        {message.username && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              ensureActive();
+                              setField("username", "");
+                            }}
+                            className="absolute right-2 text-[#949ba4] hover:text-white"
+                            title="Clear username"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                      {validateWebhookUsername(message.username || "") && (
+                        <p className="flex items-center gap-1 mt-1 text-[10px] text-[#f28b8b]">
+                          <AlertCircle size={10} className="shrink-0" />
+                          <span>{validateWebhookUsername(message.username || "")}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Avatar URL Input */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
+                          Override Avatar URL
+                        </label>
+                        {message.avatar_url && !avatarLoadError && isValidHttpUrl(message.avatar_url) && (
+                          <span className="text-[10px] text-[#57f287] flex items-center gap-0.5">
+                            <Check size={10} /> Valid
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Avatar Thumbnail Preview */}
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#1e1f22] border border-[#35373c] shrink-0 flex items-center justify-center">
+                          {message.avatar_url && !avatarLoadError ? (
+                            <img
+                              src={message.avatar_url}
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                              onError={() => setAvatarLoadError(true)}
+                            />
+                          ) : (
+                            <User size={16} className="text-[#949ba4]" />
+                          )}
+                        </div>
+
+                        <div className="relative flex-1 flex items-center">
+                          <input
+                            type="text"
+                            value={message.avatar_url || ""}
+                            placeholder="https://cdn.discordapp.com/avatars/..."
+                            onChange={(e) => {
+                              ensureActive();
+                              setField("avatar_url", e.target.value.trim());
+                            }}
+                            className={`w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-2.5 pr-7 py-1.5 rounded border transition-colors focus:outline-none ${
+                              !isValidHttpUrl(message.avatar_url || "") || avatarLoadError
+                                ? "border-[#f28b8b] focus:border-[#f28b8b]"
+                                : "border-[#232428] focus:border-[#5865f2]"
+                            }`}
+                          />
+                          {message.avatar_url && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                ensureActive();
+                                setField("avatar_url", "");
+                              }}
+                              className="absolute right-2 text-[#949ba4] hover:text-white"
+                              title="Clear avatar URL"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {(!isValidHttpUrl(message.avatar_url || "") || avatarLoadError) && (
+                        <p className="flex items-center gap-1 mt-1 text-[10px] text-[#f28b8b]">
+                          <AlertCircle size={10} className="shrink-0" />
+                          <span>
+                            {avatarLoadError
+                              ? "Unable to load image from this URL."
+                              : "Must be a valid http:// or https:// image URL."}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Thread Sub-Section */}
             <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
               <button
@@ -1332,111 +1555,97 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       )}
 
       {/* Set Link Modal (Reply or Edit Existing Message) */}
-      {linkModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            setLinkModalOpen(false);
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-[#2b2d31] rounded-lg border border-[#1e1f22] p-4 w-full max-w-md space-y-3.5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Link size={14} className="text-[#5865f2]" /> Set Discord Message Link
-              </h4>
+      <Modal
+        open={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        title={
+          <span className="flex items-center gap-1.5">
+            <Link size={16} className="text-[#5865f2]" /> Set Discord Message Link
+          </span>
+        }
+        width="max-w-md"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setLinkModalOpen(false)}
+              className="px-3 py-1.5 text-xs text-[#949ba4] hover:text-white rounded hover:bg-[#35373c] transition-colors"
+            >
+              Cancel
+            </button>
+            {linkModeInput === "edit" && (
               <button
                 type="button"
-                onClick={() => setLinkModalOpen(false)}
-                className="text-[#949ba4] hover:text-white"
+                disabled={isLoadingLinkedMsg}
+                onClick={() => void handleSaveMessageLink(true)}
+                className="px-3 py-1.5 rounded bg-[#35373c] hover:bg-[#404249] text-xs font-semibold text-white disabled:opacity-50 transition-colors"
               >
-                <X size={14} />
+                {isLoadingLinkedMsg ? "Loading…" : "Bind & Load Message"}
               </button>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={() => void handleSaveMessageLink(false)}
+              className="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-xs font-semibold text-white transition-colors"
+            >
+              Save Link
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3.5">
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1e1f22] rounded-lg border border-[#111214]">
+            <button
+              type="button"
+              onClick={() => setLinkModeInput("reply")}
+              className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
+                linkModeInput === "reply"
+                  ? "bg-[#5865f2] text-white"
+                  : "text-[#949ba4] hover:text-white"
+              }`}
+            >
+              ↩ Reply to Message
+            </button>
+            <button
+              type="button"
+              onClick={() => setLinkModeInput("edit")}
+              className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
+                linkModeInput === "edit"
+                  ? "bg-[#faa61a] text-[#111214]"
+                  : "text-[#949ba4] hover:text-white"
+              }`}
+            >
+              ✎ Edit Existing Message
+            </button>
+          </div>
 
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1e1f22] rounded-lg border border-[#111214]">
-              <button
-                type="button"
-                onClick={() => setLinkModeInput("reply")}
-                className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
-                  linkModeInput === "reply"
-                    ? "bg-[#5865f2] text-white"
-                    : "text-[#949ba4] hover:text-white"
-                }`}
-              >
-                ↩ Reply to Message
-              </button>
-              <button
-                type="button"
-                onClick={() => setLinkModeInput("edit")}
-                className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
-                  linkModeInput === "edit"
-                    ? "bg-[#faa61a] text-[#111214]"
-                    : "text-[#949ba4] hover:text-white"
-                }`}
-              >
-                ✎ Edit Existing Message
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-semibold text-[#b5bac1]">
-                Discord Message URL
-              </label>
-              <input
-                type="text"
-                placeholder="https://discord.com/channels/guildId/channelId/messageId"
-                value={messageLinkInput}
-                onChange={(e) => {
-                  setMessageLinkInput(e.target.value);
-                  setLinkError(null);
-                }}
-                className="w-full bg-[#1e1f22] text-xs text-white px-2.5 py-2 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none font-mono"
-              />
-              <p className="text-[11px] text-[#949ba4]">
-                {linkModeInput === "reply"
-                  ? "When sent via Bot, this message will natively reply to the linked Discord message."
-                  : "Binds this message to the linked channel & message ID so Bot Dispatch updates it in-place."}
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-semibold text-[#b5bac1]">
+              Discord Message URL
+            </label>
+            <input
+              type="text"
+              placeholder="https://discord.com/channels/guildId/channelId/messageId"
+              value={messageLinkInput}
+              onChange={(e) => {
+                setMessageLinkInput(e.target.value);
+                setLinkError(null);
+              }}
+              className="w-full bg-[#1e1f22] text-xs text-white px-2.5 py-2 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none font-mono"
+            />
+            <p className="text-[11px] text-[#949ba4]">
+              {linkModeInput === "reply"
+                ? "When sent via Bot, this message will natively reply to the linked Discord message."
+                : "Binds this message to the linked channel & message ID so Bot Dispatch updates it in-place."}
+            </p>
+            {linkError && (
+              <p className="text-[11px] text-[#f28b8b] bg-[#da373c]/10 border border-[#da373c]/30 rounded px-2.5 py-1.5 break-words [overflow-wrap:anywhere]">
+                {linkError}
               </p>
-              {linkError && (
-                <p className="text-[11px] text-[#f28b8b] bg-[#da373c]/10 border border-[#da373c]/30 rounded px-2.5 py-1.5">
-                  {linkError}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e1f22]">
-              <button
-                type="button"
-                onClick={() => setLinkModalOpen(false)}
-                className="px-3 py-1.5 text-xs text-[#949ba4] hover:text-white"
-              >
-                Cancel
-              </button>
-              {linkModeInput === "edit" && (
-                <button
-                  type="button"
-                  disabled={isLoadingLinkedMsg}
-                  onClick={() => void handleSaveMessageLink(true)}
-                  className="px-3 py-1.5 rounded bg-[#35373c] hover:bg-[#404249] text-xs font-semibold text-white disabled:opacity-50"
-                >
-                  {isLoadingLinkedMsg ? "Loading…" : "Bind & Load Message"}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => void handleSaveMessageLink(false)}
-                className="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-xs font-semibold text-white"
-              >
-                Save Link
-              </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

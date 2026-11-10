@@ -1,7 +1,7 @@
 import { createApp } from "./app.js";
 import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
-import { flowRepository, interactionReceiptRepository } from "./repositories/index.js";
+import { runDatabaseMaintenance } from "./services/maintenanceService.js";
 import { logger } from "./utils/logger.js";
 import type { Server } from "node:http";
 
@@ -15,6 +15,13 @@ const start = async (): Promise<void> => {
   await initializeDatabase();
   log.info("Database ready");
 
+  // Immediate maintenance sweep on startup
+  runDatabaseMaintenance().catch((err: unknown) => {
+    log.warn(
+      `Initial maintenance sweep error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  });
+
   const app = createApp();
 
   const server: Server = app.listen(env.port, () => {
@@ -22,12 +29,9 @@ const start = async (): Promise<void> => {
     log.info(`Health check: http://localhost:${env.port}/api/health`);
   });
 
-  // Sweep expired flows and interaction receipts every 10 minutes
+  // Periodic maintenance sweep every 10 minutes
   const cleanup = setInterval(() => {
-    Promise.all([
-      flowRepository.pruneExpired(),
-      interactionReceiptRepository.pruneExpired(),
-    ]).catch((error: unknown) => {
+    runDatabaseMaintenance().catch((error: unknown) => {
       log.warn(
         `Cleanup sweep error: ${error instanceof Error ? error.message : String(error)}`,
       );

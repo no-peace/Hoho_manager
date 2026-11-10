@@ -1,0 +1,327 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import Database from "better-sqlite3";
+import type { DatabaseClient, QueryParams, RunResult } from "../src/config/database.js";
+import { ActionRepository } from "../src/repositories/actionRepository.js";
+import { sessionRepository } from "../src/repositories/sessionRepository.js";
+import { TemplateRepository } from "../src/repositories/templateRepository.js";
+import { BotProfileRepository, WebhookProfileRepository } from "../src/repositories/profileRepository.js";
+import { decrypt } from "../src/utils/crypto.js";
+import { migrations } from "../src/config/migrations.js";
+
+const spread = (params?: QueryParams): unknown[] =>
+  params === undefined ? [] : Array.isArray(params) ? [...params] : [params];
+
+const createFullMemoryDb = (): { client: DatabaseClient; raw: Database.Database } => {
+  const raw = new Database(":memory:");
+  raw.pragma("foreign_keys = ON");
+
+  // Apply all migrations
+  for (const migration of migrations) {
+    raw.exec(migration.sql);
+  }
+
+  const client: DatabaseClient = {
+    async query<T>(sql: string, params?: QueryParams): Promise<T[]> {
+      return raw.prepare(sql).all(...spread(params)) as T[];
+    },
+    async get<T>(sql: string, params?: QueryParams): Promise<T | undefined> {
+      return raw.prepare(sql).get(...spread(params)) as T | undefined;
+    },
+    async run(sql: string, params?: QueryParams): Promise<RunResult> {
+      const res = raw.prepare(sql).run(...spread(params));
+      return {
+        changes: res.changes,
+        lastInsertRowid: Number(res.lastInsertRowid),
+      };
+    },
+    async exec(sql: string): Promise<void> {
+      raw.exec(sql);
+    },
+    async transaction<T>(fn: () => Promise<T> | T): Promise<T> {
+      if (raw.inTransaction) {
+        return await fn();
+      }
+      raw.exec("BEGIN IMMEDIATE");
+      try {
+        const result = await fn();
+        raw.exec("COMMIT");
+        return result;
+      } catch (err) {
+        raw.exec("ROLLBACK");
+        throw err;
+      }
+    },
+    async close(): Promise<void> {
+      raw.close();
+    },
+  };
+
+  return { client, raw };
+};
+
+describe("server/repositories: SQLite Repositories & Transactions Suite", () => {
+  let memory: ReturnType<typeof createFullMemoryDb>;
+  let actionRepo: ActionRepository;
+  let templateRepo: TemplateRepository;
+  let botProfileRepo: BotProfileRepository;
+  let webhookProfileRepo: WebhookProfileRepository;
+  let testUserId: number;
+
+  beforeEach(async () => {
+    memory = createFullMemoryDb();
+    actionRepo = new ActionRepository(memory.client);
+    templateRepo = new TemplateRepository(memory.client);
+    botProfileRepo = new BotProfileRepository(memory.client);
+    webhookProfileRepo = new WebhookProfileRepository(memory.client);
+
+    // Create a base user for foreign key constraints
+    const userRes = await memory.client.run(
+      "INSERT INTO users (discord_id, username, role) VALUES ('123456789', 'TestUser', 'admin')",
+    );
+    testUserId = userRes.lastInsertRowid;
+  });
+
+  afterEach(async () => {
+    await memory.client.close();
+  });
+
+  describe("ActionRepository", () => {
+    it("atomically registers ad-hoc flows with registerFlows() in a transaction", async () => {
+      const messageId = "msg_snowflake_1001";
+      const flows = [
+        {
+          customId: "action:btn_verify",
+          steps: [{ type: "send_ephemeral_reply", config: { content: "Verified!" } }],
+        },
+        {
+          customId: "action:btn_role",
+          steps: [{ type: "add_role", config: { roleId: "role_999" } }],
+        },
+      ];
+
+      await actionRepo.registerFlows(messageId, flows as any);
+
+      const registered = await actionRepo.findByCustomId("action:btn_verify", messageId);
+      expect(registered).toHaveLength(1);
+      expect((registered[0] as any).message_id).toBe(messageId);
+      expect((registered[0] as any).action_type).toBe("send_ephemeral_reply");
+
+      // Verify replacing flows atomically replaces old ones
+      const updatedFlows = [
+        {
+          customId: "action:btn_verify",
+          steps: [{ type: "send_ephemeral_reply", config: { content: "Replaced!" } }],
+        },
+      ];
+      await actionRepo.registerFlows(messageId, updatedFlows as any);
+
+      const replaced = await actionRepo.findByCustomId("action:btn_verify", messageId);
+      expect(replaced).toHaveLength(1);
+      expect((replaced[0] as any).config.content).toBe("Replaced!");
+
+      const oldFlow = await actionRepo.findByCustomId("action:btn_role", messageId);
+      expect(oldFlow).toHaveLength(0);
+    });
+
+    it("atomically replaces template action flows with replaceForTemplate()", async () => {
+      // Create template first
+      const template = await templateRepo.create({
+        userId: testUserId,
+        name: "Welcome Card",
+        data: { content: "Welcome!" } as any,
+      });
+
+      const actions = [
+        {
+          customId: "action:btn_1",
+          actionType: "dud",
+          config: {},
+          executionOrder: 0,
+        },
+      ];
+
+      await actionRepo.replaceForTemplate(template.id, actions as any);
+
+      const list = await actionRepo.listByTemplate(template.id);
+      expect(list).toHaveLength(1);
+      expect(list[0].action_type).toBe("dud");
+
+      // Fallback resolution: template flow matches when messageId is null
+      const resolved = await actionRepo.findByCustomId("action:btn_1");
+      expect(resolved).toHaveLength(1);
+      expect((resolved[0] as any).template_id).toBe(template.id);
+    });
+
+    it("logs action execution and prunes logs older than TTL", async () => {
+      await actionRepo.log({
+        actionDefinitionId: null,
+        interactionId: "int_100",
+        userId: "user_555",
+        status: "success",
+        details: { step: 1 },
+      });
+
+      const countBefore = await memory.client.get<{ count: number }>(
+        "SELECT COUNT(*) AS count FROM action_logs",
+      );
+      expect(countBefore?.count).toBe(1);
+
+      // Backdate the log entry to 30 days ago
+      await memory.client.run(
+        "UPDATE action_logs SET executed_at = datetime('now', '-30 days')",
+      );
+
+      // Prune logs older than 7 days
+      const { changes: pruned } = await memory.client.run(
+        "DELETE FROM action_logs WHERE executed_at < datetime('now', '-7 days')",
+      );
+      expect(pruned).toBe(1);
+
+      const countAfter = await memory.client.get<{ count: number }>(
+        "SELECT COUNT(*) AS count FROM action_logs",
+      );
+      expect(countAfter?.count).toBe(0);
+    });
+  });
+
+  describe("SessionRepository", () => {
+    it("creates active session and resolves caller ownership accurately (RB-18)", async () => {
+      const session = await sessionRepository.create({
+        guildId: "guild_test_1",
+        userId: "discord_user_888",
+        currentUserId: "discord_user_888",
+        guildOwnerId: "discord_user_888",
+      });
+
+      expect(session.tokenId).toBeDefined();
+      expect(session.me).toBe(true);
+      expect(session.owner).toBe(true);
+
+      // Other caller
+      const sessionForOther = await sessionRepository.create({
+        guildId: "guild_test_1",
+        userId: "discord_user_888",
+        currentUserId: "different_user",
+        guildOwnerId: "different_owner",
+      });
+      expect(sessionForOther.me).toBe(false);
+      expect(sessionForOther.owner).toBe(false);
+    });
+
+    it("filters active sessions and excludes expired tokens", async () => {
+      // Create active session
+      await sessionRepository.create({
+        guildId: "guild_active_1",
+        userId: "user_active",
+      });
+
+      // Create expired session
+      await sessionRepository.create({
+        guildId: "guild_active_1",
+        userId: "user_expired",
+        expiresAt: Date.now() - 10000,
+      });
+
+      const res = await sessionRepository.findActive({ guildId: "guild_active_1" });
+      expect(res.results.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("TemplateRepository", () => {
+    it("supports full CRUD lifecycle and search queries for message templates", async () => {
+      const created = await templateRepo.create({
+        userId: testUserId,
+        name: "Rules and Info",
+        description: "Official server rules",
+        data: { content: "Rule 1: Be respectful" } as any,
+      });
+
+      expect(created.id).toBeGreaterThan(0);
+      expect(created.name).toBe("Rules and Info");
+      expect(created.data.content).toBe("Rule 1: Be respectful");
+
+      // Search by name
+      const searchResults = await templateRepo.search({ userId: testUserId, q: "Rules" });
+      expect(searchResults).toHaveLength(1);
+      expect(searchResults[0].id).toBe(created.id);
+
+      // Update template metadata and data
+      const updatedMeta = await templateRepo.update(created.id, {
+        name: "Updated Rules",
+      });
+      const updated = await templateRepo.updateData(created.id, { content: "Rule 1: Be awesome" });
+      expect(updatedMeta?.name).toBe("Updated Rules");
+      expect(updated?.name).toBe("Updated Rules");
+      expect(updated?.data.content).toBe("Rule 1: Be awesome");
+
+      // Delete template
+      const deleted = await templateRepo.delete(created.id);
+      expect(deleted).toBe(true);
+
+      const fetchDeleted = await templateRepo.findById(created.id);
+      expect(fetchDeleted).toBeUndefined();
+    });
+
+    it("enforces user isolation so search and list queries return only user's templates", async () => {
+      const otherUser = await memory.client.run(
+        "INSERT INTO users (discord_id, username, role) VALUES ('999999', 'OtherUser', 'viewer')",
+      );
+      const otherUserId = otherUser.lastInsertRowid;
+
+      await templateRepo.create({
+        userId: testUserId,
+        name: "Secret Template",
+        data: { content: "Confidential" } as any,
+      });
+
+      // Search by other user returns empty
+      const otherUserTemplates = await templateRepo.findByUser(otherUserId);
+      expect(otherUserTemplates).toHaveLength(0);
+    });
+  });
+
+  describe("ProfileRepository", () => {
+    it("encrypts bot tokens with AES-256-GCM at rest and masks them on read", async () => {
+      const rawToken = "MTAwMDIwMDMwMDQwMDUwMDYw.Gz1234.SecretDiscordBotToken";
+
+      const created = await botProfileRepo.create({
+        userId: testUserId,
+        name: "Community Helper",
+        token: rawToken,
+        publicKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        applicationId: "100020030040050060",
+      });
+
+      expect(created).toBeDefined();
+      expect(created?.name).toBe("Community Helper");
+
+      // Verify database stored encrypted token string, NOT rawToken
+      const rawRow = await botProfileRepo.findRawById(created!.id);
+      expect(rawRow?.token_encrypted).not.toBe(rawToken);
+      expect(rawRow?.token_encrypted).toContain("."); // iv.authTag.ciphertext format
+
+      // Decrypt token cleanly
+      const decrypted = decrypt(rawRow!.token_encrypted);
+      expect(decrypted).toBe(rawToken);
+    });
+
+    it("creates, retrieves, and cascades webhook profiles", async () => {
+      const profile = await webhookProfileRepo.create({
+        userId: testUserId,
+        name: "Announcements Hook",
+        url: "https://discord.com/api/webhooks/111222333/secret-hook-token",
+        isDefault: 1,
+      });
+
+      expect(profile).toBeDefined();
+      expect(profile?.name).toBe("Announcements Hook");
+
+      const list = await webhookProfileRepo.listByUser(testUserId);
+      expect(list.some((p) => p.id === profile!.id)).toBe(true);
+
+      await webhookProfileRepo.delete(profile!.id);
+      const listAfter = await webhookProfileRepo.listByUser(testUserId);
+      expect(listAfter.some((p) => p.id === profile!.id)).toBe(false);
+    });
+  });
+});

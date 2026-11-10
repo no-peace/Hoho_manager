@@ -62,6 +62,14 @@ export class ApiError extends Error {
   static upstream(message: string, details?: unknown, expose = true): ApiError {
     return new ApiError(502, message, { code: "upstream_error", details, expose });
   }
+
+  static payloadTooLarge(message = "Payload too large", details?: unknown): ApiError {
+    return new ApiError(413, message, { code: "payload_too_large", details });
+  }
+
+  static gatewayTimeout(message = "Gateway timeout", details?: unknown, expose = true): ApiError {
+    return new ApiError(504, message, { code: "gateway_timeout", details, expose });
+  }
 }
 
 /** A route handler that may be async. */

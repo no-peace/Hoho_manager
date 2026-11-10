@@ -4,6 +4,7 @@ import type { DiscordInteraction } from "@dmb/shared";
 import { requireAdminKey } from "../middleware/auth.js";
 import { requireInteraction, verifyDiscordSignature } from "../middleware/verifyDiscordSignature.js";
 import {
+  cleanupDeferredInteraction,
   completeDeferredInteraction,
   handleInteraction,
 } from "../services/interactionHandler.js";
@@ -62,6 +63,11 @@ router.post(
       response.type === InteractionResponseType.DeferredChannelMessageWithSource
     ) {
       res.once("finish", () => void completeDeferredInteraction(interaction));
+      res.once("close", () => {
+        if (!res.writableFinished) {
+          cleanupDeferredInteraction(interaction.id);
+        }
+      });
     }
     res.json(response);
   }),
@@ -135,6 +141,7 @@ router.post(
         void completeDeferredInteraction(interaction);
       }
     } catch (error) {
+      cleanupDeferredInteraction(interaction.id);
       const reason = error instanceof Error ? error.message : String(error);
       log.error(`Relay could not deliver a reply for ${interaction.id}: ${reason}`);
       // `delivered: false` is what lets the worker decide to answer in-process.

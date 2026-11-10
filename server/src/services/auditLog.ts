@@ -190,6 +190,7 @@ export const auditLog = (ctx: AuditContext): void => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(10_000),
       });
     } catch (err) {
       log.warn(`Audit log delivery failed: ${err instanceof Error ? err.message : String(err)}`);

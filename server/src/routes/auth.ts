@@ -82,17 +82,24 @@ router.get(
     const clientId = env.discord.clientId || env.discord.applicationId || "";
     const clientSecret = env.discord.clientSecret || "";
 
-    const tokenRes = await fetch("https://discord.com/api/v10/oauth2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: env.discord.redirectUri,
-      }),
-    });
+    let tokenRes: Response;
+    try {
+      tokenRes = await fetch("https://discord.com/api/v10/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: env.discord.redirectUri,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (err) {
+      log.error(`Discord token exchange timed out or failed: ${err}`);
+      return res.redirect(`${clientBase}/?error=token_exchange_timeout`);
+    }
 
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text();
@@ -103,9 +110,16 @@ router.get(
     const tokenData = (await tokenRes.json()) as { access_token: string };
 
     // 1. Fetch authenticated user's Discord identity
-    const userRes = await fetch("https://discord.com/api/v10/users/@me", {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    });
+    let userRes: Response;
+    try {
+      userRes = await fetch("https://discord.com/api/v10/users/@me", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (err) {
+      log.error(`Discord user profile fetch timed out or failed: ${err}`);
+      return res.redirect(`${clientBase}/?error=fetch_user_timeout`);
+    }
 
     if (!userRes.ok) {
       log.error(`Discord user fetch failed: ${userRes.status}`);
@@ -124,6 +138,7 @@ router.get(
     try {
       const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        signal: AbortSignal.timeout(10_000),
       });
       if (guildsRes.ok) {
         const parsed = await guildsRes.json();
@@ -256,7 +271,7 @@ router.get(
     }
 
     const mutualGuilds = user.mutualGuilds ?? [];
-    // Always compute live from DB — never trust stale user.hasDefaultBotAccess from the JWT
+    // Always compute live from DB  never trust stale user.hasDefaultBotAccess from the JWT
     const hasDefaultBotAccess =
       isAdmin || (hasActiveStaffRecord && (mutualGuilds.length > 0 || !env.isProd));
 

@@ -29,8 +29,17 @@ export const ColorPicker = ({
   const hex = value == null ? "#000000" : decimalToHex(value);
   const [draftHex, setDraftHex] = useState(value == null ? "" : decimalToHex(value));
 
+  // Gated synchronization: Only overwrite draftHex if incoming `value` does NOT match the parsed draft.
+  // This allows the user to freely type "5865f2" without an immediate jump or premature "#" insertion.
   useEffect(() => {
-    setDraftHex(value == null ? "" : decimalToHex(value));
+    if (value == null) {
+      if (draftHex !== "") setDraftHex("");
+    } else {
+      const parsedDraft = parseHexColor(draftHex);
+      if (parsedDraft !== value) {
+        setDraftHex(decimalToHex(value));
+      }
+    }
   }, [value]);
 
   return (
@@ -80,18 +89,29 @@ export const ColorPicker = ({
             const text = event.target.value;
             setDraftHex(text);
             const parsed = parseHexColor(text);
-            if (parsed !== null) onChange(parsed);
+            if (parsed !== null) {
+              onChange(parsed);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.currentTarget.blur();
+            }
           }}
           onBlur={() => {
-            if (draftHex.trim() === "" && allowClear) {
+            const trimmed = draftHex.trim();
+            if (trimmed === "" && allowClear) {
               onChange(null);
+            } else if (value !== null) {
+              // Normalize format to canonical #RRGGBB on blur
+              setDraftHex(decimalToHex(value));
             } else {
-              setDraftHex(value == null ? "" : decimalToHex(value));
+              setDraftHex("");
             }
           }}
         />
         <span className="font-mono text-[11px] text-ink-faint">
-          {value == null ? "no accent" : `0x${value.toString(16)}`}
+          {value == null ? "no accent" : `0x${value.toString(16).toUpperCase()}`}
         </span>
       </div>
     </div>

@@ -10,7 +10,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo No tests for bot"
+    "test": "vitest run"
   },
   "dependencies": {
     "@dmb/shared": "*",
@@ -21,7 +21,8 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "tsx": "^4.20.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   },
   "engines": {
     "node": ">=20"

@@ -1,7 +1,7 @@
 // server/src/routes/weao.ts
 import { Router } from "express";
 import { ComponentType, ButtonStyle } from "@dmb/shared";
-import type { DiscordMessagePayload } from "@dmb/shared";
+import type { ActionConfig, ActionType, DiscordMessagePayload, FlowRegistration } from "@dmb/shared";
 import { db } from "../config/database.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
 import {
@@ -220,6 +220,20 @@ router.post(
 
       const storedActions = await actionRepository.listByTemplate(matchedSummary.id);
 
+      const flowsMap = new Map<string, { type: ActionType; config: ActionConfig }[]>();
+      for (const action of storedActions) {
+        const steps = flowsMap.get(action.custom_id) ?? [];
+        steps.push({
+          type: action.action_type as ActionType,
+          config: action.config ?? {},
+        });
+        flowsMap.set(action.custom_id, steps);
+      }
+      const flows: FlowRegistration[] = Array.from(flowsMap.entries()).map(([customId, steps]) => ({
+        customId,
+        steps,
+      }));
+
       return res.json({
         source: "backup_template",
         templateId: matchedSummary.id,
@@ -227,6 +241,7 @@ router.post(
         exploit,
         payload: interpolated,
         actionsCount: storedActions.length,
+        flows,
       });
     }
 
@@ -238,6 +253,7 @@ router.post(
       exploit,
       payload: fallbackPayload,
       actionsCount: 0,
+      flows: [],
     });
   }),
 );

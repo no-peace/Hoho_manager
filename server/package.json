@@ -10,12 +10,14 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "migrate": "tsx src/config/migrate.ts",
-    "test": "vitest run --passWithNoTests",
+    "benchmark": "node --expose-gc --import tsx benchmarks/runner.ts",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@dmb/shared": "*",
     "better-sqlite3": "^13.0.3",
+    "busboy": "^1.6.0",
     "cors": "^2.8.6",
     "discord-interactions": "^4.4.0",
     "dotenv": "^18.0.4",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/busboy": "^1.5.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.10.1",

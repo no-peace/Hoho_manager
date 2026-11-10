@@ -22,12 +22,12 @@ export const SplitPane = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [ratio, setRatio] = useState(initialRatio);
   const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
+    typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );
   const draggingRef = useRef(false);
 
   useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    const onResize = () => setIsDesktop(window.innerWidth >= 1280);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -63,7 +63,7 @@ export const SplitPane = ({
     };
   }, [onPointerMove, stopDragging]);
 
-  // Mobile & Tablet (< 1024px): Full-width single pane switched via bottom navigation
+  // Mobile & Tablet (< 1280px): Full-width single pane switched via bottom navigation
   if (!isDesktop) {
     return (
       <div ref={containerRef} className={`flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}>
@@ -85,7 +85,7 @@ export const SplitPane = ({
     );
   }
 
-  // Desktop (>= 1024px): Resizable side-by-side Studio Workbench
+  // Desktop (>= 1280px): Resizable side-by-side Studio Workbench
   return (
     <div ref={containerRef} className={`flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}>
       <div

@@ -88,6 +88,13 @@ export const toDiscordPayload = (
     exploit_name?: string;
   } = {};
 
+  if (typeof extData.username === "string" && extData.username.trim()) {
+    payload.username = extData.username.trim();
+  }
+  if (typeof extData.avatar_url === "string" && extData.avatar_url.trim()) {
+    payload.avatar_url = extData.avatar_url.trim();
+  }
+
   if (extData.thread_name) payload.thread_name = extData.thread_name;
   if (extData.exploit_name) payload.exploit_name = extData.exploit_name;
 

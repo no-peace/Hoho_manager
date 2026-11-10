@@ -19,7 +19,7 @@ export interface DatabaseClient {
   get<T>(sql: string, params?: QueryParams): Promise<T | undefined>;
   run(sql: string, params?: QueryParams): Promise<RunResult>;
   exec(sql: string): Promise<void>;
-  transaction<T>(fn: () => T): Promise<T>;
+  transaction<T>(fn: () => Promise<T> | T): Promise<T>;
   close(): Promise<void>;
 }
 
@@ -146,14 +146,117 @@ const parseTursoRows = <T>(result: TursoExecuteResult): T[] => {
 };
 
 const splitSqlStatements = (sql: string): string[] => {
-  const withoutComments = sql
-    .split("\n")
-    .filter((line) => !line.trim().startsWith("--"))
-    .join("\n");
-  return withoutComments
-    .split(";")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const statements: string[] = [];
+  let current = "";
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inBacktick = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql[i]!;
+    const next = sql[i + 1];
+
+    if (inLineComment) {
+      if (char === "\n") {
+        inLineComment = false;
+        current += "\n";
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === "*" && next === "/") {
+        inBlockComment = false;
+        i++; // skip '/'
+      }
+      continue;
+    }
+
+    if (inSingleQuote) {
+      current += char;
+      if (char === "'") {
+        if (next === "'") {
+          current += next;
+          i++; // skip escaped quote ''
+        } else {
+          inSingleQuote = false;
+        }
+      }
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      current += char;
+      if (char === '"') {
+        if (next === '"') {
+          current += next;
+          i++; // skip escaped quote ""
+        } else {
+          inDoubleQuote = false;
+        }
+      }
+      continue;
+    }
+
+    if (inBacktick) {
+      current += char;
+      if (char === "`") {
+        inBacktick = false;
+      }
+      continue;
+    }
+
+    // Outside strings and comments: detect comment starts or quotes
+    if (char === "-" && next === "-") {
+      inLineComment = true;
+      i++; // skip second '-'
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      inBlockComment = true;
+      i++; // skip '*'
+      continue;
+    }
+
+    if (char === "'") {
+      inSingleQuote = true;
+      current += char;
+      continue;
+    }
+
+    if (char === '"') {
+      inDoubleQuote = true;
+      current += char;
+      continue;
+    }
+
+    if (char === "`") {
+      inBacktick = true;
+      current += char;
+      continue;
+    }
+
+    if (char === ";") {
+      const trimmed = current.trim();
+      if (trimmed.length > 0) {
+        statements.push(trimmed);
+      }
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  const trailing = current.trim();
+  if (trailing.length > 0) {
+    statements.push(trailing);
+  }
+
+  return statements;
 };
 
 /** Open (or reuse) the local SQLite connection when Turso is not configured. */
@@ -225,11 +328,23 @@ export const db: DatabaseClient = {
     open().exec(sql);
   },
 
-  async transaction<T>(fn: () => T): Promise<T> {
+  async transaction<T>(fn: () => Promise<T> | T): Promise<T> {
     if (useTurso) {
-      return fn();
+      return await fn();
     }
-    return open().transaction(fn)();
+    const sqlite = open();
+    if (sqlite.inTransaction) {
+      return await fn();
+    }
+    sqlite.exec("BEGIN IMMEDIATE");
+    try {
+      const result = await fn();
+      sqlite.exec("COMMIT");
+      return result;
+    } catch (err) {
+      sqlite.exec("ROLLBACK");
+      throw err;
+    }
   },
 
   async close(): Promise<void> {

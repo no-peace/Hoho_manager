@@ -56,7 +56,7 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
     <Modal open={open} onClose={onClose} title="JSON Data" width="max-w-2xl">
       <div className="space-y-3 font-sans">
         {errorMessage && (
-          <div className="p-2.5 rounded bg-[#da373c]/20 border border-[#da373c]/40 text-[#f28b8b] text-xs">
+          <div className="p-2.5 rounded bg-[#da373c]/20 border border-[#da373c]/40 text-[#f28b8b] text-xs break-words [overflow-wrap:anywhere]">
             {errorMessage}
           </div>
         )}

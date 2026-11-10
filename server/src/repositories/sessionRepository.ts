@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { db } from "../config/database.js";
+import { env } from "../config/env.js";
 
 export interface ActiveSessionRecord {
   id: string; // tokenId
@@ -30,12 +31,17 @@ export interface CreateSessionInput {
   channelId?: string | null;
   createdAt?: number;
   expiresAt?: number;
+  callerId?: string | null;
+  currentUserId?: string | null;
+  owner?: boolean;
+  guildOwnerId?: string | null;
 }
 
 export interface FindSessionsOptions {
   guildId: string;
-  channelId?: string;
-  currentUserId?: string;
+  channelId?: string | null;
+  currentUserId?: string | null;
+  guildOwnerId?: string | null;
   limit?: number;
   cursor?: number;
 }
@@ -64,14 +70,21 @@ export const sessionRepository = {
       ],
     );
 
+    const callerId = input.callerId ?? input.currentUserId;
+    const isMe = callerId ? input.userId === callerId : true;
+    const isOwner = input.owner ?? Boolean(
+      (input.guildOwnerId && input.userId === input.guildOwnerId) ||
+      env.ownerDiscordIds.includes(input.userId)
+    );
+
     return {
       tokenId: id,
       createdAt,
       expiresAt,
       permissions,
       channelId: input.channelId ?? null,
-      owner: true,
-      me: input.userId === input.userId,
+      owner: isOwner,
+      me: isMe,
     };
   },
 
@@ -115,6 +128,8 @@ export const sessionRepository = {
           userId: defaultUserId,
           permissions: "8",
           channelId: options.channelId ?? null,
+          callerId: options.currentUserId,
+          guildOwnerId: options.guildOwnerId,
         });
 
         return {
@@ -137,8 +152,11 @@ export const sessionRepository = {
       expiresAt: row.expires_at,
       permissions: row.permissions,
       channelId: row.channel_id,
-      owner: true,
-      me: options.currentUserId ? row.user_id === options.currentUserId : true,
+      owner: Boolean(
+        (options.guildOwnerId && row.user_id === options.guildOwnerId) ||
+        env.ownerDiscordIds.includes(row.user_id)
+      ),
+      me: options.currentUserId ? row.user_id === options.currentUserId : false,
     }));
 
     return {

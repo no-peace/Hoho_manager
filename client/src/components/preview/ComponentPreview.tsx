@@ -2,7 +2,7 @@ import { FileText } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType } from "@dmb/shared";
 import { Markdown } from "./Markdown";
-import { ActionRowPreview, ButtonPreview } from "./ActionRowPreview";
+import { ActionRowPreview, ButtonPreview, SelectPreview } from "./ActionRowPreview";
 import { useMessageStore } from "../../store/messageStore";
 
 /**
@@ -121,6 +121,12 @@ export const AutoComponent = ({ component }: AutoComponentProps) => {
       return <ActionRowPreview component={component} />;
     case ComponentType.Button:
       return <ButtonPreview button={component} />;
+    case ComponentType.StringSelect:
+    case ComponentType.UserSelect:
+    case ComponentType.RoleSelect:
+    case ComponentType.MentionableSelect:
+    case ComponentType.ChannelSelect:
+      return <SelectPreview select={component} />;
     default:
       return null;
   }

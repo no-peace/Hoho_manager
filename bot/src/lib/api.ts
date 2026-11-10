@@ -1,4 +1,4 @@
-import type { SendSuccessResponse } from "@dmb/shared";
+import type { FlowRegistration, SendSuccessResponse } from "@dmb/shared";
 import { env } from "./env.js";
 
 export class ApiError extends Error {
@@ -57,7 +57,10 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
         ...(anonymous ? {} : { "x-admin-key": env.adminApiKey }),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : JSON.stringify(body, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
       signal,
     });
   } catch (error) {
@@ -94,6 +97,7 @@ export const resolveWeaoExploit = async (
   templateName: string | null;
   exploit: WeaoExploitChoice;
   payload: Record<string, unknown>;
+  flows?: FlowRegistration[];
 }> => {
   return request("/api/weao/resolve-exploit", {
     method: "POST",
@@ -117,6 +121,7 @@ export const api = {
     content?: string;
     username?: string;
     avatarUrl?: string;
+    flows?: FlowRegistration[];
   }) =>
     request<SendSuccessResponse>("/api/send", {
       method: "POST",
@@ -128,6 +133,7 @@ export const api = {
           ...(body.username ? { username: body.username } : {}),
           ...(body.avatarUrl ? { avatar_url: body.avatarUrl } : {}),
         },
+        ...(body.flows ? { flows: body.flows } : {}),
       },
     }),
 

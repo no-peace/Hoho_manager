@@ -142,7 +142,12 @@ interface ApiRequestOptions {
   retries?: number;
   /** Skip the base-URL join (used for webhook endpoints). */
   absoluteUrl?: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
 }
+
+const DEFAULT_REST_TIMEOUT_MS = 10_000;
+const DEFAULT_MULTIPART_TIMEOUT_MS = 30_000;
 
 /**
  * Low-level fetch against the Discord API with retry/backoff.
@@ -159,6 +164,8 @@ const apiRequest = async <T>(
     auth = "Bot",
     retries = 3,
     absoluteUrl,
+    timeoutMs,
+    signal: callerSignal,
   }: ApiRequestOptions = {},
 ): Promise<T | null> => {
   const url = absoluteUrl ?? `${DISCORD_API_BASE}${path ?? ""}`;
@@ -172,16 +179,30 @@ const apiRequest = async <T>(
     }
     if (token) headers.Authorization = `${auth} ${token}`;
 
+    const effectiveTimeout =
+      timeoutMs ?? (isFormData ? DEFAULT_MULTIPART_TIMEOUT_MS : DEFAULT_REST_TIMEOUT_MS);
+    const timeoutSignal = AbortSignal.timeout(effectiveTimeout);
+    const signal = callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal;
+
     let response: Response;
     try {
       response = await fetch(url, {
         method,
         headers,
         body: isFormData ? (body as FormData) : body === undefined ? undefined : JSON.stringify(body),
+        signal,
       });
     } catch (error) {
+      const isTimeout =
+        error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       const reason = error instanceof Error ? error.message : String(error);
       if (attempt >= retries) {
+        if (isTimeout) {
+          throw ApiError.gatewayTimeout(
+            `Discord request timed out after ${effectiveTimeout}ms: ${method} ${url}`,
+            { method, url, timeoutMs: effectiveTimeout },
+          );
+        }
         throw ApiError.upstream(`Could not reach Discord: ${reason}`);
       }
       await sleep(2 ** attempt * 500);
@@ -470,6 +491,115 @@ export const getGuildRoles = async (
     .sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
 };
 
+// ============================================================================
+// PERF-05: Bounded LRU + TTL Cache for Member Searches
+// ============================================================================
+
+export interface CacheStats {
+  size: number;
+  maxEntries: number;
+  ttlMs: number;
+  hits: number;
+  misses: number;
+}
+
+export class BoundedTtlCache<T> {
+  private readonly maxEntries: number;
+  private readonly ttlMs: number;
+  private readonly map = new Map<string, { value: T; expiresAt: number }>();
+  private hits = 0;
+  private misses = 0;
+
+  constructor(maxEntries = 500, ttlMs = 60_000) {
+    this.maxEntries = maxEntries;
+    this.ttlMs = ttlMs;
+  }
+
+  get(key: string): T | undefined {
+    const entry = this.map.get(key);
+    if (!entry) {
+      this.misses++;
+      return undefined;
+    }
+    if (Date.now() > entry.expiresAt) {
+      this.map.delete(key);
+      this.misses++;
+      return undefined;
+    }
+    // Refresh LRU order (re-insert at tail)
+    this.map.delete(key);
+    this.map.set(key, entry);
+    this.hits++;
+    return entry.value;
+  }
+
+  set(key: string, value: T, customTtlMs?: number): void {
+    if (this.map.has(key)) {
+      this.map.delete(key);
+    } else if (this.map.size >= this.maxEntries) {
+      // Evict oldest entry (head of map iterator)
+      const oldestKey = this.map.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.map.delete(oldestKey);
+      }
+    }
+    const expiresAt = Date.now() + (customTtlMs ?? this.ttlMs);
+    this.map.set(key, { value, expiresAt });
+  }
+
+  has(key: string): boolean {
+    return this.get(key) !== undefined;
+  }
+
+  delete(key: string): boolean {
+    return this.map.delete(key);
+  }
+
+  clear(): void {
+    this.map.clear();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  size(): number {
+    return this.map.size;
+  }
+
+  getStats(): CacheStats {
+    return {
+      size: this.map.size,
+      maxEntries: this.maxEntries,
+      ttlMs: this.ttlMs,
+      hits: this.hits,
+      misses: this.misses,
+    };
+  }
+
+  pruneExpired(): number {
+    const now = Date.now();
+    let pruned = 0;
+    for (const [key, entry] of this.map.entries()) {
+      if (now > entry.expiresAt) {
+        this.map.delete(key);
+        pruned++;
+      }
+    }
+    return pruned;
+  }
+}
+
+export const memberSearchCache = new BoundedTtlCache<DiscordMemberSummary[]>(500, 60_000);
+const inFlightMemberSearches = new Map<string, Promise<DiscordMemberSummary[]>>();
+
+export const clearMemberSearchCache = (): void => {
+  memberSearchCache.clear();
+  inFlightMemberSearches.clear();
+};
+
+export const getMemberSearchCacheStats = (): CacheStats => {
+  return memberSearchCache.getStats();
+};
+
 export const searchGuildMembers = async (
   guildId: string,
   query: string,
@@ -479,50 +609,78 @@ export const searchGuildMembers = async (
   if (!trimmed) return [];
 
   const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
+  const cacheKey = `${pid ?? "default"}:${guildId}:${trimmed.toLowerCase()}`;
 
-  // If query is a snowflake ID, attempt direct member lookup via REST API
-  if (/^\d{17,20}$/.test(trimmed)) {
+  // 1. Check LRU/TTL Cache
+  const cached = memberSearchCache.get(cacheKey);
+  if (cached) return cached;
+
+  // 2. Coalesce concurrent in-flight requests (Thundering Herd protection)
+  const existing = inFlightMemberSearches.get(cacheKey);
+  if (existing) return existing;
+
+  const searchPromise = (async () => {
     try {
-      const member = await apiRequest<any>(
+      const token = await resolveBotToken(pid);
+
+      // If query is a snowflake ID, attempt direct member lookup via REST API
+      if (/^\d{17,20}$/.test(trimmed)) {
+        try {
+          const member = await apiRequest<any>(
+            "GET",
+            `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(trimmed)}`,
+            { token },
+          );
+          if (member) {
+            const singleMember: DiscordMemberSummary[] = [
+              {
+                id: member.user?.id ?? trimmed,
+                username: member.user?.username ?? member.username ?? "",
+                global_name: member.user?.global_name ?? member.global_name ?? null,
+                nickname: member.nick ?? member.nickname ?? null,
+                avatar: member.user?.avatar ?? member.avatar ?? null,
+                roles: Array.isArray(member.roles) ? member.roles : [],
+              } as any,
+            ];
+            memberSearchCache.set(cacheKey, singleMember);
+            return singleMember;
+          }
+        } catch {
+          // Not found by ID or user not in guild, fall through to name search
+        }
+      }
+
+      const rawMembers = await apiRequest<any[]>(
         "GET",
-        `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(trimmed)}`,
+        `/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(trimmed)}&limit=25`,
         { token },
       );
-      if (member) {
-        return [{
-          id: member.user?.id ?? trimmed,
-          username: member.user?.username ?? member.username ?? "",
-          global_name: member.user?.global_name ?? member.global_name ?? null,
-          nickname: member.nick ?? member.nickname ?? null,
-          avatar: member.user?.avatar ?? member.avatar ?? null,
-          roles: Array.isArray(member.roles) ? member.roles : [],
-        } as any];
+      if (!rawMembers || !Array.isArray(rawMembers)) {
+        memberSearchCache.set(cacheKey, []);
+        return [];
       }
-    } catch {
-      // Not found by ID or user not in guild, fall through to name search
+      const results: DiscordMemberSummary[] = rawMembers.map((m) => ({
+        id: m.user?.id ?? m.id,
+        username: m.user?.username ?? m.username ?? "",
+        global_name: m.user?.global_name ?? null,
+        nickname: m.nick ?? null,
+        avatar: m.user?.avatar ?? m.avatar ?? null,
+        roles: Array.isArray(m.roles) ? m.roles : [],
+      }));
+      memberSearchCache.set(cacheKey, results);
+      return results;
+    } catch (err) {
+      log.warn(
+        `Member search failed for guild ${guildId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return [];
+    } finally {
+      inFlightMemberSearches.delete(cacheKey);
     }
-  }
+  })();
 
-  try {
-    const rawMembers = await apiRequest<any[]>(
-      "GET",
-      `/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(trimmed)}&limit=25`,
-      { token },
-    );
-    if (!rawMembers || !Array.isArray(rawMembers)) return [];
-    return rawMembers.map((m) => ({
-      id: m.user?.id ?? m.id,
-      username: m.user?.username ?? m.username ?? "",
-      global_name: m.user?.global_name ?? null,
-      nickname: m.nick ?? null,
-      avatar: m.user?.avatar ?? m.avatar ?? null,
-      roles: Array.isArray(m.roles) ? m.roles : [],
-    }));
-  } catch (err) {
-    log.warn(`Member search failed for guild ${guildId}: ${err instanceof Error ? err.message : String(err)}`);
-    return [];
-  }
+  inFlightMemberSearches.set(cacheKey, searchPromise);
+  return searchPromise;
 };
 
 export const getChannelMessages = async (
@@ -649,27 +807,42 @@ export const createInteractionResponse = async (
   interactionId: string,
   interactionToken: string,
   response: InteractionResponse,
+  options?: { timeoutMs?: number },
 ): Promise<unknown> =>
   apiRequest("POST", `/interactions/${interactionId}/${interactionToken}/callback`, {
     auth: "",
     body: response,
+    retries: 1,
+    timeoutMs: options?.timeoutMs ?? 2_500,
   });
 
 export const createFollowupMessage = async (
   applicationId: string,
   interactionToken: string,
   payload: DiscordMessagePayload,
-): Promise<unknown> =>
-  apiRequest("POST", `/webhooks/${applicationId}/${interactionToken}`, { body: payload });
+): Promise<unknown> => {
+  const params = new URLSearchParams();
+  if (payload.components && payload.components.length > 0) {
+    params.set("with_components", "true");
+  }
+  const query = params.toString();
+  return apiRequest("POST", `/webhooks/${applicationId}/${interactionToken}${query ? `?${query}` : ""}`, { body: payload });
+};
 
 export const editOriginalResponse = async (
   applicationId: string,
   interactionToken: string,
   payload: DiscordMessagePayload,
-): Promise<unknown> =>
-  apiRequest("PATCH", `/webhooks/${applicationId}/${interactionToken}/messages/@original`, {
+): Promise<unknown> => {
+  const params = new URLSearchParams();
+  if (payload.components && payload.components.length > 0) {
+    params.set("with_components", "true");
+  }
+  const query = params.toString();
+  return apiRequest("PATCH", `/webhooks/${applicationId}/${interactionToken}/messages/@original${query ? `?${query}` : ""}`, {
     body: payload,
   });
+};
 
 /** Defer a response so we still have time to do slow work before replying. */
 export const deferResponse = async (
@@ -695,6 +868,8 @@ export default {
   getGuildRoles,
   getGuildEmojis,
   searchGuildMembers,
+  clearMemberSearchCache,
+  getMemberSearchCacheStats,
   getChannelMessages,
   getBotIdentity,
   addGuildMemberRole,

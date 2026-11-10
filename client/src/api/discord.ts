@@ -67,11 +67,15 @@ export const sendWebhookDirect = async (
   const params = new URLSearchParams();
   if (wait) params.set("wait", "true");
   if (threadId) params.set("thread_id", threadId);
+  if (payload.components && payload.components.length > 0) {
+    params.set("with_components", "true");
+  }
+  const query = params.toString();
 
   let response: Response;
   try {
     response = await fetch(
-      `https://discord.com/api/v10/webhooks/${id}/${token}?${params.toString()}`,
+      `https://discord.com/api/v10/webhooks/${id}/${token}${query ? `?${query}` : ""}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

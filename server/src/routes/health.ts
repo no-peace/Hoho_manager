@@ -22,12 +22,15 @@ router.get(
       .get<CountRow>("SELECT COUNT(*) AS count FROM users")
       .catch(() => undefined);
 
-    res.json({
-      status: "ok",
+    const isConnected = users !== undefined;
+    const statusCode = isConnected ? 200 : 503;
+
+    res.status(statusCode).json({
+      status: isConnected ? "ok" : "degraded",
       environment: env.nodeEnv,
       uptimeSeconds: Math.round(process.uptime()),
       time: new Date().toISOString(),
-      database: { connected: users !== undefined, users: users?.count ?? null },
+      database: { connected: isConnected, users: users?.count ?? null },
       discord: {
         publicKeyConfigured: Boolean(env.discord.publicKey),
         botTokenConfigured: Boolean(env.discord.botToken),

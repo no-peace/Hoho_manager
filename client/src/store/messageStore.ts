@@ -101,7 +101,7 @@ export interface MessageState {
   setAllowedMentions(allowedMentions?: MessageData["allowed_mentions"]): void;
 
   reset(): void;
-  load(input: { data: any; mode?: EditorMode; targets?: TargetData[] }): void;
+  load(input: { data?: any; mode?: EditorMode; targets?: TargetData[] } | any): void;
 
   getPayload(): DiscordMessagePayload;
   getAllPayloads(): DiscordMessagePayload[];
@@ -706,23 +706,33 @@ export const useMessageStore = create<MessageState>()(
         });
       },
 
-      load: ({ data, mode, targets }) => {
+      load: (input: any) => {
+        const doc =
+          input && typeof input === "object" && input.data !== undefined && input.messages === undefined && input.backups === undefined
+            ? input.data
+            : (input ?? {});
+        const resolvedMode = input?.mode ?? doc?.mode;
+        const resolvedTargets =
+          (input?.targets && input.targets.length > 0)
+            ? input.targets
+            : (doc?.targets && doc.targets.length > 0 ? doc.targets : undefined);
+
         let initialMessages: MessageData[] = [];
-        if (data?.backups && Array.isArray(data.backups) && data.backups.length > 0) {
-          const b = data.backups[0];
+        if (doc?.backups && Array.isArray(doc.backups) && doc.backups.length > 0) {
+          const b = doc.backups[0];
           if (Array.isArray(b.messages) && b.messages.length > 0) {
             initialMessages = b.messages.map((m: any) => ({
               ...createEmptyMessage(),
               ...(m.data || m),
             }));
           }
-        } else if (Array.isArray(data?.messages) && data.messages.length > 0) {
-          initialMessages = data.messages.map((m: any) => ({
+        } else if (Array.isArray(doc?.messages) && doc.messages.length > 0) {
+          initialMessages = doc.messages.map((m: any) => ({
             ...createEmptyMessage(),
             ...(m.data || m),
           }));
-        } else if (data && typeof data === "object") {
-          initialMessages = [{ ...createEmptyMessage(), ...data }];
+        } else if (doc && typeof doc === "object" && (doc.content !== undefined || doc.embeds !== undefined || doc.components !== undefined)) {
+          initialMessages = [{ ...createEmptyMessage(), ...doc }];
         } else {
           initialMessages = [createEmptyMessage()];
         }
@@ -742,19 +752,19 @@ export const useMessageStore = create<MessageState>()(
               components: (c.components || []).map((child) => ({ ...child, _id: child._id || uid() })),
             }));
           }
-          const isV2 = resolveMessageMode(msg, mode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
+          const isV2 = resolveMessageMode(msg, resolvedMode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
           msg.flags = isV2 ? (msg.flags ?? 0) | 32768 : (msg.flags ?? 0) & ~32768;
           (msg as any).mode = isV2 ? EDITOR_MODES.V2 : EDITOR_MODES.CLASSIC;
         });
 
-        const activeMode = resolveMessageMode(initialMessages[0], mode || EDITOR_MODES.CLASSIC);
+        const activeMode = resolveMessageMode(initialMessages[0], resolvedMode || EDITOR_MODES.CLASSIC);
 
         set({
           mode: activeMode,
           data: initialMessages[0],
           messages: initialMessages,
           activeMessageIndex: 0,
-          targets: targets && targets.length > 0 ? targets : [{ url: "" }],
+          targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
           selection: null,
         });
       },

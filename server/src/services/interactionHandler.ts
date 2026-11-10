@@ -8,7 +8,24 @@ import { logger } from "../utils/logger.js";
 
 const log = logger.child("interactions");
 const ACK_DEADLINE_MS = 2_200;
-const pendingLateResponses = new Map<string, Promise<InteractionResponse>>();
+const DEFERRED_SAFEGUARD_TTL_MS = 30_000;
+
+export interface PendingDeferredEntry {
+  promise: Promise<InteractionResponse>;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+const pendingLateResponses = new Map<string, PendingDeferredEntry>();
+
+export const cleanupDeferredInteraction = (interactionId: string): void => {
+  const entry = pendingLateResponses.get(interactionId);
+  if (entry) {
+    clearTimeout(entry.timer);
+    pendingLateResponses.delete(interactionId);
+  }
+};
+
+export const getPendingLateResponsesCount = (): number => pendingLateResponses.size;
 
 const deferredResponse = (interaction: DiscordInteraction): InteractionResponse => ({
   type:
@@ -77,16 +94,20 @@ const deliverLateResponse = async (
 export const completeDeferredInteraction = async (
   interaction: DiscordInteraction,
 ): Promise<void> => {
-  const execution = pendingLateResponses.get(interaction.id);
-  if (!execution) return;
+  const entry = pendingLateResponses.get(interaction.id);
+  if (!entry) return;
+  clearTimeout(entry.timer);
   pendingLateResponses.delete(interaction.id);
 
   try {
-    await deliverLateResponse(interaction, await execution);
+    const response = await entry.promise;
+    await deliverLateResponse(interaction, response);
   } catch (error) {
     log.error(
       `Could not deliver the late response for interaction ${interaction.id}: ${String(error)}`,
     );
+  } finally {
+    cleanupDeferredInteraction(interaction.id);
   }
 };
 
@@ -170,11 +191,26 @@ export const handleInteraction = async (
     log.error(`Could not cache deferred response for interaction ${interaction.id}: ${String(error)}`);
   }
 
-  pendingLateResponses.set(interaction.id, execution);
   const ttlTimer = setTimeout(() => {
-    pendingLateResponses.delete(interaction.id);
-  }, 60_000);
+    cleanupDeferredInteraction(interaction.id);
+  }, DEFERRED_SAFEGUARD_TTL_MS);
   ttlTimer.unref?.();
+
+  pendingLateResponses.set(interaction.id, {
+    promise: execution,
+    timer: ttlTimer,
+  });
+
+  // When execution settles, clean up after a 5s grace period if completeDeferredInteraction was never called
+  execution
+    .finally(() => {
+      const graceTimer = setTimeout(() => {
+        cleanupDeferredInteraction(interaction.id);
+      }, 5_000);
+      graceTimer.unref?.();
+    })
+    .catch(() => {});
+
   return deferred;
 };
 

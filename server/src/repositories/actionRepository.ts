@@ -94,20 +94,22 @@ export class ActionRepository extends BaseRepository {
     templateId: number,
     actions: StoredActionDefinition[] = [],
   ): Promise<ActionDefinitionRecord[]> {
-    await this.deleteByTemplate(templateId);
+    return this.db.transaction(async () => {
+      await this.deleteByTemplate(templateId);
 
-    const created: ActionDefinitionRecord[] = [];
-    for (const [index, action] of actions.entries()) {
-      const definition = await this.create({
-        templateId,
-        customId: action.customId,
-        actionType: action.actionType,
-        config: action.config ?? {},
-        executionOrder: action.executionOrder ?? index,
-      });
-      if (definition) created.push(definition);
-    }
-    return created;
+      const created: ActionDefinitionRecord[] = [];
+      for (const [index, action] of actions.entries()) {
+        const definition = await this.create({
+          templateId,
+          customId: action.customId,
+          actionType: action.actionType,
+          config: action.config ?? {},
+          executionOrder: action.executionOrder ?? index,
+        });
+        if (definition) created.push(definition);
+      }
+      return created;
+    });
   }
 
   async findById(id: number): Promise<ActionDefinitionRecord | undefined> {
@@ -157,28 +159,30 @@ export class ActionRepository extends BaseRepository {
    * untouched.
    */
   async registerFlows(messageId: string, flows: FlowRegistration[] = []): Promise<number> {
-    await this.db.run(
-      "DELETE FROM action_definitions WHERE message_id = @messageId AND template_id IS NULL",
-      { messageId },
-    );
+    return this.db.transaction(async () => {
+      await this.db.run(
+        "DELETE FROM action_definitions WHERE message_id = @messageId AND template_id IS NULL",
+        { messageId },
+      );
 
-    let written = 0;
+      let written = 0;
 
-    for (const flow of flows) {
-      for (const [index, step] of (flow.steps ?? []).entries()) {
-        await this.create({
-          templateId: null,
-          messageId,
-          customId: flow.customId,
-          actionType: step.type,
-          config: step.config ?? {},
-          executionOrder: index,
-        });
-        written += 1;
+      for (const flow of flows) {
+        for (const [index, step] of (flow.steps ?? []).entries()) {
+          await this.create({
+            templateId: null,
+            messageId,
+            customId: flow.customId,
+            actionType: step.type,
+            config: step.config ?? {},
+            executionOrder: index,
+          });
+          written += 1;
+        }
       }
-    }
 
-    return written;
+      return written;
+    });
   }
 
   async listByTemplate(templateId: number): Promise<ActionDefinitionRecord[]> {

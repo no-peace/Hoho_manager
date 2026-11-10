@@ -231,5 +231,50 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_sessions_user ON active_sessions(user_id);
     `,
   },
+  {
+    id: "007_performance_indexes",
+    sql: `
+      -- PERF-06: Database Index Optimization
+
+      -- 1. Accelerates ad-hoc action definition lookups and single-column deletions
+      CREATE INDEX IF NOT EXISTS idx_action_defs_message_id
+        ON action_definitions(message_id);
+
+      -- 2. Accelerates ad-hoc action definition TTL cleanup sweep
+      CREATE INDEX IF NOT EXISTS idx_action_defs_adhoc_created
+        ON action_definitions(template_id, created_at);
+
+      -- 3. Accelerates flow expiration pruning and token-based state retrieval
+      CREATE INDEX IF NOT EXISTS idx_flow_states_expires
+        ON flow_states(expires_at);
+
+      CREATE INDEX IF NOT EXISTS idx_flow_states_token_expires
+        ON flow_states(token, expires_at);
+
+      -- 4. Accelerates staff cooldown lookups (discord_user_id, action)
+      CREATE INDEX IF NOT EXISTS idx_staff_cooldowns_lookup
+        ON staff_cooldowns(discord_user_id, action);
+
+      -- 5. Accelerates audit log entries TTL pruning and range scans (created_at INTEGER)
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created
+        ON audit_log_entries(created_at);
+
+      -- 6. Accelerates audit log queries filtering by user_id
+      CREATE INDEX IF NOT EXISTS idx_audit_log_user
+        ON audit_log_entries(user_id);
+
+      -- 7. Accelerates action logs TTL pruning and ordered pagination (executed_at TEXT)
+      CREATE INDEX IF NOT EXISTS idx_action_logs_executed_at
+        ON action_logs(executed_at);
+
+      -- 8. Foreign key index for bot profiles by owner user_id
+      CREATE INDEX IF NOT EXISTS idx_bot_profiles_user
+        ON bot_profiles(user_id);
+
+      -- 9. Accelerates active sessions expiration cleanup
+      CREATE INDEX IF NOT EXISTS idx_sessions_expires
+        ON active_sessions(expires_at);
+    `,
+  },
 ];
 

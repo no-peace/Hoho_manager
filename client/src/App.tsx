@@ -3,6 +3,7 @@ import {
   Bot,
   Plus,
   Edit3,
+  Send,
   Download,
   Upload,
   ShieldCheck,
@@ -77,7 +78,7 @@ const ToastAndConfirmHost: React.FC = () => {
                 ) : (
                   <Info size={15} className="shrink-0" />
                 )}
-                <span className="text-[#f2f3f5] leading-snug">{t.message}</span>
+                <span className="text-[#f2f3f5] leading-snug break-words [overflow-wrap:anywhere]">{t.message}</span>
               </div>
               <button
                 type="button"
@@ -97,6 +98,7 @@ const ToastAndConfirmHost: React.FC = () => {
           onClose={() => !confirmBusy && closeConfirm()}
           title={confirmDialog.title}
           width="max-w-md"
+          zIndex="z-[9999]"
           footer={
             <>
               <Button variant="ghost" disabled={confirmBusy} onClick={closeConfirm}>
@@ -502,7 +504,11 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     try {
       const text = await file.text();
       const document = parseImportedJson(text);
-      useMessageStore.getState().load(document as any);
+      useMessageStore.getState().load({
+        data: document,
+        targets: document?.targets,
+        mode: document?.mode,
+      });
       setCurrentName(file.name.replace(/\.json$/i, ""));
       showToast("Imported JSON file into studio!", "success");
       onClose();
@@ -910,8 +916,11 @@ export const App: React.FC = () => {
 
   const addMessage = useMessageStore((state) => state.addMessage);
 
-  const openBotModal = (actionMode: "send" | "edit") => {
+  const [botModalChannel, setBotModalChannel] = useState<"bot" | "webhook">("bot");
+
+  const openBotModal = (actionMode: "send" | "edit", channel: "bot" | "webhook" = "bot") => {
     setBotModalMode(actionMode);
+    setBotModalChannel(channel);
     setBotModalOpen(true);
   };
 
@@ -1022,8 +1031,8 @@ export const App: React.FC = () => {
             maxRatio={0.7}
             mobileActivePane={mobileView === "editor" ? "left" : "right"}
             left={
-              <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
-                {/* Top Action Bar: scrolls away on mobile (<lg) so editor gets full height, pinned on desktop (lg+) */}
+              <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0 overflow-y-auto xl:overflow-hidden custom-scrollbar">
+                {/* Top Action Bar: scrolls away on mobile/tablet (<xl) so editor gets full height, pinned on desktop (xl+) */}
                 <div className="p-2.5 sm:p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -1069,29 +1078,42 @@ export const App: React.FC = () => {
                       </Button>
                     </div>
 
-                    {/* Bot Token Dispatch Only */}
-                    <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+                    {/* Bot & Webhook Dispatch Controls */}
+                    <div className="flex items-center gap-2">
+                      {/* Webhook Send Button (UI-02) */}
                       <button
                         type="button"
-                        onClick={() => openBotModal("send")}
-                        className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                        onClick={() => openBotModal("send", "webhook")}
+                        className="bg-[#5865f2] hover:bg-[#4752c4] text-white px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                        title="Dispatch directly to Discord Webhook URL"
                       >
-                        <Bot size={13} /> Bot Send
+                        <Send size={13} /> Webhook
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => openBotModal("edit")}
-                        className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
-                        title="Edit message via bot token"
-                      >
-                        <Edit3 size={11} /> Edit
-                      </button>
+
+                      {/* Bot Token Dispatch */}
+                      <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => openBotModal("send", "bot")}
+                          className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                        >
+                          <Bot size={13} /> Bot Send
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openBotModal("edit", "bot")}
+                          className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
+                          title="Edit message via bot token"
+                        >
+                          <Edit3 size={11} /> Edit
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Multi-Message Workspace */}
-                <div className="flex-1 lg:overflow-y-auto p-2.5 sm:p-3 space-y-3 custom-scrollbar">
+                <div className="flex-1 xl:overflow-y-auto p-2.5 sm:p-3 space-y-3 custom-scrollbar">
                   {displayMessages.map((_, idx) => (
                     <MessageEditor key={idx} index={idx} />
                   ))}
@@ -1176,10 +1198,10 @@ export const App: React.FC = () => {
         <PropertyPanel />
       </main>
 
-      {/* Mobile / Tablet Bottom Navigation Bar (< 1024px) */}
+      {/* Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
       <nav
         aria-label="Mobile workspace navigation"
-        className="lg:hidden flex items-center bg-[#1e1f22] border-t border-[#111214] shrink-0 p-1.5 gap-1.5 z-30"
+        className="xl:hidden flex items-center bg-[#1e1f22] border-t border-[#111214] shrink-0 p-1.5 gap-1.5 z-30"
       >
         <button
           type="button"
@@ -1205,7 +1227,7 @@ export const App: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => openBotModal("send")}
+          onClick={() => openBotModal("send", "bot")}
           className="px-3.5 py-2 rounded-md bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
         >
           <Bot size={13} /> Send
@@ -1219,6 +1241,7 @@ export const App: React.FC = () => {
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}
         initialMode={botModalMode}
+        initialChannel={botModalChannel}
       />
       <ToastAndConfirmHost />
     </div>

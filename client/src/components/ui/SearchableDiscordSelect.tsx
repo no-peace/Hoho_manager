@@ -147,23 +147,23 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
     <div className={`relative ${className}`} ref={containerRef}>
       {/* Multi-select chips with remove buttons */}
       {multiple && valArr.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-1.5">
+        <div className="flex flex-wrap gap-1.5 mb-1.5 min-w-0">
           {valArr.map((id) => {
             const matched = options.find((o) => o.id === id);
             const label = matched ? matched.name : id;
             return (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 bg-[#2b2d31] border border-[#1e1f22] text-[#dbdee1] px-2 py-0.5 rounded text-xs"
+                className="inline-flex items-center gap-1 bg-[#2b2d31] border border-[#1e1f22] text-[#dbdee1] px-2 py-0.5 rounded text-xs max-w-full min-w-0"
               >
-                <span className="truncate max-w-[200px]" title={label}>{label}</span>
+                <span className="truncate min-w-0 max-w-[180px]" title={label}>{label}</span>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleSelection(id);
                   }}
-                  className="text-[#949ba4] hover:text-[#da373c] ml-1 font-bold text-xs focus-visible:outline-none"
+                  className="text-[#949ba4] hover:text-[#da373c] ml-1 font-bold text-xs focus-visible:outline-none shrink-0"
                   aria-label={`Remove ${label}`}
                 >
                   ×
@@ -176,7 +176,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
       {/* Main Trigger Button */}
       <div
-        className="w-full bg-[#1e1f22] border border-[#111214] rounded px-3 py-1.5 text-xs text-[#dbdee1] cursor-pointer flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+        className="w-full min-w-0 bg-[#1e1f22] border border-[#111214] rounded px-3 py-1.5 text-xs text-[#dbdee1] cursor-pointer flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
         onClick={() => setOpen(!open)}
         tabIndex={0}
         role="combobox"
@@ -188,84 +188,99 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           }
         }}
       >
-        <span className="truncate text-[#dbdee1]">{displayValue}</span>
-        <span className="text-[10px] text-[#949ba4] ml-2">▼</span>
+        <span className="truncate min-w-0 flex-1 text-[#dbdee1]">{displayValue}</span>
+        <span className="text-[10px] text-[#949ba4] shrink-0 ml-2">▼</span>
       </div>
 
       {open && dropdownRect && createPortal(
-        <div
-          ref ={portalRef}
-          style={{
-            position: "fixed",
-            top: dropdownRect.bottom + 260 > window.innerHeight && dropdownRect.top > 260
-              ? Math.max(8, dropdownRect.top - 260)
-              : dropdownRect.bottom + 4,
-            left: Math.min(
-              Math.max(8, dropdownRect.left),
-              window.innerWidth - Math.max(dropdownRect.width, 220) - 8
-            ),
-            width: Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16),
-            zIndex: 99999,
-          }}
-          className="bg-[#2b2d31] border border-[#1e1f22] rounded shadow-2xl max-h-64 flex flex-col"
-        >
-          <div className="p-2 shrink-0 border-b border-[#1e1f22]">
-            <input
-              type="text"
-              className="w-full bg-[#1e1f22] text-[#dbdee1] text-xs px-2 py-1.5 rounded outline-none border border-[#111214] focus:border-[#5865f2]"
-              placeholder={type === "member" ? "Search username or enter 17-20 digit ID..." : "Search..."}
-              value={search}
-              autoFocus
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); handleManualId(); }
-                if (e.key === "Escape") setOpen(false);
+        (() => {
+          const DROPDOWN_HEIGHT = 260;
+          const spaceBelow = window.innerHeight - dropdownRect.bottom;
+          const spaceAbove = dropdownRect.top;
+          const placeAbove = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
+          const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16);
+          const maxLeft = Math.max(8, window.innerWidth - dropdownWidth - 8);
+          const dropdownLeft = Math.max(8, Math.min(dropdownRect.left, maxLeft));
+          const calculatedTop = placeAbove
+            ? Math.max(8, dropdownRect.top - Math.min(DROPDOWN_HEIGHT, spaceAbove - 8))
+            : dropdownRect.bottom + 4;
+          const calculatedMaxHeight = placeAbove
+            ? Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceAbove - 16))
+            : Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceBelow - 16));
+
+          return (
+            <div
+              ref={portalRef}
+              style={{
+                position: "fixed",
+                top: calculatedTop,
+                left: dropdownLeft,
+                width: dropdownWidth,
+                maxHeight: calculatedMaxHeight,
+                zIndex: 99999,
               }}
-            />
-          </div>
-
-          {!guildId && type === "member" && (
-            <div className="p-2 text-[11px] text-[#949ba4] italic border-b border-[#35373c] bg-[#1e1f22]/50">
-              Select a server in the header to search by name, or enter a 17-20 digit user ID.
-            </div>
-          )}
-
-          <div className="overflow-y-auto flex-1 p-1">
-            {isSnowflake && (
-              <div
-                className="px-2 py-1.5 text-xs text-[#5865f2] hover:bg-[#35373c] cursor-pointer rounded font-medium flex items-center justify-between border-b border-[#35373c]/50 mb-1"
-                onClick={handleManualId}
-              >
-                <span>Use ID: {search.trim()}</span>
-                <span className="text-[10px] text-[#949ba4] bg-[#1e1f22] px-1 rounded">Press Enter</span>
+              className="bg-[#2b2d31] border border-[#1e1f22] rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+            >
+              <div className="p-2 shrink-0 border-b border-[#1e1f22]">
+                <input
+                  type="text"
+                  className="w-full bg-[#1e1f22] text-[#dbdee1] text-xs px-2 py-1.5 rounded outline-none border border-[#111214] focus:border-[#5865f2]"
+                  placeholder={type === "member" ? "Search username or enter 17-20 digit ID..." : "Search..."}
+                  value={search}
+                  autoFocus
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); handleManualId(); }
+                    if (e.key === "Escape") setOpen(false);
+                  }}
+                />
               </div>
-            )}
 
-            {filteredOptions.length === 0 && !isSnowflake ? (
-              <div className="px-2 py-3 text-xs text-[#949ba4] text-center italic">
-                {type === "member" && search.length < 2 && guildId
-                  ? "Type at least 2 characters to search..."
-                  : "No options found"}
-              </div>
-            ) : (
-              filteredOptions.map((opt) => {
-                const isSelected = valArr.includes(opt.id);
-                return (
+              {!guildId && type === "member" && (
+                <div className="p-2 text-[11px] text-[#949ba4] italic border-b border-[#35373c] bg-[#1e1f22]/50">
+                  Select a server in the header to search by name, or enter a 17-20 digit user ID.
+                </div>
+              )}
+
+              <div className="overflow-y-auto flex-1 p-1">
+                {isSnowflake && (
                   <div
-                    key={opt.id}
-                    className={`px-2 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between ${
-                      isSelected ? "bg-[#5865f2] text-white" : "text-[#dbdee1] hover:bg-[#35373c]"
-                    }`}
-                    onClick={() => toggleSelection(opt.id)}
+                    className="px-2 py-1.5 text-xs text-[#5865f2] hover:bg-[#35373c] cursor-pointer rounded font-medium flex items-center justify-between border-b border-[#35373c]/50 mb-1"
+                    onClick={handleManualId}
                   >
-                    <span className="truncate">{opt.name}</span>
-                    {multiple && isSelected && <span className="text-xs font-bold ml-1">✓</span>}
+                    <span>Use ID: {search.trim()}</span>
+                    <span className="text-[10px] text-[#949ba4] bg-[#1e1f22] px-1 rounded">Press Enter</span>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>,
+                )}
+
+                {filteredOptions.length === 0 && !isSnowflake ? (
+                  <div className="px-2 py-3 text-xs text-[#949ba4] text-center italic">
+                    {type === "member" && search.length < 2 && guildId
+                      ? "Type at least 2 characters to search..."
+                      : "No options found"}
+                  </div>
+                ) : (
+                  filteredOptions.map((opt) => {
+                    const isSelected = valArr.includes(opt.id);
+                    return (
+                      <div
+                        key={opt.id}
+                        className={`px-2 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between gap-2 min-w-0 ${
+                          isSelected ? "bg-[#5865f2] text-white" : "text-[#dbdee1] hover:bg-[#35373c]"
+                        }`}
+                        onClick={() => toggleSelection(opt.id)}
+                        title={opt.name}
+                      >
+                        <span className="truncate min-w-0 flex-1">{opt.name}</span>
+                        {multiple && isSelected && <span className="text-xs font-bold shrink-0 ml-1">✓</span>}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })(),
         document.body
       )}
     </div>
