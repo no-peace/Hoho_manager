@@ -1,6 +1,6 @@
 import { Copy, Trash2, X, Sliders, Workflow } from "lucide-react";
 import { useState } from "react";
-import { ButtonStyle, ComponentType } from "@dmb/shared";
+//import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";
 import { COMPONENT_FORMS } from "./ComponentForms";
@@ -26,7 +26,7 @@ export const PropertyPanel = () => {
 
   const Form = COMPONENT_FORMS[component.type];
   if (!Form) return null;
-  
+
   const hasFlow = isInteractiveComponent(component);
 
   return (

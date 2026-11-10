@@ -1,5 +1,5 @@
-import { Check } from "lucide-react";
-import { useRef } from "react";
+import { Check, Keyboard } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export const VARIABLES = [
@@ -28,9 +28,13 @@ export const VARIABLES = [
   { tag: "{message.url}", label: "https://discord.com/...", desc: "Jump link to the message" },
 
   { group: "Time & Date" },
-  { tag: "{now}", label: "12:00 PM", desc: "Current time (Dynamic to reader)" },
-  { tag: "{now.relative}", label: "2 mins ago", desc: "Relative time (Dynamic to reader)" },
-  { tag: "{now.long}", label: "Tuesday, Oct 24", desc: "Long format date (Dynamic)" },
+  { tag: "{now}", label: "12:00 PM", desc: "Short time (<t:unix:t>)" },
+  { tag: "{now.time}", label: "12:00:00 PM", desc: "Long time with seconds (<t:unix:T>)" },
+  { tag: "{now.date}", label: "11/10/2026", desc: "Short date (<t:unix:d>)" },
+  { tag: "{now.longdate}", label: "November 10, 2026", desc: "Long date (<t:unix:D>)" },
+  { tag: "{now.short}", label: "Nov 10, 2026 12:00 PM", desc: "Short date & time (<t:unix:f>)" },
+  { tag: "{now.long}", label: "Tuesday, Nov 10, 2026", desc: "Long date & time (<t:unix:F>)" },
+  { tag: "{now.relative}", label: "2 mins ago", desc: "Relative time (<t:unix:R>)" },
   { tag: "{now.unix}", label: "1698144000", desc: "Raw Unix timestamp number" },
 
   { group: "Select Menus & Modals" },
@@ -64,7 +68,55 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   variables?: boolean;
 }
 
-import { QuickMentionBox } from "./QuickMentionBox";
+import { RichPicker } from "../editor/RichPicker";
+
+const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<"top" | "bottom">("top");
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    if (wrapRef.current) {
+      const rect = wrapRef.current.getBoundingClientRect();
+      setPos(rect.top < 430 ? "bottom" : "top");
+    }
+    const handleOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="absolute right-2 top-1.5 z-20">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`p-1 rounded transition-colors ${
+          open
+            ? "bg-[#5865f2] text-white shadow-sm"
+            : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] bg-[#2b2d31]/80 border border-[#1e1f22]"
+        }`}
+        title="Quick Mentions, Timestamps & Emojis"
+      >
+        <Keyboard size={14} />
+      </button>
+      {open && (
+        <RichPicker
+          onInsert={(val) => {
+            onInsert(val);
+            setOpen(false);
+          }}
+          onClose={() => setOpen(false)}
+          position={pos}
+        />
+      )}
+    </div>
+  );
+};
 
 export const TextField = ({ label, hint, limit, variables = false, className, ...props }: TextFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -88,8 +140,8 @@ export const TextField = ({ label, hint, limit, variables = false, className, ..
   return (
     <FieldShell label={label ?? (limit !== undefined ? label : undefined)} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
-        <input ref={inputRef} className={`field w-full ${showVars ? "pr-12" : "pr-3"} bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]`} {...props} />
-        {showVars && <QuickMentionBox onSelect={handleInsertVariable} />}
+        <input ref={inputRef} className={`field w-full ${showVars ? "pr-10" : "pr-3"} bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]`} {...props} />
+        {showVars && <InlineRichPickerTrigger onInsert={handleInsertVariable} />}
       </div>
     </FieldShell>
   );
@@ -114,7 +166,7 @@ export const TextArea = ({ label, hint, limit, rows = 4, className, ...props }: 
     <FieldShell label={label} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
         <textarea ref={textAreaRef} rows={rows} className="field resize-y w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] py-2" {...props} />
-        <QuickMentionBox onSelect={handleInsertVariable} />
+        <InlineRichPickerTrigger onInsert={handleInsertVariable} />
       </div>
     </FieldShell>
   );

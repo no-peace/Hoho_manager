@@ -690,7 +690,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               key={field.key}
               label={field.label}
               type={field.type}
-              variables={field.type !== "number"}
+              variables={field.key === "content" || field.key === "name"}
               value={asText(config[field.key])}
               placeholder={field.placeholder}
               onChange={(event) =>

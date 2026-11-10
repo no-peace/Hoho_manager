@@ -689,6 +689,9 @@ const formatWeaoFieldForPreview = (
 const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" }) => {
   const weaoExploits = useDiscordCacheStore((state) => state.weaoExploits);
   const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
+  const guilds = useDiscordCacheStore((state) => state.guilds);
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
   useEffect(() => {
     if (content && /\{exploit[.:]/i.test(content)) {
@@ -698,26 +701,83 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
 
   if (!content) return null;
 
-  // Interpolate `{exploit.<Name>.<Field>}` and `{exploit:<Name>:<Field>}` in live preview
+  const unixNow = Math.floor(Date.now() / 1000);
+  const previewUserId = currentUser?.id || "0";
+  const previewUsername = currentUser?.username || "user";
+  const previewDisplay = currentUser?.global_name || previewUsername;
+  const previewGuild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
+  const userCreatedUnix =
+    /^\d{17,20}$/.test(previewUserId)
+      ? Math.floor((Number(BigInt(previewUserId) >> 22n) + 1420070400000) / 1000)
+      : unixNow;
+
+  const previewVars: Record<string, string> = {
+    "user.mention": /^\d{17,20}$/.test(previewUserId) ? `<@${previewUserId}>` : `@${previewDisplay}`,
+    "user.name": previewUsername,
+    "user.tag": previewUsername,
+    "user.displayname": previewDisplay,
+    "user.id": previewUserId,
+    "user.avatar":
+      currentUser?.avatarUrl ||
+      (currentUser?.avatar
+        ? `https://cdn.discordapp.com/avatars/${previewUserId}/${currentUser.avatar}.png`
+        : getDefaultAvatar(previewUserId)),
+    "user.roles": "@Member",
+    "user.clantag": "HOHO",
+    "user.created": `<t:${userCreatedUnix}:d>`,
+    "user.created.relative": `<t:${userCreatedUnix}:R>`,
+    "user.joined": `<t:${unixNow - 86400 * 30}:R>`,
+    "user.joined.date": `<t:${unixNow - 86400 * 30}:d>`,
+    "server.id": selectedGuildId || previewGuild?.id || "906426036772818954",
+    "server.name": previewGuild?.name || "HoHo Server",
+    "channel.id": "906426037230002210",
+    "channel.mention": "#general",
+    "bot.id": "100000000000000000",
+    "bot.mention": "@HoHo Manager",
+    now: `<t:${unixNow}:t>`,
+    "now.t": `<t:${unixNow}:t>`,
+    "now.T": `<t:${unixNow}:T>`,
+    "now.time": `<t:${unixNow}:T>`,
+    "now.d": `<t:${unixNow}:d>`,
+    "now.date": `<t:${unixNow}:d>`,
+    "now.D": `<t:${unixNow}:D>`,
+    "now.longdate": `<t:${unixNow}:D>`,
+    "now.f": `<t:${unixNow}:f>`,
+    "now.short": `<t:${unixNow}:f>`,
+    "now.F": `<t:${unixNow}:F>`,
+    "now.long": `<t:${unixNow}:F>`,
+    "now.R": `<t:${unixNow}:R>`,
+    "now.relative": `<t:${unixNow}:R>`,
+    "now.unix": String(unixNow),
+    selected: "option_1",
+    "selected.0": "option_1",
+  };
+
+  // Interpolate `{exploit.<Name>.<Field>}` and `{user.*}` / `{now.*}` in live preview
   const resolvedContent = content.includes("{")
-    ? content.replace(/\{exploit([.:])([^{}\n]+)\}/gi, (full, sep: string, rest: string) => {
-        let targetName = "";
-        let fieldName = "";
-        if (sep === ".") {
-          const lastDot = rest.lastIndexOf(".");
-          if (lastDot <= 0) return full;
-          targetName = rest.slice(0, lastDot).trim();
-          fieldName = rest.slice(lastDot + 1).trim();
-        } else {
-          const parts = rest.split(":");
-          targetName = (parts[0] || "").trim();
-          fieldName = parts.slice(1).join(":").trim() || "status";
-        }
-        const found =
-          weaoExploits.find((e) => e.title.toLowerCase() === targetName.toLowerCase()) ??
-          weaoExploits.find((e) => e.title.toLowerCase().includes(targetName.toLowerCase()));
-        return formatWeaoFieldForPreview(found, fieldName, full);
-      })
+    ? content
+        .replace(/\{exploit([.:])([^{}\n]+)\}/gi, (full, sep: string, rest: string) => {
+          let targetName = "";
+          let fieldName = "";
+          if (sep === ".") {
+            const lastDot = rest.lastIndexOf(".");
+            if (lastDot <= 0) return full;
+            targetName = rest.slice(0, lastDot).trim();
+            fieldName = rest.slice(lastDot + 1).trim();
+          } else {
+            const parts = rest.split(":");
+            targetName = (parts[0] || "").trim();
+            fieldName = parts.slice(1).join(":").trim() || "status";
+          }
+          const found =
+            weaoExploits.find((e) => e.title.toLowerCase() === targetName.toLowerCase()) ??
+            weaoExploits.find((e) => e.title.toLowerCase().includes(targetName.toLowerCase()));
+          return formatWeaoFieldForPreview(found, fieldName, full);
+        })
+        .replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (match, rawKey: string) => {
+          const k = rawKey.trim();
+          return previewVars[k] ?? previewVars[k.toLowerCase()] ?? match;
+        })
     : content;
 
   const lines = resolvedContent.split("\n");

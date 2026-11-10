@@ -50,7 +50,7 @@ export const executeCustomId = async (
   // Support standard action IDs or stored modal IDs
   const parsed = parseCustomId(customId);
   const messageId = interaction.message?.id;
-  const stored = await actionRepository.findByCustomId(customId,messageId);
+  const stored = await actionRepository.findByCustomId(customId, messageId);
 
   if (!parsed && stored.length === 0) {
     return { response: undefined, handled: false, type: null };
@@ -131,10 +131,21 @@ export const executeCustomId = async (
     selected: selectedValues.join(", "),
     ...Object.fromEntries(selectedValues.map((val, idx) => [`selected.${idx}`, val])),
 
-    // Time
+    // Time (All 7 Discord Timestamp Styles + Unix)
     now: `<t:${unixNow}:t>`,
-    "now.relative": `<t:${unixNow}:R>`,
+    "now.t": `<t:${unixNow}:t>`,
+    "now.T": `<t:${unixNow}:T>`,
+    "now.time": `<t:${unixNow}:T>`,
+    "now.d": `<t:${unixNow}:d>`,
+    "now.date": `<t:${unixNow}:d>`,
+    "now.D": `<t:${unixNow}:D>`,
+    "now.longdate": `<t:${unixNow}:D>`,
+    "now.f": `<t:${unixNow}:f>`,
+    "now.short": `<t:${unixNow}:f>`,
+    "now.F": `<t:${unixNow}:F>`,
     "now.long": `<t:${unixNow}:F>`,
+    "now.R": `<t:${unixNow}:R>`,
+    "now.relative": `<t:${unixNow}:R>`,
     "now.unix": unixNow,
   };
 
@@ -165,7 +176,11 @@ export const executeCustomId = async (
     logger: log,
   };
 
-  const logStep = async (step: ExecutableStep, response: ActionResponse | undefined, startedAt: number): Promise<void> => {
+  const logStep = async (
+    step: ExecutableStep,
+    response: ActionResponse | undefined,
+    startedAt: number,
+  ): Promise<void> => {
     await actionRepository.log({
       actionDefinitionId: step.id,
       interactionId: interaction.id,
@@ -177,7 +192,17 @@ export const executeCustomId = async (
     });
   };
 
-  const runSteps = async (list: ExecutableStep[], depth: number): Promise<ActionResponse | undefined> => {
+  const resolveStepConfig = async (raw: Record<string, any>): Promise<Record<string, any>> => {
+    const replaced = replaceVariables(raw, variables);
+    if (!JSON.stringify(replaced).includes("{exploit")) return replaced;
+    const { payload: weaoResolved } = await interpolateWeaoPlaceholders(replaced as any);
+    return weaoResolved as Record<string, any>;
+  };
+
+  const runSteps = async (
+    list: ExecutableStep[],
+    depth: number,
+  ): Promise<ActionResponse | undefined> => {
     if (depth > MAX_BRANCH_DEPTH) return actionFailed("That flow nests too deeply to run.");
 
     for (const step of list) {
@@ -186,17 +211,14 @@ export const executeCustomId = async (
 
       const started = Date.now();
 
-      // Conditional check step with branching
+      // Conditional check step with branching (resolve condition sides without mutating sub-branches early)
       if (step.type === "check" && hasBranches(step.config)) {
-        //const parsedConfig = replaceVariables(step.config, variables);
-        let parsedConfig = replaceVariables(step.config, variables);
-        if (JSON.stringify(parsedConfig).includes("{exploit")) {
-          const { payload: weaoResolved } = await interpolateWeaoPlaceholders(
-            parsedConfig as any,
-          );
-          parsedConfig = weaoResolved as Record<string, any>;
-        }
-        const branch = selectBranch(parsedConfig, variables);
+        const { pass, fail, then: thenBranch, else: elseBranch, ...condOnly } = step.config;
+        const resolvedCond = await resolveStepConfig(condOnly);
+        const branch = selectBranch(
+          { ...resolvedCond, pass, fail, then: thenBranch, else: elseBranch },
+          variables,
+        );
         const nested = await runSteps(branch, depth + 1);
         await logStep(step, nested, started);
         if (nested) return nested;
@@ -205,19 +227,16 @@ export const executeCustomId = async (
 
       let response: ActionResponse | undefined;
       try {
-        let parsedConfig = replaceVariables(step.config, variables);
-        if (JSON.stringify(parsedConfig).includes("{exploit")) {
-          const { payload: weaoResolved } = await interpolateWeaoPlaceholders(
-            parsedConfig as any,
-          );
-          parsedConfig = weaoResolved as Record<string, any>;
-        }
-        const stepProfileId = typeof parsedConfig.profileId === "number" ? parsedConfig.profileId : null;
-        const stepBotToken = stepProfileId ? await discord.resolveBotToken(stepProfileId).catch(()=> botToken) : botToken;
+        const parsedConfig = await resolveStepConfig(step.config);
+        const stepProfileId =
+          typeof parsedConfig.profileId === "number" ? parsedConfig.profileId : null;
+        const stepBotToken = stepProfileId
+          ? await discord.resolveBotToken(stepProfileId).catch(() => botToken)
+          : botToken;
         response = await handler.run({
           ...context,
           botToken: stepBotToken,
-          config: parsedConfig
+          config: parsedConfig,
         });
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);

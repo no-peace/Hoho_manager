@@ -27,33 +27,44 @@ const SELECT_TYPES: readonly number[] = [
   ComponentType.MentionableSelect,
 ];
 
-const renderEmoji = (emoji: any) => {
+export const renderButtonEmoji = (emoji: any) => {
   if (!emoji) return null;
-  if (emoji.name) {
-      const match = String(emoji.name).match(/^<(a?):(\w+):(\d+)>$/);
-      if (match) {
-        const [, animated, name, id] = match;
-        return (
-          <img
-            src={`https://cdn.discordapp.com/emojis/${id}.${animated ? "gif" : "png"}?size=24`}
-            alt={name}
-            className="h-4 w-4 object-contain inline-block shrink-0"
-          />
-        );
-      }
-      return <span className="inline-block shrink-0">{emoji.name}</span>;
+  if (typeof emoji === "string") {
+    const match = emoji.match(/^<(a?):(\w+):(\d+)>$/);
+    if (match) {
+      const [, animated, name, id] = match;
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${id}.${animated ? "gif" : "webp"}?size=24&quality=lossless`}
+          alt={name}
+          className="h-4 w-4 object-contain inline-block shrink-0"
+        />
+      );
     }
+    return <span className="inline-block shrink-0">{emoji}</span>;
+  }
   if (typeof emoji === "object") {
     if (emoji.id) {
       return (
         <img
-          src={`https://cdn.discordapp.com/emojis/${emoji.id}.${emoji.animated ? "gif" : "png"}?size=24`}
+          src={`https://cdn.discordapp.com/emojis/${emoji.id}.${emoji.animated ? "gif" : "webp"}?size=24&quality=lossless`}
           alt={emoji.name || ""}
           className="h-4 w-4 object-contain inline-block shrink-0"
         />
       );
     }
     if (emoji.name) {
+      const match = String(emoji.name).match(/^<(a?):(\w+):(\d+)>$/);
+      if (match) {
+        const [, animated, name, id] = match;
+        return (
+          <img
+            src={`https://cdn.discordapp.com/emojis/${id}.${animated ? "gif" : "webp"}?size=24&quality=lossless`}
+            alt={name}
+            className="h-4 w-4 object-contain inline-block shrink-0"
+          />
+        );
+      }
       return <span className="inline-block shrink-0">{emoji.name}</span>;
     }
   }
@@ -62,7 +73,7 @@ const renderEmoji = (emoji: any) => {
 
 export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
-  const emojiNode = renderEmoji((button as any).emoji);
+  const emojiNode = renderButtonEmoji((button as any).emoji);
 
   return (
     <button

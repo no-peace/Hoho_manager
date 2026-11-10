@@ -556,6 +556,31 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
         {/* TAB 2: TIME */}
         {activeTab === "time" && (
           <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-1">
+              {[
+                { label: "Now", offsetSec: 0 },
+                { label: "+5m", offsetSec: 300 },
+                { label: "+15m", offsetSec: 900 },
+                { label: "+1h", offsetSec: 3600 },
+                { label: "+24h", offsetSec: 86400 },
+                { label: "+7d", offsetSec: 86400 * 7 },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => {
+                    const target = new Date(Date.now() + preset.offsetSec * 1000);
+                    const tzOffset = target.getTimezoneOffset() * 60000;
+                    const localIso = new Date(target.getTime() - tzOffset).toISOString();
+                    setSelectedDate(localIso.slice(0, 10));
+                    setSelectedTime(localIso.slice(11, 16));
+                  }}
+                  className="px-2 py-0.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] text-[10px] font-semibold text-[#dbdee1] hover:text-white border border-[#232428] transition-colors"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
@@ -749,6 +774,78 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             })}
           </div>
         )}
+        {/* TAB 4: VARIABLES */}
+        {activeTab === "variables" && (
+          <div className="space-y-2.5">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
+              />
+              <input
+                type="text"
+                placeholder="Search {user.mention}, {now}, {selected}…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#1e1f22] text-xs text-white pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={(ev) => handleInsert("{exploit.", ev)}
+                className="w-full text-left px-2.5 py-1.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] group transition-colors border border-[#232428] flex items-center justify-between"
+              >
+                <span className="font-mono text-xs font-bold text-[#57f287] group-hover:text-white">
+                  {"{exploit.<Name>.<Field>}"}
+                </span>
+                <span className="text-[10px] text-[#949ba4] group-hover:text-white/90">
+                  Live WEAO Tag
+                </span>
+              </button>
+
+              {VARIABLES.filter((v) => {
+                if (!searchQuery.trim()) return true;
+                if (v.group) return false;
+                const sq = searchQuery.toLowerCase();
+                return (
+                  v.tag?.toLowerCase().includes(sq) ||
+                  v.label?.toLowerCase().includes(sq) ||
+                  v.desc?.toLowerCase().includes(sq)
+                );
+              }).map((v, i) =>
+                v.group ? (
+                  <div
+                    key={`grp-${i}`}
+                    className="pt-2 pb-0.5 px-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22]"
+                  >
+                    {v.group}
+                  </div>
+                ) : (
+                  <button
+                    key={v.tag}
+                    type="button"
+                    onClick={(ev) => handleInsert(v.tag!, ev)}
+                    className="w-full text-left px-2 py-1.5 rounded hover:bg-[#5865f2] group transition-colors flex flex-col"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-mono text-xs font-bold text-[#5865f2] group-hover:text-white">
+                        {v.tag}
+                      </span>
+                      <span className="text-[10px] text-[#949ba4] group-hover:text-white/80">
+                        {v.label}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-[#b5bac1] group-hover:text-white/90">
+                      {v.desc}
+                    </span>
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Hover Preview Bar for Emojis */}
@@ -756,79 +853,6 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
         <div className="px-3 py-1.5 bg-[#111214] border-t border-[#1e1f22] flex items-center gap-2 text-xs">
           {hoveredEmoji.icon}
           <span className="font-mono text-[#dbdee1] font-semibold">{hoveredEmoji.name}</span>
-        </div>
-      )}
-
-      {/* TAB 4: VARIABLES */}
-      {activeTab === "variables" && (
-        <div className="space-y-2.5">
-          <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
-            />
-            <input
-              type="text"
-              placeholder="Search {user.mention}, {now}, {selected}…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1e1f22] text-xs text-white pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <button
-              type="button"
-              onClick={(ev) => handleInsert("{exploit.", ev)}
-              className="w-full text-left px-2.5 py-1.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] group transition-colors border border-[#232428] flex items-center justify-between"
-            >
-              <span className="font-mono text-xs font-bold text-[#57f287] group-hover:text-white">
-                {"{exploit.<Name>.<Field>}"}
-              </span>
-              <span className="text-[10px] text-[#949ba4] group-hover:text-white/90">
-                Live WEAO Tag
-              </span>
-            </button>
-
-            {VARIABLES.filter((v) => {
-              if (!searchQuery.trim()) return true;
-              if (v.group) return false;
-              const sq = searchQuery.toLowerCase();
-              return (
-                v.tag?.toLowerCase().includes(sq) ||
-                v.label?.toLowerCase().includes(sq) ||
-                v.desc?.toLowerCase().includes(sq)
-              );
-            }).map((v, i) =>
-              v.group ? (
-                <div
-                  key={`grp-${i}`}
-                  className="pt-2 pb-0.5 px-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22]"
-                >
-                  {v.group}
-                </div>
-              ) : (
-                <button
-                  key={v.tag}
-                  type="button"
-                  onClick={(ev) => handleInsert(v.tag!, ev)}
-                  className="w-full text-left px-2 py-1.5 rounded hover:bg-[#5865f2] group transition-colors flex flex-col"
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-mono text-xs font-bold text-[#5865f2] group-hover:text-white">
-                      {v.tag}
-                    </span>
-                    <span className="text-[10px] text-[#949ba4] group-hover:text-white/80">
-                      {v.label}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-[#b5bac1] group-hover:text-white/90">
-                    {v.desc}
-                  </span>
-                </button>
-              ),
-            )}
-          </div>
         </div>
       )}
       

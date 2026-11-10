@@ -230,7 +230,6 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
     <>
       <TextField
         label="Label"
-        variables
         limit={Limits.components.label}
         value={component.label ?? ""}
         placeholder="Button Text"

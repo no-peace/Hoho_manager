@@ -38,7 +38,7 @@ import {
   parseDiscordMessageLink,
   type ExtendedMessageData,
 } from "../../utils/discord";
-import { newGalleryItem, newButton, newThumbnail } from "../../utils/componentsV2";
+import { newGalleryItem, newButton, newThumbnail, buttonStylePatch } from "../../utils/componentsV2";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 import { request } from "../../api/client";
 
@@ -81,6 +81,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const moveComponentById = useMessageStore((state) => state.moveComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
   const selection = useMessageStore((state) => state.selection);
+  const select = useMessageStore((state) => state.select);
 
   const rawMessage =
     (messages && messages[index]) || (index === 0 ? data : messages?.[0]) || data;
@@ -139,6 +140,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       if (optionsMenuOpen && optionsMenuRef.current && !optionsMenuRef.current.contains(target)) {
         setOptionsMenuOpen(false);
       }
+      setOpenContainerAddId(null);
+      setOpenAccessoryMenuId(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -343,12 +346,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             />
 
             {/* Discohook + Add Accessory button (converts TextDisplay to Section) */}
-            <div className="relative inline-block">
+            <div className="relative inline-block" onMouseDown={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenAccessoryMenuId(openAccessoryMenuId === id ? null : id)
-                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenAccessoryMenuId(openAccessoryMenuId === id ? null : id);
+                }}
                 className="px-2.5 py-1 rounded bg-[#35373c] hover:bg-[#4e5058] text-xs font-semibold text-[#dbdee1] hover:text-white flex items-center gap-1.5 transition-colors"
               >
                 <Plus size={12} /> Add Accessory <ChevronDown size={12} />
@@ -520,46 +524,90 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
-                        Button Label
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={80}
-                        value={accessory.label || ""}
-                        onChange={(e) => {
-                          ensureActive();
-                          if (id) {
-                            updateComponentById(id, {
-                              accessory: { ...accessory, label: e.target.value },
-                            });
-                          }
-                        }}
-                        className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
-                      />
-                    </div>
-                    {accessory.style === ButtonStyle.Link && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
-                          Link URL
+                          Button Style
+                        </label>
+                        <select
+                          value={accessory.style ?? ButtonStyle.Primary}
+                          onChange={(e) => {
+                            ensureActive();
+                            if (id) {
+                              const nextStyle = Number(e.target.value);
+                              updateComponentById(id, {
+                                accessory: {
+                                  ...accessory,
+                                  ...buttonStylePatch(accessory, nextStyle),
+                                },
+                              });
+                            }
+                          }}
+                          className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
+                        >
+                          <option value={ButtonStyle.Primary}>Primary (Blurple)</option>
+                          <option value={ButtonStyle.Secondary}>Secondary (Grey)</option>
+                          <option value={ButtonStyle.Success}>Success (Green)</option>
+                          <option value={ButtonStyle.Danger}>Danger (Red)</option>
+                          <option value={ButtonStyle.Link}>Link (URL)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                          Button Label
                         </label>
                         <input
-                          type="url"
-                          value={accessory.url || ""}
+                          type="text"
+                          maxLength={80}
+                          value={accessory.label || ""}
                           onChange={(e) => {
                             ensureActive();
                             if (id) {
                               updateComponentById(id, {
-                                accessory: { ...accessory, url: e.target.value },
+                                accessory: { ...accessory, label: e.target.value },
                               });
                             }
                           }}
                           className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
                         />
                       </div>
-                    )}
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                          {accessory.style === ButtonStyle.Link ? "Link URL" : "Actions Flow"}
+                        </label>
+                        {accessory.style === ButtonStyle.Link ? (
+                          <input
+                            type="url"
+                            value={accessory.url || ""}
+                            placeholder="https://..."
+                            onChange={(e) => {
+                              ensureActive();
+                              if (id) {
+                                updateComponentById(id, {
+                                  accessory: { ...accessory, url: e.target.value },
+                                });
+                              }
+                            }}
+                            className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              ensureActive();
+                              if (accessory._id) {
+                                select({ kind: "component", id: accessory._id });
+                              }
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-xs font-semibold text-white transition-colors"
+                          >
+                            Configure Actions & Emoji
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

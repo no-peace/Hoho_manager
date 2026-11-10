@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { ButtonStyle, ComponentType, type ComponentNode } from "@dmb/shared";
+import { renderButtonEmoji } from "../preview/ActionRowPreview";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { componentLabel } from "../../utils/componentsV2";
@@ -234,6 +235,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             isSelected,
                           )} ${child.disabled ? "opacity-50" : ""}`}
                         >
+                          {renderButtonEmoji(child.emoji)}
                           <span className="truncate max-w-[150px]">
                             {child.label || "Button"}
                           </span>

@@ -3,6 +3,7 @@ import type { ComponentNode } from "@dmb/shared";
 import { ComponentType } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { ActionRowPreview, ButtonPreview } from "./ActionRowPreview";
+import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Previews for the components that can sit inside a container (plus action rows,
@@ -27,8 +28,24 @@ const SeparatorPreview = ({ component }: { component: ComponentNode }) =>
     />
   );
 
+const resolveAttachment = (
+  url: string | undefined,
+  attachedFiles: { name: string; previewUrl: string }[],
+): string | undefined => {
+  if (!url) return undefined;
+  if (url.startsWith("attachment://")) {
+    const filename = url.slice("attachment://".length);
+    const match = attachedFiles.find(
+      (f) => f.name === filename || `SPOILER_${f.name}` === filename,
+    );
+    if (match) return match.previewUrl;
+  }
+  return url;
+};
+
 const SectionPreview = ({ component }: { component: ComponentNode }) => {
-  const thumbnail = component.accessory?.media?.url;
+  const attachedFiles = useMessageStore((s) => s.attachedFiles);
+  const thumbnail = resolveAttachment(component.accessory?.media?.url, attachedFiles);
   const isButton = component.accessory?.type === ComponentType.Button;
 
   return (
@@ -51,6 +68,7 @@ const SectionPreview = ({ component }: { component: ComponentNode }) => {
 };
 
 const MediaGalleryPreview = ({ component }: { component: ComponentNode }) => {
+  const attachedFiles = useMessageStore((s) => s.attachedFiles);
   const items = component.items ?? [];
   if (items.length === 0) return <p className="text-xs text-[#6d6f78]">No gallery images</p>;
 
@@ -61,8 +79,8 @@ const MediaGalleryPreview = ({ component }: { component: ComponentNode }) => {
       {items.map((item) => (
         <img
           key={item._id}
-          src={item.media.url}
-          alt=""
+          src={resolveAttachment(item.media.url, attachedFiles)}
+          alt={item.description ?? ""}
           className="h-32 w-full rounded object-cover"
         />
       ))}

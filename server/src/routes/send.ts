@@ -114,6 +114,65 @@ router.post(
         // Fallback to uninterpolated message if WEAO is unreachable
       }
 
+      const unixNow = Math.floor(Date.now() / 1000);
+      const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
+      const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
+      const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
+      const targetChannelId = typeof channelId === "string" ? channelId : "";
+
+      const sendVars: Record<string, string> = {
+        now: `<t:${unixNow}:f>`,
+        "now.t": `<t:${unixNow}:t>`,
+        "now.T": `<t:${unixNow}:T>`,
+        "now.d": `<t:${unixNow}:d>`,
+        "now.D": `<t:${unixNow}:D>`,
+        "now.f": `<t:${unixNow}:f>`,
+        "now.F": `<t:${unixNow}:F>`,
+        "now.R": `<t:${unixNow}:R>`,
+        "now.relative": `<t:${unixNow}:R>`,
+        "now.time": `<t:${unixNow}:t>`,
+        "now.longtime": `<t:${unixNow}:T>`,
+        "now.date": `<t:${unixNow}:d>`,
+        "now.longdate": `<t:${unixNow}:D>`,
+        "now.short": `<t:${unixNow}:f>`,
+        "now.long": `<t:${unixNow}:F>`,
+        "now.unix": String(unixNow),
+        "now.iso": new Date().toISOString(),
+        ...(targetChannelId
+          ? {
+              "channel.id": targetChannelId,
+              "channel.mention": `<#${targetChannelId}>`,
+            }
+          : {}),
+        ...(senderDiscordId
+          ? {
+              "user.id": senderDiscordId,
+              "user.mention": `<@${senderDiscordId}>`,
+              "user.name": senderName,
+              "user.tag": senderName,
+              "user.displayname": senderName,
+            }
+          : {}),
+      };
+
+      const replaceSendVars = (val: any): any => {
+        if (typeof val === "string") {
+          return val.replace(/\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g, (m, k) => {
+            const key = k.trim();
+            return sendVars[key] !== undefined ? sendVars[key] : m;
+          });
+        }
+        if (Array.isArray(val)) return val.map(replaceSendVars);
+        if (val !== null && typeof val === "object") {
+          const out: any = {};
+          for (const [k, v] of Object.entries(val)) out[k] = replaceSendVars(v);
+          return out;
+        }
+        return val;
+      };
+
+      weaoInterpolated = replaceSendVars(weaoInterpolated);
+
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
         const { scrubMentions, sanitizeAllowedMentions } = await import(
           "../utils/mentionScrubber.js"

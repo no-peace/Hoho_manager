@@ -85,7 +85,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       <div className="flex gap-4">
         <div className="min-w-0 flex-1">
           {embed.title && (
-            <p className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5]">
+            <div className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5]">
               {embed.url ? (
                 <a
                   href={embed.url}
@@ -93,12 +93,12 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
                   rel="noreferrer"
                   className="text-link hover:underline"
                 >
-                  {embed.title}
+                  <Markdown content={embed.title} className="inline" />
                 </a>
               ) : (
-                embed.title
+                <Markdown content={embed.title} />
               )}
-            </p>
+            </div>
           )}
 
           {embed.description && <Markdown content={embed.description} className="text-sm" />}
