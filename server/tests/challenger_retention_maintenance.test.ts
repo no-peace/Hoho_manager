@@ -20,7 +20,7 @@ describe("PERF-04: Retention & Maintenance Sweeps", () => {
     // Keep db connection open
   });
 
-  it("prunes old action logs and audit logs while retaining fresh entries", async () => {
+  it("prunes old action logs while retaining fresh entries, and safely ignores dropped audit_log_entries", async () => {
     const oldTimestamp = new Date(Date.now() - 40 * 86_400_000)
       .toISOString()
       .replace("T", " ")
@@ -29,22 +29,12 @@ describe("PERF-04: Retention & Maintenance Sweeps", () => {
 
     const oldIntId = `int_old_${runId}`;
     const freshIntId = `int_fresh_${runId}`;
-    const oldAuditType = `test_old_${runId}`;
-    const freshAuditType = `test_fresh_${runId}`;
 
     await db.run(
       `INSERT INTO action_logs (interaction_id, user_id, status, executed_at)
        VALUES (@oldIntId, 'user1', 'success', @oldTimestamp),
               (@freshIntId, 'user1', 'success', @freshTimestamp)`,
       { oldIntId, freshIntId, oldTimestamp, freshTimestamp },
-    );
-
-    const oldMs = Date.now() - 100 * 86_400_000;
-    const freshMs = Date.now();
-    await db.run(
-      `INSERT INTO audit_log_entries (guild_id, type, created_at)
-       VALUES ('g1', ?, ?), ('g1', ?, ?)`,
-      [oldAuditType, oldMs, freshAuditType, freshMs],
     );
 
     const report = await runDatabaseMaintenance({
@@ -54,19 +44,13 @@ describe("PERF-04: Retention & Maintenance Sweeps", () => {
     });
 
     expect(report.actionLogsPruned).toBeGreaterThanOrEqual(1);
-    expect(report.auditLogsPruned).toBeGreaterThanOrEqual(1);
+    expect(report.auditLogsPruned).toBe(0); // Zero-DB logging: audit logs are not stored in SQLite
 
     const remainingLogs = await db.query<{ interaction_id: string }>(
       `SELECT interaction_id FROM action_logs WHERE interaction_id IN (?, ?)`,
       [oldIntId, freshIntId],
     );
     expect(remainingLogs.map((r) => r.interaction_id)).toEqual([freshIntId]);
-
-    const remainingAudits = await db.query<{ type: string }>(
-      `SELECT type FROM audit_log_entries WHERE type IN (?, ?)`,
-      [oldAuditType, freshAuditType],
-    );
-    expect(remainingAudits.map((r) => r.type)).toEqual([freshAuditType]);
   });
 
   it("prunes orphaned ad-hoc actions but never prunes template-backed actions", async () => {

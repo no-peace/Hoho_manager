@@ -231,6 +231,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
       <TextField
         label="Label"
         limit={Limits.components.label}
+        variables
         value={component.label ?? ""}
         placeholder="Button Text"
         onChange={(event) => update({ label: event.target.value })}
@@ -297,6 +298,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
       <TextField
         label="Placeholder"
         limit={Limits.components.placeholder}
+        variables
         value={component.placeholder ?? ""}
         placeholder="Choose an option…"
         onChange={(event) => update({ placeholder: event.target.value })}
@@ -351,6 +353,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               <TextField
                 label="Label"
                 limit={Limits.components.selectOptionLabel}
+                variables
                 value={option.label}
                 placeholder="Option label"
                 onChange={(event) => replaceOption(index, { label: event.target.value })}
@@ -358,6 +361,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               <TextField
                 label="Value"
                 limit={Limits.components.selectOptionLabel}
+                variables
                 value={option.value}
                 placeholder="option_value"
                 onChange={(event) => replaceOption(index, { value: event.target.value })}
@@ -368,6 +372,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               <TextField
                 label="Description"
                 limit={100}
+                variables
                 value={option.description ?? ""}
                 placeholder="Short description..."
                 onChange={(event) => replaceOption(index, { description: event.target.value || undefined })}

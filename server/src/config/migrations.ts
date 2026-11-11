@@ -276,5 +276,24 @@ export const migrations: readonly Migration[] = [
         ON active_sessions(expires_at);
     `,
   },
+  {
+    id: "008_staff_and_logging_enhancements",
+    sql: `
+      -- 1. Drop audit_log_entries table to conserve SQLite database storage (logs stream directly to Discord log channel)
+      DROP TABLE IF EXISTS audit_log_entries;
+
+      -- 2. Add avatar and global name to staff_access
+      ALTER TABLE staff_access ADD COLUMN discord_avatar TEXT;
+      ALTER TABLE staff_access ADD COLUMN discord_global_name TEXT;
+
+      -- 3. Add expanded permission controls to staff_access
+      ALTER TABLE staff_access ADD COLUMN can_use_webhooks INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE staff_access ADD COLUMN can_override_profile INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE staff_access ADD COLUMN can_attach_files INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE staff_access ADD COLUMN can_use_components_v2 INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE staff_access ADD COLUMN can_use_weao_exploits INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE staff_access ADD COLUMN allowed_guild_ids TEXT NOT NULL DEFAULT '["*"]';
+    `,
+  },
 ];
 

@@ -19,42 +19,50 @@ const parseGranular = (raw?: string | null): Record<string, number> => {
   }
 };
 
-/** GET /api/access  list all staff records */
+const formatStaffRecord = (r: import("../repositories/staffRepository.js").StaffRecord) => {
+  const defaultAvatarIndex = (BigInt(r.discord_user_id || "0") >> 22n) % 6n;
+  return {
+    ...r,
+    discord_avatar: r.discord_avatar ?? null,
+    discord_global_name: r.discord_global_name ?? null,
+    avatarUrl: r.discord_avatar
+      ? `https://cdn.discordapp.com/avatars/${r.discord_user_id}/${r.discord_avatar}.png`
+      : `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`,
+    allowed_channel_ids: JSON.parse(r.allowed_channel_ids || "[]"),
+    allowed_role_mention_ids: JSON.parse(r.allowed_role_mention_ids || "[]"),
+    allowed_guild_ids: r.allowed_guild_ids ? JSON.parse(r.allowed_guild_ids) : ["*"],
+    can_use_webhooks: r.can_use_webhooks ?? 1,
+    can_override_profile: r.can_override_profile ?? 1,
+    can_attach_files: r.can_attach_files ?? 1,
+    can_use_components_v2: r.can_use_components_v2 ?? 1,
+    can_use_weao_exploits: r.can_use_weao_exploits ?? 1,
+    granular_cooldowns: parseGranular(r.granular_cooldowns),
+    granular_rate_limits: parseGranular(r.granular_rate_limits),
+  };
+};
+
+/** GET /api/access — list all staff records */
 router.get(
   "/",
   requireHeadAdmin,
   asyncHandler(async (_req, res) => {
     const records = await staffRepository.findAll();
-    return res.json(
-      records.map((r) => ({
-        ...r,
-        allowed_channel_ids: JSON.parse(r.allowed_channel_ids),
-        allowed_role_mention_ids: JSON.parse(r.allowed_role_mention_ids),
-        granular_cooldowns: parseGranular(r.granular_cooldowns),
-        granular_rate_limits: parseGranular(r.granular_rate_limits),
-      })),
-    );
+    return res.json(records.map(formatStaffRecord));
   }),
 );
 
-/** GET /api/access/:discordUserId  get one record */
+/** GET /api/access/:discordUserId — get one record */
 router.get(
   "/:discordUserId",
   requireHeadAdmin,
   asyncHandler(async (req, res) => {
     const r = await staffRepository.findByDiscordId(req.params.discordUserId as string);
     if (!r) throw ApiError.notFound("Staff record not found");
-    return res.json({
-      ...r,
-      allowed_channel_ids: JSON.parse(r.allowed_channel_ids),
-      allowed_role_mention_ids: JSON.parse(r.allowed_role_mention_ids),
-      granular_cooldowns: parseGranular(r.granular_cooldowns),
-      granular_rate_limits: parseGranular(r.granular_rate_limits),
-    });
+    return res.json(formatStaffRecord(r));
   }),
 );
 
-/** POST /api/access  grant access to a Discord user */
+/** POST /api/access — grant access to a Discord user */
 router.post(
   "/",
   requireHeadAdmin,
@@ -62,6 +70,8 @@ router.post(
     const {
       discord_user_id,
       discord_username,
+      discord_global_name,
+      discord_avatar,
       granted_by_discord_id,
       is_active,
       expires_at,
@@ -76,6 +86,12 @@ router.post(
       can_mention_roles,
       allowed_role_mention_ids,
       max_messages_per_hour,
+      can_use_webhooks,
+      can_override_profile,
+      can_attach_files,
+      can_use_components_v2,
+      can_use_weao_exploits,
+      allowed_guild_ids,
       granular_cooldowns,
       granular_rate_limits,
       notes,
@@ -89,9 +105,32 @@ router.post(
       throw ApiError.badRequest("Staff record already exists for this user. Use PATCH to update.");
     }
 
+    let resolvedAvatar = discord_avatar ?? null;
+    let resolvedGlobalName = discord_global_name ?? null;
+
+    if (!resolvedAvatar || !resolvedGlobalName) {
+      try {
+        const { resolveBotToken } = await import("../services/discordService.js");
+        const token = await resolveBotToken();
+        const userRes = await fetch(`https://discord.com/api/v10/users/${discord_user_id}`, {
+          headers: { Authorization: `Bot ${token}` },
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (userRes.ok) {
+          const userData = (await userRes.json()) as any;
+          if (!resolvedAvatar && userData.avatar) resolvedAvatar = userData.avatar;
+          if (!resolvedGlobalName && userData.global_name) resolvedGlobalName = userData.global_name;
+        }
+      } catch {
+        // Non-blocking avatar lookup
+      }
+    }
+
     const record = await staffRepository.create({
       discord_user_id,
       discord_username: discord_username ?? discord_user_id,
+      discord_global_name: resolvedGlobalName,
+      discord_avatar: resolvedAvatar,
       granted_by_discord_id: granted_by_discord_id ?? "admin",
       is_active: is_active ?? 1,
       expires_at: expires_at ?? null,
@@ -106,6 +145,12 @@ router.post(
       can_mention_roles: can_mention_roles ?? 0,
       allowed_role_mention_ids: JSON.stringify(allowed_role_mention_ids ?? []),
       max_messages_per_hour: max_messages_per_hour ?? 10,
+      can_use_webhooks: can_use_webhooks ?? 1,
+      can_override_profile: can_override_profile ?? 1,
+      can_attach_files: can_attach_files ?? 1,
+      can_use_components_v2: can_use_components_v2 ?? 1,
+      can_use_weao_exploits: can_use_weao_exploits ?? 1,
+      allowed_guild_ids: JSON.stringify(allowed_guild_ids ?? ["*"]),
       granular_cooldowns:
         typeof granular_cooldowns === "string"
           ? granular_cooldowns
@@ -132,13 +177,7 @@ router.post(
       },
     });
 
-    return res.status(201).json({
-      ...record,
-      allowed_channel_ids: JSON.parse(record.allowed_channel_ids),
-      allowed_role_mention_ids: JSON.parse(record.allowed_role_mention_ids),
-      granular_cooldowns: parseGranular(record.granular_cooldowns),
-      granular_rate_limits: parseGranular(record.granular_rate_limits),
-    });
+    return res.status(201).json(formatStaffRecord(record));
   }),
 );
 
@@ -154,6 +193,8 @@ router.patch(
     const updateData: Record<string, unknown> = {};
     const allowed = [
       "discord_username",
+      "discord_global_name",
+      "discord_avatar",
       "is_active",
       "expires_at",
       "cooldown_seconds",
@@ -165,6 +206,11 @@ router.patch(
       "can_mention_here",
       "can_mention_roles",
       "max_messages_per_hour",
+      "can_use_webhooks",
+      "can_override_profile",
+      "can_attach_files",
+      "can_use_components_v2",
+      "can_use_weao_exploits",
       "notes",
     ];
     for (const key of allowed) {
@@ -175,6 +221,9 @@ router.patch(
     }
     if (req.body.allowed_role_mention_ids !== undefined) {
       updateData.allowed_role_mention_ids = JSON.stringify(req.body.allowed_role_mention_ids);
+    }
+    if (req.body.allowed_guild_ids !== undefined) {
+      updateData.allowed_guild_ids = JSON.stringify(req.body.allowed_guild_ids);
     }
     if (req.body.granular_cooldowns !== undefined) {
       updateData.granular_cooldowns =
@@ -206,17 +255,7 @@ router.patch(
       ) as Record<string, string>,
     });
 
-    return res.json(
-      updated
-        ? {
-            ...updated,
-            allowed_channel_ids: JSON.parse(updated.allowed_channel_ids),
-            allowed_role_mention_ids: JSON.parse(updated.allowed_role_mention_ids),
-            granular_cooldowns: parseGranular(updated.granular_cooldowns),
-            granular_rate_limits: parseGranular(updated.granular_rate_limits),
-          }
-        : undefined,
-    );
+    return res.json(updated ? formatStaffRecord(updated) : undefined);
   }),
 );
 

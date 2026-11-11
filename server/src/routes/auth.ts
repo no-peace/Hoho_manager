@@ -322,6 +322,14 @@ router.get(
                 can_mention_here: staffRecord.can_mention_here === 1,
                 can_mention_roles: staffRecord.can_mention_roles === 1,
                 allowed_role_mention_ids: allowedRoleMentionIds,
+                can_use_webhooks: staffRecord.can_use_webhooks !== 0,
+                can_override_profile: staffRecord.can_override_profile !== 0,
+                can_attach_files: staffRecord.can_attach_files !== 0,
+                can_use_components_v2: staffRecord.can_use_components_v2 !== 0,
+                can_use_weao_exploits: staffRecord.can_use_weao_exploits !== 0,
+                allowed_guild_ids: staffRecord.allowed_guild_ids
+                  ? JSON.parse(staffRecord.allowed_guild_ids)
+                  : ["*"],
               }
             : null,
       },

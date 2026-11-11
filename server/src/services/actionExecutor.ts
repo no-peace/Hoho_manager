@@ -18,7 +18,7 @@ export interface ExecuteResult {
   type: string | null;
 }
 
-const replaceVariables = (obj: any, vars: Record<string, any>): any => {
+export const replaceVariables = (obj: any, vars: Record<string, any>): any => {
   if (typeof obj === "string") {
     return obj.replace(/\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g, (match, key) => {
       const trimmedKey = key.trim();
@@ -43,30 +43,7 @@ const snowflakeToUnix = (id: string) => {
   return Math.floor(timestamp / 1000);
 };
 
-export const executeCustomId = async (
-  customId: string,
-  interaction: DiscordInteraction,
-): Promise<ExecuteResult> => {
-  // Support standard action IDs or stored modal IDs
-  const parsed = parseCustomId(customId);
-  const messageId = interaction.message?.id;
-  const stored = await actionRepository.findByCustomId(customId, messageId);
-
-  if (!parsed && stored.length === 0) {
-    return { response: undefined, handled: false, type: null };
-  }
-
-  const actionType = parsed?.type ?? stored[0]?.action_type ?? "modal_submit";
-
-  const steps: ExecutableStep[] =
-    stored.length > 0
-      ? stored.map((definition) => ({
-          id: definition.id,
-          type: definition.action_type,
-          config: definition.config ?? {},
-        }))
-      : [{ id: null, type: actionType, config: parsed?.params ?? {} }];
-
+export const extractVariablesFromInteraction = (interaction: DiscordInteraction): Record<string, unknown> => {
   const user = interaction.member?.user ?? interaction.user;
   const member = interaction.member as any;
   const userId = user?.id ?? "unknown";
@@ -74,8 +51,23 @@ export const executeCustomId = async (
   const username = user?.username ?? "User";
   const displayname = member?.nick ?? user?.global_name ?? username;
 
-  const clanTagMatch = displayname.match(/^\[(.*?)\]|^\((.*?)\)|^\{(.*?)\}/);
-  const clantag = clanTagMatch ? (clanTagMatch[1] || clanTagMatch[2] || clanTagMatch[3]) : "";
+  // 1. Official Discord Clan Tag (member.clan.tag or user.clan.tag)
+  const officialClanTag =
+    member?.clan?.tag ??
+    (user as any)?.clan?.tag ??
+    member?.user?.clan?.tag ??
+    (user as any)?.primary_guild?.tag;
+
+  // 2. Bracketed tag anywhere in display name, nick, or username (e.g. [TAG], (TAG), {TAG})
+  const textToScan = `${displayname} ${username}`;
+  const bracketMatch = textToScan.match(/[\[\(\{]([A-Za-z0-9_\-\.]{1,16})[\]\)\}]/);
+
+  const clantag =
+    typeof officialClanTag === "string" && officialClanTag.trim()
+      ? officialClanTag.trim()
+      : bracketMatch
+      ? bracketMatch[1]
+      : "";
 
   const unixNow = Math.floor(Date.now() / 1000);
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
@@ -85,6 +77,8 @@ export const executeCustomId = async (
   const selectedValues: string[] = Array.isArray(interaction.data?.values)
     ? interaction.data.values.map(String)
     : [];
+
+  const messageId = interaction.message?.id;
 
   // Master variable dictionary
   const variables: Record<string, unknown> = {
@@ -165,6 +159,42 @@ export const executeCustomId = async (
       }
     }
   }
+
+  return variables;
+};
+
+export const resolveActionVariables = (textOrObj: any, interaction: DiscordInteraction): any => {
+  const vars = extractVariablesFromInteraction(interaction);
+  return replaceVariables(textOrObj, vars);
+};
+
+export const executeCustomId = async (
+  customId: string,
+  interaction: DiscordInteraction,
+): Promise<ExecuteResult> => {
+  // Support standard action IDs or stored modal IDs
+  const parsed = parseCustomId(customId);
+  const messageId = interaction.message?.id;
+  const stored = await actionRepository.findByCustomId(customId, messageId);
+
+  if (!parsed && stored.length === 0) {
+    return { response: undefined, handled: false, type: null };
+  }
+
+  const actionType = parsed?.type ?? stored[0]?.action_type ?? "modal_submit";
+
+  const steps: ExecutableStep[] =
+    stored.length > 0
+      ? stored.map((definition) => ({
+          id: definition.id,
+          type: definition.action_type,
+          config: definition.config ?? {},
+        }))
+      : [{ id: null, type: actionType, config: parsed?.params ?? {} }];
+
+  const variables = extractVariablesFromInteraction(interaction);
+  const user = interaction.member?.user ?? interaction.user;
+  const userId = user?.id ?? "unknown";
 
   const botToken = await discord.resolveBotToken().catch(() => null);
   const context: Omit<ActionContext, "config"> = {

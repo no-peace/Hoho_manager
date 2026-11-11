@@ -174,25 +174,58 @@ router.post(
       weaoInterpolated = replaceSendVars(weaoInterpolated);
 
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+        // 1. Strict Role & Mention Permission Check (alert/block if unauthorized)
+        const { findUnauthorizedMentions } = await import("../utils/mentionScrubber.js");
+        const violations = findUnauthorizedMentions(weaoInterpolated, staffCtx.record);
+        if (violations.length > 0) {
+          const mentionLabels = violations.map((v) => v.mention).join(", ");
+          const { auditLog } = await import("../services/auditLog.js");
+          auditLog({
+            event: "ROLE_MENTION_BLOCKED",
+            actorDiscordId: staffCtx.staffId ?? undefined,
+            actorUsername: staffCtx.record.discord_username,
+            channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+            reason: `Attempted unauthorized ping: ${mentionLabels}`,
+            ip: req.ip,
+          });
+          throw ApiError.forbidden(
+            `You do not have permission to ping: ${mentionLabels}. Please remove these mentions before sending.`,
+          );
+        }
+
+        // 2. Profile Override permission check
+        if (
+          staffCtx.record.can_override_profile === 0 &&
+          (weaoInterpolated.username || weaoInterpolated.avatar_url)
+        ) {
+          throw ApiError.forbidden("Your staff account is not permitted to override username or avatar.");
+        }
+
+        // 3. Components V2 permission check
+        if (
+          staffCtx.record.can_use_components_v2 === 0 &&
+          Array.isArray(weaoInterpolated.components) &&
+          weaoInterpolated.components.length > 0
+        ) {
+          throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
+        }
+
+        // 4. WEAO Exploits permission check
+        if (
+          staffCtx.record.can_use_weao_exploits === 0 &&
+          (exploitHint || JSON.stringify(weaoInterpolated).includes("{exploit."))
+        ) {
+          throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
+        }
+
         const { scrubMentions, sanitizeAllowedMentions } = await import(
           "../utils/mentionScrubber.js"
         );
-        const { payload: scrubbed, stripped } = scrubMentions(
+        const { payload: scrubbed } = scrubMentions(
           weaoInterpolated,
           staffCtx.record,
         );
-        const finalMsg = sanitizeAllowedMentions(scrubbed, staffCtx.record);
-        if (stripped.length > 0) {
-          const { auditLog } = await import("../services/auditLog.js");
-          auditLog({
-            event: "MENTION_BLOCKED",
-            actorDiscordId: staffCtx.staffId ?? undefined,
-            channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
-            reason: `Stripped disallowed mentions: ${stripped.join(", ")}`,
-            ip: req.ip,
-          });
-        }
-        return finalMsg;
+        return sanitizeAllowedMentions(scrubbed, staffCtx.record);
       }
       return weaoInterpolated;
     };
@@ -252,6 +285,15 @@ router.post(
       throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
     }
     const files = [...uploadedFiles, ...urlFiles];
+
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      if (staffCtx.record.can_attach_files === 0 && files.length > 0) {
+        throw ApiError.forbidden("Your staff account is not permitted to attach files.");
+      }
+      if (mode === "webhook" && staffCtx.record.can_use_webhooks === 0) {
+        throw ApiError.forbidden("Your staff account is not permitted to send via Discord Webhooks.");
+      }
+    }
 
     if (mode === "webhook") {
       if (typeof webhookUrl !== "string") {

@@ -30,6 +30,8 @@ export const AccessPanel = () => {
     setFormData({
       discord_user_id: "",
       discord_username: "",
+      discord_global_name: "",
+      discord_avatar: null,
       is_active: 1,
       can_send_messages: 1,
       can_edit_messages: 0,
@@ -38,6 +40,12 @@ export const AccessPanel = () => {
       can_mention_everyone: 0,
       can_mention_here: 0,
       can_mention_roles: 0,
+      can_use_webhooks: 1,
+      can_override_profile: 1,
+      can_attach_files: 1,
+      can_use_components_v2: 1,
+      can_use_weao_exploits: 1,
+      allowed_guild_ids: ["*"],
       cooldown_seconds: 30,
       max_messages_per_hour: 10,
       allowed_channel_ids: [],
@@ -164,7 +172,9 @@ export const AccessPanel = () => {
                         onClick={() =>
                           updateForm({
                             discord_user_id: currentUser.id,
-                            discord_username: currentUser.global_name || currentUser.username,
+                            discord_username: currentUser.username,
+                            discord_global_name: currentUser.global_name || currentUser.username,
+                            discord_avatar: currentUser.avatar,
                           })
                         }
                         className="text-[11px] text-[#5865f2] hover:underline font-semibold"
@@ -179,8 +189,48 @@ export const AccessPanel = () => {
                     guildId={selectedGuildId || undefined}
                     value={formData.discord_user_id || ""}
                     onChange={(val) => updateForm({ discord_user_id: val as string })}
+                    onSelectOption={(opt) => {
+                      updateForm({
+                        discord_user_id: opt.id,
+                        discord_username: opt.username || opt.name,
+                        discord_global_name: opt.global_name || null,
+                        discord_avatar: opt.avatar || null,
+                      });
+                    }}
                     placeholder="Search member..."
                   />
+                  {formData.discord_user_id && (
+                    <div className="mt-2 flex items-center gap-3 p-2.5 rounded bg-[#2b2d31] border border-[#35373c]/50">
+                      {formData.discord_avatar ? (
+                        <img
+                          src={`https://cdn.discordapp.com/avatars/${formData.discord_user_id}/${formData.discord_avatar}.png`}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover border border-[#35373c]"
+                          onError={(e) => {
+                            const defaultAvatar = `https://cdn.discordapp.com/embed/avatars/${(BigInt(formData.discord_user_id || "0") >> 22n) % 6n}.png`;
+                            (e.target as HTMLImageElement).src = defaultAvatar;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                          {(formData.discord_global_name || formData.discord_username || "U").slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white truncate">
+                            {formData.discord_global_name || formData.discord_username || "Selected User"}
+                          </span>
+                          <span className="text-[10px] font-mono text-[#949ba4] bg-[#1e1f22] px-1.5 py-0.2 rounded border border-[#111214]">
+                            {formData.discord_user_id}
+                          </span>
+                        </div>
+                        {formData.discord_username && (
+                          <p className="text-[11px] text-[#949ba4] truncate">@{formData.discord_username}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <TextField
@@ -220,6 +270,31 @@ export const AccessPanel = () => {
                   label="Can Manage Templates"
                   checked={formData.can_manage_templates === 1}
                   onChange={(c) => updateForm({ can_manage_templates: c ? 1 : 0 })}
+                />
+                <Checkbox
+                  label="Can Send via Webhook Mode"
+                  checked={formData.can_use_webhooks !== 0}
+                  onChange={(c) => updateForm({ can_use_webhooks: c ? 1 : 0 })}
+                />
+                <Checkbox
+                  label="Can Override Bot Name/Avatar (Webhook)"
+                  checked={formData.can_override_profile !== 0}
+                  onChange={(c) => updateForm({ can_override_profile: c ? 1 : 0 })}
+                />
+                <Checkbox
+                  label="Can Attach / Upload Files"
+                  checked={formData.can_attach_files !== 0}
+                  onChange={(c) => updateForm({ can_attach_files: c ? 1 : 0 })}
+                />
+                <Checkbox
+                  label="Can Use Components V2"
+                  checked={formData.can_use_components_v2 !== 0}
+                  onChange={(c) => updateForm({ can_use_components_v2: c ? 1 : 0 })}
+                />
+                <Checkbox
+                  label="Can Bind WEAO Exploits"
+                  checked={formData.can_use_weao_exploits !== 0}
+                  onChange={(c) => updateForm({ can_use_weao_exploits: c ? 1 : 0 })}
                 />
               </div>
             </div>
@@ -323,32 +398,49 @@ export const AccessPanel = () => {
             ) : (
               records.map(record => {
                 const isCurrentUser = currentUser && record.discord_user_id === currentUser.id;
+                const defaultAvatar = `https://cdn.discordapp.com/embed/avatars/${(BigInt(record.discord_user_id || "0") >> 22n) % 6n}.png`;
+                const avatarSrc = record.avatarUrl || (record.discord_avatar ? `https://cdn.discordapp.com/avatars/${record.discord_user_id}/${record.discord_avatar}.png` : defaultAvatar);
+
                 return (
                   <div key={record.discord_user_id} className={`flex items-center justify-between p-3 rounded border ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <strong className="text-[#dbdee1]">{record.discord_username || 'Unknown User'}</strong>
-                        {isCurrentUser && (
-                          <span className="text-[10px] font-bold text-[#5865f2] bg-[#5865f2]/15 border border-[#5865f2]/30 px-1.5 py-0.5 rounded">
-                            (You)
-                          </span>
-                        )}
-                        <span className="text-xs font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">{record.discord_user_id}</span>
-                        {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#f28b8b] bg-[#da373c]/10 px-1.5 py-0.5 rounded">Disabled</span>}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={avatarSrc}
+                        alt=""
+                        className="w-9 h-9 rounded-full object-cover border border-[#35373c] shrink-0 bg-[#2b2d31]"
+                        onError={(e) => { (e.target as HTMLImageElement).src = defaultAvatar; }}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong className="text-[#dbdee1]">{record.discord_global_name || record.discord_username || 'Unknown Staff'}</strong>
+                          {record.discord_username && (
+                            <span className="text-xs text-[#949ba4]">@{record.discord_username}</span>
+                          )}
+                          {isCurrentUser && (
+                            <span className="text-[10px] font-bold text-[#5865f2] bg-[#5865f2]/15 border border-[#5865f2]/30 px-1.5 py-0.5 rounded">
+                              (You)
+                            </span>
+                          )}
+                          <span className="text-xs font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">{record.discord_user_id}</span>
+                          {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#f28b8b] bg-[#da373c]/10 px-1.5 py-0.5 rounded">Disabled</span>}
+                        </div>
+                        <div className="text-xs text-[#949ba4] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                          <span>Cooldown: {record.cooldown_seconds}s</span>
+                          <span>Max/hr: {record.max_messages_per_hour}</span>
+                          <span>Channels: {record.allowed_channel_ids.length === 0 ? 'NONE' : record.allowed_channel_ids.includes('*') ? 'ALL' : record.allowed_channel_ids.length}</span>
+                          <span>Webhooks: {record.can_use_webhooks === 0 ? 'No' : 'Yes'}</span>
+                          <span>Overrides: {record.can_override_profile === 0 ? 'No' : 'Yes'}</span>
+                          <span>Files: {record.can_attach_files === 0 ? 'No' : 'Yes'}</span>
+                        </div>
                       </div>
-                    <div className="text-xs text-[#949ba4] mt-1 flex gap-3">
-                      <span>Cooldown: {record.cooldown_seconds}s</span>
-                      <span>Max/hr: {record.max_messages_per_hour}</span>
-                      <span>Allowed Channels: {record.allowed_channel_ids.length === 0 ? 'NONE' : record.allowed_channel_ids.includes('*') ? 'ALL' : record.allowed_channel_ids.length}</span>
+                    </div>
+                    <div className="flex gap-1 shrink-0 ml-2">
+                      <IconButton icon={Edit2} label="Edit" onClick={() => handleEdit(record)} className="text-[#b5bac1] hover:text-white" />
+                      <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#f28b8b] hover:bg-[#da373c]/10" />
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <IconButton icon={Edit2} label="Edit" onClick={() => handleEdit(record)} className="text-[#b5bac1] hover:text-white" />
-                    <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#f28b8b] hover:bg-[#da373c]/10" />
-                  </div>
-                </div>
-              );
-            })
+                );
+              })
             )}
           </div>
         )}

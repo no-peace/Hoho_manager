@@ -1,5 +1,5 @@
 import type { ActionType } from "@dmb/shared";
-import { actionFailed, ephemeral } from "./responses.js";
+import { actionFailed } from "./responses.js";
 import {
   configString,
   toMessagePayload,
@@ -36,7 +36,7 @@ export const run = async ({
 
   try {
     await discord.sendChannelMessageWithToken(channelId, payload, botToken);
-    return ephemeral("\ud83d\udce8 Message sent.");
+    return undefined;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`send_message failed in ${channelId}: ${reason}`);

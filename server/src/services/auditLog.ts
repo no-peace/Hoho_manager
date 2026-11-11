@@ -27,6 +27,7 @@ export type AuditEvent =
   | "DELETE_MESSAGE"
   | "SEND_BLOCKED"
   | "MENTION_BLOCKED"
+  | "ROLE_MENTION_BLOCKED"
   | "COOLDOWN_HIT"
   | "RATE_LIMIT_HIT"
   | "STAFF_GRANTED"
@@ -34,38 +35,52 @@ export type AuditEvent =
   | "STAFF_UPDATED"
   | "STAFF_ACCESS_DENIED"
   | "CHANNEL_DENIED"
-  | "PERMISSION_DENIED";
+  | "PERMISSION_DENIED"
+  | "PROFILE_OVERRIDE_BLOCKED"
+  | "TEMPLATE_SAVED"
+  | "TEMPLATE_DELETED"
+  | "LOGIN_SUCCESS";
 
 const EVENT_COLORS: Record<AuditEvent, number> = {
-  SEND_MESSAGE:        0x23A55A,  // green
-  EDIT_MESSAGE:        0xFAA61A,  // yellow
-  DELETE_MESSAGE:      0xFF6B35,  // orange
-  SEND_BLOCKED:        0xDA373C,  // red
-  MENTION_BLOCKED:     0xDA373C,  // red
-  COOLDOWN_HIT:        0xFAA61A,  // yellow
-  RATE_LIMIT_HIT:      0xDA373C,  // red
-  STAFF_GRANTED:       0x5865F2,  // blurple
-  STAFF_REVOKED:       0xDA373C,  // red
-  STAFF_UPDATED:       0x5865F2,  // blurple
-  STAFF_ACCESS_DENIED: 0xDA373C,  // red
-  CHANNEL_DENIED:      0xDA373C,  // red
-  PERMISSION_DENIED:   0xDA373C,  // red
+  SEND_MESSAGE:             0x23A55A,  // green
+  EDIT_MESSAGE:             0xFAA61A,  // yellow
+  DELETE_MESSAGE:           0xFF6B35,  // orange
+  SEND_BLOCKED:             0xDA373C,  // red
+  MENTION_BLOCKED:          0xDA373C,  // red
+  ROLE_MENTION_BLOCKED:     0xDA373C,  // red
+  COOLDOWN_HIT:             0xFAA61A,  // yellow
+  RATE_LIMIT_HIT:           0xDA373C,  // red
+  STAFF_GRANTED:            0x5865F2,  // blurple
+  STAFF_REVOKED:            0xDA373C,  // red
+  STAFF_UPDATED:            0x5865F2,  // blurple
+  STAFF_ACCESS_DENIED:      0xDA373C,  // red
+  CHANNEL_DENIED:           0xDA373C,  // red
+  PERMISSION_DENIED:        0xDA373C,  // red
+  PROFILE_OVERRIDE_BLOCKED: 0xDA373C,  // red
+  TEMPLATE_SAVED:           0x5865F2,  // blurple
+  TEMPLATE_DELETED:         0xFF6B35,  // orange
+  LOGIN_SUCCESS:            0x23A55A,  // green
 };
 
 const EVENT_LABELS: Record<AuditEvent, string> = {
-  SEND_MESSAGE:        "✅ Message Sent",
-  EDIT_MESSAGE:        "✏️ Message Edited",
-  DELETE_MESSAGE:      "🗑️ Message Deleted",
-  SEND_BLOCKED:        "🚫 Send Blocked",
-  MENTION_BLOCKED:     "🚫 Mention Stripped",
-  COOLDOWN_HIT:        "⏱️ Cooldown Active",
-  RATE_LIMIT_HIT:      "🛑 Rate Limit Hit",
-  STAFF_GRANTED:       "🔑 Staff Access Granted",
-  STAFF_REVOKED:       "❌ Staff Access Revoked",
-  STAFF_UPDATED:       "🔄 Staff Permissions Updated",
-  STAFF_ACCESS_DENIED: "🚫 Access Denied  Not Staff",
-  CHANNEL_DENIED:      "🚫 Channel Not Allowed",
-  PERMISSION_DENIED:   "🚫 Permission Denied",
+  SEND_MESSAGE:             "✅ Message Sent",
+  EDIT_MESSAGE:             "✏️ Message Edited",
+  DELETE_MESSAGE:           "🗑️ Message Deleted",
+  SEND_BLOCKED:             "🚫 Send Blocked",
+  MENTION_BLOCKED:          "🚫 Mention Blocked",
+  ROLE_MENTION_BLOCKED:     "🚫 Role Mention Blocked",
+  COOLDOWN_HIT:             "⏱️ Cooldown Active",
+  RATE_LIMIT_HIT:           "🛑 Rate Limit Hit",
+  STAFF_GRANTED:            "🔑 Staff Access Granted",
+  STAFF_REVOKED:            "❌ Staff Access Revoked",
+  STAFF_UPDATED:            "🔄 Staff Permissions Updated",
+  STAFF_ACCESS_DENIED:      "🚫 Access Denied — Not Staff",
+  CHANNEL_DENIED:           "🚫 Channel Not Allowed",
+  PERMISSION_DENIED:        "🚫 Permission Denied",
+  PROFILE_OVERRIDE_BLOCKED: "🚫 Profile Override Blocked",
+  TEMPLATE_SAVED:           "💾 Template Saved",
+  TEMPLATE_DELETED:         "🗑️ Template Deleted",
+  LOGIN_SUCCESS:            "🔐 Operator Logged In",
 };
 
 export interface AuditContext {
@@ -149,34 +164,28 @@ const buildEmbed = (ctx: AuditContext) => {
 
 /**
  * Fire-and-forget: post an audit embed to the configured log channel.
- * Never throws  a logging failure must never break the request.
+ * Never stores in SQLite to conserve database storage.
+ * Never throws — a logging failure must never break the request.
  */
 export const auditLog = (ctx: AuditContext): void => {
   void (async () => {
     try {
-      const logChannelId = await settingsService.getEffectiveLogChannelId(ctx.guildId);
-      const botToken = env.discord.botToken;
+      // Check if this event type is enabled for Discord channel dispatch in Head Admin Settings
+      const settings = ctx.guildId ? await settingsService.getSettings(ctx.guildId) : await settingsService.getSettings("__global__");
+      const loggingConfig = (settings?.extra_settings as any)?.logging_config as { enabled_channel_events?: string[] } | undefined;
 
-      if (ctx.guildId) {
-        try {
-          const { auditLogRepository } = await import("../repositories/auditLogRepository.js");
-          await auditLogRepository.create({
-            guildId: ctx.guildId,
-            channelId: ctx.channelId,
-            messageId: ctx.messageId,
-            userId: ctx.actorDiscordId,
-            userName: ctx.actorUsername,
-            type: ctx.event.toLowerCase(),
-            reason: ctx.reason,
-            details: ctx.details,
-          });
-        } catch {
-          // DB persistence failure should not interrupt execution
+      if (loggingConfig && Array.isArray(loggingConfig.enabled_channel_events)) {
+        if (!loggingConfig.enabled_channel_events.includes(ctx.event)) {
+          // Event disabled by Head Admin for Discord logging
+          return;
         }
       }
 
+      const logChannelId = await settingsService.getEffectiveLogChannelId(ctx.guildId);
+      const botToken = env.discord.botToken;
+
       if (!logChannelId || !botToken) {
-        // Log locally when no channel is configured  still useful during dev.
+        // Log locally when no channel is configured — still useful during dev.
         log.info(`[AUDIT] ${ctx.event} actor=${ctx.actorDiscordId ?? "?"} reason=${ctx.reason ?? "-"}`);
         return;
       }

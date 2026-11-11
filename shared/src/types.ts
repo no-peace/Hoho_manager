@@ -490,3 +490,83 @@ export interface DiscordMemberSummary {
   avatar: string | null;
 }
 
+/* ── Staff Access & Logging Types ────────────────────────────────────────── */
+
+export interface LoggingConfig {
+  enabled_channel_events: string[];
+}
+
+export interface StaffRecord {
+  id: number;
+  discord_user_id: string;
+  discord_username: string;
+  discord_global_name?: string | null;
+  discord_avatar?: string | null;
+  avatarUrl?: string | null;
+  granted_by_discord_id: string;
+  is_active: number;
+  expires_at: string | null;
+  cooldown_seconds: number;
+  can_send_messages: number;
+  can_edit_messages: number;
+  can_delete_messages: number;
+  can_manage_templates: number;
+  allowed_channel_ids: string[];
+  can_mention_everyone: number;
+  can_mention_here: number;
+  can_mention_roles: number;
+  allowed_role_mention_ids: string[];
+  max_messages_per_hour: number;
+  can_use_webhooks?: number;
+  can_override_profile?: number;
+  can_attach_files?: number;
+  can_use_components_v2?: number;
+  can_use_weao_exploits?: number;
+  allowed_guild_ids?: string[];
+  granular_cooldowns?: Record<string, number>;
+  granular_rate_limits?: Record<string, number>;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffMentionPermissions {
+  can_mention_everyone: boolean;
+  can_mention_here: boolean;
+  can_mention_roles: boolean;
+  allowed_role_mention_ids: string[];
+  can_use_webhooks?: boolean;
+  can_override_profile?: boolean;
+  can_attach_files?: boolean;
+  can_use_components_v2?: boolean;
+  can_use_weao_exploits?: boolean;
+  allowed_guild_ids?: string[];
+}
+
+export interface LoggingConfig {
+  enabled_channel_events: string[];
+}
+
+export const ALL_LOG_EVENTS = [
+  { event: "SEND_MESSAGE", label: "Message Sent", category: "Messages" },
+  { event: "EDIT_MESSAGE", label: "Message Edited", category: "Messages" },
+  { event: "DELETE_MESSAGE", label: "Message Deleted", category: "Messages" },
+  { event: "SEND_BLOCKED", label: "Send Blocked", category: "Security & Policy" },
+  { event: "MENTION_BLOCKED", label: "Mention Blocked (@everyone/@here)", category: "Security & Policy" },
+  { event: "ROLE_MENTION_BLOCKED", label: "Role Mention Blocked", category: "Security & Policy" },
+  { event: "PERMISSION_DENIED", label: "Permission Denied", category: "Security & Policy" },
+  { event: "PROFILE_OVERRIDE_BLOCKED", label: "Profile Override Blocked", category: "Security & Policy" },
+  { event: "CHANNEL_DENIED", label: "Channel Denied", category: "Security & Policy" },
+  { event: "COOLDOWN_HIT", label: "Cooldown Active", category: "Rate Limits" },
+  { event: "RATE_LIMIT_HIT", label: "Rate Limit Exceeded", category: "Rate Limits" },
+  { event: "STAFF_GRANTED", label: "Staff Access Granted", category: "Staff & Auth" },
+  { event: "STAFF_REVOKED", label: "Staff Access Revoked", category: "Staff & Auth" },
+  { event: "STAFF_UPDATED", label: "Staff Permissions Updated", category: "Staff & Auth" },
+  { event: "STAFF_ACCESS_DENIED", label: "Unauthorized Access Denied", category: "Staff & Auth" },
+  { event: "LOGIN_SUCCESS", label: "Operator Login", category: "Staff & Auth" },
+  { event: "TEMPLATE_SAVED", label: "Template Saved", category: "Templates" },
+  { event: "TEMPLATE_DELETED", label: "Template Deleted", category: "Templates" },
+] as const;
+
+export const DEFAULT_LOG_EVENTS = ALL_LOG_EVENTS.map((e) => e.event);
+

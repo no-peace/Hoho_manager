@@ -5,6 +5,9 @@ export interface StaffRecord {
   id: number;
   discord_user_id: string;
   discord_username: string;
+  discord_global_name?: string | null;
+  discord_avatar?: string | null;
+  avatarUrl?: string | null;
   granted_by_discord_id: string;
   is_active: number;
   expires_at: string | null;
@@ -19,6 +22,12 @@ export interface StaffRecord {
   can_mention_roles: number;
   allowed_role_mention_ids: string[];
   max_messages_per_hour: number;
+  can_use_webhooks?: number;
+  can_override_profile?: number;
+  can_attach_files?: number;
+  can_use_components_v2?: number;
+  can_use_weao_exploits?: number;
+  allowed_guild_ids?: string[];
   notes: string | null;
   created_at: string;
   updated_at: string;

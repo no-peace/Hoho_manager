@@ -4,6 +4,8 @@ export interface StaffRecord {
   id: number;
   discord_user_id: string;
   discord_username: string;
+  discord_global_name?: string | null;
+  discord_avatar?: string | null;
   granted_by_discord_id: string;
   is_active: number;
   expires_at: string | null;
@@ -18,6 +20,12 @@ export interface StaffRecord {
   can_mention_roles: number;
   allowed_role_mention_ids: string; // JSON
   max_messages_per_hour: number;
+  can_use_webhooks?: number;
+  can_override_profile?: number;
+  can_attach_files?: number;
+  can_use_components_v2?: number;
+  can_use_weao_exploits?: number;
+  allowed_guild_ids?: string; // JSON
   granular_cooldowns?: string; // JSON
   granular_rate_limits?: string; // JSON
   notes: string | null;
@@ -45,6 +53,8 @@ export const staffRepository = {
   async create(data: {
     discord_user_id: string;
     discord_username: string;
+    discord_global_name?: string | null;
+    discord_avatar?: string | null;
     granted_by_discord_id: string;
     is_active?: number;
     expires_at?: string | null;
@@ -59,29 +69,41 @@ export const staffRepository = {
     can_mention_roles?: number;
     allowed_role_mention_ids?: string;
     max_messages_per_hour?: number;
+    can_use_webhooks?: number;
+    can_override_profile?: number;
+    can_attach_files?: number;
+    can_use_components_v2?: number;
+    can_use_weao_exploits?: number;
+    allowed_guild_ids?: string;
     granular_cooldowns?: string;
     granular_rate_limits?: string;
     notes?: string | null;
   }): Promise<StaffRecord> {
     await db.run(`
       INSERT INTO staff_access (
-        discord_user_id, discord_username, granted_by_discord_id,
+        discord_user_id, discord_username, discord_global_name, discord_avatar, granted_by_discord_id,
         is_active, expires_at, cooldown_seconds,
         can_send_messages, can_edit_messages, can_delete_messages, can_manage_templates,
         allowed_channel_ids,
         can_mention_everyone, can_mention_here, can_mention_roles, allowed_role_mention_ids,
-        max_messages_per_hour, granular_cooldowns, granular_rate_limits, notes
+        max_messages_per_hour, can_use_webhooks, can_override_profile, can_attach_files,
+        can_use_components_v2, can_use_weao_exploits, allowed_guild_ids,
+        granular_cooldowns, granular_rate_limits, notes
       ) VALUES (
-        @discord_user_id, @discord_username, @granted_by_discord_id,
+        @discord_user_id, @discord_username, @discord_global_name, @discord_avatar, @granted_by_discord_id,
         @is_active, @expires_at, @cooldown_seconds,
         @can_send_messages, @can_edit_messages, @can_delete_messages, @can_manage_templates,
         @allowed_channel_ids,
         @can_mention_everyone, @can_mention_here, @can_mention_roles, @allowed_role_mention_ids,
-        @max_messages_per_hour, @granular_cooldowns, @granular_rate_limits, @notes
+        @max_messages_per_hour, @can_use_webhooks, @can_override_profile, @can_attach_files,
+        @can_use_components_v2, @can_use_weao_exploits, @allowed_guild_ids,
+        @granular_cooldowns, @granular_rate_limits, @notes
       )
     `, {
       discord_user_id: data.discord_user_id,
       discord_username: data.discord_username,
+      discord_global_name: data.discord_global_name ?? null,
+      discord_avatar: data.discord_avatar ?? null,
       granted_by_discord_id: data.granted_by_discord_id,
       is_active: data.is_active ?? 1,
       expires_at: data.expires_at ?? null,
@@ -96,6 +118,12 @@ export const staffRepository = {
       can_mention_roles: data.can_mention_roles ?? 0,
       allowed_role_mention_ids: data.allowed_role_mention_ids ?? '[]',
       max_messages_per_hour: data.max_messages_per_hour ?? 10,
+      can_use_webhooks: data.can_use_webhooks ?? 1,
+      can_override_profile: data.can_override_profile ?? 1,
+      can_attach_files: data.can_attach_files ?? 1,
+      can_use_components_v2: data.can_use_components_v2 ?? 1,
+      can_use_weao_exploits: data.can_use_weao_exploits ?? 1,
+      allowed_guild_ids: data.allowed_guild_ids ?? '["*"]',
       granular_cooldowns: data.granular_cooldowns ?? '{}',
       granular_rate_limits: data.granular_rate_limits ?? '{}',
       notes: data.notes ?? null,

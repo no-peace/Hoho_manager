@@ -5,10 +5,19 @@ import api from "../../api/client";
 
 export type SelectType = "guild" | "channel" | "role" | "member";
 
+export interface SelectOption {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  username?: string;
+  global_name?: string | null;
+}
+
 interface Props {
   type: SelectType;
   value: string | string[];
   onChange: (value: string | string[]) => void;
+  onSelectOption?: (option: SelectOption) => void;
   guildId?: string;
   multiple?: boolean;
   placeholder?: string;
@@ -19,6 +28,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   type,
   value,
   onChange,
+  onSelectOption,
   guildId,
   multiple = false,
   placeholder = "Select...",
@@ -27,7 +37,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   const { guilds, channels, roles, fetchGuilds, fetchChannels, fetchRoles } = useDiscordCacheStore();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [memberResults, setMemberResults] = useState<{ id: string; name: string }[]>([]);
+  const [memberResults, setMemberResults] = useState<SelectOption[]>([]);
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const updateRect = () => {
@@ -87,6 +97,9 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                 : m.global_name
                 ? `${m.global_name} (${m.username})`
                 : (m.username || m.id || ""),
+              avatar: m.avatar || m.user?.avatar || null,
+              username: m.username || m.user?.username || "",
+              global_name: m.global_name || m.user?.global_name || null,
             }))
           );
         } catch {
@@ -97,7 +110,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
     }
   }, [search, type, open, guildId]);
 
-  let options: { id: string; name: string }[] = [];
+  let options: SelectOption[] = [];
   if (type === "guild" && guilds) {
     options = guilds.map((g) => ({ id: g.id, name: g.name }));
   } else if (type === "channel" && guildId && channels[guildId]) {
@@ -116,16 +129,18 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
   const isSnowflake = /^\d{17,20}$/.test(search.trim());
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: string, opt?: SelectOption) => {
     if (multiple) {
       const valArr = Array.isArray(value) ? value : (value ? [value] : []);
       if (valArr.includes(id)) {
         onChange(valArr.filter((v) => v !== id));
       } else {
         onChange([...valArr, id]);
+        if (opt && onSelectOption) onSelectOption(opt);
       }
     } else {
       onChange(id);
+      if (opt && onSelectOption) onSelectOption(opt);
       setOpen(false);
     }
   };
@@ -133,7 +148,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   const handleManualId = () => {
     const trimmed = search.trim();
     if (/^\d{17,20}$/.test(trimmed)) {
-      toggleSelection(trimmed);
+      toggleSelection(trimmed, { id: trimmed, name: trimmed });
       setSearch("");
     }
   };
@@ -268,10 +283,25 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                         className={`px-2 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between gap-2 min-w-0 ${
                           isSelected ? "bg-[#5865f2] text-white" : "text-[#dbdee1] hover:bg-[#35373c]"
                         }`}
-                        onClick={() => toggleSelection(opt.id)}
+                        onClick={() => toggleSelection(opt.id, opt)}
                         title={opt.name}
                       >
-                        <span className="truncate min-w-0 flex-1">{opt.name}</span>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {type === "member" && (
+                            opt.avatar ? (
+                              <img
+                                src={`https://cdn.discordapp.com/avatars/${opt.id}/${opt.avatar}.webp?size=24`}
+                                alt=""
+                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#1e1f22]"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-[#5865f2] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+                                {opt.name.charAt(0).toUpperCase()}
+                              </div>
+                            )
+                          )}
+                          <span className="truncate min-w-0 flex-1">{opt.name}</span>
+                        </div>
                         {multiple && isSelected && <span className="text-xs font-bold shrink-0 ml-1">✓</span>}
                       </div>
                     );

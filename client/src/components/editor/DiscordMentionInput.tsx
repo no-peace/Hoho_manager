@@ -276,7 +276,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
   const mentionableRoles = useMemo(() => {
     if (isUnrestrictedMentions) return guildRoles;
-    if (!staffPerms?.can_mention_roles) return EMPTY_ROLES;
+    if (!staffPerms) return EMPTY_ROLES;
+    if (staffPerms.can_mention_roles) return guildRoles;
     const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
     if (allowedIds.includes("*")) return guildRoles;
     return guildRoles.filter((r) => allowedIds.includes(r.id));

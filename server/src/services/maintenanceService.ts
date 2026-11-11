@@ -43,24 +43,9 @@ export const pruneActionLogs = async (retentionDays = 30, batchSize = 500): Prom
   return total;
 };
 
-export const pruneAuditLogs = async (retentionDays = 90, batchSize = 500): Promise<number> => {
-  const cutoff = Date.now() - retentionDays * 86_400_000;
-  let total = 0;
-  while (true) {
-    const { changes } = await db.run(
-      `DELETE FROM audit_log_entries
-       WHERE id IN (
-         SELECT id FROM audit_log_entries
-         WHERE created_at <= @cutoff
-         LIMIT @batchSize
-       )`,
-      { cutoff, batchSize },
-    );
-    total += changes;
-    if (changes < batchSize) break;
-    await new Promise((resolve) => setImmediate(resolve));
-  }
-  return total;
+export const pruneAuditLogs = async (_retentionDays = 90, _batchSize = 500): Promise<number> => {
+  // audit_log_entries table dropped to conserve SQLite database storage space
+  return 0;
 };
 
 export const pruneOrphanedAdHocActions = async (

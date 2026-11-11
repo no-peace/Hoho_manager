@@ -21,22 +21,13 @@ describe("PERF-06: Database Indexes Verification", () => {
     expect(indexNames.has("idx_flow_states_expires")).toBe(true);
     expect(indexNames.has("idx_flow_states_token_expires")).toBe(true);
     expect(indexNames.has("idx_staff_cooldowns_lookup")).toBe(true);
-    expect(indexNames.has("idx_audit_log_created")).toBe(true);
-    expect(indexNames.has("idx_audit_log_user")).toBe(true);
+    // Note: audit_log_entries was dropped in migration 008 in favor of zero-DB Discord logging
     expect(indexNames.has("idx_action_logs_executed_at")).toBe(true);
     expect(indexNames.has("idx_bot_profiles_user")).toBe(true);
     expect(indexNames.has("idx_sessions_expires")).toBe(true);
   });
 
   it("verifies query plans utilize created indexes instead of full table scans", async () => {
-    const planAudit = await db.query<{ detail: string }>(
-      "EXPLAIN QUERY PLAN SELECT * FROM audit_log_entries WHERE created_at <= ?",
-      [Date.now()],
-    );
-    expect(
-      planAudit.some((row) => row.detail.includes("USING INDEX idx_audit_log_created")),
-    ).toBe(true);
-
     const planActionLogs = await db.query<{ detail: string }>(
       "EXPLAIN QUERY PLAN SELECT * FROM action_logs WHERE executed_at <= ?",
       ["2026-11-10 00:00:00"],

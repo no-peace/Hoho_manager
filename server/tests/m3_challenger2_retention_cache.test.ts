@@ -266,24 +266,7 @@ describe("Milestone 3 Challenger 2: Retention & Cache Empirical Verification", (
         );
       }
 
-      // Seed 5 stale audit_logs (>90d) and 5 fresh audit_logs
-      const staleAuditTypes: string[] = [];
-      const freshAuditTypes: string[] = [];
-      for (let i = 0; i < 5; i++) {
-        const staleType = `audit_stale_${testTag}_${i}`;
-        const freshType = `audit_fresh_${testTag}_${i}`;
-        staleAuditTypes.push(staleType);
-        freshAuditTypes.push(freshType);
-
-        await db.run(
-          `INSERT INTO audit_log_entries (guild_id, type, created_at) VALUES ('guild_ret', ?, ?)`,
-          [staleType, staleAuditMs],
-        );
-        await db.run(
-          `INSERT INTO audit_log_entries (guild_id, type, created_at) VALUES ('guild_ret', ?, ?)`,
-          [freshType, freshAuditMs],
-        );
-      }
+      // Note: audit_log_entries dropped in migration 008 in favor of zero-DB Discord channel logging
 
       // Seed 5 stale ad-hoc action_definitions (template_id IS NULL, >30d)
       // and 5 fresh ad-hoc action_definitions (template_id IS NULL, 1d)
@@ -338,7 +321,7 @@ describe("Milestone 3 Challenger 2: Retention & Cache Empirical Verification", (
       });
 
       expect(report.actionLogsPruned).toBeGreaterThanOrEqual(5);
-      expect(report.auditLogsPruned).toBeGreaterThanOrEqual(5);
+      expect(report.auditLogsPruned).toBe(0); // Zero-DB logging
       expect(report.orphanedAdHocActionsPruned).toBeGreaterThanOrEqual(5);
 
       // Verify stale action_logs deleted, fresh action_logs retained
@@ -348,16 +331,6 @@ describe("Milestone 3 Challenger 2: Retention & Cache Empirical Verification", (
       }
       for (const id of freshActionIds) {
         const found = await db.get("SELECT id FROM action_logs WHERE interaction_id = ?", [id]);
-        expect(found).toBeDefined();
-      }
-
-      // Verify stale audit_logs deleted, fresh audit_logs retained
-      for (const t of staleAuditTypes) {
-        const found = await db.get("SELECT id FROM audit_log_entries WHERE type = ?", [t]);
-        expect(found).toBeUndefined();
-      }
-      for (const t of freshAuditTypes) {
-        const found = await db.get("SELECT id FROM audit_log_entries WHERE type = ?", [t]);
         expect(found).toBeDefined();
       }
 

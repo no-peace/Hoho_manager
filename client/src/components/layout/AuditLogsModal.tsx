@@ -99,9 +99,13 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
             Loading audit logs...
           </div>
         ) : logs.length === 0 ? (
-          <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31]">
-            <Shield size={24} className="mx-auto mb-2 opacity-50" />
-            No audit log entries recorded for this guild yet.
+          <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31] p-6 space-y-2">
+            <Shield size={28} className="mx-auto text-[#5865f2] opacity-80" />
+            <p className="font-semibold text-[#dbdee1]">Audit Logs Stream to Discord</p>
+            <p className="max-w-md mx-auto text-[11px] text-[#949ba4]">
+              Audit events are dispatched directly to your configured Discord log channel to prevent SQLite storage bloat.
+              You can configure which events are sent in <span className="text-white font-semibold">Head Admin Settings</span>.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[500px] border border-[#2b2d31] rounded-lg">

@@ -118,16 +118,121 @@ const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void
   );
 };
 
+const ACTUAL_VARIABLES = VARIABLES.filter(
+  (v): v is { tag: string; label: string; desc: string } => typeof (v as any).tag === "string",
+);
+
+interface VariableAutocompleteProps {
+  query: string;
+  onSelect: (tag: string) => void;
+  onClose: () => void;
+  dropdownPos?: "top" | "bottom";
+}
+
+const VariableAutocompletePopover = ({
+  query,
+  onSelect,
+  dropdownPos = "bottom",
+}: VariableAutocompleteProps) => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const q = query.toLowerCase();
+  const filtered = useMemo(
+    () =>
+      ACTUAL_VARIABLES.filter(
+        (v) =>
+          !q ||
+          v.tag.toLowerCase().includes(q) ||
+          v.desc.toLowerCase().includes(q) ||
+          v.label.toLowerCase().includes(q),
+      ).slice(0, 8),
+    [q],
+  );
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  if (filtered.length === 0) return null;
+
+  return (
+    <div
+      className={`absolute left-0 z-50 w-72 bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1 ${
+        dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"
+      }`}
+    >
+      <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
+        <span>Variables ({filtered.length})</span>
+        <span className="text-[9px] font-normal lowercase">Click to insert</span>
+      </div>
+      <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+        {filtered.map((item, idx) => (
+          <button
+            key={item.tag}
+            type="button"
+            className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
+              idx === selectedIndex
+                ? "bg-[#5865f2] text-white"
+                : "text-[#dbdee1] hover:bg-[#2b2d31]"
+            }`}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onSelect(item.tag);
+            }}
+          >
+            <div className="min-w-0 flex-1">
+              <span className="font-mono font-semibold text-xs">{item.tag}</span>
+              <p
+                className={`text-[10px] truncate ${
+                  idx === selectedIndex ? "text-[#dee0fc]" : "text-[#949ba4]"
+                }`}
+              >
+                {item.desc}
+              </p>
+            </div>
+            <span
+              className={`text-[10px] font-mono px-1 rounded ml-1 shrink-0 ${
+                idx === selectedIndex ? "bg-[#4752c4]" : "bg-[#2b2d31] text-[#949ba4]"
+              }`}
+            >
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const TextField = ({ label, hint, limit, variables = false, className, ...props }: TextFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const showVars = Boolean(variables) && !props.disabled && (!props.type || props.type === "text");
+  const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+
+  const checkInlineVariable = (val: string, cursor: number) => {
+    if (!showVars) return;
+    const textBefore = val.slice(0, cursor);
+    const lastOpen = textBefore.lastIndexOf("{");
+    if (lastOpen !== -1) {
+      const token = textBefore.slice(lastOpen);
+      if (!/[}\n\r]/.test(token)) {
+        const q = token.slice(1);
+        if (!/\s/.test(q)) {
+          setAcState({ open: true, query: q, start: lastOpen, end: cursor });
+          return;
+        }
+      }
+    }
+    setAcState(null);
+  };
+
   const handleInsertVariable = (tag: string) => {
     const input = inputRef.current;
     if (!input || !props.onChange) return;
     const currentVal = asText(props.value);
-    const start = input.selectionStart ?? currentVal.length;
-    const end = input.selectionEnd ?? currentVal.length;
+    const start = acState?.open ? acState.start : (input.selectionStart ?? currentVal.length);
+    const end = acState?.open ? acState.end : (input.selectionEnd ?? currentVal.length);
     const newVal = currentVal.substring(0, start) + tag + currentVal.substring(end);
+    setAcState(null);
     const e = { target: { value: newVal } } as any;
     props.onChange(e);
     setTimeout(() => {
@@ -137,36 +242,113 @@ export const TextField = ({ label, hint, limit, variables = false, className, ..
       } catch {}
     }, 0);
   };
+
   return (
     <FieldShell label={label ?? (limit !== undefined ? label : undefined)} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
-        <input ref={inputRef} className={`field w-full ${showVars ? "pr-10" : "pr-3"} bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]`} {...props} />
+        <input
+          ref={inputRef}
+          className={`field w-full ${showVars ? "pr-10" : "pr-3"} bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]`}
+          {...props}
+          onChange={(e) => {
+            props.onChange?.(e);
+            checkInlineVariable(e.target.value, e.target.selectionEnd ?? e.target.value.length);
+          }}
+          onKeyUp={(e) => {
+            props.onKeyUp?.(e);
+            const input = inputRef.current;
+            if (input) checkInlineVariable(input.value, input.selectionEnd ?? input.value.length);
+          }}
+          onBlur={(e) => {
+            props.onBlur?.(e);
+            setTimeout(() => setAcState(null), 200);
+          }}
+        />
         {showVars && <InlineRichPickerTrigger onInsert={handleInsertVariable} />}
+        {showVars && acState?.open && (
+          <VariableAutocompletePopover
+            query={acState.query}
+            onSelect={handleInsertVariable}
+            onClose={() => setAcState(null)}
+          />
+        )}
       </div>
     </FieldShell>
   );
 };
 
-export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> { label?: string; hint?: ReactNode; limit?: number; }
+export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> { label?: string; hint?: ReactNode; limit?: number; variables?: boolean; }
 
-export const TextArea = ({ label, hint, limit, rows = 4, className, ...props }: TextAreaProps) => {
+export const TextArea = ({ label, hint, limit, rows = 4, variables = true, className, ...props }: TextAreaProps) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const showVars = Boolean(variables) && !props.disabled;
+  const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+
+  const checkInlineVariable = (val: string, cursor: number) => {
+    if (!showVars) return;
+    const textBefore = val.slice(0, cursor);
+    const lastOpen = textBefore.lastIndexOf("{");
+    if (lastOpen !== -1) {
+      const token = textBefore.slice(lastOpen);
+      if (!/[}\n\r]/.test(token)) {
+        const q = token.slice(1);
+        if (!/\s/.test(q)) {
+          setAcState({ open: true, query: q, start: lastOpen, end: cursor });
+          return;
+        }
+      }
+    }
+    setAcState(null);
+  };
+
   const handleInsertVariable = (tag: string) => {
     const input = textAreaRef.current;
     if (!input || !props.onChange) return;
     const currentVal = asText(props.value);
-    const start = input.selectionStart ?? currentVal.length;
-    const end = input.selectionEnd ?? currentVal.length;
+    const start = acState?.open ? acState.start : (input.selectionStart ?? currentVal.length);
+    const end = acState?.open ? acState.end : (input.selectionEnd ?? currentVal.length);
     const newVal = currentVal.substring(0, start) + tag + currentVal.substring(end);
+    setAcState(null);
     const e = { target: { value: newVal } } as any;
     props.onChange(e);
-    setTimeout(() => { input.focus(); input.setSelectionRange(start + tag.length, start + tag.length); }, 0);
+    setTimeout(() => {
+      try {
+        input.focus();
+        input.setSelectionRange(start + tag.length, start + tag.length);
+      } catch {}
+    }, 0);
   };
+
   return (
     <FieldShell label={label} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
-        <textarea ref={textAreaRef} rows={rows} className="field resize-y w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] py-2" {...props} />
-        <InlineRichPickerTrigger onInsert={handleInsertVariable} />
+        <textarea
+          ref={textAreaRef}
+          rows={rows}
+          className="field resize-y w-full pr-10 bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] py-2"
+          {...props}
+          onChange={(e) => {
+            props.onChange?.(e);
+            checkInlineVariable(e.target.value, e.target.selectionEnd ?? e.target.value.length);
+          }}
+          onKeyUp={(e) => {
+            props.onKeyUp?.(e);
+            const input = textAreaRef.current;
+            if (input) checkInlineVariable(input.value, input.selectionEnd ?? input.value.length);
+          }}
+          onBlur={(e) => {
+            props.onBlur?.(e);
+            setTimeout(() => setAcState(null), 200);
+          }}
+        />
+        {showVars && <InlineRichPickerTrigger onInsert={handleInsertVariable} />}
+        {showVars && acState?.open && (
+          <VariableAutocompletePopover
+            query={acState.query}
+            onSelect={handleInsertVariable}
+            onClose={() => setAcState(null)}
+          />
+        )}
       </div>
     </FieldShell>
   );

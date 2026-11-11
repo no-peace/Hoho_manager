@@ -16,6 +16,82 @@ export interface ScrubResult {
   stripped: string[];
 }
 
+export interface UnauthorizedMentionViolation {
+  type: "everyone" | "here" | "role";
+  mention: string;
+  roleId?: string;
+}
+
+// Role mention pattern: <@&123456789012345678> or <@123456789012345678>
+const ROLE_OR_USER_MENTION_RE = /<@&?(\d{17,20})>/g;
+
+export const findUnauthorizedMentions = (
+  obj: unknown,
+  perms: MentionPermissions,
+): UnauthorizedMentionViolation[] => {
+  const violations: UnauthorizedMentionViolation[] = [];
+  const scanned = new Set<string>();
+
+  let allowedRoleIds: string[] = [];
+  try {
+    allowedRoleIds = typeof perms.allowed_role_mention_ids === "string"
+      ? JSON.parse(perms.allowed_role_mention_ids)
+      : Array.isArray(perms.allowed_role_mention_ids)
+      ? perms.allowed_role_mention_ids
+      : [];
+  } catch {
+    allowedRoleIds = [];
+  }
+
+  const canEveryone = Boolean(perms.can_mention_everyone);
+  const canHere = Boolean(perms.can_mention_here);
+  const allRolesAllowed = Boolean(perms.can_mention_roles) || allowedRoleIds.includes("*");
+
+  const scanText = (text: string) => {
+    // 1. Check @everyone
+    if (!canEveryone && /@everyone/i.test(text)) {
+      if (!scanned.has("@everyone")) {
+        violations.push({ type: "everyone", mention: "@everyone" });
+        scanned.add("@everyone");
+      }
+    }
+
+    // 2. Check @here
+    if (!canHere && /@here/i.test(text)) {
+      if (!scanned.has("@here")) {
+        violations.push({ type: "here", mention: "@here" });
+        scanned.add("@here");
+      }
+    }
+
+    // 3. Check role mentions: <@&123...> or <@123...> when targeting roles
+    const matches = text.matchAll(ROLE_OR_USER_MENTION_RE);
+    for (const match of matches) {
+      const id = match[1];
+      const rawMention = match[0];
+      // If it has & (explicit role mention) or if all roles are disallowed and not in allowed list
+      const isExplicitRole = rawMention.startsWith("<@&");
+      if (isExplicitRole && !allRolesAllowed && !allowedRoleIds.includes(id)) {
+        if (!scanned.has(rawMention)) {
+          violations.push({ type: "role", mention: rawMention, roleId: id });
+          scanned.add(rawMention);
+        }
+      }
+    }
+  };
+
+  const walk = (val: unknown) => {
+    if (typeof val === "string") scanText(val);
+    else if (Array.isArray(val)) val.forEach(walk);
+    else if (val !== null && typeof val === "object") {
+      for (const v of Object.values(val as Record<string, unknown>)) walk(v);
+    }
+  };
+
+  walk(obj);
+  return violations;
+};
+
 // Role mention pattern: <@&123456789012345678>
 const ROLE_MENTION_RE = /<@&(\d+)>/g;
 

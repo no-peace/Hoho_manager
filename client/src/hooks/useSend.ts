@@ -6,6 +6,8 @@ import { useProfileStore } from "../store/profileStore";
 import { SEND_MODES } from "../utils/constants";
 import type { EditorMode, SendModeValue } from "../utils/constants";
 import { isPayloadEmpty } from "../utils/discord";
+import { checkUnauthorizedMentions } from "../utils/mentionValidation";
+import { useGlobalStore } from "../store/globalStore";
 
 export interface SendResult {
   ok: boolean;
@@ -48,6 +50,15 @@ export const useSend = (): UseSendReturn => {
       let result: unknown;
       const isMulti = store.messages && store.messages.length > 1;
       const allPayloads = isMulti ? store.getAllPayloads() : [rawPayload];
+
+      const mentionCheck = checkUnauthorizedMentions(allPayloads);
+      if (!mentionCheck.valid) {
+        const errorMsg = `Permission Denied: You do not have permission to ping ${mentionCheck.violations.join(", ")}. Please remove unauthorized mentions before sending.`;
+        setSendState({ status: "error", error: errorMsg, result: null });
+        useGlobalStore.getState().showToast(errorMsg, "error");
+        return { ok: false, error: errorMsg };
+      }
+
       const payload = { ...rawPayload };
 
       // Local files ride as multipart `files`; external URL attachments are

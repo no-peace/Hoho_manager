@@ -1,5 +1,5 @@
 import type { ActionType } from "@dmb/shared";
-import { actionFailed, ephemeral } from "./responses.js";
+import { actionFailed } from "./responses.js";
 import {
   configNumber,
   configString,
@@ -41,7 +41,7 @@ export const run = async ({
 
   try {
     await discord.sendWebhook(url, payload, { wait: false });
-    return ephemeral("\ud83d\udce8 Sent.");
+    return undefined;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`send_webhook_message failed: ${reason}`);

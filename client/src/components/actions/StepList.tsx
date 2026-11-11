@@ -343,6 +343,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
         <div className="space-y-3">
           <TextField
             label="Modal Title"
+            variables
             value={asText(config.title)}
             placeholder="Application Form"
             onChange={(e) => patchConfig(index, { ...config, title: e.target.value })}
@@ -424,6 +425,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       <div className="flex-1">
                         <TextField
                           label="Field Label"
+                          variables
                           value={input.label}
                           placeholder="e.g. Why should we accept you?"
                           onChange={(e) => patchInput(fieldIdx, { label: e.target.value })}
@@ -457,6 +459,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
                     <TextField
                       label="Placeholder (optional)"
+                      variables
                       value={input.placeholder ?? ""}
                       placeholder="Type your answer here..."
                       onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
@@ -602,6 +605,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               ) : roleMode === "adaptive" ? (
                 <TextField
                   label="Role Variable (Adaptive)"
+                  variables
                   value={roleId}
                   placeholder="selected_role or {target_role_id}"
                   hint="Reads role ID dynamically from flow variable"
@@ -610,6 +614,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               ) : (
                 <TextField
                   label="Mirror Source Variable"
+                  variables
                   value={roleId}
                   placeholder="author.roles or target.role_id"
                   hint="Mirrors role from external context or variable"
@@ -679,6 +684,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             <TextArea
               key={field.key}
               label={field.label}
+              variables={true}
               value={asText(config[field.key])}
               placeholder={field.placeholder}
               onChange={(event) =>
@@ -690,7 +696,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
               key={field.key}
               label={field.label}
               type={field.type}
-              variables={field.key === "content" || field.key === "name"}
+              variables={true}
               value={asText(config[field.key])}
               placeholder={field.placeholder}
               onChange={(event) =>

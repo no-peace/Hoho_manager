@@ -21,6 +21,7 @@ import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 import { EDITOR_MODES } from "../../utils/constants";
+import { checkUnauthorizedMentions } from "../../utils/mentionValidation";
 
 export interface DispatchModalProps {
   open: boolean;
@@ -286,6 +287,16 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
         const store = useMessageStore.getState();
         const allPayloads = store.getAllPayloads();
         const payloadsToSend = allPayloads.length > 0 ? allPayloads : [store.getPayload()];
+
+        const mentionCheck = checkUnauthorizedMentions(payloadsToSend);
+        if (!mentionCheck.valid) {
+          const errorMsg = `Permission Denied: You do not have permission to ping ${mentionCheck.violations.join(", ")}. Please remove unauthorized mentions before dispatching.`;
+          setSendResult(errorMsg);
+          useGlobalStore.getState().showToast(errorMsg, "error");
+          setIsSending(false);
+          return;
+        }
+
         const attachedFiles = store.attachedFiles;
         const flows = useActionStore.getState().toRegistrations();
 
@@ -375,6 +386,16 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           : allPayloads.length > 0
             ? allPayloads
             : [store.getPayload()];
+
+      const mentionCheck = checkUnauthorizedMentions(payloadsToSend);
+      if (!mentionCheck.valid) {
+        const errorMsg = `Permission Denied: You do not have permission to ping ${mentionCheck.violations.join(", ")}. Please remove unauthorized mentions before dispatching.`;
+        setSendResult(errorMsg);
+        useGlobalStore.getState().showToast(errorMsg, "error");
+        setIsSending(false);
+        return;
+      }
+
       const attachedFiles = store.attachedFiles;
       const flows = useActionStore.getState().toRegistrations();
 
