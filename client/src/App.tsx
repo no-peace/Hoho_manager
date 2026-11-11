@@ -1084,7 +1084,7 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openBotModal("send", "webhook")}
-                        className="bg-[#5865f2] hover:bg-[#4752c4] text-white px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                        className="bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.98] text-white px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1.5 select-none"
                         title="Dispatch directly to Discord Webhook URL"
                       >
                         <Send size={13} /> Webhook
@@ -1095,14 +1095,14 @@ export const App: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openBotModal("send", "bot")}
-                          className="bg-[#248046] hover:bg-[#1a6334] text-white px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 border-r border-[#1a6334]"
+                          className="bg-[#248046] hover:bg-[#1a6334] active:scale-[0.98] text-white px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 border-r border-[#1a6334] select-none"
                         >
                           <Bot size={13} /> Bot Send
                         </button>
                         <button
                           type="button"
                           onClick={() => openBotModal("edit", "bot")}
-                          className="bg-[#1a6334] hover:bg-[#144f28] text-white px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1"
+                          className="bg-[#1a6334] hover:bg-[#144f28] active:scale-[0.98] text-white px-2.5 py-1.5 text-xs font-medium transition-all flex items-center gap-1 select-none"
                           title="Edit message via bot token"
                         >
                           <Edit3 size={11} /> Edit
@@ -1201,36 +1201,42 @@ export const App: React.FC = () => {
       {/* Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
       <nav
         aria-label="Mobile workspace navigation"
-        className="xl:hidden flex items-center bg-[#1e1f22] border-t border-[#111214] shrink-0 p-1.5 gap-1.5 z-30"
+        className="xl:hidden flex items-center bg-[#1e1f22]/95 backdrop-blur-md border-t border-[#111214] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         <button
           type="button"
           onClick={() => setMobileView("editor")}
-          className={`flex-1 py-2 rounded-md text-xs font-bold transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98] select-none ${
             mobileView === "editor"
-              ? "bg-[#5865f2] text-white"
-              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white"
+              ? "bg-[#5865f2] text-white shadow-md shadow-[#5865f2]/20"
+              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white border border-[#35373c]/50"
           }`}
         >
-          Editor ({displayMessages.length})
+          <Edit3 size={14} />
+          <span>Editor</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 font-mono">
+            {displayMessages.length}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => setMobileView("preview")}
-          className={`flex-1 py-2 rounded-md text-xs font-bold transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98] select-none ${
             mobileView === "preview"
-              ? "bg-[#5865f2] text-white"
-              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white"
+              ? "bg-[#5865f2] text-white shadow-md shadow-[#5865f2]/20"
+              : "bg-[#2b2d31] text-[#b5bac1] hover:text-white border border-[#35373c]/50"
           }`}
         >
-          Live Preview
+          <Eye size={14} />
+          <span>Preview</span>
         </button>
         <button
           type="button"
           onClick={() => openBotModal("send", "bot")}
-          className="px-3.5 py-2 rounded-md bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+          className="px-4 py-2.5 rounded-xl bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-all active:scale-[0.98] shadow-md shadow-[#248046]/20 shrink-0 flex items-center gap-1.5 select-none"
         >
-          <Bot size={13} /> Send
+          <Send size={13} />
+          <span>Dispatch</span>
         </button>
       </nav>
 

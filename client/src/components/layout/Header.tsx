@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-all select-none"
               title="Head Admin Settings"
             >
               <Settings size={14} className="text-[#949ba4]" />
@@ -147,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-all select-none"
               title="Configure Custom Bot Token"
             >
               <KeyRound size={14} className="text-[#f0b232]" />
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             <button
               type="button"
               onClick={onOpenBackups}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-all select-none"
               title="Saved Templates & Backups"
             >
               <FolderOpen size={14} className="text-[#949ba4]" />
@@ -174,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             <button
               type="button"
               onClick={() => setAccessOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 px-2.5 py-1.5 rounded transition-colors"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-all select-none"
               title="Staff Access Controls"
             >
               <Shield size={14} />
@@ -187,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] rounded-full pl-1 pr-2.5 py-1 transition-colors"
+                className="flex items-center gap-2 bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] border border-[#35373c] rounded-full pl-1 pr-2.5 py-1 transition-all select-none"
                 title="Account & Session Info"
               >
                 <img

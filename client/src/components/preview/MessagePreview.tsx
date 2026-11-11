@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Bot, Eye, Info, FileText, Link2, Music } from "lucide-react";
+import { Bot, Eye, Info, FileText, Link2, Music, Monitor, Smartphone } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
@@ -119,6 +119,8 @@ export const MessagePreview = () => {
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [density, setDensity] = useState<"cozy" | "compact">("cozy");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -148,156 +150,263 @@ export const MessagePreview = () => {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between border-b border-[#1e1f22] bg-[#2b2d31] px-4 py-2.5">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-white">
-          <Eye size={14} className="text-[#5865f2]" /> Preview
-        </h2>
-        <span className="rounded-md bg-[#1e1f22] px-2 py-0.5 text-[10px] font-medium text-[#949ba4]">
-          Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
-        </span>
+    <div className="flex min-h-0 flex-1 flex-col select-text">
+      {/* Enhanced Preview Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
+            <Eye size={14} className="text-[#5865f2]" /> Live Preview
+          </h2>
+          <span className="rounded-md bg-[#1e1f22] border border-[#111214] px-2 py-0.5 text-[10px] font-semibold text-[#949ba4]">
+            Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
+          </span>
+        </div>
+
+        {/* Viewport Device & Density Controls */}
+        <div className="flex items-center gap-1.5">
+          {displayMessages.length > 1 && (
+            <div className="flex items-center gap-1 bg-[#1e1f22] p-0.5 rounded-lg border border-[#111214] mr-1">
+              {displayMessages.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveMessageIndex?.(i)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                    i === activeMessageIndex
+                      ? "bg-[#5865f2] text-white shadow-xs"
+                      : "text-[#949ba4] hover:text-white"
+                  }`}
+                  title={`View Message ${i + 1}`}
+                >
+                  #{i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Desktop vs Mobile Simulation Toggle */}
+          <div className="flex items-center bg-[#1e1f22] p-0.5 rounded-lg border border-[#111214]">
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("desktop")}
+              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                previewDevice === "desktop"
+                  ? "bg-[#5865f2] text-white shadow-xs"
+                  : "text-[#949ba4] hover:text-[#dbdee1]"
+              }`}
+              title="Desktop View (Full Width Discord client)"
+            >
+              <Monitor size={12} />
+              <span className="hidden sm:inline text-[11px]">Desktop</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("mobile")}
+              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                previewDevice === "mobile"
+                  ? "bg-[#5865f2] text-white shadow-xs"
+                  : "text-[#949ba4] hover:text-[#dbdee1]"
+              }`}
+              title="Mobile View (375px iPhone/Android simulator)"
+            >
+              <Smartphone size={12} />
+              <span className="hidden sm:inline text-[11px]">Mobile</span>
+            </button>
+          </div>
+
+          {/* Cozy vs Compact Density */}
+          <button
+            type="button"
+            onClick={() => setDensity((d) => (d === "cozy" ? "compact" : "cozy"))}
+            className="px-2 py-1 rounded text-[11px] font-semibold bg-[#1e1f22] hover:bg-[#35373c] text-[#949ba4] hover:text-[#dbdee1] border border-[#111214] transition-colors"
+            title={`Switch to ${density === "cozy" ? "Compact" : "Cozy"} density`}
+          >
+            {density === "cozy" ? "Cozy" : "Compact"}
+          </button>
+        </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-4 space-y-3 custom-scrollbar">
-        {isAllEmpty ? (
-          <p className="flex items-center gap-2 text-xs text-[#949ba4]">
-            <Info size={13} /> Nothing to preview yet.
-          </p>
-        ) : (
-          displayMessages.map((message, index) => {
-            const isActive = index === activeMessageIndex;
-            const isMsgV2 =
-              Boolean((message.flags ?? 0) & MessageFlags.IsComponentsV2) ||
-              (message as any).mode === EDITOR_MODES.V2;
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 sm:p-4 custom-scrollbar">
+        {/* Responsive Container: Fluid on desktop or bounded phone mockup on mobile mode */}
+        <div
+          className={
+            previewDevice === "mobile"
+              ? "max-w-[390px] mx-auto my-2 bg-[#313338] border border-[#232428] rounded-2xl shadow-2xl p-3 min-h-[440px] transition-all"
+              : "w-full transition-all"
+          }
+        >
+          {previewDevice === "mobile" && (
+            <div className="flex items-center justify-between border-b border-[#232428] pb-2 mb-3 text-[11px] text-[#949ba4] select-none">
+              <span className="flex items-center gap-1 font-bold text-[#dbdee1]">
+                <span className="text-[#5865f2]">#</span> general
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1e1f22] text-[#949ba4]">
+                Mobile 390px
+              </span>
+            </div>
+          )}
 
-            const effectiveAvatar =
-              message.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
-            const effectiveUsername =
-              message.username || botIdentity?.username || "Message Builder";
+          {isAllEmpty ? (
+            <p className="flex items-center gap-2 text-xs text-[#949ba4] py-8 justify-center">
+              <Info size={14} /> Nothing to preview yet. Add content or embeds in the editor.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {displayMessages.map((message, index) => {
+                const isActive = index === activeMessageIndex;
+                const isMsgV2 =
+                  Boolean((message.flags ?? 0) & MessageFlags.IsComponentsV2) ||
+                  (message as any).mode === EDITOR_MODES.V2;
 
-            const prevMessage = index > 0 ? displayMessages[index - 1] : undefined;
-            const prevAvatar =
-              prevMessage?.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
-            const prevUsername =
-              prevMessage?.username || botIdentity?.username || "Message Builder";
+                const effectiveAvatar =
+                  message.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
+                const effectiveUsername =
+                  message.username || botIdentity?.username || "Message Builder";
 
-            const isConsecutive =
-              index > 0 &&
-              effectiveUsername === prevUsername &&
-              effectiveAvatar === prevAvatar;
+                const prevMessage = index > 0 ? displayMessages[index - 1] : undefined;
+                const prevAvatar =
+                  prevMessage?.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
+                const prevUsername =
+                  prevMessage?.username || botIdentity?.username || "Message Builder";
 
-            const actionRows = (message.components || []).filter(
-              (c) => c.type === ComponentType.ActionRow,
-            );
+                const isConsecutive =
+                  index > 0 &&
+                  density === "cozy" &&
+                  effectiveUsername === prevUsername &&
+                  effectiveAvatar === prevAvatar;
 
-            return (
-              <div
-                key={index}
-                onClick={() => setActiveMessageIndex?.(index)}
-                className={`group relative flex gap-3 p-2.5 rounded-lg transition-all cursor-pointer ${
-                  isActive
-                    ? "ring-2 ring-[#5865f2] bg-[#5865f2]/5 shadow-sm"
-                    : "hover:bg-[#2b2d31]/40"
-                } ${
-                  isConsecutive ? "pl-14 -mt-1" : "mt-2 first:mt-0"
-                }`}
-                title={`Message ${index + 1}${isActive ? " (Active)" : " - Click to edit"}`}
-              >
-                {!isConsecutive && (
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865f2]">
-                    {effectiveAvatar ? (
-                      <img
-                        src={effectiveAvatar}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          if (
-                            defaultDiscordAvatar &&
-                            e.currentTarget.src !== defaultDiscordAvatar
-                          ) {
-                            e.currentTarget.src = defaultDiscordAvatar;
-                          } else {
-                            e.currentTarget.style.display = "none";
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center">
-                        <Bot size={18} className="text-white" />
-                      </span>
-                    )}
-                  </div>
-                )}
+                const actionRows = (message.components || []).filter(
+                  (c) => c.type === ComponentType.ActionRow,
+                );
 
-                <div className="min-w-0 flex-1">
-                  {!isConsecutive && (
-                    <p className="flex items-center gap-2">
-                      <span className="text-[15px] font-medium text-[#f2f3f5]">
-                        {effectiveUsername}
-                      </span>
-                      <span className="rounded bg-[#5865f2] px-1 py-px text-[10px] font-semibold text-white">
-                        APP
-                      </span>
-                      <span className="text-xs text-[#949ba4]">
-                        Today at{" "}
-                        {now.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </p>
-                  )}
+                const timeString = now.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
 
-                  <div className="mt-0.5 space-y-2">
-                    {isMsgV2 ? (
-                      <div className="space-y-2 max-w-[520px]">
-                        {message.components &&
-                          message.components.map((component) => (
-                            <div key={component._id}>
-                              <TopLevelComponent component={component} />
-                            </div>
-                          ))}
-                        <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
-                          flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        {message.content && (
-                          <Markdown
-                            content={message.content}
-                            className="text-[15px] text-[#dbdee1]"
+                return (
+                  <div
+                    key={index}
+                    onClick={() => setActiveMessageIndex?.(index)}
+                    className={`group relative flex gap-3 p-2.5 rounded-xl transition-all cursor-pointer ${
+                      isActive
+                        ? "ring-2 ring-[#5865f2]/80 bg-[#5865f2]/5 shadow-sm"
+                        : "hover:bg-[#2b2d31]/40"
+                    } ${
+                      isConsecutive ? "pl-14 -mt-1" : "mt-2 first:mt-0"
+                    }`}
+                    title={`Message ${index + 1}${isActive ? " (Active)" : " - Click to edit"}`}
+                  >
+                    {/* Cozy mode avatar */}
+                    {density === "cozy" && !isConsecutive && (
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865f2] border border-[#111214]/40">
+                        {effectiveAvatar ? (
+                          <img
+                            src={effectiveAvatar}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              if (
+                                defaultDiscordAvatar &&
+                                e.currentTarget.src !== defaultDiscordAvatar
+                              ) {
+                                e.currentTarget.src = defaultDiscordAvatar;
+                              } else {
+                                e.currentTarget.style.display = "none";
+                              }
+                            }}
                           />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center">
+                            <Bot size={18} className="text-white" />
+                          </span>
                         )}
-
-                        {index === activeMessageIndex && attachedFiles.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-1 pb-1">
-                            {attachedFiles.map((file) => (
-                              <AttachmentPreviewItem key={file.id} file={file} />
-                            ))}
-                          </div>
-                        )}
-
-                        {message.embeds &&
-                          message.embeds.map((embed) => (
-                            <EmbedPreview key={embed._id} embed={embed} />
-                          ))}
-
-                        {actionRows.length > 0 && (
-                          <div className="space-y-1.5 pt-1">
-                            {actionRows.map((row) => (
-                              <ActionRowPreview key={row._id} component={row} />
-                            ))}
-                          </div>
-                        )}
-                      </>
+                      </div>
                     )}
+
+                    <div className="min-w-0 flex-1">
+                      {/* Cozy mode header */}
+                      {density === "cozy" && !isConsecutive && (
+                        <p className="flex items-center gap-2">
+                          <span className="text-[15px] font-medium text-[#f2f3f5]">
+                            {effectiveUsername}
+                          </span>
+                          <span className="rounded bg-[#5865f2] px-1 py-px text-[10px] font-semibold text-white">
+                            APP
+                          </span>
+                          <span className="text-xs text-[#949ba4]">
+                            Today at {timeString}
+                          </span>
+                        </p>
+                      )}
+
+                      {/* Compact mode inline header */}
+                      {density === "compact" && (
+                        <div className="flex items-baseline gap-1.5 text-xs text-[#949ba4] mb-0.5">
+                          <span className="font-mono text-[10px] text-[#80848e] shrink-0">
+                            {timeString}
+                          </span>
+                          <span className="font-semibold text-white truncate max-w-[150px]">
+                            {effectiveUsername}
+                          </span>
+                          <span className="rounded bg-[#5865f2] px-1 text-[9px] font-bold text-white uppercase">
+                            APP
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="mt-0.5 space-y-2">
+                        {isMsgV2 ? (
+                          <div className="space-y-2 max-w-[520px]">
+                            {message.components &&
+                              message.components.map((component) => (
+                                <div key={component._id}>
+                                  <TopLevelComponent component={component} />
+                                </div>
+                              ))}
+                            <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
+                              flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            {message.content && (
+                              <Markdown
+                                content={message.content}
+                                className="text-[15px] text-[#dbdee1] leading-relaxed break-words"
+                              />
+                            )}
+
+                            {index === activeMessageIndex && attachedFiles.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-1 pb-1">
+                                {attachedFiles.map((file) => (
+                                  <AttachmentPreviewItem key={file.id} file={file} />
+                                ))}
+                              </div>
+                            )}
+
+                            {message.embeds &&
+                              message.embeds.map((embed) => (
+                                <EmbedPreview key={embed._id} embed={embed} />
+                              ))}
+
+                            {actionRows.length > 0 && (
+                              <div className="space-y-1.5 pt-1">
+                                {actionRows.map((row) => (
+                                  <ActionRowPreview key={row._id} component={row} />
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

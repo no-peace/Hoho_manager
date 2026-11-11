@@ -957,7 +957,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   return (
     <div
       onClick={() => ensureActive()}
-      className={`rounded-lg bg-[#292b2f] border transition-all ${
+      className={`rounded-xl bg-[#292b2f] border transition-all ${
         isActive
           ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_4px_16px_rgba(0,0,0,0.25)]"
           : "border-[#1e1f22] hover:border-[#383a40]"
@@ -966,7 +966,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       {/* ── Message Collapsible Trigger Header (Discohook style) ── */}
       <div
         className={`flex items-center justify-between px-3 py-2.5 bg-[#232428] select-none ${
-          isOpen ? "rounded-t-[7px] border-b border-[#1e1f22]" : "rounded-[7px]"
+          isOpen ? "rounded-t-xl border-b border-[#1e1f22]" : "rounded-xl"
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -1076,7 +1076,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
       {/* ── Message Body Panel ── */}
       {isOpen && (
-        <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-[7px]">
+        <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-xl">
           {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
             {/* ── Webhook Profile Override Sub-Section (UI-01) ── */}
