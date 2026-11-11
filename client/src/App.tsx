@@ -916,11 +916,8 @@ export const App: React.FC = () => {
 
   const addMessage = useMessageStore((state) => state.addMessage);
 
-  const [botModalChannel, setBotModalChannel] = useState<"bot" | "webhook">("bot");
-
-  const openBotModal = (actionMode: "send" | "edit", channel: "bot" | "webhook" = "bot") => {
+  const openBotModal = (actionMode: "send" | "edit" = "send") => {
     setBotModalMode(actionMode);
-    setBotModalChannel(channel);
     setBotModalOpen(true);
   };
 
@@ -1078,30 +1075,20 @@ export const App: React.FC = () => {
                       </Button>
                     </div>
 
-                    {/* Bot & Webhook Dispatch Controls */}
+                    {/* Bot Dispatch Controls */}
                     <div className="flex items-center gap-2">
-                      {/* Webhook Send Button (UI-02) */}
-                      <button
-                        type="button"
-                        onClick={() => openBotModal("send", "webhook")}
-                        className="bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.98] text-white px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1.5 select-none"
-                        title="Dispatch directly to Discord Webhook URL"
-                      >
-                        <Send size={13} /> Webhook
-                      </button>
-
                       {/* Bot Token Dispatch */}
                       <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
                         <button
                           type="button"
-                          onClick={() => openBotModal("send", "bot")}
+                          onClick={() => openBotModal("send")}
                           className="bg-[#248046] hover:bg-[#1a6334] active:scale-[0.98] text-white px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 border-r border-[#1a6334] select-none"
                         >
                           <Bot size={13} /> Bot Send
                         </button>
                         <button
                           type="button"
-                          onClick={() => openBotModal("edit", "bot")}
+                          onClick={() => openBotModal("edit")}
                           className="bg-[#1a6334] hover:bg-[#144f28] active:scale-[0.98] text-white px-2.5 py-1.5 text-xs font-medium transition-all flex items-center gap-1 select-none"
                           title="Edit message via bot token"
                         >
@@ -1247,7 +1234,6 @@ export const App: React.FC = () => {
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}
         initialMode={botModalMode}
-        initialChannel={botModalChannel}
       />
       <ToastAndConfirmHost />
     </div>

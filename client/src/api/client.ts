@@ -320,6 +320,63 @@ export const api = {
     me: () => request<{ user: CurrentUser | null }>("/api/auth/me"),
     logout: () => request<{ success: boolean; ok: boolean }>("/api/auth/logout", { method: "POST" }),
   },
+
+  executors: {
+    list: () =>
+      request<
+        Array<{
+          id: number;
+          title: string;
+          enabled: boolean;
+          authorId?: string | null;
+          templateId?: number | null;
+          customPayload?: any;
+          createdAt: number;
+          updatedAt: number;
+        }>
+      >("/api/executors"),
+    upsert: (body: {
+      title: string;
+      enabled?: boolean;
+      authorId?: string | null;
+      templateId?: number | null;
+      customPayload?: any;
+    }) =>
+      request<{ ok: boolean; executor: any }>("/api/executors", {
+        method: "POST",
+        body,
+      }),
+    delete: (id: number) =>
+      request<{ ok: boolean; deleted: boolean }>(`/api/executors/${id}`, {
+        method: "DELETE",
+      }),
+  },
+
+  tracking: {
+    list: () => request<{ messages: any[] }>("/api/tracking/messages"),
+    sync: () =>
+      request<{
+        ok: boolean;
+        total: number;
+        updated: number;
+        removed: number;
+        errors: number;
+      }>("/api/tracking/sync", {
+        method: "POST",
+      }),
+    track: (body: {
+      channelId: string;
+      messageId: string;
+      templateId?: number | null;
+      exploitName?: string | null;
+      authorUserId?: string | null;
+      rawPayload?: any;
+    }) =>
+      request<{ ok: boolean }>("/api/tracking/track", {
+        method: "POST",
+        body,
+      }),
+  },
 };
 
 export type { ActionType, SendMode };

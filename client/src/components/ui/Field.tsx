@@ -69,6 +69,9 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 import { RichPicker } from "../editor/RichPicker";
+import { UNICODE_EMOJI_LIST } from "../../utils/unicodeEmojis";
+import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import { useGlobalStore } from "../../store/globalStore";
 
 const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
   const [open, setOpen] = useState(false);
@@ -127,15 +130,16 @@ interface VariableAutocompleteProps {
   onSelect: (tag: string) => void;
   onClose: () => void;
   dropdownPos?: "top" | "bottom";
+  selectedIndex?: number;
 }
 
 const VariableAutocompletePopover = ({
   query,
   onSelect,
   dropdownPos = "bottom",
+  selectedIndex = 0,
 }: VariableAutocompleteProps) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().replace(/^\{+/, "");
   const filtered = useMemo(
     () =>
       ACTUAL_VARIABLES.filter(
@@ -148,10 +152,6 @@ const VariableAutocompletePopover = ({
     [q],
   );
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
   if (filtered.length === 0) return null;
 
   return (
@@ -162,7 +162,7 @@ const VariableAutocompletePopover = ({
     >
       <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
         <span>Variables ({filtered.length})</span>
-        <span className="text-[9px] font-normal lowercase">Click to insert</span>
+        <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
       </div>
       <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
         {filtered.map((item, idx) => (
@@ -203,26 +203,140 @@ const VariableAutocompletePopover = ({
   );
 };
 
-export const TextField = ({ label, hint, limit, variables = false, className, ...props }: TextFieldProps) => {
+interface EmojiAutocompleteProps {
+  query: string;
+  onSelect: (emoji: string) => void;
+  onClose: () => void;
+  dropdownPos?: "top" | "bottom";
+  selectedIndex?: number;
+}
+
+const EmojiAutocompletePopover = ({
+  query,
+  onSelect,
+  dropdownPos = "bottom",
+  selectedIndex = 0,
+}: EmojiAutocompleteProps) => {
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const emojisByGuild = useDiscordCacheStore((state) => state.emojis);
+  const guildEmojis = (selectedGuildId && emojisByGuild[selectedGuildId]) || [];
+
+  const q = query.toLowerCase().replace(/^:/, "").replace(/:$/, "");
+  const filtered = useMemo(() => {
+    const list: Array<{ key: string; name: string; display: ReactNode; insert: string }> = [];
+    for (const g of guildEmojis) {
+      if (!q || g.name.toLowerCase().includes(q)) {
+        list.push({
+          key: g.id,
+          name: g.name,
+          display: (
+            <img
+              src={`https://cdn.discordapp.com/emojis/${g.id}.${g.animated ? "gif" : "png"}?size=32`}
+              alt={g.name}
+              className="w-4 h-4 object-contain inline-block"
+            />
+          ),
+          insert: `<${g.animated ? "a" : ""}:${g.name}:${g.id}>`,
+        });
+      }
+      if (list.length >= 6) break;
+    }
+    for (const u of UNICODE_EMOJI_LIST) {
+      if (!q || u.name.toLowerCase().includes(q) || u.keywords.some((k) => k.toLowerCase().includes(q))) {
+        list.push({
+          key: u.name,
+          name: u.name,
+          display: <span className="text-base">{u.char}</span>,
+          insert: u.char,
+        });
+      }
+      if (list.length >= 12) break;
+    }
+    return list;
+  }, [q, guildEmojis]);
+
+  if (filtered.length === 0) return null;
+
+  return (
+    <div
+      className={`absolute left-0 z-50 w-64 bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1 ${
+        dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"
+      }`}
+    >
+      <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
+        <span>Emojis ({filtered.length})</span>
+        <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
+      </div>
+      <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+        {filtered.map((item, idx) => (
+          <button
+            key={item.key}
+            type="button"
+            className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors ${
+              idx === selectedIndex
+                ? "bg-[#5865f2] text-white"
+                : "text-[#dbdee1] hover:bg-[#2b2d31]"
+            }`}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onSelect(item.insert);
+            }}
+          >
+            <span className="shrink-0 flex items-center justify-center w-5 h-5">
+              {item.display}
+            </span>
+            <span className="font-mono text-xs truncate">:{item.name}:</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const TextField = ({ label, hint, limit, variables = true, className, ...props }: TextFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const showVars = Boolean(variables) && !props.disabled && (!props.type || props.type === "text");
   const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+  const [emojiAcState, setEmojiAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const getDropdownPos = (): "top" | "bottom" => {
+    if (!inputRef.current) return "bottom";
+    const rect = inputRef.current.getBoundingClientRect();
+    return window.innerHeight - rect.bottom < 220 && rect.top > 220 ? "top" : "bottom";
+  };
 
   const checkInlineVariable = (val: string, cursor: number) => {
-    if (!showVars) return;
     const textBefore = val.slice(0, cursor);
-    const lastOpen = textBefore.lastIndexOf("{");
-    if (lastOpen !== -1) {
-      const token = textBefore.slice(lastOpen);
-      if (!/[}\n\r]/.test(token)) {
-        const q = token.slice(1);
-        if (!/\s/.test(q)) {
-          setAcState({ open: true, query: q, start: lastOpen, end: cursor });
-          return;
+    if (showVars) {
+      const lastOpen = textBefore.lastIndexOf("{");
+      if (lastOpen !== -1) {
+        const token = textBefore.slice(lastOpen);
+        if (!/[}\n\r]/.test(token)) {
+          const q = token.replace(/^\{+/, "");
+          if (!/\s/.test(q)) {
+            setAcState({ open: true, query: q, start: lastOpen, end: cursor });
+            setEmojiAcState(null);
+            setSelectedIndex(0);
+            return;
+          }
         }
       }
     }
+
+    const colonIdx = textBefore.lastIndexOf(":");
+    if (colonIdx !== -1) {
+      const token = textBefore.slice(colonIdx);
+      if (!/\s/.test(token) && token.length >= 1) {
+        setEmojiAcState({ open: true, query: token.slice(1), start: colonIdx, end: cursor });
+        setAcState(null);
+        setSelectedIndex(0);
+        return;
+      }
+    }
+
     setAcState(null);
+    setEmojiAcState(null);
   };
 
   const handleInsertVariable = (tag: string) => {
@@ -243,6 +357,24 @@ export const TextField = ({ label, hint, limit, variables = false, className, ..
     }, 0);
   };
 
+  const handleInsertEmoji = (emojiChar: string) => {
+    const input = inputRef.current;
+    if (!input || !props.onChange) return;
+    const currentVal = asText(props.value);
+    const start = emojiAcState?.open ? emojiAcState.start : (input.selectionStart ?? currentVal.length);
+    const end = emojiAcState?.open ? emojiAcState.end : (input.selectionEnd ?? currentVal.length);
+    const newVal = currentVal.substring(0, start) + emojiChar + currentVal.substring(end);
+    setEmojiAcState(null);
+    const e = { target: { value: newVal } } as any;
+    props.onChange(e);
+    setTimeout(() => {
+      try {
+        input.focus();
+        input.setSelectionRange(start + emojiChar.length, start + emojiChar.length);
+      } catch {}
+    }, 0);
+  };
+
   return (
     <FieldShell label={label ?? (limit !== undefined ? label : undefined)} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
@@ -254,6 +386,73 @@ export const TextField = ({ label, hint, limit, variables = false, className, ..
             props.onChange?.(e);
             checkInlineVariable(e.target.value, e.target.selectionEnd ?? e.target.value.length);
           }}
+          onKeyDown={(e) => {
+            props.onKeyDown?.(e);
+            if (acState?.open) {
+              const q = acState.query.toLowerCase().replace(/^\{+/, "");
+              const filtered = ACTUAL_VARIABLES.filter(
+                (v) =>
+                  !q ||
+                  v.tag.toLowerCase().includes(q) ||
+                  v.desc.toLowerCase().includes(q) ||
+                  v.label.toLowerCase().includes(q),
+              ).slice(0, 8);
+              if (filtered.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev + 1) % filtered.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  const target = filtered[selectedIndex] || filtered[0];
+                  if (target) handleInsertVariable(target.tag);
+                  return;
+                }
+              }
+              if (e.key === "Escape") {
+                setAcState(null);
+                return;
+              }
+            }
+
+            if (emojiAcState?.open) {
+              const q = emojiAcState.query.toLowerCase().replace(/^:/, "").replace(/:$/, "");
+              const filtered = UNICODE_EMOJI_LIST.filter(
+                (u) =>
+                  !q ||
+                  u.name.toLowerCase().includes(q) ||
+                  u.keywords.some((k) => k.toLowerCase().includes(q)),
+              ).slice(0, 12);
+              if (filtered.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev + 1) % filtered.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  const target = filtered[selectedIndex] || filtered[0];
+                  if (target) handleInsertEmoji(target.char);
+                  return;
+                }
+              }
+              if (e.key === "Escape") {
+                setEmojiAcState(null);
+                return;
+              }
+            }
+          }}
           onKeyUp={(e) => {
             props.onKeyUp?.(e);
             const input = inputRef.current;
@@ -261,15 +460,29 @@ export const TextField = ({ label, hint, limit, variables = false, className, ..
           }}
           onBlur={(e) => {
             props.onBlur?.(e);
-            setTimeout(() => setAcState(null), 200);
+            setTimeout(() => {
+              setAcState(null);
+              setEmojiAcState(null);
+            }, 200);
           }}
         />
         {showVars && <InlineRichPickerTrigger onInsert={handleInsertVariable} />}
         {showVars && acState?.open && (
           <VariableAutocompletePopover
             query={acState.query}
+            dropdownPos={getDropdownPos()}
+            selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
+          />
+        )}
+        {emojiAcState?.open && (
+          <EmojiAutocompletePopover
+            query={emojiAcState.query}
+            dropdownPos={getDropdownPos()}
+            selectedIndex={selectedIndex}
+            onSelect={handleInsertEmoji}
+            onClose={() => setEmojiAcState(null)}
           />
         )}
       </div>
@@ -283,22 +496,46 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const showVars = Boolean(variables) && !props.disabled;
   const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+  const [emojiAcState, setEmojiAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const getDropdownPos = (): "top" | "bottom" => {
+    if (!textAreaRef.current) return "bottom";
+    const rect = textAreaRef.current.getBoundingClientRect();
+    return window.innerHeight - rect.bottom < 220 && rect.top > 220 ? "top" : "bottom";
+  };
 
   const checkInlineVariable = (val: string, cursor: number) => {
-    if (!showVars) return;
     const textBefore = val.slice(0, cursor);
-    const lastOpen = textBefore.lastIndexOf("{");
-    if (lastOpen !== -1) {
-      const token = textBefore.slice(lastOpen);
-      if (!/[}\n\r]/.test(token)) {
-        const q = token.slice(1);
-        if (!/\s/.test(q)) {
-          setAcState({ open: true, query: q, start: lastOpen, end: cursor });
-          return;
+    if (showVars) {
+      const lastOpen = textBefore.lastIndexOf("{");
+      if (lastOpen !== -1) {
+        const token = textBefore.slice(lastOpen);
+        if (!/[}\n\r]/.test(token)) {
+          const q = token.replace(/^\{+/, "");
+          if (!/\s/.test(q)) {
+            setAcState({ open: true, query: q, start: lastOpen, end: cursor });
+            setEmojiAcState(null);
+            setSelectedIndex(0);
+            return;
+          }
         }
       }
     }
+
+    const colonIdx = textBefore.lastIndexOf(":");
+    if (colonIdx !== -1) {
+      const token = textBefore.slice(colonIdx);
+      if (!/\s/.test(token) && token.length >= 1) {
+        setEmojiAcState({ open: true, query: token.slice(1), start: colonIdx, end: cursor });
+        setAcState(null);
+        setSelectedIndex(0);
+        return;
+      }
+    }
+
     setAcState(null);
+    setEmojiAcState(null);
   };
 
   const handleInsertVariable = (tag: string) => {
@@ -319,6 +556,24 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
     }, 0);
   };
 
+  const handleInsertEmoji = (emojiChar: string) => {
+    const input = textAreaRef.current;
+    if (!input || !props.onChange) return;
+    const currentVal = asText(props.value);
+    const start = emojiAcState?.open ? emojiAcState.start : (input.selectionStart ?? currentVal.length);
+    const end = emojiAcState?.open ? emojiAcState.end : (input.selectionEnd ?? currentVal.length);
+    const newVal = currentVal.substring(0, start) + emojiChar + currentVal.substring(end);
+    setEmojiAcState(null);
+    const e = { target: { value: newVal } } as any;
+    props.onChange(e);
+    setTimeout(() => {
+      try {
+        input.focus();
+        input.setSelectionRange(start + emojiChar.length, start + emojiChar.length);
+      } catch {}
+    }, 0);
+  };
+
   return (
     <FieldShell label={label} hint={hint} limit={limit} counterValue={asText(props.value)} className={className}>
       <div className="relative w-full">
@@ -331,6 +586,73 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
             props.onChange?.(e);
             checkInlineVariable(e.target.value, e.target.selectionEnd ?? e.target.value.length);
           }}
+          onKeyDown={(e) => {
+            props.onKeyDown?.(e);
+            if (acState?.open) {
+              const q = acState.query.toLowerCase().replace(/^\{+/, "");
+              const filtered = ACTUAL_VARIABLES.filter(
+                (v) =>
+                  !q ||
+                  v.tag.toLowerCase().includes(q) ||
+                  v.desc.toLowerCase().includes(q) ||
+                  v.label.toLowerCase().includes(q),
+              ).slice(0, 8);
+              if (filtered.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev + 1) % filtered.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  const target = filtered[selectedIndex] || filtered[0];
+                  if (target) handleInsertVariable(target.tag);
+                  return;
+                }
+              }
+              if (e.key === "Escape") {
+                setAcState(null);
+                return;
+              }
+            }
+
+            if (emojiAcState?.open) {
+              const q = emojiAcState.query.toLowerCase().replace(/^:/, "").replace(/:$/, "");
+              const filtered = UNICODE_EMOJI_LIST.filter(
+                (u) =>
+                  !q ||
+                  u.name.toLowerCase().includes(q) ||
+                  u.keywords.some((k) => k.toLowerCase().includes(q)),
+              ).slice(0, 12);
+              if (filtered.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev + 1) % filtered.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  const target = filtered[selectedIndex] || filtered[0];
+                  if (target) handleInsertEmoji(target.char);
+                  return;
+                }
+              }
+              if (e.key === "Escape") {
+                setEmojiAcState(null);
+                return;
+              }
+            }
+          }}
           onKeyUp={(e) => {
             props.onKeyUp?.(e);
             const input = textAreaRef.current;
@@ -338,15 +660,29 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
           }}
           onBlur={(e) => {
             props.onBlur?.(e);
-            setTimeout(() => setAcState(null), 200);
+            setTimeout(() => {
+              setAcState(null);
+              setEmojiAcState(null);
+            }, 200);
           }}
         />
         {showVars && <InlineRichPickerTrigger onInsert={handleInsertVariable} />}
         {showVars && acState?.open && (
           <VariableAutocompletePopover
             query={acState.query}
+            dropdownPos={getDropdownPos()}
+            selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
+          />
+        )}
+        {emojiAcState?.open && (
+          <EmojiAutocompletePopover
+            query={emojiAcState.query}
+            dropdownPos={getDropdownPos()}
+            selectedIndex={selectedIndex}
+            onSelect={handleInsertEmoji}
+            onClose={() => setEmojiAcState(null)}
           />
         )}
       </div>

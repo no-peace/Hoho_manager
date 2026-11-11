@@ -3,6 +3,7 @@ import type { ComponentNode, GalleryItem, SelectOption } from "@dmb/shared";
 import { ButtonStyle, ComponentType, Limits } from "@dmb/shared";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextField } from "../ui/Field";
+import { EmojiPickerField } from "../ui/EmojiPickerField";
 import { ColorPicker } from "../ui/ColorPicker";
 import { DiscordMentionInput } from "./DiscordMentionInput";
 import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
@@ -237,12 +238,12 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
         onChange={(event) => update({ label: event.target.value })}
       />
 
-      <TextField
+      <EmojiPickerField
         label="Emoji (Optional)"
-        value={formatEmojiInput(component.emoji)}
-        placeholder="e.g. ⭐ or <:name:123456789>"
-        onChange={(event) => {
-          update({ emoji: parseEmojiInput(event.target.value) });
+        value={component.emoji}
+        placeholder="⭐ or <:name:123456789> or type :name"
+        onChange={(emoji) => {
+          update({ emoji });
         }}
       />
 
@@ -377,12 +378,12 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
                 placeholder="Short description..."
                 onChange={(event) => replaceOption(index, { description: event.target.value || undefined })}
               />
-              <TextField
+              <EmojiPickerField
                 label="Emoji"
-                value={formatEmojiInput(option.emoji)}
-                placeholder="⭐ or <:name:123456789>"
-                onChange={(event) => {
-                  replaceOption(index, { emoji: parseEmojiInput(event.target.value) });
+                value={option.emoji}
+                placeholder="⭐ or <:name:123456789> or type :name"
+                onChange={(emoji) => {
+                  replaceOption(index, { emoji });
                 }}
               />
             </div>

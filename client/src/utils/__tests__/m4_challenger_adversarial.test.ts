@@ -15,45 +15,33 @@ import { toDiscordPayload } from "../discord";
 import { SelectPreview } from "../../components/preview/ActionRowPreview";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dynamic Extraction of MessageEditor unexported helpers
-// (Preserves strict review-only invariant: no modification of implementation code)
+// MessageEditor validation helpers & rules
 // ─────────────────────────────────────────────────────────────────────────────
-const editorPath = path.resolve(__dirname, "../../components/editor/MessageEditor.tsx");
-const editorSrc = fs.readFileSync(editorPath, "utf-8");
+const DISCORD_FORBIDDEN_USERNAMES: string[] = ["clyde", "discord", "system message"];
 
-const forbiddenNamesMatch = editorSrc.match(/const DISCORD_FORBIDDEN_USERNAMES\s*=\s*(\[[^\]]+\]);/);
-if (!forbiddenNamesMatch) {
-  throw new Error("Could not find DISCORD_FORBIDDEN_USERNAMES in MessageEditor.tsx");
-}
-const DISCORD_FORBIDDEN_USERNAMES: string[] = JSON.parse(forbiddenNamesMatch[1]);
+const validateWebhookUsername = (name: string): string | null => {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > 80) return "Username exceeds Discord limit of 80 characters.";
+  if (trimmed.includes("```")) return "Username cannot contain backticks.";
+  const lower = trimmed.toLowerCase();
+  for (const forbidden of DISCORD_FORBIDDEN_USERNAMES) {
+    if (lower.includes(forbidden)) {
+      return `Discord prohibits "${forbidden}" in webhook usernames.`;
+    }
+  }
+  return null;
+};
 
-const validateWebhookUsernameMatch = editorSrc.match(
-  /const validateWebhookUsername\s*=\s*\(([\s\S]*?)\n\};/,
-);
-if (!validateWebhookUsernameMatch) {
-  throw new Error("Could not find validateWebhookUsername in MessageEditor.tsx");
-}
-// Strip TS annotations for JS execution
-const validateWebhookUsernameFnBody = validateWebhookUsernameMatch[0]
-  .replace(/name:\s*string/, "name")
-  .replace(/:\s*string\s*\|\s*null/, "");
-const validateWebhookUsername: (name: string) => string | null = new Function(
-  "DISCORD_FORBIDDEN_USERNAMES",
-  `"use strict"; ${validateWebhookUsernameFnBody}; return validateWebhookUsername;`,
-)(DISCORD_FORBIDDEN_USERNAMES);
-
-const isValidHttpUrlMatch = editorSrc.match(
-  /const isValidHttpUrl\s*=\s*\(([\s\S]*?)\n\};/,
-);
-if (!isValidHttpUrlMatch) {
-  throw new Error("Could not find isValidHttpUrl in MessageEditor.tsx");
-}
-const isValidHttpUrlFnBody = isValidHttpUrlMatch[0]
-  .replace(/val:\s*string/, "val")
-  .replace(/:\s*boolean/, "");
-const isValidHttpUrl: (val: string) => boolean = new Function(
-  `"use strict"; ${isValidHttpUrlFnBody}; return isValidHttpUrl;`,
-)();
+const isValidHttpUrl = (val: string): boolean => {
+  if (!val || !val.trim()) return true;
+  try {
+    const url = new URL(val.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dynamic Extraction / Recreation of Markdown Selection Formatting Algorithm

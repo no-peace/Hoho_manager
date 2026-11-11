@@ -173,10 +173,19 @@ router.post(
 
       weaoInterpolated = replaceSendVars(weaoInterpolated);
 
+      let authorResolved = weaoInterpolated;
+      try {
+        const { resolveAuthorPlaceholders } = await import("../services/authorService.js");
+        const aRes = await resolveAuthorPlaceholders(weaoInterpolated, null, profileId);
+        authorResolved = aRes.payload;
+      } catch {
+        // Fallback to weaoInterpolated
+      }
+
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
         // 1. Strict Role & Mention Permission Check (alert/block if unauthorized)
         const { findUnauthorizedMentions } = await import("../utils/mentionScrubber.js");
-        const violations = findUnauthorizedMentions(weaoInterpolated, staffCtx.record);
+        const violations = findUnauthorizedMentions(authorResolved, staffCtx.record);
         if (violations.length > 0) {
           const mentionLabels = violations.map((v) => v.mention).join(", ");
           const { auditLog } = await import("../services/auditLog.js");
@@ -196,7 +205,7 @@ router.post(
         // 2. Profile Override permission check
         if (
           staffCtx.record.can_override_profile === 0 &&
-          (weaoInterpolated.username || weaoInterpolated.avatar_url)
+          (authorResolved.username || authorResolved.avatar_url)
         ) {
           throw ApiError.forbidden("Your staff account is not permitted to override username or avatar.");
         }
@@ -204,8 +213,8 @@ router.post(
         // 3. Components V2 permission check
         if (
           staffCtx.record.can_use_components_v2 === 0 &&
-          Array.isArray(weaoInterpolated.components) &&
-          weaoInterpolated.components.length > 0
+          Array.isArray(authorResolved.components) &&
+          authorResolved.components.length > 0
         ) {
           throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
         }
@@ -213,7 +222,7 @@ router.post(
         // 4. WEAO Exploits permission check
         if (
           staffCtx.record.can_use_weao_exploits === 0 &&
-          (exploitHint || JSON.stringify(weaoInterpolated).includes("{exploit."))
+          (exploitHint || JSON.stringify(authorResolved).includes("{exploit."))
         ) {
           throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
         }
@@ -222,12 +231,12 @@ router.post(
           "../utils/mentionScrubber.js"
         );
         const { payload: scrubbed } = scrubMentions(
-          weaoInterpolated,
+          authorResolved,
           staffCtx.record,
         );
         return sanitizeAllowedMentions(scrubbed, staffCtx.record);
       }
-      return weaoInterpolated;
+      return authorResolved;
     };
 
     const isMulti = Array.isArray(rawMessages) && rawMessages.length > 0;
@@ -309,6 +318,30 @@ router.post(
         });
         await registerMessageFlows(sent);
         sentList.push(sent);
+
+        // Auto-tracking for dynamic messages ({exploit.*}, {user.*}, author pfp, templates)
+        const sentId = (sent as any)?.id;
+        if (sentId) {
+          const rawStr = JSON.stringify(msg);
+          const hasDynamic =
+            rawStr.includes("{exploit.") ||
+            rawStr.includes("{user.") ||
+            rawStr.includes("discord.com/users/");
+          if (hasDynamic || req.body?.templateId || req.body?.exploitName) {
+            try {
+              const { trackMessage } = await import("../services/messageTrackerService.js");
+              await trackMessage({
+                channelId,
+                messageId: sentId,
+                templateId: req.body?.templateId ? Number(req.body.templateId) : null,
+                exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
+                rawPayload: msg,
+              });
+            } catch (trackErr) {
+              log.warn("Failed to auto-track message:", trackErr);
+            }
+          }
+        }
       }
       if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
         const { staffRepository } = await import("../repositories/staffRepository.js");
@@ -345,6 +378,30 @@ router.post(
         });
         await registerMessageFlows(sent);
         sentList.push(sent);
+
+        // Auto-tracking for dynamic messages ({exploit.*}, {user.*}, author pfp, templates)
+        const sentId = (sent as any)?.id;
+        if (sentId) {
+          const rawStr = JSON.stringify(msg);
+          const hasDynamic =
+            rawStr.includes("{exploit.") ||
+            rawStr.includes("{user.") ||
+            rawStr.includes("discord.com/users/");
+          if (hasDynamic || req.body?.templateId || req.body?.exploitName) {
+            try {
+              const { trackMessage } = await import("../services/messageTrackerService.js");
+              await trackMessage({
+                channelId,
+                messageId: sentId,
+                templateId: req.body?.templateId ? Number(req.body.templateId) : null,
+                exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
+                rawPayload: msg,
+              });
+            } catch (trackErr) {
+              log.warn("Failed to auto-track message:", trackErr);
+            }
+          }
+        }
       }
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }

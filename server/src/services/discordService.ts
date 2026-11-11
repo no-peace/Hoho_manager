@@ -590,6 +590,41 @@ export class BoundedTtlCache<T> {
 
 export const memberSearchCache = new BoundedTtlCache<DiscordMemberSummary[]>(500, 60_000);
 const inFlightMemberSearches = new Map<string, Promise<DiscordMemberSummary[]>>();
+export const userCache = new BoundedTtlCache<DiscordMemberSummary>(1000, 10 * 60_000);
+
+export const getDiscordUserAvatarUrl = (user: {
+  id: string;
+  avatar: string | null;
+}): string => {
+  if (user.avatar) {
+    const ext = user.avatar.startsWith("a_") ? "gif" : "png";
+    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=1024`;
+  }
+  const defaultIndex = (BigInt(user.id) >> 22n) % 6n;
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+};
+
+export const getDiscordUser = async (
+  userId: string,
+  profileId: number | null = null,
+): Promise<DiscordMemberSummary> => {
+  const cached = userCache.get(userId);
+  if (cached) return cached;
+
+  const token = await resolveBotToken(profileId);
+  const data = await apiRequest<any>("GET", `/users/${userId}`, { token });
+  if (!data) throw ApiError.notFound(`User ${userId} not found on Discord`);
+
+  const summary: DiscordMemberSummary = {
+    id: data.id,
+    username: data.username,
+    global_name: data.global_name ?? null,
+    nickname: null,
+    avatar: data.avatar ?? null,
+  };
+  userCache.set(userId, summary);
+  return summary;
+};
 
 export const clearMemberSearchCache = (): void => {
   memberSearchCache.clear();
@@ -883,4 +918,6 @@ export default {
   createFollowupMessage,
   editOriginalResponse,
   deferResponse,
+  getDiscordUser,
+  getDiscordUserAvatarUrl,
 };

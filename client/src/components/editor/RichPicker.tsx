@@ -22,6 +22,7 @@ export interface RichPickerProps {
   onClose: () => void;
   guildId?: string | null;
   position?: "top" | "bottom";
+  initialTab?: TabType;
 }
 
 type TabType = "mentions" | "time" | "emojis" | "variables";
@@ -42,8 +43,9 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   onClose,
   guildId: propGuildId,
   position = "top",
+  initialTab = "mentions",
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>("mentions");
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const effectiveGuildId = propGuildId || selectedGuildId;
 

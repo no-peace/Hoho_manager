@@ -1,128 +1,303 @@
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Copy,
+  Check,
+  Search,
+  User,
+  Shield,
+  Clock,
+  Sparkles,
+  RefreshCw,
+  Code2,
+  Terminal,
+} from "lucide-react";
+
+interface DocItem {
+  tag: string;
+  desc: string;
+  example: string;
+  category: "user" | "server" | "time" | "form" | "exploit" | "author";
+}
+
+const DOC_ITEMS: DocItem[] = [
+  // User & Member
+  { tag: "{user.mention}", desc: "Pings/mentions the interacting user (<@id>)", example: "@Nexus42", category: "user" },
+  { tag: "{user.name}", desc: "The member's exact username without discriminator", example: "nexus42", category: "user" },
+  { tag: "{user.tag}", desc: "Alias for the user's username", example: "nexus42", category: "user" },
+  { tag: "{user.displayname}", desc: "Server nickname or global display name", example: "Nexus", category: "user" },
+  { tag: "{user.id}", desc: "Discord numeric Snowflake ID", example: "708504312862474282", category: "user" },
+  { tag: "{user.avatar}", desc: "Direct CDN URL to the user's avatar image", example: "https://cdn.discordapp.com/...", category: "user" },
+  { tag: "{user.roles}", desc: "Space-separated list of all role mentions the user has", example: "@Member @VIP", category: "user" },
+  { tag: "{user.clantag}", desc: "Official Discord clan tag, or bracketed tag from name [TAG], (TAG), TAG |", example: "HOHO", category: "user" },
+  { tag: "{user.created}", desc: "Account creation date formatted in user's local timezone", example: "<t:1571875200:d>", category: "user" },
+  { tag: "{user.created.relative}", desc: "Account age as a relative timestamp (e.g. 5 years ago)", example: "<t:1571875200:R>", category: "user" },
+  { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
+  { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
+
+  // Server & Channel
+  { tag: "{server.id}", desc: "Current Discord Guild (Server) ID", example: "906426036772818954", category: "server" },
+  { tag: "{server.name}", desc: "Name of the Discord server", example: "HoHo Hub", category: "server" },
+  { tag: "{server.icon}", desc: "Direct CDN URL to the server's icon", example: "https://cdn.discordapp.com/icons/...", category: "server" },
+  { tag: "{channel.mention}", desc: "Channel mention (<#id>) where interaction occurred", example: "#announcements", category: "server" },
+  { tag: "{channel.id}", desc: "Current channel's numeric ID", example: "123456789012345678", category: "server" },
+  { tag: "{bot.mention}", desc: "Mentions the bot account dispatching the message", example: "@HoHo Bot", category: "server" },
+  { tag: "{bot.id}", desc: "Numeric Application ID of the active bot", example: "112233445566778899", category: "server" },
+  { tag: "{message.id}", desc: "Discord message ID of the container message", example: "135792468013579246", category: "server" },
+  { tag: "{message.url}", desc: "Direct jump link to the Discord message", example: "https://discord.com/channels/...", category: "server" },
+
+  // Time & Timestamps
+  { tag: "{now}", desc: "Current short time in user's timezone (<t:unix:t>)", example: "12:00 PM", category: "time" },
+  { tag: "{now.time}", desc: "Current long time with seconds (<t:unix:T>)", example: "12:00:45 PM", category: "time" },
+  { tag: "{now.date}", desc: "Current short date (<t:unix:d>)", example: "11/11/2026", category: "time" },
+  { tag: "{now.longdate}", desc: "Current long date (<t:unix:D>)", example: "November 11, 2026", category: "time" },
+  { tag: "{now.short}", desc: "Short date and time (<t:unix:f>)", example: "Nov 11, 2026 12:00 PM", category: "time" },
+  { tag: "{now.long}", desc: "Full weekday, date and time (<t:unix:F>)", example: "Wednesday, Nov 11, 2026 12:00 PM", category: "time" },
+  { tag: "{now.relative}", desc: "Dynamic relative countdown / age (<t:unix:R>)", example: "just now", category: "time" },
+  { tag: "{now.unix}", desc: "Raw numeric Unix timestamp in seconds", example: "1794380400", category: "time" },
+
+  // Forms, Modals & Select Menus
+  { tag: "{selected}", desc: "Comma-separated list of values selected in a dropdown", example: "opt_vip, opt_beta", category: "form" },
+  { tag: "{selected.0}", desc: "The first value chosen in a single or multi-select dropdown", example: "opt_vip", category: "form" },
+  { tag: "{input.<custom_id>}", desc: "Submitted text value from a modal input with matching custom ID", example: "My Feedback", category: "form" },
+  { tag: "{modal.<custom_id>}", desc: "Alias for modal input field value", example: "user_email@domain.com", category: "form" },
+
+  // WEAO & Custom Exploits
+  { tag: "{exploit.title}", desc: "Executor / Exploit name (Delta, Macsploit, Wave, etc.)", example: "Macsploit", category: "exploit" },
+  { tag: "{exploit.version}", desc: "Current detected version string", example: "v2.1.4", category: "exploit" },
+  { tag: "{exploit.updated}", desc: "Last update timestamp formatted in user timezone", example: "<t:1794380000:R>", category: "exploit" },
+  { tag: "{exploit.sunc}", desc: "sUNC capability percentage score", example: "98%", category: "exploit" },
+  { tag: "{exploit.status}", desc: "Formatted status badge with indicator icon", example: "🟢 Updated", category: "exploit" },
+  { tag: "{exploit.status_raw}", desc: "Raw lowercase status identifier ('updated' or 'outdated')", example: "updated", category: "exploit" },
+  { tag: "{exploit.features}", desc: "List of supported executor capabilities and platforms", example: "Decompiler, Saveinstance", category: "exploit" },
+  { tag: "{exploit.url}", desc: "Official purchase or download URL", example: "https://raptor.fun/", category: "exploit" },
+
+  // Dynamic Author Auto-Resolution
+  { tag: "{user.<id>.name}", desc: "Fetches and injects any Discord user's global name / username by ID", example: "Nexus42", category: "author" },
+  { tag: "{user.<id>.avatar}", desc: "Fetches user's current avatar CDN link (auto-updates when they change fpf)", example: "https://cdn.discordapp.com/avatars/...", category: "author" },
+  { tag: "{user.<id>.url}", desc: "Direct profile link to the user (https://discord.com/users/<id>)", example: "https://discord.com/users/708504312862474282", category: "author" },
+  { tag: "{user.<id>.mention}", desc: "Pings/mentions the specific user by ID (<@id>)", example: "<@708504312862474282>", category: "author" },
+];
 
 export const DocsPage = () => {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [copiedTag, setCopiedTag] = useState<string | null>(null);
+
+  const copyToClipboard = (tag: string) => {
+    void navigator.clipboard.writeText(tag);
+    setCopiedTag(tag);
+    setTimeout(() => setCopiedTag(null), 1500);
+  };
+
+  const filteredItems = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return DOC_ITEMS.filter((item) => {
+      const matchesCat = activeCategory === "all" || item.category === activeCategory;
+      const matchesQuery =
+        !q ||
+        item.tag.toLowerCase().includes(q) ||
+        item.desc.toLowerCase().includes(q) ||
+        item.example.toLowerCase().includes(q);
+      return matchesCat && matchesQuery;
+    });
+  }, [search, activeCategory]);
+
   return (
-    <div className="h-screen overflow-y-auto custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-20">
-      {/* Header */}
+    <div className="h-screen overflow-y-auto custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-24">
+      {/* Top Header */}
       <div className="h-14 flex items-center px-6 border-b border-[#1e1f22] bg-[#2b2d31] sticky top-0 z-50 shadow-sm">
-        <a href="/" className="flex items-center gap-2 text-[#b5bac1] hover:text-white transition-colors text-sm font-bold">
+        <a
+          href="/"
+          className="flex items-center gap-2 text-[#b5bac1] hover:text-white transition-colors text-sm font-bold"
+        >
           <ArrowLeft size={16} /> Back to Builder
         </a>
-        <div className="ml-auto flex items-center gap-2 font-bold text-white">
-          <BookOpen size={18} className="text-[#5865f2]" /> Variable Documentation
+        <div className="ml-auto flex items-center gap-2 font-bold text-white text-sm">
+          <BookOpen size={18} className="text-[#5865f2]" /> Studio Documentation & Variable Catalog
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto mt-10 px-6">
-        <div className="mb-10">
-          <h1 className="text-3xl font-extrabold text-white mb-4">Dynamic Variables</h1>
-          <p className="text-[#b5bac1] text-base leading-relaxed">
-            Variables resolve in action flows when a user interacts. Initial messages are sent before there is a clicker, so user variables there remain unchanged. Use the <code>{'{variable.name}'}</code> syntax.
+      <div className="max-w-5xl mx-auto mt-8 px-6">
+        {/* Hero Section */}
+        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#2b2d31] via-[#232428] to-[#1e1f22] border border-[#1e1f22] shadow-xl">
+          <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-2">
+            <Sparkles size={14} /> Full System Guide & Reference
+          </div>
+          <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
+            Variables, Dynamic Tracking & Executors
+          </h1>
+          <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
+            HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
+            Use <code className="text-[#5865f2] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
           </p>
         </div>
 
-        {/* User / Member */}
-        <section className="mb-10 bg-[#2b2d31] border border-[#1e1f22] rounded-lg overflow-hidden shadow-sm">
-          <h2 className="text-lg font-bold text-white px-5 py-4 border-b border-[#1e1f22] bg-[#1e1f22]/50">User & Member</h2>
-          <div className="p-0">
+        {/* Feature Highlights Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+            <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-1.5">
+              <User size={14} /> Author Profile Auto-Fetch
+            </div>
+            <p className="text-xs text-[#b5bac1] leading-relaxed">
+              Set embed author URL to <code className="text-white bg-[#1e1f22] px-1 rounded">https://discord.com/users/USER_ID</code>.
+              The bot automatically fetches their username, avatar fpf, and Discord link, and keeps them updated in real time.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+            <div className="flex items-center gap-2 text-[#23a55a] font-bold text-xs uppercase tracking-wider mb-1.5">
+              <RefreshCw size={14} /> Live Message Auto-Tracking
+            </div>
+            <p className="text-xs text-[#b5bac1] leading-relaxed">
+              Messages containing <code className="text-white bg-[#1e1f22] px-1 rounded">{"{exploit.*}"}</code> or developer author tokens are auto-registered into the tracking daemon.
+              When status or profiles change, the bot automatically edits existing messages.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+            <div className="flex items-center gap-2 text-[#faa61a] font-bold text-xs uppercase tracking-wider mb-1.5">
+              <Terminal size={14} /> Slash Commands & Sync
+            </div>
+            <p className="text-xs text-[#b5bac1] leading-relaxed">
+              Use <code className="text-white bg-[#1e1f22] px-1 rounded">/exploit</code> to send customized executor status cards with custom templates, and <code className="text-white bg-[#1e1f22] px-1 rounded">/sync</code> to immediately reconcile all tracked messages in your server.
+            </p>
+          </div>
+        </div>
+
+        {/* Search & Category Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mb-6">
+          <div className="relative w-full sm:w-80">
+            <Search size={15} className="absolute left-3 top-2.5 text-[#949ba4]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search variables or syntax..."
+              className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-9 pr-3 py-2 rounded-lg border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+            {[
+              { id: "all", label: "All" },
+              { id: "user", label: "User" },
+              { id: "server", label: "Server" },
+              { id: "time", label: "Time" },
+              { id: "form", label: "Forms & Modals" },
+              { id: "exploit", label: "Exploits" },
+              { id: "author", label: "Author Resolution" },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  activeCategory === cat.id
+                    ? "bg-[#5865f2] text-white shadow-sm"
+                    : "bg-[#2b2d31] text-[#949ba4] hover:text-white hover:bg-[#35373c] border border-[#1e1f22]"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Variables Table */}
+        <div className="bg-[#2b2d31] border border-[#1e1f22] rounded-xl overflow-hidden shadow-sm mb-12">
+          <div className="px-5 py-3 border-b border-[#1e1f22] bg-[#1e1f22]/70 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+              Available Variables ({filteredItems.length})
+            </span>
+            <span className="text-[11px] text-[#949ba4]">Click any tag or copy button to copy</span>
+          </div>
+
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-[12px] uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22] bg-[#2b2d31]">
-                  <th className="px-5 py-3 font-semibold">Variable</th>
+                <tr className="text-[11px] uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22] bg-[#232428]">
+                  <th className="px-5 py-3 font-semibold w-[28%]">Variable Tag</th>
                   <th className="px-5 py-3 font-semibold">Description</th>
+                  <th className="px-5 py-3 font-semibold w-[24%]">Output Example</th>
+                  <th className="px-4 py-3 font-semibold w-16 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="text-sm divide-y divide-[#1e1f22]">
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.mention}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Mentions the user who interacted with the component.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.name}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The member's exact username (e.g., <code>ada</code>).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.displayname}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The member's server nickname or global display name.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.id}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The member's numeric Discord ID.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.avatar}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">A direct URL link to the member's profile picture.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.created}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">When the account was created (Dynamic Discord Timestamp).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{user.joined}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">When the member joined the server (Relative Timestamp).</td>
-                </tr>
+              <tbody className="text-xs divide-y divide-[#1e1f22]">
+                {filteredItems.map((item) => (
+                  <tr key={item.tag} className="hover:bg-[#1e1f22]/40 transition-colors">
+                    <td className="px-5 py-3 font-mono">
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(item.tag)}
+                        className="text-[#5865f2] hover:text-[#7983f5] bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/20 hover:border-[#5865f2] transition-colors text-left"
+                        title="Click to copy"
+                      >
+                        {item.tag}
+                      </button>
+                    </td>
+                    <td className="px-5 py-3 text-[#dbdee1] leading-relaxed">{item.desc}</td>
+                    <td className="px-5 py-3 font-mono text-[#949ba4] truncate max-w-[200px]">
+                      {item.example}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(item.tag)}
+                        className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors inline-flex items-center justify-center"
+                        title="Copy tag"
+                      >
+                        {copiedTag === item.tag ? (
+                          <Check size={13} className="text-[#23a55a]" />
+                        ) : (
+                          <Copy size={13} />
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredItems.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-8 text-center text-[#949ba4]">
+                      No variables matching &ldquo;{search}&rdquo; in this category.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
 
-        {/* Server & Channel */}
-        <section className="mb-10 bg-[#2b2d31] border border-[#1e1f22] rounded-lg overflow-hidden shadow-sm">
-          <h2 className="text-lg font-bold text-white px-5 py-4 border-b border-[#1e1f22] bg-[#1e1f22]/50">Server, Channel & Bot</h2>
-          <div className="p-0">
-            <table className="w-full text-left border-collapse">
-              <tbody className="text-sm divide-y divide-[#1e1f22]">
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{server.id}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The server's numeric ID.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{channel.mention}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Mentions the channel where the interaction occurred.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{channel.id}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The channel's numeric ID.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{bot.mention}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Mentions the bot executing the action.</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{bot.id}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The bot's numeric ID.</td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Custom Executor Configuration Guide */}
+        <section className="p-6 rounded-2xl bg-[#2b2d31] border border-[#1e1f22] space-y-4 shadow-sm">
+          <div className="flex items-center gap-2 text-white font-bold text-base">
+            <Code2 size={18} className="text-[#5865f2]" /> Custom Executor Payloads & Auto-Updates
           </div>
-        </section>
+          <p className="text-xs text-[#b5bac1] leading-relaxed">
+            You can fully customize executor messages by creating custom executor templates.
+            Provide your own Discohook/Discord JSON payload. The bot inspects embed authors and auto-fetches the owner&apos;s name and avatar directly from Discord.
+          </p>
 
-        {/* Time */}
-        <section className="mb-10 bg-[#2b2d31] border border-[#1e1f22] rounded-lg overflow-hidden shadow-sm">
-          <h2 className="text-lg font-bold text-white px-5 py-4 border-b border-[#1e1f22] bg-[#1e1f22]/50">Time & Date</h2>
-          <p className="text-xs text-[#949ba4] px-5 py-3 border-b border-[#1e1f22] bg-[#2b2d31]">Note: Except for UNIX, these utilize Discord's dynamic timestamps. Every reader sees them converted to their own local timezone.</p>
-          <div className="p-0">
-            <table className="w-full text-left border-collapse">
-              <tbody className="text-sm divide-y divide-[#1e1f22]">
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3 w-[30%]"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{now}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">The current time (e.g., 12:00 PM).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{now.relative}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Relative time (e.g., 2 minutes ago).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{now.long}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Long-form date (e.g., Tuesday, October 24).</td>
-                </tr>
-                <tr className="hover:bg-[#1e1f22]/30 transition-colors">
-                  <td className="px-5 py-3"><code className="text-[#5865f2] bg-[#1e1f22] px-1.5 py-0.5 rounded font-mono">{'{now.unix}'}</code></td>
-                  <td className="px-5 py-3 text-[#b5bac1]">Unix time as a plain raw number.</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="bg-[#1e1f22] rounded-xl p-4 border border-[#111214] font-mono text-xs text-[#dbdee1] overflow-x-auto">
+            <pre className="text-[11px] leading-relaxed text-[#b5bac1]">
+{`{
+  "embeds": [
+    {
+      "description": "# Macsploit\\n> **Status:** {exploit.status}\\n> Paid **$10 Lifetime**",
+      "color": 15329769,
+      "footer": { "text": ".gg/hohohub" },
+      "author": {
+        "url": "https://discord.com/users/708504312862474282"
+      }
+    }
+  ]
+}`}
+            </pre>
           </div>
+          <p className="text-[11px] text-[#949ba4]">
+            💡 Notice that the <code className="text-white font-mono bg-[#111214] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#111214] px-1 rounded">author.icon_url</code> are omitted: the server will automatically resolve and populate the user&apos;s live Discord display name and profile picture!
+          </p>
         </section>
       </div>
     </div>

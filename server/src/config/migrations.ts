@@ -295,5 +295,46 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE staff_access ADD COLUMN allowed_guild_ids TEXT NOT NULL DEFAULT '["*"]';
     `,
   },
+  {
+    id: "009_tracked_messages_and_custom_executors",
+    sql: `
+      -- 1. Space-optimized tracked messages for auto-updating dynamic placeholders
+      CREATE TABLE IF NOT EXISTS tracked_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        channel_id TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        template_id INTEGER REFERENCES templates(id) ON DELETE SET NULL,
+        exploit_name TEXT,
+        author_user_id TEXT,
+        raw_payload TEXT,
+        last_payload_hash TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        last_checked_at INTEGER NOT NULL,
+        UNIQUE(channel_id, message_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tracked_messages_chan_msg
+        ON tracked_messages(channel_id, message_id);
+      CREATE INDEX IF NOT EXISTS idx_tracked_messages_exploit
+        ON tracked_messages(exploit_name);
+      CREATE INDEX IF NOT EXISTS idx_tracked_messages_author
+        ON tracked_messages(author_user_id);
+
+      -- 2. Custom executor configurations allowing user to define/customize executors in /exploit
+      CREATE TABLE IF NOT EXISTS custom_executors (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        author_id TEXT,
+        template_id INTEGER REFERENCES templates(id) ON DELETE SET NULL,
+        custom_payload TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_custom_executors_enabled
+        ON custom_executors(enabled);
+    `,
+  },
 ];
 

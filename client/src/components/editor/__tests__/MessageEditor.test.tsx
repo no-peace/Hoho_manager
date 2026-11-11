@@ -3,105 +3,68 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MessageEditor } from "../MessageEditor";
 import { useMessageStore } from "../../../store/messageStore";
 
-describe("MessageEditor (UI-01 Webhook Profile Overrides)", () => {
+describe("MessageEditor", () => {
   beforeEach(() => {
     useMessageStore.getState().reset();
   });
 
-  it("renders collapsed Profile Override button displaying Default Bot Profile when unset", () => {
+  it("renders Message 1 header with badge", () => {
     render(<MessageEditor index={0} />);
 
-    expect(screen.getByText(/Profile Override \(Webhook\)/i)).toBeDefined();
-    expect(screen.getByText("Default Bot Profile")).toBeDefined();
+    expect(screen.getByText("Message 1")).toBeDefined();
+    expect(screen.getByText("Classic")).toBeDefined();
   });
 
-  it("expands panel on click and typing username updates message in store", () => {
+  it("renders Rename, Duplicate and Delete buttons in toolbar", () => {
     render(<MessageEditor index={0} />);
 
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
-
-    const usernameInput = screen.getByPlaceholderText("Announcements Bot") as HTMLInputElement;
-    expect(usernameInput).toBeDefined();
-
-    fireEvent.change(usernameInput, { target: { value: "Security Alerts" } });
-    expect(useMessageStore.getState().data.username).toBe("Security Alerts");
+    expect(screen.getByTitle("Rename Message")).toBeDefined();
+    expect(screen.getByTitle("Duplicate Message")).toBeDefined();
+    expect(screen.getByTitle("Delete Message")).toBeDefined();
   });
 
-  it("displays character counter reflecting typed username length", () => {
+  it("disables Delete button when only one message exists", () => {
     render(<MessageEditor index={0} />);
 
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
-
-    const usernameInput = screen.getByPlaceholderText("Announcements Bot");
-    fireEvent.change(usernameInput, { target: { value: "12345" } });
-
-    expect(screen.getByText("5/80")).toBeDefined();
+    const deleteBtn = screen.getByTitle("Delete Message") as HTMLButtonElement;
+    expect(deleteBtn.disabled).toBe(true);
   });
 
-  it("displays validation error when username contains forbidden words (clyde/discord/system message)", () => {
+  it("duplicates message when Duplicate Message button is clicked", () => {
+    useMessageStore.getState().setField("content", "Original text");
     render(<MessageEditor index={0} />);
 
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
+    const dupBtn = screen.getByTitle("Duplicate Message");
+    fireEvent.click(dupBtn);
 
-    const usernameInput = screen.getByPlaceholderText("Announcements Bot");
-    fireEvent.change(usernameInput, { target: { value: "discord staff" } });
-
-    expect(screen.getByText(/Discord prohibits "discord" in webhook usernames/i)).toBeDefined();
+    const messages = useMessageStore.getState().messages;
+    expect(messages.length).toBe(2);
+    expect(messages[1].content).toBe("Original text");
   });
 
-  it("displays validation error when username contains backticks", () => {
+  it("allows renaming message through inline rename prompt", () => {
     render(<MessageEditor index={0} />);
 
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
+    const renameBtn = screen.getByTitle("Rename Message");
+    fireEvent.click(renameBtn);
 
-    const usernameInput = screen.getByPlaceholderText("Announcements Bot");
-    fireEvent.change(usernameInput, { target: { value: "bot```name" } });
+    const renameInput = screen.getByPlaceholderText("Message 1") as HTMLInputElement;
+    expect(renameInput).toBeDefined();
 
-    expect(screen.getByText(/Username cannot contain backticks/i)).toBeDefined();
+    fireEvent.change(renameInput, { target: { value: "Welcome Announcement" } });
+    fireEvent.keyDown(renameInput, { key: "Enter" });
+
+    expect(screen.getByText("Welcome Announcement")).toBeDefined();
   });
 
-  it("validates avatar URL: shows Valid badge for HTTPS URL", () => {
+  it("toggles collapsible content area when clicking header toggle", () => {
     render(<MessageEditor index={0} />);
 
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
+    const collapseBtn = screen.getByTitle("Collapse Message");
+    expect(collapseBtn).toBeDefined();
+    fireEvent.click(collapseBtn);
 
-    const avatarInput = screen.getByPlaceholderText("https://cdn.discordapp.com/avatars/...");
-    fireEvent.change(avatarInput, { target: { value: "https://example.com/avatar.png" } });
-
-    expect(screen.getByText(/Valid/i)).toBeDefined();
-  });
-
-  it("triggers image load error on avatar img onError", () => {
-    render(<MessageEditor index={0} />);
-
-    const toggleButton = screen.getByRole("button", { name: /Profile Override \(Webhook\)/i });
-    fireEvent.click(toggleButton);
-
-    const avatarInput = screen.getByPlaceholderText("https://cdn.discordapp.com/avatars/...");
-    fireEvent.change(avatarInput, { target: { value: "https://example.com/broken.png" } });
-
-    const avatarImg = screen.getByAltText("Avatar");
-    fireEvent.error(avatarImg);
-
-    // After load error, Valid badge disappears and input gets error styling
-    expect(screen.queryByText(/Valid/i)).toBeNull();
-  });
-
-  it("clears both username and avatar_url via Clear Profile Override button", () => {
-    useMessageStore.getState().setField("username", "Pre-set Bot");
-    useMessageStore.getState().setField("avatar_url", "https://example.com/avatar.png");
-
-    render(<MessageEditor index={0} />);
-
-    const clearButton = screen.getByTitle("Clear Profile Override");
-    fireEvent.click(clearButton);
-
-    expect(useMessageStore.getState().data.username).toBe("");
-    expect(useMessageStore.getState().data.avatar_url).toBe("");
+    // After collapsing, title changes to Expand Message
+    expect(screen.getByTitle("Expand Message")).toBeDefined();
   });
 });

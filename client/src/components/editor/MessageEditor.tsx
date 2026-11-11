@@ -35,6 +35,7 @@ import { EmbedEditor } from "./EmbedEditor";
 import { DiscohookComponentsEditor } from "./DiscohookComponentsEditor";
 import { FileAttachmentsSection } from "./FileAttachmentsSection";
 import { ColorPicker } from "../ui/ColorPicker";
+import { TextField } from "../ui/Field";
 import { useMessageStore } from "../../store/messageStore";
 import { EDITOR_MODES, uid } from "../../utils/constants";
 import {
@@ -66,23 +67,6 @@ const CONTAINER_CHILD_OPTIONS = [
   { label: "Separator", type: ComponentType.Separator, icon: Minus },
   { label: "Action Row", type: ComponentType.ActionRow, icon: Layers },
 ] as const;
-
-const DISCORD_FORBIDDEN_USERNAMES = ["clyde", "discord", "system message"];
-
-/** Validate Discord webhook username rules (1-80 chars, no forbidden words, no backticks). */
-const validateWebhookUsername = (name: string): string | null => {
-  if (!name || !name.trim()) return null;
-  const trimmed = name.trim();
-  if (trimmed.length > 80) return "Username exceeds Discord limit of 80 characters.";
-  if (trimmed.includes("```")) return "Username cannot contain backticks.";
-  const lower = trimmed.toLowerCase();
-  for (const forbidden of DISCORD_FORBIDDEN_USERNAMES) {
-    if (lower.includes(forbidden)) {
-      return `Discord prohibits "${forbidden}" in webhook usernames.`;
-    }
-  }
-  return null;
-};
 
 /** Validate HTTP/HTTPS image URL format. */
 const isValidHttpUrl = (val: string): boolean => {
@@ -140,14 +124,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   // Local collapsible section states matching Discohook
   const [isOpen, setIsOpen] = useState(true);
   const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name));
-  const [profileOverrideOpen, setProfileOverrideOpen] = useState(
-    Boolean(message.username || message.avatar_url),
-  );
-  const [avatarLoadError, setAvatarLoadError] = useState(false);
-
-  useEffect(() => {
-    setAvatarLoadError(false);
-  }, [message.avatar_url]);
 
   // Rename message state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -594,13 +570,12 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
-                          Button Label
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={80}
+                        <TextField
+                          label="Button Label"
+                          variables
+                          limit={80}
                           value={accessory.label || ""}
+                          placeholder="Button Text"
                           onChange={(e) => {
                             ensureActive();
                             if (id) {
@@ -609,7 +584,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                               });
                             }
                           }}
-                          className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
                         />
                       </div>
                       <div>
@@ -972,6 +946,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
+            title={isOpen ? "Collapse Message" : "Expand Message"}
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(!isOpen);
@@ -1079,189 +1054,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
         <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-xl">
           {/* Shared Collapsible Thread, WEAO Exploit Binding & Files Sections */}
           <div className="space-y-2">
-            {/* ── Webhook Profile Override Sub-Section (UI-01) ── */}
-            <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
-              <div
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setProfileOverrideOpen(!profileOverrideOpen);
-                  }
-                }}
-                onClick={() => setProfileOverrideOpen(!profileOverrideOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#dbdee1] hover:bg-[#282a2e] transition-colors cursor-pointer select-none"
-              >
-                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-[#949ba4]">
-                  {profileOverrideOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                  <User size={13} className="text-[#5865f2]" /> Profile Override (Webhook)
-                </span>
-                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                  {(message.username || message.avatar_url) ? (
-                    <div className="flex items-center gap-1.5 bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 rounded text-[10px] text-[#dee0fc]">
-                      {message.avatar_url && !avatarLoadError && (
-                        <img
-                          src={message.avatar_url}
-                          alt=""
-                          className="w-3.5 h-3.5 rounded-full object-cover"
-                        />
-                      )}
-                      <span className="font-semibold truncate max-w-[120px]">
-                        {message.username || "Custom Avatar"}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          ensureActive();
-                          setField("username", "");
-                          setField("avatar_url", "");
-                        }}
-                        className="text-[#949ba4] hover:text-[#f28b8b] ml-0.5"
-                        title="Clear Profile Override"
-                      >
-                        <X size={11} />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[10px] text-[#949ba4] font-normal">
-                      Default Bot Profile
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {profileOverrideOpen && (
-                <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-3">
-                  {/* Notice Banner */}
-                  <p className="text-[11px] text-[#949ba4] leading-relaxed">
-                    Custom author name and avatar applied when sending via Discord Webhook. Bot Token dispatch uses the Bot application's global identity.
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Username Input */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
-                          Override Username
-                        </label>
-                        <span className={`text-[10px] font-mono ${
-                          (message.username?.length || 0) > 80 ? "text-[#f28b8b] font-bold" : "text-[#949ba4]"
-                        }`}>
-                          {message.username?.length || 0}/80
-                        </span>
-                      </div>
-                      <div className="relative flex items-center">
-                        <input
-                          type="text"
-                          maxLength={80}
-                          value={message.username || ""}
-                          placeholder="Announcements Bot"
-                          onChange={(e) => {
-                            ensureActive();
-                            setField("username", e.target.value);
-                          }}
-                          className={`w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-2.5 pr-7 py-1.5 rounded border transition-colors focus:outline-none ${
-                            validateWebhookUsername(message.username || "")
-                              ? "border-[#f28b8b] focus:border-[#f28b8b]"
-                              : "border-[#232428] focus:border-[#5865f2]"
-                          }`}
-                        />
-                        {message.username && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              ensureActive();
-                              setField("username", "");
-                            }}
-                            className="absolute right-2 text-[#949ba4] hover:text-white"
-                            title="Clear username"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                      {validateWebhookUsername(message.username || "") && (
-                        <p className="flex items-center gap-1 mt-1 text-[10px] text-[#f28b8b]">
-                          <AlertCircle size={10} className="shrink-0" />
-                          <span>{validateWebhookUsername(message.username || "")}</span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Avatar URL Input */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
-                          Override Avatar URL
-                        </label>
-                        {message.avatar_url && !avatarLoadError && isValidHttpUrl(message.avatar_url) && (
-                          <span className="text-[10px] text-[#57f287] flex items-center gap-0.5">
-                            <Check size={10} /> Valid
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {/* Avatar Thumbnail Preview */}
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#1e1f22] border border-[#35373c] shrink-0 flex items-center justify-center">
-                          {message.avatar_url && !avatarLoadError ? (
-                            <img
-                              src={message.avatar_url}
-                              alt="Avatar"
-                              className="w-full h-full object-cover"
-                              onError={() => setAvatarLoadError(true)}
-                            />
-                          ) : (
-                            <User size={16} className="text-[#949ba4]" />
-                          )}
-                        </div>
-
-                        <div className="relative flex-1 flex items-center">
-                          <input
-                            type="text"
-                            value={message.avatar_url || ""}
-                            placeholder="https://cdn.discordapp.com/avatars/..."
-                            onChange={(e) => {
-                              ensureActive();
-                              setField("avatar_url", e.target.value.trim());
-                            }}
-                            className={`w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-2.5 pr-7 py-1.5 rounded border transition-colors focus:outline-none ${
-                              !isValidHttpUrl(message.avatar_url || "") || avatarLoadError
-                                ? "border-[#f28b8b] focus:border-[#f28b8b]"
-                                : "border-[#232428] focus:border-[#5865f2]"
-                            }`}
-                          />
-                          {message.avatar_url && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                ensureActive();
-                                setField("avatar_url", "");
-                              }}
-                              className="absolute right-2 text-[#949ba4] hover:text-white"
-                              title="Clear avatar URL"
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      {(!isValidHttpUrl(message.avatar_url || "") || avatarLoadError) && (
-                        <p className="flex items-center gap-1 mt-1 text-[10px] text-[#f28b8b]">
-                          <AlertCircle size={10} className="shrink-0" />
-                          <span>
-                            {avatarLoadError
-                              ? "Unable to load image from this URL."
-                              : "Must be a valid http:// or https:// image URL."}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Thread Sub-Section */}
             <div className="rounded border border-[#1e1f22] bg-[#232428] overflow-hidden">
               <button

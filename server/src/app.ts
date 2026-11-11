@@ -18,6 +18,8 @@ import settingsRouter from "./routes/settings.js";
 import discordRouter from "./routes/discord.js";
 import authRouter from "./routes/auth.js";
 import weaoRouter from "./routes/weao.js";
+import executorsRouter from "./routes/executors.js";
+import trackingRouter from "./routes/tracking.js";
 
 export const createApp = (): Express => {
   const app = express();
@@ -78,6 +80,8 @@ export const createApp = (): Express => {
   app.use("/api/v1", discordRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/weao", weaoRouter);
+  app.use("/api/executors", executorsRouter);
+  app.use("/api/tracking", trackingRouter);
 
   // Serve built frontend if client/dist exists (Express 5 compatible SPA fallback)
   const clientDist = path.resolve(serverRoot, "../client/dist");

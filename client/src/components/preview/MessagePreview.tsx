@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Bot, Eye, Info, FileText, Link2, Music, Monitor, Smartphone } from "lucide-react";
+import { Bot, Eye, Info, FileText, Link2, Music } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
@@ -119,7 +119,6 @@ export const MessagePreview = () => {
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [density, setDensity] = useState<"cozy" | "compact">("cozy");
 
   useEffect(() => {
@@ -184,36 +183,6 @@ export const MessagePreview = () => {
             </div>
           )}
 
-          {/* Desktop vs Mobile Simulation Toggle */}
-          <div className="flex items-center bg-[#1e1f22] p-0.5 rounded-lg border border-[#111214]">
-            <button
-              type="button"
-              onClick={() => setPreviewDevice("desktop")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                previewDevice === "desktop"
-                  ? "bg-[#5865f2] text-white shadow-xs"
-                  : "text-[#949ba4] hover:text-[#dbdee1]"
-              }`}
-              title="Desktop View (Full Width Discord client)"
-            >
-              <Monitor size={12} />
-              <span className="hidden sm:inline text-[11px]">Desktop</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewDevice("mobile")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                previewDevice === "mobile"
-                  ? "bg-[#5865f2] text-white shadow-xs"
-                  : "text-[#949ba4] hover:text-[#dbdee1]"
-              }`}
-              title="Mobile View (375px iPhone/Android simulator)"
-            >
-              <Smartphone size={12} />
-              <span className="hidden sm:inline text-[11px]">Mobile</span>
-            </button>
-          </div>
-
           {/* Cozy vs Compact Density */}
           <button
             type="button"
@@ -227,24 +196,8 @@ export const MessagePreview = () => {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 sm:p-4 custom-scrollbar">
-        {/* Responsive Container: Fluid on desktop or bounded phone mockup on mobile mode */}
-        <div
-          className={
-            previewDevice === "mobile"
-              ? "max-w-[390px] mx-auto my-2 bg-[#313338] border border-[#232428] rounded-2xl shadow-2xl p-3 min-h-[440px] transition-all"
-              : "w-full transition-all"
-          }
-        >
-          {previewDevice === "mobile" && (
-            <div className="flex items-center justify-between border-b border-[#232428] pb-2 mb-3 text-[11px] text-[#949ba4] select-none">
-              <span className="flex items-center gap-1 font-bold text-[#dbdee1]">
-                <span className="text-[#5865f2]">#</span> general
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1e1f22] text-[#949ba4]">
-                Mobile 390px
-              </span>
-            </div>
-          )}
+        {/* Responsive Discord Preview Container */}
+        <div className="w-full max-w-4xl mx-auto transition-all">
 
           {isAllEmpty ? (
             <p className="flex items-center gap-2 text-xs text-[#949ba4] py-8 justify-center">

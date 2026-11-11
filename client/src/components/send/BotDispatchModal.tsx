@@ -12,7 +12,7 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-import { WEBHOOK_URL_REGEX, MessageFlags } from "@dmb/shared";
+import { MessageFlags } from "@dmb/shared";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { useProfileStore } from "../../store/profileStore";
@@ -27,77 +27,20 @@ export interface DispatchModalProps {
   open: boolean;
   onClose: () => void;
   initialMode?: "send" | "edit";
-  initialChannel?: "bot" | "webhook";
 }
 
 const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   open,
   onClose,
   initialMode = "send",
-  initialChannel,
 }) => {
-  // Top-Level Channel Mode: "bot" vs "webhook"
-  const [dispatchChannel, setDispatchChannel] = useState<"bot" | "webhook">(() => {
-    if (initialChannel) return initialChannel;
-    try {
-      return (localStorage.getItem("studio_dispatch_channel") as "bot" | "webhook") || "bot";
-    } catch {
-      return "bot";
-    }
-  });
-
-  useEffect(() => {
-    if (initialChannel) {
-      setDispatchChannel(initialChannel);
-    }
-  }, [initialChannel]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("studio_dispatch_channel", dispatchChannel);
-    } catch {
-      // ignore
-    }
-  }, [dispatchChannel]);
-
-  // Webhook Dispatch State
-  const webhookUrlFromStore = useProfileStore((state) => state.webhookUrl);
-  const setStoreWebhookUrl = useProfileStore((state) => state.setWebhookUrl);
-  const threadIdFromStore = useProfileStore((state) => state.threadId);
-  const setStoreThreadId = useProfileStore((state) => state.setThreadId);
-  const targets = useMessageStore((state) => state.targets);
   const messagesFromStore = useMessageStore((state) => state.messages);
   const dataFromStore = useMessageStore((state) => state.data);
-
-  const [webhookUrlInput, setWebhookUrlInput] = useState(() => {
-    return webhookUrlFromStore || targets?.[0]?.url || "";
-  });
-  const [threadIdInput, setThreadIdInput] = useState(() => threadIdFromStore || "");
-
-  useEffect(() => {
-    if (open) {
-      if (webhookUrlFromStore) setWebhookUrlInput(webhookUrlFromStore);
-      else if (targets?.[0]?.url) setWebhookUrlInput(targets[0].url);
-      if (threadIdFromStore) setThreadIdInput(threadIdFromStore);
-    }
-  }, [open, webhookUrlFromStore, threadIdFromStore, targets]);
-
-  const isWebhookUrlValid = useMemo(() => {
-    return WEBHOOK_URL_REGEX.test(webhookUrlInput.trim());
-  }, [webhookUrlInput]);
-
-  const isThreadIdValid = useMemo(() => {
-    const trimmed = threadIdInput.trim();
-    if (!trimmed) return true;
-    return /^\d{17,20}$/.test(trimmed);
-  }, [threadIdInput]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
-
-  const canDispatchWebhook = isWebhookUrlValid && isThreadIdValid && !isSending;
 
   const displayMessages = useMemo(() => {
     return messagesFromStore && messagesFromStore.length > 0
@@ -267,106 +210,6 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   };
 
   const handleDispatch = async () => {
-    // ── Webhook Mode Dispatch Path ──
-    if (dispatchChannel === "webhook") {
-      const trimmedUrl = webhookUrlInput.trim();
-      if (!WEBHOOK_URL_REGEX.test(trimmedUrl)) {
-        setSendResult("Please provide a valid Discord Webhook URL.");
-        return;
-      }
-      const trimmedThreadId = threadIdInput.trim();
-      if (trimmedThreadId && !/^\d{17,20}$/.test(trimmedThreadId)) {
-        setSendResult("Thread ID must be a 17-20 digit Discord Snowflake.");
-        return;
-      }
-
-      setIsSending(true);
-      setSendResult(null);
-
-      try {
-        const store = useMessageStore.getState();
-        const allPayloads = store.getAllPayloads();
-        const payloadsToSend = allPayloads.length > 0 ? allPayloads : [store.getPayload()];
-
-        const mentionCheck = checkUnauthorizedMentions(payloadsToSend);
-        if (!mentionCheck.valid) {
-          const errorMsg = `Permission Denied: You do not have permission to ping ${mentionCheck.violations.join(", ")}. Please remove unauthorized mentions before dispatching.`;
-          setSendResult(errorMsg);
-          useGlobalStore.getState().showToast(errorMsg, "error");
-          setIsSending(false);
-          return;
-        }
-
-        const attachedFiles = store.attachedFiles;
-        const flows = useActionStore.getState().toRegistrations();
-
-        const localFiles = attachedFiles.filter(
-          (f): f is typeof f & { file: File } => f.file instanceof File,
-        );
-        const urlAttachments = attachedFiles
-          .filter((f) => !f.file && typeof f.url === "string")
-          .map((f, index) => ({
-            id: `url-${index}`,
-            filename: f.spoiler ? `SPOILER_${f.name}` : f.name,
-            url: f.url as string,
-            is_spoiler: Boolean(f.spoiler),
-            ...(f.description ? { description: f.description } : {}),
-          }));
-
-        // Persist entered URL and thread ID in profileStore and messageStore targets
-        setStoreWebhookUrl(trimmedUrl);
-        setStoreThreadId(trimmedThreadId);
-        if (store.setTargetUrl) {
-          store.setTargetUrl(0, trimmedUrl);
-        }
-
-        if (localFiles.length > 0) {
-          const formData = new FormData();
-          const sendBody = {
-            mode: "webhook",
-            webhookUrl: trimmedUrl,
-            threadId: trimmedThreadId || undefined,
-            messages: payloadsToSend,
-            payload: payloadsToSend[0],
-            flows,
-            ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
-          };
-          formData.append("payload_json", JSON.stringify(sendBody));
-          for (const fileItem of localFiles) {
-            const filename = fileItem.spoiler ? `SPOILER_${fileItem.name}` : fileItem.name;
-            formData.append("files", fileItem.file, filename);
-          }
-          await api.send(formData);
-        } else {
-          await api.send({
-            mode: "webhook",
-            webhookUrl: trimmedUrl,
-            threadId: trimmedThreadId || undefined,
-            messages: payloadsToSend,
-            payload: payloadsToSend[0],
-            flows,
-            ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
-          });
-        }
-
-        setSendResult(
-          payloadsToSend.length > 1
-            ? `Successfully dispatched ${payloadsToSend.length} messages in sequence to webhook!`
-            : "Successfully dispatched message to webhook!",
-        );
-        setTimeout(() => onClose(), 2000);
-      } catch (err: any) {
-        const errorMsg =
-          err?.response?.data?.error ||
-          err?.message ||
-          "An error occurred while dispatching to webhook.";
-        setSendResult(String(errorMsg));
-      } finally {
-        setIsSending(false);
-      }
-      return;
-    }
-
     // ── Bot Token Dispatch Path ──
     if (selectedChannels.length === 0) return;
     if (mode === "edit" && !targetMessageId) return;
@@ -526,7 +369,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={dispatchChannel === "webhook" ? "Dispatch to Discord Webhook" : "Dispatch via Bot"}
+      title={mode === "edit" ? "Edit via Bot" : "Dispatch via Bot"}
       width="max-w-2xl"
       footer={
         <>
@@ -536,33 +379,20 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           <Button
             variant="primary"
             className={`${
-              dispatchChannel === "webhook"
-                ? "bg-[#5865f2] hover:bg-[#4752c4]"
-                : mode === "edit"
-                  ? "bg-[#faa61a] hover:bg-[#d88c0e]"
-                  : "bg-[#248046] hover:bg-[#1a6334]"
+              mode === "edit"
+                ? "bg-[#faa61a] hover:bg-[#d88c0e]"
+                : "bg-[#248046] hover:bg-[#1a6334]"
             } text-white border-none flex items-center gap-2`}
             onClick={() => void handleDispatch()}
             loading={isSending}
             disabled={
-              dispatchChannel === "webhook"
-                ? !canDispatchWebhook
-                : (selectedChannels.length === 0 ||
-                  isSending ||
-                  (mode === "edit" && !targetMessageId) ||
-                  (!canUseDefaultBot && botProfileId === null))
+              selectedChannels.length === 0 ||
+              isSending ||
+              (mode === "edit" && !targetMessageId) ||
+              (!canUseDefaultBot && botProfileId === null)
             }
           >
-            {dispatchChannel === "webhook" ? (
-              <>
-                <Send size={16} />
-                <span>
-                  {displayMessages.length > 1
-                    ? `Dispatch Batch (${displayMessages.length} Messages)`
-                    : "Dispatch to Webhook"}
-                </span>
-              </>
-            ) : mode === "edit" ? (
+            {mode === "edit" ? (
               <>
                 <Edit3 size={16} /> Update Message
               </>
@@ -576,164 +406,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       }
     >
       <div className="flex flex-col gap-5">
-        {/* Top Channel Selector: Bot Token vs Webhook */}
-        <div className="flex bg-[#111214] p-1 rounded-lg border border-[#1e1f22] shrink-0">
-          <button
-            type="button"
-            onClick={() => setDispatchChannel("bot")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-xs font-bold transition-all ${
-              dispatchChannel === "bot"
-                ? "bg-[#2b2d31] text-white shadow-sm border border-[#35373c]"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#1e1f22]"
-            }`}
-          >
-            <Bot size={15} className={dispatchChannel === "bot" ? "text-[#57f287]" : ""} />
-            <span>Bot Token Dispatch</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDispatchChannel("webhook")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-xs font-bold transition-all ${
-              dispatchChannel === "webhook"
-                ? "bg-[#5865f2] text-white shadow-sm"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#1e1f22]"
-            }`}
-          >
-            <Send size={15} />
-            <span>Webhook URL Dispatch</span>
-          </button>
-        </div>
-
-        {/* ── Webhook Channel View ── */}
-        {dispatchChannel === "webhook" ? (
-          <div className="space-y-4">
-            {/* 1. Webhook URL Input */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-[#b5bac1] uppercase tracking-wide flex items-center gap-1.5">
-                  1. Discord Webhook URL <span className="text-[#f28b8b]">*</span>
-                </label>
-                {webhookUrlInput && (
-                  <span className={`text-[10px] font-semibold flex items-center gap-1 ${
-                    isWebhookUrlValid ? "text-[#57f287]" : "text-[#f28b8b]"
-                  }`}>
-                    {isWebhookUrlValid ? (
-                      <>
-                        <Check size={11} /> Valid Discord Webhook
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle size={11} /> Invalid Webhook URL
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type="url"
-                  value={webhookUrlInput}
-                  onChange={(e) => setWebhookUrlInput(e.target.value)}
-                  placeholder="https://discord.com/api/webhooks/1234567890/token_string..."
-                  className={`w-full bg-[#1e1f22] text-xs font-mono text-[#dbdee1] px-3 py-2 rounded-md border transition-colors outline-none focus:ring-1 ${
-                    webhookUrlInput && !isWebhookUrlValid
-                      ? "border-[#f28b8b] focus:ring-[#f28b8b]"
-                      : "border-[#111214] focus:border-[#5865f2] focus:ring-[#5865f2]"
-                  }`}
-                />
-                {webhookUrlInput && (
-                  <button
-                    type="button"
-                    onClick={() => setWebhookUrlInput("")}
-                    className="absolute right-2.5 top-2.5 text-[#949ba4] hover:text-white"
-                    title="Clear URL"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-              <p className="text-[11px] text-[#949ba4]">
-                Obtained from Discord Server Settings → Integrations → Webhooks → Copy Webhook URL.
-              </p>
-            </div>
-
-            {/* 2. Thread / Forum Post ID (Optional) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-[#b5bac1] uppercase tracking-wide">
-                  2. Thread ID (Optional)
-                </label>
-                {threadIdInput && (
-                  <span className={`text-[10px] font-semibold flex items-center gap-1 ${
-                    isThreadIdValid ? "text-[#57f287]" : "text-[#f28b8b]"
-                  }`}>
-                    {isThreadIdValid ? (
-                      <>
-                        <Check size={11} /> Valid Snowflake
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle size={11} /> Must be 17–20 Digits
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                maxLength={20}
-                value={threadIdInput}
-                onChange={(e) => setThreadIdInput(e.target.value.replace(/\D/g, ""))}
-                placeholder="1098765432109876543 (Thread / Forum Post ID)"
-                className={`w-full bg-[#1e1f22] text-xs font-mono text-[#dbdee1] px-3 py-2 rounded-md border transition-colors outline-none focus:ring-1 ${
-                  threadIdInput && !isThreadIdValid
-                    ? "border-[#f28b8b] focus:ring-[#f28b8b]"
-                    : "border-[#111214] focus:border-[#5865f2] focus:ring-[#5865f2]"
-                }`}
-              />
-              <p className="text-[11px] text-[#949ba4]">
-                If specified, Discord sends this message inside the specified active Thread or Forum Post rather than the parent channel.
-              </p>
-            </div>
-
-            {/* 3. Batch Dispatch Summary Card */}
-            <div className="p-3 bg-[#1e1f22] border border-[#111214] rounded-lg space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#dbdee1] flex items-center gap-1.5">
-                  <Send size={13} className="text-[#5865f2]" /> Batch Scope
-                </span>
-                <span className="bg-[#2b2d31] px-2 py-0.5 rounded text-[11px] font-mono text-[#5865f2]">
-                  {displayMessages.length} Message{displayMessages.length > 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {displayMessages.map((m, idx) => {
-                  const isV2 =
-                    Boolean((m.flags ?? 0) & MessageFlags.IsComponentsV2) ||
-                    (m as any).mode === EDITOR_MODES.V2;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-[#2b2d31] border border-[#35373c] text-[11px]"
-                    >
-                      <span className="font-semibold text-white">Msg {idx + 1}:</span>
-                      <span className="text-[#949ba4]">{isV2 ? "V2" : "Classic"}</span>
-                      {m.username && (
-                        <span className="text-[#57f287] font-medium truncate max-w-[80px]">
-                          @{m.username}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* ── Bot Token Channel View ── */
-          <>
-            {/* Mode Toggles */}
-            <div className="flex bg-[#1e1f22] p-1 rounded-md border border-[#111214] shrink-0">
+        {/* Mode Toggles */}
+        <div className="flex bg-[#1e1f22] p-1 rounded-md border border-[#111214] shrink-0">
               <button
                 type="button"
                 onClick={() => setMode("send")}
@@ -968,8 +642,6 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 )}
               </div>
             )}
-          </>
-        )}
 
         {sendResult && (
           <div

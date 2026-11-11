@@ -691,12 +691,11 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     expect(source).toContain("break-words [overflow-wrap:anywhere]");
   });
 
-  it("verifies BotDispatchModal wraps with <Modal> and supports Webhook URL mode (UI-02 / UI-06)", () => {
+  it("verifies BotDispatchModal wraps with <Modal> and supports bot dispatch mode (UI-02 / UI-06)", () => {
     const filePath = path.resolve(__dirname, "../components/send/BotDispatchModal.tsx");
     const source = fs.readFileSync(filePath, "utf-8");
     expect(source).toContain("<Modal");
-    expect(source).toContain("Dispatch to Discord Webhook");
-    expect(source).toContain("WEBHOOK_URL_REGEX");
+    expect(source).toContain("Dispatch via Bot");
   });
 
   it("verifies MessageEditor Set Link modal uses <Modal> component (UI-06)", () => {

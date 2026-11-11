@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
 import { runDatabaseMaintenance } from "./services/maintenanceService.js";
+import { startMessageTrackerPolling, stopMessageTrackerPolling } from "./services/messageTrackerService.js";
 import { logger } from "./utils/logger.js";
 import type { Server } from "node:http";
 
@@ -21,6 +22,9 @@ const start = async (): Promise<void> => {
       `Initial maintenance sweep error: ${err instanceof Error ? err.message : String(err)}`,
     );
   });
+
+  // Start background message tracker for dynamic auto-updates
+  startMessageTrackerPolling();
 
   const app = createApp();
 
@@ -45,6 +49,7 @@ const start = async (): Promise<void> => {
     isShuttingDown = true;
     log.info(`Received ${signal}. Starting graceful shutdown...`);
     clearInterval(cleanup);
+    stopMessageTrackerPolling();
 
     server.close(() => {
       log.info("HTTP server closed.");

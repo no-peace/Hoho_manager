@@ -51,22 +51,32 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   const username = user?.username ?? "User";
   const displayname = member?.nick ?? user?.global_name ?? username;
 
-  // 1. Official Discord Clan Tag (member.clan.tag or user.clan.tag)
+  // 1. Official Discord Clan Tag (member.clan.tag, user.clan.tag, member.clan string, primary_guild.tag)
   const officialClanTag =
-    member?.clan?.tag ??
-    (user as any)?.clan?.tag ??
+    (typeof member?.clan === "string" ? member.clan : member?.clan?.tag) ??
+    (typeof (user as any)?.clan === "string" ? (user as any).clan : (user as any)?.clan?.tag) ??
     member?.user?.clan?.tag ??
-    (user as any)?.primary_guild?.tag;
+    (user as any)?.primary_guild?.tag ??
+    (member as any)?.primary_guild?.tag ??
+    (member as any)?.clan_tag ??
+    (user as any)?.clan_tag;
 
-  // 2. Bracketed tag anywhere in display name, nick, or username (e.g. [TAG], (TAG), {TAG})
+  // 2. Bracketed or separator-delimited tag in nickname, display name, or username
+  // Matches: [TAG], (TAG), {TAG}, TAG | Name, Name | TAG, TAG - Name, Name - TAG, TAG • Name
   const textToScan = `${displayname} ${username}`;
   const bracketMatch = textToScan.match(/[\[\(\{]([A-Za-z0-9_\-\.]{1,16})[\]\)\}]/);
+  const separatorMatch = !bracketMatch
+    ? textToScan.match(/(?:^([A-Za-z0-9_\-\.]{2,8})\s*[\|\-•:]|[\|\-•:]\s*([A-Za-z0-9_\-\.]{2,8})$)/)
+    : null;
+  const sepTag = separatorMatch ? separatorMatch[1] || separatorMatch[2] : null;
 
   const clantag =
     typeof officialClanTag === "string" && officialClanTag.trim()
       ? officialClanTag.trim()
       : bracketMatch
       ? bracketMatch[1]
+      : sepTag
+      ? sepTag.trim()
       : "";
 
   const unixNow = Math.floor(Date.now() / 1000);

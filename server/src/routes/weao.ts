@@ -17,6 +17,8 @@ import {
   type TemplateSummary,
 } from "../repositories/templateRepository.js";
 import { actionRepository } from "../repositories/actionRepository.js";
+import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
+import { resolveAuthorPlaceholders } from "../services/authorService.js";
 import { logger } from "../utils/logger.js";
 
 const log = logger.child("weaoRoute");
@@ -137,6 +139,13 @@ router.get(
 
     let exploits: WeaoExploitRecord[] = [];
     let templates: TemplateSummary[] = [];
+    let customExecutors: any[] = [];
+
+    try {
+      customExecutors = await customExecutorRepository.list(true);
+    } catch (err) {
+      log.warn("Failed to list custom executors:", err);
+    }
 
     try {
       exploits = await getAllExploits();
@@ -154,9 +163,30 @@ router.get(
       log.warn("Failed to list templates from summaries:", err);
     }
 
+    // Convert custom executors to exploit records
+    const customRecords: any[] = customExecutors.map((c) => ({
+      _id: `custom_${c.id}`,
+      title: c.title,
+      version: "Custom",
+      updatedDate: new Date(c.updated_at).toISOString().split("T")[0],
+      updateStatus: true,
+      hasBackupTemplate: true,
+      backupTemplateId: c.template_id,
+      backupTemplateName: c.title,
+      isCustom: true,
+      author_id: c.author_id,
+    }));
+
+    const allExploitsCombined = [
+      ...customRecords,
+      ...exploits.filter(
+        (e) => !customRecords.some((c) => c.title.toLowerCase() === e.title.toLowerCase()),
+      ),
+    ];
+
     const filtered = q
-      ? exploits.filter((e) => e.title.toLowerCase().includes(q))
-      : exploits;
+      ? allExploitsCombined.filter((e) => e.title.toLowerCase().includes(q))
+      : allExploitsCombined;
 
     const results = filtered.map((e) => {
       const matchedTemplate = templates.find(
@@ -166,9 +196,9 @@ router.get(
       );
       return {
         ...e,
-        hasBackupTemplate: Boolean(matchedTemplate),
-        backupTemplateId: matchedTemplate?.id ?? null,
-        backupTemplateName: matchedTemplate?.name ?? null,
+        hasBackupTemplate: Boolean(e.hasBackupTemplate || matchedTemplate),
+        backupTemplateId: e.backupTemplateId ?? matchedTemplate?.id ?? null,
+        backupTemplateName: e.backupTemplateName ?? matchedTemplate?.name ?? null,
       };
     });
 
@@ -188,9 +218,84 @@ router.post(
       throw ApiError.badRequest("`exploit` name is required");
     }
 
+    // 1. Check for configured Custom Executor first
+    const customExec =
+      (await customExecutorRepository.findByTitle(exploitQuery)) ??
+      (await customExecutorRepository.findById(exploitQuery));
+
+    if (customExec) {
+      let basePayload: DiscordMessagePayload = {
+        embeds: [
+          {
+            title: customExec.title,
+            description: `# ${customExec.title}\n> Live status card for ${customExec.title}`,
+            color: 0x23a55a,
+          },
+        ],
+      };
+
+      if (customExec.template_id) {
+        const fullTemplate = await templateRepository.findById(customExec.template_id);
+        const rawDoc = fullTemplate?.data as any;
+        basePayload =
+          rawDoc?.messages?.[0]?.data?.data ??
+          rawDoc?.messages?.[0]?.data ??
+          rawDoc ??
+          basePayload;
+      } else if (customExec.custom_payload) {
+        try {
+          basePayload = JSON.parse(customExec.custom_payload);
+        } catch {}
+      }
+
+      const { payload: interpolated } = await interpolateWeaoPlaceholders(
+        basePayload,
+        customExec.title,
+      );
+
+      const authorRes = await resolveAuthorPlaceholders(
+        interpolated,
+        customExec.author_id,
+      );
+
+      let flows: FlowRegistration[] = [];
+      if (customExec.template_id) {
+        const storedActions = await actionRepository.listByTemplate(customExec.template_id);
+        const flowsMap = new Map<string, { type: ActionType; config: ActionConfig }[]>();
+        for (const action of storedActions) {
+          const steps = flowsMap.get(action.custom_id) ?? [];
+          steps.push({
+            type: action.action_type as ActionType,
+            config: action.config ?? {},
+          });
+          flowsMap.set(action.custom_id, steps);
+        }
+        flows = Array.from(flowsMap.entries()).map(([customId, steps]) => ({
+          customId,
+          steps,
+        }));
+      }
+
+      return res.json({
+        source: "custom_executor",
+        templateId: customExec.template_id,
+        templateName: customExec.title,
+        exploit: {
+          title: customExec.title,
+          version: "Custom",
+          updateStatus: true,
+          platform: "Custom",
+        },
+        payload: authorRes.payload,
+        actionsCount: flows.length,
+        flows,
+      });
+    }
+
+    // 2. Check WEAO Exploit Catalog
     const exploit = await findExploitByName(exploitQuery);
     if (!exploit) {
-      throw ApiError.notFound(`No exploit matching "${exploitQuery}" found on WEAO`);
+      throw ApiError.notFound(`No exploit matching "${exploitQuery}" found`);
     }
 
     const allTemplates = await listAllTemplateSummaries();
@@ -218,6 +323,8 @@ router.post(
         exploit.title,
       );
 
+      const authorRes = await resolveAuthorPlaceholders(interpolated);
+
       const storedActions = await actionRepository.listByTemplate(matchedSummary.id);
 
       const flowsMap = new Map<string, { type: ActionType; config: ActionConfig }[]>();
@@ -239,19 +346,20 @@ router.post(
         templateId: matchedSummary.id,
         templateName: matchedSummary.name,
         exploit,
-        payload: interpolated,
+        payload: authorRes.payload,
         actionsCount: storedActions.length,
         flows,
       });
     }
 
     const fallbackPayload = await buildAdaptiveExploitPayload(exploit);
+    const authorRes = await resolveAuthorPlaceholders(fallbackPayload);
     return res.json({
       source: "adaptive_default",
       templateId: null,
       templateName: null,
       exploit,
-      payload: fallbackPayload,
+      payload: authorRes.payload,
       actionsCount: 0,
       flows: [],
     });

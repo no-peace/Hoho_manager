@@ -51,6 +51,11 @@ export class SendCommand extends Command {
     try {
       await api.sendMessage({ content: message, channelId: channel.id });
       await interaction.editReply(`\u2705 Sent to <#${channel.id}>.`);
+      if (typeof interaction.deleteReply === "function") {
+        setTimeout(() => {
+          interaction.deleteReply().catch(() => {});
+        }, 1500);
+      }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       await interaction.editReply(`\u26a0\ufe0f Could not send:\n${reason}`);

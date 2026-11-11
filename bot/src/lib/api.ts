@@ -105,6 +105,19 @@ export const resolveWeaoExploit = async (
   });
 };
 
+export const syncTrackedMessages = async (): Promise<{
+  checked: number;
+  updated: number;
+  removed: number;
+  errors: number;
+}> => {
+  const data = await request<{ ok: boolean; result: { checked: number; updated: number; removed: number; errors: number } }>(
+    "/api/tracking/sync",
+    { method: "POST" },
+  );
+  return data?.result ?? { checked: 0, updated: 0, removed: 0, errors: 0 };
+};
+
 export const api = {
   health: (signal?: AbortSignal) =>
     request<HealthResponse>("/api/health", { anonymous: true, signal }),
@@ -122,6 +135,8 @@ export const api = {
     username?: string;
     avatarUrl?: string;
     flows?: FlowRegistration[];
+    templateId?: number | null;
+    exploitName?: string | null;
   }) =>
     request<SendSuccessResponse>("/api/send", {
       method: "POST",
@@ -134,11 +149,14 @@ export const api = {
           ...(body.avatarUrl ? { avatar_url: body.avatarUrl } : {}),
         },
         ...(body.flows ? { flows: body.flows } : {}),
+        ...(body.templateId ? { templateId: body.templateId } : {}),
+        ...(body.exploitName ? { exploitName: body.exploitName } : {}),
       },
     }),
 
   listWeaoExploits,
   resolveWeaoExploit,
+  syncTrackedMessages,
 };
 
 export default api;
