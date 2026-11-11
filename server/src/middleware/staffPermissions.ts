@@ -2,8 +2,6 @@ import crypto from "node:crypto";
 import type { Request, RequestHandler } from "express";
 import { env } from "../config/env.js";
 import { staffRepository } from "../repositories/staffRepository.js";
-import { botProfileRepository } from "../repositories/profileRepository.js";
-import { userRepository } from "../repositories/userRepository.js";
 import { settingsService } from "../services/settingsService.js";
 import { auditLog } from "../services/auditLog.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
@@ -83,35 +81,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       return next();
     }
 
-    // 5. Check if the caller is using their OWN custom Bot Profile (or Webhook mode)
-    const rawProfileId = req.body?.profileId ?? req.query?.profileId;
-    const parsedProfileId =
-      rawProfileId !== undefined && rawProfileId !== null && rawProfileId !== "" && rawProfileId !== "null"
-        ? Number(rawProfileId)
-        : null;
-
-    if (sessionUser && parsedProfileId !== null && Number.isSafeInteger(parsedProfileId) && parsedProfileId > 0) {
-      const [dbUser, botProfile] = await Promise.all([
-        userRepository.findByDiscordId(sessionUser.id),
-        botProfileRepository.findById(parsedProfileId),
-      ]);
-      if (!botProfile) {
-        return next(ApiError.notFound(`Bot profile ${parsedProfileId} not found`));
-      }
-      if (!dbUser || botProfile.user_id !== dbUser.id) {
-        return next(ApiError.forbidden("That custom bot profile belongs to another user"));
-      }
-      // User is dispatching/reading strictly via their own verified custom bot token
-      req.staffContext = { isAdmin: false, staffId: sessionUser.id };
-      return next();
-    }
-
-    if (sessionUser && req.body?.mode === "webhook") {
-      req.staffContext = { isAdmin: false, staffId: sessionUser.id };
-      return next();
-    }
-
-    // 6. Standard Staff Access table check for the Server Default Bot (NEVER fail open!)
+    // 5. Standard Staff Access table check for the Server Default Bot (NEVER fail open!)
     if (!staffId || !/^\d{17,20}$/.test(staffId)) {
       auditLog({
         event: "STAFF_ACCESS_DENIED",
@@ -133,7 +103,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       });
       return next(
         ApiError.forbidden(
-          "You do not share a common server with the default bot. Add your own Custom Bot Token in Bot Config.",
+          "You do not share a common server with the configured bot. Ask a Head Admin to review your access.",
         ),
       );
     }
@@ -150,7 +120,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       });
       return next(
         ApiError.forbidden(
-          "You do not have staff access to the default bot. Add your own Custom Bot Token in Bot Config, or ask a Head Admin to grant staff access.",
+          "You do not have staff access to the configured bot. Ask a Head Admin to grant staff access.",
         ),
       );
     }

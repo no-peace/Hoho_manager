@@ -55,9 +55,11 @@ export const hasActionHandler = (actionType: string): boolean =>
 
 /** Metadata for the UI's action picker. */
 export const listActionTypes = (): ActionHandlerMeta[] =>
-  modules.map((module) => ({
-    type: module.type,
-    description: module.description,
-  }));
+  modules
+    .filter((module) => module.type !== "send_webhook_message")
+    .map((module) => ({
+      type: module.type,
+      description: module.description,
+    }));
 
 export default { getActionHandler, hasActionHandler, listActionTypes };

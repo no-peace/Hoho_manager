@@ -1,5 +1,4 @@
 import { useGlobalStore } from "../store/globalStore";
-import { useProfileStore } from "../store/profileStore";
 
 export interface MentionViolationCheck {
   valid: boolean;
@@ -8,10 +7,9 @@ export interface MentionViolationCheck {
 
 export const checkUnauthorizedMentions = (payloads: unknown[]): MentionViolationCheck => {
   const currentUser = useGlobalStore.getState().currentUser;
-  const botProfileId = useProfileStore.getState().botProfileId;
 
   // Unrestricted if Head Admin or using own Custom Bot profile
-  if (currentUser?.isAdmin || botProfileId !== null) {
+  if (currentUser?.isAdmin) {
     return { valid: true, violations: [] };
   }
 

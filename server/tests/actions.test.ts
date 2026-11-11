@@ -333,13 +333,14 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
 
     // 9. sendWebhookMessage
     describe("actions/sendWebhookMessage.ts", () => {
-      it("dispatches message via stored webhook profile", async () => {
+      it("returns an explicit disabled response without calling webhook delivery", async () => {
         const handler = getActionHandler("send_webhook_message");
-        await handler?.run({
+        const response = await handler?.run({
           ...mockContext,
           config: { webhookUrl: "https://discord.com/api/webhooks/1/tok", content: "Hook msg" },
         });
-        expect(mockDiscordApi.sendWebhook).toHaveBeenCalled();
+        expect(response?.data?.content).toContain("disabled");
+        expect(mockDiscordApi.sendWebhook).not.toHaveBeenCalled();
       });
     });
 
@@ -422,12 +423,15 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
     describe("actions/wait.ts", () => {
       it("pauses execution for configured seconds", async () => {
         vi.useFakeTimers();
-        const handler = getActionHandler("wait");
-        const waitPromise = handler?.run({ ...mockContext, config: { seconds: 1 } });
-        await vi.advanceTimersByTimeAsync(1000);
-        const res = await waitPromise;
-        expect(res).toBeUndefined();
-        vi.useRealTimers();
+        try {
+          const handler = getActionHandler("wait");
+          const waitPromise = handler?.run({ ...mockContext, config: { seconds: 1 } });
+          await vi.advanceTimersByTimeAsync(1000);
+          const res = await waitPromise;
+          expect(res).toBeUndefined();
+        } finally {
+          vi.useRealTimers();
+        }
       });
     });
 

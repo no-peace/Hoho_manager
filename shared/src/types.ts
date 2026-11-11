@@ -425,16 +425,13 @@ export interface AuthMeResponse {
 
 /* ── Send API ─────────────────────────────────────────────────────────────── */
 
-export type SendMode = "webhook" | "bot";
+export type SendMode = "bot";
 
 export interface SendRequestBody {
   mode: SendMode;
   payload?: DiscordMessagePayload;
   messages?: DiscordMessagePayload[];
   channelId?: string;
-  webhookUrl?: string;
-  profileId?: number | null;
-  threadId?: string;
   editMessageId?: string;
   attachments?: DiscordAttachmentPayload[];
   /**

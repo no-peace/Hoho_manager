@@ -13,7 +13,6 @@ import {
 import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
-import { useProfileStore } from "../../store/profileStore";
 import api from "../../api/client";
 import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
 
@@ -55,9 +54,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
   const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
   const currentUser = useGlobalStore((state) => state.currentUser);
-  const botProfileId = useProfileStore((state) => state.botProfileId);
 
-  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin || botProfileId !== null);
+  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin);
   const staffPerms = currentUser?.staffPermissions;
   const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);
   const canPingHere = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_here);

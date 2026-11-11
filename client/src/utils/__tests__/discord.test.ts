@@ -52,10 +52,10 @@ describe("client discord utils", () => {
   });
 
   describe("toDiscordPayload", () => {
-    it("preserves username and avatar_url profile overrides", () => {
+    it("does not transmit legacy username or avatar_url sender overrides", () => {
       const msgData: MessageData = {
-        content: "Hello from override!",
-        username: "Webhook Bot",
+        content: "Hello from the configured bot!",
+        username: "Legacy Name",
         avatar_url: "https://example.com/avatar.png",
         thread_name: "",
         embeds: [],
@@ -63,10 +63,11 @@ describe("client discord utils", () => {
       };
 
       const payload = toDiscordPayload(msgData, "classic");
-      expect(payload.content).toBe("Hello from override!");
-      expect(payload.username).toBe("Webhook Bot");
-      expect(payload.avatar_url).toBe("https://example.com/avatar.png");
+      expect(payload.content).toBe("Hello from the configured bot!");
+      expect(payload.username).toBeUndefined();
+      expect(payload.avatar_url).toBeUndefined();
     });
+
 
     it("sanitizes empty embeds and components", () => {
       const msgData: MessageData = {

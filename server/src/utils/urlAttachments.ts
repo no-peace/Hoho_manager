@@ -5,6 +5,7 @@ import { ApiError } from "./errors.js";
 import { logger } from "./logger.js";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+const MAX_TOTAL_URL_ATTACHMENT_SIZE = 50 * 1024 * 1024; // 50 mb
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_URL_ATTACHMENTS = 10;
 
@@ -168,9 +169,13 @@ export const fetchUrlAttachments = async (
   attachments: unknown,
 ): Promise<DiscordAttachmentFile[]> => {
   if (!Array.isArray(attachments) || attachments.length === 0) return [];
+  if (attachments.length > MAX_URL_ATTACHMENTS) {
+    throw ApiError.badRequest(`Too many URL attachments: maximum ${MAX_URL_ATTACHMENTS} allowed`);
+  }
 
-  const inputs = attachments.slice(0, MAX_URL_ATTACHMENTS) as UrlAttachmentInput[];
+  const inputs = attachments as UrlAttachmentInput[];
   const resolved: DiscordAttachmentFile[] = [];
+  let totalReceived = 0;
 
   for (const input of inputs) {
     const rawUrl = typeof input?.url === "string" ? input.url.trim() : "";
@@ -212,6 +217,13 @@ export const fetchUrlAttachments = async (
         `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
       );
     }
+    if (
+      Number.isFinite(contentLength) &&
+      contentLength > 0 &&
+      totalReceived + contentLength > MAX_TOTAL_URL_ATTACHMENT_SIZE
+    ) {
+      throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
+    }
 
     let buffer: ArrayBuffer;
     if (response.body && typeof response.body.getReader === "function") {
@@ -229,6 +241,10 @@ export const fetchUrlAttachments = async (
               `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
             );
           }
+          if (totalReceived + received > MAX_TOTAL_URL_ATTACHMENT_SIZE) {
+            await reader.cancel().catch(() => {});
+            throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
+          }
           chunks.push(value);
         }
       }
@@ -239,6 +255,7 @@ export const fetchUrlAttachments = async (
         offset += chunk.byteLength;
       }
       buffer = merged.buffer;
+      totalReceived += received;
     } else {
       buffer = await response.arrayBuffer();
       if (buffer.byteLength > MAX_FILE_SIZE) {
@@ -246,6 +263,10 @@ export const fetchUrlAttachments = async (
           `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
         );
       }
+      if (totalReceived + buffer.byteLength > MAX_TOTAL_URL_ATTACHMENT_SIZE) {
+        throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
+      }
+      totalReceived += buffer.byteLength;
     }
 
     const type =

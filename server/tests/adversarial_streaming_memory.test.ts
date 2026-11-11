@@ -1,12 +1,10 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from "vitest";
 import express, { type Request, type Response, type NextFunction } from "express";
 import http, { type Server } from "node:http";
 import net from "node:net";
-import { Readable } from "node:stream";
 import { multipartParser } from "../src/middleware/multipart.js";
 import discord, {
   createInteractionResponse,
-  sendWebhook,
 } from "../src/services/discordService.js";
 import {
   handleInteraction,
@@ -111,7 +109,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       const boundary = "----AdversarialSingleFileStream";
       const totalBytes = 26 * 1024 * 1024; // 26MB
       const chunkSize = 1024 * 1024; // 1MB chunks
-      const chunkCount = 26;
+      const chunkCount = totalBytes / chunkSize;
 
       const stream = new ReadableStream({
         start(controller) {
@@ -146,8 +144,9 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
     it("Probe 1.3: Aggregate files exceeding 50MB (multiple 18MB files) emits HTTP 413 payload_too_large", async () => {
       // 3 files of 18MB each = 54MB total. Each file is < 25MB individual limit.
       const boundary = "----AdversarialMultiFileAggregate";
-      const fileBytes = 18 * 1024 * 1024; // 18MB
-      const chunkSize = 1024 * 1024; // 1MB
+      const fileBytes = 18 * 1024 * 1024; // 18MB per file
+      const chunkSize = 1024 * 1024; // 1MB chunks
+      const chunksPerFile = fileBytes / chunkSize;
 
       const stream = new ReadableStream({
         start(controller) {
@@ -157,7 +156,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
                 `--${boundary}\r\nContent-Disposition: form-data; name="files[${f}]"; filename="file_${f}.bin"\r\nContent-Type: application/octet-stream\r\n\r\n`,
               ),
             );
-            for (let c = 0; c < 18; c++) {
+            for (let c = 0; c < chunksPerFile; c++) {
               controller.enqueue(new Uint8Array(chunkSize));
             }
             controller.enqueue(new TextEncoder().encode("\r\n"));
@@ -202,8 +201,6 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
     it("Probe 1.5: Socket unpipe, client abort and corrupted stream resilience", async () => {
       // Test that an abrupt TCP client disconnect mid-upload does not crash the server process
       let serverErrorThrown = false;
-      const originalListeners = process.listeners("uncaughtException");
-
       const uncaughtHandler = (err: Error) => {
         serverErrorThrown = true;
       };
@@ -304,38 +301,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(inspectedSignal).toBeInstanceOf(AbortSignal);
     });
 
-    it("Probe 2.2: Multipart REST calls use 30s timeout signal", async () => {
-      let inspectedSignal: AbortSignal | undefined;
-
-      globalThis.fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
-        inspectedSignal = init?.signal as AbortSignal | undefined;
-        return {
-          ok: true,
-          status: 200,
-          headers: new Headers({ "content-type": "application/json" }),
-          json: async () => ({ id: "msg_123" }),
-        } as any;
-      });
-
-      await discord.sendWebhook(
-        "https://discord.com/api/webhooks/123/token",
-        { content: "multipart test" },
-        {
-          files: [
-            {
-              key: "files[0]",
-              filename: "sample.txt",
-              file: new Blob(["sample content"]),
-            },
-          ],
-        },
-      );
-
-      expect(inspectedSignal).toBeDefined();
-      expect(inspectedSignal).toBeInstanceOf(AbortSignal);
-    });
-
-    it("Probe 2.3: Fast interaction callback uses 2.5s timeout signal", async () => {
+    it("Probe 2.2: Fast interaction callback uses 2.5s timeout signal", async () => {
       let callCount = 0;
 
       globalThis.fetch = vi.fn().mockImplementation(async () => {
@@ -361,56 +327,16 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(callCount).toBe(2);
     });
 
-    it("Probe 2.4: Outbound REST timeouts map cleanly to HTTP 504 gateway_timeout", async () => {
-      globalThis.fetch = vi.fn().mockImplementation(async () => {
-        throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
-      });
-
-      let caughtError: any = null;
-      try {
-        await sendWebhook("https://discord.com/api/webhooks/999/token", {
-          content: "probe timeout",
-        });
-      } catch (err) {
-        caughtError = err;
-      }
-
-      expect(caughtError).toBeInstanceOf(ApiError);
-      expect(caughtError.status).toBe(504);
-      expect(caughtError.code).toBe("gateway_timeout");
-      expect(caughtError.message).toContain("Discord request timed out after 10000ms");
+    it("Probe 2.3: blocks legacy webhook URL message sends before calling fetch", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      await expect(
+        discord.sendWebhook("https://discord.com/api/webhooks/123/token", {
+          content: "legacy webhook send",
+        }),
+      ).rejects.toMatchObject({ status: 403 });
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    it("Probe 2.5: REST request timeout incurs 4 attempts (1 initial + 3 retries) with exponential backoff", async () => {
-      let callCount = 0;
-      const callTimestamps: number[] = [];
-
-      globalThis.fetch = vi.fn().mockImplementation(async () => {
-        callCount++;
-        callTimestamps.push(Date.now());
-        throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
-      });
-
-      const startTime = Date.now();
-      let caughtError: any = null;
-      try {
-        await sendWebhook("https://discord.com/api/webhooks/999/token", {
-          content: "probe retry latency",
-        });
-      } catch (err) {
-        caughtError = err;
-      }
-
-      const totalElapsed = Date.now() - startTime;
-
-      expect(caughtError).toBeInstanceOf(ApiError);
-      expect(caughtError.status).toBe(504);
-      expect(caughtError.code).toBe("gateway_timeout");
-      // 1 initial attempt + 3 retries = 4 attempts total
-      expect(callCount).toBe(4);
-      // Demonstrates exponential backoff delays (500ms + 1000ms + 2000ms = 3500ms minimum)
-      expect(totalElapsed).toBeGreaterThanOrEqual(3400);
-    });
   });
 
   /* ==========================================================================

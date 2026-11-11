@@ -7,21 +7,17 @@ import {
   Download,
   Upload,
   ShieldCheck,
-  AlertTriangle,
-  KeyRound,
   CheckCircle2,
-  Trash2,
   AlertCircle,
   Info,
   X,
   Eye,
-  EyeOff,
   Clock,
   Lock,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
 import { Modal } from "./components/ui/Modal";
-import { Header, getDiscordAvatarUrl, HOHO_LOGO_URL } from "./components/layout/Header";
+import { Header, HOHO_LOGO_URL } from "./components/layout/Header";
 import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
@@ -29,11 +25,11 @@ import { PropertyPanel } from "./components/editor/PropertyPanel";
 import { DocsPage } from "./pages/DocsPage";
 import { JsonModal } from "./components/editor/JsonModal";
 import { BotDispatchModal } from "./components/send/BotDispatchModal";
+import { ServerBotAccessModal } from "./components/layout/ServerBotAccessModal";
 import { useMessageStore } from "./store/messageStore";
 import { useActionStore } from "./store/actionStore";
 import { useTemplateStore } from "./store/templateStore";
 import { useGlobalStore } from "./store/globalStore";
-import { useProfileStore } from "./store/profileStore";
 import { useTemplates } from "./hooks/useTemplates";
 import { downloadJson, parseImportedJson, toQueryData } from "./utils/exportImport";
 import { copyTextToClipboard } from "./utils/clipboard";
@@ -130,323 +126,6 @@ const ToastAndConfirmHost: React.FC = () => {
         </Modal>
       )}
     </>
-  );
-};
-
-/* ── Post-Login Bot & Workspace Configuration Modal (1aa39ecf Bot-Only Style) ── */
-const WorkspaceConfigModal: React.FC<{ open: boolean; onClose: () => void }> = ({
-  open,
-  onClose,
-}) => {
-  const currentUser = useGlobalStore((s) => s.currentUser);
-  const fetchCurrentUser = useGlobalStore((s) => s.fetchCurrentUser);
-  const showToast = useGlobalStore((s) => s.showToast);
-  const openConfirm = useGlobalStore((s) => s.openConfirm);
-  const { botProfiles, fetchProfiles, setBotProfileId, botProfileId } = useProfileStore();
-
-  const [name, setName] = useState("");
-  const [token, setToken] = useState("");
-  const [showToken, setShowToken] = useState(false);
-  const [applicationId, setApplicationId] = useState("");
-  const [publicKey, setPublicKey] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      void fetchProfiles();
-      setError(null);
-      setSuccessMsg(null);
-    }
-  }, [open, fetchProfiles]);
-
-  if (!open || !currentUser) return null;
-
-  const hasDefaultAccess = Boolean(currentUser.hasDefaultBotAccess || currentUser.isAdmin);
-  const mutualGuilds = currentUser.mutualGuilds ?? [];
-
-  const handleSaveCustomBot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMsg(null);
-    setSaving(true);
-    try {
-      const res = await api.profiles.createBot({
-        name: name.trim(),
-        token: token.trim(),
-        applicationId: applicationId.trim(),
-        publicKey: publicKey.trim(),
-      });
-      await fetchProfiles();
-      await fetchCurrentUser();
-      if (res?.profile?.id) {
-        setBotProfileId(res.profile.id);
-        localStorage.setItem("bot_selected_profile", String(res.profile.id));
-        const identity = await api.discord.identity(res.profile.id).catch(() => null);
-        if (identity?.id) {
-          useGlobalStore.getState().setBotIdentity({
-            id: identity.id,
-            username: identity.username || res.profile.name,
-            avatar: identity.avatar,
-          });
-        }
-      }
-      setName("");
-      setToken("");
-      setApplicationId("");
-      setPublicKey("");
-      setSuccessMsg("Custom Bot verified with Discord, encrypted, and set as your active bot!");
-      showToast("Custom Bot verified and set as active!", "success");
-    } catch (err: any) {
-      setError(
-        err?.message ||
-          "Discord rejected those bot credentials. Check your Token, Application ID, and Public Key.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleRemoveBot = (id: number, botName: string) => {
-    openConfirm({
-      title: "Delete Custom Bot",
-      message: `Are you sure you want to remove "${botName}" from your configured bots?`,
-      confirmLabel: "Delete Bot",
-      danger: true,
-      onConfirm: async () => {
-        try {
-          await api.profiles.removeBot(id);
-          if (botProfileId === id) {
-            setBotProfileId(null);
-          }
-          await fetchProfiles();
-          await fetchCurrentUser();
-          showToast(`Removed bot profile "${botName}"`, "info");
-        } catch (err: any) {
-          showToast(err?.message || "Failed to remove bot profile", "error");
-        }
-      },
-    });
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title="Workspace & Bot Configuration" width="max-w-xl">
-      <div className="space-y-4 text-xs text-[#dbdee1]">
-        {/* User & Mutual Server Verification Banner */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e1f22] border border-[#111214]">
-          <div className="flex items-center gap-3">
-            <img
-              src={getDiscordAvatarUrl(currentUser, 64)}
-              alt={currentUser.username}
-              className="w-10 h-10 rounded-full object-cover border border-[#35373c]"
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">
-                  {currentUser.global_name || currentUser.username}
-                </span>
-                {hasDefaultAccess ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#23a559]/20 text-[#57f287] text-[10px] font-bold uppercase">
-                    <ShieldCheck size={11} /> Default Bot Authorized
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#f0b232]/20 text-[#f0b232] text-[10px] font-bold uppercase">
-                    <KeyRound size={11} /> Custom Bot Mode
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#949ba4] mt-0.5">
-                Session active (expires in 24h) • {mutualGuilds.length} common server(s) with Default Bot
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Explanation */}
-        {!hasDefaultAccess ? (
-          <div className="p-3 rounded-lg bg-[#f0b232]/10 border border-[#f0b232]/30 flex items-start gap-2.5">
-            <AlertTriangle size={16} className="text-[#f0b232] shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold text-white">
-                {mutualGuilds.length === 0
-                  ? "No Common Server Found with HoHo Default Bot"
-                  : "No Staff / Admin Role Found in Common Server"}
-              </p>
-              <p className="text-[11px] text-[#dbdee1] leading-relaxed">
-                You can still use the full HoHo Manager studio! To send or edit Discord messages, add your own Bot Token below (encrypted with AES-256-GCM and scoped strictly to your account).
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="p-3 rounded-lg bg-[#23a559]/10 border border-[#23a559]/30 flex items-start gap-2.5">
-            <CheckCircle2 size={16} className="text-[#57f287] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-white">Verified Server & Role Access</p>
-              <p className="text-[11px] text-[#dbdee1]">
-                You can use the Server Default Bot
-                {mutualGuilds.length > 0
-                  ? ` across ${mutualGuilds.map((g) => g.name).join(", ")}`
-                  : ""}
-                , or optionally add your own custom Bot Profile below.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Custom Bot Configuration Form */}
-        <form
-          onSubmit={(e) => void handleSaveCustomBot(e)}
-          autoComplete="off"
-          className="space-y-3 bg-[#1e1f22] p-3.5 rounded-lg border border-[#111214]"
-        >
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#b5bac1]">
-            Add Your Own Discord Bot Token
-          </h4>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-                Bot Display Name
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="My Custom Bot"
-                className="w-full bg-[#2b2d31] border border-[#111214] rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#5865f2]"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-                Application ID (Client ID)
-              </label>
-              <input
-                type="text"
-                required
-                value={applicationId}
-                onChange={(e) => setApplicationId(e.target.value)}
-                placeholder="123456789012345678"
-                className="w-full bg-[#2b2d31] border border-[#111214] rounded px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#5865f2]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-              Bot Token (from Discord Dev Portal → Bot)
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                autoComplete="off"
-                spellCheck={false}
-                data-1p-ignore="true"
-                data-lpignore="true"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                style={
-                  !showToken
-                    ? ({ WebkitTextSecurity: "disc" } as React.CSSProperties)
-                    : undefined
-                }
-                placeholder="Paste Discord Bot Token"
-                className="w-full bg-[#2b2d31] border border-[#111214] rounded px-2.5 py-1.5 pr-9 text-xs text-white font-mono outline-none focus:border-[#5865f2]"
-              />
-              <button
-                type="button"
-                onClick={() => setShowToken(!showToken)}
-                className="absolute right-2.5 top-1.5 text-[#949ba4] hover:text-white"
-                title={showToken ? "Hide token" : "Show token"}
-              >
-                {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-              Public Key (64-char hex from General Information)
-            </label>
-            <input
-              type="text"
-              required
-              value={publicKey}
-              onChange={(e) => setPublicKey(e.target.value)}
-              placeholder="a1b2c3..."
-              className="w-full bg-[#2b2d31] border border-[#111214] rounded px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#5865f2]"
-            />
-          </div>
-
-          {error && <p className="text-[11px] text-[#f28b8b] font-medium">{error}</p>}
-          {successMsg && <p className="text-[11px] text-[#57f287] font-medium">{successMsg}</p>}
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="submit" size="sm" variant="primary" loading={saving}>
-              Verify & Save Bot
-            </Button>
-          </div>
-        </form>
-
-        {/* Saved Custom Bots for this User */}
-        {botProfiles.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
-              Your Configured Bots ({botProfiles.length})
-            </p>
-            {botProfiles.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between p-2.5 rounded bg-[#1e1f22] border border-[#111214]"
-              >
-                <div className="flex items-center gap-2">
-                  <Bot size={15} className="text-[#57f287]" />
-                  <div>
-                    <p className="text-xs font-bold text-white">{p.name}</p>
-                    <p className="text-[10px] text-[#949ba4] font-mono">
-                      App ID: {p.application_id}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBotProfileId(p.id);
-                      localStorage.setItem("bot_selected_profile", String(p.id));
-                      showToast(`Switched active bot to "${p.name}"`, "info");
-                    }}
-                    className={`px-2 py-1 rounded text-[11px] font-semibold ${
-                      botProfileId === p.id
-                        ? "bg-[#23a559] text-white"
-                        : "bg-[#2b2d31] text-[#dbdee1] hover:bg-[#35373c]"
-                    }`}
-                  >
-                    {botProfileId === p.id ? "Active" : "Use Bot"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveBot(p.id, p.name)}
-                    className="p-1 text-[#949ba4] hover:text-[#f28b8b]"
-                    title="Delete custom bot"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex justify-end pt-2 border-t border-[#1e1f22]">
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Continue to Studio
-          </Button>
-        </div>
-      </div>
-    </Modal>
   );
 };
 
@@ -1229,7 +908,7 @@ export const App: React.FC = () => {
 
       <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />
-      <WorkspaceConfigModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
+      <ServerBotAccessModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
       <BotDispatchModal
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}

@@ -3,8 +3,6 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import { env } from "../config/env.js";
 import { staffRepository } from "../repositories/staffRepository.js";
-import { botProfileRepository } from "../repositories/profileRepository.js";
-import { userRepository } from "../repositories/userRepository.js";
 import { auditLogRepository } from "../repositories/auditLogRepository.js";
 import { sessionRepository } from "../repositories/sessionRepository.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
@@ -29,12 +27,9 @@ const parseProfileId = (value: unknown): number | null => {
 };
 
 /**
- * Access control for Discord entity endpoints:
- * - Allows master admin key
- * - In production, requires a verified OAuth session (never trusts raw x-staff-id headers without session)
- * - Allows custom Bot Profile owner when `?profileId=<id>` belongs to the logged-in user
- * - For Default Bot (`profileId === null`), requires Head Admin or active Staff Record
- */
+ * Access control for Discord entity endpoints. Custom bot profiles do not grant
+ * access; callers must use the configured server bot and normal staff access.
+*/
 const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next) => {
   const adminKey = req.get("x-admin-key");
   if (adminKey && safeEqual(adminKey, env.adminApiKey)) {
@@ -66,23 +61,6 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
     }
   }
 
-  // Allow logged-in users in Custom Bot Mode to query their OWN custom Bot Profile
-  const profileId = parseProfileId(req.query.profileId);
-  if (sessionUser && profileId !== null) {
-    const [dbUser, botProfile] = await Promise.all([
-      userRepository.findByDiscordId(sessionUser.id),
-      botProfileRepository.findById(profileId),
-    ]);
-    if (!botProfile) {
-      return next(ApiError.notFound(`Bot profile ${profileId} not found`));
-    }
-    if (!dbUser || botProfile.user_id !== dbUser.id) {
-      return next(ApiError.forbidden("That custom bot profile belongs to another user"));
-    }
-    req.staffContext = { isAdmin: false, staffId: sessionUser.id };
-    return next();
-  }
-
   if (staffId && /^\d{17,20}$/.test(staffId)) {
     if (!env.isProd && ((await settingsService.isHeadAdmin(staffId)) || env.ownerDiscordIds.includes(staffId))) {
       req.staffContext = { isAdmin: true, staffId };
@@ -101,16 +79,34 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
   return next(ApiError.unauthorized("Authentication required (admin key or active staff ID)"));
 });
 
+const requireAllowedGuild: RequestHandler = (req, _res, next) => {
+  const guildId = req.params.guildId;
+  const staffCtx = req.staffContext;
+  if (!guildId || staffCtx?.isAdmin || !staffCtx?.record) return next();
+
+  let allowedGuilds: string[] = [];
+  try {
+    const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
+    if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
+  } catch {
+    // Invalid allowlist data must fail closed.
+  }
+
+  if (allowedGuilds.includes("*") || (typeof guildId === "string" && allowedGuilds.includes(guildId))) return next();
+  return next(ApiError.forbidden(`You are not allowed to access guild ${guildId}`));
+};
+
 router.get("/guilds", requireStaffOrAdmin, asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
   let guilds = await discord.getBotGuilds(profileId);
   const staffCtx = req.staffContext;
-  if (staffCtx && !staffCtx.isAdmin && staffCtx.record?.allowed_guild_ids) {
+  if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
     let allowedGuilds: string[] = [];
     try {
-      allowedGuilds = JSON.parse(staffCtx.record.allowed_guild_ids);
+      const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
+      if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
     } catch {
-      allowedGuilds = ["*"];
+      // Invalid allowlist data must fail closed.
     }
     if (!allowedGuilds.includes("*")) {
       guilds = guilds.filter((g) => allowedGuilds.includes(g.id));
@@ -119,7 +115,7 @@ router.get("/guilds", requireStaffOrAdmin, asyncHandler(async (req, res) => {
   return res.json({ guilds });
 }));
 
-router.get("/guilds/:guildId/channels", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/channels", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -146,7 +142,7 @@ router.get("/guilds/:guildId/channels", requireStaffOrAdmin, asyncHandler(async 
   return res.json({ channels });
 }));
 
-router.get("/guilds/:guildId/roles", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/roles", requireStaffOrAdmin,requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -157,7 +153,7 @@ router.get("/guilds/:guildId/roles", requireStaffOrAdmin, asyncHandler(async (re
   return res.json({ roles });
 }));
 
-router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -174,7 +170,7 @@ router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, asyncHandler(
   return res.json({ members });
 }));
 
-router.get("/guilds/:guildId/emojis", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/emojis", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -229,10 +225,10 @@ const getAuditLogsHandler: RequestHandler = asyncHandler(async (req, res) => {
   });
 });
 
-router.get("/guilds/:guildId/audit-logs", requireStaffOrAdmin, getAuditLogsHandler);
-router.get("/guilds/:guildId/log", requireStaffOrAdmin, getAuditLogsHandler);
+router.get("/guilds/:guildId/audit-logs", requireStaffOrAdmin, requireAllowedGuild, getAuditLogsHandler);
+router.get("/guilds/:guildId/log", requireStaffOrAdmin, requireAllowedGuild, getAuditLogsHandler);
 
-router.post("/guilds/:guildId/audit-logs", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.post("/guilds/:guildId/audit-logs", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -260,7 +256,7 @@ router.post("/guilds/:guildId/audit-logs", requireStaffOrAdmin, asyncHandler(asy
   return res.status(201).json({ ok: true, entry });
 }));
 
-router.get("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -280,7 +276,7 @@ router.get("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async 
   return res.json(result);
 }));
 
-router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -302,7 +298,7 @@ router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async
   return res.status(201).json({ ok: true, session });
 }));
 
-router.delete("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.delete("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -327,7 +323,7 @@ router.delete("/guilds/:guildId/sessions", requireStaffOrAdmin, asyncHandler(asy
   return res.json({ ok: true, revoked: revokedCount });
 }));
 
-router.delete("/guilds/:guildId/sessions/:tokenId", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.delete("/guilds/:guildId/sessions/:tokenId", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId, tokenId } = req.params;
   if (!guildId || typeof guildId !== "string" || !tokenId || typeof tokenId !== "string") {
     throw ApiError.badRequest("`guildId` and `tokenId` are required");

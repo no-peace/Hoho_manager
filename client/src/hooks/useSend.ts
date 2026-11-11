@@ -27,7 +27,6 @@ export const useSend = (): UseSendReturn => {
   const setSendState = useMessageStore((state) => state.setSendState);
 
   const channelId = useProfileStore((state) => state.channelId);
-  const botProfileId = useProfileStore((state) => state.botProfileId);
 
   const sendMessage = useCallback(async (editMessageId?: string): Promise<SendResult> => {
     const store = useMessageStore.getState();
@@ -84,7 +83,6 @@ export const useSend = (): UseSendReturn => {
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
           channelId: channelId || undefined,
-          profileId: botProfileId ?? undefined,
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
           ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
@@ -101,7 +99,6 @@ export const useSend = (): UseSendReturn => {
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
           channelId,
-          profileId: botProfileId ?? undefined,
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
           ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
@@ -115,7 +112,7 @@ export const useSend = (): UseSendReturn => {
       setSendState({ status: "error", error: message, result: null });
       return { ok: false, error: message };
     }
-  }, [channelId, botProfileId, setSendState]);
+  }, [channelId, setSendState]);
 
   const isConfigured = Boolean(channelId && channelId.trim() !== "");
   return { sendMessage, isConfigured, mode, sendMode: SEND_MODES.BOT };

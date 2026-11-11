@@ -1,4 +1,3 @@
-import { WEBHOOK_URL_REGEX } from "@dmb/shared";
 import type { DiscordMessagePayload } from "@dmb/shared";
 
 /**
@@ -28,92 +27,22 @@ export class WebhookError extends Error {
   }
 }
 
-interface WebhookIds {
-  id: string;
-  token: string;
-}
-
-const parseWebhook = (url: string): WebhookIds => {
-  const match = typeof url === "string" ? url.match(WEBHOOK_URL_REGEX) : null;
-  const [, id, token] = match ?? [];
-  if (!id || !token) throw new WebhookError("That isn't a valid Discord webhook URL.");
-  return { id, token };
-};
-
 export interface WebhookSendOptions {
   threadId?: string;
   wait?: boolean;
   signal?: AbortSignal;
 }
 
-interface DiscordApiError {
-  message?: string;
-  retry_after?: number;
-}
-
-/**
- * POST a message straight to a webhook.
- *
- * @returns the created message when `wait` is true, otherwise `null`
- */
+/** Arbitrary Discord webhook URL sending is disabled on this client. */
 export const sendWebhookDirect = async (
-  webhookUrl: string,
-  payload: DiscordMessagePayload,
-  options: WebhookSendOptions = {},
-): Promise<unknown> => {
-  const { threadId, wait = true, signal } = options;
-  const { id, token } = parseWebhook(webhookUrl);
-
-  const params = new URLSearchParams();
-  if (wait) params.set("wait", "true");
-  if (threadId) params.set("thread_id", threadId);
-  if (payload.components && payload.components.length > 0) {
-    params.set("with_components", "true");
-  }
-  const query = params.toString();
-
-  let response: Response;
-  try {
-    response = await fetch(
-      `https://discord.com/api/v10/webhooks/${id}/${token}${query ? `?${query}` : ""}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...payload,
-          // Never let a message ping a whole server by accident.
-          allowed_mentions: payload.allowed_mentions ?? { parse: [] },
-        }),
-        signal,
-      },
-    );
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw error;
-    throw new WebhookError(
-      "Could not reach Discord. The webhook may have been deleted, or a browser extension blocked the request.",
-    );
-  }
-
-  if (response.status === 204) return null;
-
-  const data = (await response.json().catch(() => null)) as DiscordApiError | null;
-
-  if (response.status === 429) {
-    const retryAfterMs = Math.ceil((data?.retry_after ?? 1) * 1000);
-    throw new WebhookError(
-      `Rate limited by Discord  try again in ${Math.ceil(retryAfterMs / 1000)}s.`,
-      { status: 429, retryAfterMs },
-    );
-  }
-
-  if (!response.ok) {
-    throw new WebhookError(
-      data?.message ?? `Discord rejected the message (${response.status}).`,
-      { status: response.status },
-    );
-  }
-
-  return data;
+  _webhookUrl: string,
+  _payload: DiscordMessagePayload,
+  _options: WebhookSendOptions = {},
+): Promise<never> => {
+  throw new WebhookError(
+    "Arbitrary Discord webhook URL sending is disabled. Use the configured server bot.",
+  );
 };
+
 
 export default { sendWebhookDirect };

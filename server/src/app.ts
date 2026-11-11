@@ -10,7 +10,7 @@ import { apiLimiter, authLimiter } from "./middleware/rateLimit.js";
 import configRouter from "./routes/config.js";
 import healthRouter from "./routes/health.js";
 import interactionsRouter from "./routes/interactions.js";
-import profilesRouter from "./routes/profiles.js";
+
 import sendRouter from "./routes/send.js";
 import templatesRouter from "./routes/templates.js";
 import accessRouter from "./routes/access.js";
@@ -73,7 +73,6 @@ export const createApp = (): Express => {
   app.use("/api/config", configRouter);
   app.use("/api/send", sendRouter);
   app.use("/api/templates", templatesRouter);
-  app.use("/api/profiles", profilesRouter);
   app.use("/api/access", accessRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/discord", discordRouter);

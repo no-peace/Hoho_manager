@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
-import { ProfilesPanel } from "./ProfilesPanel";
 import { useGlobalStore } from "../../store/globalStore";
 import { request } from "../../api/client";
 import { ALL_LOG_EVENTS, DEFAULT_LOG_EVENTS } from "@dmb/shared";
@@ -21,7 +20,7 @@ interface SettingsData {
 
 export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const { selectedGuildId } = useGlobalStore();
-  const [tab, setTab] = useState<"general" | "bots">("general");
+  const tab = "general" as const;
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SettingsData>({ log_channel_id: null, head_admin_ids: [] });
   const [saving, setSaving] = useState(false);
@@ -146,16 +145,10 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
         {/* Sidebar */}
         <div className="w-full sm:w-44 bg-[#1e1f22] border border-[#111214] rounded p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
           <button
-            onClick={() => setTab("general")}
+            onClick={() => tab}
             className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#5865f2] text-white" : "text-[#b5bac1] hover:bg-[#35373c]"}`}
           >
             General
-          </button>
-          <button
-            onClick={() => setTab("bots")}
-            className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "bots" ? "bg-[#5865f2] text-white" : "text-[#b5bac1] hover:bg-[#35373c]"}`}
-          >
-            Bot Profiles
           </button>
         </div>
 
@@ -322,12 +315,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                   </div>
                 </>
               )}
-            </div>
-          )}
-
-          {tab === "bots" && (
-            <div className="-m-4">
-              <ProfilesPanel />
             </div>
           )}
         </div>

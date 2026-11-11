@@ -4,7 +4,6 @@ import type { UserRole } from "@dmb/shared";
 import { env } from "../config/env.js";
 import { userRepository } from "../repositories/userRepository.js";
 import { staffRepository } from "../repositories/staffRepository.js";
-import { botProfileRepository, webhookProfileRepository } from "../repositories/profileRepository.js";
 import { settingsService } from "../services/settingsService.js";
 import * as discord from "../services/discordService.js";
 import {
@@ -277,15 +276,6 @@ router.get(
 
     let customBotCount = 0;
     let customWebhookCount = 0;
-    const dbUser = await userRepository.findByDiscordId(user.id);
-    if (dbUser) {
-      const [bots, webhooks] = await Promise.all([
-        botProfileRepository.listByUser(dbUser.id).catch(() => []),
-        webhookProfileRepository.listByUser(dbUser.id).catch(() => []),
-      ]);
-      customBotCount = bots.length;
-      customWebhookCount = webhooks.length;
-    }
 
     let avatarUrl: string;
     if (user.avatar) {
@@ -314,7 +304,7 @@ router.get(
         mutualGuilds,
         customBotCount,
         customWebhookCount,
-        needsBotConfig: !hasDefaultBotAccess && customBotCount === 0 && customWebhookCount === 0,
+        needsBotConfig: !hasDefaultBotAccess,
         staffPermissions:
           hasActiveStaffRecord && staffRecord
             ? {
@@ -322,8 +312,6 @@ router.get(
                 can_mention_here: staffRecord.can_mention_here === 1,
                 can_mention_roles: staffRecord.can_mention_roles === 1,
                 allowed_role_mention_ids: allowedRoleMentionIds,
-                can_use_webhooks: staffRecord.can_use_webhooks !== 0,
-                can_override_profile: staffRecord.can_override_profile !== 0,
                 can_attach_files: staffRecord.can_attach_files !== 0,
                 can_use_components_v2: staffRecord.can_use_components_v2 !== 0,
                 can_use_weao_exploits: staffRecord.can_use_weao_exploits !== 0,

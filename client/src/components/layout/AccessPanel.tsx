@@ -40,8 +40,6 @@ export const AccessPanel = () => {
       can_mention_everyone: 0,
       can_mention_here: 0,
       can_mention_roles: 0,
-      can_use_webhooks: 1,
-      can_override_profile: 1,
       can_attach_files: 1,
       can_use_components_v2: 1,
       can_use_weao_exploits: 1,
@@ -272,16 +270,6 @@ export const AccessPanel = () => {
                   onChange={(c) => updateForm({ can_manage_templates: c ? 1 : 0 })}
                 />
                 <Checkbox
-                  label="Can Send via Webhook Mode"
-                  checked={formData.can_use_webhooks !== 0}
-                  onChange={(c) => updateForm({ can_use_webhooks: c ? 1 : 0 })}
-                />
-                <Checkbox
-                  label="Can Override Bot Name/Avatar (Webhook)"
-                  checked={formData.can_override_profile !== 0}
-                  onChange={(c) => updateForm({ can_override_profile: c ? 1 : 0 })}
-                />
-                <Checkbox
                   label="Can Attach / Upload Files"
                   checked={formData.can_attach_files !== 0}
                   onChange={(c) => updateForm({ can_attach_files: c ? 1 : 0 })}
@@ -428,8 +416,6 @@ export const AccessPanel = () => {
                           <span>Cooldown: {record.cooldown_seconds}s</span>
                           <span>Max/hr: {record.max_messages_per_hour}</span>
                           <span>Channels: {record.allowed_channel_ids.length === 0 ? 'NONE' : record.allowed_channel_ids.includes('*') ? 'ALL' : record.allowed_channel_ids.length}</span>
-                          <span>Webhooks: {record.can_use_webhooks === 0 ? 'No' : 'Yes'}</span>
-                          <span>Overrides: {record.can_override_profile === 0 ? 'No' : 'Yes'}</span>
                           <span>Files: {record.can_attach_files === 0 ? 'No' : 'Yes'}</span>
                         </div>
                       </div>

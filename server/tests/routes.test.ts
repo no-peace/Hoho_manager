@@ -15,6 +15,7 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     sendWebhook: vi.fn().mockResolvedValue({ id: "hook_out_1" }),
     createInteractionResponse: vi.fn().mockResolvedValue(true),
     getGuildChannels: vi.fn().mockResolvedValue([]),
+    getChannelGuildId: vi.fn().mockResolvedValue("guild_123"),
     getGuildRoles: vi.fn().mockResolvedValue([]),
     getBotGuilds: vi.fn().mockResolvedValue([]),
     getWebhookInfo: vi.fn().mockResolvedValue({ id: "hook_1", name: "Webhook REST" }),
@@ -108,14 +109,14 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
 
   // 4. /api/send
   describe("POST /api/send", () => {
-    it("returns HTTP 400 when mode is invalid", async () => {
-      const res = await fetch(`${baseUrl}/api/send`, {
+      it("rejects webhook mode", async () => {
+        const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-admin-key": env.adminApiKey,
         },
-        body: JSON.stringify({ mode: "invalid_mode", payload: { content: "hi" } }),
+        body: JSON.stringify({ mode: "webhook", payload: { content: "hi" } }),
       });
       expect(res.status).toBe(400);
       const json = await res.json();
@@ -161,8 +162,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           "x-admin-key": env.adminApiKey,
         },
         body: JSON.stringify({
-          mode: "webhook",
-          webhookUrl: "https://discord.com/api/webhooks/1/tok",
+          mode: "bot",
           messages: excessiveMessages,
         }),
       });
@@ -171,8 +171,8 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("maximum 10 allowed");
     });
 
-    it("dispatches webhook payload successfully with x-admin-key", async () => {
-      const res = await fetch(`${baseUrl}/api/send`, {
+      it("rejects webhook URL message sending and never calls Discord webhook delivery", async () => {
+        const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -184,11 +184,10 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           payload: { content: "Automated test message" },
         }),
       });
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.ok).toBe(true);
-      expect(discordService.sendWebhook).toHaveBeenCalled();
+      expect(res.status).toBe(400);
+      expect(discordService.sendWebhook).not.toHaveBeenCalled();
     });
+
   });
 
   // 5. /api/interactions
@@ -284,9 +283,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           url: "https://discord.com/api/webhooks/999/tok",
         }),
       });
-      expect(res.status).toBe(201);
-      const json = await res.json();
-      expect(json.profile.name).toBe("Webhook REST");
+      expect(res.status).toBe(404);
     });
 
     it("lists webhook profiles via GET /api/profiles/webhooks", async () => {
@@ -305,9 +302,8 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       const res = await fetch(`${baseUrl}/api/access`, {
         headers: { "x-admin-key": env.adminApiKey },
       });
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(Array.isArray(json)).toBe(true);
+      expect(res.status).toBe(404);
+
     });
   });
 

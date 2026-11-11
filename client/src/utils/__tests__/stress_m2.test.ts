@@ -6,23 +6,24 @@ import { MessageFlags, ComponentType } from "@dmb/shared";
 import type { MessageData } from "@dmb/shared";
 
 describe("Milestone 2 Stress Tests: toDiscordPayload Overrides & Sanitization", () => {
-  it("preserves profile overrides in classic mode", () => {
+  it("does not transmit legacy sender overrides in classic mode", () => {
     const msg: MessageData = {
       content: "Override check",
-      username: "SpecialAgent",
+      username: "Legacy Name",
       avatar_url: "https://example.com/bot.png",
       thread_name: "Test Thread",
       embeds: [],
       components: [],
     };
     const payload = toDiscordPayload(msg, "classic");
-    expect(payload.username).toBe("SpecialAgent");
-    expect(payload.avatar_url).toBe("https://example.com/bot.png");
+    expect(payload.username).toBeUndefined();
+    expect(payload.avatar_url).toBeUndefined();
     expect(payload.thread_name).toBe("Test Thread");
     expect(payload.content).toBe("Override check");
   });
 
-  it("preserves profile overrides in v2 mode", () => {
+
+  it("does not transmit legacy sender overrides in v2 mode", () => {
     const msg: MessageData = {
       content: "V2 Override",
       username: "V2Agent",
@@ -32,8 +33,8 @@ describe("Milestone 2 Stress Tests: toDiscordPayload Overrides & Sanitization", 
       components: [],
     };
     const payload = toDiscordPayload(msg, "v2");
-    expect(payload.username).toBe("V2Agent");
-    expect(payload.avatar_url).toBe("https://example.com/v2.png");
+    expect(payload.username).toBeUndefined();
+    expect(payload.avatar_url).toBeUndefined();
     expect((payload.flags ?? 0) & MessageFlags.IsComponentsV2).toBe(MessageFlags.IsComponentsV2);
   });
 

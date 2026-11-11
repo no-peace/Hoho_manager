@@ -211,16 +211,12 @@ export const MessagePreview = () => {
                   Boolean((message.flags ?? 0) & MessageFlags.IsComponentsV2) ||
                   (message as any).mode === EDITOR_MODES.V2;
 
-                const effectiveAvatar =
-                  message.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
-                const effectiveUsername =
-                  message.username || botIdentity?.username || "Message Builder";
+                const effectiveAvatar = botIdentity?.avatar || defaultDiscordAvatar;
+                const effectiveUsername = botIdentity?.username || "Message Builder";
 
-                const prevMessage = index > 0 ? displayMessages[index - 1] : undefined;
-                const prevAvatar =
-                  prevMessage?.avatar_url || botIdentity?.avatar || defaultDiscordAvatar;
-                const prevUsername =
-                  prevMessage?.username || botIdentity?.username || "Message Builder";
+                const prevAvatar = botIdentity?.avatar || defaultDiscordAvatar;
+                const prevUsername = botIdentity?.username || "Message Builder";
+
 
                 const isConsecutive =
                   index > 0 &&

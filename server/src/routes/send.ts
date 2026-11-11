@@ -42,6 +42,28 @@ const assertStaffChannelAllowed = (
   }
 };
 
+const assertStaffGuildAllowed = async (
+  staffCtx: Express.Request["staffContext"],
+  channelId: string,
+): Promise<void> => {
+  if (!staffCtx || staffCtx.isAdmin || !staffCtx.record) return;
+
+  let allowedGuilds: string[] = [];
+  try {
+    const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
+    if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
+  } catch {
+    // Invalid allowlist data must fail closed.
+  }
+
+  if (allowedGuilds.includes("*")) return;
+
+  const guildId = await discord.getChannelGuildId(channelId);
+  if (!guildId || !allowedGuilds.includes(guildId)) {
+    throw ApiError.forbidden(`You are not allowed to access guild ${guildId ?? "unknown"}`);
+  }
+};
+
 router.post(
   "/",
   multipartParser,
@@ -60,12 +82,21 @@ router.post(
       editMessageId,
       ...body
     } = req.body;
-    const profileId = parseProfileId(rawProfileId);
-
-    if (mode !== "bot" && mode !== "webhook") {
-      throw ApiError.badRequest('`mode` must be "bot" or "webhook"');
+        if (mode !== "bot") {
+      throw ApiError.badRequest('Only mode "bot" is supported.');
     }
-
+    if (typeof webhookUrl === "string" && webhookUrl.trim() !== "") {
+      throw ApiError.badRequest("Webhook URL message sending is disabled.");
+    }
+    if (
+      rawProfileId !== undefined &&
+      rawProfileId !== null &&
+      rawProfileId !== "" &&
+      rawProfileId !== "null"
+    ) {
+      throw ApiError.badRequest("Custom bot profiles are disabled. Use the configured server bot.");
+    }
+    const profileId: number | null = null;
     const staffCtx = req.staffContext;
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
@@ -75,6 +106,7 @@ router.post(
       }
       if (typeof channelId === "string") {
         assertStaffChannelAllowed(staffCtx, channelId);
+        await assertStaffChannelAllowed(staffCtx,channelId);
       }
     }
 
@@ -104,6 +136,10 @@ router.post(
       if (message.flags === 0) delete message.flags;
 
       const sanitizedMessage = cleanseIds(message);
+      // Legacy editor fields are not Discord message-sender overrides. Keep them
+      // in old backups/imports, but never forward them to Discord.
+      delete sanitizedMessage.username;
+      delete sanitizedMessage.avatar_url;
 
       let weaoInterpolated = sanitizedMessage;
       try {
@@ -202,15 +238,7 @@ router.post(
           );
         }
 
-        // 2. Profile Override permission check
-        if (
-          staffCtx.record.can_override_profile === 0 &&
-          (authorResolved.username || authorResolved.avatar_url)
-        ) {
-          throw ApiError.forbidden("Your staff account is not permitted to override username or avatar.");
-        }
-
-        // 3. Components V2 permission check
+        // 2. Components V2 permission check
         if (
           staffCtx.record.can_use_components_v2 === 0 &&
           Array.isArray(authorResolved.components) &&
@@ -293,14 +321,18 @@ router.post(
     if (uploadedFiles.length + urlFiles.length > 10) {
       throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
     }
+    const totalAttachmentBytes =
+      uploadedFiles.reduce((total, file) => total + file.size, 0) +
+      urlFiles.reduce((total, file) => total + file.file.size, 0);
+    if (totalAttachmentBytes > 50 * 1024 * 1024) {
+      throw ApiError.payloadTooLarge("Combined attachments exceed maximum allowed size of 50 MB");
+    }
     const files = [...uploadedFiles, ...urlFiles];
+
 
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       if (staffCtx.record.can_attach_files === 0 && files.length > 0) {
         throw ApiError.forbidden("Your staff account is not permitted to attach files.");
-      }
-      if (mode === "webhook" && staffCtx.record.can_use_webhooks === 0) {
-        throw ApiError.forbidden("Your staff account is not permitted to send via Discord Webhooks.");
       }
     }
 
@@ -446,11 +478,26 @@ router.get(
         ? req.query.guildId.trim()
         : undefined;
 
-    let targetGuildId = queryGuildId;
-    if (!targetGuildId) {
-      const [guild] = await discord.getBotGuilds(profileId);
-      targetGuildId = guild?.id;
+        const botGuilds = await discord.getBotGuilds(profileId);
+    let availableGuilds = botGuilds;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      let allowedGuilds: string[] = [];
+      try {
+        const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
+        if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
+      } catch {
+        // Invalid allowlist data must fail closed.
+      }
+      if (!allowedGuilds.includes("*")) {
+        availableGuilds = botGuilds.filter((guild) => allowedGuilds.includes(guild.id));
+      }
     }
+
+    if (queryGuildId && !availableGuilds.some((guild) => guild.id === queryGuildId)) {
+      throw ApiError.forbidden(`You are not allowed to access guild ${queryGuildId}`);
+    }
+
+    const targetGuildId = queryGuildId ?? availableGuilds[0]?.id;
     if (!targetGuildId) return res.json([]);
 
     const channels = await discord.getGuildChannels(targetGuildId, profileId);
@@ -486,12 +533,11 @@ router.get(
     if (typeof channelId !== "string") {
       throw ApiError.badRequest("`channelId` must be a string");
     }
-    if (profileId === null) {
-      if (!req.staffContext?.isAdmin && !req.staffContext?.record) {
-        throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
-      }
+    if (!req.staffContext?.isAdmin && req.staffContext?.record) {
       assertStaffChannelAllowed(req.staffContext, channelId);
+      await assertStaffGuildAllowed(req.staffContext, channelId);
     }
+
 
     const token = await discord.resolveBotToken(profileId);
     const me = await discord.getBotIdentity(token);

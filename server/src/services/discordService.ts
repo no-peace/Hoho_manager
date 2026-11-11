@@ -1,7 +1,6 @@
 import { DISCORD_API_BASE, InteractionResponseType, MessageFlags } from "@dmb/shared";
 import type { DiscordMessagePayload, DiscordUser, InteractionResponse } from "@dmb/shared";
 import { env } from "../config/env.js";
-import { botProfileRepository } from "../repositories/profileRepository.js";
 import { ApiError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { parseWebhookUrl } from "../utils/validation.js";
@@ -99,19 +98,12 @@ const readErrorMessage = (data: unknown, status: number): string => {
 };
 
 /**
- * Resolve the bot token to use for an outbound request.
- * Preference: explicit profile id -> the configured env token.
+ * Resolve the only bot token this instance is allowed to use.
+ * The optional argument is retained temporarily for legacy internal callers,
+ * but is deliberately ignored so stored custom tokens can never be selected.
  */
-export const resolveBotToken = async (profileId: number | null = null): Promise<string> => {
-  if (profileId != null) {
-    const token = await botProfileRepository.revealToken(profileId);
-    if (!token) throw ApiError.notFound(`Bot profile ${profileId} not found`);
-    return token;
-  }
-
+export const resolveBotToken = async (_legacyProfileId?: number | null): Promise<string> => {
   if (!env.discord.botToken) {
-    // Deliberately user-visible: "Internal server error" would send someone
-    // hunting through logs for a one-line config fix.
     throw new ApiError(503, "No bot token is configured on the server", {
       code: "bot_token_missing",
       expose: true,
@@ -120,19 +112,17 @@ export const resolveBotToken = async (profileId: number | null = null): Promise<
   return env.discord.botToken;
 };
 
+
 export const resolveBotTokenForApplication = async (
   applicationId: string,
 ): Promise<string | null> => {
-  if (applicationId === env.discord.applicationId && env.discord.botToken) {
+  if (!env.discord.botToken) return null;
+  if (!env.discord.applicationId || applicationId === env.discord.applicationId) {
     return env.discord.botToken;
   }
-
-  const profileToken = await botProfileRepository.revealTokenByApplicationId(applicationId);
-  if (profileToken) return profileToken;
-
-  if (!env.discord.applicationId) return env.discord.botToken ?? null;
   return null;
 };
+
 
 interface ApiRequestOptions {
   body?: unknown;
@@ -307,44 +297,19 @@ const buildMultipartPayload = (
 };
 
 /**
- * POST a message through a webhook URL.
- *
- * @param webhookUrl full Discord webhook URL
- * @param payload    message payload (content/embeds/components)
+ * Legacy compatibility stub. Arbitrary webhook-URL message sending is disabled.
+ * Keep this export so old callers fail explicitly instead of sending externally.
  */
 export const sendWebhook = async (
-  webhookUrl: string,
-  payload: DiscordMessagePayload,
-  { wait = true, threadId, files }: WebhookSendOptions = {},
+  _webhookUrl: string,
+  _payload: DiscordMessagePayload,
+  _options: WebhookSendOptions = {},
 ): Promise<DiscordMessage | null> => {
-  const parsed = parseWebhookUrl(webhookUrl);
-  if (!parsed) throw ApiError.badRequest("Not a valid Discord webhook URL");
-
-  const params = new URLSearchParams();
-  if (wait) params.set("wait", "true");
-  if (threadId) params.set("thread_id", threadId);
-  if (payload.components && payload.components.length > 0) {
-    params.set("with_components", "true");
-  }
-
-  const query = params.toString();
-  const absoluteUrl = `${DISCORD_API_BASE}/webhooks/${parsed.id}/${parsed.token}${
-    query ? `?${query}` : ""
-  }`;
-
-  const hasFiles = files && files.length > 0;
-  const body = hasFiles
-    ? buildMultipartPayload(payload, files)
-    : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
-
-  const message = await apiRequest<DiscordMessage>("POST", null, {
-    body,
-    absoluteUrl,
-  });
-
-  log.info(`Sent webhook message${message?.id ? ` ${message.id}` : ""}`);
-  return message;
+  throw ApiError.forbidden(
+    "Webhook URL message sending is disabled. Use the configured server bot.",
+  );
 };
+
 
 /** Inspect a webhook without sending (used to validate a URL before saving). */
 export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
@@ -357,6 +322,17 @@ export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
 };
 
 /* ── Bot (token required, server-side only) ───────────────────────────────── */
+
+/** Return the owning guild for a Discord channel using the configured bot. */
+export const getChannelGuildId = async (channelId: string): Promise<string | null> => {
+  const token = await resolveBotToken();
+  const channel = await apiRequest<{ guild_id?: string | null }>(
+    "GET",
+    `/channels/${encodeURIComponent(channelId)}`,
+    { token },
+  );
+  return typeof channel?.guild_id === "string" ? channel.guild_id : null;
+};
 
 export const getGuildEmojis = async (
   guildId: string,

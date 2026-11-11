@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import type { Request, RequestHandler } from "express";
 import type { DiscordInteraction } from "@dmb/shared";
 import { env } from "../config/env.js";
-import { botProfileRepository } from "../repositories/profileRepository.js";
 import { ApiError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
@@ -98,11 +97,9 @@ export const verifyDiscordSignature: RequestHandler = async (req, res, next) => 
   }
 
   const configuredApplicationId = env.discord.applicationId;
-  const publicKeyHex =
-    configuredApplicationId === interaction.application_id
+  const publicKeyHex = configuredApplicationId === interaction.application_id || !configuredApplicationId
       ? env.discord.publicKey?.trim()
-      : (await botProfileRepository.findPublicKeyByApplicationId(interaction.application_id)) ??
-        (configuredApplicationId ? undefined : env.discord.publicKey?.trim());
+      : undefined;
 
   if (!publicKeyHex) {
     res.status(503).json({ error: "No public key is configured for this application" });

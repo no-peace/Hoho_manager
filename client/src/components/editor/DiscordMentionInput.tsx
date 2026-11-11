@@ -20,7 +20,6 @@ import {
 import { RichPicker } from "./RichPicker";
 import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
-import { useProfileStore } from "../../store/profileStore";
 import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
 import api from "../../api/client";
 
@@ -265,10 +264,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
   const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
   const currentUser = useGlobalStore((state) => state.currentUser);
-  const botProfileId = useProfileStore((state) => state.botProfileId);
 
   // Unrestricted if Head Admin or using a Custom Bot profile
-  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin || botProfileId !== null);
+  const isUnrestrictedMentions = Boolean(currentUser?.isAdmin);
   const staffPerms = currentUser?.staffPermissions;
 
   const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);

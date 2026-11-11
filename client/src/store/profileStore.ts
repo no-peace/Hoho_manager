@@ -1,19 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { api, type BotProfile, type WebhookProfile } from "../api/client";
+import type { BotProfile, WebhookProfile } from "../api/client";
 import { SEND_MODES } from "../utils/constants";
 import type { SendModeValue } from "../utils/constants";
 
 /**
- * Where a message is sent from, and the profiles available to send it with.
- *
- * Two modes exist side by side:
- *   - `webhook`  sent straight from the browser, no backend involved
- *   - `bot`      proxied through `/api/send` so the token stays server-side
- *
- * The webhook URL is persisted for convenience. It *is* a credential, so it only
- * ever lives in this browser's localStorage and is never sent anywhere except
- * Discord itself.
+ * Retained as a compatibility store for older components and saved workspace
+ * state. Sending is always through the single server-configured bot.
+ * Webhook URLs and profile IDs are deliberately never persisted or selected.
  */
 export interface ProfileState {
   sendMode: SendModeValue;
@@ -21,18 +15,15 @@ export interface ProfileState {
   channelId: string;
   botProfileId: number | null;
   threadId: string;
-
   webhookProfiles: WebhookProfile[];
   botProfiles: BotProfile[];
   status: "idle" | "loading" | "error";
   error: string | null;
-
   setSendMode(mode: SendModeValue): void;
   setWebhookUrl(url: string): void;
   setChannelId(channelId: string): void;
   setBotProfileId(id: number | null): void;
   setThreadId(threadId: string): void;
-
   fetchProfiles(): Promise<void>;
   useWebhookProfile(profile: WebhookProfile): void;
   reset(): void;
@@ -40,61 +31,66 @@ export interface ProfileState {
 
 export const useProfileStore = create<ProfileState>()(
   persist(
-    (set, get) => ({
-      sendMode: SEND_MODES.WEBHOOK,
+    (set) => ({
+      sendMode: SEND_MODES.BOT,
       webhookUrl: "",
       channelId: "",
       botProfileId: null,
       threadId: "",
-
       webhookProfiles: [],
       botProfiles: [],
       status: "idle",
       error: null,
-
-      setSendMode: (sendMode) => set({ sendMode }),
-      setWebhookUrl: (webhookUrl) => set({ webhookUrl: webhookUrl.trim() }),
+      setSendMode: (_mode) => set({ sendMode: SEND_MODES.BOT }),
+      setWebhookUrl: (_url) => set({ webhookUrl: "" }),
       setChannelId: (channelId) => set({ channelId: channelId.trim() }),
-      setBotProfileId: (botProfileId) => set({ botProfileId }),
-      setThreadId: (threadId) => set({ threadId }),
-
+      setBotProfileId: (_id) => set({ botProfileId: null }),
+      setThreadId: (threadId) => set({ threadId: threadId.trim() }),
       fetchProfiles: async () => {
-        set({ status: "loading" });
-        try {
-          const bots = await api.profiles
-            .listBots()
-            .catch(() => ({ profiles: [] as BotProfile[] }));
-          set({
-            webhookProfiles: [],
-            botProfiles: bots.profiles,
-            status: "idle",
-            error: null,
-          });
-        } catch (error) {
-          set({
-            status: "error",
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+        set({ webhookProfiles: [], botProfiles: [], status: "idle", error: null });
       },
-
-      /** Apply a saved profile's URL to the active target. */
-      useWebhookProfile: (profile) => get().setWebhookUrl(profile.url),
-
+      useWebhookProfile: (_profile) => set({ webhookUrl: "" }),
       reset: () =>
-        set({ webhookUrl: "", channelId: "", botProfileId: null, threadId: "", error: null }),
+        set({
+          webhookUrl: "",
+          channelId: "",
+          botProfileId: null,
+          threadId: "",
+          webhookProfiles: [],
+          botProfiles: [],
+          status: "idle",
+          error: null,
+          sendMode: SEND_MODES.BOT,
+        }),
     }),
     {
       name: "dmb:profile",
-      // Cached profile lists are excluded: they are refetched from the server.
+      version: 2,
+      // Migrate old localStorage entries without retaining webhook URLs or IDs.
+      migrate: (persistedState: unknown) => {
+        const oldState = (persistedState ?? {}) as Partial<ProfileState>;
+        return {
+          channelId: typeof oldState.channelId === "string" ? oldState.channelId : "",
+          threadId: typeof oldState.threadId === "string" ? oldState.threadId : "",
+        };
+      },
       partialize: (state) => ({
-        sendMode: state.sendMode,
-        webhookUrl: state.webhookUrl,
         channelId: state.channelId,
-        botProfileId: state.botProfileId,
         threadId: state.threadId,
       }),
-      version: 1,
+      merge: (persistedState, currentState) => {
+        const saved = (persistedState ?? {}) as Partial<ProfileState>;
+        return {
+          ...currentState,
+          channelId: typeof saved.channelId === "string" ? saved.channelId : "",
+          threadId: typeof saved.threadId === "string" ? saved.threadId : "",
+          sendMode: SEND_MODES.BOT,
+          webhookUrl: "",
+          botProfileId: null,
+          webhookProfiles: [],
+          botProfiles: [],
+        };
+      },
     },
   ),
 );
