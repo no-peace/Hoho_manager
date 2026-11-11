@@ -1,6 +1,6 @@
 import { Copy, Trash2, X, Sliders, Workflow } from "lucide-react";
-import { useState } from "react";
-//import { ButtonStyle, ComponentType } from "@dmb/shared";
+import { useState, useEffect } from "react";
+import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";
 import { COMPONENT_FORMS } from "./ComponentForms";
@@ -19,6 +19,18 @@ export const PropertyPanel = () => {
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
 
+  useEffect(() => {
+    setActiveTab("properties");
+  }, [selection?.id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") select(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [select]);
+
   if (!selection || selection.kind !== "component") return null;
 
   const component = findComponent(components, selection.id);
@@ -27,7 +39,11 @@ export const PropertyPanel = () => {
   const Form = COMPONENT_FORMS[component.type];
   if (!Form) return null;
 
-  const hasFlow = isInteractiveComponent(component);
+  const componentId = (component._id || selection.id) as string;
+  const isLinkButton =
+    component.type === ComponentType.Button &&
+    component.style === ButtonStyle.Link;
+  const hasFlow = isInteractiveComponent(component) && !isLinkButton;
 
   return (
     <>
@@ -59,25 +75,21 @@ export const PropertyPanel = () => {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {component._id && (
-              <>
-                <IconButton
-                  icon={Copy}
-                  label="Duplicate Component"
-                  size={14}
-                  onClick={() => duplicateComponentById(component._id as string)}
-                />
-                <IconButton
-                  icon={Trash2}
-                  label="Delete Component"
-                  size={14}
-                  onClick={() => {
-                    removeComponentById(component._id as string);
-                    select(null);
-                  }}
-                />
-              </>
-            )}
+            <IconButton
+              icon={Copy}
+              label="Duplicate Component"
+              size={14}
+              onClick={() => duplicateComponentById(componentId)}
+            />
+            <IconButton
+              icon={Trash2}
+              label="Delete Component"
+              size={14}
+              onClick={() => {
+                removeComponentById(componentId);
+                select(null);
+              }}
+            />
             <IconButton icon={X} label="Close Inspector" size={15} onClick={() => select(null)} />
           </div>
         </div>
@@ -119,7 +131,7 @@ export const PropertyPanel = () => {
           ) : (
             <Form
               component={component}
-              update={(patch) => component._id && updateComponentById(component._id, patch)}
+              update={(patch) => updateComponentById(componentId, patch)}
             />
           )}
         </div>
