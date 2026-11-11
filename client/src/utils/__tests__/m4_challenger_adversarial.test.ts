@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import {

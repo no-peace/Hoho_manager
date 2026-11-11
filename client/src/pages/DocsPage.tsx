@@ -6,8 +6,6 @@ import {
   Check,
   Search,
   User,
-  Shield,
-  Clock,
   Sparkles,
   RefreshCw,
   Code2,

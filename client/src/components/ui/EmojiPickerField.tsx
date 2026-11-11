@@ -6,7 +6,7 @@ import { useGlobalStore } from "../../store/globalStore";
 import { RichPicker } from "../editor/RichPicker";
 
 export interface EmojiData {
-  id?: string;
+  id?: string | null;
   name: string;
   animated?: boolean;
 }

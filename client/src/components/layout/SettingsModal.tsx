@@ -249,7 +249,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                       {categories.map(({ category, items }) => {
                         const catEvents = items.map((i) => i.event);
                         const allSelected = catEvents.every((e) => enabledEvents.includes(e));
-                        const someSelected = catEvents.some((e) => enabledEvents.includes(e));
 
                         return (
                           <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { request, api } from "../../api/client";
 import {
   Bot,
@@ -8,11 +8,7 @@ import {
   Edit3,
   Send,
   KeyRound,
-  X,
-  Check,
-  AlertCircle,
 } from "lucide-react";
-import { MessageFlags } from "@dmb/shared";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { useProfileStore } from "../../store/profileStore";
@@ -20,7 +16,6 @@ import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
-import { EDITOR_MODES } from "../../utils/constants";
 import { checkUnauthorizedMentions } from "../../utils/mentionValidation";
 
 export interface DispatchModalProps {
@@ -34,19 +29,10 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   onClose,
   initialMode = "send",
 }) => {
-  const messagesFromStore = useMessageStore((state) => state.messages);
-  const dataFromStore = useMessageStore((state) => state.data);
-
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
-
-  const displayMessages = useMemo(() => {
-    return messagesFromStore && messagesFromStore.length > 0
-      ? messagesFromStore
-      : [dataFromStore];
-  }, [messagesFromStore, dataFromStore]);
 
   // Bot Dispatch State
   const botProfiles = useProfileStore((state) => state.botProfiles);

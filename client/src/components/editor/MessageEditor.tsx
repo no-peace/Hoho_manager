@@ -18,9 +18,6 @@ import {
   Box,
   FileText,
   Minus,
-  User,
-  Check,
-  AlertCircle,
 } from "lucide-react";
 import {
   Limits,
@@ -67,17 +64,6 @@ const CONTAINER_CHILD_OPTIONS = [
   { label: "Separator", type: ComponentType.Separator, icon: Minus },
   { label: "Action Row", type: ComponentType.ActionRow, icon: Layers },
 ] as const;
-
-/** Validate HTTP/HTTPS image URL format. */
-const isValidHttpUrl = (val: string): boolean => {
-  if (!val || !val.trim()) return true;
-  try {
-    const url = new URL(val.trim());
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
 
 export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const messages = useMessageStore((state) => state.messages);

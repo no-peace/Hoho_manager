@@ -1219,7 +1219,7 @@ export const App: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => openBotModal("send", "bot")}
+          onClick={() => openBotModal("send")}
           className="px-4 py-2.5 rounded-xl bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-all active:scale-[0.98] shadow-md shadow-[#248046]/20 shrink-0 flex items-center gap-1.5 select-none"
         >
           <Send size={13} />
