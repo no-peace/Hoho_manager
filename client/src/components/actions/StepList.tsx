@@ -12,6 +12,7 @@ import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
+import { api } from "../../api/client";
 
 interface ConfigField {
   key: string;
@@ -173,16 +174,15 @@ export const RoleSelect: React.FC<{
     if (!guildId) return;
     let cancelled = false;
     setLoading(true);
-    import("../../api/client").then(({ api }) => {
-      api.discord.roles(guildId)
-        .then((res) => {
-          if (!cancelled && res?.roles) setRoles(res.roles);
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    });
+    api.discord
+      .roles(guildId)
+      .then((res) => {
+        if (!cancelled && res?.roles) setRoles(res.roles);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => { cancelled = true; };
   }, [guildId]);
 

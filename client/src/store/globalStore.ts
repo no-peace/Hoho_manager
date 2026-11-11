@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { api }  from "../api/client";
 
 export interface BotIdentity {
   id: string;
@@ -228,7 +229,6 @@ export const useGlobalStore = create<GlobalState>((set) => {
     fetchCurrentUser: async () => {
       set({ authLoading: true });
       try {
-        const { default: api } = await import("../api/client");
         const res = await api.auth.me();
         const user = res?.user ?? null;
         set({ currentUser: user, authLoading: false });
@@ -240,7 +240,6 @@ export const useGlobalStore = create<GlobalState>((set) => {
     },
     logout: async () => {
       try {
-        const { default: api } = await import("../api/client");
         await api.auth.logout();
       } catch {
         // Ignore network errors on logout

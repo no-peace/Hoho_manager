@@ -99,8 +99,16 @@ export const removeComponent = (
     if (component.accessory) {
       if (component.accessory._id === id) {
         found = true;
-        const { accessory, ...rest } = component;
-        next.push(rest as ComponentNode);
+        if (component.type === 9) {
+          next.push({
+            _id: component._id,
+            type: 10,
+            content: (component.components ?? []).map((t) => t.content || "").join("\n"),
+          });
+        } else {
+          const { accessory, ...rest } = component;
+          next.push(rest as ComponentNode);
+        }
         continue;
       }
       if (Array.isArray(component.accessory.components)) {

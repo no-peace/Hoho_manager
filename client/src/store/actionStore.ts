@@ -39,7 +39,6 @@ const FALLBACK_TYPES: ActionHandlerMeta[] = [
   { type: "send_dm", description: "DM the member who clicked" },
   { type: "open_modal", description: "Open a form the user can fill in" },
   { type: "send_message", description: "Send a message as the bot" },
-  { type: "send_webhook_message", description: "Send a message through a saved webhook" },
   { type: "delete_message", description: "Delete the message carrying the component" },
   { type: "create_thread", description: "Start a thread from the message" },
   { type: "wait", description: "Pause before the next step" },
@@ -178,7 +177,10 @@ export const useActionStore = create<ActionState>()((set, get) => ({
     try {
       const response = await api.config();
       if (Array.isArray(response.actionTypes) && response.actionTypes.length > 0) {
-        set({ actionTypes: response.actionTypes, typesLoaded: true });
+        set({
+          actionTypes: response.actionTypes.filter((a) => a.type !== "send_webhook_message"),
+          typesLoaded: true,
+        });
       }
     } catch {
       // Offline or backend down: the fallback list keeps the editor usable.

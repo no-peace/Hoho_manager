@@ -69,7 +69,14 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
 
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const emojisByGuild = useDiscordCacheStore((state) => state.emojis);
+  const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
   const guildEmojis = (selectedGuildId && emojisByGuild[selectedGuildId]) || [];
+
+  useEffect(() => {
+    if (selectedGuildId) {
+      void fetchEmojis(selectedGuildId);
+    }
+  }, [selectedGuildId, fetchEmojis]);
 
   useEffect(() => {
     setTextValue(formatEmojiInput(value));

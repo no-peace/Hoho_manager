@@ -64,17 +64,20 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
 
   const mentionableRoles = useMemo(() => {
     if (isUnrestrictedMentions) return guildRoles;
-    if (!staffPerms?.can_mention_roles) return EMPTY_ROLES;
+    if (!staffPerms) return EMPTY_ROLES;
     const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
+    if (staffPerms.can_mention_roles && (allowedIds.length === 0 || allowedIds.includes("*"))) {
+      return guildRoles;
+    }
     if (allowedIds.includes("*")) return guildRoles;
     return guildRoles.filter((r) => allowedIds.includes(r.id));
   }, [guildRoles, isUnrestrictedMentions, staffPerms]);
 
   const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
   const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
-
-  // Emojis state
-  const [serverEmojis, setServerEmojis] = useState<CustomEmoji[]>([]);
+  const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
+  const emojisMap = useDiscordCacheStore((state) => state.emojis);
+  const serverEmojis: CustomEmoji[] = (effectiveGuildId && emojisMap[effectiveGuildId]) || [];
 
   const [customSavedEmojis, setCustomSavedEmojis] = useState<CustomEmoji[]>(() => {
     try {
@@ -103,10 +106,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   >([]);
   const [isSearchingMembers, setIsSearchingMembers] = useState(false);
 
-  // Time tab state
+  // Time tab state (use local YYYY-MM-DD to match local HH:mm)
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
-    return now.toISOString().split("T")[0];
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   });
   const [selectedTime, setSelectedTime] = useState(() => {
     const now = new Date();
@@ -125,18 +131,9 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
     if (effectiveGuildId) {
       fetchChannels(effectiveGuildId);
       fetchRoles(effectiveGuildId);
-      // Fetch emojis
-      // Fetch emojis
-      (api.discord as any)
-        .emojis?.(effectiveGuildId)
-        .then((res: { emojis: CustomEmoji[] }) => {
-          if (res?.emojis) {
-            setServerEmojis(res.emojis);
-          }
-        })
-        .catch(() => {});
+      fetchEmojis(effectiveGuildId);
     }
-  }, [effectiveGuildId, fetchChannels, fetchRoles]);
+  }, [effectiveGuildId, fetchChannels, fetchRoles, fetchEmojis]);
 
   // Member search debouncing
   useEffect(() => {

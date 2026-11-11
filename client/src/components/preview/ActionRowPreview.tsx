@@ -77,6 +77,30 @@ export const renderButtonEmoji = (emoji: any) => {
 export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
   const emojiNode = renderButtonEmoji((button as any).emoji);
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const guilds = useDiscordCacheStore((state) => state.guilds);
+
+  const rawLabel = button.label ?? (isLink ? "Link" : "Button");
+  const resolvedLabel = rawLabel.includes("{")
+    ? rawLabel.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (match, rawKey: string) => {
+        const key = rawKey.trim().toLowerCase();
+        const username = currentUser?.username || "User";
+        const displayName = currentUser?.global_name || username;
+        const userId = currentUser?.id || "123456789012345678";
+        const guild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
+        const map: Record<string, string> = {
+          "user.name": username,
+          "user.tag": username,
+          "user.displayname": displayName,
+          "user.id": userId,
+          "user.clantag": "HOHO",
+          "server.name": guild?.name || "HoHo Server",
+          "server.id": guild?.id || selectedGuildId || "987654321",
+        };
+        return map[key] ?? match;
+      })
+    : rawLabel;
 
   return (
     <button
@@ -90,7 +114,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
     >
       {emojiNode}
       {isLink && <ExternalLink size={14} className="shrink-0" />}
-      <span className="truncate max-w-[200px]">{button.label ?? (isLink ? "Link" : "Button")}</span>
+      <span className="truncate max-w-[200px]">{resolvedLabel}</span>
     </button>
   );
 };

@@ -85,29 +85,36 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   }, [open, type, guildId, fetchGuilds, fetchChannels, fetchRoles]);
 
   useEffect(() => {
-    if (type === "member" && open && guildId && search.length >= 2) {
-      const timeout = setTimeout(async () => {
-        try {
-          const res = await api.discord.searchMembers(guildId, search);
-          setMemberResults(
-            (res.members || []).map((m: any) => ({
-              id: String(m.id || m.user?.id || ""),
-              name: m.nickname
-                ? `${m.nickname} (${m.username})`
-                : m.global_name
-                ? `${m.global_name} (${m.username})`
-                : (m.username || m.id || ""),
-              avatar: m.avatar || m.user?.avatar || null,
-              username: m.username || m.user?.username || "",
-              global_name: m.global_name || m.user?.global_name || null,
-            }))
-          );
-        } catch {
-          // ignore
-        }
-      }, 500);
-      return () => clearTimeout(timeout);
+    if (type !== "member" || !open || !guildId || search.trim().length < 2) {
+      setMemberResults([]);
+      return;
     }
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await api.discord.searchMembers(guildId, search.trim());
+        if (cancelled) return;
+        setMemberResults(
+          (res.members || []).map((m: any) => ({
+            id: String(m.id || m.user?.id || ""),
+            name: m.nickname
+              ? `${m.nickname} (${m.username})`
+              : m.global_name
+              ? `${m.global_name} (${m.username})`
+              : (m.username || m.id || ""),
+            avatar: m.avatar || m.user?.avatar || null,
+            username: m.username || m.user?.username || "",
+            global_name: m.global_name || m.user?.global_name || null,
+          })),
+        );
+      } catch {
+        if (!cancelled) setMemberResults([]);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [search, type, open, guildId]);
 
   let options: SelectOption[] = [];

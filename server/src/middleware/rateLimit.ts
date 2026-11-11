@@ -37,7 +37,7 @@ export const authLimiter: RequestHandler = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   handler: json429,
-  skip: () => env.nodeEnv === "test,"
+  skip: () => env.nodeEnv === "test",
 });
 
 export const sendLimiter: RequestHandler = rateLimit({

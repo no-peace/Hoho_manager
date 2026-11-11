@@ -558,7 +558,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       <div>
                         <TextField
                           label="Button Label"
-                          variables
                           limit={80}
                           value={accessory.label || ""}
                           placeholder="Button Text"
@@ -597,9 +596,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                             onClick={(e) => {
                               e.stopPropagation();
                               ensureActive();
-                              if (accessory._id) {
-                                select({ kind: "component", id: accessory._id });
+                              const targetAccId = accessory._id || uid();
+                              if (!accessory._id && id) {
+                                updateComponentById(id, {
+                                  accessory: { ...accessory, _id: targetAccId },
+                                });
                               }
+                              select({ kind: "component", id: targetAccId });
                             }}
                             className="w-full px-2.5 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-xs font-semibold text-white transition-colors"
                           >
@@ -870,7 +873,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             </div>
 
             {/* + Add to Container Dropdown */}
-            <div className="relative inline-block">
+            <div className="relative inline-block" onMouseDown={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 onClick={() =>

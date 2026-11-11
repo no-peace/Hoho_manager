@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Trash2, Save, Users } from "lucide-react";
 import { useProfileStore } from "../../store/profileStore";
 import { useGlobalStore } from "../../store/globalStore";
-
+import { request } from "../../api/client";
 export const ProfilesPanel = () => {
   const { botProfiles, fetchProfiles, status } = useProfileStore();
   const [name, setName] = useState("");
@@ -21,25 +21,15 @@ export const ProfilesPanel = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
-
-      const response = await fetch(`${baseUrl}/api/profiles/bots`, {
+      await request("/api/profiles/bots", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-admin-key": adminKey 
+        body: {
+          name: name.trim(),
+          token: token.trim(),
+          applicationId: applicationId.trim(),
+          publicKey: publicKey.trim(),
         },
-        body: JSON.stringify({ name: name.trim(), token: token.trim(), applicationId: applicationId.trim(), publicKey: publicKey.trim() })
       });
-      const result = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(
-          result && typeof result.error === "string"
-            ? result.error
-            : `Could not save bot profile (${response.status})`,
-        );
-      }
 
       setName("");
       setToken("");
@@ -61,12 +51,8 @@ export const ProfilesPanel = () => {
       danger: true,
       onConfirm: async () => {
         try {
-          const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-          const adminKey = import.meta.env.VITE_ADMIN_API_KEY || "";
-
-          await fetch(`${baseUrl}/api/profiles/bots/${id}`, {
+          await request(`/api/profiles/bots/${id}`, {
             method: "DELETE",
-            headers: { "x-admin-key": adminKey },
           });
 
           void fetchProfiles();

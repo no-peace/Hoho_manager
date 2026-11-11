@@ -19,13 +19,19 @@ export const getEditorModeForDiscordMessage = (message: unknown): EditorMode => 
     ? EDITOR_MODES.V2
     : EDITOR_MODES.CLASSIC;
 };
-const hydrateComponentNode = (c:any): ComponentNode => {
-  const node: ComponentNode ={
+const hydrateComponentNode = (c: any): ComponentNode => {
+  const node: ComponentNode = {
     ...c,
     _id: c._id || genId(),
   };
+  if (c.accessory && typeof c.accessory === "object") {
+    node.accessory = hydrateComponentNode(c.accessory);
+  }
   if (Array.isArray(c.options)) {
-    node.options = c.options.map((o:any) => ({...o, _id: o._id || genId()}));
+    node.options = c.options.map((o: any) => ({ ...o, _id: o._id || genId() }));
+  }
+  if (Array.isArray(c.items)) {
+    node.items = c.items.map((it: any) => ({ ...it, _id: it._id || genId() }));
   }
   if (Array.isArray(c.components)) {
     node.components = c.components.map(hydrateComponentNode);

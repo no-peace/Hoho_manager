@@ -30,23 +30,37 @@ const TextDisplayForm = ({ component, update }: ComponentFormProps) => (
 
 const SectionForm = ({ component, update }: ComponentFormProps) => (
   <>
-    <TextField
-      label="Thumbnail URL"
-      value={component.accessory?.media?.url ?? ""}
-      placeholder="https://…"
-      onChange={(event) =>
-        update({
-          accessory: {
-            _id: component.accessory?._id ?? uid(),
-            type: component.accessory?.type ?? ComponentType.Thumbnail,
-            media: { url: event.target.value },
-          },
-        })
-      }
-    />
+    {component.accessory?.type === ComponentType.Button ? (
+      <ButtonForm
+        component={component.accessory}
+        update={(patch) =>
+          update({
+            accessory: {
+              ...component.accessory!,
+              _id: component.accessory?._id ?? uid(),
+              ...patch,
+            },
+          })
+        }
+      />
+    ) : (
+      <TextField
+        label="Thumbnail URL"
+        value={component.accessory?.media?.url ?? ""}
+        placeholder="https://…"
+        onChange={(event) =>
+          update({
+            accessory: {
+              _id: component.accessory?._id ?? uid(),
+              type: ComponentType.Thumbnail,
+              media: { url: event.target.value },
+            },
+          })
+        }
+      />
+    )}
     <p className="rounded bg-[#1e1f22] border border-[#232428] px-2.5 py-2 text-[11px] text-[#949ba4]">
-      Section text items are individual TextDisplay components. Click on any TextDisplay child in
-      the tree to edit its markdown, mentions, or timestamps.
+      Section text items are individual TextDisplay components. Edit them directly in the message card.
     </p>
   </>
 );
@@ -202,7 +216,6 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
       <TextField
         label="Label"
         limit={Limits.components.label}
-        variables
         value={component.label ?? ""}
         placeholder="Button Text"
         onChange={(event) => update({ label: event.target.value })}

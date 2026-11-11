@@ -283,9 +283,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     return guildRoles.filter((r) => allowedIds.includes(r.id));
   }, [guildRoles, isUnrestrictedMentions, staffPerms]);
 
-  const [serverEmojis, setServerEmojis] = useState<
-    Array<{ id: string; name: string; animated?: boolean }>
-  >([]);
+  const emojisMap = useDiscordCacheStore((state) => state.emojis);
+  const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
+  const serverEmojis = (effectiveGuildId && emojisMap[effectiveGuildId]) || [];
 
   const [memberResults, setMemberResults] = useState<
     Array<{
@@ -301,14 +301,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (effectiveGuildId) {
       fetchChannels(effectiveGuildId);
       fetchRoles(effectiveGuildId);
-      (api.discord as any)
-        .emojis?.(effectiveGuildId)
-        .then((res: { emojis: Array<{ id: string; name: string; animated?: boolean }> }) => {
-          if (res?.emojis) setServerEmojis(res.emojis);
-        })
-        .catch(() => {});
+      fetchEmojis(effectiveGuildId);
     }
-  }, [effectiveGuildId, fetchChannels, fetchRoles]);
+  }, [effectiveGuildId, fetchChannels, fetchRoles, fetchEmojis]);
 
   // Pre-warm WEAO cache when user triggers exploit autocomplete
   useEffect(() => {

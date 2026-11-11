@@ -2,7 +2,8 @@ import type { EmbedData, EmbedField } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { decimalToHex } from "../../utils/discord";
 import { useMessageStore } from "../../store/messageStore";
-
+import { useGlobalStore } from "../../store/globalStore";
+import { useDiscordCacheStore } from "../../store/discordCacheStore";
 /**
  * Discord-style embed preview.
  *
@@ -51,16 +52,55 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   const rows = groupFields(embed.fields);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
 
+  const currentUser = useGlobalStore((state) => state.currentUser);
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const guilds = useDiscordCacheStore((state) => state.guilds);
+  const previewGuild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
+
+  const resolvePlainVars = (text?: string): string => {
+    if (!text || !text.includes("{")) return text ?? "";
+    const username = currentUser?.username || "User";
+    const displayName = currentUser?.global_name || username;
+    const userId = currentUser?.id || "123456789012345678";
+    const avatarUrl =
+      currentUser?.avatarUrl ||
+      (currentUser?.avatar
+        ? `https://cdn.discordapp.com/avatars/${userId}/${currentUser.avatar}.png`
+        : "https://cdn.discordapp.com/embed/avatars/0.png");
+    const guildIcon =
+      previewGuild?.id && previewGuild?.icon
+        ? `https://cdn.discordapp.com/icons/${previewGuild.id}/${previewGuild.icon}.png`
+        : "https://cdn.discordapp.com/embed/avatars/1.png";
+    const map: Record<string, string> = {
+      "user.name": username,
+      "user.tag": username,
+      "user.displayname": displayName,
+      "user.id": userId,
+      "user.avatar": avatarUrl,
+      "user.clantag": "HOHO",
+      "server.name": previewGuild?.name || "HoHo Server",
+      "server.id": previewGuild?.id || selectedGuildId || "987654321",
+      "server.icon": guildIcon,
+      "now.unix": String(Math.floor(Date.now() / 1000)),
+      "now.iso": new Date().toISOString(),
+    };
+    return text.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (m, k: string) => {
+      const key = k.trim().toLowerCase();
+      return map[key] ?? m;
+    });
+  };
+
   const resolveAttachmentUrl = (url?: string): string | undefined => {
     if (!url) return undefined;
-    if (url.startsWith("attachment://")) {
-      const filename = url.slice("attachment://".length);
+    const interpolated = resolvePlainVars(url);
+    if (interpolated.startsWith("attachment://")) {
+      const filename = interpolated.slice("attachment://".length);
       const match = attachedFiles.find(
         (f) => f.name === filename || `SPOILER_${f.name}` === filename,
       );
       if (match) return match.previewUrl;
     }
-    return url;
+    return interpolated;
   };
 
   return (
@@ -79,16 +119,16 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
           )}
           {embed.author.url ? (
             <a
-              href={embed.author.url}
+              href={resolvePlainVars(embed.author.url)}
               target="_blank"
               rel="noreferrer"
               className="text-sm font-semibold hover:underline min-w-0 break-words [overflow-wrap:anywhere]"
             >
-              {embed.author.name}
+              {resolvePlainVars(embed.author.name)}
             </a>
           ) : (
             <span className="text-sm font-semibold min-w-0 break-words [overflow-wrap:anywhere]">
-              {embed.author.name}
+              {resolvePlainVars(embed.author.name)}
             </span>
           )}
         </div>
@@ -137,7 +177,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               {row.map((field) => (
                 <div key={field._id ?? field.name} className="min-w-0 break-words [overflow-wrap:anywhere]">
                   <p className="text-sm font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
-                    {field.name || "\u00a0"}
+                    {resolvePlainVars(field.name) || "\u00a0"}
                   </p>
                   {field.value && (
                     <Markdown content={field.value} className="text-sm break-words [overflow-wrap:anywhere]" />
@@ -165,7 +205,9 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               />
             )}
             {embed.footer?.text && (
-              <span className="break-words min-w-0 [overflow-wrap:anywhere]">{embed.footer.text}</span>
+              <span className="break-words min-w-0 [overflow-wrap:anywhere]">
+                {resolvePlainVars(embed.footer.text)}
+              </span>
             )}
             {embed.footer?.text && formattedTimestamp && <span className="shrink-0">•</span>}
             {formattedTimestamp && <span className="shrink-0">{formattedTimestamp}</span>}

@@ -114,27 +114,25 @@ export const scrubString = (text: string, perms: MentionPermissions, stripped: s
     });
   }
 
-  if (!perms.can_mention_roles) {
-    result = result.replace(ROLE_MENTION_RE, (_match, roleId) => {
+  let allowedRoleIds: string[] = [];
+  try {
+    allowedRoleIds =
+      typeof perms.allowed_role_mention_ids === "string"
+        ? JSON.parse(perms.allowed_role_mention_ids)
+        : Array.isArray(perms.allowed_role_mention_ids)
+          ? perms.allowed_role_mention_ids
+          : [];
+  } catch {
+    allowedRoleIds = [];
+  }
+
+  const allRolesAllowed = Boolean(perms.can_mention_roles) || allowedRoleIds.includes("*");
+  if (!allRolesAllowed) {
+    result = result.replace(ROLE_MENTION_RE, (match, roleId) => {
+      if (allowedRoleIds.includes(roleId)) return match;
       stripped.push(`<@&${roleId}>`);
       return `@\u200b${roleId}`;
     });
-  } else {
-    let allowedRoleIds: string[] = [];
-    try {
-      allowedRoleIds = JSON.parse(perms.allowed_role_mention_ids);
-    } catch {
-      allowedRoleIds = [];
-    }
-
-    const allRolesAllowed = allowedRoleIds.length === 0 || allowedRoleIds.includes("*");
-    if (!allRolesAllowed) {
-      result = result.replace(ROLE_MENTION_RE, (match, roleId) => {
-        if (allowedRoleIds.includes(roleId)) return match;
-        stripped.push(`<@&${roleId}>`);
-        return `@\u200b${roleId}`;
-      });
-    }
   }
 
   return result;
@@ -183,19 +181,22 @@ export const sanitizeAllowedMentions = (
 
   let roles: string[] | undefined;
 
-  if (perms.can_mention_roles) {
-    let allowedRoleIds: string[] = [];
-    try {
-      allowedRoleIds = JSON.parse(perms.allowed_role_mention_ids);
-    } catch {
-      allowedRoleIds = [];
-    }
+  let allowedRoleIds: string[] = [];
+  try {
+    allowedRoleIds =
+      typeof perms.allowed_role_mention_ids === "string"
+        ? JSON.parse(perms.allowed_role_mention_ids)
+        : Array.isArray(perms.allowed_role_mention_ids)
+          ? perms.allowed_role_mention_ids
+          : [];
+  } catch {
+    allowedRoleIds = [];
+  }
 
-    if (allowedRoleIds.length === 0 || allowedRoleIds.includes("*")) {
-      parse.push("roles");
-    } else {
-      roles = allowedRoleIds.filter((id) => id !== "*");
-    }
+  if (perms.can_mention_roles || allowedRoleIds.includes("*")) {
+    parse.push("roles");
+  } else if (allowedRoleIds.length > 0) {
+    roles = allowedRoleIds.filter((id) => id !== "*");
   }
 
   const allowedMentions: Record<string, unknown> = {

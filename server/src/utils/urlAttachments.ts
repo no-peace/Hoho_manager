@@ -206,11 +206,46 @@ export const fetchUrlAttachments = async (
       );
     }
 
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > MAX_FILE_SIZE) {
+    const contentLength = Number(response.headers.get("content-length") ?? "0");
+    if (Number.isFinite(contentLength) && contentLength > MAX_FILE_SIZE) {
       throw ApiError.badRequest(
         `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
       );
+    }
+
+    let buffer: ArrayBuffer;
+    if (response.body && typeof response.body.getReader === "function") {
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          received += value.byteLength;
+          if (received > MAX_FILE_SIZE) {
+            await reader.cancel().catch(() => {});
+            throw ApiError.badRequest(
+              `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
+            );
+          }
+          chunks.push(value);
+        }
+      }
+      const merged = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      buffer = merged.buffer;
+    } else {
+      buffer = await response.arrayBuffer();
+      if (buffer.byteLength > MAX_FILE_SIZE) {
+        throw ApiError.badRequest(
+          `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
+        );
+      }
     }
 
     const type =

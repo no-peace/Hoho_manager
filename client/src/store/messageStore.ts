@@ -745,12 +745,20 @@ export const useMessageStore = create<MessageState>()(
               fields: (e.fields || []).map((f) => ({ ...f, _id: f._id || uid() })),
             }));
           }
+          const hydrateNode = (c: ComponentNode): ComponentNode => ({
+            ...c,
+            _id: c._id || uid(),
+            ...(c.accessory ? { accessory: hydrateNode(c.accessory) } : {}),
+            ...(Array.isArray(c.components) ? { components: c.components.map(hydrateNode) } : {}),
+            ...(Array.isArray(c.options)
+              ? { options: c.options.map((o) => ({ ...o, _id: o._id || uid() })) }
+              : {}),
+            ...(Array.isArray(c.items)
+              ? { items: c.items.map((it) => ({ ...it, _id: it._id || uid() })) }
+              : {}),
+          });
           if (msg.components) {
-            msg.components = msg.components.map((c) => ({
-              ...c,
-              _id: c._id || uid(),
-              components: (c.components || []).map((child) => ({ ...child, _id: child._id || uid() })),
-            }));
+            msg.components = msg.components.map(hydrateNode);
           }
           const isV2 = resolveMessageMode(msg, resolvedMode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
           msg.flags = isV2 ? (msg.flags ?? 0) | 32768 : (msg.flags ?? 0) & ~32768;

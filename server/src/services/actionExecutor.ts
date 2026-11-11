@@ -115,10 +115,11 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
 
     // Server
     "server.id": interaction.guild_id ?? "unknown",
-    "server.name": "Your Server",
-    "server.icon": interaction.guild_id
-      ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/icon.png`
-      : "",
+    "server.name": (interaction as any).guild?.name ?? "Server",
+    "server.icon":
+      interaction.guild_id && (interaction as any).guild?.icon
+        ? `https://cdn.discordapp.com/icons/${interaction.guild_id}/${(interaction as any).guild.icon}.png`
+        : "",
 
     // Channel, Bot & Message
     "channel.id": interaction.channel_id ?? "unknown",
@@ -206,7 +207,23 @@ export const executeCustomId = async (
   const user = interaction.member?.user ?? interaction.user;
   const userId = user?.id ?? "unknown";
 
-  const botToken = await discord.resolveBotToken().catch(() => null);
+  const botToken =
+    (await discord
+      .resolveBotTokenForApplication?.(interaction.application_id)
+      .catch(() => null)) || (await discord.resolveBotToken().catch(() => null));
+
+  const guildId = interaction.guild_id;
+  if (guildId && botToken && variables["server.name"] === "Server") {
+    const guilds = await discord.getBotGuilds().catch(() => []);
+    const matchedGuild = guilds.find((g) => g.id === guildId);
+    if (matchedGuild) {
+      variables["server.name"] = matchedGuild.name;
+      if (matchedGuild.icon) {
+        variables["server.icon"] = `https://cdn.discordapp.com/icons/${guildId}/${matchedGuild.icon}.png`;
+      }
+    }
+  }
+
   const context: Omit<ActionContext, "config"> = {
     interaction,
     variables,
@@ -216,10 +233,15 @@ export const executeCustomId = async (
     logger: log,
   };
 
+  const isErrorResponse = (res: ActionResponse | undefined): boolean =>
+    typeof (res?.data as any)?.content === "string" &&
+    ((res?.data as any).content as string).startsWith("\u26a0\ufe0f");
+
   const logStep = async (
     step: ExecutableStep,
     response: ActionResponse | undefined,
     startedAt: number,
+    failed = false,
   ): Promise<void> => {
     await actionRepository.log({
       actionDefinitionId: step.id,
@@ -227,7 +249,7 @@ export const executeCustomId = async (
       userId,
       guildId: interaction.guild_id ?? null,
       channelId: interaction.channel_id ?? null,
-      status: response ? "success" : "pending",
+      status: failed || isErrorResponse(response) ? "failed" : "success",
       response: { type: step.type, ms: Date.now() - startedAt },
     });
   };
@@ -239,11 +261,18 @@ export const executeCustomId = async (
     return weaoResolved as Record<string, any>;
   };
 
+  let halted = false;
+
   const runSteps = async (
     list: ExecutableStep[],
     depth: number,
   ): Promise<ActionResponse | undefined> => {
-    if (depth > MAX_BRANCH_DEPTH) return actionFailed("That flow nests too deeply to run.");
+    if (depth > MAX_BRANCH_DEPTH) {
+      halted = true;
+      return actionFailed("That flow nests too deeply to run.");
+    }
+
+    let lastResponse: ActionResponse | undefined;
 
     for (const step of list) {
       const handler = getActionHandler(step.type);
@@ -251,7 +280,6 @@ export const executeCustomId = async (
 
       const started = Date.now();
 
-      // Conditional check step with branching (resolve condition sides without mutating sub-branches early)
       if (step.type === "check" && hasBranches(step.config)) {
         const { pass, fail, then: thenBranch, else: elseBranch, ...condOnly } = step.config;
         const resolvedCond = await resolveStepConfig(condOnly);
@@ -260,35 +288,48 @@ export const executeCustomId = async (
           variables,
         );
         const nested = await runSteps(branch, depth + 1);
-        await logStep(step, nested, started);
-        if (nested) return nested;
+        await logStep(step, nested, started, isErrorResponse(nested));
+        if (nested) lastResponse = nested;
+        if (halted) return lastResponse;
         continue;
       }
 
       let response: ActionResponse | undefined;
+      let threw = false;
       try {
         const parsedConfig = await resolveStepConfig(step.config);
-        const stepProfileId =
-          typeof parsedConfig.profileId === "number" ? parsedConfig.profileId : null;
-        const stepBotToken = stepProfileId
-          ? await discord.resolveBotToken(stepProfileId).catch(() => botToken)
-          : botToken;
         response = await handler.run({
           ...context,
-          botToken: stepBotToken,
+          botToken,
           config: parsedConfig,
         });
       } catch (err) {
+        threw = true;
         const reason = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : undefined;
         log.error(`Action "${step.type}" threw: ${reason}`, stack);
         response = actionFailed("Something went wrong running that action.");
       }
 
-      await logStep(step, response, started);
-      if (response) return response;
+      const failed = threw || isErrorResponse(response);
+      await logStep(step, response, started, failed);
+
+      if (step.type === "stop") {
+        halted = true;
+        const hasStopMessage = Boolean(
+          typeof step.config?.content === "string" && step.config.content.trim(),
+        );
+        return hasStopMessage ? response : (lastResponse ?? response);
+      }
+
+      if (response) lastResponse = response;
+
+      if (failed || step.type === "open_modal") {
+        halted = true;
+        return lastResponse;
+      }
     }
-    return undefined;
+    return lastResponse;
   };
 
   const response = await runSteps(steps, 0);
