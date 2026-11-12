@@ -67,6 +67,7 @@ router.post(
       actions: Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : [],
       isPublic: optionalFlag(body.isPublic) ?? 0,
       expiresAt: parseExpiresAt(body.expiresAt),
+      isTracked: optionalFlag(body.isTracked) ?? 0,
     });
     res.status(201).json({ template });
   }),
@@ -90,6 +91,7 @@ router.put(
           : undefined,
         isPublic: optionalFlag(body.isPublic),
         expiresAt: parseExpiresAt(body.expiresAt),
+        isTracked: optionalFlag(body.isTracked),
       },
     );
     res.json({ template });
