@@ -466,8 +466,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       if (idSuggestions !== null) {
         return idSuggestions.slice(0, 20).map((suggestion) => ({
           id: `var_${suggestion.tag}`,
-          title: suggestion.tag,
-          subtitle: `${suggestion.label}  ${suggestion.desc}`,
+          title: suggestion.displayTag,
+          subtitle: `${suggestion.label} • ID …${suggestion.userId.slice(-4)}`,
           icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
           replacement: suggestion.tag,
           keepOpen: false,
