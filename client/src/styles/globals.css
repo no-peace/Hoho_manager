@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Whitney", "Helvetica", "sans-serif";
-  --font-code: "Source Code Pro", "Consolas", "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Monaco", "Courier New", "Courier", "monospace";
+  --font-sans: "Geist Sans", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
+  --font-code: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
 
   --spacing-inherit: inherit;
   --spacing-4-5: 1.125rem;
@@ -244,5 +245,21 @@ details summary::-webkit-details-marker {
   }
   .text-link:hover {
     text-decoration: underline;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  [data-motion] {
+    transform: none !important;
+  }
+  .motion-safe-transition {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .motion-hover-lift:hover {
+    transform: translateY(-1px);
   }
 }
