@@ -22,7 +22,7 @@ import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
 import api from "../../api/client";
-
+import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 export interface DiscordMentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -461,6 +461,18 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
     if (acType === "variable") {
       const items: AutocompleteItem[] = [];
+      const idSuggestions = getUserIdPlaceholderSuggestions(q);
+
+      if (idSuggestions !== null) {
+        return idSuggestions.slice(0, 20).map((suggestion) => ({
+          id: `var_${suggestion.tag}`,
+          title: suggestion.tag,
+          subtitle: `${suggestion.label}  ${suggestion.desc}`,
+          icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
+          replacement: suggestion.tag,
+          keepOpen: false,
+        }));
+      }
 
       if (!q || "exploit.".includes(q) || "weao".includes(q)) {
         items.push({

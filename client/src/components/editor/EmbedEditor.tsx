@@ -259,7 +259,7 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     />
                     <p className="mt-1 text-[10px] leading-relaxed text-[#949ba4]">
                       For automatic author details, use a Discord profile URL (https://discord.com/users/USER_ID). Leave Author Name and Author Icon URL empty to let the server fill them when sending.
-                      The editor preview does not fetch live Discord profiles.
+                      The editor preview resolves user-ID placeholders such as {"{user.ID.name}"} and {"{user.ID.avatarurl}"} using the server bot. Use avatarurl when you need the profile picture URL..
                     </p>
                   </div>
                 )}

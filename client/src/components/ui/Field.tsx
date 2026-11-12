@@ -1,6 +1,7 @@
 import { Check, Keyboard } from "lucide-react";
 import { useRef, useState, useEffect, useMemo } from "react";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 
 export const VARIABLES = [
   { group: "User / Clicker" },
@@ -125,6 +126,24 @@ const ACTUAL_VARIABLES = VARIABLES.filter(
   (v): v is { tag: string; label: string; desc: string } => typeof (v as any).tag === "string",
 );
 
+const getAutocompleteVariables = (query: string) => {
+  const idSuggestions = getUserIdPlaceholderSuggestions(query);
+
+  // null means this is an ordinary variable query.
+  // An empty array means it is an ID query with no matching field.
+  if (idSuggestions !== null) return idSuggestions;
+
+  const q = query.toLowerCase().replace(/^\\{+/, "");
+
+  return ACTUAL_VARIABLES.filter(
+    (v) =>
+      !q ||
+      v.tag.toLowerCase().includes(q) ||
+      v.desc.toLowerCase().includes(q) ||
+      v.label.toLowerCase().includes(q),
+  ).slice(0, 8);
+};
+
 interface VariableAutocompleteProps {
   query: string;
   onSelect: (tag: string) => void;
@@ -139,17 +158,9 @@ const VariableAutocompletePopover = ({
   dropdownPos = "bottom",
   selectedIndex = 0,
 }: VariableAutocompleteProps) => {
-  const q = query.toLowerCase().replace(/^\{+/, "");
   const filtered = useMemo(
-    () =>
-      ACTUAL_VARIABLES.filter(
-        (v) =>
-          !q ||
-          v.tag.toLowerCase().includes(q) ||
-          v.desc.toLowerCase().includes(q) ||
-          v.label.toLowerCase().includes(q),
-      ).slice(0, 8),
-    [q],
+    () =>getAutocompleteVariables(query),
+    [query],
   );
 
   if (filtered.length === 0) return null;
@@ -389,14 +400,7 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
           onKeyDown={(e) => {
             props.onKeyDown?.(e);
             if (acState?.open) {
-              const q = acState.query.toLowerCase().replace(/^\{+/, "");
-              const filtered = ACTUAL_VARIABLES.filter(
-                (v) =>
-                  !q ||
-                  v.tag.toLowerCase().includes(q) ||
-                  v.desc.toLowerCase().includes(q) ||
-                  v.label.toLowerCase().includes(q),
-              ).slice(0, 8);
+              const filtered = getAutocompleteVariables(acState.query);
               if (filtered.length > 0) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
