@@ -28,9 +28,7 @@ export const ServerBotAccessModal = ({
             {hasAccess ? "Server bot access enabled" : "Server bot access required"}
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[#b5bac1]">
-            HoHo Manager uses one Discord bot token configured by the server administrator.
-            Custom bot tokens, webhook URL message sending, and per-message sender identity
-            overrides are disabled.
+            HoHo Manager sends messages through the server bot configured by the administrator. Your access determines whether you can use that bot to send and manage messages.
           </p>
           {!hasAccess && (
             <p className="mt-2 text-xs leading-relaxed text-[#f0b232]">

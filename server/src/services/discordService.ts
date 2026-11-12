@@ -567,6 +567,7 @@ export class BoundedTtlCache<T> {
 export const memberSearchCache = new BoundedTtlCache<DiscordMemberSummary[]>(500, 60_000);
 const inFlightMemberSearches = new Map<string, Promise<DiscordMemberSummary[]>>();
 export const userCache = new BoundedTtlCache<DiscordMemberSummary>(1000, 10 * 60_000);
+const inFlightUserLookups = new Map<string, Promise<DiscordMemberSummary>>();
 
 export const getDiscordUserAvatarUrl = (user: {
   id: string;
@@ -584,22 +585,55 @@ export const getDiscordUser = async (
   userId: string,
   profileId: number | null = null,
 ): Promise<DiscordMemberSummary> => {
+  if (!/^\d{17,20}$/.test(userId)) {
+    throw ApiError.badRequest("Invalid Discord user ID");
+  }
+
   const cached = userCache.get(userId);
   if (cached) return cached;
 
-  const token = await resolveBotToken(profileId);
-  const data = await apiRequest<any>("GET", `/users/${userId}`, { token });
-  if (!data) throw ApiError.notFound(`User ${userId} not found on Discord`);
+  const existing = inFlightUserLookups.get(userId);
+  if (existing) return existing;
 
-  const summary: DiscordMemberSummary = {
-    id: data.id,
-    username: data.username,
-    global_name: data.global_name ?? null,
-    nickname: null,
-    avatar: data.avatar ?? null,
-  };
-  userCache.set(userId, summary);
-  return summary;
+  let lookupPromise: Promise<DiscordMemberSummary>;
+
+  lookupPromise = (async () => {
+    const token = await resolveBotToken(profileId);
+    const data = await apiRequest<{
+      id?: string;
+      username?: string;
+      global_name?: string | null;
+      avatar?: string | null;
+    }>("GET", `/users/${encodeURIComponent(userId)}`, { token });
+
+    if (
+      !data ||
+      data.id !== userId ||
+      typeof data.username !== "string" ||
+      data.username.length === 0
+    ) {
+      throw ApiError.notFound(`User ${userId} was not returned by Discord`);
+    }
+
+    const summary: DiscordMemberSummary = {
+      id: data.id,
+      username: data.username,
+      global_name: data.global_name ?? null,
+      nickname: null,
+      avatar: data.avatar ?? null,
+    };
+
+    // Only successful, validated responses enter the TTL cache.
+    userCache.set(userId, summary);
+    return summary;
+  })().finally(() => {
+    if (inFlightUserLookups.get(userId) === lookupPromise) {
+      inFlightUserLookups.delete(userId);
+    }
+  });
+
+  inFlightUserLookups.set(userId, lookupPromise);
+  return lookupPromise;
 };
 
 export const clearMemberSearchCache = (): void => {

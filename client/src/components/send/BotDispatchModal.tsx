@@ -50,21 +50,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       return [];
     }
   });
-  const [cachedBotInfo] = useState<{ name: string; avatar: string } | null>(() => {
-    try {
-      const cached = JSON.parse(localStorage.getItem("bot_identity_cache") || "null");
-      if (
-        cached &&
-        typeof cached.name === "string" &&
-        typeof cached.avatar === "string"
-      ) {
-        return cached;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  });
+  const botIdentity = useGlobalStore((state) => state.botIdentity);
   const [botMessages, setBotMessages] = useState<BotMessage[]>([]);
   const [targetMessageId, setTargetMessageId] = useState("");
   const [loadedMessageId, setLoadedMessageId] = useState<string | null>(null);
@@ -422,9 +408,9 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           </div>
 
           <div className="p-3 rounded-lg border border-[#5865f2]/50 bg-[#5865f2]/10 flex items-center gap-3">
-            {cachedBotInfo?.avatar ? (
+            {botIdentity?.avatar ? (
               <img
-                src={cachedBotInfo.avatar}
+                src={botIdentity.avatar}
                 alt=""
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -435,7 +421,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             )}
             <div className="min-w-0">
               <p className="text-[14px] font-bold text-white truncate">
-                {cachedBotInfo?.name || "HoHo Server Bot"}
+                {botIdentity?.username || "HoHo Bot"}
               </p>
               <p className="text-[11px] text-[#949ba4] truncate">
                 {canUseServerBot

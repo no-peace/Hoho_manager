@@ -257,6 +257,10 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                       }
                       className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
                     />
+                    <p className="mt-1 text-[10px] leading-relaxed text-[#949ba4]">
+                      For automatic author details, use a Discord profile URL (https://discord.com/users/USER_ID). Leave Author Name and Author Icon URL empty to let the server fill them when sending.
+                      The editor preview does not fetch live Discord profiles.
+                    </p>
                   </div>
                 )}
 

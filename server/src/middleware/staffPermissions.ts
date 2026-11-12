@@ -31,8 +31,53 @@ const isAdmin = (req: Request): boolean => {
   return !!provided && safeEqual(provided, env.adminApiKey);
 };
 
-export const requireStaffPermission = (action: StaffAction): RequestHandler =>
+type StaffActionInput =
+  | StaffAction
+  | ((req: Request) => StaffAction);
+
+const parseStringList = (raw: string | null | undefined): string[] => {
+  try {
+    const parsed: unknown = JSON.parse(raw || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const parseNumberRecord = (
+  raw: string | null | undefined,
+): Record<string, number> => {
+  try {
+    const parsed: unknown = JSON.parse(raw || "{}");
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([, value]) =>
+          typeof value === "number" &&
+          Number.isFinite(value) &&
+          value >= 0,
+      ),
+    );
+  } catch {
+    return {};
+  }
+};
+
+export const requireStaffPermission = (
+  actionInput: StaffActionInput,
+): RequestHandler =>
   asyncHandler(async (req, _res, next) => {
+    const action =
+      typeof actionInput === "function" ? actionInput(req) : actionInput;
     const requestId = crypto.randomUUID().slice(0, 8);
     const ip = req.ip ?? req.socket.remoteAddress ?? "?";
 
@@ -169,12 +214,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
       const channelId: string | undefined =
         req.body?.channelId ?? req.params?.channelId ?? (req.query?.channelId as string);
       if (channelId) {
-        let allowed: string[];
-        try {
-          allowed = JSON.parse(record.allowed_channel_ids);
-        } catch {
-          allowed = [];
-        }
+        const allowed = parseStringList(record.allowed_channel_ids);
         const allAllowed = allowed.includes("*");
         if (!allAllowed && (allowed.length === 0 || !allowed.includes(channelId))) {
           auditLog({
@@ -192,14 +232,7 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
     }
 
     if (req.method !== "GET") {
-      let granularCooldowns: Record<string, number> = {};
-      if (record.granular_cooldowns) {
-        try {
-          granularCooldowns = JSON.parse(record.granular_cooldowns);
-        } catch {
-          granularCooldowns = {};
-        }
-      }
+      const granularCooldowns = parseNumberRecord(record.granular_cooldowns);
       const effectiveCooldown =
         typeof granularCooldowns[action] === "number"
           ? granularCooldowns[action]
@@ -224,14 +257,8 @@ export const requireStaffPermission = (action: StaffAction): RequestHandler =>
         }
       }
 
-      let granularRateLimits: Record<string, number> = {};
-      if (record.granular_rate_limits) {
-        try {
-          granularRateLimits = JSON.parse(record.granular_rate_limits);
-        } catch {
-          granularRateLimits = {};
-        }
-      }
+      const granularRateLimits = parseNumberRecord(record.granular_rate_limits);
+
       const effectiveRateLimit =
         typeof granularRateLimits[action] === "number"
           ? granularRateLimits[action]

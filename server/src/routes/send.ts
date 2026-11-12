@@ -74,7 +74,12 @@ router.post(
   multipartParser,
   attachUser,
   sendLimiter,
-  requireStaffPermission("send"),
+  requireStaffPermission((req) =>
+    typeof req.body?.editMessageId === "string" &&
+      req.body.editMessageId.trim() !== ""
+      ? "edit"
+      : "send",
+  ),
   asyncHandler(async (req, res) => {
     const {
       mode,
@@ -87,7 +92,7 @@ router.post(
       editMessageId,
       ...body
     } = req.body;
-        if (mode !== "bot") {
+    if (mode !== "bot") {
       throw ApiError.badRequest('Only mode "bot" is supported.');
     }
     if (typeof webhookUrl === "string" && webhookUrl.trim() !== "") {
@@ -130,8 +135,8 @@ router.post(
     const processMessage = async (raw: unknown) => {
       const exploitHint =
         raw !== null &&
-        typeof raw === "object" &&
-        typeof (raw as Record<string, unknown>).exploit_name === "string"
+          typeof raw === "object" &&
+          typeof (raw as Record<string, unknown>).exploit_name === "string"
           ? ((raw as Record<string, unknown>).exploit_name as string)
           : undefined;
 
@@ -181,18 +186,18 @@ router.post(
         "now.iso": new Date().toISOString(),
         ...(targetChannelId
           ? {
-              "channel.id": targetChannelId,
-              "channel.mention": `<#${targetChannelId}>`,
-            }
+            "channel.id": targetChannelId,
+            "channel.mention": `<#${targetChannelId}>`,
+          }
           : {}),
         ...(senderDiscordId
           ? {
-              "user.id": senderDiscordId,
-              "user.mention": `<@${senderDiscordId}>`,
-              "user.name": senderName,
-              "user.tag": senderName,
-              "user.displayname": senderName,
-            }
+            "user.id": senderDiscordId,
+            "user.mention": `<@${senderDiscordId}>`,
+            "user.name": senderName,
+            "user.tag": senderName,
+            "user.displayname": senderName,
+          }
           : {}),
       };
 
@@ -219,8 +224,11 @@ router.post(
         const { resolveAuthorPlaceholders } = await import("../services/authorService.js");
         const aRes = await resolveAuthorPlaceholders(weaoInterpolated, null, profileId);
         authorResolved = aRes.payload;
-      } catch {
-        // Fallback to weaoInterpolated
+      } catch (error) {
+        log.warn(
+          `Author profile enrichment failed; sending original interpolated payload: ${error instanceof Error ? error.message : String(error)
+          }`,
+        );
       }
 
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
@@ -483,7 +491,7 @@ router.get(
         ? req.query.guildId.trim()
         : undefined;
 
-        const botGuilds = await discord.getBotGuilds(profileId);
+    const botGuilds = await discord.getBotGuilds(profileId);
     let availableGuilds = botGuilds;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       let allowedGuilds: string[] = [];
@@ -579,9 +587,11 @@ router.get(
     if (typeof channelId !== "string" || typeof messageId !== "string") {
       throw ApiError.badRequest("`channelId` and `messageId` must be strings");
     }
-    if (profileId === null) {
-      if (!req.staffContext?.isAdmin && !req.staffContext?.record) {
-        throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
+    if (!req.staffContext?.isAdmin) {
+      if (!req.staffContext?.record) {
+        throw ApiError.forbidden(
+          "Default bot requires an active staff record or Head Admin access",
+        );
       }
       assertStaffChannelAllowed(req.staffContext, channelId);
       await assertStaffGuildAllowed(req.staffContext, channelId);

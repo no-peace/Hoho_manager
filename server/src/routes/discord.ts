@@ -2,6 +2,8 @@ import crypto from "node:crypto";
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { env } from "../config/env.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
+import { requireHeadAdmin } from "../middleware/auth.js";
 import { staffRepository } from "../repositories/staffRepository.js";
 import { auditLogRepository } from "../repositories/auditLogRepository.js";
 import { sessionRepository } from "../repositories/sessionRepository.js";
@@ -79,43 +81,60 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
   return next(ApiError.unauthorized("Authentication required (admin key or active staff ID)"));
 });
 
+const parseAllowedIds = (raw: string | null | undefined): string[] => {
+  try {
+    const parsed: unknown = JSON.parse(raw || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 const requireAllowedGuild: RequestHandler = (req, _res, next) => {
   const guildId = req.params.guildId;
   const staffCtx = req.staffContext;
-  if (!guildId || staffCtx?.isAdmin || !staffCtx?.record) return next();
 
-  let allowedGuilds: string[] = [];
-  try {
-    const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
-    if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
-  } catch {
-    // Invalid allowlist data must fail closed.
+  if (typeof guildId !== "string" || !guildId || staffCtx?.isAdmin) return next();
+
+  if (!staffCtx?.record) {
+    return next(ApiError.forbidden("An active staff record is required"));
   }
 
-  if (allowedGuilds.includes("*") || (typeof guildId === "string" && allowedGuilds.includes(guildId))) return next();
-  return next(ApiError.forbidden(`You are not allowed to access guild ${guildId}`));
+  const allowedGuilds = parseAllowedIds(
+    staffCtx.record.allowed_guild_ids,
+  );
+
+  if (allowedGuilds.includes("*") || allowedGuilds.includes(guildId)) {
+    return next();
+  }
+
+  return next(
+    ApiError.forbidden(`You are not allowed to access guild ${guildId}`),
+  );
 };
 
-router.get("/guilds", requireStaffOrAdmin, asyncHandler(async (req, res) => {
+router.get("/guilds", requireStaffPermission("send"), asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
   let guilds = await discord.getBotGuilds(profileId);
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-    let allowedGuilds: string[] = [];
-    try {
-      const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
-      if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
-    } catch {
-      // Invalid allowlist data must fail closed.
-    }
+    const allowedGuilds = parseAllowedIds(
+      staffCtx.record.allowed_guild_ids,
+    );
+
     if (!allowedGuilds.includes("*")) {
-      guilds = guilds.filter((g) => allowedGuilds.includes(g.id));
+      guilds = guilds.filter((guild) =>
+        allowedGuilds.includes(guild.id),
+      );
     }
   }
   return res.json({ guilds });
 }));
 
-router.get("/guilds/:guildId/channels", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+
+router.get("/guilds/:guildId/channels", requireStaffPermission("send"), requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -128,7 +147,15 @@ router.get("/guilds/:guildId/channels", requireStaffOrAdmin, requireAllowedGuild
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
     let allowed: string[] = [];
     try {
-      allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
+      const allowedChannels = parseAllowedIds(
+        staffCtx.record.allowed_channel_ids,
+      );
+
+      if (!allowedChannels.includes("*")) {
+        channels = channels.filter((channel) =>
+          allowedChannels.includes(channel.id),
+        );
+      }
     } catch {
       allowed = [];
     }
@@ -142,7 +169,7 @@ router.get("/guilds/:guildId/channels", requireStaffOrAdmin, requireAllowedGuild
   return res.json({ channels });
 }));
 
-router.get("/guilds/:guildId/roles", requireStaffOrAdmin,requireAllowedGuild, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/roles", requireStaffPermission("send"),requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -153,7 +180,7 @@ router.get("/guilds/:guildId/roles", requireStaffOrAdmin,requireAllowedGuild, as
   return res.json({ roles });
 }));
 
-router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/members/search", requireStaffPermission("send"), requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -170,7 +197,7 @@ router.get("/guilds/:guildId/members/search", requireStaffOrAdmin, requireAllowe
   return res.json({ members });
 }));
 
-router.get("/guilds/:guildId/emojis", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/emojis", requireStaffPermission("send"), requireAllowedGuild, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -225,10 +252,10 @@ const getAuditLogsHandler: RequestHandler = asyncHandler(async (req, res) => {
   });
 });
 
-router.get("/guilds/:guildId/audit-logs", requireStaffOrAdmin, requireAllowedGuild, getAuditLogsHandler);
-router.get("/guilds/:guildId/log", requireStaffOrAdmin, requireAllowedGuild, getAuditLogsHandler);
+router.get("/guilds/:guildId/audit-logs", requireHeadAdmin, getAuditLogsHandler);
+router.get("/guilds/:guildId/log", requireHeadAdmin, getAuditLogsHandler);
 
-router.post("/guilds/:guildId/audit-logs", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.post("/guilds/:guildId/audit-logs", requireHeadAdmin, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -256,7 +283,7 @@ router.post("/guilds/:guildId/audit-logs", requireStaffOrAdmin, requireAllowedGu
   return res.status(201).json({ ok: true, entry });
 }));
 
-router.get("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.get("/guilds/:guildId/sessions", requireHeadAdmin, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -276,7 +303,7 @@ router.get("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild
   return res.json(result);
 }));
 
-router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.post("/guilds/:guildId/sessions", requireHeadAdmin, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -298,7 +325,7 @@ router.post("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuil
   return res.status(201).json({ ok: true, session });
 }));
 
-router.delete("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.delete("/guilds/:guildId/sessions", requireHeadAdmin, asyncHandler(async (req, res) => {
   const { guildId } = req.params;
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
@@ -323,7 +350,7 @@ router.delete("/guilds/:guildId/sessions", requireStaffOrAdmin, requireAllowedGu
   return res.json({ ok: true, revoked: revokedCount });
 }));
 
-router.delete("/guilds/:guildId/sessions/:tokenId", requireStaffOrAdmin, requireAllowedGuild, asyncHandler(async (req, res) => {
+router.delete("/guilds/:guildId/sessions/:tokenId", requireHeadAdmin, asyncHandler(async (req, res) => {
   const { guildId, tokenId } = req.params;
   if (!guildId || typeof guildId !== "string" || !tokenId || typeof tokenId !== "string") {
     throw ApiError.badRequest("`guildId` and `tokenId` are required");

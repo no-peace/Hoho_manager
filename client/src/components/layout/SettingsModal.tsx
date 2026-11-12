@@ -5,7 +5,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { useGlobalStore } from "../../store/globalStore";
 import { request } from "../../api/client";
 import { ALL_LOG_EVENTS, DEFAULT_LOG_EVENTS } from "@dmb/shared";
-import { CheckSquare, Square, Shield, Bell, Database } from "lucide-react";
+import { CheckSquare, Square, Shield, Bell } from "lucide-react";
 
 interface SettingsData {
   log_channel_id: string | null;
@@ -180,10 +180,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                       onChange={(val) => setData({ ...data, log_channel_id: (val as string) || null })}
                       placeholder="Select a channel for audit alerts..."
                     />
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#57f287] pt-1">
-                      <Database size={12} className="shrink-0" />
-                      <span>Zero-DB Storage Mode: Audit events stream straight to Discord, using 0 KB SQLite space.</span>
-                    </div>
                   </div>
 
                   {/* Configurable Discord Logging Events */}

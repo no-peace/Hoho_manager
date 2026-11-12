@@ -303,6 +303,8 @@ export const DocsPage = () => {
       "color": 15329769,
       "footer": { "text": ".gg/hohohub" },
       "author": {
+        "name": "{user.708504312862474282.name}",
+        "url": "{user.708504312862474282.url}",
         "url": "https://discord.com/users/708504312862474282"
       }
     }
@@ -311,7 +313,7 @@ export const DocsPage = () => {
             </pre>
           </div>
           <p className="text-[11px] text-[#949ba4]">
-            💡 Notice that the <code className="text-white font-mono bg-[#111214] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#111214] px-1 rounded">author.icon_url</code> are omitted: the server will automatically resolve and populate the user&apos;s live Discord display name and profile picture!
+            💡 Notice that the <code className="text-white font-mono bg-[#111214] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#111214] px-1 rounded">author.icon_url</code> are omitted: When the message is sent, the server attempts to fetch the Discord user and fills blank author name and icon fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
           </p>
         </section>
       </div>
