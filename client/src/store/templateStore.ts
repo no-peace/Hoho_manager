@@ -22,6 +22,7 @@ const toSummary = (template: TemplateDetailResponse["template"]): TemplateSummar
   description: template.description,
   preview_image_url: template.preview_image_url,
   is_public: template.is_public,
+  is_tracked: template.is_tracked ?? 0,
   expires_at: template.expires_at ?? null,
   created_at: template.created_at,
   updated_at: template.updated_at,
@@ -40,7 +41,7 @@ export interface TemplateState {
 
   fetchTemplates(query?: string): Promise<void>;
   /** Persist the current document. */
-  save(document: { data: unknown; actions: unknown[]; expiresAt?: string | null }): Promise<TemplateDetailResponse["template"]>;
+  save(document: { data: unknown; actions: unknown[]; expiresAt?: string | null; isTracked?: boolean }): Promise<TemplateDetailResponse["template"]>;
   /** Fetch a full template and hand it back for the caller to load. */
   load(id: number): Promise<TemplateDetailResponse["template"]>;
   remove(id: number): Promise<void>;
@@ -81,6 +82,7 @@ export const useTemplateStore = create<TemplateState>()((set, get) => ({
       data: document.data,
       actions: document.actions,
       ...(document.expiresAt !== undefined ? { expiresAt: document.expiresAt } : {}),
+      ...(document.isTracked !== undefined ? { isTracked: document.isTracked } : {}),
     };
 
     const response = currentId
