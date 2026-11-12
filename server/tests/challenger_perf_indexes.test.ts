@@ -23,7 +23,8 @@ describe("PERF-06: Database Indexes Verification", () => {
     expect(indexNames.has("idx_staff_cooldowns_lookup")).toBe(true);
     // Note: audit_log_entries was dropped in migration 008 in favor of zero-DB Discord logging
     expect(indexNames.has("idx_action_logs_executed_at")).toBe(true);
-    expect(indexNames.has("idx_bot_profiles_user")).toBe(true);
+    expect(indexNames.has("idx_templates_expires_at")).toBe(true);
+    expect(indexNames.has("idx_tracked_messages_expires_at")).toBe(true);
     expect(indexNames.has("idx_sessions_expires")).toBe(true);
   });
 
