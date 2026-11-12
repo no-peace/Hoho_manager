@@ -5,6 +5,7 @@ import { createApp } from "../src/app.js";
 import { env } from "../src/config/env.js";
 import { db, initializeDatabase } from "../src/config/database.js";
 import * as discordService from "../src/services/discordService.js";
+import { staffRepository } from "../src/repositories/staffRepository.js";
 
 // Mock outbound discord service calls with importOriginal
 vi.mock("../src/services/discordService.js", async (importOriginal) => {
@@ -173,7 +174,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("maximum 10 allowed");
     });
 
-      it("rejects webhook URL message sending and never calls Discord webhook delivery", async () => {
+    it("rejects webhook URL message sending and never calls Discord webhook delivery", async () => {
         const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
@@ -190,6 +191,44 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(discordService.sendWebhook).not.toHaveBeenCalled();
     });
 
+    it("blocks staff from sending to a channel in a unauthoried guild", async () =>{
+      const staffId = "123456789012345678";
+
+      await staffRepository.create({
+        discord_user_id: staffId,
+        discord_username: "regression_test",
+        granted_by_discord_id: "987654321098765432",
+        can_send_messages: 1,
+        cooldown_seconds: 0,
+        max_messages_per_hour: 10,
+        allowed_channel_ids: JSON.stringify(["channel_123"]),
+        allowed_guild_ids: JSON.stringify(["guild_allowed"]),
+      });
+
+      try {
+        // The mocked Discord service resolves this channel to guild_123.
+        // The staff member is only allowed in guild_allowed.
+        vi.mocked(discordService.getChannelGuildId).mockResolvedValue("guild_123");
+
+        const res = await fetch(`${baseUrl}/api/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-staff-id": staffId,
+          },
+          body: JSON.stringify({
+            mode: "bot",
+            channelId: "channel_123",
+            payload: { content: "Regression test message" },
+          }),
+        });
+
+        expect(res.status).toBe(403);
+        expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+      } finally {
+        await staffRepository.delete(staffId);
+      }
+    });
   });
 
   // 5. /api/interactions

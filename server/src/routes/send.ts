@@ -25,19 +25,26 @@ const parseProfileId = (value: unknown): number | null => {
   return profileId;
 };
 
+const parseAllowedIds = (value: string | null | undefined): string[] => {
+  try {
+    const parsed: unknown = JSON.parse(value || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 const assertStaffChannelAllowed = (
   staffCtx: Express.Request["staffContext"],
   channelId: string,
 ): void => {
   if (!staffCtx || staffCtx.isAdmin || !staffCtx.record) return;
-  let allowed: string[] = [];
-  try {
-    allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
-  } catch {
-    allowed = [];
-  }
-  const allAllowed = allowed.includes("*");
-  if (!allAllowed && (allowed.length === 0 || !allowed.includes(channelId))) {
+
+  const allowed = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+
+  if (!allowed.includes("*") && !allowed.includes(channelId)) {
     throw ApiError.forbidden(`You are not allowed to access channel ${channelId}`);
   }
 };
@@ -48,19 +55,17 @@ const assertStaffGuildAllowed = async (
 ): Promise<void> => {
   if (!staffCtx || staffCtx.isAdmin || !staffCtx.record) return;
 
-  let allowedGuilds: string[] = [];
-  try {
-    const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
-    if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
-  } catch {
-    // Invalid allowlist data must fail closed.
-  }
+  const allowedGuilds = parseAllowedIds(staffCtx.record.allowed_guild_ids);
 
   if (allowedGuilds.includes("*")) return;
 
+  // Lookup errors propagate, preventing the operation from proceeding.
   const guildId = await discord.getChannelGuildId(channelId);
+
   if (!guildId || !allowedGuilds.includes(guildId)) {
-    throw ApiError.forbidden(`You are not allowed to access guild ${guildId ?? "unknown"}`);
+    throw ApiError.forbidden(
+      `You are not allowed to access guild ${guildId ?? "unknown"}`,
+    );
   }
 };
 
@@ -106,7 +111,7 @@ router.post(
       }
       if (typeof channelId === "string") {
         assertStaffChannelAllowed(staffCtx, channelId);
-        await assertStaffChannelAllowed(staffCtx,channelId);
+        await assertStaffGuildAllowed(staffCtx, channelId);
       }
     }
 
@@ -579,6 +584,7 @@ router.get(
         throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
       }
       assertStaffChannelAllowed(req.staffContext, channelId);
+      await assertStaffGuildAllowed(req.staffContext, channelId);
     }
 
     let found: discord.DiscordMessageRecord | null = null;
