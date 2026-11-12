@@ -42,13 +42,7 @@ export interface HeaderProps {
   onOpenSend?: (mode: "send" | "edit") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onOpenBackups,
-  onOpenJson,
-  onShare,
-  onClearAll,
-  onOpenSend,
-}) => {
+export const Header: React.FC<HeaderProps> = () => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
