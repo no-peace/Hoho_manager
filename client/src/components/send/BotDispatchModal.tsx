@@ -42,7 +42,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [trackAfterSend, setTrackAfterSend] = useState(() => {
     const payload = JSON.stringify(useMessageStore.getState().getAllPayloads());
-    return /\\{user\\.\\d{17,20}\\./i.test(payload) || payload.includes("{exploit.") || payload.includes("discord.com/users/");
+    return /\{user\.\d{17,20}\./i.test(payload) || payload.includes("{exploit.") || payload.includes("discord.com/users/");
   });
   const [customExpiry, setCustomExpiry] = useState<string | null>(null);
   const [mode, setMode] = useState<"send" | "edit">(initialMode);
@@ -123,7 +123,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       setLoadedMessageId(null);
       setBotMessages([]);
       const activePayload = JSON.stringify(useMessageStore.getState().getAllPayloads());
-      setTrackAfterSend(/\\{user\\.\\d{17,20}\\./i.test(activePayload) || activePayload.includes("{exploit.") || activePayload.includes("discord.com/users/"));
+      setTrackAfterSend(/\{user\.\d{17,20}\./i.test(activePayload) || activePayload.includes("{exploit.") || activePayload.includes("discord.com/users/"));
       setCustomExpiry(null);
 
       const activeData = useMessageStore.getState().data as any;
