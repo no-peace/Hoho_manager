@@ -47,6 +47,7 @@ export interface CreateTemplateServiceInput {
   actions?: StoredActionDefinition[];
   isPublic?: number;
   expiresAt?: string | null;
+  isTracked?: number;
 }
 
 export interface UpdateTemplateServiceInput {
@@ -56,6 +57,7 @@ export interface UpdateTemplateServiceInput {
   actions?: StoredActionDefinition[];
   isPublic?: number;
   expiresAt?: string | null;
+  isTracked?: number;
 }
 
 export const templateService = {
@@ -75,7 +77,7 @@ export const templateService = {
 
   async create(
     userId: number,
-    { name, description = null, data, actions = [], isPublic = 0, expiresAt }: CreateTemplateServiceInput,
+    { name, description = null, data, actions = [], isPublic = 0, expiresAt, isTracked = 0 }: CreateTemplateServiceInput,
   ): Promise<TemplateWithActions> {
     const existing = await templateRepository.findByUser(userId);
     if (existing.length >= MAX_TEMPLATES_PER_USER) {
@@ -89,6 +91,7 @@ export const templateService = {
       data,
       isPublic,
       expiresAt,
+      isTracked,
     });
     if (!template) throw ApiError.upstream("Template could not be created");
 
@@ -102,7 +105,7 @@ export const templateService = {
   async update(
     id: number,
     userId: number,
-    { name, description, data, actions, isPublic, expiresAt }: UpdateTemplateServiceInput,
+    { name, description, data, actions, isPublic, expiresAt, isTracked }: UpdateTemplateServiceInput,
   ): Promise<TemplateWithActions> {
     // Ownership check happens inside get().
     await this.get(id, userId);
@@ -116,6 +119,7 @@ export const templateService = {
       name,
       description,
       is_public: isPublic,
+      ...(isTracked !== undefined ? { is_tracked: isTracked ? 1 : 0 } : {}),
       ...(expiresAt !== undefined ? { expires_at: expiresAt } : {}),
     });
     if (!updated) throw ApiError.notFound("Template not found");
