@@ -35,6 +35,9 @@ import { downloadJson, parseImportedJson, toQueryData } from "./utils/exportImpo
 import { copyTextToClipboard } from "./utils/clipboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import api from "./api/client";
+import { Checkbox } from "./components/ui/Field";
+import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
+import { getServerNow } from "./store/globalStore";
 
 const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
   <img
@@ -129,91 +132,115 @@ const ToastAndConfirmHost: React.FC = () => {
   );
 };
 
-/* ── Backups Modal (With 14-Day / Scheduled Retention & Tracked Messages) ── */
+/* ── Unified Backups & Tracking Modal ── */
 const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
   onClose,
 }) => {
   const { templates, saveCurrent, loadTemplate, refresh } = useTemplates();
-  const [activeTab, setActiveTab] = useState<"backups" | "tracked">("backups");
+  const [filter, setFilter] = useState<"all" | "tracked" | "templates">("all");
   const [templateName, setTemplateName] = useState("");
-  const [retentionMode, setRetentionMode] = useState<"14d" | "scheduled" | "keep">("14d");
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [editingTplId, setEditingTplId] = useState<number | null>(null);
+  const [trackOnSave, setTrackOnSave] = useState(false);
+  const [expiryEnabled, setExpiryEnabled] = useState(true);
+  const [scheduledExpiry, setScheduledExpiry] = useState<string | null>(
+    () => new Date(getServerNow().getTime() + 14 * 86_400_000).toISOString(),
+  );
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editExpiresAt, setEditExpiresAt] = useState("");
+  const [editTracked, setEditTracked] = useState(false);
+  const [editExpiresAt, setEditExpiresAt] = useState<string | null>(null);
   const [trackedList, setTrackedList] = useState<any[]>([]);
   const [loadingTracked, setLoadingTracked] = useState(false);
-
   const currentName = useTemplateStore((state) => state.currentName);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
   const { showToast, openConfirm } = useGlobalStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!open || activeTab !== "tracked") return;
+  const refreshTracked = async () => {
     setLoadingTracked(true);
-    api.tracking
-      .list()
-      .then((res) => setTrackedList(res.messages ?? []))
-      .catch(() => setTrackedList([]))
-      .finally(() => setLoadingTracked(false));
-  }, [open, activeTab]);
+    try {
+      const response = await api.tracking.list();
+      setTrackedList(response.messages ?? []);
+    } catch (error: any) {
+      showToast(error?.message || "Failed to load tracked messages", "error");
+      setTrackedList([]);
+    } finally {
+      setLoadingTracked(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) void refreshTracked();
+  }, [open]);
 
   if (!open) return null;
 
-  const resolveExpiresAtInput = (): string | null | undefined => {
-    if (retentionMode === "keep") return null;
-    if (retentionMode === "scheduled") {
-      if (!scheduledDate) throw new Error("Select a future retention date & time.");
-      const parsed = new Date(scheduledDate);
-      if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
-        throw new Error("Scheduled retention date must be in the future.");
-      }
-      return parsed.toISOString();
+  const resolveNewExpiry = (): string | null => {
+    if (!expiryEnabled) return null;
+    const expiry = scheduledExpiry
+      ? new Date(scheduledExpiry)
+      : new Date(getServerNow().getTime() + 14 * 86_400_000);
+    if (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= getServerNow().getTime()) {
+      throw new Error("Expiry date must be in the future.");
     }
-    return new Date(Date.now() + 14 * 86_400_000).toISOString();
+    return expiry.toISOString();
   };
 
   const handleSave = async () => {
-    if (templateName.trim()) {
-      setCurrentName(templateName.trim());
-    }
     try {
-      const expiresAt = resolveExpiresAtInput();
-      await saveCurrent(expiresAt);
+      const expiresAt = resolveNewExpiry();
+      if (templateName.trim()) setCurrentName(templateName.trim());
+      await saveCurrent(expiresAt, trackOnSave);
       setTemplateName("");
-      showToast("Template saved to backups!", "success");
-    } catch (e: any) {
-      showToast(e?.message || "Failed to save template", "error");
-    }
-  };
-
-  const handleUpdateTemplateMeta = async (id: number) => {
-    try {
-      const expiresAt = editExpiresAt
-        ? new Date(editExpiresAt).toISOString()
-        : null;
-      await api.templates.update(id, {
-        name: editName.trim() || "Untitled Backup",
-        expiresAt,
-      });
       await refresh();
-      setEditingTplId(null);
-      showToast("Backup retention updated!", "success");
-    } catch (e: any) {
-      showToast(e?.message || "Failed to update backup", "error");
+      showToast("Backup saved successfully", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to save backup", "error");
     }
   };
 
-  const handleUntrack = async (id: number) => {
+  const beginEditTemplate = (item: any) => {
+    setEditingKey(`template-${item.id}`);
+    setEditName(item.name);
+    setEditTracked(Boolean(item.is_tracked));
+    setEditExpiresAt(item.expires_at ? new Date(item.expires_at).toISOString() : null);
+  };
+
+  const beginEditTracked = (item: any) => {
+    setEditingKey(`tracked-${item.id}`);
+    setEditName(item.name || `Message ${item.messageId}`);
+    setEditTracked(true);
+    setEditExpiresAt(item.expiresAt ? new Date(item.expiresAt).toISOString() : null);
+  };
+
+  const saveItemEdit = async (item: any, kind: "template" | "tracked") => {
     try {
-      await api.tracking.untrack(id);
-      setTrackedList((prev) => prev.filter((item) => item.id !== id));
-      showToast("Stopped tracking message", "info");
-    } catch (e: any) {
-      showToast(e?.message || "Failed to untrack message", "error");
+      if (editExpiresAt) {
+        const expiry = new Date(editExpiresAt);
+        if (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= getServerNow().getTime()) {
+          throw new Error("Expiry date must be in the future.");
+        }
+      }
+      if (kind === "template") {
+        await api.templates.update(item.id, {
+          name: editName.trim() || "Untitled Backup",
+          expiresAt: editExpiresAt,
+          isTracked: editTracked,
+        });
+        await refresh();
+      } else {
+        await api.tracking.update(item.id, {
+          name: editName.trim() || null,
+          expiresAt: editExpiresAt,
+          track: editTracked,
+        });
+        await refreshTracked();
+      }
+      setEditingKey(null);
+      showToast("Backup settings updated", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to update backup", "error");
     }
   };
 
@@ -224,8 +251,21 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       confirmLabel: "Load Template",
       onConfirm: async () => {
         await loadTemplate(id);
-        showToast("Template loaded into studio!", "success");
+        showToast("Template loaded into studio", "success");
         onClose();
+      },
+    });
+  };
+
+  const handleDeleteTemplate = (id: number) => {
+    openConfirm({
+      title: "Delete Backup",
+      message: "This permanently deletes the saved template. This cannot be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        await remove(id);
+        showToast("Backup deleted", "info");
       },
     });
   };
@@ -237,8 +277,8 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     showToast("Exported JSON file", "info");
   };
 
-  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImportJson = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     try {
       const text = await file.text();
@@ -249,257 +289,198 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
         mode: document?.mode,
       });
       setCurrentName(file.name.replace(/\.json$/i, ""));
-      showToast("Imported JSON file into studio!", "success");
+      showToast("Imported JSON file into studio", "success");
       onClose();
-    } catch (err: any) {
-      showToast(err?.message || "Invalid JSON file format.", "error");
+    } catch (error: any) {
+      showToast(error?.message || "Invalid JSON file format", "error");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
+  const linkedTemplateIds = new Set(
+    trackedList.map((item) => Number(item.templateId)).filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const items = [
+    ...templates.map((item) => ({
+      kind: "template" as const,
+      key: `template-${item.id}`,
+      id: item.id,
+      name: item.name,
+      isTracked: Boolean(item.is_tracked),
+      expiresAt: item.expires_at ?? null,
+      updatedAt: item.updated_at,
+      source: item,
+    })),
+    ...trackedList
+      .filter((item) => !item.templateId || !linkedTemplateIds.has(Number(item.templateId)))
+      .map((item) => ({
+        kind: "tracked" as const,
+        key: `tracked-${item.id}`,
+        id: item.id,
+        name: item.name || `Message ${item.messageId}`,
+        isTracked: true,
+        expiresAt: item.expiresAt ?? null,
+        updatedAt: item.updatedAt ?? item.createdAt,
+        source: item,
+      })),
+  ];
+  const visibleItems = items.filter((item) => {
+    if (filter === "tracked") return item.isTracked;
+    if (filter === "templates") return item.kind === "template";
+    return true;
+  });
+
   return (
-    <Modal open={open} onClose={onClose} title="Saved Templates & Tracked Backups" width="max-w-lg">
+    <Modal open={open} onClose={onClose} title="Backups & Tracking" width="max-w-2xl">
       <div className="space-y-4">
-        <div className="flex items-center gap-1 bg-[#1e1f22] p-1 rounded-lg border border-[#111214]">
-          <button
-            type="button"
-            onClick={() => setActiveTab("backups")}
-            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-colors ${
-              activeTab === "backups"
-                ? "bg-[#5865f2] text-white"
-                : "text-[#949ba4] hover:text-white"
-            }`}
-          >
-            Saved Backups ({templates.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("tracked")}
-            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-colors ${
-              activeTab === "tracked"
-                ? "bg-[#5865f2] text-white"
-                : "text-[#949ba4] hover:text-white"
-            }`}
-          >
-            Tracked Messages ({trackedList.length})
-          </button>
-        </div>
-
-        {activeTab === "backups" ? (
-          <>
-            <div className="space-y-2 bg-[#232428] p-2.5 rounded-lg border border-[#1e1f22]">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="flex-1 bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded outline-none focus:border-[#5865f2]"
-                  placeholder="Template / Backup name..."
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                />
-                <Button size="sm" variant="primary" onClick={() => void handleSave()}>
-                  Save
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-[#b5bac1]">
-                <span className="font-semibold text-[#949ba4]">Retention:</span>
-                <select
-                  value={retentionMode}
-                  onChange={(e) =>
-                    setRetentionMode(e.target.value as "14d" | "scheduled" | "keep")
-                  }
-                  className="bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none focus:border-[#5865f2]"
-                >
-                  <option value="14d">14 Days (Unscheduled Default)</option>
-                  <option value="scheduled">Schedule Expiry Date…</option>
-                  <option value="keep">Keep Indefinitely / Tracked</option>
-                </select>
-                {retentionMode === "scheduled" && (
-                  <input
-                    type="datetime-local"
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                    className="bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none focus:border-[#5865f2]"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Download}
-                onClick={handleExportJson}
-                className="flex-1 text-xs"
-              >
-                Export JSON
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Upload}
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 text-xs"
-              >
-                Import JSON
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".json,application/json"
-                onChange={(e) => void handleImportJson(e)}
+        <section className="space-y-3 rounded-xl border border-[#26282d] bg-[#18191c] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={templateName}
+              onChange={(event) => setTemplateName(event.target.value)}
+              placeholder="Template / Tracked Backup name..."
+              className="min-w-0 flex-1 rounded-lg border border-[#26282d] bg-[#232428] px-3 py-2 text-xs text-[#f2f3f5] outline-none focus:border-[#5865f2]"
+            />
+            <Button size="sm" variant="primary" onClick={() => void handleSave()}>
+              Save Backup
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Checkbox
+              checked={trackOnSave}
+              onChange={setTrackOnSave}
+              label="Track Message"
+              className="text-xs"
+            />
+            <Checkbox
+              checked={expiryEnabled}
+              onChange={setExpiryEnabled}
+              label="Custom Expiry Date"
+              className="text-xs"
+            />
+            {expiryEnabled && (
+              <DateTimePickerPopover
+                value={scheduledExpiry}
+                onChange={setScheduledExpiry}
+                placeholder="14-day default expiry"
               />
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-              {templates.length === 0 ? (
-                <p className="text-xs text-[#949ba4] py-4 text-center">
-                  No saved templates yet. Name your template above and click Save.
-                </p>
-              ) : (
-                templates.map((tpl) => (
-                  <div
-                    key={tpl.id}
-                    className="p-2.5 rounded bg-[#1e1f22] border border-[#111214] hover:border-[#35373c] space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[#dbdee1] truncate">
-                          {tpl.name}
-                        </p>
-                        <p className="text-[10px] text-[#949ba4]">
-                          Updated {new Date(tpl.updated_at).toLocaleString()} •{" "}
-                          {tpl.expires_at
-                            ? `Expires ${new Date(tpl.expires_at).toLocaleDateString()}`
-                            : "Pinned / Tracked"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleLoad(tpl.id)}
-                          className="text-xs text-[#5865f2] hover:bg-[#5865f2]/10"
-                        >
-                          Load
-                        </Button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (editingTplId === tpl.id) {
-                              setEditingTplId(null);
-                            } else {
-                              setEditingTplId(tpl.id);
-                              setEditName(tpl.name);
-                              setEditExpiresAt(
-                                tpl.expires_at
-                                  ? new Date(tpl.expires_at).toISOString().slice(0, 16)
-                                  : "",
-                              );
-                            }
-                          }}
-                          className="p-1 text-[#949ba4] hover:text-white hover:bg-[#35373c] rounded"
-                          title="Edit backup & retention schedule"
-                        >
-                          <Edit3 size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => remove(tpl.id)}
-                          className="p-1 text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/20 rounded"
-                          title="Delete backup"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-
-                    {editingTplId === tpl.id && (
-                      <div className="pt-2 border-t border-[#2b2d31] flex flex-wrap items-center gap-2">
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="flex-1 min-w-[120px] bg-[#2b2d31] border border-[#111214] text-[#dbdee1] text-xs px-2 py-1 rounded outline-none"
-                          placeholder="Backup name"
-                        />
-                        <input
-                          type="datetime-local"
-                          value={editExpiresAt}
-                          onChange={(e) => setEditExpiresAt(e.target.value)}
-                          className="bg-[#2b2d31] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none"
-                          title="Leave empty to keep indefinitely"
-                        />
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => void handleUpdateTemplateMeta(tpl.id)}
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-            {loadingTracked ? (
-              <p className="text-xs text-[#949ba4] py-4 text-center">
-                Loading tracked messages…
-              </p>
-            ) : trackedList.length === 0 ? (
-              <p className="text-xs text-[#949ba4] py-4 text-center">
-                No tracked Discord messages yet. Messages with dynamic{" "}
-                <code>{"{exploit.*}"}</code> or <code>{"{user.<ID>.*}"}</code> placeholders
-                are auto-tracked when sent.
-              </p>
-            ) : (
-              trackedList.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded bg-[#1e1f22] border border-[#111214]"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-[#dbdee1] truncate">
-                      Message <span className="font-mono">{item.messageId}</span>
-                    </p>
-                    <p className="text-[10px] text-[#949ba4] truncate">
-                      Channel: <span className="font-mono">{item.channelId}</span>
-                      {item.exploitName ? ` • Exploit: ${item.exploitName}` : ""}
-                      {item.templateId ? ` • Template #${item.templateId}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {item.templateId && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleLoad(item.templateId)}
-                        className="text-xs text-[#5865f2] hover:bg-[#5865f2]/10"
-                      >
-                        Load Template
-                      </Button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void handleUntrack(item.id)}
-                      className="px-2 py-1 text-[11px] text-[#f28b8b] hover:bg-[#da373c]/20 rounded"
-                      title="Stop auto-updating this message"
-                    >
-                      Untrack
-                    </button>
-                  </div>
-                </div>
-              ))
             )}
           </div>
-        )}
+          <p className="text-[10px] text-[#787c87]">
+            Tracking keeps dynamic user and exploit placeholders synchronized. New backups expire after 14 days by default.
+          </p>
+        </section>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-[#26282d] bg-[#1e1f22] p-1">
+            {([
+              ["all", `All · ${items.length}`],
+              ["tracked", `Tracked Only · ${items.filter((item) => item.isTracked).length}`],
+              ["templates", `Saved Templates · ${templates.length}`],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${filter === value ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" icon={Download} onClick={handleExportJson}>
+              Export
+            </Button>
+            <Button size="sm" variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()}>
+              Import
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".json,application/json"
+              onChange={(event) => void handleImportJson(event)}
+            />
+          </div>
+        </div>
+
+        <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+          {loadingTracked ? (
+            <p className="py-8 text-center text-xs text-[#949ba4]">Loading tracked messages…</p>
+          ) : visibleItems.length === 0 ? (
+            <p className="py-8 text-center text-xs text-[#949ba4]">
+              No items in this view yet. Save a template or enable tracking when dispatching a message.
+            </p>
+          ) : visibleItems.map((item) => (
+            <article key={item.key} className="space-y-2 rounded-lg border border-[#26282d] bg-[#1e1f22] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-xs font-semibold text-[#f2f3f5]">{item.name}</p>
+                    <span className="rounded border border-[#35373c] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#949ba4]">
+                      {item.kind === "template" ? "Saved template" : "Tracked message"}
+                    </span>
+                    {item.isTracked && <span className="rounded border border-[#5865f2]/40 px-1.5 py-0.5 text-[9px] text-[#aab0ff]">Tracking on</span>}
+                  </div>
+                  <p className="mt-1 truncate text-[10px] text-[#949ba4]">
+                    {item.kind === "template"
+                      ? `Updated ${new Date(item.updatedAt).toLocaleString()}`
+                      : `Channel ${item.source.channelId} · Message ${item.source.messageId}`}
+                    {" · "}
+                    {item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleString()}` : "No expiry"}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {item.kind === "template" && (
+                    <Button size="sm" variant="ghost" onClick={() => handleLoad(item.id)}>
+                      Load
+                    </Button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => item.kind === "template" ? beginEditTemplate(item.source) : beginEditTracked(item.source)}
+                    className="rounded-md p-2 text-[#949ba4] hover:bg-[#2b2d31] hover:text-white"
+                    title="Edit backup settings"
+                  >
+                    <Edit3 size={13} />
+                  </button>
+                  {item.kind === "template" ? (
+                    <button type="button" onClick={() => handleDeleteTemplate(item.id)} className="rounded-md p-2 text-[#949ba4] hover:bg-[#da373c]/15 hover:text-[#f28b8b]" title="Delete backup">×</button>
+                  ) : (
+                    <button type="button" onClick={() => void handleUntrack(item.id)} className="rounded-md px-2 py-1 text-[10px] text-[#f28b8b] hover:bg-[#da373c]/15">Untrack</button>
+                  )}
+                </div>
+              </div>
+
+              {editingKey === item.key && (
+                <div className="space-y-3 border-t border-[#2b2d31] pt-3">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(event) => setEditName(event.target.value)}
+                    placeholder="Backup name"
+                    className="w-full rounded-lg border border-[#35373c] bg-[#232428] px-3 py-2 text-xs text-[#f2f3f5] outline-none focus:border-[#5865f2]"
+                  />
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Checkbox checked={editTracked} onChange={setEditTracked} label="Track Message" className="text-xs" />
+                    <DateTimePickerPopover
+                      value={editExpiresAt}
+                      onChange={setEditExpiresAt}
+                      placeholder="No expiry"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setEditingKey(null)}>Cancel</Button>
+                    <Button size="sm" variant="primary" onClick={() => void saveItemEdit(item.source, item.kind)}>Save Changes</Button>
+                  </div>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
       </div>
     </Modal>
   );
