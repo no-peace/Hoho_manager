@@ -31,6 +31,7 @@ export interface TemplateSummary {
   description: string | null;
   preview_image_url: string | null;
   is_public: number;
+  is_tracked?: number;
   expires_at?: string | null;
   created_at: string;
   updated_at: string;
@@ -115,7 +116,7 @@ export class TemplateRepository extends BaseRepository {
     limit?: number;
   }): Promise<TemplateSummary[]> {
     return this.db.query<TemplateSummary>(
-      `SELECT id, user_id, name, description, preview_image_url, is_public, expires_at, created_at, updated_at
+      `SELECT id, user_id, name, description, preview_image_url, is_public, is_tracked, expires_at, created_at, updated_at
          FROM templates
         WHERE user_id = @userId
           AND (@q IS NULL OR name LIKE @like OR description LIKE @like)
