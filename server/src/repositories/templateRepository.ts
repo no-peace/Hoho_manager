@@ -17,6 +17,7 @@ export interface TemplateRow {
   data: string;
   preview_image_url: string | null;
   is_public: number;
+  is_tracked?: number;
   expires_at?: string | null;
   created_at: string;
   updated_at: string;
@@ -43,13 +44,14 @@ export interface CreateTemplateInput {
   previewImageUrl?: string | null;
   isPublic?: number;
   expiresAt?: string | null;
+  isTracked?: number;
 }
 
 export type UpdateTemplateInput = Partial<
-  Pick<TemplateRow, "name" | "description" | "preview_image_url" | "is_public" | "expires_at">
+  Pick<TemplateRow, "name" | "description" | "preview_image_url" | "is_public" | "is_tracked" | "expires_at">
 >;
 
-const UPDATABLE = ["name", "description", "preview_image_url", "is_public", "expires_at"] as const;
+const UPDATABLE = ["name", "description", "preview_image_url", "is_public", "is_tracked", "expires_at"] as const;
 
 const hydrate = (row: TemplateRow | undefined): TemplateRecord | undefined =>
   parseJson<TemplateRecord>(row as unknown as TemplateRecord, ["data"]);
@@ -63,6 +65,7 @@ export class TemplateRepository extends BaseRepository {
     previewImageUrl = null,
     isPublic = 0,
     expiresAt,
+    isTracked = 0,
   }: CreateTemplateInput): Promise<TemplateRecord | undefined> {
     const resolvedExpiresAt =
       expiresAt === undefined
@@ -70,8 +73,8 @@ export class TemplateRepository extends BaseRepository {
         : expiresAt;
 
     const { lastInsertRowid } = await this.db.run(
-      `INSERT INTO templates (user_id, name, description, data, preview_image_url, is_public, expires_at)
-       VALUES (@userId, @name, @description, @data, @previewImageUrl, @isPublic, @expiresAt)`,
+      `INSERT INTO templates (user_id, name, description, data, preview_image_url, is_public, is_tracked, expires_at)
+       VALUES (@userId, @name, @description, @data, @previewImageUrl, @isPublic, @isTracked, @expiresAt)`,
       {
         userId,
         name,
@@ -79,6 +82,7 @@ export class TemplateRepository extends BaseRepository {
         data: JSON.stringify(data ?? {}),
         previewImageUrl,
         isPublic: isPublic ? 1 : 0,
+        isTracked: isTracked ? 1 : 0,
         expiresAt: resolvedExpiresAt,
       },
     );
@@ -92,7 +96,7 @@ export class TemplateRepository extends BaseRepository {
 
   async findByUser(userId: number): Promise<TemplateSummary[]> {
     return this.db.query<TemplateSummary>(
-      `SELECT id, user_id, name, description, preview_image_url, is_public, expires_at, created_at, updated_at
+      `SELECT id, user_id, name, description, preview_image_url, is_public, is_tracked, expires_at, created_at, updated_at
          FROM templates
         WHERE user_id = @userId
         ORDER BY updated_at DESC`,
