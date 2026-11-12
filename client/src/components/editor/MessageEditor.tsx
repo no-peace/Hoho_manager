@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Modal } from "../ui/Modal";
 import { ShinyText } from "../reactbits/ReactBitsPrimitives";
+import { AnimatePresence, motion } from "motion/react";
 import { useGlobalStore } from "../../store/globalStore";
 import {
   ChevronDown,
@@ -1220,8 +1221,15 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 <Plus size={13} /> Add <ChevronDown size={13} />
               </button>
 
-              {addMenuOpen && (
-                <div className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-75">
+              <AnimatePresence>
+                {addMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: 4 }}
+                    transition={{ duration: 0.14, ease: "easeOut" }}
+                    style={{ transformOrigin: "bottom left" }}
+                    className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30"
                   {!isV2 ? (
                     <>
                       <button
@@ -1267,8 +1275,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       );
                     })
                   )}
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Set Link Button */}
@@ -1302,8 +1311,15 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 <SlidersHorizontal size={13} /> Options <ChevronDown size={13} />
               </button>
 
-              {optionsMenuOpen && (
-                <div className="absolute left-0 bottom-full mb-1.5 w-56 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30 text-xs">
+              <AnimatePresence>
+                {optionsMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: 4 }}
+                    transition={{ duration: 0.14, ease: "easeOut" }}
+                    style={{ transformOrigin: "bottom left" }}
+                    className="absolute left-0 bottom-full mb-1.5 w-56 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30 text-xs"
                   <button
                     type="button"
                     onClick={() => {
@@ -1329,8 +1345,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   >
                     <Layers size={13} /> Convert to {isV2 ? "Classic" : "Components V2"}
                   </button>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
