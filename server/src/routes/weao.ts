@@ -244,7 +244,12 @@ router.post(
           basePayload;
       } else if (customExec.custom_payload) {
         try {
-          basePayload = JSON.parse(customExec.custom_payload);
+          const parsed = JSON.parse(customExec.custom_payload);
+          if (parsed && typeof parsed === "object") {
+            delete parsed.username;
+            delete parsed.avatar_url;
+            basePayload = parsed;
+          }
         } catch {}
       }
 

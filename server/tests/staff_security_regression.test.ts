@@ -323,4 +323,96 @@ describe("Phase 2 staff security regressions", () => {
       await staffRepository.delete(staffId);
     }
   });
+
+  it("rejects past expiresAt on template creation and enforces template permission", async () => {
+    const pastRes = await fetch(`${baseUrl}/api/templates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": env.adminApiKey,
+      },
+      body: JSON.stringify({
+        name: "Expired Backup",
+        data: { content: "hello" },
+        expiresAt: "2020-01-01T00:00:00.000Z",
+      }),
+    });
+    expect(pastRes.status).toBe(400);
+
+    const staffId = "123456789012345687";
+    await createStaff(staffId, { can_manage_templates: 0 });
+    try {
+      const deniedRes = await fetch(`${baseUrl}/api/templates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffId,
+        },
+        body: JSON.stringify({
+          name: "Staff Backup",
+          data: { content: "hello" },
+        }),
+      });
+      expect(deniedRes.status).toBe(403);
+    } finally {
+      await staffRepository.delete(staffId);
+    }
+  });
+
+  it("validates custom executor payloads and blocks non-admin writes", async () => {
+    const staffId = "123456789012345688";
+    await createStaff(staffId);
+    try {
+      const denied = await fetch(`${baseUrl}/api/executors`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffId,
+        },
+        body: JSON.stringify({ id: "test_exec", title: "Test Exec" }),
+      });
+      expect(denied.status).toBe(403);
+    } finally {
+      await staffRepository.delete(staffId);
+    }
+
+    const badAuthor = await fetch(`${baseUrl}/api/executors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": env.adminApiKey,
+      },
+      body: JSON.stringify({
+        id: "test_exec",
+        title: "Test Exec",
+        author_id: "not-a-snowflake",
+      }),
+    });
+    expect(badAuthor.status).toBe(400);
+
+    const valid = await fetch(`${baseUrl}/api/executors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": env.adminApiKey,
+      },
+      body: JSON.stringify({
+        id: "test_exec",
+        title: "Test Exec",
+        custom_payload: {
+          content: "Custom executor status",
+          username: "LegacyOverride",
+        },
+      }),
+    });
+    expect(valid.status).toBe(200);
+    const json = await valid.json();
+    expect(json.executor.custom_payload).not.toContain("LegacyOverride");
+
+    const del = await fetch(`${baseUrl}/api/executors/test_exec`, {
+      method: "DELETE",
+      headers: { "x-admin-key": env.adminApiKey },
+    });
+    expect(del.status).toBe(200);
+  });
 });

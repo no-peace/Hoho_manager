@@ -90,7 +90,7 @@ const DOC_ITEMS: DocItem[] = [
 
   // Dynamic Author Auto-Resolution
   { tag: "{user.<id>.name}", desc: "Fetches and injects any Discord user's global name / username by ID", example: "Nexus42", category: "author" },
-  { tag: "{user.<id>.avatar}", desc: "Fetches user's current avatar CDN link (auto-updates when they change fpf)", example: "https://cdn.discordapp.com/avatars/...", category: "author" },
+  { tag: "{user.<id>.avatar}", desc: "Fetches user's current avatar CDN link (auto-updates when they change pfp)", example: "https://cdn.discordapp.com/avatars/...", category: "author" },
   { tag: "{user.<id>.url}", desc: "Direct profile link to the user (https://discord.com/users/<id>)", example: "https://discord.com/users/708504312862474282", category: "author" },
   { tag: "{user.<id>.mention}", desc: "Pings/mentions the specific user by ID (<@id>)", example: "<@708504312862474282>", category: "author" },
 ];
@@ -157,7 +157,7 @@ export const DocsPage = () => {
             </div>
             <p className="text-xs text-[#b5bac1] leading-relaxed">
               Set embed author URL to <code className="text-white bg-[#1e1f22] px-1 rounded">https://discord.com/users/USER_ID</code>.
-              The bot automatically fetches their username, avatar fpf, and Discord link, and keeps them updated in real time.
+              The bot automatically fetches their username, avatar pfp, and Discord link, and keeps them
             </p>
           </div>
 

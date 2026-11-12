@@ -341,32 +341,33 @@ export const api = {
   },
 
   executors: {
-    list: () =>
-      request<
-        Array<{
-          id: number;
+    list: (includeAll = false) =>
+      request<{
+        executors: Array<{
+          id: string;
           title: string;
-          enabled: boolean;
-          authorId?: string | null;
-          templateId?: number | null;
-          customPayload?: any;
-          createdAt: number;
-          updatedAt: number;
-        }>
-      >("/api/executors"),
+          enabled: number;
+          author_id: string | null;
+          template_id: number | null;
+          custom_payload: string | null;
+          created_at: number;
+          updated_at: number;
+        }>;
+      }>(`/api/executors${includeAll ? "?all=true" : ""}`),
     upsert: (body: {
+      id: string;
       title: string;
       enabled?: boolean;
-      authorId?: string | null;
-      templateId?: number | null;
-      customPayload?: any;
+      author_id?: string | null;
+      template_id?: number | null;
+      custom_payload?: unknown;
     }) =>
       request<{ ok: boolean; executor: any }>("/api/executors", {
         method: "POST",
         body,
       }),
-    delete: (id: number) =>
-      request<{ ok: boolean; deleted: boolean }>(`/api/executors/${id}`, {
+    delete: (id: string) =>
+      request<{ ok: boolean }>(`/api/executors/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
   },

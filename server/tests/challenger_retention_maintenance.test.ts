@@ -7,6 +7,7 @@ import {
   pruneOrphanedAdHocActions,
   pruneExpiredFlowStates,
   pruneExpiredSessions,
+  pruneExpiredTemplates,
 } from "../src/services/maintenanceService.js";
 
 describe("PERF-04: Retention & Maintenance Sweeps", () => {
@@ -159,4 +160,52 @@ describe("PERF-04: Retention & Maintenance Sweeps", () => {
     );
     expect(expiredSession).toBeUndefined();
   });
+
+  it("prunes expired unreferenced templates while preserving tracked/pinned templates", async () => {
+    const pastIso = new Date(Date.now() - 3600 * 1000).toISOString();
+    const futureIso = new Date(Date.now() + 14 * 86_400_000).toISOString();
+    const userId = 89000 + Math.floor(Math.random() * 1000);
+
+    await db.run(
+      `INSERT OR IGNORE INTO users (id, discord_id, username) VALUES (?, ?, 'tpl_retention_user')`,
+      [userId, `disc_ret_${userId}`],
+    );
+
+    const expUnref = await db.run(
+      `INSERT INTO templates (user_id, name, data, expires_at) VALUES (?, ?, '{}', ?)`,
+      [userId, `exp_unref_${runId}`, pastIso],
+    );
+    const expTracked = await db.run(
+      `INSERT INTO templates (user_id, name, data, expires_at) VALUES (?, ?, '{}', ?)`,
+      [userId, `exp_tracked_${runId}`, pastIso],
+    );
+    const activeFuture = await db.run(
+      `INSERT INTO templates (user_id, name, data, expires_at) VALUES (?, ?, '{}', ?)`,
+      [userId, `active_future_${runId}`, futureIso],
+    );
+
+    await db.run(
+      `INSERT INTO tracked_messages (channel_id, message_id, template_id, last_payload_hash, created_at, updated_at, last_checked_at)
+       VALUES ('chan_ret', ?, ?, 'hash1', 1, 1, 1)`,
+      [`msg_ret_${runId}`, expTracked.lastInsertRowid],
+    );
+
+    const pruned = await pruneExpiredTemplates(10);
+    expect(pruned).toBeGreaterThanOrEqual(1);
+
+    const foundUnref = await db.get("SELECT id FROM templates WHERE id = ?", [
+      expUnref.lastInsertRowid,
+    ]);
+    const foundTracked = await db.get("SELECT id FROM templates WHERE id = ?", [
+      expTracked.lastInsertRowid,
+    ]);
+    const foundFuture = await db.get("SELECT id FROM templates WHERE id = ?", [
+      activeFuture.lastInsertRowid,
+    ]);
+
+    expect(foundUnref).toBeUndefined();
+    expect(foundTracked).toBeDefined();
+    expect(foundFuture).toBeDefined();
+  });
 });
+
