@@ -1,7 +1,7 @@
 import { Check, Keyboard, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState, useEffect, useMemo } from "react";
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ChangeEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 
 export const VARIABLES = [
@@ -693,7 +693,7 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
   label?: string;
   hint?: ReactNode;
   options: readonly SelectOption_[];
-  onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
 }
 export const Select = ({ label, hint, options, className, value, defaultValue, onChange, disabled, name, required }: SelectProps) => {
   const [open, setOpen] = useState(false);
@@ -710,7 +710,7 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
   const choose = (nextValue: string) => {
-    onChange?.({ target: { value: nextValue, name } } as React.ChangeEvent<HTMLSelectElement>);
+    onChange?.({ target: { value: nextValue, name } } as ChangeEvent<HTMLSelectElement>);
     setOpen(false);
   };
   return (
