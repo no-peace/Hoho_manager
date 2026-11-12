@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import { env } from "./env.js";
 import { migrations } from "./migrations.js";
 import { logger } from "../utils/logger.js";
+import { createTursoPipelineClient, parseTursoRows } from "./tursoPipeline.js";
 
 /** Named (`{ userId: 1 }`) or positional (`[1]`) bind parameters. */
 export type QueryParams = Record<string, unknown> | readonly unknown[];
@@ -42,111 +43,12 @@ const getTursoPipelineUrl = (): string => {
   return `${httpsBase}/v2/pipeline`;
 };
 
-type TursoArg =
-  | { type: "null" }
-  | { type: "integer"; value: string }
-  | { type: "float"; value: number }
-  | { type: "text"; value: string };
+const tursoClient = createTursoPipelineClient(getTursoPipelineUrl(), tursoAuthToken);
 
-const toTursoArg = (val: unknown): TursoArg => {
-  if (val === null || val === undefined) return { type: "null" };
-  if (typeof val === "boolean") return { type: "integer", value: val ? "1" : "0" };
-  if (typeof val === "bigint") return { type: "integer", value: val.toString() };
-  if (typeof val === "number") {
-    if (!Number.isFinite(val)) return { type: "null" };
-    return Number.isInteger(val)
-      ? { type: "integer", value: String(val) }
-      : { type: "float", value: val };
-  }
-  return { type: "text", value: String(val) };
-};
-
-const buildTursoStmt = (sql: string, params?: QueryParams): Record<string, unknown> => {
-  if (!params) return { sql };
-  if (Array.isArray(params)) {
-    return { sql, args: params.map(toTursoArg) };
-  }
-  const named_args = Object.entries(params as Record<string, unknown>)
-    .filter(([key]) => new RegExp(`[@:$]\\b${key}\\b`).test(sql))
-    .map(([key, value]) => ({
-      name: key.replace(/^[@:$]/, ""),
-      value: toTursoArg(value),
-    }));
-  return named_args.length > 0 ? { sql, named_args } : { sql };
-};
-
-interface TursoExecuteResult {
-  cols: { name: string; decltype?: string | null }[];
-  rows: { type: string; value?: string | number }[][];
-  affected_row_count: number;
-  last_insert_rowid?: string | number | null;
-}
-
-const executeTursoStatement = async (
+const executeTursoStatement = (
   sql: string,
   params?: QueryParams,
-): Promise<TursoExecuteResult> => {
-  const res = await fetch(getTursoPipelineUrl(), {
-    method: "POST",
-    signal: AbortSignal.timeout(10_000),
-    headers: {
-      Authorization: `Bearer ${tursoAuthToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      requests: [
-        { type: "execute", stmt: buildTursoStmt(sql, params) },
-        { type: "close" },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Turso HTTP ${res.status}: ${errText}`);
-  }
-
-  const data = (await res.json()) as {
-    results?: Array<{
-      type: string;
-      response?: { result?: TursoExecuteResult };
-      error?: { message?: string };
-    }>;
-  };
-
-  const first = data.results?.[0];
-  if (first?.type === "error" || first?.error) {
-    throw new Error(`Turso SQL Error: ${first.error?.message ?? "Unknown error"}`);
-  }
-
-  return (
-    first?.response?.result ?? {
-      cols: [],
-      rows: [],
-      affected_row_count: 0,
-      last_insert_rowid: 0,
-    }
-  );
-};
-
-const parseTursoRows = <T>(result: TursoExecuteResult): T[] => {
-  const cols = result.cols ?? [];
-  return (result.rows ?? []).map((row) => {
-    const obj: Record<string, unknown> = {};
-    for (let i = 0; i < cols.length; i++) {
-      const colName = cols[i]!.name;
-      const cell = row[i];
-      if (!cell || cell.type === "null") {
-        obj[colName] = null;
-      } else if (cell.type === "integer" || cell.type === "float") {
-        obj[colName] = Number(cell.value);
-      } else {
-        obj[colName] = cell.value !== undefined ? String(cell.value) : null;
-      }
-    }
-    return obj as T;
-  });
-};
+): Promise<Awaited<ReturnType<typeof tursoClient.execute>>> => tursoClient.execute(sql, params);
 
 const splitSqlStatements = (sql: string): string[] => {
   const statements: string[] = [];
@@ -333,7 +235,7 @@ export const db: DatabaseClient = {
 
   async transaction<T>(fn: () => Promise<T> | T): Promise<T> {
     if (useTurso) {
-      return await fn();
+      return await tursoClient.transaction(fn);
     }
     const sqlite = open();
     if (sqlite.inTransaction) {
