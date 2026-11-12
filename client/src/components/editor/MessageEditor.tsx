@@ -1230,7 +1230,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     transition={{ duration: 0.14, ease: "easeOut" }}
                     style={{ transformOrigin: "bottom left" }}
                     className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30"
-                  {!isV2 ? (
+                  >
+                    {!isV2 ? (
                     <>
                       <button
                         type="button"
@@ -1320,7 +1321,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     transition={{ duration: 0.14, ease: "easeOut" }}
                     style={{ transformOrigin: "bottom left" }}
                     className="absolute left-0 bottom-full mb-1.5 w-56 bg-[#1e1f22] border border-[#111214] shadow-2xl rounded-lg py-1 z-30 text-xs"
-                  <button
+                  >
+                    <button
                     type="button"
                     onClick={() => {
                       const text = JSON.stringify(message, null, 2);
