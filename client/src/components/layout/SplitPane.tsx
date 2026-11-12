@@ -71,6 +71,7 @@ export const SplitPane = ({
       <div ref={containerRef} className={`relative flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}>
         <motion.div
           aria-hidden={mobileActivePane !== "left"}
+          inert={mobileActivePane !== "left"}
           className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "left" ? "z-10" : "pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "left" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "left" ? 0 : -8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
@@ -80,6 +81,7 @@ export const SplitPane = ({
         </motion.div>
         <motion.div
           aria-hidden={mobileActivePane !== "right"}
+          inert={mobileActivePane !== "right"}
           className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "right" ? "z-10" : "pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "right" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "right" ? 0 : 8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
