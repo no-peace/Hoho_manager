@@ -73,7 +73,7 @@ import { RichPicker } from "../editor/RichPicker";
 import { UNICODE_EMOJI_LIST } from "../../utils/unicodeEmojis";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { aC } from "vitest/dist/chunks/reporters.d.BuRON0I0.js";
+//import { aC } from "vitest/dist/chunks/reporters.d.BuRON0I0.js";
 
 const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
   const [open, setOpen] = useState(false);
