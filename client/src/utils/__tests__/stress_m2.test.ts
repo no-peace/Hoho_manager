@@ -68,18 +68,19 @@ describe("Milestone 2 Stress Tests: toDiscordPayload Overrides & Sanitization", 
     expect(payload.content).toBe("Null/empty test");
   });
 
-  it("preserves Unicode and emoji profile overrides", () => {
+  it("preserves Unicode message content but omits legacy sender overrides", () => {
     const msg: MessageData = {
-      content: "Unicode test",
-      username: "🤖 Bot / 測試 / 🚀",
-      avatar_url: "https://example.com/🚀.png",
+      content: "Unicode test ðŸ¤– æ¸¬è©¦ ðŸš€",
+      username: "ðŸ¤– Bot / æ¸¬è©¦ / ðŸš€",
+      avatar_url: "https://example.com/ðŸš€.png",
       thread_name: "",
       embeds: [],
       components: [],
     };
     const payload = toDiscordPayload(msg, "classic");
-    expect(payload.username).toBe("🤖 Bot / 測試 / 🚀");
-    expect(payload.avatar_url).toBe("https://example.com/🚀.png");
+    expect(payload.content).toBe("Unicode test ðŸ¤– æ¸¬è©¦ ðŸš€");
+    expect(payload.username).toBeUndefined();
+    expect(payload.avatar_url).toBeUndefined();
   });
 
   it("strips internal keys (_id, _state) from embeds and components", () => {

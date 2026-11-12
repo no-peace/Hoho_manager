@@ -695,7 +695,8 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     const filePath = path.resolve(__dirname, "../components/send/BotDispatchModal.tsx");
     const source = fs.readFileSync(filePath, "utf-8");
     expect(source).toContain("<Modal");
-    expect(source).toContain("Dispatch via Bot");
+    expect(source).toContain("Dispatch via Server Bot");
+    expect(source).toContain("Edit via Server Bot");
   });
 
   it("verifies MessageEditor Set Link modal uses <Modal> component (UI-06)", () => {

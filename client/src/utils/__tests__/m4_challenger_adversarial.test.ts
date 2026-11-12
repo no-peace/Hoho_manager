@@ -265,7 +265,7 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
     });
 
     describe("Store Synchronization for Profile Overrides", () => {
-      it("synchronizes setField username and avatar_url to store and payload", () => {
+      it("keeps legacy sender fields in the editor store but omits them from Discord payloads", () => {
         const store = useMessageStore.getState();
         store.setField("content", "Testing profile overrides");
         store.setField("username", "CyberBot");
@@ -275,16 +275,14 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(updated.username).toBe("CyberBot");
         expect(updated.avatar_url).toBe("https://cdn.example.com/avatar.png");
 
-        // Verify toDiscordPayload in classic mode
         const payloadClassic = toDiscordPayload(updated, "classic");
-        expect(payloadClassic.username).toBe("CyberBot");
-        expect(payloadClassic.avatar_url).toBe("https://cdn.example.com/avatar.png");
+        expect(payloadClassic.username).toBeUndefined();
+        expect(payloadClassic.avatar_url).toBeUndefined();
         expect(payloadClassic.content).toBe("Testing profile overrides");
 
-        // Verify toDiscordPayload in V2 mode
         const payloadV2 = toDiscordPayload(updated, "v2");
-        expect(payloadV2.username).toBe("CyberBot");
-        expect(payloadV2.avatar_url).toBe("https://cdn.example.com/avatar.png");
+        expect(payloadV2.username).toBeUndefined();
+        expect(payloadV2.avatar_url).toBeUndefined();
       });
 
       it("clears profile overrides when setField is called with empty string", () => {
@@ -307,7 +305,7 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(payload.avatar_url).toBeUndefined();
       });
 
-      it("isolates profile overrides across multiple messages in store", () => {
+      it("keeps legacy profile fields in each stored message but omits them from payloads", () => {
         const store = useMessageStore.getState();
         store.load({
           messages: [
@@ -316,12 +314,19 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
           ],
         });
 
+        const storedMessages = useMessageStore.getState().messages;
+        expect(storedMessages).toHaveLength(2);
+        expect(storedMessages[0]?.username).toBe("BotZero");
+        expect(storedMessages[1]?.username).toBe("BotOne");
+
         const allPayloads = useMessageStore.getState().getAllPayloads();
-        expect(allPayloads.length).toBe(2);
-        expect(allPayloads[0].username).toBe("BotZero");
-        expect(allPayloads[0].avatar_url).toBe("https://example.com/0.png");
-        expect(allPayloads[1].username).toBe("BotOne");
-        expect(allPayloads[1].avatar_url).toBe("https://example.com/1.png");
+        expect(allPayloads).toHaveLength(2);
+        expect(allPayloads[0]?.content).toBe("Message 0");
+        expect(allPayloads[1]?.content).toBe("Message 1");
+        for (const payload of allPayloads) {
+          expect(payload.username).toBeUndefined();
+          expect(payload.avatar_url).toBeUndefined();
+        }
       });
     });
   });
@@ -406,7 +411,7 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
     });
 
     describe("Multi-Message Batch Webhook Payload Structure Construction", () => {
-      it("constructs compliant single-message webhook payload", () => {
+      it("constructs a single-message server bot dispatch payload without sender overrides", () => {
         const store = useMessageStore.getState();
         store.setField("content", "Single dispatch");
         store.setField("username", "AlertBot");
@@ -414,27 +419,23 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         const payloads = store.getAllPayloads();
         const singlePayload = payloads.length > 0 ? payloads[0] : store.getPayload();
 
-        const webhookUrl = "https://discord.com/api/webhooks/123456789012345678/secret-token";
-        const threadId = "987654321098765432";
-
         const requestBody = {
-          mode: "webhook",
-          webhookUrl,
-          threadId: threadId || undefined,
+          mode: "bot",
+          channelId: "123456789012345678",
           messages: [singlePayload],
           payload: singlePayload,
           flows: [],
         };
 
-        expect(requestBody.mode).toBe("webhook");
-        expect(requestBody.webhookUrl).toBe(webhookUrl);
-        expect(requestBody.threadId).toBe("987654321098765432");
+        expect(requestBody.mode).toBe("bot");
+        expect(requestBody.channelId).toBe("123456789012345678");
         expect(requestBody.messages).toHaveLength(1);
         expect(requestBody.messages[0].content).toBe("Single dispatch");
-        expect(requestBody.messages[0].username).toBe("AlertBot");
+        expect(requestBody.messages[0].username).toBeUndefined();
+        expect(requestBody.messages[0].avatar_url).toBeUndefined();
       });
 
-      it("constructs compliant multi-message batch payload for sequence dispatch", () => {
+      it("constructs a multi-message server bot batch payload without sender overrides", () => {
         const store = useMessageStore.getState();
         store.load({
           messages: [
@@ -447,20 +448,23 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         const allPayloads = store.getAllPayloads();
         expect(allPayloads).toHaveLength(3);
 
-        const webhookUrl = "https://discord.com/api/webhooks/123456789012345678/token";
         const requestBody = {
-          mode: "webhook",
-          webhookUrl,
-          threadId: undefined,
+          mode: "bot",
+          channelId: "123456789012345678",
           messages: allPayloads,
           payload: allPayloads[0],
           flows: [],
         };
 
+        expect(requestBody.mode).toBe("bot");
         expect(requestBody.messages).toHaveLength(3);
         expect(requestBody.payload.content).toBe("Message 1 of 3");
         expect(requestBody.messages[1].content).toBe("Message 2 of 3");
         expect(requestBody.messages[2].content).toBe("Message 3 of 3");
+        for (const payload of requestBody.messages) {
+          expect(payload.username).toBeUndefined();
+          expect(payload.avatar_url).toBeUndefined();
+        }
       });
 
       it("maps URL attachments with spoiler prefixes accurately", () => {

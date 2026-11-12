@@ -137,7 +137,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("channelId");
     });
 
-    it("returns HTTP 400 when mode webhook lacks webhookUrl", async () => {
+    it("rejects webhook mode even when webhookUrl is missing", async () => {
       const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
@@ -146,11 +146,13 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
         },
         body: JSON.stringify({ mode: "webhook", payload: { content: "hi" } }),
       });
-      expect(res.status).toBe(400);
-      const json = await res.json();
-      expect(json.error).toContain("webhookUrl");
-    });
 
+      expect(res.status).toBe(400);
+
+      const json = await res.json();
+      expect(json.error).toContain("mode");
+    });
+    
     it("returns HTTP 400 when messages array exceeds 10 messages", async () => {
       const excessiveMessages = Array.from({ length: 11 }, (_, i) => ({
         content: `Message ${i}`,
@@ -269,30 +271,14 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
     });
   });
 
-  // 7. /api/profiles
+    // 7. /api/profiles
   describe("/api/profiles", () => {
-    it("creates webhook profile via POST /api/profiles/webhooks", async () => {
-      const res = await fetch(`${baseUrl}/api/profiles/webhooks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": env.adminApiKey,
-        },
-        body: JSON.stringify({
-          name: "Webhook REST",
-          url: "https://discord.com/api/webhooks/999/tok",
-        }),
-      });
-      expect(res.status).toBe(404);
-    });
-
-    it("lists webhook profiles via GET /api/profiles/webhooks", async () => {
+    it("rejects requests to the removed webhook profiles route", async () => {
       const res = await fetch(`${baseUrl}/api/profiles/webhooks`, {
         headers: { "x-admin-key": env.adminApiKey },
       });
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(Array.isArray(json.profiles)).toBe(true);
+
+      expect(res.status).toBe(404);
     });
   });
 
@@ -302,8 +288,11 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       const res = await fetch(`${baseUrl}/api/access`, {
         headers: { "x-admin-key": env.adminApiKey },
       });
-      expect(res.status).toBe(404);
 
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      expect(Array.isArray(json)).toBe(true);
     });
   });
 

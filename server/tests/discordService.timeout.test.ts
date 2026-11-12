@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, afterEach } from "vitest";
 import discord, { createInteractionResponse } from "../src/services/discordService.js";
 import { ApiError } from "../src/utils/errors.js";
@@ -23,34 +24,40 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("maps fetch TimeoutError to ApiError.gatewayTimeout (HTTP 504) after retries", async () => {
-    let callCount = 0;
-
-    globalThis.fetch = vi.fn().mockImplementation(async () => {
-      callCount++;
-      const timeoutError = new DOMException(
-        "The operation was aborted due to timeout",
-        "TimeoutError",
-      );
-      throw timeoutError;
-    });
-
-  });
-
-  it("sets 2.5s fast timeout and 1 retry on interaction response callbacks", async () => {
+  it("sets 2.5s fast timeout and retries interaction callbacks once", async () => {
     let callCount = 0;
     let capturedInit: RequestInit | undefined;
 
-    globalThis.fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
-      callCount++;
-      capturedInit = init;
-      const timeoutError = new DOMException(
-        "The operation was aborted due to timeout",
-        "TimeoutError",
-      );
-      throw timeoutError;
-    });
-    
-  });
+    globalThis.fetch = vi.fn().mockImplementation(
+      async (_url: string, init?: RequestInit) => {
+        callCount++;
+        capturedInit = init;
 
+        throw new DOMException(
+          "The operation was aborted due to timeout",
+          "TimeoutError",
+        );
+      },
+    );
+
+    let thrownError: unknown;
+
+    try {
+      await createInteractionResponse("int_123", "token_abc", {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: "reply" } as any,
+      });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError).toBeInstanceOf(ApiError);
+    expect((thrownError as ApiError).status).toBe(504);
+    expect((thrownError as ApiError).code).toBe("gateway_timeout");
+    expect((thrownError as Error).message).toContain(
+      "Discord request timed out after 2500ms",
+    );
+    expect(capturedInit?.signal).toBeInstanceOf(AbortSignal);
+    expect(callCount).toBe(2);
+  });
 });
