@@ -203,7 +203,7 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const beginEditTemplate = (item: any) => {
     setEditingKey(`template-${item.id}`);
     setEditName(item.name);
-    setEditTracked(Boolean(item.is_tracked));
+    setEditTracked(Boolean(item.is_tracked || item.trackingRecord));
     setEditExpiresAt(item.expires_at ? new Date(item.expires_at).toISOString() : null);
   };
 
@@ -229,6 +229,18 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
           isTracked: editTracked,
         });
         await refresh();
+        if (item.trackingRecord) {
+          if (editTracked) {
+            await api.tracking.update(item.trackingRecord.id, {
+              name: editName.trim() || null,
+              expiresAt: editExpiresAt,
+              track: true,
+            });
+          } else {
+            await api.tracking.untrack(item.trackingRecord.id);
+          }
+          await refreshTracked();
+        }
       } else {
         await api.tracking.update(item.id, {
           name: editName.trim() || null,
@@ -324,7 +336,7 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
         isTracked: Boolean(item.is_tracked || linkedTracking),
         expiresAt: linkedTracking?.expiresAt ?? item.expires_at ?? null,
         updatedAt: item.updated_at,
-        source: item,
+        source: { ...item, trackingRecord: linkedTracking },
       };
     }),
     ...trackedList
