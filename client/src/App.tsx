@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { motion } from "motion/react";
 import {
   Bot,
   Plus,
