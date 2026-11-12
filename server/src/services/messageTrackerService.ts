@@ -21,14 +21,19 @@ export interface TrackMessageParams {
   exploitName?: string | null;
   authorUserId?: string | null;
   rawPayload?: DiscordMessagePayload | null;
+  resolvedPayload?: DiscordMessagePayload | null;
+  name?: string | null;
+  expiresAt?: string | null;
 }
 
 export const trackMessage = async (
   params: TrackMessageParams,
 ): Promise<TrackedMessageRecord | null> => {
   try {
-    const rawToStore = params.templateId ? null : params.rawPayload ? JSON.stringify(params.rawPayload) : null;
-    const hash = params.rawPayload ? computePayloadHash(params.rawPayload) : "pending";
+    const rawToStore = params.rawPayload ? JSON.stringify(params.rawPayload) : null;
+    const hash = params.resolvedPayload
+      ? computePayloadHash(params.resolvedPayload)
+      : params.rawPayload ? computePayloadHash(params.rawPayload) : "pending";
 
     return await trackedMessageRepository.upsert({
       channel_id: params.channelId,
@@ -38,6 +43,8 @@ export const trackMessage = async (
       author_user_id: params.authorUserId ?? null,
       raw_payload: rawToStore,
       last_payload_hash: hash,
+      name: params.name ?? null,
+      expires_at: params.expiresAt ?? null,
     });
   } catch (err) {
     log.warn(`Failed to track message ${params.messageId} in ${params.channelId}:`, err);
@@ -58,6 +65,11 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
 
   for (const record of records) {
     try {
+      if (record.expires_at && Number.isFinite(Date.parse(record.expires_at)) && Date.parse(record.expires_at) <= Date.now()) {
+        await trackedMessageRepository.deleteById(record.id);
+        result.removed++;
+        continue;
+      }
       let basePayload: DiscordMessagePayload | null = null;
 
       // 1. Resolve base payload from template, custom executor, or stored raw_payload
