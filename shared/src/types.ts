@@ -383,6 +383,8 @@ export interface TemplateRecord {
   data: QueryData;
   preview_image_url: string | null;
   is_public: number;
+  is_tracked?: number;
+  expires_at?: string | null;
   created_at: string;
   updated_at: string;
 }
