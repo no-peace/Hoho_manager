@@ -21,9 +21,6 @@ import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
 import { PropertyPanel } from "./components/editor/PropertyPanel";
-import { DocsPage } from "./pages/DocsPage";
-import { JsonModal } from "./components/editor/JsonModal";
-import { BotDispatchModal } from "./components/send/BotDispatchModal";
 import { ServerBotAccessModal } from "./components/layout/ServerBotAccessModal";
 import { useMessageStore } from "./store/messageStore";
 import { useActionStore } from "./store/actionStore";
@@ -38,6 +35,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { Checkbox } from "./components/ui/Field";
 import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
 import { getServerNow } from "./store/globalStore";
+import { updatePageSeo } from "./utils/seo";
+
+const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
+const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
+const BotDispatchModal = React.lazy(() => import("./components/send/BotDispatchModal").then((module) => ({ default: module.BotDispatchModal })));
 
 const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
   <img
@@ -779,6 +781,12 @@ export const App: React.FC = () => {
   );
 
   useEffect(() => {
+    updatePageSeo(currentPath === "/docs"
+      ? { title: "HoHo Manager Docs — Variables & Dynamic Tracking", description: "Complete reference for HoHo Manager dynamic variables, tracking, and interactive flows.", path: "/docs", schemaType: "TechArticle" }
+      : { title: "HoHo Manager — Discord Bot Studio", description: "Visual Discord Bot Message, Embed, Components V2, and Dynamic Placeholder Studio for HoHo Hub.", path: "/", schemaType: "SoftwareApplication" });
+  }, [currentPath]);
+
+  useEffect(() => {
     const onPopState = () => setCurrentPath(window.location.pathname);
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -857,7 +865,7 @@ export const App: React.FC = () => {
   if (currentPath === "/docs") {
     return (
       <>
-        <DocsPage />
+        <React.Suspense fallback={<div className="min-h-screen bg-[#111214]" />}><DocsPage /></React.Suspense>
         <ToastAndConfirmHost />
       </>
     );
@@ -1075,14 +1083,14 @@ export const App: React.FC = () => {
         </button>
       </nav>
 
-      <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
+      <React.Suspense fallback={null}><JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} /></React.Suspense>
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />
       <ServerBotAccessModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
-      <BotDispatchModal
+      <React.Suspense fallback={null}><BotDispatchModal
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}
         initialMode={botModalMode}
-      />
+      /></React.Suspense>
       <ToastAndConfirmHost />
     </div>
   );

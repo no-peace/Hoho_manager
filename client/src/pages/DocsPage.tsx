@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { updatePageSeo } from "../utils/seo";
+import { ShinyText, SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
 import {
   ArrowLeft,
   BookOpen,
@@ -96,6 +98,9 @@ const DOC_ITEMS: DocItem[] = [
 ];
 
 export const DocsPage = () => {
+  useEffect(() => {
+    updatePageSeo({ title: "HoHo Manager Docs — Variables & Dynamic Tracking", description: "Complete reference for HoHo Manager dynamic variables, tracking, and interactive flows.", path: "/docs", schemaType: "TechArticle" });
+  }, []);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
@@ -138,10 +143,10 @@ export const DocsPage = () => {
         {/* Hero Section */}
         <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#2b2d31] via-[#232428] to-[#1e1f22] border border-[#1e1f22] shadow-xl">
           <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-2">
-            <Sparkles size={14} /> Full System Guide & Reference
+            <Sparkles size={14} /> <ShinyText text="FULL SYSTEM GUIDE & REFERENCE" />
           </div>
           <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
-            Variables, Dynamic Tracking & Executors
+            <SplitTextReveal text="Variables, Dynamic Tracking & Executors" />
           </h1>
           <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.

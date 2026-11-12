@@ -43,7 +43,13 @@ export const revokeAllSessions = (): void => {
   globalRevokedAtMs = Date.now();
 };
 
-const getSecret = (): string => env.sessionSecret || env.adminApiKey || "default-session-secret";
+const getSecret = (): string => {
+  const secret = env.sessionSecret || env.adminApiKey;
+  if (!secret && env.isProd) {
+    throw new Error("CRITICAL: SESSION_SECRET or ADMIN_API_KEY must be configured in production");
+  }
+  return secret || "dev-only-session-secret";
+};
 
 export const createSessionToken = (user: SessionUser): string => {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");

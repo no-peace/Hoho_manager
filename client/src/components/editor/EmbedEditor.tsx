@@ -10,6 +10,9 @@ import {
 import type { EmbedData } from "@dmb/shared";
 import { Limits } from "@dmb/shared";
 import { ColorPicker } from "../ui/ColorPicker";
+import { Checkbox } from "../ui/Field";
+import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
+import { getServerNow } from "../../store/globalStore";
 import { DiscordMentionInput } from "./DiscordMentionInput";
 import { embedCharCount, decimalToHex } from "../../utils/discord";
 import { useMessageStore } from "../../store/messageStore";
@@ -602,49 +605,26 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
                 <div className="pt-1 border-t border-[#1e1f22] space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-[#dbdee1] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(embed.timestamp)}
-                        onChange={(e) =>
-                          updateEmbed(id, {
-                            timestamp: e.target.checked ? new Date().toISOString() : null,
-                          })
-                        }
-                        className="rounded bg-[#1e1f22] border-[#383a40] text-[#5865f2] focus:ring-0"
-                      />
-                      Include Timestamp
-                    </label>
+                    <Checkbox
+                      label="Include Timestamp"
+                      checked={Boolean(embed.timestamp)}
+                      onChange={(checked) => updateEmbed(id, { timestamp: checked ? getServerNow().toISOString() : null })}
+                      className="text-xs"
+                    />
                   </div>
                   {embed.timestamp && (
                     <div className="flex items-center gap-2">
-                      <input
-                        type="datetime-local"
-                        value={(() => {
-                          try {
-                            const d = new Date(embed.timestamp);
-                            if (isNaN(d.getTime())) return "";
-                            const tzOffset = d.getTimezoneOffset() * 60000;
-                            return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-                          } catch {
-                            return "";
-                          }
-                        })()}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const d = new Date(e.target.value);
-                            if (!isNaN(d.getTime())) {
-                              updateEmbed(id, { timestamp: d.toISOString() });
-                            }
-                          }
-                        }}
-                        className="field text-xs !py-1 font-mono flex-1"
+                      <DateTimePickerPopover
+                        allowPastDates={true}
+                        value={embed.timestamp}
+                        onChange={(iso) => updateEmbed(id, { timestamp: iso })}
+                        className="flex-1"
                       />
                       <button
                         type="button"
-                        onClick={() => updateEmbed(id, { timestamp: new Date().toISOString() })}
+                        onClick={() => updateEmbed(id, { timestamp: getServerNow().toISOString() })}
                         className="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[11px] text-[#dbdee1] border border-[#111214] shrink-0"
-                        title="Reset to current time"
+                        title="Reset to Server Time"
                       >
                         Now
                       </button>

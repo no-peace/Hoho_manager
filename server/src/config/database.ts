@@ -28,11 +28,14 @@ const log = logger.child("db");
 
 const tursoUrlRaw = (process.env.TURSO_DATABASE_URL ?? "").trim();
 const tursoAuthToken = (process.env.TURSO_AUTH_TOKEN ?? "").trim();
-const useTurso =
+const validTursoUrl = /^(libsql|https?):\/\//i.test(tursoUrlRaw);
+if (
   env.nodeEnv !== "test" &&
-  Boolean(tursoUrlRaw) &&
-  Boolean(tursoAuthToken) &&
-  /^(libsql|https?):\/\//i.test(tursoUrlRaw);
+  (Boolean(tursoUrlRaw) !== Boolean(tursoAuthToken) || (Boolean(tursoUrlRaw) && !validTursoUrl))
+) {
+  throw new Error("Invalid Turso configuration: both TURSO_DATABASE_URL (libsql:// or https://) and TURSO_AUTH_TOKEN must be provided together.");
+}
+const useTurso = env.nodeEnv !== "test" && Boolean(tursoUrlRaw) && Boolean(tursoAuthToken) && validTursoUrl;
 
 const getTursoPipelineUrl = (): string => {
   const httpsBase = tursoUrlRaw.replace(/^libsql:\/\//i, "https://").replace(/\/+$/, "");

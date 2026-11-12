@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /docs
+Disallow: /api/
+
+Sitemap: https://hoho-manager.onrender.com/sitemap.xml

@@ -73,7 +73,14 @@ router.get(
     }
 
     const cookies = parseCookies(req.headers.cookie);
-    if (env.isProd && (!state || !cookies.oauth_state || cookies.oauth_state !== state)) {
+    const cookieState = cookies.oauth_state;
+    const stateMatches =
+      typeof state === "string" &&
+      typeof cookieState === "string" &&
+      Buffer.byteLength(state) === Buffer.byteLength(cookieState) &&
+      crypto.timingSafeEqual(Buffer.from(state), Buffer.from(cookieState));
+    res.clearCookie("oauth_state", { path: "/" });
+    if ((env.isProd || cookieState !== undefined) && !stateMatches) {
       log.warn("OAuth state parameter mismatch or missing");
       return res.redirect(`${clientBase}/?error=invalid_oauth_state`);
     }

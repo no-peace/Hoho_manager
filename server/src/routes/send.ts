@@ -381,31 +381,6 @@ router.post(
       }
     }
 
-    if (mode === "webhook") {
-      if (typeof webhookUrl !== "string") {
-        throw ApiError.badRequest('`webhookUrl` is required when mode is "webhook"');
-      }
-      const sentList = [];
-      for (let i = 0; i < finalMessages.length; i++) {
-        const msg = finalMessages[i];
-        const sent = await discord.sendWebhook(webhookUrl, msg, {
-          wait: true,
-          threadId: typeof threadId === "string" ? threadId : null,
-          files: i === 0 ? files : [],
-        });
-        await registerMessageFlows(sent);
-        sentList.push(sent);
-
-        await registerTracking(sent, i);
-      }
-      if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
-        const { staffRepository } = await import("../repositories/staffRepository.js");
-        await staffRepository.upsertCooldown(staffCtx.staffId, "send");
-      }
-      log.info(`Webhook send by user ${req.user?.id ?? "?"}`);
-      return res.json({ ok: true, mode, message: sentList[0], messages: sentList });
-    }
-
     if (typeof channelId !== "string") {
       throw ApiError.badRequest('`channelId` is required when mode is "bot"');
     }
