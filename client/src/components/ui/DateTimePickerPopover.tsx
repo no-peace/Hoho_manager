@@ -119,14 +119,11 @@ export const DateTimePickerPopover = ({
               <div className="mt-3 border-t border-[#26282d] pt-3">
                 <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-[#949ba4]"><Clock size={12} /> TIME</div>
                 <div className="flex items-center gap-2">
-                  <select aria-label="Hour" value={hour12} onChange={(event) => changeTime((Number(event.target.value) % 12) + (selected.getHours() >= 12 ? 12 : 0), selected.getMinutes())}
-                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] px-2 text-xs text-[#f2f3f5]">
-                    {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}
-                  </select>
-                  <select aria-label="Minute" value={selected.getMinutes()} onChange={(event) => changeTime(selected.getHours(), Number(event.target.value))}
-                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] px-2 text-xs text-[#f2f3f5]">
-                    {Array.from({ length: 60 }, (_, minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}
-                  </select>
+                  <button type="button" aria-label="Increase hour" onClick={() => changeTime((selected.getHours() + 1) % 24, selected.getMinutes())}
+                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] text-xs font-semibold tabular-nums text-[#f2f3f5]">{pad(hour12)}</button>
+                  <span className="text-xs text-[#949ba4]">:</span>
+                  <button type="button" aria-label="Increase minute" onClick={() => changeTime(selected.getHours(), (selected.getMinutes() + 1) % 60)}
+                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] text-xs font-semibold tabular-nums text-[#f2f3f5]">{pad(selected.getMinutes())}</button>
                   <button type="button" onClick={() => changeTime(selected.getHours() >= 12 ? selected.getHours() - 12 : selected.getHours() + 12, selected.getMinutes())}
                     className="h-8 rounded-md border border-[#2b2d31] bg-[#232428] px-3 text-xs font-semibold text-[#f2f3f5]">{selected.getHours() >= 12 ? "PM" : "AM"}</button>
                 </div>
