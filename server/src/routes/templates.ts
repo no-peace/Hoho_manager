@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { QueryData, StoredActionDefinition } from "@dmb/shared";
 import { attachUser, requireUser } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { templateService } from "../services/templateService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
@@ -12,6 +13,22 @@ router.use(attachUser);
 
 const readBody = (body: unknown): Record<string, unknown> =>
   (body ?? {}) as Record<string, unknown>;
+
+const parseExpiresAt = (raw: unknown): string | null | undefined => {
+  if (raw === undefined) return undefined;
+  if (raw === null || raw === "") return null;
+  if (typeof raw !== "string") {
+    throw ApiError.badRequest("`expiresAt` must be an ISO date string or null");
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    throw ApiError.badRequest("`expiresAt` must be a valid date/time");
+  }
+  if (parsed.getTime() <= Date.now()) {
+    throw ApiError.badRequest("`expiresAt` must be in the future");
+  }
+  return parsed.toISOString();
+};
 
 /** GET /api/templates?q=search  list the current user's templates. */
 router.get(
@@ -34,9 +51,10 @@ router.get(
   }),
 );
 
-/** POST /api/templates  create a template (optionally with its action chain). */
+/** POST /api/templates — create a template (optionally with its action chain). */
 router.post(
   "/",
+  requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
     requireStrings(body, ["name"]);
@@ -48,14 +66,16 @@ router.post(
       data: body.data as QueryData,
       actions: Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : [],
       isPublic: optionalFlag(body.isPublic) ?? 0,
+      expiresAt: parseExpiresAt(body.expiresAt),
     });
     res.status(201).json({ template });
   }),
 );
 
-/** PUT /api/templates/:id  partial update; `actions` replaces the whole chain. */
+/** PUT /api/templates/:id — partial update; `actions` replaces the whole chain. */
 router.put(
   "/:id",
+  requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
     const template = await templateService.update(
@@ -69,6 +89,7 @@ router.put(
           ? (body.actions as StoredActionDefinition[])
           : undefined,
         isPublic: optionalFlag(body.isPublic),
+        expiresAt: parseExpiresAt(body.expiresAt),
       },
     );
     res.json({ template });
@@ -78,6 +99,7 @@ router.put(
 /** DELETE /api/templates/:id */
 router.delete(
   "/:id",
+  requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     await templateService.remove(requireId(req.params.id), requireUser(req).id);
     res.status(204).end();

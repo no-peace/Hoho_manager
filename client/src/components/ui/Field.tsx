@@ -73,7 +73,6 @@ import { RichPicker } from "../editor/RichPicker";
 import { UNICODE_EMOJI_LIST } from "../../utils/unicodeEmojis";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
-//import { aC } from "vitest/dist/chunks/reporters.d.BuRON0I0.js";
 
 const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
   const [open, setOpen] = useState(false);
@@ -134,7 +133,7 @@ const getAutocompleteVariables = (query: string) => {
   // An empty array means it is an ID query with no matching field.
   if (idSuggestions !== null) return idSuggestions;
 
-  const q = query.toLowerCase().replace(/^\\{+/, "");
+  const q = query.toLowerCase().replace(/^\{+/, "");
 
   return ACTUAL_VARIABLES.filter(
     (v) =>

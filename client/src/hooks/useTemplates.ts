@@ -19,7 +19,7 @@ export interface UseTemplatesReturn {
   dirty: boolean;
   status: "idle" | "loading" | "error";
   error: string | null;
-  saveCurrent(): Promise<TemplateDetailResponse["template"]>;
+  saveCurrent(expiresAt?: string | null): Promise<TemplateDetailResponse["template"]>;
   loadTemplate(id: number): Promise<TemplateDetailResponse["template"] | null>;
   refresh(query?: string): Promise<void>;
 }
@@ -37,14 +37,17 @@ export const useTemplates = (): UseTemplatesReturn => {
     void fetchTemplates();
   }, [fetchTemplates]);
 
-  const saveCurrent = useCallback(async (): Promise<TemplateDetailResponse["template"]> => {
-    const { data, messages, targets, mode } = useMessageStore.getState();
-    const actions = useActionStore.getState().toList();
-    const messagesToSave = messages && messages.length > 0 ? messages : [data];
-    const document = toQueryData(messagesToSave, targets, mode);
+  const saveCurrent = useCallback(
+    async (expiresAt?: string | null): Promise<TemplateDetailResponse["template"]> => {
+      const { data, messages, targets, mode } = useMessageStore.getState();
+      const actions = useActionStore.getState().toList();
+      const messagesToSave = messages && messages.length > 0 ? messages : [data];
+      const document = toQueryData(messagesToSave, targets, mode);
 
-    return useTemplateStore.getState().save({ data: document, actions });
-  }, []);
+      return useTemplateStore.getState().save({ data: document, actions, expiresAt });
+    },
+    [],
+  );
 
   const loadTemplate = useCallback(
     async (id: number): Promise<TemplateDetailResponse["template"] | null> => {

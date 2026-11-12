@@ -15,12 +15,36 @@ export interface MaintenanceReport {
   expiredFlowsPruned: number;
   expiredReceiptsPruned: number;
   expiredSessionsPruned: number;
+  expiredTemplatesPruned?: number;
   actionLogsPruned: number;
   orphanedAdHocActionsPruned: number;
   auditLogsPruned: number;
   cacheEntriesPruned: number;
   durationMs: number;
 }
+
+export const pruneExpiredTemplates = async (batchSize = 500): Promise<number> => {
+  const now = new Date().toISOString();
+  let total = 0;
+  while (true) {
+    const { changes } = await db.run(
+      `DELETE FROM templates
+       WHERE id IN (
+         SELECT id FROM templates
+         WHERE expires_at IS NOT NULL
+           AND datetime(expires_at) <= datetime(@now)
+           AND id NOT IN (SELECT template_id FROM tracked_messages WHERE template_id IS NOT NULL)
+           AND id NOT IN (SELECT template_id FROM custom_executors WHERE template_id IS NOT NULL)
+         LIMIT @batchSize
+       )`,
+      { now, batchSize },
+    );
+    total += changes;
+    if (changes < batchSize) break;
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  return total;
+};
 
 export const pruneActionLogs = async (retentionDays = 30, batchSize = 500): Promise<number> => {
   const cutoffDate = new Date(Date.now() - retentionDays * 86_400_000);
@@ -167,6 +191,13 @@ export const runDatabaseMaintenance = async (
     log.warn(`Session pruning failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
+  let expiredTemplatesPruned = 0;
+  try {
+    expiredTemplatesPruned = await pruneExpiredTemplates(batchSize);
+  } catch (err) {
+    log.warn(`Template retention pruning failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   let actionLogsPruned = 0;
   try {
     actionLogsPruned = await pruneActionLogs(actionLogDays, batchSize);
@@ -195,6 +226,7 @@ export const runDatabaseMaintenance = async (
     expiredFlowsPruned,
     expiredReceiptsPruned,
     expiredSessionsPruned,
+    expiredTemplatesPruned,
     actionLogsPruned,
     orphanedAdHocActionsPruned,
     auditLogsPruned,

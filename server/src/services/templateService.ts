@@ -46,6 +46,7 @@ export interface CreateTemplateServiceInput {
   data: QueryData | Record<string, unknown>;
   actions?: StoredActionDefinition[];
   isPublic?: number;
+  expiresAt?: string | null;
 }
 
 export interface UpdateTemplateServiceInput {
@@ -54,6 +55,7 @@ export interface UpdateTemplateServiceInput {
   data?: QueryData | Record<string, unknown>;
   actions?: StoredActionDefinition[];
   isPublic?: number;
+  expiresAt?: string | null;
 }
 
 export const templateService = {
@@ -73,7 +75,7 @@ export const templateService = {
 
   async create(
     userId: number,
-    { name, description = null, data, actions = [], isPublic = 0 }: CreateTemplateServiceInput,
+    { name, description = null, data, actions = [], isPublic = 0, expiresAt }: CreateTemplateServiceInput,
   ): Promise<TemplateWithActions> {
     const existing = await templateRepository.findByUser(userId);
     if (existing.length >= MAX_TEMPLATES_PER_USER) {
@@ -86,6 +88,7 @@ export const templateService = {
       description,
       data,
       isPublic,
+      expiresAt,
     });
     if (!template) throw ApiError.upstream("Template could not be created");
 
@@ -99,7 +102,7 @@ export const templateService = {
   async update(
     id: number,
     userId: number,
-    { name, description, data, actions, isPublic }: UpdateTemplateServiceInput,
+    { name, description, data, actions, isPublic, expiresAt }: UpdateTemplateServiceInput,
   ): Promise<TemplateWithActions> {
     // Ownership check happens inside get().
     await this.get(id, userId);
@@ -109,7 +112,12 @@ export const templateService = {
       await templateRepository.updateData(id, data);
     }
 
-    const updated = await templateRepository.update(id, { name, description, is_public: isPublic });
+    const updated = await templateRepository.update(id, {
+      name,
+      description,
+      is_public: isPublic,
+      ...(expiresAt !== undefined ? { expires_at: expiresAt } : {}),
+    });
     if (!updated) throw ApiError.notFound("Template not found");
 
     if (actions !== undefined) {

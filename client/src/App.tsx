@@ -129,31 +129,91 @@ const ToastAndConfirmHost: React.FC = () => {
   );
 };
 
-/* ── Backups Modal (1aa39ecf Style with In-App Toasts & Confirmations) ── */
+/* ── Backups Modal (With 14-Day / Scheduled Retention & Tracked Messages) ── */
 const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
   onClose,
 }) => {
-  const { templates, saveCurrent, loadTemplate } = useTemplates();
+  const { templates, saveCurrent, loadTemplate, refresh } = useTemplates();
+  const [activeTab, setActiveTab] = useState<"backups" | "tracked">("backups");
   const [templateName, setTemplateName] = useState("");
+  const [retentionMode, setRetentionMode] = useState<"14d" | "scheduled" | "keep">("14d");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [editingTplId, setEditingTplId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editExpiresAt, setEditExpiresAt] = useState("");
+  const [trackedList, setTrackedList] = useState<any[]>([]);
+  const [loadingTracked, setLoadingTracked] = useState(false);
+
   const currentName = useTemplateStore((state) => state.currentName);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
   const { showToast, openConfirm } = useGlobalStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!open || activeTab !== "tracked") return;
+    setLoadingTracked(true);
+    api.tracking
+      .list()
+      .then((res) => setTrackedList(res.messages ?? []))
+      .catch(() => setTrackedList([]))
+      .finally(() => setLoadingTracked(false));
+  }, [open, activeTab]);
+
   if (!open) return null;
+
+  const resolveExpiresAtInput = (): string | null | undefined => {
+    if (retentionMode === "keep") return null;
+    if (retentionMode === "scheduled") {
+      if (!scheduledDate) throw new Error("Select a future retention date & time.");
+      const parsed = new Date(scheduledDate);
+      if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+        throw new Error("Scheduled retention date must be in the future.");
+      }
+      return parsed.toISOString();
+    }
+    return new Date(Date.now() + 14 * 86_400_000).toISOString();
+  };
 
   const handleSave = async () => {
     if (templateName.trim()) {
       setCurrentName(templateName.trim());
     }
     try {
-      await saveCurrent();
+      const expiresAt = resolveExpiresAtInput();
+      await saveCurrent(expiresAt);
       setTemplateName("");
       showToast("Template saved to backups!", "success");
     } catch (e: any) {
       showToast(e?.message || "Failed to save template", "error");
+    }
+  };
+
+  const handleUpdateTemplateMeta = async (id: number) => {
+    try {
+      const expiresAt = editExpiresAt
+        ? new Date(editExpiresAt).toISOString()
+        : null;
+      await api.templates.update(id, {
+        name: editName.trim() || "Untitled Backup",
+        expiresAt,
+      });
+      await refresh();
+      setEditingTplId(null);
+      showToast("Backup retention updated!", "success");
+    } catch (e: any) {
+      showToast(e?.message || "Failed to update backup", "error");
+    }
+  };
+
+  const handleUntrack = async (id: number) => {
+    try {
+      await api.tracking.untrack(id);
+      setTrackedList((prev) => prev.filter((item) => item.id !== id));
+      showToast("Stopped tracking message", "info");
+    } catch (e: any) {
+      showToast(e?.message || "Failed to untrack message", "error");
     }
   };
 
@@ -199,91 +259,247 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Saved Templates & Backups" width="max-w-md">
+    <Modal open={open} onClose={onClose} title="Saved Templates & Tracked Backups" width="max-w-lg">
       <div className="space-y-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            className="flex-1 bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded outline-none focus:border-[#5865f2]"
-            placeholder="Template / Backup name..."
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-          />
-          <Button size="sm" variant="primary" onClick={() => void handleSave()}>
-            Save
-          </Button>
+        <div className="flex items-center gap-1 bg-[#1e1f22] p-1 rounded-lg border border-[#111214]">
+          <button
+            type="button"
+            onClick={() => setActiveTab("backups")}
+            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-colors ${
+              activeTab === "backups"
+                ? "bg-[#5865f2] text-white"
+                : "text-[#949ba4] hover:text-white"
+            }`}
+          >
+            Saved Backups ({templates.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("tracked")}
+            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-colors ${
+              activeTab === "tracked"
+                ? "bg-[#5865f2] text-white"
+                : "text-[#949ba4] hover:text-white"
+            }`}
+          >
+            Tracked Messages ({trackedList.length})
+          </button>
         </div>
 
-        <div className="flex gap-2 pt-2 border-t border-[#1e1f22]">
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={Download}
-            onClick={handleExportJson}
-            className="flex-1 text-xs"
-          >
-            Export JSON
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={Upload}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex-1 text-xs"
-          >
-            Import JSON
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept=".json,application/json"
-            onChange={(e) => void handleImportJson(e)}
-          />
-        </div>
-
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
-            Saved Templates ({templates.length})
-          </p>
-          {templates.length === 0 ? (
-            <p className="text-xs text-[#949ba4] py-4 text-center">
-              No saved templates yet. Name your template above and click Save.
-            </p>
-          ) : (
-            templates.map((tpl) => (
-              <div
-                key={tpl.id}
-                className="flex items-center justify-between p-2 rounded bg-[#1e1f22] border border-[#111214] hover:border-[#35373c]"
-              >
-                <div className="min-w-0 flex-1 mr-2">
-                  <p className="text-xs font-semibold text-[#dbdee1] truncate">{tpl.name}</p>
-                  <p className="text-[10px] text-[#949ba4]">
-                    Updated {new Date(tpl.updated_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleLoad(tpl.id)}
-                    className="text-xs text-[#5865f2] hover:bg-[#5865f2]/10"
-                  >
-                    Load
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => remove(tpl.id)}
-                    className="p-1 text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/20 rounded"
-                    title="Delete backup"
-                  >
-                    ×
-                  </button>
-                </div>
+        {activeTab === "backups" ? (
+          <>
+            <div className="space-y-2 bg-[#232428] p-2.5 rounded-lg border border-[#1e1f22]">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="flex-1 bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-xs px-2.5 py-1.5 rounded outline-none focus:border-[#5865f2]"
+                  placeholder="Template / Backup name..."
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+                <Button size="sm" variant="primary" onClick={() => void handleSave()}>
+                  Save
+                </Button>
               </div>
-            ))
-          )}
-        </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-[#b5bac1]">
+                <span className="font-semibold text-[#949ba4]">Retention:</span>
+                <select
+                  value={retentionMode}
+                  onChange={(e) =>
+                    setRetentionMode(e.target.value as "14d" | "scheduled" | "keep")
+                  }
+                  className="bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none focus:border-[#5865f2]"
+                >
+                  <option value="14d">14 Days (Unscheduled Default)</option>
+                  <option value="scheduled">Schedule Expiry Date…</option>
+                  <option value="keep">Keep Indefinitely / Tracked</option>
+                </select>
+                {retentionMode === "scheduled" && (
+                  <input
+                    type="datetime-local"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="bg-[#1e1f22] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none focus:border-[#5865f2]"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={Download}
+                onClick={handleExportJson}
+                className="flex-1 text-xs"
+              >
+                Export JSON
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={Upload}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 text-xs"
+              >
+                Import JSON
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".json,application/json"
+                onChange={(e) => void handleImportJson(e)}
+              />
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+              {templates.length === 0 ? (
+                <p className="text-xs text-[#949ba4] py-4 text-center">
+                  No saved templates yet. Name your template above and click Save.
+                </p>
+              ) : (
+                templates.map((tpl) => (
+                  <div
+                    key={tpl.id}
+                    className="p-2.5 rounded bg-[#1e1f22] border border-[#111214] hover:border-[#35373c] space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-[#dbdee1] truncate">
+                          {tpl.name}
+                        </p>
+                        <p className="text-[10px] text-[#949ba4]">
+                          Updated {new Date(tpl.updated_at).toLocaleString()} •{" "}
+                          {tpl.expires_at
+                            ? `Expires ${new Date(tpl.expires_at).toLocaleDateString()}`
+                            : "Pinned / Tracked"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleLoad(tpl.id)}
+                          className="text-xs text-[#5865f2] hover:bg-[#5865f2]/10"
+                        >
+                          Load
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editingTplId === tpl.id) {
+                              setEditingTplId(null);
+                            } else {
+                              setEditingTplId(tpl.id);
+                              setEditName(tpl.name);
+                              setEditExpiresAt(
+                                tpl.expires_at
+                                  ? new Date(tpl.expires_at).toISOString().slice(0, 16)
+                                  : "",
+                              );
+                            }
+                          }}
+                          className="p-1 text-[#949ba4] hover:text-white hover:bg-[#35373c] rounded"
+                          title="Edit backup & retention schedule"
+                        >
+                          <Edit3 size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(tpl.id)}
+                          className="p-1 text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/20 rounded"
+                          title="Delete backup"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+
+                    {editingTplId === tpl.id && (
+                      <div className="pt-2 border-t border-[#2b2d31] flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1 min-w-[120px] bg-[#2b2d31] border border-[#111214] text-[#dbdee1] text-xs px-2 py-1 rounded outline-none"
+                          placeholder="Backup name"
+                        />
+                        <input
+                          type="datetime-local"
+                          value={editExpiresAt}
+                          onChange={(e) => setEditExpiresAt(e.target.value)}
+                          className="bg-[#2b2d31] border border-[#111214] text-[#dbdee1] text-[11px] px-2 py-1 rounded outline-none"
+                          title="Leave empty to keep indefinitely"
+                        />
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          onClick={() => void handleUpdateTemplateMeta(tpl.id)}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+            {loadingTracked ? (
+              <p className="text-xs text-[#949ba4] py-4 text-center">
+                Loading tracked messages…
+              </p>
+            ) : trackedList.length === 0 ? (
+              <p className="text-xs text-[#949ba4] py-4 text-center">
+                No tracked Discord messages yet. Messages with dynamic{" "}
+                <code>{"{exploit.*}"}</code> or <code>{"{user.<ID>.*}"}</code> placeholders
+                are auto-tracked when sent.
+              </p>
+            ) : (
+              trackedList.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 p-2.5 rounded bg-[#1e1f22] border border-[#111214]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-[#dbdee1] truncate">
+                      Message <span className="font-mono">{item.messageId}</span>
+                    </p>
+                    <p className="text-[10px] text-[#949ba4] truncate">
+                      Channel: <span className="font-mono">{item.channelId}</span>
+                      {item.exploitName ? ` • Exploit: ${item.exploitName}` : ""}
+                      {item.templateId ? ` • Template #${item.templateId}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {item.templateId && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleLoad(item.templateId)}
+                        className="text-xs text-[#5865f2] hover:bg-[#5865f2]/10"
+                      >
+                        Load Template
+                      </Button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void handleUntrack(item.id)}
+                      className="px-2 py-1 text-[11px] text-[#f28b8b] hover:bg-[#da373c]/20 rounded"
+                      title="Stop auto-updating this message"
+                    >
+                      Untrack
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );

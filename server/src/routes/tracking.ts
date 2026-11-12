@@ -196,7 +196,7 @@ router.post(
     if (
       authorUserId !== undefined &&
       authorUserId !== null &&
-      (typeof authorUserId !== "string" || !/^\\d{17,20}$/.test(authorUserId))
+      (typeof authorUserId !== "string" || !/^\d{17,20}$/.test(authorUserId))
     ) {
       throw ApiError.badRequest("`authorUserId` must be a valid Discord user ID");
     }
@@ -265,6 +265,40 @@ router.post(
     }
 
     return res.json({ ok: true, tracked });
+  }),
+);
+
+/**
+ * Stop tracking a message if the caller has edit or delete permission
+ * and is allowed in the message's channel and guild.
+ */
+router.delete(
+  "/messages/:id",
+  attachUser,
+  requireStaffPermission("edit"),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw ApiError.badRequest("`id` must be a positive integer");
+    }
+
+    const list = await trackedMessageRepository.listAll();
+    const target = list.find((m) => m.id === id);
+    if (!target) {
+      throw ApiError.notFound("Tracked message record not found");
+    }
+
+    const staffCtx = req.staffContext;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const allowedChannels = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+      if (!allowedChannels.includes("*") && !allowedChannels.includes(target.channel_id)) {
+        throw ApiError.forbidden(`You are not allowed to access channel ${target.channel_id}`);
+      }
+      await assertStaffGuildAllowed(req, target.channel_id);
+    }
+
+    await trackedMessageRepository.deleteById(id);
+    return res.json({ ok: true, deletedId: id });
   }),
 );
 

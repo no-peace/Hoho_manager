@@ -336,5 +336,13 @@ export const migrations: readonly Migration[] = [
         ON custom_executors(enabled);
     `,
   },
+  {
+    id: "010_template_retention",
+    sql: `
+      ALTER TABLE templates ADD COLUMN expires_at TEXT;
+      CREATE INDEX IF NOT EXISTS idx_templates_expires_at
+        ON templates(expires_at);
+    `,
+  },
 ];
 

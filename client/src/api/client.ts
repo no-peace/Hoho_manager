@@ -126,6 +126,7 @@ export interface TemplateSummary {
   description: string | null;
   preview_image_url: string | null;
   is_public: number;
+  expires_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -173,8 +174,9 @@ export interface BotListResponse {
 
 export interface TemplateSaveBody {
   name: string;
-  data: unknown;
-  actions: unknown[];
+  data?: unknown;
+  actions?: unknown[];
+  expiresAt?: string | null;
 }
 
 export const api = {
@@ -392,6 +394,10 @@ export const api = {
       request<{ ok: boolean }>("/api/tracking/track", {
         method: "POST",
         body,
+      }),
+    untrack: (id: number) =>
+      request<{ ok: boolean; deletedId: number }>(`/api/tracking/messages/${id}`, {
+        method: "DELETE",
       }),
   },
 };

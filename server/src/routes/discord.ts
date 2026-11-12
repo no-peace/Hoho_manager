@@ -145,24 +145,14 @@ router.get("/guilds/:guildId/channels", requireStaffPermission("send"), requireA
 
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-    let allowed: string[] = [];
-    try {
-      const allowedChannels = parseAllowedIds(
-        staffCtx.record.allowed_channel_ids,
+    const allowedChannels = parseAllowedIds(
+      staffCtx.record.allowed_channel_ids,
+    );
+
+    if (!allowedChannels.includes("*")) {
+      channels = channels.filter((channel) =>
+        allowedChannels.includes(channel.id),
       );
-
-      if (!allowedChannels.includes("*")) {
-        channels = channels.filter((channel) =>
-          allowedChannels.includes(channel.id),
-        );
-      }
-    } catch {
-      allowed = [];
-    }
-
-    const allAllowed = allowed.includes("*");
-    if (!allAllowed) {
-      channels = channels.filter((c) => allowed.includes(c.id));
     }
   }
 
