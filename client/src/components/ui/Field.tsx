@@ -73,6 +73,7 @@ import { RichPicker } from "../editor/RichPicker";
 import { UNICODE_EMOJI_LIST } from "../../utils/unicodeEmojis";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
+import { aC } from "vitest/dist/chunks/reporters.d.BuRON0I0.js";
 
 const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
   const [open, setOpen] = useState(false);
@@ -593,14 +594,7 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
           onKeyDown={(e) => {
             props.onKeyDown?.(e);
             if (acState?.open) {
-              const q = acState.query.toLowerCase().replace(/^\{+/, "");
-              const filtered = ACTUAL_VARIABLES.filter(
-                (v) =>
-                  !q ||
-                  v.tag.toLowerCase().includes(q) ||
-                  v.desc.toLowerCase().includes(q) ||
-                  v.label.toLowerCase().includes(q),
-              ).slice(0, 8);
+              const filtered = getAutocompleteVariables(acState.query);
               if (filtered.length > 0) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
