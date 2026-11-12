@@ -126,6 +126,7 @@ export interface TemplateSummary {
   description: string | null;
   preview_image_url: string | null;
   is_public: number;
+  is_tracked?: number;
   expires_at?: string | null;
   created_at: string;
   updated_at: string;
@@ -177,6 +178,7 @@ export interface TemplateSaveBody {
   data?: unknown;
   actions?: unknown[];
   expiresAt?: string | null;
+  isTracked?: boolean;
 }
 
 export const api = {
