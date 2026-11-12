@@ -329,6 +329,38 @@ router.post(
       }
     };
 
+    const registerTracking = async (sent: unknown, index: number): Promise<void> => {
+      const sentId = sent !== null && typeof sent === "object"
+        ? (sent as Record<string, unknown>).id
+        : undefined;
+      if (typeof sentId !== "string") return;
+      const rawInputMsg = messagesToProcess[index];
+      const uninterpolatedCleanMsg = cleanseIds(rawInputMsg);
+      if (uninterpolatedCleanMsg && typeof uninterpolatedCleanMsg === "object") {
+        delete (uninterpolatedCleanMsg as Record<string, unknown>).username;
+        delete (uninterpolatedCleanMsg as Record<string, unknown>).avatar_url;
+      }
+      const rawStr = JSON.stringify(uninterpolatedCleanMsg);
+      const hasDynamic = /\{user\.\d{17,20}\./i.test(rawStr) ||
+        rawStr.includes("{exploit.") || rawStr.includes("discord.com/users/");
+      if (!(hasDynamic || req.body?.track === true || Boolean(req.body?.templateId) || Boolean(req.body?.exploitName))) return;
+      try {
+        const { trackMessage } = await import("../services/messageTrackerService.js");
+        await trackMessage({
+          channelId: String(channelId ?? ""),
+          messageId: sentId,
+          templateId: req.body?.templateId ? Number(req.body.templateId) : null,
+          exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
+          rawPayload: uninterpolatedCleanMsg,
+          resolvedPayload: finalMessages[index],
+          name: typeof req.body?.trackName === "string" ? req.body.trackName : null,
+          expiresAt: typeof req.body?.expiresAt === "string" ? req.body.expiresAt : null,
+        });
+      } catch (trackErr) {
+        log.warn("Failed to auto-track message:", trackErr);
+      }
+    };
+
     const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
     const urlFiles = await fetchUrlAttachments(body.attachments);
     if (uploadedFiles.length + urlFiles.length > 10) {
@@ -364,29 +396,7 @@ router.post(
         await registerMessageFlows(sent);
         sentList.push(sent);
 
-        // Auto-tracking for dynamic messages ({exploit.*}, {user.*}, author pfp, templates)
-        const sentId = (sent as any)?.id;
-        if (sentId) {
-          const rawStr = JSON.stringify(msg);
-          const hasDynamic =
-            rawStr.includes("{exploit.") ||
-            rawStr.includes("{user.") ||
-            rawStr.includes("discord.com/users/");
-          if (hasDynamic || req.body?.templateId || req.body?.exploitName) {
-            try {
-              const { trackMessage } = await import("../services/messageTrackerService.js");
-              await trackMessage({
-                channelId,
-                messageId: sentId,
-                templateId: req.body?.templateId ? Number(req.body.templateId) : null,
-                exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
-                rawPayload: msg,
-              });
-            } catch (trackErr) {
-              log.warn("Failed to auto-track message:", trackErr);
-            }
-          }
-        }
+        await registerTracking(sent, i);
       }
       if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
         const { staffRepository } = await import("../repositories/staffRepository.js");
@@ -410,6 +420,7 @@ router.post(
         files,
       });
       await registerMessageFlows(sent);
+      await registerTracking(sent, 0);
       sentList.push(sent);
       log.info(
         `Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`,
@@ -424,29 +435,7 @@ router.post(
         await registerMessageFlows(sent);
         sentList.push(sent);
 
-        // Auto-tracking for dynamic messages ({exploit.*}, {user.*}, author pfp, templates)
-        const sentId = (sent as any)?.id;
-        if (sentId) {
-          const rawStr = JSON.stringify(msg);
-          const hasDynamic =
-            rawStr.includes("{exploit.") ||
-            rawStr.includes("{user.") ||
-            rawStr.includes("discord.com/users/");
-          if (hasDynamic || req.body?.templateId || req.body?.exploitName) {
-            try {
-              const { trackMessage } = await import("../services/messageTrackerService.js");
-              await trackMessage({
-                channelId,
-                messageId: sentId,
-                templateId: req.body?.templateId ? Number(req.body.templateId) : null,
-                exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
-                rawPayload: msg,
-              });
-            } catch (trackErr) {
-              log.warn("Failed to auto-track message:", trackErr);
-            }
-          }
-        }
+        await registerTracking(sent, i);
       }
       log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
     }
