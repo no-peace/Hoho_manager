@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
+import { Checkbox } from "../ui/Field";
 import { Button } from "../ui/Button";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
@@ -121,6 +122,9 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       setSendResult(null);
       setLoadedMessageId(null);
       setBotMessages([]);
+      const activePayload = JSON.stringify(useMessageStore.getState().getAllPayloads());
+      setTrackAfterSend(/\\{user\\.\\d{17,20}\\./i.test(activePayload) || activePayload.includes("{exploit.") || activePayload.includes("discord.com/users/"));
+      setCustomExpiry(null);
 
       const activeData = useMessageStore.getState().data as any;
       if (
@@ -589,18 +593,12 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
         )}
 
         <section className="space-y-3 rounded-lg border border-[#26282d] bg-[#18191c] p-3">
-          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#dbdee1]">
-            <input
-              type="checkbox"
-              checked={trackAfterSend}
-              onChange={(event) => setTrackAfterSend(event.target.checked)}
-              className="sr-only"
-            />
-            <span className={`flex h-4 w-4 items-center justify-center rounded-[4px] border ${trackAfterSend ? "border-[#5865f2] bg-[#5865f2]" : "border-[#3f4147] bg-[#232428]"}`}>
-              {trackAfterSend && <span className="text-[10px] font-bold text-white">✓</span>}
-            </span>
-            Track this message (Auto-update dynamic variables)
-          </label>
+          <Checkbox
+            checked={trackAfterSend}
+            onChange={setTrackAfterSend}
+            label="Track this message (Auto-update dynamic variables)"
+            className="text-xs font-medium"
+          />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] text-[#949ba4]">Optional retention expiry</span>
             <DateTimePickerPopover value={customExpiry} onChange={setCustomExpiry} placeholder="No expiry" />
