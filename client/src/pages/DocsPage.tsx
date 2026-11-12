@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { updatePageSeo } from "../utils/seo";
 import {
   ArrowLeft,
   BookOpen,
@@ -96,6 +97,9 @@ const DOC_ITEMS: DocItem[] = [
 ];
 
 export const DocsPage = () => {
+  useEffect(() => {
+    updatePageSeo({ title: "HoHo Manager Docs — Variables & Dynamic Tracking", description: "Complete reference for HoHo Manager dynamic variables, tracking, and interactive flows.", path: "/docs", schemaType: "TechArticle" });
+  }, []);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
