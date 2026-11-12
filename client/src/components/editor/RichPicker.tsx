@@ -11,7 +11,8 @@ import {
   Megaphone,
 } from "lucide-react";
 import { VARIABLES } from "../ui/Field";
-import { useGlobalStore } from "../../store/globalStore";
+import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
+import { getServerNow, useGlobalStore } from "../../store/globalStore";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
 import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
@@ -106,14 +107,14 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
 
   // Time tab state (use local YYYY-MM-DD to match local HH:mm)
   const [selectedDate, setSelectedDate] = useState(() => {
-    const now = new Date();
+    const now = getServerNow();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, "0");
     const d = String(now.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   });
   const [selectedTime, setSelectedTime] = useState(() => {
-    const now = new Date();
+    const now = getServerNow();
     return now.toTimeString().split(" ")[0].slice(0, 5); // HH:mm
   });
 
@@ -578,29 +579,20 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-[#949ba4] mb-1">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="block text-[11px] font-semibold text-[#949ba4]">Date &amp; Time</label>
+              <DateTimePickerPopover
+                allowPastDates={true}
+                value={new Date(`${selectedDate}T${selectedTime}:00`).toISOString()}
+                onChange={(value) => {
+                  const target = value ? new Date(value) : getServerNow();
+                  const year = target.getFullYear();
+                  const month = String(target.getMonth() + 1).padStart(2, "0");
+                  const day = String(target.getDate()).padStart(2, "0");
+                  setSelectedDate(`${year}-${month}-${day}`);
+                  setSelectedTime(target.toTimeString().slice(0, 5));
+                }}
+              />
             </div>
 
             <div>
