@@ -35,6 +35,7 @@ import { downloadJson, parseImportedJson, toQueryData } from "./utils/exportImpo
 import { copyTextToClipboard } from "./utils/clipboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import api from "./api/client";
+import { AnimatePresence, motion } from "motion/react";
 import { Checkbox } from "./components/ui/Field";
 import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
 import { getServerNow } from "./store/globalStore";
@@ -482,8 +483,16 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 </div>
               </div>
 
-              {editingKey === item.key && (
-                <div className="space-y-3 border-t border-[#2b2d31] pt-3">
+              <AnimatePresence>
+                {editingKey === item.key && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: -4 }}
+                  transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ transformOrigin: "top left" }}
+                  className="space-y-3 border-t border-[#2b2d31] pt-3"
+                >
                   <input
                     type="text"
                     value={editName}
@@ -503,8 +512,9 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                     <Button size="sm" variant="ghost" onClick={() => setEditingKey(null)}>Cancel</Button>
                     <Button size="sm" variant="primary" onClick={() => void saveItemEdit(item.source, item.kind)}>Save Changes</Button>
                   </div>
-                </div>
-              )}
+                </motion.div>
+                )}
+              </AnimatePresence>
             </article>
           ))}
         </div>
