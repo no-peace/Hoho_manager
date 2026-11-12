@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import { motion } from "motion/react";
 import {
   Bot,
   Plus,
@@ -905,7 +906,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
+    <div className="flex h-dvh flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden">
       <Header
         onOpenBackups={() => setBackupsOpen(true)}
         onOpenJson={() => setJsonModalOpen(true)}
@@ -939,76 +940,6 @@ export const App: React.FC = () => {
             mobileActivePane={mobileView === "editor" ? "left" : "right"}
             left={
               <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0 overflow-y-auto xl:overflow-hidden custom-scrollbar">
-                {/* Top Action Bar: scrolls away on mobile/tablet (<xl) so editor gets full height, pinned on desktop (xl+) */}
-                <div className="p-2.5 sm:p-3 bg-[#232428] border-b border-[#1e1f22] shrink-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={handleShare}
-                        className="text-xs"
-                      >
-                        Share
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setBackupsOpen(true)}
-                        className="text-xs"
-                      >
-                        Backups
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setJsonModalOpen(true)}
-                        className="text-xs"
-                      >
-                        JSON
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setConfigModalOpen(true)}
-                        className="text-xs text-[#5865f2] hover:bg-[#5865f2]/15"
-                      >
-                        Bot Config
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleClearAll}
-                        className="text-xs text-[#f28b8b] hover:bg-[#da373c]/20"
-                      >
-                        Clear All
-                      </Button>
-                    </div>
-
-                    {/* Bot Dispatch Controls */}
-                    <div className="flex items-center gap-2">
-                      {/* Bot Token Dispatch */}
-                      <div className="inline-flex rounded-lg overflow-hidden border border-[#1a6334] shadow-sm">
-                        <button
-                          type="button"
-                          onClick={() => openBotModal("send")}
-                          className="bg-[#248046] hover:bg-[#1a6334] active:scale-[0.98] text-white px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 border-r border-[#1a6334] select-none"
-                        >
-                          <Bot size={13} /> Bot Send
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openBotModal("edit")}
-                          className="bg-[#1a6334] hover:bg-[#144f28] active:scale-[0.98] text-white px-2.5 py-1.5 text-xs font-medium transition-all flex items-center gap-1 select-none"
-                          title="Edit message via bot token"
-                        >
-                          <Edit3 size={11} /> Edit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Multi-Message Workspace */}
                 <div className="flex-1 xl:overflow-y-auto p-2.5 sm:p-3 space-y-3 custom-scrollbar">
                   {displayMessages.map((_, idx) => (
@@ -1098,37 +1029,47 @@ export const App: React.FC = () => {
       {/* Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
       <nav
         aria-label="Mobile workspace navigation"
-        className="xl:hidden flex items-center bg-[#1e1f22]/95 backdrop-blur-md border-t border-[#111214] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        className="xl:hidden flex items-center bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         <button
           type="button"
           onClick={() => setMobileView("editor")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98] select-none ${mobileView === "editor"
-            ? "bg-[#5865f2] text-white shadow-md shadow-[#5865f2]/20"
-            : "bg-[#2b2d31] text-[#b5bac1] hover:text-white border border-[#35373c]/50"
-            }`}
+          aria-pressed={mobileView === "editor"}
+          className="relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.98] select-none"
         >
-          <Edit3 size={14} />
-          <span>Editor</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 font-mono">
+          {mobileView === "editor" && (
+            <motion.span
+              layoutId="mobileWorkspaceTab"
+              className="absolute inset-0 rounded-lg bg-[#5865f2]"
+              transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            />
+          )}
+          <Edit3 size={14} className="relative z-10" />
+          <span className={`relative z-10 ${mobileView === "editor" ? "text-white" : ""}`}>Editor</span>
+          <span className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}>
             {displayMessages.length}
           </span>
         </button>
         <button
           type="button"
           onClick={() => setMobileView("preview")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98] select-none ${mobileView === "preview"
-            ? "bg-[#5865f2] text-white shadow-md shadow-[#5865f2]/20"
-            : "bg-[#2b2d31] text-[#b5bac1] hover:text-white border border-[#35373c]/50"
-            }`}
+          aria-pressed={mobileView === "preview"}
+          className="relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.98] select-none"
         >
-          <Eye size={14} />
-          <span>Preview</span>
+          {mobileView === "preview" && (
+            <motion.span
+              layoutId="mobileWorkspaceTab"
+              className="absolute inset-0 rounded-lg bg-[#5865f2]"
+              transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            />
+          )}
+          <Eye size={14} className="relative z-10" />
+          <span className={`relative z-10 ${mobileView === "preview" ? "text-white" : ""}`}>Preview</span>
         </button>
         <button
           type="button"
           onClick={() => openBotModal("send")}
-          className="px-4 py-2.5 rounded-xl bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-all active:scale-[0.98] shadow-md shadow-[#248046]/20 shrink-0 flex items-center gap-1.5 select-none"
+          className="px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors active:scale-[0.98] shrink-0 flex items-center gap-1.5 select-none"
         >
           <Send size={13} />
           <span>Dispatch</span>
