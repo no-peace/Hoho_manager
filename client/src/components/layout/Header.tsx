@@ -10,6 +10,11 @@ import {
   Shield,
   ArrowLeft,
   KeyRound,
+  FileJson,
+  Share2,
+  Trash2,
+  Bot,
+  Edit3,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
@@ -43,7 +48,13 @@ export interface HeaderProps {
   onOpenSend?: (mode: "send" | "edit") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenBackups,
+  onOpenJson,
+  onShare,
+  onClearAll,
+  onOpenSend,
+}) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -152,18 +163,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
             >
               <KeyRound size={14} className="text-[#f0b232]" />
               <span className="hidden md:inline">Bot Config</span>
-            </button>
-          )}
-
-          {onOpenBackups && (
-            <button
-              type="button"
-              onClick={onOpenBackups}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-all select-none"
-              title="Saved Templates & Backups"
-            >
-              <FolderOpen size={14} className="text-[#949ba4]" />
-              <span className="hidden md:inline">Backups</span>
             </button>
           )}
         </div>
@@ -325,6 +324,41 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups }) => {
         </div>
       </header>
 
+      <div className="relative z-10 flex min-h-10 shrink-0 items-center justify-between gap-2 border-b border-[#26282d] bg-[#18191c] px-3 py-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          {onOpenBackups && (
+            <button type="button" onClick={onOpenBackups} className="inline-flex items-center gap-1.5 rounded-lg border border-[#26282d] bg-[#232428] px-2.5 py-1.5 text-xs font-semibold text-[#dbdee1] transition-colors hover:bg-[#2b2d31] active:scale-[0.98]">
+              <FolderOpen size={13} /> <span>Backups &amp; Tracking</span>
+            </button>
+          )}
+          {onOpenJson && (
+            <button type="button" onClick={onOpenJson} className="inline-flex items-center gap-1.5 rounded-lg border border-[#26282d] bg-[#232428] px-2.5 py-1.5 text-xs font-semibold text-[#dbdee1] transition-colors hover:bg-[#2b2d31] active:scale-[0.98]">
+              <FileJson size={13} /> <span className="hidden sm:inline">JSON</span>
+            </button>
+          )}
+          {onShare && (
+            <button type="button" onClick={onShare} className="inline-flex items-center gap-1.5 rounded-lg border border-[#26282d] bg-[#232428] px-2.5 py-1.5 text-xs font-semibold text-[#dbdee1] transition-colors hover:bg-[#2b2d31] active:scale-[0.98]">
+              <Share2 size={13} /> <span className="hidden sm:inline">Share</span>
+            </button>
+          )}
+          {onClearAll && (
+            <button type="button" onClick={onClearAll} className="inline-flex items-center gap-1.5 rounded-lg border border-[#71383b]/60 bg-[#3a2427]/40 px-2.5 py-1.5 text-xs font-semibold text-[#f28b8b] transition-colors hover:bg-[#da373c]/15 active:scale-[0.98]">
+              <Trash2 size={13} /> <span className="hidden sm:inline">Clear</span>
+            </button>
+          )}
+        </div>
+        {onOpenSend && (
+          <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-[#1a6334]">
+            <button type="button" onClick={() => onOpenSend("send")} className="inline-flex items-center gap-1.5 bg-[#248046] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#1a6334] active:scale-[0.98]">
+              <Bot size={13} /> <span>Bot Send</span>
+            </button>
+            <button type="button" onClick={() => onOpenSend("edit")} title="Edit message via bot token" className="inline-flex items-center gap-1 border-l border-[#1a6334] bg-[#1a6334] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#144f28] active:scale-[0.98]">
+              <Edit3 size={12} /> <span className="hidden sm:inline">Edit</span>
+            </button>
+          </div>
+        )}
+      </div>
+      
       {isAdmin && <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
       {isAdmin && (

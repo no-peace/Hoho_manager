@@ -18,11 +18,13 @@ export interface ModalProps {
 
 // Module-level stack for managing active modal count and top-most escape handling
 let openModalCount = 0;
+let previousBodyOverflow = "";
 const modalStack: (() => void)[] = [];
 
 if (typeof document !== "undefined") {
   document.addEventListener("keydown", (e: KeyboardEvent) => {
     if (e.key === "Escape" && modalStack.length > 0) {
+      e.preventDefault();
       e.stopPropagation();
       const topClose = modalStack[modalStack.length - 1];
       topClose?.();
@@ -49,8 +51,9 @@ export const Modal: React.FC<ModalProps> = ({
   useEffect(() => {
     if (!open) return;
 
-    openModalCount++;
     if (typeof document !== "undefined" && document.body) {
+      if (openModalCount === 0) previousBodyOverflow = document.body.style.overflow;
+      openModalCount++;
       document.body.style.overflow = "hidden";
     }
 
@@ -60,8 +63,8 @@ export const Modal: React.FC<ModalProps> = ({
 
     return () => {
       openModalCount = Math.max(0, openModalCount - 1);
-      if (typeof document !== "undefined" && document.body) {
-        document.body.style.overflow = "hidden"; // Retains Studio's fixed layout invariant
+      if (typeof document !== "undefined" && document.body && openModalCount === 0) {
+        document.body.style.overflow = previousBodyOverflow;
       }
       if (closeOnEscape) {
         const idx = modalStack.lastIndexOf(onClose);

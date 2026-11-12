@@ -483,8 +483,12 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
     modalStack: (() => void)[] = [];
     openModalCount = 0;
     bodyOverflow = "";
+    previousBodyOverflow = "";
 
     openModal(onClose: () => void, closeOnEscape = true): () => void {
+      if (this.openModalCount === 0) {
+        this.previousBodyOverflow = this.bodyOverflow;
+      }
       this.openModalCount++;
       this.bodyOverflow = "hidden";
 
@@ -494,7 +498,9 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
 
       return () => {
         this.openModalCount = Math.max(0, this.openModalCount - 1);
-        this.bodyOverflow = "hidden"; // Retains Studio fixed layout invariant
+        if (this.openModalCount === 0) {
+          this.bodyOverflow = this.previousBodyOverflow;
+        }
         if (closeOnEscape) {
           const idx = this.modalStack.lastIndexOf(onClose);
           if (idx !== -1) {
@@ -603,9 +609,9 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
     expect(manager.modalStack.length).toBe(0);
   });
 
-  it("retains Studio invariant: body overflow remains hidden throughout entire modal lifecycle", () => {
+  it("keeps body overflow locked while a modal is open and restores its previous value afterward", () => {
     const manager = new ModalStackManager();
-    expect(manager.bodyOverflow).toBe("");
+    manager.bodyOverflow = "auto";
 
     // Open Modal 1
     const unmount1 = manager.openModal(vi.fn());
@@ -621,7 +627,7 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
 
     // Close Modal 1
     unmount1();
-    expect(manager.bodyOverflow).toBe("hidden"); // Retains Studio invariant!
+    expect(manager.bodyOverflow).toBe("auto");
   });
 
   it("ignores Escape when modal has closeOnEscape: false", () => {
@@ -660,8 +666,10 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
       );
     });
 
-    it("verifies body overflow retention invariant", () => {
-      expect(source).toContain('document.body.style.overflow = "hidden"; // Retains Studio\'s fixed layout invariant');
+    it("verifies body overflow is restored after the last modal closes", () => {
+      expect(source).toContain("if (openModalCount === 0) previousBodyOverflow = document.body.style.overflow");
+      expect(source).toContain("openModalCount === 0) {");
+      expect(source).toContain("document.body.style.overflow = previousBodyOverflow");
     });
 
     it("verifies backdrop click guard (e.target === e.currentTarget)", () => {
