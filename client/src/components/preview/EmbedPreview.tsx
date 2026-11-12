@@ -1,5 +1,6 @@
 import type { EmbedData, EmbedField } from "@dmb/shared";
 import { Markdown } from "./Markdown";
+import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { decimalToHex } from "../../utils/discord";
 import { useMessageStore } from "../../store/messageStore";
 import { useGlobalStore } from "../../store/globalStore";
@@ -51,7 +52,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   const accent = embed.color == null ? "#4f545c" : decimalToHex(embed.color);
   const rows = groupFields(embed.fields);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
-
+  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const guilds = useDiscordCacheStore((state) => state.guilds);
@@ -84,10 +85,14 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       "now.unix": String(Math.floor(Date.now() / 1000)),
       "now.iso": new Date().toISOString(),
     };
-    return text.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (m, k: string) => {
-      const key = k.trim().toLowerCase();
-      return map[key] ?? m;
-    });
+    const withLocalVars = text.replace(
+      /\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g,
+      (m, k: string) => {
+        const key = k.trim().toLowerCase();
+        return map[key] ?? m;
+      },
+    );
+    return resolveUserPlaceholders(withLocalVars);
   };
 
   const resolveAttachmentUrl = (url?: string): string | undefined => {
@@ -140,7 +145,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
             <div className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
               {embed.url ? (
                 <a
-                  href={embed.url}
+                  href={resolvePlainVars(embed.url)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-link hover:underline break-words [overflow-wrap:anywhere]"

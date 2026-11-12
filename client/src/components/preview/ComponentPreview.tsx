@@ -3,6 +3,7 @@ import type { ComponentNode } from "@dmb/shared";
 import { ComponentType } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { ActionRowPreview, ButtonPreview, SelectPreview } from "./ActionRowPreview";
+import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useMessageStore } from "../../store/messageStore";
 
 /**
@@ -31,21 +32,26 @@ const SeparatorPreview = ({ component }: { component: ComponentNode }) =>
 const resolveAttachment = (
   url: string | undefined,
   attachedFiles: { name: string; previewUrl: string }[],
+  resolveUserPlaceholders: (value: string) => string,
 ): string | undefined => {
   if (!url) return undefined;
-  if (url.startsWith("attachment://")) {
-    const filename = url.slice("attachment://".length);
+
+  const resolvedUrl = resolveUserPlaceholders(url);
+
+  if (resolvedUrl.startsWith("attachment://")) {
+    const filename = resolvedUrl.slice("attachment://".length);
     const match = attachedFiles.find(
       (f) => f.name === filename || `SPOILER_${f.name}` === filename,
     );
     if (match) return match.previewUrl;
   }
-  return url;
+  return resolvedUrl;
 };
 
 const SectionPreview = ({ component }: { component: ComponentNode }) => {
   const attachedFiles = useMessageStore((s) => s.attachedFiles);
-  const thumbnail = resolveAttachment(component.accessory?.media?.url, attachedFiles);
+  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
+  const thumbnail = resolveAttachment(component.accessory?.media?.url, attachedFiles, resolveUserPlaceholders);
   const isButton = component.accessory?.type === ComponentType.Button;
 
   return (
@@ -70,6 +76,7 @@ const SectionPreview = ({ component }: { component: ComponentNode }) => {
 const MediaGalleryPreview = ({ component }: { component: ComponentNode }) => {
   const attachedFiles = useMessageStore((s) => s.attachedFiles);
   const items = component.items ?? [];
+  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   if (items.length === 0) return <p className="text-xs text-[#6d6f78]">No gallery images</p>;
 
   const cols = items.length === 1 ? "grid-cols-1" : items.length === 2 ? "grid-cols-2" : "grid-cols-3";
@@ -79,7 +86,7 @@ const MediaGalleryPreview = ({ component }: { component: ComponentNode }) => {
       {items.map((item) => (
         <img
           key={item._id}
-          src={resolveAttachment(item.media.url, attachedFiles)}
+          src={resolveAttachment(item.media.url, attachedFiles, resolveUserPlaceholders)}
           alt={item.description ?? ""}
           className="h-32 w-full rounded object-cover"
         />

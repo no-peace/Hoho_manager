@@ -90,6 +90,7 @@ const getUserField = (
     case "id":
       return user.id;
     case "avatar":
+    case "avatarurl":
     case "icon":
     case "pfp":
       return getDiscordUserAvatarUrl(user);

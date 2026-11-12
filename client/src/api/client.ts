@@ -233,6 +233,23 @@ export const api = {
       request<{ id: string; username: string; avatar: string | null } | null>(
         `/api/discord/identity${profileId ? `?profileId=${profileId}` : ""}`
       ),
+    resolveUsers: (ids: string[], signal?: AbortSignal) =>
+      request<{
+        users: Record<
+          string,
+          {
+            id: string;
+            username: string;
+            globalName: string | null;
+            avatarUrl: string;
+            profileUrl: string;
+          }
+        >;
+        failedIds: string[];
+      }>(
+        `/api/discord/users/resolve?ids=${encodeURIComponent(ids.join(","))}`,
+        { signal },
+      ),
     guilds: (profileId?: number) =>
       request<{ guilds: { id: string; name: string; icon: string | null }[] }>(
         `/api/discord/guilds${profileId ? `?profileId=${profileId}` : ""}`

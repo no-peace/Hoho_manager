@@ -19,6 +19,12 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     getChannelGuildId: vi.fn().mockResolvedValue("guild_123"),
     getGuildRoles: vi.fn().mockResolvedValue([]),
     getBotGuilds: vi.fn().mockResolvedValue([]),
+    getDiscordUser: vi.fn(),
+    getDiscordUserAvatarUrl: vi.fn((user: { id: string; avatar: string | null }) =>
+      user.avatar
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`
+        : "https://cdn.discordapp.com/embed/avatars/0.png",
+    ),
     getWebhookInfo: vi.fn().mockResolvedValue({ id: "hook_1", name: "Webhook REST" }),
     resolveBotToken: vi.fn().mockResolvedValue("Bot.FakeToken"),
   };
@@ -348,14 +354,131 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
   });
 
   // 10. /api/discord
-  describe("GET /api/discord/guilds/:guildId/channels", () => {
+  describe("GET /api/discord", () => {
+    const USER_A = "123456789012345678";
+    const USER_B = "223456789012345678";
+
+    const makeUser = (id: string, username: string) => ({
+      id,
+      username,
+      global_name: username === "peace" ? "Peace" : null,
+      nickname: null,
+      avatar: "avatar_hash",
+    });
+
     it("returns channel list", async () => {
       const res = await fetch(`${baseUrl}/api/discord/guilds/123/channels`, {
         headers: { "x-admin-key": env.adminApiKey },
       });
+
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(Array.isArray(json.channels)).toBe(true);
+    });
+
+    describe("GET /api/discord/users/resolve", () => {
+      const adminHeaders = {
+        "x-admin-key": env.adminApiKey,
+      };
+
+      it("rejects a request without IDs", async () => {
+        const res = await fetch(`${baseUrl}/api/discord/users/resolve`, {
+          headers: adminHeaders,
+        });
+
+        expect(res.status).toBe(400);
+      });
+
+      it("rejects invalid Discord user IDs", async () => {
+        const res = await fetch(
+          `${baseUrl}/api/discord/users/resolve?ids=not-a-discord-id`,
+          { headers: adminHeaders },
+        );
+
+        expect(res.status).toBe(400);
+      });
+
+      it("rejects more than 10 unique IDs", async () => {
+        const ids = Array.from(
+          { length: 11 },
+          (_, index) => `${String(index + 1).padStart(17, "0")}`,
+        );
+
+        const res = await fetch(
+          `${baseUrl}/api/discord/users/resolve?ids=${ids.join(",")}`,
+          { headers: adminHeaders },
+        );
+
+        expect(res.status).toBe(400);
+      });
+
+      it("deduplicates IDs and returns safe user profile data", async () => {
+        vi.mocked(discordService.getDiscordUser).mockResolvedValue(
+          makeUser(USER_A, "peace") as any,
+        );
+
+        const res = await fetch(
+          `${baseUrl}/api/discord/users/resolve?ids=${USER_A},${USER_A}`,
+          { headers: adminHeaders },
+        );
+
+        expect(res.status).toBe(200);
+
+        const json = await res.json();
+
+        expect(Object.keys(json.users)).toEqual([USER_A]);
+        expect(json.failedIds).toEqual([]);
+
+        expect(json.users[USER_A]).toEqual({
+          id: USER_A,
+          username: "peace",
+          globalName: "Peace",
+          avatarUrl: `https://cdn.discordapp.com/avatars/${USER_A}/avatar_hash.png?size=1024`,
+          profileUrl: `https://discord.com/users/${USER_A}`,
+        });
+
+        expect(discordService.getDiscordUser).toHaveBeenCalledTimes(1);
+        expect(discordService.getDiscordUser).toHaveBeenCalledWith(USER_A);
+      });
+
+      it("returns successful users and reports failed lookups separately", async () => {
+        vi.mocked(discordService.getDiscordUser).mockImplementation(
+          async (id) => {
+            if (id === USER_A) return makeUser(USER_A, "peace") as any;
+            throw new Error("Discord API unavailable");
+          },
+        );
+
+        const res = await fetch(
+          `${baseUrl}/api/discord/users/resolve?ids=${USER_A},${USER_B}`,
+          { headers: adminHeaders },
+        );
+
+        expect(res.status).toBe(200);
+
+        const json = await res.json();
+
+        expect(json.users[USER_A]).toBeDefined();
+        expect(json.users[USER_B]).toBeUndefined();
+        expect(json.failedIds).toContain(USER_B);
+      });
+
+      it("does not expose raw Discord errors or bot credentials", async () => {
+        vi.mocked(discordService.getDiscordUser).mockRejectedValue(
+          new Error("Bot token SECRET_TOKEN Discord API failure"),
+        );
+
+        const res = await fetch(
+          `${baseUrl}/api/discord/users/resolve?ids=${USER_A}`,
+          { headers: adminHeaders },
+        );
+
+        const body = await res.text();
+
+        expect(body).not.toContain("SECRET_TOKEN");
+        expect(body).not.toContain("Bot token");
+        expect(body).not.toContain("Discord API failure");
+      });
     });
   });
 

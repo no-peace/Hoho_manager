@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronDown, ExternalLink, Check } from "lucide-react";
 import type { ComponentNode, SelectOption } from "@dmb/shared";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
+import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
 
@@ -80,27 +81,29 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const guilds = useDiscordCacheStore((state) => state.guilds);
-
+  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   const rawLabel = button.label ?? (isLink ? "Link" : "Button");
-  const resolvedLabel = rawLabel.includes("{")
-    ? rawLabel.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (match, rawKey: string) => {
-        const key = rawKey.trim().toLowerCase();
-        const username = currentUser?.username || "User";
-        const displayName = currentUser?.global_name || username;
-        const userId = currentUser?.id || "123456789012345678";
-        const guild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
-        const map: Record<string, string> = {
-          "user.name": username,
-          "user.tag": username,
-          "user.displayname": displayName,
-          "user.id": userId,
-          "user.clantag": "HOHO",
-          "server.name": guild?.name || "HoHo Server",
-          "server.id": guild?.id || selectedGuildId || "987654321",
-        };
-        return map[key] ?? match;
-      })
-    : rawLabel;
+  const resolvedLabel = resolveUserPlaceholders(
+    rawLabel.includes("{")
+      ? rawLabel.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (match, rawKey: string) => {
+          const key = rawKey.trim().toLowerCase();
+          const username = currentUser?.username || "User";
+          const displayName = currentUser?.global_name || username;
+          const userId = currentUser?.id || "123456789012345678";
+          const guild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
+          const map: Record<string, string> = {
+            "user.name": username,
+            "user.tag": username,
+            "user.displayname": displayName,
+            "user.id": userId,
+            "user.clantag": "HOHO",
+            "server.name": guild?.name || "HoHo Server",
+            "server.id": guild?.id || selectedGuildId || "987654321",
+          };
+          return map[key] ?? match;
+        })
+      : rawLabel,
+  );
 
   return (
     <button

@@ -208,6 +208,75 @@ router.get("/guilds/:guildId/emojis", requireStaffPermission("send"), requireAll
   return res.json({ emojis });
 }));
 
+const DISCORD_SNOWFLAKE_REGEX = /^\d{17,20}$/;
+const MAX_PREVIEW_USER_IDS = 10;
+
+/**
+ * Resolve Discord user placeholders for the live editor preview.
+ * Only safe profile fields are returned; the bot token remains server-side.
+ */
+router.get(
+  "/users/resolve",
+  requireStaffPermission("send"),
+  asyncHandler(async (req, res) => {
+    const rawIds = req.query.ids;
+
+    if (typeof rawIds !== "string" || rawIds.length === 0) {
+      throw ApiError.badRequest("`ids` query parameter is required");
+    }
+
+    const ids = [...new Set(rawIds.split(",").map((id) => id.trim()).filter(Boolean))];
+
+    if (ids.length === 0 || ids.length > MAX_PREVIEW_USER_IDS) {
+      throw ApiError.badRequest(
+        `Provide between 1 and ${MAX_PREVIEW_USER_IDS} unique Discord user IDs`,
+      );
+    }
+
+    if (ids.some((id) => !DISCORD_SNOWFLAKE_REGEX.test(id))) {
+      throw ApiError.badRequest("One or more Discord user IDs are invalid");
+    }
+
+    const users: Record<
+      string,
+      {
+        id: string;
+        username: string;
+        globalName: string | null;
+        avatarUrl: string;
+        profileUrl: string;
+      }
+    > = {};
+    const failedIds: string[] = [];
+
+    // Sequential requests deliberately bound outbound Discord API traffic.
+    // getDiscordUser already caches successful results and coalesces in-flight lookups.
+    for (const id of ids) {
+      try {
+        const user = await discord.getDiscordUser(id);
+
+        if (!user || user.id !== id || typeof user.username !== "string") {
+          failedIds.push(id);
+          continue;
+        }
+
+        users[id] = {
+          id: user.id,
+          username: user.username,
+          globalName: user.global_name ?? null,
+          avatarUrl: discord.getDiscordUserAvatarUrl(user),
+          profileUrl: `https://discord.com/users/${user.id}`,
+        };
+      } catch {
+        // Do not expose upstream Discord errors or credentials to the browser.
+        failedIds.push(id);
+      }
+    }
+
+    return res.json({ users, failedIds });
+  }),
+);
+
 router.get("/identity", requireStaffOrAdmin, asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
   const token = await discord.resolveBotToken(profileId);

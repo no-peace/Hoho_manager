@@ -1,6 +1,7 @@
 // client/src/components/preview/Markdown.tsx
 import React, { useState, useEffect } from "react";
 import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
+import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useGlobalStore } from "../../store/globalStore";
 import {
   useDiscordCacheStore,
@@ -691,6 +692,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const currentUser = useGlobalStore((state) => state.currentUser);
+  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
   useEffect(() => {
@@ -754,8 +756,9 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   };
 
   // Interpolate `{exploit.<Name>.<Field>}` and `{user.*}` / `{now.*}` in live preview
-  const resolvedContent = content.includes("{")
-    ? content
+  const withResolvedDiscordUser = resolveUserPlaceholders(content);
+  const resolvedContent = withResolvedDiscordUser.includes("{")
+    ? withResolvedDiscordUser
         .replace(/\{exploit([.:])([^{}\n]+)\}/gi, (full, sep: string, rest: string) => {
           let targetName = "";
           let fieldName = "";
@@ -778,7 +781,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
           const k = rawKey.trim();
           return previewVars[k] ?? previewVars[k.toLowerCase()] ?? match;
         })
-    : content;
+    : withResolvedDiscordUser;
 
   const lines = resolvedContent.split("\n");
   const renderedElements: React.ReactNode[] = [];
