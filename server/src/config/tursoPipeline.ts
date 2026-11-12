@@ -58,7 +58,10 @@ const buildStatement = (sql: string, params?: TursoQueryParams): Record<string, 
   if (Array.isArray(params)) return { sql, args: params.map(toTursoArg) };
 
   const namedArgs = Object.entries(params as Record<string, unknown>)
-    .filter(([key]) => new RegExp(`[@:$]\\b${key.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`).test(sql))
+    .filter(([key]) => {
+      const name = key.replace(/^[@:$]/, "");
+      return ["@", ":", "$"].some((prefix) => sql.includes(`${prefix}${name}`));
+    })
     .map(([key, value]) => ({
       name: key.replace(/^[@:$]/, ""),
       value: toTursoArg(value),
