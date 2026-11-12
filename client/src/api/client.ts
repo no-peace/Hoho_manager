@@ -396,6 +396,11 @@ export const api = {
         method: "POST",
         body,
       }),
+    update: (id: number, body: { name?: string | null; expiresAt?: string | null; track?: boolean }) =>
+      request<{ ok: boolean; tracked: boolean; message?: any }>(`/api/tracking/messages/${id}`, {
+        method: "PATCH",
+        body,
+      }),
     untrack: (id: number) =>
       request<{ ok: boolean; deletedId: number }>(`/api/tracking/messages/${id}`, {
         method: "DELETE",
