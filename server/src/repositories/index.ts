@@ -16,8 +16,6 @@ import {
 } from "./interactionReceiptRepository.js";
 import { flowRepository, FlowRepository } from "./flowRepository.js";
 import {
-  botProfileRepository,
-  BotProfileRepository,
   webhookProfileRepository,
   WebhookProfileRepository,
 } from "./profileRepository.js";
@@ -31,7 +29,7 @@ export interface Repositories {
   interactionReceipts: InteractionReceiptRepository;
   flows: FlowRepository;
   webhookProfiles: WebhookProfileRepository;
-  botProfiles: BotProfileRepository;
+
 }
 
 export const repositories: Repositories = Object.freeze({
@@ -41,7 +39,6 @@ export const repositories: Repositories = Object.freeze({
   interactionReceipts: interactionReceiptRepository,
   flows: flowRepository,
   webhookProfiles: webhookProfileRepository,
-  botProfiles: botProfileRepository,
 });
 
 export {
@@ -49,8 +46,6 @@ export {
   ActionRepository,
   interactionReceiptRepository,
   InteractionReceiptRepository,
-  botProfileRepository,
-  BotProfileRepository,
   flowRepository,
   FlowRepository,
   templateRepository,
