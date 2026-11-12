@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Modal } from "../ui/Modal";
+import { ShinyText } from "../reactbits/ReactBitsPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
 import {
   ChevronDown,
@@ -973,7 +974,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 : "bg-[#1e1f22] text-[#949ba4]"
             }`}
           >
-            {isV2 ? "Components V2" : "Classic"}
+            {isV2 ? <ShinyText text="Components V2" /> : "Classic"}
           </span>
         </div>
 
