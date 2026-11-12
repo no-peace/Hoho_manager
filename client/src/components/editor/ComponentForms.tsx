@@ -315,15 +315,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-[#b5bac1] uppercase">Option {index + 1}</span>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1.5 text-[11px] text-[#dbdee1] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(option.default)}
-                    onChange={(e) => replaceOption(index, { default: e.target.checked })}
-                    className="rounded bg-[#2b2d31] border-[#383a40] text-[#5865f2] focus:ring-0"
-                  />
-                  Default
-                </label>
+                <Checkbox label="Default" checked={Boolean(option.default)} onChange={(checked) => replaceOption(index, { default: checked })} className="text-[11px]" />
                 <IconButton
                   icon={Trash2}
                   size={12}
