@@ -97,7 +97,7 @@ export const DateTimePickerPopover = ({
                 <div className="text-sm font-semibold text-[#f2f3f5]">{selected.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
-                    disabled={!allowPastDates && visibleMonth.getFullYear() === today.getFullYear() && visibleMonth.getMonth() === today.getMonth()}
+                    disabled={!allowPastDates && (visibleMonth.getFullYear() < today.getFullYear() || (visibleMonth.getFullYear() === today.getFullYear() && visibleMonth.getMonth() <= today.getMonth()))}
                     className="rounded-md p-1.5 text-[#949ba4] hover:bg-[#2b2d31] disabled:opacity-30"><ChevronLeft size={15} /></button>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[#dbdee1]">{visibleMonth.toLocaleDateString([], { month: "long", year: "numeric" })}</span>
                   <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
