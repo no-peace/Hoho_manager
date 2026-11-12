@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
-import { SettingsModal } from "./SettingsModal";
+const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
 import { useGlobalStore } from "../../store/globalStore";
-import { AccessPanel } from "./AccessPanel";
+const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 
 export const HOHO_LOGO_URL = "https://raw.githubusercontent.com/acsu123/HohoV2/main/BloxFruit/keysystem/hoho_logo.png";
 
@@ -312,7 +312,17 @@ export const Header: React.FC<HeaderProps> = () => {
         </div>
       </header>
       
-      {isAdmin && <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
+      {isAdmin && (
+        <React.Suspense
+          fallback={
+            <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Head Admin Settings" width="max-w-md">
+              <p className="p-4 text-center text-xs text-[#949ba4]">Loading settings...</p>
+            </Modal>
+          }
+        >
+          <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        </React.Suspense>
+      )}
 
       {isAdmin && (
         <Modal
@@ -321,7 +331,9 @@ export const Header: React.FC<HeaderProps> = () => {
           title="Staff Access Controls"
           width="max-w-4xl"
         >
-          <AccessPanel />
+          <React.Suspense fallback={<div className="p-6 text-center text-xs text-[#949ba4]">Loading staff access...</div>}>
+            <AccessPanel />
+          </React.Suspense>
         </Modal>
       )}
     </>
