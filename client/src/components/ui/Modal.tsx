@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-
+import { AnimatePresence, motion } from "motion/react";
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -130,8 +130,6 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [open]);
 
-  if (!open) return null;
-
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnBackdropClick && e.target === e.currentTarget) {
       onClose();
@@ -139,14 +137,21 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   const modalContent = (
-    <div
-      className={`fixed inset-0 ${zIndex} flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150`}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className={`fixed inset-0 ${zIndex} flex items-end justify-center bg-black/75 backdrop-blur-sm p-0 sm:items-center sm:p-4`}
       onClick={handleBackdropClick}
     >
-      <div
+      <motion.div
         ref={modalBoxRef}
         tabIndex={-1}
-        className={`w-full ${width} rounded-lg bg-[#313338] border border-[#1e1f22] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 max-h-[85vh] outline-none ${className}`}
+        initial={{ opacity: 0, scale: 0.96, y: 6 }}
+        animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
+        exit={{ opacity: 0, scale: 0.97, y: 4, transition: { duration: 0.12, ease: [0.4, 0, 1, 1] } }}
+        className={`w-full ${width} rounded-t-2xl sm:rounded-xl bg-[#313338] border border-[#1e1f22] shadow-xl flex flex-col overflow-hidden max-h-[90dvh] sm:max-h-[85vh] mt-auto sm:my-auto outline-none ${className}`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
@@ -176,15 +181,15 @@ export const Modal: React.FC<ModalProps> = ({
             {footer}
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   if (typeof document === "undefined" || !document.body) {
     return null;
   }
 
-  return createPortal(modalContent, document.body);
+  return createPortal(<AnimatePresence>{open ? modalContent : null}</AnimatePresence>, document.body);
 };
 
 export default Modal;

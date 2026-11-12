@@ -69,6 +69,9 @@ router.get(
           templateId: m.template_id,
           exploitName: m.exploit_name,
           authorUserId: m.author_user_id,
+          name: m.name ?? null,
+          expiresAt: m.expires_at ?? null,
+          createdAt: m.created_at,
           updatedAt: m.updated_at,
           lastCheckedAt: m.last_checked_at,
         })),
@@ -124,6 +127,9 @@ router.get(
         templateId: m.template_id,
         exploitName: m.exploit_name,
         authorUserId: m.author_user_id,
+        name: m.name ?? null,
+        expiresAt: m.expires_at ?? null,
+        createdAt: m.created_at,
         updatedAt: m.updated_at,
         lastCheckedAt: m.last_checked_at,
       })),
@@ -265,6 +271,53 @@ router.post(
     }
 
     return res.json({ ok: true, tracked });
+  }),
+);
+
+/**
+ * Update tracking metadata while preserving channel and guild access checks.
+ */
+router.patch(
+  "/messages/:id",
+  attachUser,
+  requireStaffPermission("edit"),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("`id` must be a positive integer");
+    const target = (await trackedMessageRepository.listAll()).find((m) => m.id === id);
+    if (!target) throw ApiError.notFound("Tracked message record not found");
+    const staffCtx = req.staffContext;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const allowedChannels = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+      if (!allowedChannels.includes("*") && !allowedChannels.includes(target.channel_id)) {
+        throw ApiError.forbidden(`You are not allowed to access channel ${target.channel_id}`);
+      }
+      await assertStaffGuildAllowed(req, target.channel_id);
+    }
+    const body = req.body ?? {};
+    if (body.track === false) {
+      await trackedMessageRepository.deleteById(id);
+      return res.json({ ok: true, tracked: false });
+    }
+    const updates: { name?: string | null; expires_at?: string | null } = {};
+    if (body.name !== undefined) {
+      if (body.name !== null && (typeof body.name !== "string" || body.name.length > 100)) {
+        throw ApiError.badRequest("`name` must be a string of at most 100 characters or null");
+      }
+      updates.name = body.name;
+    }
+    if (body.expiresAt !== undefined) {
+      if (body.expiresAt !== null && typeof body.expiresAt !== "string") {
+        throw ApiError.badRequest("`expiresAt` must be an ISO date string or null");
+      }
+      if (typeof body.expiresAt === "string" && (!Number.isFinite(Date.parse(body.expiresAt)) || Date.parse(body.expiresAt) <= Date.now())) {
+        throw ApiError.badRequest("`expiresAt` must be a valid future date");
+      }
+      updates.expires_at = body.expiresAt;
+    }
+    await trackedMessageRepository.updateConfig(id, updates);
+    const updated = (await trackedMessageRepository.listAll()).find((m) => m.id === id);
+    return res.json({ ok: true, tracked: true, message: updated });
   }),
 );
 

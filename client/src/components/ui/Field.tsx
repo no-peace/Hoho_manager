@@ -1,6 +1,7 @@
-import { Check, Keyboard } from "lucide-react";
+import { Check, Keyboard, ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState, useEffect, useMemo } from "react";
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ChangeEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 
 export const VARIABLES = [
@@ -191,7 +192,7 @@ const VariableAutocompletePopover = ({
             }}
           >
             <div className="min-w-0 flex-1">
-              <span className="font-mono font-semibold text-xs">{item.tag}</span>
+              <span className="font-mono font-semibold text-xs">{(item as any).displayTag ?? item.tag}</span>
               <p
                 className={`text-[10px] truncate ${
                   idx === selectedIndex ? "text-[#dee0fc]" : "text-[#949ba4]"
@@ -688,21 +689,72 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
 };
 
 export interface SelectOption_ { value: string; label: string; }
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> { label?: string; hint?: ReactNode; options: readonly SelectOption_[]; }
-export const Select = ({ label, hint, options, className, ...props }: SelectProps) => (
-  <FieldShell label={label} hint={hint} className={className}>
-    <select className="field cursor-pointer w-full bg-[#1e1f22] text-[#dbdee1] border-[#111214] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]" {...props}>
-      {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-    </select>
-  </FieldShell>
-);
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {
+  label?: string;
+  hint?: ReactNode;
+  options: readonly SelectOption_[];
+  onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
+}
+export const Select = ({ label, hint, options, className, value, defaultValue, onChange, disabled, name, required }: SelectProps) => {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, options.findIndex((option) => option.value === (value ?? defaultValue))));
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selectedValue = String(value ?? defaultValue ?? options[0]?.value ?? "");
+  const selected = options.find((option) => option.value === selectedValue);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  const choose = (nextValue: string) => {
+    onChange?.({ target: { value: nextValue, name } } as ChangeEvent<HTMLSelectElement>);
+    setOpen(false);
+  };
+  return (
+    <FieldShell label={label} hint={hint} className={className}>
+      <div ref={rootRef} className="relative">
+        <button type="button" role="combobox" aria-label={label} aria-expanded={open} aria-controls={`select-options-${name ?? "field"}`}
+          disabled={disabled} onClick={() => setOpen((current) => !current)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); setActiveIndex((index) => Math.min(options.length - 1, index + 1)); }
+            if (event.key === "ArrowUp") { event.preventDefault(); setOpen(true); setActiveIndex((index) => Math.max(0, index - 1)); }
+            if (event.key === "Enter" && open) { event.preventDefault(); if (options[activeIndex]) choose(options[activeIndex].value); }
+            if (event.key === "Escape") setOpen(false);
+          }}
+          className="flex w-full items-center justify-between rounded-lg border border-[#26282d] bg-[#18191c] px-3 py-2 text-xs text-[#f2f3f5] hover:border-[#3f4147] disabled:opacity-50">
+          <span>{selected?.label ?? "Select an option"}</span><ChevronDown size={14} className="text-[#949ba4]" />
+        </button>
+        <AnimatePresence>
+          {open && <motion.div id={`select-options-${name ?? "field"}`} role="listbox"
+            initial={{ opacity: 0, scale: 0.97, y: -3 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -3 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: "top" }}
+            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-[#26282d] bg-[#18191c] p-1 shadow-xl">
+            {options.map((option, index) => <button key={option.value} type="button" role="option" aria-selected={option.value === selectedValue}
+              onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(option.value)}
+              className={`w-full rounded-md px-2.5 py-2 text-left text-xs ${option.value === selectedValue ? "bg-[#5865f2] text-white" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]"}`}>
+              {option.label}
+            </button>)}
+          </motion.div>}
+        </AnimatePresence>
+        {required && <input type="hidden" name={name} value={selectedValue} />}
+      </div>
+    </FieldShell>
+  );
+};
 
-export interface CheckboxProps { label?: ReactNode; checked?: boolean; onChange: (checked: boolean) => void; className?: string; }
-export const Checkbox = ({ label, checked, onChange, className = "" }: CheckboxProps) => (
-  <label className={`flex cursor-pointer items-center gap-2 text-sm font-normal text-[#dbdee1] ${className}`}>
-    <input type="checkbox" checked={Boolean(checked)} onChange={(e) => onChange(e.target.checked)} className="peer hidden" />
-    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[#82838A] text-transparent transition-colors peer-checked:border-transparent peer-checked:bg-[#5865f2] peer-checked:text-white"><Check size={16} aria-hidden="true" /></span>
+export interface CheckboxProps { label?: ReactNode; checked?: boolean; onChange: (checked: boolean) => void; className?: string; disabled?: boolean; }
+export const Checkbox = ({ label, checked, onChange, className = "", disabled = false }: CheckboxProps) => (
+  <button type="button" role="checkbox" aria-checked={Boolean(checked)} disabled={disabled}
+    onClick={() => onChange(!checked)}
+    className={`inline-flex items-center gap-2 text-left text-sm font-normal text-[#dbdee1] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-transform active:scale-95 ${checked ? "border-[#5865f2] bg-[#5865f2] text-white" : "border-[#3f4147] bg-[#18191c] text-transparent"}`}>
+      <Check size={12} aria-hidden="true" />
+    </span>
     {label}
-  </label>
+  </button>
 );
 export default TextField;

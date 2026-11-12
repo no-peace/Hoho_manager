@@ -78,6 +78,8 @@ interface GlobalState {
   setCurrentUser: (user: CurrentUser | null) => void;
   setAuthLoading: (loading: boolean) => void;
   fetchCurrentUser: () => Promise<CurrentUser | null>;
+  serverTimeOffsetMs: number;
+  syncServerTime: () => Promise<void>;
   logout: () => Promise<void>;
 
   // In-App Toast & Confirmation Modal System (Replaces window.alert / window.confirm)
@@ -224,11 +226,35 @@ export const useGlobalStore = create<GlobalState>((set) => {
       }),
     currentUser: null,
     authLoading: true,
+    serverTimeOffsetMs: 0,
+    syncServerTime: async () => {
+      try {
+        const response = await fetch("/api/health");
+        if (!response.ok) return;
+        const json = await response.json();
+        if (typeof json.time === "string") {
+          set({ serverTimeOffsetMs: new Date(json.time).getTime() - Date.now() });
+        }
+      } catch {
+        // Keep the last known server clock offset when offline.
+      }
+    },
     setCurrentUser: (user) => set({ currentUser: user }),
     setAuthLoading: (loading) => set({ authLoading: loading }),
     fetchCurrentUser: async () => {
       set({ authLoading: true });
       try {
+        try {
+          const health = await fetch("/api/health");
+          if (health.ok) {
+            const json = await health.json();
+            if (typeof json.time === "string") {
+              set({ serverTimeOffsetMs: new Date(json.time).getTime() - Date.now() });
+            }
+          }
+        } catch {
+          // Authentication can still proceed when health is temporarily unavailable.
+        }
         const res = await api.auth.me();
         const user = res?.user ?? null;
         set({ currentUser: user, authLoading: false });
@@ -293,3 +319,6 @@ export const useGlobalStore = create<GlobalState>((set) => {
       })),
   };
 });
+
+export const getServerNow = (): Date =>
+  new Date(Date.now() + useGlobalStore.getState().serverTimeOffsetMs);

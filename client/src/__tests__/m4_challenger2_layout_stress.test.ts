@@ -655,7 +655,9 @@ describe("Challenge UI-06: Modal Stack LIFO & Body Scroll Lock Invariant", () =>
     });
 
     it("verifies portaling to document.body", () => {
-      expect(source).toContain("return createPortal(modalContent, document.body)");
+      expect(source).toContain(
+        "return createPortal(<AnimatePresence>{open ? modalContent : null}</AnimatePresence>, document.body)",
+      );
     });
 
     it("verifies body overflow retention invariant", () => {

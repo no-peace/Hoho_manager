@@ -4,8 +4,6 @@ import type { DatabaseClient, QueryParams, RunResult } from "../src/config/datab
 import { ActionRepository } from "../src/repositories/actionRepository.js";
 import { sessionRepository } from "../src/repositories/sessionRepository.js";
 import { TemplateRepository } from "../src/repositories/templateRepository.js";
-import { BotProfileRepository, WebhookProfileRepository } from "../src/repositories/profileRepository.js";
-import { decrypt } from "../src/utils/crypto.js";
 import { migrations } from "../src/config/migrations.js";
 
 const spread = (params?: QueryParams): unknown[] =>
@@ -63,16 +61,12 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
   let memory: ReturnType<typeof createFullMemoryDb>;
   let actionRepo: ActionRepository;
   let templateRepo: TemplateRepository;
-  let botProfileRepo: BotProfileRepository;
-  let webhookProfileRepo: WebhookProfileRepository;
   let testUserId: number;
 
   beforeEach(async () => {
     memory = createFullMemoryDb();
     actionRepo = new ActionRepository(memory.client);
     templateRepo = new TemplateRepository(memory.client);
-    botProfileRepo = new BotProfileRepository(memory.client);
-    webhookProfileRepo = new WebhookProfileRepository(memory.client);
 
     // Create a base user for foreign key constraints
     const userRes = await memory.client.run(
@@ -128,8 +122,11 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
       const template = await templateRepo.create({
         userId: testUserId,
         name: "Welcome Card",
-        data: { content: "Welcome!" } as any,
+        data: { messages: [{ data: { content: "Welcome!" } }] },
       });
+      if (!template) {
+        throw new Error("Expected template creation to return a record");
+      }
 
       const actions = [
         {
@@ -158,7 +155,7 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
         interactionId: "int_100",
         userId: "user_555",
         status: "success",
-        details: { step: 1 },
+        response: { step: 1 },
       });
 
       const countBefore = await memory.client.get<{ count: number }>(
@@ -229,30 +226,38 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
 
   describe("TemplateRepository", () => {
     it("supports full CRUD lifecycle and search queries for message templates", async () => {
+      const initialData = { messages: [{ data: { content: "Rule 1: Be respectful" } }] };
       const created = await templateRepo.create({
         userId: testUserId,
         name: "Rules and Info",
         description: "Official server rules",
-        data: { content: "Rule 1: Be respectful" } as any,
+        data: initialData,
       });
+      if (!created) {
+        throw new Error("Expected template creation to return a record");
+      }
 
       expect(created.id).toBeGreaterThan(0);
       expect(created.name).toBe("Rules and Info");
-      expect(created.data.content).toBe("Rule 1: Be respectful");
+      expect(created.data).toEqual(initialData);
 
       // Search by name
       const searchResults = await templateRepo.search({ userId: testUserId, q: "Rules" });
       expect(searchResults).toHaveLength(1);
-      expect(searchResults[0].id).toBe(created.id);
+      expect(searchResults[0]?.id).toBe(created.id);
 
       // Update template metadata and data
       const updatedMeta = await templateRepo.update(created.id, {
         name: "Updated Rules",
       });
-      const updated = await templateRepo.updateData(created.id, { content: "Rule 1: Be awesome" });
-      expect(updatedMeta?.name).toBe("Updated Rules");
-      expect(updated?.name).toBe("Updated Rules");
-      expect(updated?.data.content).toBe("Rule 1: Be awesome");
+      const updatedData = { messages: [{ data: { content: "Rule 1: Be awesome" } }] };
+      const updated = await templateRepo.updateData(created.id, updatedData);
+      if (!updatedMeta || !updated) {
+        throw new Error("Expected template updates to return a record");
+      }
+      expect(updatedMeta.name).toBe("Updated Rules");
+      expect(updated.name).toBe("Updated Rules");
+      expect(updated.data).toEqual(updatedData);
 
       // Delete template
       const deleted = await templateRepo.delete(created.id);
@@ -280,48 +285,4 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
     });
   });
 
-  describe("ProfileRepository", () => {
-    it("encrypts bot tokens with AES-256-GCM at rest and masks them on read", async () => {
-      const rawToken = "MTAwMDIwMDMwMDQwMDUwMDYw.Gz1234.SecretDiscordBotToken";
-
-      const created = await botProfileRepo.create({
-        userId: testUserId,
-        name: "Community Helper",
-        token: rawToken,
-        publicKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        applicationId: "100020030040050060",
-      });
-
-      expect(created).toBeDefined();
-      expect(created?.name).toBe("Community Helper");
-
-      // Verify database stored encrypted token string, NOT rawToken
-      const rawRow = await botProfileRepo.findRawById(created!.id);
-      expect(rawRow?.token_encrypted).not.toBe(rawToken);
-      expect(rawRow?.token_encrypted).toContain("."); // iv.authTag.ciphertext format
-
-      // Decrypt token cleanly
-      const decrypted = decrypt(rawRow!.token_encrypted);
-      expect(decrypted).toBe(rawToken);
-    });
-
-    it("creates, retrieves, and cascades webhook profiles", async () => {
-      const profile = await webhookProfileRepo.create({
-        userId: testUserId,
-        name: "Announcements Hook",
-        url: "https://discord.com/api/webhooks/111222333/secret-hook-token",
-        isDefault: 1,
-      });
-
-      expect(profile).toBeDefined();
-      expect(profile?.name).toBe("Announcements Hook");
-
-      const list = await webhookProfileRepo.listByUser(testUserId);
-      expect(list.some((p) => p.id === profile!.id)).toBe(true);
-
-      await webhookProfileRepo.delete(profile!.id);
-      const listAfter = await webhookProfileRepo.listByUser(testUserId);
-      expect(listAfter.some((p) => p.id === profile!.id)).toBe(false);
-    });
-  });
 });

@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Whitney", "Helvetica", "sans-serif";
-  --font-code: "Source Code Pro", "Consolas", "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Monaco", "Courier New", "Courier", "monospace";
+  --font-sans: "Geist Sans", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
+  --font-code: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
 
   --spacing-inherit: inherit;
   --spacing-4-5: 1.125rem;
@@ -113,47 +114,6 @@
   }
 }
 
-/* ── Whitney Discord Fonts ────────────────────────────────────────────── */
-@font-face {
-  font-family: Whitney;
-  font-style: normal;
-  font-weight: 300;
-  src: url("/fonts/whitney-300.woff") format("woff");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Whitney;
-  font-style: normal;
-  font-weight: 400;
-  src: url("/fonts/whitney-400.woff") format("woff");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Whitney;
-  font-style: normal;
-  font-weight: 500;
-  src: url("/fonts/whitney-500.woff") format("woff");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Whitney;
-  font-style: normal;
-  font-weight: 600;
-  src: url("/fonts/whitney-600.woff") format("woff");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Whitney;
-  font-style: normal;
-  font-weight: 700;
-  src: url("/fonts/whitney-700.woff") format("woff");
-  font-display: swap;
-}
-
 /* ── Discord Color Variables & Root ───────────────────────────────────── */
 :root {
   --color-chrome: #1E1F22;
@@ -244,5 +204,20 @@ details summary::-webkit-details-marker {
   }
   .text-link:hover {
     text-decoration: underline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-motion] {
+    transform: none !important;
+  }
+  .motion-safe-transition {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .motion-hover-lift:hover {
+    transform: translateY(-1px);
   }
 }

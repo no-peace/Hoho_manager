@@ -344,5 +344,19 @@ export const migrations: readonly Migration[] = [
         ON templates(expires_at);
     `,
   },
+  {
+    id: "011_unified_tracking_and_drop_legacy_profiles",
+    sql: `
+      ALTER TABLE templates ADD COLUMN is_tracked INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE tracked_messages ADD COLUMN name TEXT;
+      ALTER TABLE tracked_messages ADD COLUMN expires_at TEXT;
+      CREATE INDEX IF NOT EXISTS idx_tracked_messages_expires_at
+        ON tracked_messages(expires_at);
+      DROP INDEX IF EXISTS idx_webhooks_user;
+      DROP INDEX IF EXISTS idx_bot_profiles_user;
+      DROP TABLE IF EXISTS webhook_profiles;
+      DROP TABLE IF EXISTS bot_profiles;
+    `,
+  },
 ];
 
