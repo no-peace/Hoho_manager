@@ -1,6 +1,11 @@
 
 export interface UserIdPlaceholderSuggestion {
+  /** Full token inserted into the editor. */
   tag: string;
+  /** Short tag shown in the autocomplete menu. */
+  displayTag: string;
+  /** Discord user ID extracted from the query. */
+  userId: string;
   label: string;
   desc: string;
 }
@@ -26,7 +31,7 @@ export function getUserIdPlaceholderSuggestions(
 ): UserIdPlaceholderSuggestion[] | null {
   const normalized = query.trim().replace(/^\{+/, "").toLowerCase();
 
-  const match = normalized.match(/^user\.(\d{1,20})(?:\.(.*))?$/);
+  const match = normalized.match(/^user\.(\d{1,20})(?:\.([a-z0-9_]*))?$/);
 
   if (!match) return null;
 
@@ -43,6 +48,8 @@ export function getUserIdPlaceholderSuggestions(
     })
     .map((field) => ({
       tag: `{user.${userId}.${field.key}}`,
+      displayTag: `{user.${field.key}}`,
+      userId,
       label: field.label,
       desc: field.desc,
     }));
