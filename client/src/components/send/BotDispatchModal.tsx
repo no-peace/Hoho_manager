@@ -8,6 +8,7 @@ import {
   Square,
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
+import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
 import { Button } from "../ui/Button";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
@@ -38,6 +39,11 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
+  const [trackAfterSend, setTrackAfterSend] = useState(() => {
+    const payload = JSON.stringify(useMessageStore.getState().getAllPayloads());
+    return /\\{user\\.\\d{17,20}\\./i.test(payload) || payload.includes("{exploit.") || payload.includes("discord.com/users/");
+  });
+  const [customExpiry, setCustomExpiry] = useState<string | null>(null);
   const [mode, setMode] = useState<"send" | "edit">(initialMode);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<string[]>(() => {
@@ -263,6 +269,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 payload: payloadsToSend[0],
                 channelId,
                 flows,
+                track: trackAfterSend,
+                expiresAt: customExpiry,
                 ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
               },
               true,
@@ -279,6 +287,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                   channelId,
                   flows,
                   editMessageId,
+                  track: trackAfterSend,
+                  expiresAt: customExpiry,
                   ...(includeAttachments && urlAttachments.length > 0
                     ? { attachments: urlAttachments }
                     : {}),
@@ -577,6 +587,25 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             )}
           </section>
         )}
+
+        <section className="space-y-3 rounded-lg border border-[#26282d] bg-[#18191c] p-3">
+          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#dbdee1]">
+            <input
+              type="checkbox"
+              checked={trackAfterSend}
+              onChange={(event) => setTrackAfterSend(event.target.checked)}
+              className="sr-only"
+            />
+            <span className={`flex h-4 w-4 items-center justify-center rounded-[4px] border ${trackAfterSend ? "border-[#5865f2] bg-[#5865f2]" : "border-[#3f4147] bg-[#232428]"}`}>
+              {trackAfterSend && <span className="text-[10px] font-bold text-white">✓</span>}
+            </span>
+            Track this message (Auto-update dynamic variables)
+          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] text-[#949ba4]">Optional retention expiry</span>
+            <DateTimePickerPopover value={customExpiry} onChange={setCustomExpiry} placeholder="No expiry" />
+          </div>
+        </section>
 
         {sendResult && (
           <div
