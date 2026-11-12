@@ -244,6 +244,16 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     }
   };
 
+  const handleUntrack = async (id: number) => {
+    try {
+      await api.tracking.untrack(id);
+      setTrackedList((current) => current.filter((item) => item.id !== id));
+      showToast("Stopped tracking message", "info");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to stop tracking", "error");
+    }
+  };
+
   const handleLoad = (id: number) => {
     openConfirm({
       title: "Load Saved Template",
