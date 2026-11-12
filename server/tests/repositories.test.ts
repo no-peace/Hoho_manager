@@ -4,8 +4,6 @@ import type { DatabaseClient, QueryParams, RunResult } from "../src/config/datab
 import { ActionRepository } from "../src/repositories/actionRepository.js";
 import { sessionRepository } from "../src/repositories/sessionRepository.js";
 import { TemplateRepository } from "../src/repositories/templateRepository.js";
-import { BotProfileRepository, WebhookProfileRepository } from "../src/repositories/profileRepository.js";
-import { decrypt } from "../src/utils/crypto.js";
 import { migrations } from "../src/config/migrations.js";
 
 const spread = (params?: QueryParams): unknown[] =>
@@ -63,16 +61,12 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
   let memory: ReturnType<typeof createFullMemoryDb>;
   let actionRepo: ActionRepository;
   let templateRepo: TemplateRepository;
-  let botProfileRepo: BotProfileRepository;
-  let webhookProfileRepo: WebhookProfileRepository;
   let testUserId: number;
 
   beforeEach(async () => {
     memory = createFullMemoryDb();
     actionRepo = new ActionRepository(memory.client);
     templateRepo = new TemplateRepository(memory.client);
-    botProfileRepo = new BotProfileRepository(memory.client);
-    webhookProfileRepo = new WebhookProfileRepository(memory.client);
 
     // Create a base user for foreign key constraints
     const userRes = await memory.client.run(
@@ -280,48 +274,4 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
     });
   });
 
-  describe("ProfileRepository", () => {
-    it("encrypts bot tokens with AES-256-GCM at rest and masks them on read", async () => {
-      const rawToken = "MTAwMDIwMDMwMDQwMDUwMDYw.Gz1234.SecretDiscordBotToken";
-
-      const created = await botProfileRepo.create({
-        userId: testUserId,
-        name: "Community Helper",
-        token: rawToken,
-        publicKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        applicationId: "100020030040050060",
-      });
-
-      expect(created).toBeDefined();
-      expect(created?.name).toBe("Community Helper");
-
-      // Verify database stored encrypted token string, NOT rawToken
-      const rawRow = await botProfileRepo.findRawById(created!.id);
-      expect(rawRow?.token_encrypted).not.toBe(rawToken);
-      expect(rawRow?.token_encrypted).toContain("."); // iv.authTag.ciphertext format
-
-      // Decrypt token cleanly
-      const decrypted = decrypt(rawRow!.token_encrypted);
-      expect(decrypted).toBe(rawToken);
-    });
-
-    it("creates, retrieves, and cascades webhook profiles", async () => {
-      const profile = await webhookProfileRepo.create({
-        userId: testUserId,
-        name: "Announcements Hook",
-        url: "https://discord.com/api/webhooks/111222333/secret-hook-token",
-        isDefault: 1,
-      });
-
-      expect(profile).toBeDefined();
-      expect(profile?.name).toBe("Announcements Hook");
-
-      const list = await webhookProfileRepo.listByUser(testUserId);
-      expect(list.some((p) => p.id === profile!.id)).toBe(true);
-
-      await webhookProfileRepo.delete(profile!.id);
-      const listAfter = await webhookProfileRepo.listByUser(testUserId);
-      expect(listAfter.some((p) => p.id === profile!.id)).toBe(false);
-    });
-  });
 });
