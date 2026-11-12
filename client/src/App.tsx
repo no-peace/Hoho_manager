@@ -36,6 +36,8 @@ import { Checkbox } from "./components/ui/Field";
 import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
 import { getServerNow } from "./store/globalStore";
 import { updatePageSeo } from "./utils/seo";
+import gsap from "gsap";
+import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
 const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
@@ -568,6 +570,7 @@ const DEMO_SHOWCASES = [
 const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => {
   const [activeShowcase, setActiveShowcase] = useState<number>(0);
   const [clickedBtn, setClickedBtn] = useState<string | null>(null);
+  const showcaseCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -575,6 +578,18 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
     }, 6500);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const element = showcaseCardRef.current;
+    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { duration: 0.35, ease: "power3.out" } });
+      tl.fromTo("[data-showcase-badge]", { y: 8, opacity: 0 }, { y: 0, opacity: 1 }, 0);
+      tl.fromTo("[data-showcase-title]", { y: 10, opacity: 0 }, { y: 0, opacity: 1 }, "<0.05");
+      tl.fromTo("[data-showcase-actions]", { y: 8, opacity: 0 }, { y: 0, opacity: 1 }, "<0.05");
+    }, element);
+    return () => ctx.revert();
+  }, [activeShowcase]);
 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
@@ -601,13 +616,13 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
       </div>
 
       <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8">
-        <div className="lg:col-span-5 bg-[#2b2d31] border border-[#111214] rounded-xl p-6 sm:p-8 shadow-xl space-y-6">
+        <SpotlightCard className="lg:col-span-5 bg-[#2b2d31] border border-[#111214] rounded-xl p-6 sm:p-8 shadow-xl space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
-              Discord OAuth2 Workspace
+              <ShinyText text="COMPONENTS V2 & DYNAMIC TRACKING" />
             </span>
             <h1 className="text-2xl font-bold text-white tracking-tight">
-              Sign in to launch the studio
+              <SplitTextReveal text="HoHo Manager Studio" />
             </h1>
             <p className="text-xs sm:text-sm text-[#949ba4] leading-relaxed">
               Authenticate with Discord to verify your mutual servers and staff roles, or connect your own Bot Token after login.
@@ -657,9 +672,9 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
               </span>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
 
-        <div className="lg:col-span-7 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
+        <SpotlightCard className="lg:col-span-7 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
           <div className="bg-[#1e1f22] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-[#949ba4]">
               #announcements  Preview
@@ -697,6 +712,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                 </div>
 
                 <div
+                  ref={showcaseCardRef}
                   className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-all"
                   style={{
                     borderLeftWidth: "4px",
@@ -704,7 +720,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#dee0fc]">
+                    <span data-showcase-badge className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#dee0fc]">
                       {currentDemo.badge}
                     </span>
                     <span className="text-[11px] text-[#57f287] font-semibold">
@@ -712,12 +728,12 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-white">{currentDemo.title}</h3>
+                  <h3 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h3>
                   <p className="text-xs text-[#dbdee1] leading-relaxed">
                     {currentDemo.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div data-showcase-actions className="flex flex-wrap items-center gap-2 pt-1">
                     {currentDemo.buttons.map((b) => (
                       <button
                         key={b.label}
@@ -748,7 +764,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
               </div>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
 
       <div className="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#949ba4] border-t border-[#2b2d31] pt-4">
@@ -960,7 +976,7 @@ export const App: React.FC = () => {
                       disabled={displayMessages.length >= 10}
                       className="w-full py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
                     >
-                      <Plus size={15} /> Add Message ({displayMessages.length}/10)
+                      <Plus size={15} /> Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)
                     </button>
 
                     {addMsgMenuOpen && (
@@ -1054,7 +1070,7 @@ export const App: React.FC = () => {
           <Edit3 size={14} className="relative z-10" />
           <span className={`relative z-10 ${mobileView === "editor" ? "text-white" : ""}`}>Editor</span>
           <span className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}>
-            {displayMessages.length}
+            <CountUpNumber value={displayMessages.length} />
           </span>
         </button>
         <button
@@ -1073,14 +1089,16 @@ export const App: React.FC = () => {
           <Eye size={14} className="relative z-10" />
           <span className={`relative z-10 ${mobileView === "preview" ? "text-white" : ""}`}>Preview</span>
         </button>
-        <button
-          type="button"
-          onClick={() => openBotModal("send")}
-          className="px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors active:scale-[0.98] shrink-0 flex items-center gap-1.5 select-none"
-        >
-          <Send size={13} />
-          <span>Dispatch</span>
-        </button>
+        <MagneticButton className="shrink-0">
+          <button
+            type="button"
+            onClick={() => openBotModal("send")}
+            className="px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-colors active:scale-[0.98] flex items-center gap-1.5 select-none"
+          >
+            <Send size={13} />
+            <span>Dispatch</span>
+          </button>
+        </MagneticButton>
       </nav>
 
       <React.Suspense fallback={null}><JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} /></React.Suspense>

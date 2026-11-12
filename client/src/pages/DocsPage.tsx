@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
-import { ShinyText, SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
+import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
+import { motion } from "motion/react";
 import {
   ArrowLeft,
   BookOpen,
@@ -156,7 +157,7 @@ export const DocsPage = () => {
 
         {/* Feature Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
             <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-1.5">
               <User size={14} /> Author Profile Auto-Fetch
             </div>
@@ -164,9 +165,9 @@ export const DocsPage = () => {
               Set embed author URL to <code className="text-white bg-[#1e1f22] px-1 rounded">https://discord.com/users/USER_ID</code>.
               The bot automatically fetches their username, avatar pfp, and Discord link, and keeps them
             </p>
-          </div>
+          </SpotlightCard>
 
-          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
             <div className="flex items-center gap-2 text-[#23a55a] font-bold text-xs uppercase tracking-wider mb-1.5">
               <RefreshCw size={14} /> Live Message Auto-Tracking
             </div>
@@ -174,16 +175,16 @@ export const DocsPage = () => {
               Messages containing <code className="text-white bg-[#1e1f22] px-1 rounded">{"{exploit.*}"}</code> or developer author tokens are auto-registered into the tracking daemon.
               When status or profiles change, the bot automatically edits existing messages.
             </p>
-          </div>
+          </SpotlightCard>
 
-          <div className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
+          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
             <div className="flex items-center gap-2 text-[#faa61a] font-bold text-xs uppercase tracking-wider mb-1.5">
               <Terminal size={14} /> Slash Commands & Sync
             </div>
             <p className="text-xs text-[#b5bac1] leading-relaxed">
               Use <code className="text-white bg-[#1e1f22] px-1 rounded">/exploit</code> to send customized executor status cards with custom templates, and <code className="text-white bg-[#1e1f22] px-1 rounded">/sync</code> to immediately reconcile all tracked messages in your server.
             </p>
-          </div>
+          </SpotlightCard>
         </div>
 
         {/* Search & Category Filter */}
@@ -213,20 +214,27 @@ export const DocsPage = () => {
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   activeCategory === cat.id
-                    ? "bg-[#5865f2] text-white shadow-sm"
-                    : "bg-[#2b2d31] text-[#949ba4] hover:text-white hover:bg-[#35373c] border border-[#1e1f22]"
+                    ? "text-white"
+                    : "text-[#949ba4] hover:text-white bg-[#2b2d31] border border-[#1e1f22] hover:bg-[#35373c]"
                 }`}
               >
-                {cat.label}
+                {activeCategory === cat.id && (
+                  <motion.span
+                    layoutId="docsCategoryPill"
+                    className="absolute inset-0 rounded-lg bg-[#5865f2]"
+                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                  />
+                )}
+                <span className="relative z-10">{cat.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Variables Table */}
-        <div className="bg-[#2b2d31] border border-[#1e1f22] rounded-xl overflow-hidden shadow-sm mb-12">
+        <SpotlightCard className="bg-[#2b2d31] border border-[#1e1f22] rounded-xl overflow-hidden shadow-sm mb-12">
           <div className="px-5 py-3 border-b border-[#1e1f22] bg-[#1e1f22]/70 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
               Available Variables ({filteredItems.length})
@@ -287,7 +295,7 @@ export const DocsPage = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
         <section className="p-6 rounded-2xl bg-[#2b2d31] border border-[#1e1f22] space-y-4 shadow-sm">
