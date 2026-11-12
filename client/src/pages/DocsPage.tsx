@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
-import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
+import { ShinyText, SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
 import {
   ArrowLeft,
   BookOpen,
