@@ -308,22 +308,27 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     }
   };
 
-  const linkedTemplateIds = new Set(
-    trackedList.map((item) => Number(item.templateId)).filter((id) => Number.isFinite(id) && id > 0),
+  const trackedByTemplate = new Map<number, any>(
+    trackedList
+      .filter((item) => Number.isFinite(Number(item.templateId)) && Number(item.templateId) > 0)
+      .map((item) => [Number(item.templateId), item]),
   );
   const items = [
-    ...templates.map((item) => ({
-      kind: "template" as const,
-      key: `template-${item.id}`,
-      id: item.id,
-      name: item.name,
-      isTracked: Boolean(item.is_tracked),
-      expiresAt: item.expires_at ?? null,
-      updatedAt: item.updated_at,
-      source: item,
-    })),
+    ...templates.map((item) => {
+      const linkedTracking = trackedByTemplate.get(item.id);
+      return {
+        kind: "template" as const,
+        key: `template-${item.id}`,
+        id: item.id,
+        name: item.name,
+        isTracked: Boolean(item.is_tracked || linkedTracking),
+        expiresAt: linkedTracking?.expiresAt ?? item.expires_at ?? null,
+        updatedAt: item.updated_at,
+        source: item,
+      };
+    }),
     ...trackedList
-      .filter((item) => !item.templateId || !linkedTemplateIds.has(Number(item.templateId)))
+      .filter((item) => !Number.isFinite(Number(item.templateId)) || Number(item.templateId) <= 0)
       .map((item) => ({
         kind: "tracked" as const,
         key: `tracked-${item.id}`,
