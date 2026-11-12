@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { getServerNow } from "../../store/globalStore";
 
 export interface DateTimePickerPopoverProps {
@@ -24,6 +25,8 @@ export const DateTimePickerPopover = ({
 }: DateTimePickerPopoverProps) => {
   const parsedValue = value ? new Date(value) : null;
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number; above: boolean }>({ top: 0, left: 0, above: false });
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const date = parsedValue && !Number.isNaN(parsedValue.getTime()) ? parsedValue : getServerNow();
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -46,10 +49,28 @@ export const DateTimePickerPopover = ({
 
   useEffect(() => {
     if (open) {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const above = window.innerHeight - rect.bottom < 360 && rect.top > 360;
+        setPosition({ top: above ? Math.max(12, rect.top - 8) : rect.bottom + 8, left: Math.max(12, Math.min(rect.left, window.innerWidth - 304)), above });
+      }
       const next = parsedValue && !Number.isNaN(parsedValue.getTime()) ? parsedValue : getServerNow();
       setSelected(next);
       setVisibleMonth(new Date(next.getFullYear(), next.getMonth(), 1));
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const reposition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const above = window.innerHeight - rect.bottom < 360 && rect.top > 360;
+      setPosition({ top: above ? Math.max(12, rect.top - 8) : rect.bottom + 8, left: Math.max(12, Math.min(rect.left, window.innerWidth - 304)), above });
+    };
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => { window.removeEventListener("resize", reposition); window.removeEventListener("scroll", reposition, true); };
   }, [open]);
 
   const chooseDay = (day: Date) => {
@@ -80,19 +101,19 @@ export const DateTimePickerPopover = ({
 
   return (
     <div className={`relative inline-block ${className}`}>
-      <button type="button" onClick={() => setOpen((current) => !current)}
+      <button ref={triggerRef} type="button" onClick={() => setOpen((current) => !current)}
         className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-[#2b2d31] bg-[#1e1f22] px-3 py-1.5 text-xs font-medium text-[#dbdee1] hover:border-[#3f4147]">
         <CalendarDays size={13} className="text-[#949ba4]" />
         <span className="tabular-nums">{label ?? placeholder}</span>
       </button>
-      <AnimatePresence>
-        {open && (
+      {open && createPortal(
+        <>
           <>
-            <button type="button" aria-label="Close date picker" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-            <motion.div initial={{ opacity: 0, scale: 0.96, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: -4 }} transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              style={{ transformOrigin: "top left" }}
-              className="absolute left-0 top-full z-50 mt-2 w-[292px] rounded-xl border border-[#26282d] bg-[#18191c] p-3 shadow-xl">
+            <button type="button" aria-label="Close date picker" className="fixed inset-0 z-[10049] cursor-default" onClick={() => setOpen(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.96, y: position.above ? 4 : -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: position.above ? 4 : -4 }} transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "fixed", top: position.top, left: position.left, transform: position.above ? "translateY(-100%)" : undefined, transformOrigin: position.above ? "bottom left" : "top left" }}
+              className="z-[10050] w-[292px] rounded-xl border border-[#26282d] bg-[#18191c] p-3 shadow-xl">
               <div className="mb-3">
                 <div className="text-sm font-semibold text-[#f2f3f5]">{selected.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</div>
                 <div className="mt-2 flex items-center justify-between">
@@ -118,24 +139,29 @@ export const DateTimePickerPopover = ({
               </div>
               <div className="mt-3 border-t border-[#26282d] pt-3">
                 <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-[#949ba4]"><Clock size={12} /> TIME</div>
-                <div className="flex items-center gap-2">
-                  <button type="button" aria-label="Increase hour" onClick={() => changeTime((selected.getHours() + 1) % 24, selected.getMinutes())}
-                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] text-xs font-semibold tabular-nums text-[#f2f3f5]">{pad(hour12)}</button>
+                <div className="flex items-center gap-1.5">
+                  <button type="button" aria-label="Decrease hour" onClick={() => changeTime((selected.getHours() + 23) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">−</button>
+                  <span className="min-w-6 text-center text-xs font-semibold tabular-nums text-white">{pad(hour12)}</span>
+                  <button type="button" aria-label="Increase hour" onClick={() => changeTime((selected.getHours() + 1) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">+</button>
                   <span className="text-xs text-[#949ba4]">:</span>
-                  <button type="button" aria-label="Increase minute" onClick={() => changeTime(selected.getHours(), (selected.getMinutes() + 1) % 60)}
-                    className="h-8 flex-1 rounded-md border border-[#2b2d31] bg-[#232428] text-xs font-semibold tabular-nums text-[#f2f3f5]">{pad(selected.getMinutes())}</button>
-                  <button type="button" onClick={() => changeTime(selected.getHours() >= 12 ? selected.getHours() - 12 : selected.getHours() + 12, selected.getMinutes())}
-                    className="h-8 rounded-md border border-[#2b2d31] bg-[#232428] px-3 text-xs font-semibold text-[#f2f3f5]">{selected.getHours() >= 12 ? "PM" : "AM"}</button>
+                  <button type="button" aria-label="Decrease minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 55 : 59)) % 60)} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">−</button>
+                  <span className="min-w-6 text-center text-xs font-semibold tabular-nums text-white">{pad(selected.getMinutes())}</span>
+                  <button type="button" aria-label="Increase minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 5 : 1)) % 60)} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">+</button>
+                  <button type="button" onClick={() => changeTime(selected.getHours() >= 12 ? selected.getHours() - 12 : selected.getHours() + 12, selected.getMinutes())} className="h-8 rounded-md border border-[#2b2d31] bg-[#232428] px-2 text-xs font-semibold text-white">{selected.getHours() >= 12 ? "PM" : "AM"}</button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {["+1h", "+24h", "14d"].map((preset) => <button key={preset} type="button" onClick={() => { const next = new Date(selected); next.setTime(next.getTime() + (preset === "+1h" ? 3600000 : preset === "+24h" ? 86400000 : 14 * 86400000)); setSelected(next); }} className="rounded-md border border-[#2b2d31] px-2 py-1 text-[10px] font-semibold text-[#b5bac1] hover:bg-[#2b2d31]">{preset}</button>)}
                 </div>
               </div>
               <div className="mt-3 flex justify-between">
-                <button type="button" onClick={() => onChange(null)} className="rounded-md px-2 py-1.5 text-xs text-[#949ba4] hover:bg-[#2b2d31]">Clear</button>
+                <button type="button" onClick={() => { onChange(null); setOpen(false); }} className="rounded-md px-2 py-1.5 text-xs text-[#949ba4] hover:bg-[#2b2d31]">Clear</button>
                 <button type="button" onClick={() => { onChange(selected.toISOString()); setOpen(false); }} className="rounded-md bg-[#5865f2] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#4752c4]">Apply</button>
               </div>
             </motion.div>
           </>
-        )}
-      </AnimatePresence>
+        </>,
+        document.body,
+      )}
     </div>
   );
 };
