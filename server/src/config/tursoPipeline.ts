@@ -60,7 +60,16 @@ const buildStatement = (sql: string, params?: TursoQueryParams): Record<string, 
   const namedArgs = Object.entries(params as Record<string, unknown>)
     .filter(([key]) => {
       const name = key.replace(/^[@:$]/, "");
-      return ["@", ":", "$"].some((prefix) => sql.includes(`${prefix}${name}`));
+      return ["@", ":", "$"].some((prefix) => {
+        const placeholder = `${prefix}${name}`;
+        let index = sql.indexOf(placeholder);
+        while (index !== -1) {
+          const next = sql[index + placeholder.length];
+          if (!next || !/[A-Za-z0-9_]/.test(next)) return true;
+          index = sql.indexOf(placeholder, index + 1);
+        }
+        return false;
+      });
     })
     .map(([key, value]) => ({
       name: key.replace(/^[@:$]/, ""),
