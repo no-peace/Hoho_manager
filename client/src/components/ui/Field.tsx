@@ -191,7 +191,7 @@ const VariableAutocompletePopover = ({
             }}
           >
             <div className="min-w-0 flex-1">
-              <span className="font-mono font-semibold text-xs">{item.tag}</span>
+              <span className="font-mono font-semibold text-xs">{(item as any).displayTag ?? item.tag}</span>
               <p
                 className={`text-[10px] truncate ${
                   idx === selectedIndex ? "text-[#dee0fc]" : "text-[#949ba4]"
