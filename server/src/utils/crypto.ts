@@ -15,6 +15,7 @@ import { logger } from "./logger.js";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12; // 96-bit nonce, the GCM recommendation
+const AUTH_TAG_LENGTH = 16; // 128-bit authentication tag
 
 let cachedKey: Buffer | null = null;
 
@@ -35,7 +36,9 @@ const getKey = (): Buffer => (cachedKey ??= deriveKey());
 /** Encrypt a string. Output: `<iv>.<tag>.<ciphertext>`, all base64url. */
 export const encrypt = (plaintext: string): string => {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);
+  const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv, {
+    authTagLength: AUTH_TAG_LENGTH,
+  });
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return [
@@ -51,12 +54,17 @@ export const decrypt = (payload: string): string | null => {
     const [ivPart, tagPart, dataPart] = payload.split(".");
     if (!ivPart || !tagPart || !dataPart) return null;
 
+    const iv = Buffer.from(ivPart, "base64url");
+    const tag = Buffer.from(tagPart, "base64url");
+    if (iv.length !== IV_LENGTH || tag.length !== AUTH_TAG_LENGTH) return null;
+
     const decipher = crypto.createDecipheriv(
       ALGORITHM,
       getKey(),
-      Buffer.from(ivPart, "base64url"),
+      iv,
+      { authTagLength: AUTH_TAG_LENGTH },
     );
-    decipher.setAuthTag(Buffer.from(tagPart, "base64url"));
+    decipher.setAuthTag(tag);
     const decrypted = Buffer.concat([
       decipher.update(Buffer.from(dataPart, "base64url")),
       decipher.final(),
