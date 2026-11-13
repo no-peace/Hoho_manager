@@ -65,15 +65,19 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
   const portalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (containerRef.current && !containerRef.current.contains(target) && portalRef.current && !portalRef.current.contains(target)) {
-        setOpen(false);
-      }
+      if (containerRef.current && !containerRef.current.contains(target) && portalRef.current && !portalRef.current.contains(target)) setOpen(false);
     };
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
