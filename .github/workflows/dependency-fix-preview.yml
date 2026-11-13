@@ -5,7 +5,8 @@ on:
     branches: [chore/security-workflows-refresh]
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
   preview:
@@ -33,14 +34,24 @@ jobs:
         run: npm ci
 
       - name: Recheck production dependencies
-        continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Upload patched lockfile for review
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: patched-package-lock-preview
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 3
+      - name: Commit the verified patched lockfile
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "The lockfile already contains all compatible security fixes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "fix: update vulnerable npm dependencies"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Trigger full validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run ci.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run security.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run lighthouse.yml --ref "${GITHUB_REF_NAME}"
