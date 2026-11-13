@@ -67,6 +67,7 @@ export interface CultMorphSurfaceProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
 }
 
 export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
@@ -88,6 +89,7 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
             layoutId={layoutId}
             type="button"
             onClick={() => setOpen(true)}
+            disabled={disabled}
             className="w-full py-2.5 px-4 rounded-xl bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform duration-75 cursor-pointer"
           >
             {triggerIcon}
