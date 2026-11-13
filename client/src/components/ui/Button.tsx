@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { IconComponent } from "./icon";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 /**
  * Button.
@@ -10,26 +11,10 @@ import type { IconComponent } from "./icon";
  * saturated accent.
  */
 
-const BASE =
-  "relative inline-flex items-center justify-center gap-1.5 border border-white/[0.08] rounded-lg font-medium transition-colors duration-150 shrink-0 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] select-none";
-
-const VARIANTS = {
-  primary: "bg-blurple-500 hover:bg-blurple-600 active:bg-blurple-700 text-white",
-  secondary:
-    "bg-[#97979f1f] hover:bg-[#97979f33] active:bg-[#50505a4d] text-[#ebebed] border-[#97979f0a]",
-  success: "bg-[#00863a] hover:bg-[#047e37] active:bg-[#057332] text-white",
-  danger: "bg-[#d22d39] hover:bg-[#b42831] active:bg-[#a4232c] text-white",
-  ghost: "border-transparent bg-transparent text-ink-muted hover:bg-hover hover:text-ink",
-  outline: "border-line bg-transparent text-ink hover:bg-hover",
-} as const;
-
+const BASE = UI_THEME_CONFIG.button.base;
+const VARIANTS = UI_THEME_CONFIG.button.variants;
 export type ButtonVariant = keyof typeof VARIANTS;
-
-const SIZES = {
-  sm: "h-7 px-2.5 text-xs min-w-[44px]",
-  md: "h-8 px-4 text-sm min-w-[60px]",
-  lg: "h-9 px-5 text-sm min-w-[60px]",
-} as const;
+const SIZES = UI_THEME_CONFIG.button.sizes;
 
 export type ButtonSize = keyof typeof SIZES;
 
@@ -91,8 +76,7 @@ export const IconButton = ({
     title={label}
     aria-label={label}
     className={[
-      "inline-flex items-center justify-center rounded-lg p-1.5 transition-colors",
-      "disabled:cursor-not-allowed disabled:opacity-40",
+      UI_THEME_CONFIG.button.iconButtonBase,
       VARIANTS[variant],
       className,
     ].join(" ")}
