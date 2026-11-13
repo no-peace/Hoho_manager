@@ -293,7 +293,7 @@ router.get(
 router.get(
   "/me",
   asyncHandler(async (req, res) => {
-    const user = getSessionUserFromRequest(req);
+    const user = await getSessionUserFromRequest(req);
     if (!user) {
       return res.json({ user: null });
     }
