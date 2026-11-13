@@ -15,8 +15,8 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     if (!context) return;
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const columns = 18;
-    const rows = 10;
+    let columns = 18;
+    let rows = 10;
     const frameInterval = 1000 / 30;
     let frameId = 0;
     let width = 1;
@@ -37,20 +37,22 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
         const depth = row * 54 + 130;
         const scale = 340 / (340 + depth);
         const alpha = Math.max(0.07, (1 - row / rows) * 0.38);
-        for (let column = 0; column < columns; column += 1) {
-          const worldX = (column - (columns - 1) / 2) * 62;
-          const wave = motionQuery.matches
-            ? 0
-            : Math.sin(column * 0.38 + time + row * 0.12) * 12;
-          const x = centerX + worldX * scale;
-          const y = centerY + (row * 32 + wave + 48) * scale;
-          const radius = Math.max(0.7, 2.1 * scale);
-
+        const spacingX = columns <= 12 ? 52 : 62;
+        const radius = Math.max(0.7, 2.1 * scale);
+        for (let color = 0; color < 2; color += 1) {
           context.beginPath();
-          context.arc(x, y, radius, 0, Math.PI * 2);
-          context.fillStyle = (row + column) % 6 === 0
-            ? `rgba(87, 242, 135, ${alpha})`
-            : `rgba(148, 156, 247, ${alpha})`;
+          for (let column = 0; column < columns; column += 1) {
+            if (((row + column) % 6 === 0) !== (color === 1)) continue;
+            const worldX = (column - (columns - 1) / 2) * spacingX;
+            const wave = motionQuery.matches ? 0 : Math.sin(column * 0.38 + time + row * 0.12) * 12;
+            const x = centerX + worldX * scale;
+            const y = centerY + (row * 32 + wave + 48) * scale;
+            context.moveTo(x + radius, y);
+            context.arc(x, y, radius, 0, Math.PI * 2);
+          }
+          context.fillStyle = color === 1
+            ? "rgba(87, 242, 135, " + alpha + ")"
+            : "rgba(148, 156, 247, " + alpha + ")";
           context.fill();
         }
       }
@@ -60,7 +62,10 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
       const bounds = canvas.getBoundingClientRect();
       width = Math.max(1, bounds.width);
       height = Math.max(1, bounds.height);
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+      const isCompactMobile = width < 640;
+      columns = isCompactMobile ? 12 : 18;
+      rows = isCompactMobile ? 6 : 10;
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, isCompactMobile ? 1.25 : 1.5);
       canvas.width = Math.round(width * pixelRatio);
       canvas.height = Math.round(height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
