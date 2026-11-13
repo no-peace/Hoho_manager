@@ -58,7 +58,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   return (
     <div
-      className={`rounded-lg overflow-hidden bg-[#2b2d31] border transition-all ${
+      className={`rounded-xl overflow-hidden bg-[#2b2d31] border transition-[border-color,box-shadow] duration-150 ${
         active ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2]" : "border-[#1e1f22]"
       }`}
       style={{
@@ -68,7 +68,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       onClick={() => id && select({ kind: "embed", id })}
     >
       {/* ── Embed Card Header (Title & Global Actions) ── */}
-      <div className={`flex items-center justify-between px-3 py-2 bg-[#232428] select-none ${isOpen ? "border-b border-[#1e1f22]" : ""}`}>
+      <div className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${isOpen ? "border-b border-[#1e1f22]" : ""}`}>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -84,7 +84,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             {embed.title ? `Embed: ${embed.title}` : `Embed #${index + 1}`}
           </span>
           <span
-            className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+            className={`text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded bg-[#18191c] border border-[#26282d] ${
               used > Limits.embed.total
                 ? "bg-[#da373c]/20 text-[#f28b8b]"
                 : used > Limits.embed.total * 0.9
@@ -187,11 +187,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           )}
 
           {/* ── 2. Author Sub-Section ── */}
-          <div className="border border-[#1e1f22] rounded bg-[#232428] overflow-hidden">
+          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setAuthorOpen(!authorOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#282a2e] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
             >
               <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
                 {authorOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Author
@@ -292,11 +292,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 3. Body Sub-Section (Title & Description) ── */}
-          <div className="border border-[#1e1f22] rounded bg-[#232428] overflow-hidden">
+          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setBodyOpen(!bodyOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#282a2e] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
             >
               <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
                 {bodyOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Body
@@ -367,7 +367,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 4. Fields Sub-Section (Draggable 25 Fields Grid) ── */}
-          <div className="border border-[#1e1f22] rounded bg-[#232428] overflow-hidden">
+          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e1f22]">
               <button
                 type="button"
@@ -488,11 +488,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 5. Images Sub-Section (Image & Thumbnail URLs) ── */}
-          <div className="border border-[#1e1f22] rounded bg-[#232428] overflow-hidden">
+          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setImagesOpen(!imagesOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#282a2e] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
             >
               <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
                 {imagesOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Images
@@ -542,11 +542,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 6. Footer Sub-Section (Text, Icon & Timestamp) ── */}
-          <div className="border border-[#1e1f22] rounded bg-[#232428] overflow-hidden">
+          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setFooterOpen(!footerOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#282a2e] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
             >
               <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
                 {footerOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Footer & Timestamp

@@ -124,7 +124,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
     };
 
     const cardHeader = (
-      <div className="flex items-center justify-between px-3 py-2 bg-[#232428] border-b border-[#1e1f22] rounded-t-lg select-none">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22] rounded-t-lg select-none">
         <span className="text-xs font-bold uppercase tracking-wider text-[#dbdee1]">
           {getComponentTitle(comp, compIdx)}
         </span>
@@ -190,7 +190,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
+          className="rounded-lg bg-[#2b2d31] border border-[#26282d] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 space-y-2.5">
@@ -312,7 +312,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
+          className="rounded-lg bg-[#2b2d31] border border-[#26282d] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 space-y-3">
@@ -495,7 +495,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
+          className="rounded-lg bg-[#2b2d31] border border-[#26282d] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 space-y-2.5">
@@ -584,7 +584,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
+          className="rounded-lg bg-[#2b2d31] border border-[#26282d] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 space-y-2">
@@ -615,7 +615,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-lg bg-[#2b2d31] border border-[#1e1f22]"
+          className="rounded-lg bg-[#2b2d31] border border-[#26282d] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 flex flex-wrap items-center justify-between gap-4">

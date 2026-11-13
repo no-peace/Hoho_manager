@@ -108,7 +108,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     >
       {/* ── Message Collapsible Trigger Header ── */}
       <div
-        className={`flex items-center justify-between px-3 py-2.5 bg-[#232428] select-none ${
+        className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${
           isOpen ? "rounded-t-xl border-b border-[#1e1f22]" : "rounded-xl"
         }`}
       >

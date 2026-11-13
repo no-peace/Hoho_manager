@@ -158,16 +158,16 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         return (
           <div
             key={rowId}
-            className="rounded-lg bg-[#232428] border border-[#1e1f22] shadow-sm transition-colors hover:border-[#313338]"
+            className="rounded-lg bg-[#232428] border border-[#26282d] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#35373c]"
           >
             {/* ── Action Row Header ── */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1f22]/70 border-b border-[#1e1f22] rounded-t-lg select-none">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-[#232428] border-b border-[#1e1f22] rounded-t-lg select-none">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#dbdee1] uppercase tracking-wider">
                   <Layers size={12} className="text-[#5865f2]" />
                   Action Row #{siblingIndex + 1}
                 </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#2b2d31] text-[#949ba4] border border-[#313338]">
+                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-[#18191c] text-[#b5bac1] border border-[#26282d]">
                   {capacityLabel}
                 </span>
               </div>
@@ -247,7 +247,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[10px] font-mono"
                               title={`${stepCount} Flow Action(s)`}
                             >
-                              {stepCount}
+                              ⚡ {stepCount} steps
                             </span>
                           ) : null}
 
@@ -325,7 +325,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                                 <span>• {(child.options || []).length} option(s)</span>
                               )}
                               {stepCount > 0 && (
-                                <span className="text-[#f0b232]">• {stepCount} flow step(s)</span>
+                                <span className="text-[#f0b232] font-mono">⚡ {stepCount} steps</span>
                               )}
                             </div>
                           </div>

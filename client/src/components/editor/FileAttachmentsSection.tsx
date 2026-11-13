@@ -119,9 +119,9 @@ export const FileAttachmentsSection: React.FC = () => {
   };
 
   return (
-    <section className="rounded-lg border border-[#202225] bg-[#202225]/40 overflow-hidden text-xs">
+    <section className="rounded-lg border border-[#26282d] bg-[#1e1f22] overflow-hidden text-xs">
       {/* ── Section Trigger Header ── */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#202225]">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22]">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
@@ -130,7 +130,7 @@ export const FileAttachmentsSection: React.FC = () => {
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span>Files</span>
           {attachedFiles.length > 0 && (
-            <span className="rounded bg-[#5865f2] px-1.5 py-0.2 text-[10px] font-bold text-white">
+            <span className="rounded-md bg-[#18191c] border border-[#26282d] px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-bold text-white">
               {attachedFiles.length}
             </span>
           )}
