@@ -12,7 +12,6 @@ import {
   Plus,
   Trash2,
   Type,
-  X,
 } from "lucide-react";
 import {
   ButtonStyle,
