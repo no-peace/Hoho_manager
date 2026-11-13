@@ -33,6 +33,15 @@ export const updatePageSeo = ({ title, description, path, schemaType = "Software
   setMeta('meta[property="og:url"]', "property", "og:url", canonicalUrl);
   setMeta('meta[property="og:title"]', "property", "og:title", title);
   setMeta('meta[property="og:description"]', "property", "og:description", description);
+  const websiteNode = {
+    "@type": "WebSite",
+    name: "HoHo Manager",
+    url: `${SITE}/`,
+    sameAs: [
+      "https://github.com/no-peace/Hoho_manager",
+      "https://discord.gg/hohohub",
+    ],
+  };
   const application = {
     "@type": ["SoftwareApplication", "WebApplication"],
     name: "HoHo Manager",
@@ -42,8 +51,8 @@ export const updatePageSeo = ({ title, description, path, schemaType = "Software
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   };
   const graph = schemaType === "TechArticle"
-    ? [{ "@type": "WebSite", name: "HoHo Manager", url: SITE + "/" }, application, { "@type": "TechArticle", headline: title, description, url: canonicalUrl, mainEntityOfPage: canonicalUrl }]
-    : [{ "@type": "WebSite", name: "HoHo Manager", url: SITE + "/" }, application];
+    ? [websiteNode, application, { "@type": "TechArticle", headline: title, description, url: canonicalUrl, mainEntityOfPage: canonicalUrl }]
+    : [websiteNode, application];
   let schema = document.querySelector<HTMLScriptElement>("#schema-jsonld");
   if (!schema) {
     schema = document.createElement("script");
