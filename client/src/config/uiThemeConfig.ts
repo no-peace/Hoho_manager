@@ -43,7 +43,7 @@ export const UI_THEME_CONFIG = {
    * - Snappy Timing (75ms press scale to 0.97, never tween while held)
    */
   button: {
-    base: "relative inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-all duration-150 shrink-0 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#18191c]",
+    base: "relative inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out shrink-0 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#18191c]",
     variants: {
       primary:
         "bg-[#5865f2] hover:bg-[#4752c4] active:bg-[#3c45a5] text-white border border-white/10 shadow-[0_1px_0_0_rgba(255,255,255,0.12)_inset,0_2px_6px_rgba(0,0,0,0.28)]",
@@ -65,7 +65,7 @@ export const UI_THEME_CONFIG = {
     },
     /** Fitts's Law: invisible 6px hit-area expansion around compact icon buttons */
     iconButtonBase:
-      "relative inline-flex items-center justify-center rounded-lg p-1.5 transition-all duration-150 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] after:content-[''] after:absolute after:-inset-1.5",
+      "relative inline-flex items-center justify-center rounded-lg p-1.5 transition-[transform,background-color,border-color,color,opacity] duration-150 ease-out active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] after:content-[''] after:absolute after:-inset-1.5",
   },
 
   /**
@@ -96,9 +96,9 @@ export const UI_THEME_CONFIG = {
     headerBar:
       "sticky top-0 left-0 z-20 bg-[#1e1f22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-3 sm:px-4 h-12 flex items-center justify-between font-sans shrink-0",
     editorCardActive:
-      "rounded-xl bg-[#292b2f] border border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_8px_24px_rgba(0,0,0,0.32)] transition-all duration-150",
+      "rounded-xl bg-[#292b2f] border border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_8px_24px_rgba(0,0,0,0.32)] transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorCardInactive:
-      "rounded-xl bg-[#292b2f] border border-[#1e1f22] hover:border-[#383a40] opacity-95 hover:opacity-100 transition-all duration-150",
+      "rounded-xl bg-[#292b2f] border border-[#1e1f22] hover:border-[#383a40] opacity-95 hover:opacity-100 transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorSubSection:
       "rounded-lg border border-[#1e1f22] bg-[#232428] overflow-hidden",
     modalBackdrop:
@@ -108,7 +108,7 @@ export const UI_THEME_CONFIG = {
     modalHeader:
       "flex items-center justify-between px-5 py-3.5 border-b border-[#1e1f22] bg-[#2b2d31] shrink-0",
     modalFooter:
-      "px-5 py-3 border-t border-[#1e1f22] bg-[#2b2d31] flex justify-end gap-2.5 shrink-0",
+      "px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3 border-t border-[#1e1f22] bg-[#2b2d31] flex justify-end gap-2.5 shrink-0",
     badgeBlurple:
       "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#5865f2]/20 text-[#949cf7] border border-[#5865f2]/40",
     badgeNeutral:
