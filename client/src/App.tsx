@@ -68,32 +68,11 @@ const ToastAndConfirmHost: React.FC = () => {
         }}
       />
       <div role="status" aria-live="polite" className="sr-only">
-        {toasts.map((t) => (
-          <span key={t.id}>{t.message}</span>
+        {toasts.map((toast) => (
+          <span key={toast.id}>{toast.message}</span>
         ))}
       </div>
-        {toasts.map((t) => {
-          const styles =
-            t.variant === "success"
-              ? "border-[#23a55a]/60 bg-[#111214]/95 text-[#57f287]"
-              : t.variant === "error"
-                ? "border-[#da373c]/60 bg-[#111214]/95 text-[#f28b8b]"
-                : t.variant === "warning"
-                  ? "border-[#f0b232]/60 bg-[#111214]/95 text-[#f0b232]"
-                  : "border-[#5865f2]/60 bg-[#111214]/95 text-[#dee0fc]";
-          return (
-            <div
-              key={t.id}
-              className={`pointer-events-auto flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border shadow-2xl backdrop-blur-md text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-150 ${styles}`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {t.variant === "success" ? (
-                  <CheckCircle2 size={15} className="shrink-0" />
-                ) : t.variant === "error" || t.variant === "warning" ? (
-                  <AlertCircle size={15} className="shrink-0" />
-                ) : (
-                  <Info size={15} className="shrink-0" />
-                )}
+
       {confirmDialog.open && (
         <Modal
           open={confirmDialog.open}
