@@ -115,7 +115,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <React.Suspense fallback={<SessionAuthLoader />}>
+    <React.Suspense fallback={null}>
       <StudioLayout />
       <StudioModals />
     </React.Suspense>
