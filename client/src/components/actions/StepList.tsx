@@ -659,19 +659,23 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             </div>
           )}
 
-          <BranchEditor
-            label={isMemberHasRole ? "Has Role (Then)" : "Condition Passed (Then)"}
-            steps={passSteps}
-            depth={depth + 1}
-            onChange={(nextPass) => patchConfig(index, { ...config, pass: nextPass, then: nextPass })}
-          />
+          <div className="border-l-[3px] border-l-[#23a55a] pl-3">
+            <BranchEditor
+              label={isMemberHasRole ? "Has Role (Then)" : "Condition Passed (Then)"}
+              steps={passSteps}
+              depth={depth + 1}
+              onChange={(nextPass) => patchConfig(index, { ...config, pass: nextPass, then: nextPass })}
+            />
+          </div>
 
-          <BranchEditor
-            label={isMemberHasRole ? "Does Not Have Role (Else)" : "Condition Failed (Else)"}
-            steps={failSteps}
-            depth={depth + 1}
-            onChange={(nextFail) => patchConfig(index, { ...config, fail: nextFail, else: nextFail })}
-          />
+          <div className="border-l-[3px] border-l-[#da373c] pl-3">
+            <BranchEditor
+              label={isMemberHasRole ? "Does Not Have Role (Else)" : "Condition Failed (Else)"}
+              steps={failSteps}
+              depth={depth + 1}
+              onChange={(nextFail) => patchConfig(index, { ...config, fail: nextFail, else: nextFail })}
+            />
+          </div>
         </div>
       );
     }
