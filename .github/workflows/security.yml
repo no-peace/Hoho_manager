@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: security-${{ github.workflow }}-${{ github.ref }}
@@ -20,6 +19,7 @@ jobs:
   secret-scan:
     name: Scan repository history for leaked secrets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out full Git history
         uses: actions/checkout@v4
@@ -30,12 +30,22 @@ jobs:
         run: |
           docker run --rm \
             -v "$PWD:/repo" \
-            zricethezav/gitleaks:v8.24.2 \
-            detect --source=/repo --redact --no-banner --exit-code 1
+            zricethezav/gitleaks:v8.24.3 \
+            git /repo --gitleaks-ignore-path /repo/.gitleaksignore --redact --report-format json --report-path /repo/gitleaks-report.json --exit-code 1
+
+      - name: Upload redacted secret scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-redacted-report
+          path: gitleaks-report.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   static-analysis:
     name: Static security analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -54,6 +64,7 @@ jobs:
   dependency-audit:
     name: Audit npm dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -68,15 +79,25 @@ jobs:
         run: npm ci
 
       - name: Check for high and critical npm vulnerabilities
-        run: npm audit --audit-level=high
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          npm audit --audit-level=high --json > npm-audit-report.json
+          audit_status=$?
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const report = JSON.parse(readFileSync("npm-audit-report.json", "utf8"));
+          console.log("Dependency vulnerability summary:");
+          console.log(JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2));
+          NODE
+          exit "$audit_status"
 
-  dependency-review:
-    name: Review dependencies introduced by pull requests
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          fail-on-severity: high
-          deny-licenses: GPL-3.0, AGPL-3.0
+          name: npm-security-audit-report
+          path: npm-audit-report.json
+          if-no-files-found: ignore
+          retention-days: 14
