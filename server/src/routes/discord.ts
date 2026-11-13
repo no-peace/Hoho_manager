@@ -39,7 +39,7 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
     return next();
   }
 
-  const sessionUser = getSessionUserFromRequest(req);
+  const sessionUser = await getSessionUserFromRequest(req);
   const headerStaffId = req.get("x-staff-id");
 
   if (sessionUser && headerStaffId && headerStaffId !== sessionUser.id) {
