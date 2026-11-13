@@ -169,7 +169,14 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
     >
       <motion.div
         key={shakeKey}
-        animate={shakeKey > 0 ? UI_THEME_CONFIG.motion.validationShake : undefined}
+        animate={
+          shakeKey > 0
+            ? {
+                x: [...UI_THEME_CONFIG.motion.validationShake.x],
+                transition: { ...UI_THEME_CONFIG.motion.validationShake.transition },
+              }
+            : undefined
+        }
         className="space-y-3.5"
       >
         <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1e1f22] rounded-lg border border-[#111214]">
