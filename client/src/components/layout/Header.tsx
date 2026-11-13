@@ -363,13 +363,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
       </header>
       
       {isAdmin && (
-        <React.Suspense
-          fallback={
-            <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Head Admin Settings" width="max-w-md">
-              <p className="p-4 text-center text-xs text-[#949ba4]">Loading settings...</p>
-            </Modal>
-          }
-        >
+        <React.Suspense fallback={null}>
           <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
         </React.Suspense>
       )}
@@ -381,7 +375,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
           title="Staff Access Controls"
           width="max-w-4xl"
         >
-          <React.Suspense fallback={<div className="p-6 text-center text-xs text-[#949ba4]">Loading staff access...</div>}>
+          <React.Suspense fallback={null}>
             <AccessPanel />
           </React.Suspense>
         </Modal>
