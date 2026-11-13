@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 /**
@@ -80,9 +80,26 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (surfaceRef.current && !surfaceRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={surfaceRef} className={`relative ${className}`}>
       <AnimatePresence mode="popLayout" initial={false}>
         {!open ? (
           <motion.button
