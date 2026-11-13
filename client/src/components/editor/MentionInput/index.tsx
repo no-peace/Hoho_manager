@@ -20,6 +20,7 @@ import { getUserIdPlaceholderSuggestions } from "../../../utils/userPlaceholderA
 import {
   COMMON_EMOJIS_LIST,
   EXPLOIT_FIELD_OPTIONS,
+  detectAutocompleteToken,
   type AutocompleteItem,
 } from "../../../utils/mentionParser";
 import { AutocompletePopover } from "./AutocompletePopover";
@@ -254,38 +255,19 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         }
       }
 
-      // 2. Check @ mention
-      const mentionMatch = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
-      if (mentionMatch) {
-        const atIdx = textBeforeCursor.lastIndexOf("@");
-        setAcType("user");
-        setAcQuery(mentionMatch[1] ?? "");
-        setAcCursorStart(atIdx);
-        setAcCursorEnd(cursorPos);
-        setSelectedIndex(0);
-        return;
-      }
-
-      // 3. Check # channel
-      const channelMatch = textBeforeCursor.match(/(?:^|\s)#([a-zA-Z0-9_-]*)$/);
-      if (channelMatch) {
-        const hashIdx = textBeforeCursor.lastIndexOf("#");
-        setAcType("channel");
-        setAcQuery(channelMatch[1] ?? "");
-        setAcCursorStart(hashIdx);
-        setAcCursorEnd(cursorPos);
-        setSelectedIndex(0);
-        return;
-      }
-
-      // 4. Check : emoji
-      const emojiMatch = textBeforeCursor.match(/(?:^|\s):([a-zA-Z0-9_]{1,})$/);
-      if (emojiMatch) {
-        const colonIdx = textBeforeCursor.lastIndexOf(":");
-        setAcType("emoji");
-        setAcQuery(emojiMatch[1] ?? "");
-        setAcCursorStart(colonIdx);
-        setAcCursorEnd(cursorPos);
+      // Use the shared pure parser for @user, #channel, and :emoji tokens.
+      const detected = detectAutocompleteToken(text, cursorPos);
+      if (
+        detected &&
+        (detected.type === "user" ||
+          detected.type === "channel" ||
+          detected.type === "emoji")
+      ) {
+        setAcType(detected.type);
+        setAcExploitTarget(detected.exploitTarget ?? "");
+        setAcQuery(detected.query);
+        setAcCursorStart(detected.start);
+        setAcCursorEnd(detected.end);
         setSelectedIndex(0);
         return;
       }
