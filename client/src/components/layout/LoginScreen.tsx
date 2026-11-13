@@ -1,10 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AlertCircle, Clock, Lock, ShieldCheck, X } from "lucide-react";
-import gsap from "gsap";
 import { HoHoLogoMark } from "./HoHoLogoMark";
 import { PublicPageHeader } from "./PublicPageHeader";
-import { SkiperDynamicStatusPill } from "../ui/CultSkiperPrimitives";
-import { ShinyText, SpotlightCard, SplitTextReveal } from "../reactbits/ReactBitsPrimitives";
 const ThreeHeroCanvas = React.lazy(() =>
   import("../reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })),
 );
@@ -69,7 +66,6 @@ const DEMO_SHOWCASES = [
 export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => {
   const [activeShowcase, setActiveShowcase] = useState<number>(0);
   const [clickedBtn, setClickedBtn] = useState<string | null>(null);
-  const showcaseCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -77,18 +73,6 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
     }, 6500);
     return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    const element = showcaseCardRef.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { duration: 0.35, ease: "power3.out" } });
-      tl.fromTo("[data-showcase-badge]", { y: 8, opacity: 0 }, { y: 0, opacity: 1 }, 0);
-      tl.fromTo("[data-showcase-title]", { y: 10, opacity: 0 }, { y: 0, opacity: 1 }, "<0.05");
-      tl.fromTo("[data-showcase-actions]", { y: 8, opacity: 0 }, { y: 0, opacity: 1 }, "<0.05");
-    }, element);
-    return () => ctx.revert();
-  }, [activeShowcase]);
 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
@@ -98,13 +82,13 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
       <PublicPageHeader activePage="studio" />
 
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
-        <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+        <div className="relative isolate overflow-hidden lg:col-span-5 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
-              <ShinyText text="COMPONENTS V2 & DYNAMIC TRACKING" />
+              COMPONENTS V2 & DYNAMIC TRACKING
             </span>
             <h1 className="text-2xl font-bold text-white tracking-tight">
-              <SplitTextReveal text="HoHo Manager Studio" />
+              HoHo Manager Studio
             </h1>
             <p className="text-xs sm:text-sm text-[#949ba4] leading-relaxed">
               Sign in with Discord to verify your account, shared servers, and staff access before opening the message studio.
@@ -154,9 +138,9 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               </span>
             </div>
           </div>
-        </SpotlightCard>
+        </div>
 
-        <SpotlightCard className="lg:col-span-7 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl overflow-hidden shadow-xl flex flex-col">
+        <div className="relative isolate overflow-hidden lg:col-span-7 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl overflow-hidden shadow-xl flex flex-col">
           <div className="bg-[#1e1f22] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-[#949ba4]">
               #announcements  Preview
@@ -196,7 +180,6 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                 </div>
 
                 <div
-                  ref={showcaseCardRef}
                   className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-all"
                   style={{
                     borderLeftWidth: "4px",
@@ -207,7 +190,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                     <span data-showcase-badge className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#dee0fc]">
                       {currentDemo.badge}
                     </span>
-                    <SkiperDynamicStatusPill badge="Bot Dispatch" accentColor="#57f287" />
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#18191c] border border-[#26282d] text-[10px] font-bold uppercase tracking-wider text-[#dbdee1]"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
                   </div>
 
                   <h3 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h3>
@@ -246,7 +229,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               </div>
             </div>
           </div>
-        </SpotlightCard>
+        </div>
       </main>
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
