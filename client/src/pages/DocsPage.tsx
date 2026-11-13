@@ -251,7 +251,8 @@ export const DocsPage = () => {
                         className="text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] active:scale-[0.97] transition-all text-left"
                         title="Click to copy"
                       >
-                        {item.tag}
+                        <span>{item.tag}</span>
+                        <kbd className="ml-2 hidden rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px] font-medium text-[#949ba4] xl:inline">Click to copy</kbd>
                       </button>
                     </td>
                     <td className="px-5 py-3 text-[#dbdee1] leading-relaxed">{item.desc}</td>
