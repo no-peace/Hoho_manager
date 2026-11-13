@@ -127,9 +127,9 @@ export const DocsPage = () => {
   }, [search, activeCategory]);
 
   return (
-    <div className="h-screen overflow-y-auto custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-24">
+    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-24">
       {/* Top Header */}
-      <div className="h-14 flex items-center px-6 border-b border-[#1e1f22] bg-[#2b2d31] sticky top-0 z-50 shadow-sm">
+      <div className="h-14 flex items-center justify-between gap-2 px-4 sm:px-6 border-b border-[#1e1f22] bg-[#2b2d31]/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
         <a
           href="/"
           className="flex items-center gap-2 text-[#b5bac1] hover:text-white transition-colors text-sm font-bold"
@@ -201,7 +201,7 @@ export const DocsPage = () => {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar sm:flex-wrap w-full sm:w-auto pb-1 sm:pb-0">
             {[
               { id: "all", label: "All" },
               { id: "user", label: "User" },
