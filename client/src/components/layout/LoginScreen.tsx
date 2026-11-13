@@ -135,7 +135,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
           </div>
 
           {authError && (
-            <div className="p-3 rounded-lg bg-[#da373c]/15 border border-[#da373c]/40 text-xs text-[#f28b8b] flex items-center gap-2">
+            <div role="alert" className="p-3 rounded-lg bg-[#da373c]/15 border border-[#da373c]/40 text-xs text-[#f28b8b] flex items-center gap-2">
               <AlertCircle size={15} className="shrink-0" />
               <span>{AUTH_ERROR_MESSAGES[authError] ?? "Login could not be completed. Please try again."}</span>
             </div>
