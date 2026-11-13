@@ -56,6 +56,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   token_exchange_failed: "Discord could not complete login. Please try again later.",
   token_exchange_invalid_response: "Discord returned an invalid login response. Please try again.",
   fetch_user_timeout: "Discord profile lookup timed out. Please try again.",
+  fetch_user_failed: "Discord could not verify your profile. Please try signing in again.",
 };
 
 const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
