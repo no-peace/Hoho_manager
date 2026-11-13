@@ -42,6 +42,16 @@ export class SendCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
+    const { checkCommandCooldown } = await import("../lib/commandCooldown.js");
+    const waitSec = checkCommandCooldown("send", interaction.user.id, 3);
+    if (waitSec > 0) {
+      await interaction.reply({
+        content: "⏳ Please wait **" + waitSec + "s** before running `/send` again.",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     const channel = interaction.options.getChannel("channel", true);
     const message = interaction.options.getString("message", true);
 
