@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 export interface ModalProps {
   open: boolean;
@@ -177,7 +178,9 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         <div className="p-5 overflow-y-auto text-[#dbdee1] flex-1 text-sm leading-relaxed custom-scrollbar">
-          {children}
+          <ErrorBoundary level="modal" fallbackTitle="Dialog Content Error">
+            {children}
+          </ErrorBoundary>
         </div>
 
         {footer && (
