@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useAutocompleteMenu } from "../../hooks/useAutocompleteMenu";
+import { MarkdownToolbar } from "./MentionInput/MarkdownToolbar";
 import {
   Hash,
   Volume2,
@@ -68,12 +70,11 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
 
   // Autocomplete state
-  const [acType, setAcType] = useState<AutocompleteType>(null);
-  const [acQuery, setAcQuery] = useState("");
-  const [acExploitTarget, setAcExploitTarget] = useState("");
-  const [acCursorStart, setAcCursorStart] = useState(-1);
-  const [acCursorEnd, setAcCursorEnd] = useState(-1);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const {
+    acType, setAcType, acQuery, setAcQuery, acExploitTarget, setAcExploitTarget,
+    acCursorStart, setAcCursorStart, acCursorEnd, setAcCursorEnd,
+    selectedIndex, setSelectedIndex,
+  } = useAutocompleteMenu();
 
   useEffect(() => {
     if ((acType || showRichPicker) && textareaRef.current) {
@@ -855,136 +856,9 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       {/* Integrated Editor Box with Attached Toolbar Ribbon */}
       <div className="relative w-full rounded-lg border border-[#232428] hover:border-[#35373c] focus-within:border-[#5865f2] bg-[#1e1f22] transition-colors">
         {showToolbar && (
-          <div
-            className="flex items-center gap-0.5 px-2 py-1 bg-[#18191c]/80 border-b border-[#232428] rounded-t-lg text-[#949ba4] overflow-x-auto select-none custom-scrollbar"
-            role="toolbar"
-            aria-label="Markdown formatting"
-          >
-            {/* Bold */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("**", "**", "bold text")}
-              title="Bold (**text**) • Ctrl+B"
-              aria-label="Bold"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Bold size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Italic */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("*", "*", "italic text")}
-              title="Italic (*text*) • Ctrl+I"
-              aria-label="Italic"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Italic size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Underline */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("__", "__", "underlined text")}
-              title="Underline (__text__) • Ctrl+U"
-              aria-label="Underline"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Underline size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Strikethrough */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("~~", "~~", "strikethrough text")}
-              title="Strikethrough (~~text~~)"
-              aria-label="Strikethrough"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Strikethrough size={13} strokeWidth={2.5} />
-            </button>
-
-            <div className="w-[1px] h-3.5 bg-[#35373c] mx-0.5 shrink-0" />
-
-            {/* Inline Code */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("`", "`", "code")}
-              title="Inline Code (`text`) • Ctrl+E"
-              aria-label="Inline Code"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Code size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Code Block */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("```\n", "\n```", "code block")}
-              title="Code Block (```lang\n...\n```)"
-              aria-label="Code Block"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <FileCode size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Spoiler */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("||", "||", "spoiler")}
-              title="Spoiler (||text||)"
-              aria-label="Spoiler"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <EyeOff size={13} strokeWidth={2.5} />
-            </button>
-
-            {/* Quote */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => formatSelection("> ", "", "quote", true)}
-              title="Quote (> text)"
-              aria-label="Quote"
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Quote size={13} strokeWidth={2.5} />
-            </button>
-
-            <div className="w-[1px] h-3.5 bg-[#35373c] mx-0.5 shrink-0" />
-
-            {/* Timestamp Helper */}
-            <button
-              type="button"
-              tabIndex={-1}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                const now = Math.floor(Date.now() / 1000);
-                formatSelection(`<t:${now}:R>`, "", "");
-              }}
-              title="Relative Timestamp (<t:epoch:R>)"
-              aria-label="Relative Timestamp"
-              className="px-1.5 h-6 rounded flex items-center gap-1 text-[11px] font-mono hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors"
-            >
-              <Clock size={12} />
-              <span className="hidden sm:inline text-[10px]">time:R</span>
-            </button>
-          </div>
+          <MarkdownToolbar onFormat={(prefix, suffix, defaultText, isLinePrefix) =>
+            formatSelection(prefix, suffix, defaultText, isLinePrefix)
+          } />
         )}
 
         <textarea
