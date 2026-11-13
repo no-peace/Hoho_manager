@@ -12,7 +12,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -21,6 +21,8 @@ concurrency:
 jobs:
   verify:
     name: Verify release
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -53,6 +55,8 @@ jobs:
   publish:
     name: Publish GitHub release
     needs: verify
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Create release with generated notes
