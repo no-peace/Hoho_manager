@@ -51,7 +51,7 @@ export class ServerCommand extends Command {
       `> • Members: ${guild.memberCount} · Channels: ${guild.channels.cache.size} · Roles: ${guild.roles.cache.size}`,
       `> • Boost: ${BOOST_TIERS[guild.premiumTier] ?? "Unknown"} · Created: <t:${createdUnix}:R> (<t:${createdUnix}:d>)`,
       `_Gateway latency: ${Math.round(this.container.client.ws.ping)}ms_`,
-
+    ].join("\n");
 
     await interaction.reply({ content: body, flags: MessageFlags.Ephemeral });
   }

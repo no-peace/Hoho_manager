@@ -44,7 +44,7 @@ export class StatusCommand extends Command {
         line("Public key configured", health.discord.publicKeyConfigured),
         line("Application id configured", health.discord.applicationIdConfigured),
         `_Uptime: ${Math.round(health.uptimeSeconds)}s_`,
-
+      ].join("\n");
 
       await interaction.editReply(body);
     } catch (error) {
