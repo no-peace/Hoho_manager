@@ -709,10 +709,10 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     expect(source).toContain("Edit via Server Bot");
   });
 
-  it("verifies MessageEditor Set Link modal uses <Modal> component (UI-06)", () => {
-    const filePath = path.resolve(__dirname, "../components/editor/MessageEditor.tsx");
+  it("verifies the extracted MessageLinkModal uses the shared <Modal> component (UI-06)", () => {
+    const filePath = path.resolve(__dirname, "../components/editor/MessageEditor/MessageLinkModal.tsx");
     const source = fs.readFileSync(filePath, "utf-8");
-    expect(source).toMatch(/<Modal\s+open=\{linkModalOpen\}/);
+    expect(source).toMatch(/<Modal\s+open=\{open\}/);
   });
 
   it("verifies SplitPane breakpoint updated to 1280px (OF-08)", () => {
