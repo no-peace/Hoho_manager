@@ -38,10 +38,11 @@ import { updatePageSeo } from "./utils/seo";
 import gsap from "gsap";
 import { Toaster as SileoToaster } from "sileo";
 import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
+import { ThreeHeroCanvas } from "./components/reactbits/ThreeHeroCanvas";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
 const PrivacyPage = React.lazy(() => import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
-const ThreeHeroCanvas = React.lazy(() => import("./components/reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })));
+
 const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
 const BotDispatchModal = React.lazy(() => import("./components/send/BotDispatchModal").then((module) => ({ default: module.BotDispatchModal })));
 
@@ -590,7 +591,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
 
   return (
     <div className="relative min-h-[100dvh] w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3 sm:p-8 pb-4 select-none overflow-x-hidden">
-      <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>
+      <ThreeHeroCanvas />
       <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HoHoLogoMark className="h-9 w-9" />
@@ -618,7 +619,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
               <SplitTextReveal text="HoHo Manager Studio" />
             </h1>
             <p className="text-xs sm:text-sm text-[#949ba4] leading-relaxed">
-              Authenticate with Discord to verify your mutual servers and staff roles, or connect your own Bot Token after login.
+              Sign in with Discord to verify your account, shared servers, and staff access before opening the message studio.
             </p>
           </div>
 
@@ -660,8 +661,8 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
               <Lock size={15} className="text-[#f0b232] shrink-0 mt-0.5" />
               <span>
-                <strong className="text-white">Custom Bot Mode:</strong>{" "}
-                Connect your own AES-256-GCM encrypted Bot Token anytime.
+                <strong className="text-white">Workspace Backups:</strong>{" "}
+                Save, restore, import, and export message configurations from the studio.
               </span>
             </div>
           </div>
