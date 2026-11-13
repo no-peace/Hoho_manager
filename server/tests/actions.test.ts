@@ -272,6 +272,8 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         const res = await handler?.run({ ...mockContext, config: { roleId: "role_new" } });
         expect(mockDiscordApi.addGuildMemberRole).toHaveBeenCalledWith("guild_123", "user_789", "role_new", "Bot.FakeToken");
         expect((res?.data as any)?.content).toContain("role_new");
+        expect((res?.data as any)?.content).toContain("**Role Added**");
+        expect((res?.data as any)?.content).toContain("Gave you <@&role_new>.");
       });
     });
 
@@ -279,8 +281,9 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
     describe("actions/removeRole.ts", () => {
       it("calls discord.removeGuildMemberRole", async () => {
         const handler = getActionHandler("remove_role");
-        await handler?.run({ ...mockContext, config: { roleId: "role_old" } });
+        const res = await handler?.run({ ...mockContext, config: { roleId: "role_old" } });
         expect(mockDiscordApi.removeGuildMemberRole).toHaveBeenCalledWith("guild_123", "user_789", "role_old", "Bot.FakeToken");
+        expect((res?.data as any)?.content).toContain("**Role Removed**");
       });
     });
 
@@ -290,15 +293,17 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         mockContext.interaction.member!.roles = ["role_toggle"];
         (mockDiscordApi.hasRole as any).mockResolvedValueOnce(true);
         const handler = getActionHandler("toggle_role");
-        await handler?.run({ ...mockContext, config: { roleId: "role_toggle" } });
+        const res = await handler?.run({ ...mockContext, config: { roleId: "role_toggle" } });
         expect(mockDiscordApi.removeGuildMemberRole).toHaveBeenCalled();
+        expect((res?.data as any)?.content).toContain("**Role Removed**");
       });
 
       it("adds role if member does not have it", async () => {
         mockContext.interaction.member!.roles = [];
         const handler = getActionHandler("toggle_role");
-        await handler?.run({ ...mockContext, config: { roleId: "role_toggle" } });
+        const res = await handler?.run({ ...mockContext, config: { roleId: "role_toggle" } });
         expect(mockDiscordApi.addGuildMemberRole).toHaveBeenCalled();
+        expect((res?.data as any)?.content).toContain("**Role Added**");
       });
     });
 
@@ -326,8 +331,9 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
     describe("actions/sendDm.ts", () => {
       it("dispatches DM to interacting user", async () => {
         const handler = getActionHandler("send_dm");
-        await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
+        const res = await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
         expect(mockDiscordApi.sendDirectMessage).toHaveBeenCalledWith("user_789", expect.anything(), "Bot.FakeToken");
+        expect((res?.data as any)?.content).toBe("📬 **Direct Message Sent** — Sent you a direct message.");
       });
     });
 
@@ -379,12 +385,13 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
     describe("actions/createThread.ts", () => {
       it("creates a thread from message", async () => {
         const handler = getActionHandler("create_thread");
-        await handler?.run({
+        const res = await handler?.run({
           ...mockContext,
           interaction: { ...mockContext.interaction, message: { id: "msg_anchor" } as any },
           config: { name: "Discussion Thread" },
         });
         expect(mockDiscordApi.createThreadFromMessage).toHaveBeenCalled();
+        expect((res?.data as any)?.content).toBe("🧵 **Thread Created** — Started <#thread_1>.");
       });
     });
 

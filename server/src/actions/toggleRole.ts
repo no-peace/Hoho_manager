@@ -30,7 +30,7 @@ export const run = async ({
     }
 
     await discord.addGuildMemberRole(guildId, userId, roleId, botToken);
-    return ephemeral(`\u2705 Gave you <@&${roleId}>.`);
+    return ephemeral(`✅ **Role Added** — Gave you <@&${roleId}>.`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`toggle_role failed for ${userId}: ${reason}`);
