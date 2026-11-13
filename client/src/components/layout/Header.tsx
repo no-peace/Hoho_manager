@@ -142,29 +142,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
             </div>
           )}
 
-          <div className="flex items-center gap-1">
+          <div className="inline-flex items-center gap-1 rounded-lg bg-[#111214] p-1 border border-[#26282d]">
             {onOpenBackups && (
-              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-lg border border-[#35373c] bg-[#2b2d31] px-2 py-1.5 text-xs font-semibold text-[#dbdee1] transition-all hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <Archive size={14} /><span className="hidden xl:inline">Backups</span>
               </button>
             )}
             {onOpenJson && (
-              <button type="button" onClick={onOpenJson} title="Import or export JSON" aria-label="Import or export JSON" className="inline-flex items-center gap-1.5 rounded-lg border border-[#35373c] bg-[#2b2d31] px-2 py-1.5 text-xs font-semibold text-[#dbdee1] transition-all hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={onOpenJson} title="Import or export JSON" aria-label="Import or export JSON" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <FileJson size={14} /><span className="hidden xl:inline">JSON</span>
               </button>
             )}
             {onShare && (
-              <button type="button" onClick={() => void onShare()} title="Copy message JSON" aria-label="Copy message JSON" className="rounded-lg border border-[#35373c] bg-[#2b2d31] p-1.5 text-[#dbdee1] transition-all hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={() => void onShare()} title="Copy message JSON" aria-label="Copy message JSON" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <Share2 size={14} />
               </button>
             )}
             {onClearAll && (
-              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-lg border border-[#35373c] bg-[#2b2d31] p-1.5 text-[#f28b8b] transition-all hover:bg-[#da373c]/15 active:scale-[0.97]">
+              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#f28b8b] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#da373c]/15 active:scale-[0.97]">
                 <Trash2 size={14} />
               </button>
             )}
             {onOpenSend && (
-              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-lg border border-[#248046] bg-[#248046] p-1.5 text-white transition-all hover:bg-[#1a6334] active:scale-[0.97]">
+              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-md border border-[#248046] bg-[#248046] px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
                 <Send size={14} />
               </button>
             )}
