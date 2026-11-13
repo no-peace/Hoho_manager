@@ -358,5 +358,19 @@ export const migrations: readonly Migration[] = [
       DROP TABLE IF EXISTS bot_profiles;
     `,
   },
+  {
+    id: "012_auth_session_revocations",
+    sql: `
+      -- Persistent revocation floors for signed-in web sessions.
+      -- The '*' row is reserved for global emergency revocation.
+      CREATE TABLE IF NOT EXISTS auth_session_revocations (
+        user_id       TEXT PRIMARY KEY,
+        revoked_at_ms INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_auth_session_revocations_timestamp
+        ON auth_session_revocations(revoked_at_ms);
+    `,
+  },
 ];
 
