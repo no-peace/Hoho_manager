@@ -47,6 +47,10 @@ const WEAO_STORAGE_KEY = "hoho_weao_exploits_cache";
 const WEAO_CLIENT_TTL_MS = 60_000;
 let weaoLastFetchedAt = 0;
 let inFlightWeaoPromise: Promise<void> | null = null;
+let inFlightGuildsPromise: Promise<void> | null = null;
+const inFlightChannelsMap = new Map<string, Promise<void>>();
+const inFlightRolesMap = new Map<string, Promise<void>>();
+const inFlightEmojisMap = new Map<string, Promise<void>>();
 
 const loadCachedWeaoExploits = (): WeaoExploitItem[] => {
   try {
@@ -89,44 +93,72 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
 
   fetchGuilds: async () => {
     if (get().guilds) return;
-    try {
-      const { guilds } = await api.discord.guilds();
-      set({ guilds });
-    } catch {
-      // Ignore error
-    }
+    if (inFlightGuildsPromise) return inFlightGuildsPromise;
+    inFlightGuildsPromise = (async () => {
+      try {
+        const { guilds } = await api.discord.guilds();
+        set({ guilds });
+      } catch {
+        // Ignore error
+      } finally {
+        inFlightGuildsPromise = null;
+      }
+    })();
+    return inFlightGuildsPromise;
   },
 
   fetchChannels: async (guildId: string) => {
     if (get().channels[guildId]) return;
-    try {
-      const { channels } = await api.discord.channels(guildId);
-      set((state) => ({ channels: { ...state.channels, [guildId]: channels } }));
-    } catch {
-      // Ignore error
-    }
+    const existing = inFlightChannelsMap.get(guildId);
+    if (existing) return existing;
+    const promise = (async () => {
+      try {
+        const { channels } = await api.discord.channels(guildId);
+        set((state) => ({ channels: { ...state.channels, [guildId]: channels } }));
+      } catch {
+        // Ignore error
+      } finally {
+        inFlightChannelsMap.delete(guildId);
+      }
+    })();
+    inFlightChannelsMap.set(guildId, promise);
+    return promise;
   },
 
   fetchRoles: async (guildId: string) => {
     if (get().roles[guildId]) return;
-    try {
-      const { roles } = await api.discord.roles(guildId);
-      set((state) => ({ roles: { ...state.roles, [guildId]: roles } }));
-    } catch {
-      // Ignore error
-    }
+    const existing = inFlightRolesMap.get(guildId);
+    if (existing) return existing;
+    const promise = (async () => {
+      try {
+        const { roles } = await api.discord.roles(guildId);
+        set((state) => ({ roles: { ...state.roles, [guildId]: roles } }));
+      } catch {
+        // Ignore error
+      } finally {
+        inFlightRolesMap.delete(guildId);
+      }
+    })();
+    inFlightRolesMap.set(guildId, promise);
+    return promise;
   },
 
   fetchEmojis: async (guildId: string) => {
     if (get().emojis[guildId]) return;
-    try {
-      const res = await (api.discord as any).emojis?.(guildId);
-      if (res?.emojis) {
-        set((state) => ({ emojis: { ...state.emojis, [guildId]: res.emojis } }));
+    const existing = inFlightEmojisMap.get(guildId);
+    if (existing) return existing;
+    const promise = (async () => {
+      try {
+        const res = await (api.discord as any).emojis?.(guildId);
+        if (res?.emojis) set((state) => ({ emojis: { ...state.emojis, [guildId]: res.emojis } }));
+      } catch {
+        // Ignore error
+      } finally {
+        inFlightEmojisMap.delete(guildId);
       }
-    } catch {
-      // Ignore error
-    }
+    })();
+    inFlightEmojisMap.set(guildId, promise);
+    return promise;
   },
 
   fetchWeaoExploits: async (force = false) => {
