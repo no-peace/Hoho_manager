@@ -609,8 +609,8 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
         </nav>
       </header>
 
-      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8">
-        <SpotlightCard className="lg:col-span-5 bg-[#2b2d31] border border-[#111214] rounded-xl p-6 sm:p-8 shadow-xl space-y-6">
+      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-center my-auto py-4 sm:py-8">
+        <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31] border border-[#111214] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
               <ShinyText text="COMPONENTS V2 & DYNAMIC TRACKING" />
@@ -668,7 +668,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
           </div>
         </SpotlightCard>
 
-        <SpotlightCard className="lg:col-span-7 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
+        <SpotlightCard className="lg:col-span-7 min-w-0 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
           <div className="bg-[#1e1f22] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-[#949ba4]">
               #announcements  Preview
@@ -693,7 +693,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             </div>
           </div>
 
-          <div className="p-6 bg-[#313338] space-y-4">
+          <div className="p-3 sm:p-6 bg-[#313338] space-y-4">
             <div className="flex items-start gap-3.5">
               <HoHoLogoMark className="h-10 w-10" />
               <div className="flex-1 min-w-0 space-y-2">
