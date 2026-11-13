@@ -40,9 +40,22 @@ import { Toaster as SileoToaster } from "sileo";
 import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
+const PrivacyPage = React.lazy(() => import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
 const ThreeHeroCanvas = React.lazy(() => import("./components/reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })));
 const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
 const BotDispatchModal = React.lazy(() => import("./components/send/BotDispatchModal").then((module) => ({ default: module.BotDispatchModal })));
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  oauth_not_configured: "Discord login is not configured on the server. Please contact an administrator.",
+  oauth_redirect_misconfigured: "The Discord callback URL is misconfigured. Please contact an administrator.",
+  oauth_denied: "Discord authorization was cancelled or denied. You can try again.",
+  invalid_oauth_state: "The login session expired or could not be verified. Please try again.",
+  token_exchange_timeout: "Discord took too long to complete login. Please try again.",
+  oauth_credentials_rejected: "Discord rejected the application credentials. Please contact an administrator.",
+  token_exchange_failed: "Discord could not complete login. Please try again later.",
+  token_exchange_invalid_response: "Discord returned an invalid login response. Please try again.",
+  fetch_user_timeout: "Discord profile lookup timed out. Please try again.",
+};
 
 const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
   <img
@@ -576,7 +589,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-4 sm:p-8 pb-20 sm:pb-8 select-none overflow-hidden">
+    <div className="relative min-h-[100dvh] w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3 sm:p-8 pb-4 select-none overflow-x-hidden">
       <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>
       <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -612,7 +625,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
           {authError && (
             <div className="p-3 rounded-lg bg-[#da373c]/15 border border-[#da373c]/40 text-xs text-[#f28b8b] flex items-center gap-2">
               <AlertCircle size={15} className="shrink-0" />
-              <span>Login failed: {authError}</span>
+              <span>{AUTH_ERROR_MESSAGES[authError] ?? "Login could not be completed. Please try again."}</span>
             </div>
           )}
 
@@ -747,12 +760,8 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
         <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
-        <span>Official Discord OAuth2 (identify, guilds)</span>
-        </footer>
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2">
-        <a href="/api/auth/discord/login" className="flex-1 py-2.5 px-4 rounded-xl bg-[#5865f2] active:scale-[0.97] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-transform">Login with Discord</a>
-        <a href="/docs" className="py-2.5 px-3.5 rounded-xl bg-[#2b2d31] border border-[#35373c] text-[#dbdee1] font-semibold text-xs active:scale-[0.97] transition-transform">Docs</a>
-      </div>
+        <span>Discord OAuth2 sign-in (profile and server access)</span>
+      </footer>
     </div>
   );
 };
@@ -776,6 +785,21 @@ export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(() =>
     typeof window !== "undefined" ? window.location.pathname : "/bots/webhook",
   );
+  const [authError, setAuthError] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const value = new URLSearchParams(window.location.search).get("error");
+    return value && Object.prototype.hasOwnProperty.call(AUTH_ERROR_MESSAGES, value) ? value : null;
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("error")) return;
+    const value = params.get("error");
+    setAuthError(value && Object.prototype.hasOwnProperty.call(AUTH_ERROR_MESSAGES, value) ? value : null);
+    params.delete("error");
+    const query = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  }, []);
 
   useEffect(() => {
     updatePageSeo(currentPath === "/docs"
@@ -862,7 +886,16 @@ export const App: React.FC = () => {
   if (currentPath === "/docs") {
     return (
       <>
-        <React.Suspense fallback={<div className="min-h-screen bg-[#111214]" />}><DocsPage /></React.Suspense>
+        <React.Suspense fallback={<div className="min-h-screen bg-[#18191c] p-6"><div className="mx-auto max-w-5xl space-y-4 animate-pulse"><div className="h-8 w-48 rounded bg-[#2b2d31]" /><div className="h-28 rounded-xl bg-[#232428]" /><div className="h-48 rounded-xl bg-[#232428]" /></div></div>}><DocsPage /></React.Suspense>
+        <ToastAndConfirmHost />
+      </>
+    );
+  }
+
+  if (currentPath === "/privacy") {
+    return (
+      <>
+        <React.Suspense fallback={<div className="min-h-screen bg-[#18191c] p-6"><div className="mx-auto max-w-4xl space-y-4 animate-pulse"><div className="h-8 w-56 rounded bg-[#2b2d31]" /><div className="h-36 rounded-xl bg-[#232428]" /><div className="h-28 rounded-xl bg-[#232428]" /></div></div>}><PrivacyPage /></React.Suspense>
         <ToastAndConfirmHost />
       </>
     );
@@ -885,21 +918,16 @@ export const App: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#1e1f22] text-[#dbdee1] font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <HoHoLogoMark className="w-12 h-12 animate-pulse" />
-          <p className="text-xs font-semibold text-[#949ba4]">Verifying Discord session...</p>
+      <div className="min-h-[100dvh] w-full bg-[#18191c] p-6 text-[#dbdee1] font-sans">
+        <div className="mx-auto flex min-h-[80dvh] max-w-5xl flex-col justify-center gap-6 animate-pulse">
+          <div className="h-10 w-52 rounded-lg bg-[#2b2d31]" />
+          <div className="grid gap-4 lg:grid-cols-2"><div className="h-64 rounded-2xl bg-[#232428]" /><div className="h-64 rounded-2xl bg-[#232428]" /></div>
         </div>
       </div>
     );
   }
 
   if (!currentUser) {
-    const authError =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("error")
-        : null;
-
     return (
       <>
         <LoginScreen authError={authError} />
