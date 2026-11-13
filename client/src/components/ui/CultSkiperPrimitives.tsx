@@ -77,6 +77,7 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
   title,
   children,
   className = "",
+  disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
 
