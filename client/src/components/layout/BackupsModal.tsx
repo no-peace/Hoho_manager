@@ -284,7 +284,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-[#26282d] bg-[#1e1f22] p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-[#26282d] bg-[#1e1f22] p-1 overflow-x-auto no-scrollbar max-w-full">
           {([
             ["all", `All · ${items.length}`],
             ["tracked", `Tracked Only · ${items.filter((item) => item.isTracked).length}`],
@@ -294,7 +294,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${filter === value ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"}`}
+              className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors shrink-0 whitespace-nowrap ${filter === value ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"}`}
             >
               {label}
             </button>
