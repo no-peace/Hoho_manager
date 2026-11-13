@@ -247,9 +247,9 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                 maxHeight: calculatedMaxHeight,
                 zIndex: 99999,
               }}
-              className="bg-[#2b2d31] border border-[#1e1f22] rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+              className="bg-[#2b2d31] border border-[#26282d] rounded-lg shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
             >
-              <div className="p-2 shrink-0 border-b border-[#1e1f22]">
+              <div className="p-2 shrink-0 bg-[#18191c] border-b border-[#26282d]">
                 <input
                   type="text"
                   aria-label={type === "member" ? "Search username or enter 17-20 digit ID" : `Search ${type} options`}
@@ -316,7 +316,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                           )}
                           <span className="truncate min-w-0 flex-1">{opt.name}</span>
                         </div>
-                        {multiple && isSelected && <span className="text-xs font-bold shrink-0 ml-1">✓</span>}
+                        {isSelected && <span className="text-xs font-bold shrink-0 ml-1">✓</span>}
                       </div>
                     );
                   })

@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <button
           type="button"
           onClick={() => setActiveTab("elements")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-[background-color,color,box-shadow] duration-150 ${
             activeTab === "elements"
               ? "bg-[#5865f2] text-white shadow-sm"
               : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"

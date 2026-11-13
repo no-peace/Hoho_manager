@@ -133,7 +133,7 @@ export const StudioLayout: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => addMessage({ flags: 0 })}
-                        className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3 active:scale-[0.98]"
+                        className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 flex items-start gap-3 active:scale-[0.98]"
                       >
                         <div className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">
                           TXT
@@ -160,7 +160,7 @@ export const StudioLayout: React.FC = () => {
                             ],
                           })
                         }
-                        className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3 active:scale-[0.98]"
+                        className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 flex items-start gap-3 active:scale-[0.98]"
                       >
                         <div className="p-2 rounded bg-[#5865f2]/20 text-[#949cf7] font-mono text-xs font-bold shrink-0">
                           V2
@@ -240,7 +240,7 @@ export const StudioLayout: React.FC = () => {
           <button
             type="button"
             onClick={() => openBotModal("send")}
-            className="min-h-[40px] px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-all active:scale-[0.97] flex items-center gap-1.5 select-none shadow-md"
+            className="min-h-[40px] px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-[transform,background-color,color,box-shadow,opacity] duration-150 active:scale-[0.97] flex items-center gap-1.5 select-none shadow-md"
           >
             <Send size={13} />
             <span>Dispatch</span>

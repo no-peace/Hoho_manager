@@ -165,7 +165,7 @@ export const SplitPane = ({
         }}
         className={`group relative w-1.5 shrink-0 cursor-col-resize transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:bg-[#5865f2] ${isDragging ? "bg-[#5865f2]" : "bg-[#111214] hover:bg-[#5865f2]"}`}
       >
-        <div className={`w-0.5 rounded-full transition-all duration-150 ${isDragging ? "h-12 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "h-8 bg-[#4e5058] group-hover:h-11 group-hover:bg-white"}`} />
+        <div className={`w-0.5 h-8 rounded-full transition-[transform,background-color,box-shadow] duration-150 ${isDragging ? "scale-y-150 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "bg-[#4e5058] group-hover:scale-y-125 group-hover:bg-white"}`} />
         {isDragging && (
           <span className="pointer-events-none absolute top-3 left-3 z-50 rounded-md bg-[#18191c] border border-[#5865f2] px-2 py-0.5 font-mono text-[10px] font-bold text-white shadow-xl tabular-nums whitespace-nowrap">
             {Math.round(ratio * 100)}% / {100 - Math.round(ratio * 100)}%
