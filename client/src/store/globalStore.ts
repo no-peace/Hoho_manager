@@ -76,6 +76,14 @@ interface GlobalState {
   authLoading: boolean;
   configModalOpen: boolean;
   setConfigModalOpen: (open: boolean) => void;
+  backupsModalOpen: boolean;
+  setBackupsModalOpen: (open: boolean) => void;
+  jsonModalOpen: boolean;
+  setJsonModalOpen: (open: boolean) => void;
+  botModalOpen: boolean;
+  botModalMode: "send" | "edit";
+  openBotModal: (mode?: "send" | "edit") => void;
+  closeBotModal: () => void;
   setCurrentUser: (user: CurrentUser | null) => void;
   setAuthLoading: (loading: boolean) => void;
   fetchCurrentUser: () => Promise<CurrentUser | null>;
@@ -152,6 +160,14 @@ export const useGlobalStore = create<GlobalState>((set) => {
     botIdentity: loadInitialBotIdentity(),
     configModalOpen: false,
     setConfigModalOpen: (open) => set({ configModalOpen: open }),
+    backupsModalOpen: false,
+    setBackupsModalOpen: (open) => set({ backupsModalOpen: open }),
+    jsonModalOpen: false,
+    setJsonModalOpen: (open) => set({ jsonModalOpen: open }),
+    botModalOpen: false,
+    botModalMode: "send",
+    openBotModal: (mode = "send") => set({ botModalMode: mode, botModalOpen: true }),
+    closeBotModal: () => set({ botModalOpen: false }),
     setSelectedGuildId: (id) =>
       set((state) => {
         const updated = { selectedGuildId: id };
