@@ -19,7 +19,6 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     const rows = 10;
     const frameInterval = 1000 / 30;
     let frameId = 0;
-    let frame = 0;
     let width = 1;
     let height = 1;
     let pointerX = 0;
