@@ -340,7 +340,6 @@ export const DocsPage = () => {
           </div>
           <div className="flex items-center gap-4">
             <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
-            <a href="https://github.com/no-peace/Hoho_manager" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub Repository</a>
           </div>
         </footer>
 

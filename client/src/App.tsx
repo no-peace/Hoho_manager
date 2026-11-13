@@ -766,7 +766,6 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
           <a href="/docs" className="hover:text-white transition-colors">Docs</a>
           <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
           <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
-          <a href="https://github.com/no-peace/Hoho_manager" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
         </div>
         <span className="sm:hidden">Discord OAuth2 sign-in</span>
       </footer>

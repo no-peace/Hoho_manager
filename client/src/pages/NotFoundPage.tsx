@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, BookOpen, Terminal } from "lucide-react";
+import { ArrowLeft, BookOpen, ShieldCheck, Terminal } from "lucide-react";
 import { HOHO_LOGO_URL } from "../components/layout/Header";
 import { SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 
@@ -43,7 +43,7 @@ export const NotFoundPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+        <nav aria-label="Helpful pages" className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
           <a
             href="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold active:scale-[0.97] transition-all shadow-sm"
@@ -56,7 +56,13 @@ export const NotFoundPage: React.FC = () => {
           >
             <BookOpen size={15} /> View Documentation
           </a>
-        </div>
+        <a
+            href="/privacy"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#35373c] hover:bg-[#404249] text-[#dbdee1] hover:text-white text-xs font-semibold active:scale-[0.97] transition-all"
+          >
+            <ShieldCheck size={15} /> Privacy Policy
+          </a>
+        </nav>
       </SpotlightCard>
     </div>
   );
