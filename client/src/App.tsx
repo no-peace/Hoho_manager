@@ -398,7 +398,7 @@ const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             />
           )}
         </div>
-        <p className="text-[10px] text-[#787c87]">
+        <p className="text-[10px] text-[#949ba4]">
           Tracking keeps dynamic user and exploit placeholders synchronized. New backups expire after 14 days by default.
         </p>
       </section>
@@ -1019,7 +1019,7 @@ export const App: React.FC = () => {
                           }}
                           className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
                         >
-                          <div className="p-2 rounded bg-[#5865f2]/20 text-[#5865f2] font-mono text-xs font-bold shrink-0">
+                          <div className="p-2 rounded bg-[#5865f2]/20 text-[#949cf7] font-mono text-xs font-bold shrink-0">
                             V2
                           </div>
                           <div>

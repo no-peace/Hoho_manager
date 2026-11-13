@@ -77,7 +77,7 @@ const MediaGalleryPreview = ({ component }: { component: ComponentNode }) => {
   const attachedFiles = useMessageStore((s) => s.attachedFiles);
   const items = component.items ?? [];
   const { resolveUserPlaceholders } = useUserPlaceholderPreview();
-  if (items.length === 0) return <p className="text-xs text-[#6d6f78]">No gallery images</p>;
+  if (items.length === 0) return <p className="text-xs text-[#949ba4]">No gallery images</p>;
 
   const cols = items.length === 1 ? "grid-cols-1" : items.length === 2 ? "grid-cols-2" : "grid-cols-3";
 

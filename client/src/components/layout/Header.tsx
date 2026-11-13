@@ -117,9 +117,9 @@ export const Header: React.FC<HeaderProps> = () => {
               fetchPriority="high"
               className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
             />
-            <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
+            <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline m-0">
               HoHo Manager
-            </span>
+            </h1>
           </a>
         </div>
 

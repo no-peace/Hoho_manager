@@ -234,11 +234,11 @@ export const FileAttachmentsSection: React.FC = () => {
                 : "border-[#35373c] bg-[#1e1f22]/50 hover:border-[#4e5058] hover:bg-[#1e1f22]"
             }`}
           >
-            <Paperclip size={20} className="mb-1 text-[#949ba4]" />
-            <p className="text-xs font-medium text-[#dbdee1]">
-              Drop files here or <span className="text-[#5865f2]">browse</span>
+            <Paperclip size={20} className="mb-1 text-[#b5bac1]" />
+            <p className="text-xs font-medium text-[#f2f3f5]">
+              Drop files here or <span className="text-[#949cf7] underline underline-offset-2 font-semibold">browse</span>
             </p>
-            <p className="mt-0.5 text-[10px] text-[#949ba4]">
+            <p className="mt-0.5 text-[10px] text-[#b5bac1]">
               Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
             </p>
           </div>
