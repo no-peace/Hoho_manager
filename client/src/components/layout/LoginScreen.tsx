@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, Clock, Lock, ShieldCheck, X } from "lucide-react";
 import gsap from "gsap";
-import { HOHO_LOGO_URL } from "./Header";
+import { HoHoLogoMark } from "./HoHoLogoMark";
+import { PublicPageHeader } from "./PublicPageHeader";
 import { SkiperDynamicStatusPill } from "../ui/CultSkiperPrimitives";
 import { ShinyText, SpotlightCard, SplitTextReveal } from "../reactbits/ReactBitsPrimitives";
 import { ThreeHeroCanvas } from "../reactbits/ThreeHeroCanvas";
@@ -19,17 +20,7 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   fetch_user_failed: "Discord could not verify your profile. Please try signing in again.",
 };
 
-export const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
-  <img
-    src={HOHO_LOGO_URL}
-    alt="HoHo Manager"
-    width={36}
-    height={36}
-    decoding="async"
-    fetchPriority="high"
-    className={`${className} rounded-xl object-cover bg-[#1e1f22] border border-[#35373c] shadow-md shrink-0`}
-  />
-);
+export { HoHoLogoMark };
 
 const DEMO_SHOWCASES = [
   {
@@ -102,23 +93,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
   return (
     <div data-testid="login-screen-scroll-root" className="relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 select-none">
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden"><ThreeHeroCanvas /></div>
-      <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <HoHoLogoMark className="h-9 w-9" />
-          <div>
-            <span className="text-base font-bold text-white tracking-tight block leading-none">
-              HoHo Manager
-            </span>
-            <span className="text-[11px] text-[#b5bac1]">
-              Discord Bot Message &amp; Components V2 Builder
-            </span>
-          </div>
-        </div>
-        <nav aria-label="Public navigation" className="flex items-center gap-2">
-          <a href="/docs" className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31]/90 hover:bg-[#35373c] border border-[#35373c] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Docs</a>
-          <a href="/privacy" className="inline-flex text-xs font-semibold text-[#b5bac1] hover:text-white bg-[#232428]/80 hover:bg-[#2b2d31] border border-[#26282d] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Privacy</a>
-        </nav>
-      </header>
+      <PublicPageHeader activePage="studio" />
 
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
         <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">

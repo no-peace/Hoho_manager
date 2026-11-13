@@ -23,7 +23,7 @@ import { useGlobalStore } from "../../store/globalStore";
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
 
-export const HOHO_LOGO_URL = "/hoho_logo.svg";
+export { HOHO_LOGO_URL } from "./HoHoLogoMark";
 
 export const getDiscordAvatarUrl = (
   user: { id: string; avatar?: string | null },

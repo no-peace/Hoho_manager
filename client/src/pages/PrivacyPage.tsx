@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { ArrowLeft, ShieldCheck, Lock, Clock, Database, BookOpen } from "lucide-react";
+import { ShieldCheck, Lock, Clock, Database } from "lucide-react";
+import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { updatePageSeo } from "../utils/seo";
 import { SpotlightCard, SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
 
@@ -14,16 +15,9 @@ export const PrivacyPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] px-4 py-6 pb-16 text-[#dbdee1] font-sans sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-4xl space-y-8">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#26282d] pb-4">
-          <a href="/" className="inline-flex items-center gap-2 rounded-lg border border-[#26282d] bg-[#232428] px-3 py-2 text-xs font-bold text-[#b5bac1] transition-all hover:text-white active:scale-[0.97]">
-            <ArrowLeft size={14} /> Back to Studio
-          </a>
-          <a href="/docs" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#949cf7] transition-colors hover:text-white">
-            <BookOpen size={14} /> Documentation
-          </a>
-        </header>
+    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] text-[#dbdee1] font-sans">
+      <PublicPageHeader activePage="privacy" />
+      <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 pb-16 sm:px-8 sm:py-10">
 
         <section className="space-y-3">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#23a55a]/30 bg-[#23a55a]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#57f287]">
