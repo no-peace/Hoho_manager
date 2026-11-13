@@ -151,16 +151,16 @@ export const DocsPage = () => {
           </h1>
           <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
-            Use <code className="text-[#5865f2] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
+            Use <code className="text-[#949cf7] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
           </p>
         </div>
 
         {/* Feature Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-1.5">
+            <h2 className="flex items-center gap-2 text-[#949cf7] font-bold text-xs uppercase tracking-wider mb-1.5">
               <User size={14} /> Author Profile Auto-Fetch
-            </div>
+            </h2>
             <p className="text-xs text-[#b5bac1] leading-relaxed">
               Set embed author URL to <code className="text-white bg-[#1e1f22] px-1 rounded">https://discord.com/users/USER_ID</code>.
               The bot automatically fetches their username, avatar pfp, and Discord link, and keeps them
@@ -168,9 +168,9 @@ export const DocsPage = () => {
           </SpotlightCard>
 
           <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <div className="flex items-center gap-2 text-[#23a55a] font-bold text-xs uppercase tracking-wider mb-1.5">
+            <h2 className="flex items-center gap-2 text-[#57f287] font-bold text-xs uppercase tracking-wider mb-1.5">
               <RefreshCw size={14} /> Live Message Auto-Tracking
-            </div>
+            </h2>
             <p className="text-xs text-[#b5bac1] leading-relaxed">
               Messages containing <code className="text-white bg-[#1e1f22] px-1 rounded">{"{exploit.*}"}</code> or developer author tokens are auto-registered into the tracking daemon.
               When status or profiles change, the bot automatically edits existing messages.
@@ -178,9 +178,9 @@ export const DocsPage = () => {
           </SpotlightCard>
 
           <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <div className="flex items-center gap-2 text-[#faa61a] font-bold text-xs uppercase tracking-wider mb-1.5">
+            <h2 className="flex items-center gap-2 text-[#faa61a] font-bold text-xs uppercase tracking-wider mb-1.5">
               <Terminal size={14} /> Slash Commands & Sync
-            </div>
+            </h2>
             <p className="text-xs text-[#b5bac1] leading-relaxed">
               Use <code className="text-white bg-[#1e1f22] px-1 rounded">/exploit</code> to send customized executor status cards with custom templates, and <code className="text-white bg-[#1e1f22] px-1 rounded">/sync</code> to immediately reconcile all tracked messages in your server.
             </p>
@@ -259,7 +259,7 @@ export const DocsPage = () => {
                       <button
                         type="button"
                         onClick={() => copyToClipboard(item.tag)}
-                        className="text-[#5865f2] hover:text-[#7983f5] bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/20 hover:border-[#5865f2] transition-colors text-left"
+                        className="text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] active:scale-[0.97] transition-all text-left"
                         title="Click to copy"
                       >
                         {item.tag}
@@ -299,9 +299,9 @@ export const DocsPage = () => {
 
         {/* Custom Executor Configuration Guide */}
         <section className="p-6 rounded-2xl bg-[#2b2d31] border border-[#1e1f22] space-y-4 shadow-sm">
-          <div className="flex items-center gap-2 text-white font-bold text-base">
-            <Code2 size={18} className="text-[#5865f2]" /> Custom Executor Payloads & Auto-Updates
-          </div>
+          <h2 className="flex items-center gap-2 text-white font-bold text-base m-0">
+            <Code2 size={18} className="text-[#949cf7]" /> Custom Executor Payloads & Auto-Updates
+          </h2>
           <p className="text-xs text-[#b5bac1] leading-relaxed">
             You can fully customize executor messages by creating custom executor templates.
             Provide your own Discohook/Discord JSON payload. The bot inspects embed authors and auto-fetches the owner&apos;s name and avatar directly from Discord.
@@ -329,6 +329,19 @@ export const DocsPage = () => {
             💡 Notice that the <code className="text-white font-mono bg-[#111214] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#111214] px-1 rounded">author.icon_url</code> are omitted: When the message is sent, the server attempts to fetch the Discord user and fills blank author name and icon fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
           </p>
         </section>
+
+        {/* Internal Links & Official Backlinks Footer */}
+        <footer className="mt-10 pt-6 border-t border-[#26282d] flex flex-wrap items-center justify-between gap-4 text-xs text-[#949ba4]">
+          <div className="flex items-center gap-4">
+            <a href="/" className="hover:text-white transition-colors font-semibold">Studio Builder</a>
+            <a href="/docs" className="text-[#949cf7] font-semibold">Documentation</a>
+            <a href="/privacy" className="hover:text-white transition-colors font-semibold">Privacy &amp; Bot Policy</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
+            <a href="https://github.com/no-peace/Hoho_manager" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub Repository</a>
+          </div>
+        </footer>
       </div>
     </div>
   );
