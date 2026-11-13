@@ -20,7 +20,7 @@
     "clsx": "^2.1.1",
     "discord-api-types": "^0.38.58",
     "emoji-mart": "^5.5.2",
-    "he": "^1.2.0",
+    "he": "^2.0.0",
     "highlight.js": "^11.9.0",
     "lucide-react": "^1.71.0",
     "motion": "^14.13.0",
