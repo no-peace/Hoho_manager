@@ -28,7 +28,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
         aria-level={depth + 1}
         onClick={() => component._id && select({ kind: "component", id: component._id })}
         className={[
-          "group flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-xs transition-colors",
+          "group flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-xs transition-colors",
           active ? "bg-blurple/20 text-ink-strong" : "text-ink-muted hover:bg-hover hover:text-ink",
         ].join(" ")}
         style={{ marginLeft: depth * 12 }}

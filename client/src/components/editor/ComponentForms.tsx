@@ -311,7 +311,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
 
       <div className="space-y-2.5">
         {options.map((option, index) => (
-          <div key={option._id} className="p-2.5 rounded-lg border border-[#111214] bg-[#1e1f22] space-y-2">
+          <div key={option._id} className="p-2.5 rounded-lg border border-[#26282d] bg-[#1e1f22] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-[#b5bac1] uppercase">Option {index + 1}</span>
               <div className="flex items-center gap-2">

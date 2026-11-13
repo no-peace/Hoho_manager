@@ -47,24 +47,24 @@ export const PropertyPanel = () => {
 
   return (
     <>
-      {/* Mobile / Tablet Backdrop (< 1024px) */}
+      {/* Mobile / Tablet Backdrop (< 1280px) */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] lg:hidden"
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm xl:hidden"
         onClick={() => select(null)}
       />
 
       {/* Docked Right Inspector on Desktop (lg+) | Slide-Up Bottom Sheet on Mobile/Tablet (<lg) */}
       <aside
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82vh] flex-col rounded-t-2xl border-t border-[#111214] bg-[#232428] shadow-2xl lg:static lg:z-10 lg:max-h-none lg:w-[360px] xl:w-[400px] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l lg:border-[#111214] lg:shadow-none"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82vh] flex-col rounded-t-2xl border-t border-[#26282d] bg-[#2b2d31] shadow-2xl xl:static xl:z-10 xl:max-h-none xl:w-96 xl:shrink-0 xl:rounded-none xl:border-t-0 xl:border-l xl:border-[#1e1f22] xl:shadow-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Pill */}
-        <div className="flex justify-center pt-2 pb-1 lg:hidden">
+        <div className="flex justify-center pt-2 pb-1 xl:hidden">
           <div className="h-1 w-10 rounded-full bg-[#4e5058]" />
         </div>
 
         {/* Inspector Header */}
-        <div className="flex items-center justify-between border-b border-[#111214] bg-[#1e1f22] px-3.5 py-2.5 shrink-0">
+        <div className="flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] px-3.5 py-2.5 shrink-0">
           <div className="min-w-0 flex-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#949ba4] block">
               Component Inspector

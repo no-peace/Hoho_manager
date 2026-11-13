@@ -714,9 +714,10 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
       {steps.map((step, index) => (
         <div
           key={step._id || index}
-          className="rounded border border-[#1e1f22] bg-[#2b2d31] p-3 space-y-2.5 shadow-sm"
+          className="rounded-lg border border-[#26282d] bg-[#2b2d31] p-3 space-y-2.5 shadow-sm"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[#1e1f22] pb-2">
+            <span className="shrink-0 rounded border border-[#26282d] bg-[#18191c] px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-[#b5bac1]">#{index + 1}</span>
             <Select
               className="flex-1 max-w-[220px]"
               value={step.type}
@@ -769,9 +770,11 @@ const BranchEditor = ({
   onChange: (steps: FlowStep[]) => void;
 }) => {
   const [open, setOpen] = useState(true);
+  const isPassBranch = /Then|Passed/.test(label);
+  const isFailBranch = /Else|Failed/.test(label);
 
   return (
-    <div className="rounded-md border border-[#1e1f22] bg-[#1e1f22]/40">
+    <div className={`rounded-md border border-[#1e1f22] border-l-[3px] ${isPassBranch ? "border-l-[#23a55a]" : isFailBranch ? "border-l-[#da373c]" : "border-l-[#35373c]"} bg-[#1e1f22]/40 overflow-hidden`}
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
