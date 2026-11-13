@@ -111,7 +111,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
 
   return (
     <div
-      className="max-w-[520px] w-full min-w-0 rounded border-l-4 bg-[#2b2d31] px-3 py-2 pr-4 text-[#dbdee1] overflow-hidden"
+      className="max-w-[520px] w-full min-w-0 rounded border-l-4 bg-[#2b2d31] px-3 py-2 pr-4 text-[#dbdee1] overflow-hidden [overflow-wrap:anywhere]"
       style={{ borderLeftColor: accent }}
     >
       {embed.author?.name && (

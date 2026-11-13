@@ -153,12 +153,12 @@ export const MessagePreview = () => {
     <UserPlaceholderPreviewProvider source={displayMessages}>
       <div className="flex min-h-0 flex-1 flex-col select-text">
         {/* Enhanced Preview Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-2 shrink-0">
+        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-1.5 shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
             <Eye size={14} className="text-[#5865f2]" /> Live Preview
           </h2>
-          <span className="rounded-md bg-[#1e1f22] border border-[#111214] px-2 py-0.5 text-[10px] font-semibold text-[#949ba4]">
+          <span className="rounded-md bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 text-[10px] font-semibold text-[#b9bcf8]">
             Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
           </span>
         </div>
@@ -166,13 +166,13 @@ export const MessagePreview = () => {
         {/* Viewport Device & Density Controls */}
         <div className="flex items-center gap-1.5">
           {displayMessages.length > 1 && (
-            <div className="flex items-center gap-1 bg-[#1e1f22] p-0.5 rounded-lg border border-[#111214] mr-1">
+            <div className="flex items-center gap-1 bg-[#18191c] p-0.5 rounded-lg border border-[#26282d] mr-1">
               {displayMessages.map((_, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setActiveMessageIndex?.(i)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors ${
                     i === activeMessageIndex
                       ? "bg-[#5865f2] text-white shadow-xs"
                       : "text-[#949ba4] hover:text-white"
@@ -189,7 +189,7 @@ export const MessagePreview = () => {
           <button
             type="button"
             onClick={() => setDensity((d) => (d === "cozy" ? "compact" : "cozy"))}
-            className="px-2 py-1 rounded text-[11px] font-semibold bg-[#1e1f22] hover:bg-[#35373c] text-[#949ba4] hover:text-[#dbdee1] border border-[#111214] transition-colors"
+            className="px-2 py-1 rounded-md text-[11px] font-semibold bg-[#18191c] hover:bg-[#35373c] text-[#949ba4] hover:text-[#dbdee1] border border-[#26282d] transition-colors"
             title={`Switch to ${density === "cozy" ? "Compact" : "Cozy"} density`}
           >
             {density === "cozy" ? "Cozy" : "Compact"}
@@ -202,9 +202,10 @@ export const MessagePreview = () => {
         <div className="w-full max-w-4xl mx-auto transition-all">
 
           {isAllEmpty ? (
-            <p className="flex items-center gap-2 text-xs text-[#949ba4] py-8 justify-center">
-              <Info size={14} /> Nothing to preview yet. Add content or embeds in the editor.
-            </p>
+            <div className="mx-auto flex min-h-40 max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#4e5058] bg-[#2b2d31]/70 px-5 py-8 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1e1f22] text-[#6d717a]"><Bot size={20} /></div>
+              <p className="text-xs font-medium text-[#b5bac1]">Nothing to preview yet — type content, add an embed, or insert a V2 component.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {displayMessages.map((message, index) => {

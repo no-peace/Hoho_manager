@@ -110,7 +110,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
       type="button"
       disabled={button.disabled}
       className={[
-        "inline-flex h-8 items-center gap-1.5 rounded px-4 text-sm font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
         BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[ButtonStyle.Primary],
         button.disabled ? "cursor-not-allowed opacity-50" : "",
       ].join(" ")}
