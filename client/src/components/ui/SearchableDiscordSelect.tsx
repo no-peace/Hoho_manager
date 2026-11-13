@@ -202,7 +202,9 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
         onClick={() => setOpen(!open)}
         tabIndex={0}
         role="combobox"
+        aria-label={placeholder || `Select ${type}`}
         aria-expanded={open}
+        aria-haspopup="listbox"
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -246,6 +248,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
               <div className="p-2 shrink-0 border-b border-[#1e1f22]">
                 <input
                   type="text"
+                  aria-label={type === "member" ? "Search username or enter 17-20 digit ID" : `Search ${type} options`}
                   className="w-full bg-[#1e1f22] text-[#dbdee1] text-xs px-2 py-1.5 rounded outline-none border border-[#111214] focus:border-[#5865f2]"
                   placeholder={type === "member" ? "Search username or enter 17-20 digit ID..." : "Search..."}
                   value={search}
