@@ -6,9 +6,7 @@ import {
   Download,
   Upload,
   ShieldCheck,
-  CheckCircle2,
   AlertCircle,
-  Info,
   X,
   Eye,
   Clock,
@@ -37,6 +35,7 @@ import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
 import { getServerNow } from "./store/globalStore";
 import { updatePageSeo } from "./utils/seo";
 import gsap from "gsap";
+import { Toaster as SileoToaster } from "sileo";
 import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
@@ -51,48 +50,25 @@ const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" 
   />
 );
 
-/* ── Global In-App Toast & Confirmation Host (Replaces Browser alert/confirm) ── */
+/* ── Global In-App Toast & Confirmation Host (Sileo Physics Toaster + Accessible Status Host) ── */
 const ToastAndConfirmHost: React.FC = () => {
-  const { toasts, dismissToast, confirmDialog, closeConfirm } = useGlobalStore();
+  const { toasts, confirmDialog, closeConfirm } = useGlobalStore();
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-[100000] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-3 sm:px-0">
-        {toasts.map((t) => {
-          const styles =
-            t.variant === "success"
-              ? "border-[#23a55a]/60 bg-[#111214]/95 text-[#57f287]"
-              : t.variant === "error"
-                ? "border-[#da373c]/60 bg-[#111214]/95 text-[#f28b8b]"
-                : t.variant === "warning"
-                  ? "border-[#f0b232]/60 bg-[#111214]/95 text-[#f0b232]"
-                  : "border-[#5865f2]/60 bg-[#111214]/95 text-[#dee0fc]";
-          return (
-            <div
-              key={t.id}
-              className={`pointer-events-auto flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border shadow-2xl backdrop-blur-md text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-150 ${styles}`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {t.variant === "success" ? (
-                  <CheckCircle2 size={15} className="shrink-0" />
-                ) : t.variant === "error" || t.variant === "warning" ? (
-                  <AlertCircle size={15} className="shrink-0" />
-                ) : (
-                  <Info size={15} className="shrink-0" />
-                )}
-                <span className="text-[#f2f3f5] leading-snug break-words [overflow-wrap:anywhere]">{t.message}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => dismissToast(t.id)}
-                className="text-[#949ba4] hover:text-white shrink-0"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })}
+      <SileoToaster
+        position="bottom-right"
+        theme="dark"
+        options={{
+          fill: "#18191c",
+          roundness: 14,
+        }}
+      />
+      <div role="status" aria-live="polite" className="sr-only">
+        {toasts.map((toast) => (
+          <span key={toast.id}>{toast.message}</span>
+        ))}
       </div>
 
       {confirmDialog.open && (
