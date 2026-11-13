@@ -17,4 +17,4 @@ export const EmojiMenu: React.FC<SpecializedMenuProps> = (props) => (
   />
 );
 
-export default VariableMenu;
+export default EmojiMenu;
