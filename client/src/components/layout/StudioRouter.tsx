@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { updatePageSeo } from "../../utils/seo";
 
 export type StudioRouteKind = "studio" | "docs" | "privacy" | "not_found";
