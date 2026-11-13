@@ -110,8 +110,10 @@ export const DateTimePickerPopover = ({
         <>
           <>
             <button type="button" aria-label="Close date picker" className="fixed inset-0 z-[10049] cursor-default" onClick={() => setOpen(false)} />
-            <motion.div initial={{ opacity: 0, scale: 0.96, y: position.above ? 4 : -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: position.above ? 4 : -4 }} transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: position.above ? 4 : -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] } }}
+              exit={{ opacity: 0, scale: 0.95, y: position.above ? 4 : -4, transition: { duration: 0.13, ease: [0.4, 0, 1, 1] } }}
               style={{ position: "fixed", top: position.top, left: position.left, transform: position.above ? "translateY(-100%)" : undefined, transformOrigin: position.above ? "bottom left" : "top left" }}
               className="z-[10050] w-[292px] rounded-xl border border-[#26282d] bg-[#18191c] p-3 shadow-xl">
               <div className="mb-3">
