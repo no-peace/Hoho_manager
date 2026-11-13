@@ -115,8 +115,8 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
           </div>
         </div>
         <nav aria-label="Public navigation" className="flex items-center gap-2">
-          <a href="/docs" className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31]/90 hover:bg-[#35373c] border border-[#35373c] px-3.5 py-2 rounded-lg active:scale-[0.97] transition-all">Documentation</a>
-          <a href="/privacy" className="hidden sm:inline-flex text-xs font-semibold text-[#b5bac1] hover:text-white bg-[#232428]/80 hover:bg-[#2b2d31] border border-[#26282d] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Privacy</a>
+          <a href="/docs" className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31]/90 hover:bg-[#35373c] border border-[#35373c] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Docs</a>
+          <a href="/privacy" className="inline-flex text-xs font-semibold text-[#b5bac1] hover:text-white bg-[#232428]/80 hover:bg-[#2b2d31] border border-[#26282d] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Privacy</a>
         </nav>
       </header>
 
@@ -189,6 +189,8 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                 <button
                   key={item.id}
                   type="button"
+                  role="tab"
+                  aria-selected={activeShowcase === idx}
                   onClick={() => {
                     setActiveShowcase(idx);
                     setClickedBtn(null);
