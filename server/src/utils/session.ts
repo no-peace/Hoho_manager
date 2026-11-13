@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import type { Request } from "express";
 import { env } from "../config/env.js";
+import { sessionRevocationRepository } from "../repositories/sessionRevocationRepository.js";
 
 export interface MutualGuildInfo {
   id: string;
@@ -25,22 +26,15 @@ export interface SessionUser {
 export const SESSION_TTL_SECONDS = 24 * 60 * 60;
 export const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 
-/**
- * In-memory revocation floor per Discord user ID (and global floor).
- * Any JWT issued at or before `userRevokedAtMs.get(userId)` is rejected immediately.
- */
-const userRevokedAtMs = new Map<string, number>();
-let globalRevokedAtMs = 0;
-
-/** Immediately invalidate all existing JWT sessions for a specific Discord user ID. */
-export const revokeUserSessions = (discordUserId: string): void => {
+/** Persistently invalidate all existing JWT sessions for a Discord user ID. */
+export const revokeUserSessions = async (discordUserId: string): Promise<void> => {
   if (!discordUserId) return;
-  userRevokedAtMs.set(discordUserId, Date.now());
+  await sessionRevocationRepository.revokeUser(discordUserId);
 };
 
-/** Immediately invalidate all existing JWT sessions across all users. */
-export const revokeAllSessions = (): void => {
-  globalRevokedAtMs = Date.now();
+/** Persistently invalidate all existing JWT sessions across all users. */
+export const revokeAllSessions = async (): Promise<void> => {
+  await sessionRevocationRepository.revokeAll();
 };
 
 const getSecret = (): string => {
@@ -67,7 +61,7 @@ export const createSessionToken = (user: SessionUser): string => {
   return `${header}.${payload}.${sig}`;
 };
 
-export const verifySessionToken = (token: string): SessionUser | null => {
+export const verifySessionToken = async (token: string): Promise<SessionUser | null> => {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
@@ -89,11 +83,14 @@ export const verifySessionToken = (token: string): SessionUser | null => {
           ? data.iat * 1000
           : 0;
 
-    if (globalRevokedAtMs > 0 && tokenIssuedMs <= globalRevokedAtMs) {
-      return null;
-    }
-    const userRevokedMs = userRevokedAtMs.get(userId);
-    if (userRevokedMs !== undefined && tokenIssuedMs <= userRevokedMs) {
+    const [globalRevokedAtMs, userRevokedAtMs] = await Promise.all([
+      sessionRevocationRepository.getGlobalRevokedAt(),
+      sessionRevocationRepository.getUserRevokedAt(userId),
+    ]);
+    if (
+      (globalRevokedAtMs > 0 && tokenIssuedMs <= globalRevokedAtMs) ||
+      (userRevokedAtMs > 0 && tokenIssuedMs <= userRevokedAtMs)
+    ) {
       return null;
     }
 
@@ -132,12 +129,12 @@ export const parseCookies = (cookieHeader?: string): Record<string, string> => {
   return cookies;
 };
 
-export const getSessionUserFromRequest = (req: Request): SessionUser | null => {
+export const getSessionUserFromRequest = async (req: Request): Promise<SessionUser | null> => {
   const cookieHeader = req.headers.cookie;
   if (cookieHeader) {
     const cookies = parseCookies(cookieHeader);
     if (cookies.dmb_session) {
-      const user = verifySessionToken(cookies.dmb_session);
+      const user = await verifySessionToken(cookies.dmb_session);
       if (user) return user;
     }
   }
@@ -145,7 +142,7 @@ export const getSessionUserFromRequest = (req: Request): SessionUser | null => {
   const authHeader = req.get("authorization");
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
-    const user = verifySessionToken(token);
+    const user = await verifySessionToken(token);
     if (user) return user;
   }
 
