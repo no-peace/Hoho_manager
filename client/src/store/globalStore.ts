@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { api }  from "../api/client";
+import { sileo } from "sileo";
+import { api } from "../api/client";
 
 export interface BotIdentity {
   id: string;
@@ -280,6 +281,15 @@ export const useGlobalStore = create<GlobalState>((set) => {
     toasts: [],
     showToast: (message, variant = "info") => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      try {
+        const options = { title: message, duration: 3800 };
+        if (variant === "success") sileo.success(options);
+        else if (variant === "error") sileo.error(options);
+        else if (variant === "warning") sileo.warning(options);
+        else sileo.info(options);
+      } catch {
+        // Keep the Zustand status history available if the toast renderer is unavailable.
+      }
       set((state) => ({
         toasts: [...state.toasts.slice(-4), { id, message, variant }],
       }));
