@@ -22,7 +22,7 @@ export interface EmbedEditorProps {
   index: number;
 }
 
-export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
+const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
   const updateEmbed = useMessageStore((state) => state.updateEmbed);
   const removeEmbed = useMessageStore((state) => state.removeEmbed);
   const duplicateEmbed = useMessageStore((state) => state.duplicateEmbed);
@@ -640,4 +640,5 @@ export const EmbedEditor: React.FC<EmbedEditorProps> = ({ embed, index }) => {
   );
 };
 
-export default React.memo(EmbedEditor);
+export const EmbedEditor = React.memo(EmbedEditorComponent);
+export default EmbedEditor;
