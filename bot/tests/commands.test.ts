@@ -219,6 +219,7 @@ describe("bot/commands: Slash Command Suite", () => {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Test"),
         },
+        reply: vi.fn().mockResolvedValue(undefined),
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
       };
