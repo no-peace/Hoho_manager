@@ -25,6 +25,14 @@ export class SyncCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
+    const { checkCommandCooldown } = await import("../lib/commandCooldown.js");
+    const waitSec = checkCommandCooldown("sync", interaction.user.id, 10);
+    if (waitSec > 0) {
+      return interaction.reply({
+        content: `⏳ Please wait **${waitSec}s** before running `/sync` again.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
