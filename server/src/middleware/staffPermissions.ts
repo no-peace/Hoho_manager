@@ -81,7 +81,7 @@ export const requireStaffPermission = (
     const requestId = crypto.randomUUID().slice(0, 8);
     const ip = req.ip ?? req.socket.remoteAddress ?? "?";
 
-    const sessionUser = getSessionUserFromRequest(req);
+    const sessionUser = await getSessionUserFromRequest(req);
     const headerStaffId = req.get("x-staff-id");
 
     // 1. Anti-spoofing: if session is present and client sent mismatched x-staff-id, reject immediately
