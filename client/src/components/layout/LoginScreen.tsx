@@ -100,8 +100,8 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3 sm:p-8 pb-20 sm:pb-8 select-none overflow-x-hidden">
-      <ThreeHeroCanvas />
+    <div data-testid="login-screen-scroll-root" className="relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 select-none">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden"><ThreeHeroCanvas /></div>
       <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HoHoLogoMark className="h-9 w-9" />
@@ -120,7 +120,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
         </nav>
       </header>
 
-      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-center my-auto py-4 sm:py-8">
+      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
         <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31] border border-[#111214] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
@@ -184,7 +184,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             <span className="text-xs font-bold text-[#949ba4]">
               #announcements  Preview
             </span>
-            <div className="flex items-center gap-1 bg-[#111214] p-1 rounded-lg">
+            <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#111214] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full">
               {DEMO_SHOWCASES.map((item, idx) => (
                 <button
                   key={item.id}
@@ -272,7 +272,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
         <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
-        <div className="hidden sm:flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <a href="/docs" className="hover:text-white transition-colors">Docs</a>
           <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
           <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
@@ -280,12 +280,6 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
         <span className="sm:hidden">Discord OAuth2 sign-in</span>
       </footer>
 
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2">
-        <a href="/api/auth/discord/login" className="flex-1 py-2.5 px-4 rounded-xl bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
-          <span>Login with Discord</span>
-        </a>
-        <a href="/docs" className="py-2.5 px-3.5 rounded-xl bg-[#2b2d31] border border-[#35373c] text-[#dbdee1] font-semibold text-xs active:scale-[0.97] transition-transform">Docs</a>
-      </div>
     </div>
   );
 };
