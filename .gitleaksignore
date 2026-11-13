@@ -1,0 +1,14 @@
+# Reviewed false positives: Discord snowflake IDs are public identifiers, not credentials.
+f244ce2c616a1a0f47e7b1f5fa272194057bb32c:server/tests/staff_security_regression.test.ts:discord-client-id:74
+6aa17939fdb4907b20e874f58adcb1d6dec20965:docs/phases_plan.md:discord-client-id:189
+2699ebe23d6e0b3855a1dcc757c511aa77513f11:docs/HoHo_Manager_Phase_2_Staff_Security_Guide.md:discord-client-id:729
+0fbfac21cd8e6935d57a39216710665881611b1c:server/tests/routes.test.ts:discord-client-id:200
+d91b98af2f5014daed5341fd0d3cfcddf4630d46:server/tests/middleware.test.ts:discord-client-id:98
+d91b98af2f5014daed5341fd0d3cfcddf4630d46:server/tests/middleware.test.ts:discord-client-id:123
+d91b98af2f5014daed5341fd0d3cfcddf4630d46:server/tests/middleware.test.ts:discord-client-id:149
+
+# Reviewed false positives: fixed CI-only test credentials and a test encryption fixture.
+f12fd37274165ff9a50e4a88d4ed28f39b749c7e:.github/workflows/ci.yml:generic-api-key:38
+918be7847eb058e75a5cfd07e77b5460c2c0d6de:.github/workflows/ci.yml:generic-api-key:27
+60d70f82d31f62c46bb303134837075233346283:server/src/utils/crypto.test.ts:generic-api-key:10
+03951b67ae4d67acd74f94f64149118baee514c8:.github/workflows/release.yml:generic-api-key:48
