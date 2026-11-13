@@ -774,7 +774,7 @@ const BranchEditor = ({
   const isFailBranch = /Else|Failed/.test(label);
 
   return (
-    <div className={`rounded-md border border-[#1e1f22] border-l-[3px] ${isPassBranch ? "border-l-[#23a55a]" : isFailBranch ? "border-l-[#da373c]" : "border-l-[#35373c]"} bg-[#1e1f22]/40 overflow-hidden`}
+    <div className={`rounded-md border border-[#1e1f22] border-l-[3px] ${isPassBranch ? "border-l-[#23a55a]" : isFailBranch ? "border-l-[#da373c]" : "border-l-[#35373c]"} bg-[#1e1f22]/40 overflow-hidden`}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
