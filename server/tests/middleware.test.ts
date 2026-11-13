@@ -34,7 +34,7 @@ describe("server/middleware: Security & Verification Pipelines Suite", () => {
       };
 
       // Mock session extraction
-      vi.spyOn(await import("../src/utils/session.js"), "getSessionUserFromRequest").mockReturnValueOnce({
+      vi.spyOn(await import("../src/utils/session.js"), "getSessionUserFromRequest").mockResolvedValueOnce({
         id: "111222333444555666",
         username: "Alice",
         role: "editor",
