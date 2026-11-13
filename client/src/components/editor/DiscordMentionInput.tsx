@@ -20,21 +20,6 @@ import {
 import { RichPicker } from "./RichPicker";
 import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
-import api from "../../api/client";
-export interface DiscordMentionInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  rows?: number;
-  maxLength?: number;
-  label?: string;
-  className?: string;
-  disabled?: boolean;
-  guildId?: string | null;
-  /** Controls toolbar visibility (defaults to true) */
-  showToolbar?: boolean;
-}
-
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
