@@ -242,7 +242,7 @@ router.patch(
 
     // If staff member was deactivated, immediately kill their active OAuth session
     if (updateData.is_active === 0 || updateData.is_active === false) {
-      revokeUserSessions(targetDiscordId);
+      await revokeUserSessions(targetDiscordId);
     }
 
     auditLog({
@@ -270,7 +270,7 @@ router.delete(
 
     await staffRepository.delete(targetDiscordId);
     // Immediately invalidate any existing JWT session for this revoked staff member
-    revokeUserSessions(targetDiscordId);
+    await revokeUserSessions(targetDiscordId);
 
     auditLog({
       event: "STAFF_REVOKED",
@@ -291,7 +291,7 @@ router.get(
     const staffId = req.params.discordUserId as string;
 
     if (env.isProd) {
-      const sessionUser = getSessionUserFromRequest(req);
+      const sessionUser = await getSessionUserFromRequest(req);
       const adminKey = req.get("x-admin-key");
       const isAuthorizedCaller =
         (adminKey && adminKey === env.adminApiKey) ||
