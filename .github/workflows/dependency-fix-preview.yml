@@ -1,0 +1,46 @@
+name: Dependency Fix Preview
+
+on:
+  push:
+    branches: [chore/security-workflows-refresh]
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Generate a compatible patched lockfile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+
+      - name: Install current locked dependencies
+        run: npm ci
+
+      - name: Apply non-breaking security updates to the lockfile
+        run: |
+          npm audit fix --package-lock-only || true
+
+      - name: Verify the updated lockfile installs
+        run: npm ci
+
+      - name: Recheck production dependencies
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Upload patched lockfile for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patched-package-lock-preview
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 3
