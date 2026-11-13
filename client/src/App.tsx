@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { HoHoLogoMark, LoginScreen } from "./components/layout/LoginScreen";
-import { StudioLayout } from "./components/layout/StudioLayout";
-import { StudioModals, ToastAndConfirmHost } from "./components/layout/StudioModals";
 import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import { useActionStore } from "./store/actionStore";
@@ -13,6 +11,13 @@ const DocsPage = React.lazy(() =>
 );
 const PrivacyPage = React.lazy(() =>
   import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })),
+);
+
+const StudioLayout = React.lazy(() =>
+  import("./components/layout/StudioLayout").then((module) => ({ default: module.StudioLayout })),
+);
+const StudioModals = React.lazy(() =>
+  import("./components/layout/StudioModals").then((module) => ({ default: module.StudioModals })),
 );
 
 const SessionAuthLoader: React.FC = () => (
@@ -71,7 +76,6 @@ export const App: React.FC = () => {
         <React.Suspense fallback={null}>
           <DocsPage />
         </React.Suspense>
-        <ToastAndConfirmHost />
       </>
     );
   }
@@ -82,7 +86,6 @@ export const App: React.FC = () => {
         <React.Suspense fallback={null}>
           <PrivacyPage />
         </React.Suspense>
-        <ToastAndConfirmHost />
       </>
     );
   }
@@ -91,7 +94,6 @@ export const App: React.FC = () => {
     return (
       <>
         <NotFoundPage />
-        <ToastAndConfirmHost />
       </>
     );
   }
@@ -108,16 +110,15 @@ export const App: React.FC = () => {
     return (
       <>
         <LoginScreen authError={authError} />
-        <ToastAndConfirmHost />
       </>
     );
   }
 
   return (
-    <>
+    <React.Suspense fallback={<SessionAuthLoader />}>
       <StudioLayout />
       <StudioModals />
-    </>
+    </React.Suspense>
   );
 };
 
