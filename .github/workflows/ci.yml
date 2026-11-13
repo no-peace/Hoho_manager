@@ -30,3 +30,20 @@ jobs:
           DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY || vars.DISCORD_PUBLIC_KEY }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID || vars.DISCORD_APPLICATION_ID }}
         run: npm test
+
+      - name: Run server performance benchmarks
+        env:
+          NODE_ENV: test
+          ADMIN_API_KEY: ci-test-admin-key-0123456789abcdef
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          DATABASE_PATH: ":memory:"
+          DISCORD_BOT_TOKEN: ci-test-bot-token
+        run: npm run benchmark:json | tee server-performance-report.json
+
+      - name: Upload server performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-performance-report
+          path: server-performance-report.json
+          if-no-files-found: ignore
