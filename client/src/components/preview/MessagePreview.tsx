@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Bot, Eye, Info, FileText, Link2, Music } from "lucide-react";
+import { Bot, Eye, FileText, Link2, Music } from "lucide-react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
