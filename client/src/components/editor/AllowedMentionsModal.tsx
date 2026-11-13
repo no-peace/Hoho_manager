@@ -3,6 +3,7 @@ import { Modal } from "../ui/Modal";
 import { useMessageStore } from "../../store/messageStore";
 import { Button } from "../ui/Button";
 import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "../ui/Field";
 
 interface AllowedMentionsModalProps {
   open: boolean;
@@ -118,35 +119,11 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
                 Broadcast & Auto Mentions
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <label className="flex items-center gap-2 p-2 rounded bg-[#2b2d31] hover:bg-[#35373c] cursor-pointer text-xs font-semibold text-white">
-                  <input
-                    type="checkbox"
-                    className="rounded border-[#1e1f22] bg-[#1e1f22] text-[#5865f2]"
-                    checked={hasParse("everyone")}
-                    onChange={() => toggleParse("everyone")}
-                  />
-                  <span>@everyone / @here</span>
-                </label>
+                <Checkbox checked={hasParse("everyone")} onChange={() => toggleParse("everyone")} label="@everyone / @here" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
 
-                <label className="flex items-center gap-2 p-2 rounded bg-[#2b2d31] hover:bg-[#35373c] cursor-pointer text-xs font-semibold text-white">
-                  <input
-                    type="checkbox"
-                    className="rounded border-[#1e1f22] bg-[#1e1f22] text-[#5865f2]"
-                    checked={hasParse("users")}
-                    onChange={() => toggleParse("users")}
-                  />
-                  <span>All Users</span>
-                </label>
+                <Checkbox checked={hasParse("users")} onChange={() => toggleParse("users")} label="All Users" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
 
-                <label className="flex items-center gap-2 p-2 rounded bg-[#2b2d31] hover:bg-[#35373c] cursor-pointer text-xs font-semibold text-white">
-                  <input
-                    type="checkbox"
-                    className="rounded border-[#1e1f22] bg-[#1e1f22] text-[#5865f2]"
-                    checked={hasParse("roles")}
-                    onChange={() => toggleParse("roles")}
-                  />
-                  <span>All Roles</span>
-                </label>
+                <Checkbox checked={hasParse("roles")} onChange={() => toggleParse("roles")} label="All Roles" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
               </div>
             </div>
 
