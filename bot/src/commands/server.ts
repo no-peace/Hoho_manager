@@ -44,17 +44,14 @@ export class ServerCommand extends Command {
 
     const { guild } = interaction;
 
+    const createdUnix = Math.floor(guild.createdTimestamp / 1000);
     const body = [
-      `**${guild.name}**`,
-      `\u2022 ID: \`${guild.id}\``,
-      `\u2022 Members: ${guild.memberCount}`,
-      `\u2022 Channels: ${guild.channels.cache.size}`,
-      `\u2022 Roles: ${guild.roles.cache.size}`,
-      `\u2022 Boost: ${BOOST_TIERS[guild.premiumTier] ?? "Unknown"}`,
-      `\u2022 Owner: <@${guild.ownerId}>`,
-      `\u2022 Created: <t:${Math.floor(guild.createdTimestamp / 1000)}:R>`,
+      `### 🌐 **${guild.name}** — Server Overview`,
+      `> • **ID:** \`${guild.id}\` · **Owner:** <@${guild.ownerId}>`,
+      `> • Members: ${guild.memberCount} · Channels: ${guild.channels.cache.size} · Roles: ${guild.roles.cache.size}`,
+      `> • Boost: ${BOOST_TIERS[guild.premiumTier] ?? "Unknown"} · Created: <t:${createdUnix}:R> (<t:${createdUnix}:d>)`,
       `_Gateway latency: ${Math.round(this.container.client.ws.ping)}ms_`,
-    ].join("\n");
+
 
     await interaction.reply({ content: body, flags: MessageFlags.Ephemeral });
   }

@@ -39,8 +39,15 @@ export class SyncCommand extends Command {
       const result = await api.syncTrackedMessages();
 
       await interaction.editReply({
-        content: `🔄 **Tracked Messages Synchronized**\n• Checked: **${result.checked}**\n• Updated: **${result.updated}**\n• Removed: **${result.removed}**${result.errors > 0 ? `\n• Errors: **${result.errors}**` : ""}`,
+        content: [
+          `🔄 **Tracked Messages Synchronized**`,
+          `> • **Checked:** \`${result.checked}\` message(s)`,
+          `> • **Updated:** \`${result.updated}\` message(s)`,
+          `> • **Pruned / Expired:** \`${result.removed}\` message(s)`,
+          ...(result.errors > 0 ? [`> • ⚠️ **Errors:** \`${result.errors}\``] : []),
+        ].join("\n"),
       });
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       await interaction.editReply({

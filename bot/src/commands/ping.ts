@@ -29,6 +29,9 @@ export class PingCommand extends Command {
     const roundTrip = Date.now() - started;
     const gateway = Math.round(this.container.client.ws.ping);
 
-    await interaction.editReply(`Pong! Round trip **${roundTrip}ms** · gateway **${gateway}ms**`);
+    const healthDot = gateway < 120 ? "🟢" : gateway < 250 ? "🟡" : "🔴";
+    await interaction.editReply(
+      `${healthDot} Pong! Round trip **${roundTrip}ms** · gateway **${gateway}ms**`,
+    );
   }
 }

@@ -33,16 +33,18 @@ export class StatusCommand extends Command {
       const health = await api.health();
 
       const line = (label: string, ok: boolean): string =>
-        `${ok ? "\u2705" : "\u274c"} ${label}`;
+        `> ${ok ? "✅" : "❌"} ${label}`;
 
+      const statusBadge = health.status === "ok" ? "🟢 Operational" : "🟡 Degraded";
       const body = [
-        `**API** \`${env.apiBaseUrl}\`  ${health.status} (${health.environment})`,
+        `### 🛠️ HoHo Manager System Status — ${statusBadge}`,
+        `**API** \`${env.apiBaseUrl}\` • **${health.status}** (${health.environment})`,
         line("Database connected", health.database.connected),
         line("Bot token configured", health.discord.botTokenConfigured),
         line("Public key configured", health.discord.publicKeyConfigured),
         line("Application id configured", health.discord.applicationIdConfigured),
         `_Uptime: ${Math.round(health.uptimeSeconds)}s_`,
-      ].join("\n");
+
 
       await interaction.editReply(body);
     } catch (error) {
