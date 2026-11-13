@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -145,22 +146,22 @@ export const Modal: React.FC<ModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className={`fixed inset-0 ${zIndex} flex items-end justify-center bg-black/75 backdrop-blur-sm p-0 sm:items-center sm:p-4`}
+      className={`fixed inset-0 ${zIndex} ${UI_THEME_CONFIG.surfaces.modalBackdrop}`}
       onClick={handleBackdropClick}
     >
       <motion.div
         ref={modalBoxRef}
         tabIndex={-1}
         initial={{ opacity: 0, scale: 0.95, y: 6 }}
-        animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.175, ease: [0.16, 1, 0.3, 1] } }}
-        exit={{ opacity: 0, scale: 0.95, y: 4, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
-        className={`w-full ${width} rounded-t-2xl sm:rounded-xl bg-[#313338] border border-[#1e1f22] shadow-xl flex flex-col overflow-hidden max-h-[90dvh] sm:max-h-[85vh] mt-auto sm:my-auto outline-none ${className}`}
+        animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: UI_THEME_CONFIG.motion.durations.enter, ease: UI_THEME_CONFIG.motion.easeOut } }}
+        exit={{ opacity: 0, scale: 0.95, y: 4, transition: { duration: UI_THEME_CONFIG.motion.durations.exit, ease: UI_THEME_CONFIG.motion.easeExit } }}
+        className={`${UI_THEME_CONFIG.surfaces.modalPanel} ${width} ${className}`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1e1f22] bg-[#2b2d31] shrink-0">
+          <div className={UI_THEME_CONFIG.surfaces.modalHeader}>
             <h2 className="text-[14px] font-bold text-white uppercase tracking-wider truncate mr-2">
               {title}
             </h2>
@@ -180,7 +181,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {footer && (
-          <div className="px-5 py-3.5 border-t border-[#1e1f22] bg-[#2b2d31] flex justify-end gap-2.5 shrink-0">
+          <div className={UI_THEME_CONFIG.surfaces.modalFooter}>
             {footer}
           </div>
         )}
