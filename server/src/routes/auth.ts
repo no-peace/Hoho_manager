@@ -13,6 +13,7 @@ import {
   createSessionToken,
   getSessionUserFromRequest,
   parseCookies,
+  revokeUserSessions,
 } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
@@ -376,10 +377,17 @@ router.get(
 );
 
 // POST /api/auth/logout
-router.post("/logout", (_req, res) => {
-  res.clearCookie("dmb_session", { path: "/" });
-  res.json({ success: true, ok: true });
-});
+router.post(
+  "/logout",
+  asyncHandler(async (req, res) => {
+    const user = await getSessionUserFromRequest(req);
+    if (user) {
+      await revokeUserSessions(user.id);
+    }
+    res.clearCookie("dmb_session", { path: "/" });
+    res.json({ success: true, ok: true });
+  }),
+);
 
 // POST /api/auth/dev-login (dev/test only)
 router.post(
