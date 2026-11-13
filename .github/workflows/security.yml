@@ -1,0 +1,82 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Scan repository history for leaked secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan with Gitleaks
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:v8.24.2 \
+            detect --source=/repo --redact --no-banner --exit-code 1
+
+  static-analysis:
+    name: Static security analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: python -m pip install --disable-pip-version-check semgrep
+
+      - name: Scan TypeScript and Node.js code
+        run: semgrep scan --config p/security-audit --config p/typescript --config p/nodejs --error --exclude node_modules --exclude dist
+
+  dependency-audit:
+    name: Audit npm dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check for high and critical npm vulnerabilities
+        run: npm audit --audit-level=high
+
+  dependency-review:
+    name: Review dependencies introduced by pull requests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
