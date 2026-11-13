@@ -38,7 +38,11 @@ jobs:
           ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           DATABASE_PATH: ":memory:"
           DISCORD_BOT_TOKEN: ci-test-bot-token
-        run: npm run benchmark:json | tee server-performance-report.json
+        run: npm run benchmark:json | tee /dev/stderr | sed -n '/^{/,$p' > server-performance-report.json
+        shell: bash
+
+      - name: Validate benchmark report JSON
+        run: node --input-type=module -e "import { readFileSync } from 'node:fs'; JSON.parse(readFileSync('server-performance-report.json', 'utf8'));"
 
       - name: Upload server performance report
         if: always()
