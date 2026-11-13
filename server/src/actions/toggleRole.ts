@@ -26,7 +26,7 @@ export const run = async ({
 
     if (alreadyHas) {
       await discord.removeGuildMemberRole(guildId, userId, roleId, botToken);
-      return ephemeral(`\u2705 Removed <@&${roleId}>.`);
+      return ephemeral(`✅ **Role Removed** — Removed <@&${roleId}>.`);
     }
 
     await discord.addGuildMemberRole(guildId, userId, roleId, botToken);

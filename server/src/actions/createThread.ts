@@ -37,7 +37,7 @@ export const run = async ({
   try {
     const thread = await discord.createThreadFromMessage(channelId, messageId, name, botToken);
     return ephemeral(
-      thread?.id ? `\ud83e\uddf5 Started <#${thread.id}>.` : "\ud83e\uddf5 Thread started.",
+      thread?.id ? `🧵 **Thread Created** — Started <#${thread.id}>.` : "🧵 **Thread Created** — Thread started.",
     );
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

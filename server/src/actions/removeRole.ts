@@ -23,7 +23,7 @@ export const run = async ({
 
   try {
     await discord.removeGuildMemberRole(guildId, userId, roleId, botToken);
-    return ephemeral(`\u2705 Removed <@&${roleId}>.`);
+    return ephemeral(`✅ **Role Removed** — Removed <@&${roleId}>.`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`remove_role failed for ${userId}: ${reason}`);

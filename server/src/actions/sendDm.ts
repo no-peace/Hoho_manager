@@ -27,7 +27,7 @@ export const run = async ({
 
   try {
     await discord.sendDirectMessage(userId, payload, botToken);
-    return ephemeral("\ud83d\udcec Sent you a direct message.");
+    return ephemeral("📬 **Direct Message Sent** — Sent you a direct message.");
   } catch (error) {
     // The most common cause is the user's privacy settings blocking DMs.
     const reason = error instanceof Error ? error.message : String(error);
