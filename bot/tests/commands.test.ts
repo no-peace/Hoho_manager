@@ -6,6 +6,7 @@ import { StatusCommand } from "../src/commands/status.js";
 import { ServerCommand } from "../src/commands/server.js";
 import { SendCommand } from "../src/commands/send.js";
 import { ExploitCommand } from "../src/commands/exploit.js";
+import { SyncCommand } from "../src/commands/sync.js";
 import api from "../src/lib/api.js";
 
 // Mock api methods
@@ -13,10 +14,12 @@ vi.mock("../src/lib/api.js", () => ({
   default: {
     health: vi.fn(),
     sendMessage: vi.fn(),
+    syncTrackedMessages: vi.fn(),
   },
   api: {
     health: vi.fn(),
     sendMessage: vi.fn(),
+    syncTrackedMessages: vi.fn(),
   },
   listWeaoExploits: vi.fn(),
   resolveWeaoExploit: vi.fn(),
@@ -286,6 +289,55 @@ describe("bot/commands: Slash Command Suite", () => {
         content: "❌ Cannot dispatch exploit message in this channel.",
       });
       expect(resolveWeaoExploit).toHaveBeenCalledWith("Delta");
+    });
+  });
+
+  describe("SyncCommand", () => {
+    it("reports checked, updated, and pruned message counts", async () => {
+      const { api: apiClient } = await import("../src/lib/api.js");
+      vi.mocked(apiClient.syncTrackedMessages).mockResolvedValueOnce({
+        checked: 12,
+        updated: 8,
+        removed: 2,
+        errors: 0,
+      });
+
+      const command = new SyncCommand(mockContext, {});
+      const interaction: any = {
+        user: { id: "sync-success-user" },
+        deferReply: vi.fn().mockResolvedValue(undefined),
+        editReply: vi.fn().mockResolvedValue(undefined),
+      };
+
+      await command.chatInputRun(interaction);
+
+      expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
+      expect(interaction.editReply).toHaveBeenCalledWith({
+        content: [
+          "🔄 **Tracked Messages Synchronized**",
+          "> • **Checked:** `12` message(s)",
+          "> • **Updated:** `8` message(s)",
+          "> • **Pruned / Expired:** `2` message(s)",
+        ].join("\n"),
+      });
+    });
+
+    it("reports synchronization failures without throwing", async () => {
+      const { api: apiClient } = await import("../src/lib/api.js");
+      vi.mocked(apiClient.syncTrackedMessages).mockRejectedValueOnce(new Error("API unavailable"));
+
+      const command = new SyncCommand(mockContext, {});
+      const interaction: any = {
+        user: { id: "sync-error-user" },
+        deferReply: vi.fn().mockResolvedValue(undefined),
+        editReply: vi.fn().mockResolvedValue(undefined),
+      };
+
+      await command.chatInputRun(interaction);
+
+      expect(interaction.editReply).toHaveBeenCalledWith({
+        content: "❌ Synchronization failed: API unavailable",
+      });
     });
   });
 });
