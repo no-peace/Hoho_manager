@@ -74,17 +74,24 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const optionsMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!addMenuOpen && !optionsMenuOpen) return;
     const handleOutsideClick = (e: MouseEvent) => {
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setAddMenuOpen(false);
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(e.target as Node)) setOptionsMenuOpen(false);
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         setAddMenuOpen(false);
-      }
-      if (optionsMenuRef.current && !optionsMenuRef.current.contains(e.target as Node)) {
         setOptionsMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [addMenuOpen, optionsMenuOpen]);
 
   const canAddClassicActionRow =
     !isV2 &&
@@ -271,7 +278,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
                       exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
                       style={{ transformOrigin: "bottom left" }}
-                      className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
+                      className="absolute left-0 bottom-full mb-1.5 w-48 max-w-[calc(100vw-2rem)] bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
                     >
                       {V2_ADD_OPTIONS.map((opt) => {
                         const Icon = opt.icon;
@@ -330,7 +337,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
                     exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
                     style={{ transformOrigin: "bottom left" }}
-                    className="absolute left-0 bottom-full mb-1.5 w-56 bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
+                    className="absolute left-0 bottom-full mb-1.5 w-56 max-w-[calc(100vw-2rem)] bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
                   >
                     <button
                       type="button"
