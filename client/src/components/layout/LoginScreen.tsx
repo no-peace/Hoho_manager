@@ -5,7 +5,9 @@ import { HoHoLogoMark } from "./HoHoLogoMark";
 import { PublicPageHeader } from "./PublicPageHeader";
 import { SkiperDynamicStatusPill } from "../ui/CultSkiperPrimitives";
 import { ShinyText, SpotlightCard, SplitTextReveal } from "../reactbits/ReactBitsPrimitives";
-import { ThreeHeroCanvas } from "../reactbits/ThreeHeroCanvas";
+const ThreeHeroCanvas = React.lazy(() =>
+  import("../reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })),
+);
 
 export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   oauth_not_configured: "Discord login is not configured on the server. Please contact an administrator.",
@@ -92,7 +94,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
 
   return (
     <div data-testid="login-screen-scroll-root" className="relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 select-none">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden"><ThreeHeroCanvas /></div>
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden"><React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense></div>
       <PublicPageHeader activePage="studio" />
 
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
