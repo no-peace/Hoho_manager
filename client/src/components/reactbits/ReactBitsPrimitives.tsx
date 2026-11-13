@@ -14,12 +14,12 @@ export const SplitTextReveal: React.FC<TextProps> = ({ text, className = "", sta
     if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches || navigator.webdriver) return;
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { duration: 0.42, ease: "power3.out" } });
-      tl.set("[data-char]", { yPercent: 100, opacity: 0 });
-      tl.to("[data-char]", { yPercent: 0, opacity: 1, stagger });
+      tl.set("[data-char]", { yPercent: 100, opacity: 0, willChange: "transform, opacity" });
+      tl.to("[data-char]", { yPercent: 0, opacity: 1, stagger, clearProps: "willChange" });
     }, element);
     return () => ctx.revert();
   }, [text, stagger]);
-  return <span ref={root} className={className} aria-label={text}>{text.split(" ").map((word, wi) => <React.Fragment key={wi}><span className="inline-block overflow-hidden">{Array.from(word).map((char, ci) => <span key={ci} data-char className="inline-block will-change-transform">{char}</span>)}</span>{wi < text.split(" ").length - 1 ? " " : ""}</React.Fragment>)}</span>;
+  return <span ref={root} className={className} aria-label={text}>{text.split(" ").map((word, wi) => <React.Fragment key={wi}><span className="inline-block overflow-hidden">{Array.from(word).map((char, ci) => <span key={ci} data-char className="inline-block">{char}</span>)}</span>{wi < text.split(" ").length - 1 ? " " : ""}</React.Fragment>)}</span>;
 };
 
 export const ShinyText: React.FC<TextProps> = ({ text, className = "" }) => (
@@ -32,9 +32,11 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({ children, className = "", spotlightColor = "rgba(88, 101, 242, 0.12)", onMouseMove, ...props }) => (
   <div {...props} className={`relative isolate overflow-hidden ${className}`} onMouseMove={(event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
-    event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+      event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+    }
     onMouseMove?.(event);
   }}>
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-100" style={{ background: `radial-gradient(280px circle at var(--spot-x,50%) var(--spot-y,50%), ${spotlightColor}, transparent 72%)` }} />
