@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111214" /><stop offset="50%" stop-color="#1E1F22" /><stop offset="100%" stop-color="#2B2D31" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#5865F2" stop-opacity="0.32" /><stop offset="100%" stop-color="#5865F2" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" /><rect width="1200" height="630" fill="url(#glow)" />
+  <rect x="64" y="64" width="1072" height="502" rx="32" fill="#18191C" fill-opacity="0.85" stroke="#35373C" stroke-width="2" />
+  <rect x="120" y="130" width="84" height="84" rx="20" fill="#5865F2" />
+  <path d="M142 148H152V166H172V148H182V196H172V176H152V196H142V148Z" fill="#FFFFFF" />
+  <text x="230" y="172" fill="#949CF7" font-family="system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="3">DISCORD BOT STUDIO • COMPONENTS V2</text>
+  <text x="230" y="212" fill="#F2F3F5" font-family="system-ui, sans-serif" font-size="38" font-weight="800">HoHo Manager</text>
+  <text x="120" y="310" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="54" font-weight="800">Visual Message, Embed &amp; Flow Builder</text>
+  <text x="120" y="372" fill="#B5BAC1" font-family="system-ui, sans-serif" font-size="26" font-weight="500">Live WEAO Exploit Placeholders • Dynamic Tracking • Interactive Button &amp; Modal Flows</text>
+  <rect x="120" y="430" width="260" height="56" rx="14" fill="#5865F2" /><text x="156" y="466" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="22" font-weight="700">IS_COMPONENTS_V2</text>
+  <rect x="404" y="430" width="290" height="56" rx="14" fill="#23A55A" fill-opacity="0.2" stroke="#23A55A" stroke-width="2" /><text x="438" y="466" fill="#57F287" font-family="system-ui, sans-serif" font-size="22" font-weight="700">AUTO-SYNC TRACKING</text>
+</svg>
