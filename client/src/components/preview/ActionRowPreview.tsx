@@ -407,7 +407,7 @@ export interface ActionRowPreviewProps {
   component: ComponentNode;
 }
 
-export const ActionRowPreview = ({ component }: ActionRowPreviewProps) => (
+export const ActionRowPreview = React.memo(({ component }: ActionRowPreviewProps) => (
   <div className="flex flex-wrap items-center gap-2">
     {(component.components ?? []).map((child) =>
       SELECT_TYPES.includes(child.type) ? (
@@ -417,6 +417,6 @@ export const ActionRowPreview = ({ component }: ActionRowPreviewProps) => (
       ),
     )}
   </div>
-);
+));
 
 export default ActionRowPreview;
