@@ -190,6 +190,7 @@ describe("bot/commands: Slash Command Suite", () => {
       } as any);
 
       const interaction: any = {
+        user: { id: "test-user-123" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Hello from bot!"),
@@ -213,6 +214,7 @@ describe("bot/commands: Slash Command Suite", () => {
       vi.mocked(api.sendMessage).mockRejectedValueOnce(new Error("Rate limited"));
 
       const interaction: any = {
+        user: { id: "test-user-123" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Test"),
@@ -249,6 +251,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       const command = new ExploitCommand(mockContext, {});
       const interaction: any = {
+        user: { id: "test-user-123" },
         options: {
           getFocused: vi.fn().mockReturnValue({ name: "exploit", value: "del" }),
         },
@@ -269,6 +272,7 @@ describe("bot/commands: Slash Command Suite", () => {
       const command = new ExploitCommand(mockContext, {});
 
       const interaction: any = {
+        user: { id: "test-user-123" },
         options: { getString: vi.fn().mockReturnValue("Delta") },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
