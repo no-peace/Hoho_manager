@@ -764,7 +764,6 @@ export const App: React.FC = () => {
   const [botModalOpen, setBotModalOpen] = useState(false);
   const [botModalMode, setBotModalMode] = useState<"send" | "edit">("send");
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
-  const [addMsgMenuOpen, setAddMsgMenuOpen] = useState(false);
 
   const currentUser = useGlobalStore((state) => state.currentUser);
   const authLoading = useGlobalStore((state) => state.authLoading);
@@ -956,6 +955,7 @@ export const App: React.FC = () => {
                     triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
                     triggerIcon={<Plus size={15} />}
                     title="Choose message type"
+                    disabled={displayMessages.length >= 10}
                     className="pb-4"
                   >
                     <div className="space-y-2">
