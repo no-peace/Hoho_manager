@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { LoginScreen } from "./components/layout/LoginScreen";
+import { HoHoLogoMark, LoginScreen } from "./components/layout/LoginScreen";
 import { StudioLayout } from "./components/layout/StudioLayout";
 import { StudioModals, ToastAndConfirmHost } from "./components/layout/StudioModals";
 import { useStudioRoute } from "./components/layout/StudioRouter";
@@ -15,14 +15,14 @@ const PrivacyPage = React.lazy(() =>
   import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })),
 );
 
-const RouteSkeleton: React.FC = () => (
-  <div className="min-h-[100dvh] w-full bg-[#18191c] p-6 text-[#dbdee1] font-sans">
-    <div className="mx-auto flex min-h-[80dvh] max-w-5xl flex-col justify-center gap-6 animate-pulse">
-      <div className="h-10 w-52 rounded-lg bg-[#2b2d31]" />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="h-64 rounded-2xl bg-[#232428]" />
-        <div className="h-64 rounded-2xl bg-[#232428]" />
-      </div>
+const SessionAuthLoader: React.FC = () => (
+  <div className="h-dvh w-full bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center gap-3 select-none font-sans">
+    <HoHoLogoMark className="h-11 w-11 rounded-xl border border-[#35373c] shadow-md" />
+    <div className="flex items-center gap-2">
+      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
+      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
+      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
+      <span className="ml-1 text-xs font-medium text-[#949ba4]">Verifying Discord session…</span>
     </div>
   </div>
 );
@@ -68,7 +68,7 @@ export const App: React.FC = () => {
   if (route === "docs") {
     return (
       <>
-        <React.Suspense fallback={<RouteSkeleton />}>
+        <React.Suspense fallback={null}>
           <DocsPage />
         </React.Suspense>
         <ToastAndConfirmHost />
@@ -79,7 +79,7 @@ export const App: React.FC = () => {
   if (route === "privacy") {
     return (
       <>
-        <React.Suspense fallback={<RouteSkeleton />}>
+        <React.Suspense fallback={null}>
           <PrivacyPage />
         </React.Suspense>
         <ToastAndConfirmHost />
@@ -97,7 +97,7 @@ export const App: React.FC = () => {
   }
 
   if (authLoading) {
-    return <RouteSkeleton />;
+    return <SessionAuthLoader />;
   }
 
   if (!currentUser) {
