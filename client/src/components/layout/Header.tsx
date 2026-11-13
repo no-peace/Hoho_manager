@@ -17,7 +17,7 @@ import { useGlobalStore } from "../../store/globalStore";
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
 
-export const HOHO_LOGO_URL = "https://raw.githubusercontent.com/acsu123/HohoV2/main/BloxFruit/keysystem/hoho_logo.png";
+export const HOHO_LOGO_URL = "/hoho_logo.svg";
 
 export const getDiscordAvatarUrl = (
   user: { id: string; avatar?: string | null },
@@ -111,7 +111,10 @@ export const Header: React.FC<HeaderProps> = () => {
           >
             <img
               src={HOHO_LOGO_URL}
-              alt="HoHo Manager"
+              width={32}
+              height={32}
+              decoding="async"
+              fetchPriority="high"
               className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
             />
             <span className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline">
@@ -181,6 +184,9 @@ export const Header: React.FC<HeaderProps> = () => {
                 <img
                   src={currentUser.avatarUrl || getDiscordAvatarUrl(currentUser, 64)}
                   alt={currentUser.username}
+                  width={24}
+                  height={24}
+                  decoding="async"
                   className="h-6 w-6 rounded-full object-cover bg-[#5865f2]"
                 />
                 <span className="text-xs font-semibold text-[#f2f3f5] max-w-[110px] truncate hidden sm:inline">

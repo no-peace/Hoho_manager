@@ -27,11 +27,40 @@ export const createApp = (): Express => {
   app.disable("x-powered-by");
   if (env.isProd) app.set("trust proxy", 1);
 
+  if (env.isProd) {
+    app.use((req, res, next) => {
+      const forwardedProto = req.headers["x-forwarded-proto"];
+      if (forwardedProto && forwardedProto !== "https") {
+        return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+      }
+      next();
+    });
+  }
+
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: false,
-      frameguard: { action: "deny"},
+      strictTransportSecurity: env.isProd
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
+      contentSecurityPolicy: env.isProd
+        ? {
+            useDefaults: true,
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'", "'unsafe-inline'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              imgSrc: ["'self'", "data:", "blob:", "https:"],
+              mediaSrc: ["'self'", "data:", "blob:", "https:"],
+              connectSrc: ["'self'", "https:", "wss:"],
+              fontSrc: ["'self'", "data:", "https:"],
+              objectSrc: ["'none'"],
+              frameAncestors: ["'none'"],
+              upgradeInsecureRequests: [],
+            },
+          }
+        : false,
+      frameguard: { action: "deny" },
       xssFilter: true,
     }),
   );
@@ -85,7 +114,23 @@ export const createApp = (): Express => {
   // Serve built frontend if client/dist exists (Express 5 compatible SPA fallback)
   const clientDist = path.resolve(serverRoot, "../client/dist");
   if (fs.existsSync(clientDist)) {
-    app.use(express.static(clientDist));
+    app.use(
+      "/assets",
+      express.static(path.join(clientDist, "assets"), {
+        maxAge: "365d",
+        immutable: true,
+      }),
+    );
+    app.use(
+      express.static(clientDist, {
+        maxAge: "7d",
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-cache");
+          }
+        },
+      }),
+    );
     app.use((req, res, next) => {
       if (req.method !== "GET" || req.path.startsWith("/api")) return next();
       res.sendFile(path.join(clientDist, "index.html"));

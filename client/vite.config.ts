@@ -37,5 +37,21 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("gsap") || id.includes("motion")) return "vendor-motion";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("emoji-mart") || id.includes("@emoji-mart") || id.includes("chrono-node")) {
+            return "vendor-pickers";
+          }
+          if (id.includes("react") || id.includes("zustand") || id.includes("sileo")) {
+            return "vendor-react";
+          }
+          return undefined;
+        },
+      },
+    },
   },
 });

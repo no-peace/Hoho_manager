@@ -76,7 +76,7 @@ export const SplitPane = ({
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "left" ? "auto" : "none" }}
         >
-          {left}
+          {mobileActivePane === "left" ? left : null}
         </motion.div>
         <motion.div
           aria-hidden={mobileActivePane !== "right"}
@@ -86,7 +86,7 @@ export const SplitPane = ({
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "right" ? "auto" : "none" }}
         >
-          {right}
+          {mobileActivePane === "right" ? right : null}
         </motion.div>
       </div>
     );
