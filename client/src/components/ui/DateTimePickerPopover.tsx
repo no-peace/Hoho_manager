@@ -125,7 +125,7 @@ export const DateTimePickerPopover = ({
                     className="rounded-md p-1.5 text-[#949ba4] hover:bg-[#2b2d31]"><ChevronRight size={15} /></button>
                 </div>
               </div>
-              <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-semibold text-[#787c87]">
+              <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-semibold text-[#949ba4]">
                 {["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((day) => <span key={day} className="py-1">{day}</span>)}
               </div>
               <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-[#232428] bg-[#232428]">
