@@ -112,15 +112,12 @@ const buildEmbed = (ctx: AuditContext) => {
 
   if (ctx.actorDiscordId) {
     fields.push({
-      name: "👤 Actor",
+      name: "👤 Operator",
       value: ctx.actorUsername
         ? `${ctx.actorUsername} (<@${ctx.actorDiscordId}>)`
         : `<@${ctx.actorDiscordId}>`,
       inline: true,
     });
-  }
-  if (ctx.targetDiscordId) {
-    fields.push({ name: "🎯 Target", value: `<@${ctx.targetDiscordId}>`, inline: true });
   }
   if (ctx.channelId) {
     fields.push({
@@ -129,34 +126,40 @@ const buildEmbed = (ctx: AuditContext) => {
       inline: true,
     });
   }
-  if (ctx.messageId) {
-    fields.push({ name: "💬 Message ID", value: ctx.messageId, inline: true });
+  if (ctx.targetDiscordId) {
+    fields.push({ name: "🎯 Target", value: `<@${ctx.targetDiscordId}>`, inline: true });
+  }
+  if (ctx.guildId && ctx.channelId && ctx.messageId) {
+    fields.push({
+      name: "🔗 Message Jump Link",
+      value: `[Jump to Message](https://discord.com/channels/${ctx.guildId}/${ctx.channelId}/${ctx.messageId})`,
+      inline: false,
+    });
   }
   if (ctx.reason) {
     fields.push({ name: "📝 Reason", value: truncate(ctx.reason, 200), inline: false });
   }
-  if (ctx.ip) {
-    fields.push({ name: "🔒 IP Hash", value: hashIp(ctx.ip), inline: true });
-  }
   if (ctx.requestId) {
     fields.push({ name: "🆔 Request ID", value: ctx.requestId, inline: true });
   }
-
-  // Append any caller-provided detail fields
   if (ctx.details) {
     for (const [key, value] of Object.entries(ctx.details)) {
-      if (value !== undefined) {
-        fields.push({ name: key, value: truncate(String(value)), inline: true });
-      }
+      if (value !== undefined) fields.push({ name: key, value: truncate(String(value)), inline: true });
     }
   }
 
   return {
     embeds: [{
       title: EVENT_LABELS[ctx.event],
+      description: [
+        `> **Event:** ${ctx.event}`,
+        `> **Actor:** ${ctx.actorDiscordId ? `<@${ctx.actorDiscordId}>` : "System"}`,
+      ].join("\n"),
       color: EVENT_COLORS[ctx.event],
       fields,
-      footer: { text: `HoHo Manager Audit Log • ${now}` },
+      footer: {
+        text: `HoHo Manager Security Audit${ctx.ip ? ` • IP Hash: ${hashIp(ctx.ip)}` : ""}`,
+      },
       timestamp: now,
     }],
   };

@@ -51,6 +51,7 @@ const buildAdaptiveExploitPayload = async (
       type: ComponentType.Button,
       style: ButtonStyle.Link,
       label: "Website",
+      emoji: { name: "🌐" },
       url: exploit.websitelink,
     });
   }
@@ -59,6 +60,7 @@ const buildAdaptiveExploitPayload = async (
       type: ComponentType.Button,
       style: ButtonStyle.Link,
       label: "Discord",
+      emoji: { name: "💬" },
       url: exploit.discordlink,
     });
   }
@@ -67,6 +69,7 @@ const buildAdaptiveExploitPayload = async (
       type: ComponentType.Button,
       style: ButtonStyle.Link,
       label: "Purchase",
+      emoji: { name: "🛒" },
       url: exploit.purchaselink,
     });
   }
@@ -74,49 +77,34 @@ const buildAdaptiveExploitPayload = async (
   return {
     embeds: [
       {
-        title: `${exploit.updateStatus ? "🟢" : "🔴"} ${exploit.title}  Live Executor Status`,
+        title: `${exploit.updateStatus ? "🟢" : "🔴"} ${exploit.title} — Executor Status`,
+        description: [
+          `> **Status:** ${exploit.updateStatus ? "🟢 **Updated & Working**" : "🔴 **Outdated / Patched**"}`,
+          `> **Version:** \`${exploit.version || "Unknown"}\` • **Platform:** \`${exploit.platform || "Windows"}\``,
+          `> **Pricing:** ${exploit.free ? "✨ **Free**" : `💎 **${exploit.cost || "Paid"}**`}`,
+        ].join("\n"),
         color: exploit.updateStatus ? 0x23a55a : 0xda373c,
         fields: [
           {
-            name: "Status",
-            value: exploit.updateStatus ? "🟢 Updated" : "🔴 Outdated",
-            inline: true,
-          },
-          {
-            name: "Version",
-            value: `\`${exploit.version || "Unknown"}\``,
-            inline: true,
-          },
-          {
             name: "sUNC / UNC",
-            value: `**sUNC:** ${suncDisplay} • **UNC:** ${
-              typeof exploit.uncPercentage === "number" ? `${exploit.uncPercentage}%` : "N/A"
-            }`,
+            value: `**sUNC:** \`${suncDisplay}\`\n**UNC:** \`${typeof exploit.uncPercentage === "number" ? `${exploit.uncPercentage}%` : "N/A"}\``,
             inline: true,
           },
           {
-            name: "Platform & Cost",
-            value: `${exploit.platform || "Windows"} • ${
-              exploit.free ? "Free" : exploit.cost || "Paid"
-            }`,
+            name: "Capabilities",
+            value: `**Decompiler:** ${exploit.decompiler ? "✅ Yes" : "❌ No"}\n**Multi-Inject:** ${exploit.multiInject ? "✅ Yes" : "❌ No"}`,
             inline: true,
           },
           {
-            name: "Detection & Features",
-            value: `${exploit.detected ? "⚠️ Detected" : "🛡️ Undetected"} • Decompiler: ${
-              exploit.decompiler ? "✅" : "❌"
-            } • Key: ${exploit.keysystem ? "🔑" : "🔓"}`,
-            inline: true,
-          },
-          {
-            name: "Last Updated",
-            value: exploit.updatedDate || "Unknown",
+            name: "Security & Key",
+            value: `${exploit.detected ? "⚠️ Detected" : "🛡️ Undetected"}\n**Key System:** ${exploit.keysystem ? "🔑 Required" : "🔓 Keyless"}`,
             inline: true,
           },
         ],
         footer: {
-          text: `Roblox Target: ${exploit.rbxversion || "Unknown"} • Powered by WEAO API`,
+          text: `HoHo Hub Status • Roblox Target: ${exploit.rbxversion || "Latest"} • Updated ${exploit.updatedDate || "Recently"}`,
         },
+        timestamp: new Date().toISOString(),
       },
     ],
     ...(buttons.length > 0
