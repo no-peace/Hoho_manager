@@ -15,6 +15,10 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     if (!context) return;
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0;
+    const isConstrainedDevice = Boolean(connection?.saveData || navigator.hardwareConcurrency <= 4 || (deviceMemory > 0 && deviceMemory <= 4));
+    let shouldAnimate = false;
     let columns = 18;
     let rows = 10;
     const frameInterval = 1000 / 30;
@@ -63,13 +67,16 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
       width = Math.max(1, bounds.width);
       height = Math.max(1, bounds.height);
       const isCompactMobile = width < 640;
-      columns = isCompactMobile ? 12 : 18;
-      rows = isCompactMobile ? 6 : 10;
+      shouldAnimate = !motionQuery.matches && !isCompactMobile && !isConstrainedDevice;
+      columns = isCompactMobile ? 10 : 18;
+      rows = isCompactMobile ? 5 : 10;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, isCompactMobile ? 1.25 : 1.5);
       canvas.width = Math.round(width * pixelRatio);
       canvas.height = Math.round(height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       draw();
+      if (shouldAnimate) start();
+      else stop();
     };
 
     const stop = () => {
@@ -79,7 +86,7 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
 
     const tick = (timestamp: number) => {
       frameId = 0;
-      if (disposed || motionQuery.matches || !isVisible || !isPageVisible) return;
+      if (disposed || !shouldAnimate || !isVisible || !isPageVisible) return;
 
       if (timestamp - lastFrameTime >= frameInterval) {
         lastFrameTime = timestamp;
@@ -92,7 +99,7 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     };
 
     const start = () => {
-      if (disposed || motionQuery.matches || !isVisible || !isPageVisible || frameId) return;
+      if (disposed || !shouldAnimate || !isVisible || !isPageVisible || frameId) return;
       lastFrameTime = 0;
       frameId = window.requestAnimationFrame(tick);
     };
@@ -109,12 +116,7 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     };
 
     const handleMotionChange = () => {
-      if (motionQuery.matches) {
-        stop();
-        draw();
-      } else {
-        start();
-      }
+      resize();
     };
 
     resize();
