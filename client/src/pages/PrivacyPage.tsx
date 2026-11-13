@@ -43,7 +43,7 @@ export const PrivacyPage: React.FC = () => {
               <Lock size={14} /> Discord OAuth2 &amp; Sessions
             </h2>
             <p className="text-xs leading-relaxed text-[#b5bac1]">
-              Sign-in requests the Discord <code className="text-white">identify</code> and <code className="text-white">guilds</code> scopes. The OAuth access token is used by the server during sign-in to retrieve your profile and server list. The application then issues a signed, HttpOnly session cookie with a 24-hour lifetime.
+              Sign-in requests the Discord <code className="text-white">identify</code> and <code className="text-white">guilds</code> scopes. The OAuth access token is used only during the server-side sign-in callback to retrieve your Discord profile and server list. It is not written to the application database or retained in the session; the application instead issues a signed, HttpOnly session cookie with a 24-hour lifetime.
             </p>
           </SpotlightCard>
 
