@@ -14,7 +14,7 @@ export const PrivacyPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#18191c] px-4 py-6 text-[#dbdee1] font-sans sm:px-8 sm:py-10">
+    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#18191c] px-4 py-6 pb-16 text-[#dbdee1] font-sans sm:px-8 sm:py-10">
       <div className="mx-auto max-w-4xl space-y-8">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#26282d] pb-4">
           <a href="/" className="inline-flex items-center gap-2 rounded-lg border border-[#26282d] bg-[#232428] px-3 py-2 text-xs font-bold text-[#b5bac1] transition-all hover:text-white active:scale-[0.97]">
