@@ -1,3 +1,4 @@
+import React from "react";
 import type { EmbedData, EmbedField } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
@@ -223,4 +224,4 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   );
 };
 
-export default EmbedPreview;
+export default React.memo(EmbedPreview);
