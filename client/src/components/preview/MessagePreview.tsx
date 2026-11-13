@@ -255,6 +255,9 @@ export const MessagePreview = () => {
                           <img
                             src={effectiveAvatar}
                             alt=""
+                            width={40}
+                            height={40}
+                            decoding="async"
                             className="h-full w-full object-cover"
                             onError={(e) => {
                               if (
