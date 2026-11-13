@@ -11,7 +11,7 @@ import type { IconComponent } from "./icon";
  */
 
 const BASE =
-  "relative inline-flex items-center justify-center gap-1.5 border border-white/[0.08] rounded-lg font-medium transition shrink-0 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] select-none";
+  "relative inline-flex items-center justify-center gap-1.5 border border-white/[0.08] rounded-lg font-medium transition-colors duration-150 shrink-0 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0..97] select-none";
 
 const VARIANTS = {
   primary: "bg-blurple-500 hover:bg-blurple-600 active:bg-blurple-700 text-white",

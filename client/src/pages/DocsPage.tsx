@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
 import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
+import {AnimatedMorphIcon } from "../components/ui/CultSkiperPrimitives";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -276,11 +277,11 @@ export const DocsPage = () => {
                         className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors inline-flex items-center justify-center"
                         title="Copy tag"
                       >
-                        {copiedTag === item.tag ? (
-                          <Check size={13} className="text-[#23a55a]" />
-                        ) : (
-                          <Copy size={13} />
-                        )}
+                        <AnimatedMorphIcon
+                          active={copiedTag === item.tag}
+                          activeIcon={<Check size={13} className="text-[#23a55a]" />}
+                          inactiveIcon={<Copy size={13} />}
+                        />
                       </button>
                     </td>
                   </tr>
