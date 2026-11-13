@@ -24,6 +24,8 @@ import {
   type AutocompleteType,
 } from "../../utils/mentionParser";
 import { AutocompletePopover } from "./AutocompletePopover";
+import { VariableMenu } from "./VariableMenu";
+import { EmojiMenu } from "./EmojiMenu";
 
 export interface DiscordMentionInputProps {
   value: string;
@@ -896,14 +898,32 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
         {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
-          <AutocompletePopover
-            headerLabel={getHeaderLabel()}
-            items={acItems}
-            selectedIndex={selectedIndex}
-            onSelectIndex={setSelectedIndex}
-            onApply={applyReplacement}
-            dropdownPosition={dropdownPosition}
-          />
+          acType === "variable" ? (
+            <VariableMenu
+              items={acItems}
+              selectedIndex={selectedIndex}
+              onSelectIndex={setSelectedIndex}
+              onApply={applyReplacement}
+              dropdownPosition={dropdownPosition}
+            />
+          ) : acType === "emoji" ? (
+            <EmojiMenu
+              items={acItems}
+              selectedIndex={selectedIndex}
+              onSelectIndex={setSelectedIndex}
+              onApply={applyReplacement}
+              dropdownPosition={dropdownPosition}
+            />
+          ) : (
+            <AutocompletePopover
+              headerLabel={getHeaderLabel()}
+              items={acItems}
+              selectedIndex={selectedIndex}
+              onSelectIndex={setSelectedIndex}
+              onApply={applyReplacement}
+              dropdownPosition={dropdownPosition}
+            />
+          )
         )}
       </div>
     </div>
