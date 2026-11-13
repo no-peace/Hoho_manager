@@ -1,0 +1,60 @@
+name: Lighthouse
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse (${{ matrix.formFactor }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        formFactor: [mobile, desktop]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package and client
+        run: npm run build:shared && npm run build:client
+
+      - name: Start production preview
+        run: |
+          npm run preview --workspace client -- --host 127.0.0.1 --port 4173 > /tmp/hoho-preview.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              echo "Preview server is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/hoho-preview.log
+          exit 1
+
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.14.0 autorun --config=.lighthouserc.${{ matrix.formFactor }}.json
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-${{ matrix.formFactor }}
+          path: lhci-results/${{ matrix.formFactor }}
+          if-no-files-found: ignore
