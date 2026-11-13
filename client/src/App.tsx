@@ -37,6 +37,7 @@ import { DateTimePickerPopover } from "./components/ui/DateTimePickerPopover";
 import { getServerNow } from "./store/globalStore";
 import { updatePageSeo } from "./utils/seo";
 import gsap from "gsap";
+import { Toaster as SileoToaster } from "sileo";
 import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
@@ -51,14 +52,26 @@ const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" 
   />
 );
 
-/* ── Global In-App Toast & Confirmation Host (Replaces Browser alert/confirm) ── */
+/* ── Global In-App Toast & Confirmation Host (Sileo Physics Toaster + Accessible Status Host) ── */
 const ToastAndConfirmHost: React.FC = () => {
-  const { toasts, dismissToast, confirmDialog, closeConfirm } = useGlobalStore();
+  const { toasts, confirmDialog, closeConfirm } = useGlobalStore();
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-[100000] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-3 sm:px-0">
+      <SileoToaster
+        position="bottom-right"
+        theme="dark"
+        options={{
+          fill: "#18191c",
+          roundness: 14,
+        }}
+      />
+      <div role="status" aria-live="polite" className="sr-only">
+        {toasts.map((t) => (
+          <span key={t.id}>{t.message}</span>
+        ))}
+      </div>
         {toasts.map((t) => {
           const styles =
             t.variant === "success"
@@ -81,20 +94,6 @@ const ToastAndConfirmHost: React.FC = () => {
                 ) : (
                   <Info size={15} className="shrink-0" />
                 )}
-                <span className="text-[#f2f3f5] leading-snug break-words [overflow-wrap:anywhere]">{t.message}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => dismissToast(t.id)}
-                className="text-[#949ba4] hover:text-white shrink-0"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
       {confirmDialog.open && (
         <Modal
           open={confirmDialog.open}
