@@ -1,6 +1,7 @@
 import React from "react";
 import { ArrowLeft, BookOpen, Terminal } from "lucide-react";
 import { HOHO_LOGO_URL } from "../components/layout/Header";
+import { SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 
 export const NotFoundPage: React.FC = () => {
   const currentPath =
@@ -10,12 +11,15 @@ export const NotFoundPage: React.FC = () => {
     <div className="min-h-screen bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center p-6 select-none">
       {/* Ambient background glow */
       /*<div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#5865f2]/10 blur-3xl" />*/}
-      <div className="w-full max-w-md rounded-xl bg-[#2b2d31] border border-[#111214] shadow-xl p-6 text-center space-y-5">
-          <img
-            src={HOHO_LOGO_URL}
-            alt="HoHo Manager"
-            className="relative mx-auto w-16 h-16 rounded-xl object-cover border border-[#5865f2]/50 shadow-lg"
-          />
+      <SpotlightCard className="w-full max-w-md space-y-5 rounded-2xl border border-[#35373c] bg-[#2b2d31] p-6 text-center shadow-xl sm:p-8">
+        <img
+          src={HOHO_LOGO_URL}
+          alt="HoHo Manager"
+          width={64}
+          height={64}
+          decoding="async"
+          className="relative mx-auto h-16 w-16 rounded-xl border border-[#5865f2]/50 object-cover shadow-lg"
+        />
 
         <div className="space-y-1.5">
           <div className="inline-block items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#da373c]/15 border border-[#da373c]/30 text-[#f28b8b] text-[11px] font-bold uppercase tracking-wider">
@@ -42,18 +46,18 @@ export const NotFoundPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
           <a
             href="/"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold transition-colors shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold active:scale-[0.97] transition-all shadow-sm"
           >
             <ArrowLeft size={15} /> Back to Message Studio
           </a>
           <a
             href="/docs"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#35373c] hover:bg-[#404249] text-[#dbdee1] hover:text-white text-xs font-semibold transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#35373c] hover:bg-[#404249] text-[#dbdee1] hover:text-white text-xs font-semibold active:scale-[0.97] transition-all"
           >
             <BookOpen size={15} /> View Documentation
           </a>
         </div>
-      </div>
+      </SpotlightCard>
     </div>
   );
 };

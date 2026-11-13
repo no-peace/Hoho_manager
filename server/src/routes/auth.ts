@@ -73,12 +73,12 @@ router.get("/discord/login", (_req, res) => {
 router.get(
   "/discord/callback",
   asyncHandler(async (req, res) => {
-    const { code, state, error, error_description } = req.query;
+    const { code, state, error } = req.query;
     const clientBase = env.clientOrigins[0] || "http://localhost:5173";
 
     if (error) {
-      log.warn(`OAuth error from Discord: ${error} - ${error_description}`);
-      return res.redirect(`${clientBase}/?error=${encodeURIComponent(String(error_description || error))}`);
+      log.warn(`OAuth authorization was not completed by Discord: ${String(error)}`);
+      return res.redirect(`${clientBase}/?error=oauth_denied`);
     }
 
     if (!code || typeof code !== "string") {
