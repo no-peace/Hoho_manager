@@ -26,7 +26,7 @@ export const requireUser = (req: Request): UserRecord => {
  * In production, never falls back to `local-admin` unless a valid `x-admin-key` header is supplied.
  */
 export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) => {
-  const sessionUser = getSessionUserFromRequest(req);
+  const sessionUser = await getSessionUserFromRequest(req);
   if (sessionUser) {
     let dbUser = await userRepository.findByDiscordId(sessionUser.id);
     if (!dbUser) {
@@ -86,7 +86,7 @@ export const requireHeadAdmin: RequestHandler = asyncHandler(async (req, _res, n
     return next();
   }
 
-  const sessionUser = getSessionUserFromRequest(req);
+  const sessionUser = await getSessionUserFromRequest(req);
   if (sessionUser) {
     const isHead =
       (await settingsService.isHeadAdmin(sessionUser.id)) ||
