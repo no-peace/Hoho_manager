@@ -163,6 +163,7 @@ router.get(
     if (!userRes.ok) {
       const errorBody = await userRes.text();
       log.error(`Discord user profile fetch failed: HTTP ${userRes.status}; response=${errorBody.slice(0, 300)}`);
+      return res.redirect(`${clientBase}/?error=fetch_user_failed`);
     }
 
     const discordUser = (await userRes.json()) as {
@@ -172,6 +173,11 @@ router.get(
       avatar?: string | null;
     };
 
+    if (!discordUser.id || !discordUser.username) {
+      log.error("Discord user profile response was missing required identity fields");
+      return res.redirect(`${clientBase}/?error=fetch_user_failed`);
+    }
+    
     // 2. Fetch user's guilds via OAuth token & cross-check with the Default Bot's guilds + roles
     let userGuilds: DiscordUserGuild[] = [];
     try {
