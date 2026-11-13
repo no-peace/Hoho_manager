@@ -1056,7 +1056,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   {threadOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Thread
                 </span>
                 {message.thread_name && (
-                  <span className="text-[10px] text-[#5865f2] font-semibold truncate max-w-[150px]">
+                  <span className="text-[10px] text-[#949cf7] font-semibold truncate max-w-[150px]">
                     #{message.thread_name}
                   </span>
                 )}
