@@ -111,10 +111,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
         )}
 
         {loading ? (
-          <div className="text-center py-12 text-[#949ba4] text-xs">
-            <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-[#5865f2]" />
-            Loading active sessions...
-          </div>
+          <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading active sessions...</span></div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31]">
             <Key size={24} className="mx-auto mb-2 opacity-50" />
@@ -127,7 +124,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
               return (
                 <div
                   key={s.tokenId}
-                  className="bg-[#2b2d31] border border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-4"
+                  className="bg-[#2b2d31] border border-[#26282d] hover:border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-4 transition-[border-color,background-color] duration-150"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">

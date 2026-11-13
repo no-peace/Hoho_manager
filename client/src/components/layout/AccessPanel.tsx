@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2, Edit2, ShieldAlert } from "lucide-react";
+import { Plus, Save, Trash2, Edit2, ShieldAlert, RefreshCw } from "lucide-react";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, TextField } from "../ui/Field";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
@@ -378,7 +378,7 @@ export const AccessPanel = () => {
         ) : (
           <div className="space-y-2">
             {loading ? (
-              <div className="text-[#949ba4] p-4 text-center">Loading...</div>
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] p-4 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading...</span></div>
             ) : records.length === 0 ? (
               <div className="text-[#949ba4] p-8 text-center bg-[#1e1f22] rounded border border-dashed border-[#35373c]">
                 No staff members configured. Click &quot;Grant Access&quot; to add one.
@@ -390,7 +390,7 @@ export const AccessPanel = () => {
                 const avatarSrc = record.avatarUrl || (record.discord_avatar ? `https://cdn.discordapp.com/avatars/${record.discord_user_id}/${record.discord_avatar}.png` : defaultAvatar);
 
                 return (
-                  <div key={record.discord_user_id} className={`flex items-center justify-between p-3 rounded border ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
+                  <div key={record.discord_user_id} className={`flex items-center justify-between gap-3 rounded-lg border border-[#26282d] bg-[#2b2d31] p-3 transition-[border-color,background-color,opacity] duration-150 hover:border-[#35373c] ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <img
                         src={avatarSrc}

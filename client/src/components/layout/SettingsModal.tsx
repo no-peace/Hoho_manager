@@ -5,7 +5,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { useGlobalStore } from "../../store/globalStore";
 import { request } from "../../api/client";
 import { ALL_LOG_EVENTS, DEFAULT_LOG_EVENTS } from "@dmb/shared";
-import { CheckSquare, Square, Shield, Bell } from "lucide-react";
+import { CheckSquare, Square, Shield, Bell, RefreshCw } from "lucide-react";
 
 interface SettingsData {
   log_channel_id: string | null;
@@ -143,7 +143,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
       <div className="flex flex-col sm:flex-row gap-4 h-[75vh] min-w-0">
         {/* Sidebar */}
-        <div className="w-full sm:w-44 bg-[#1e1f22] border border-[#111214] rounded p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
+        <div className="w-full sm:w-44 bg-[#18191c] border border-[#26282d] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
           <button
             onClick={() => tab}
             className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#5865f2] text-white" : "text-[#b5bac1] hover:bg-[#35373c]"}`}
@@ -153,7 +153,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#1e1f22] border border-[#111214] rounded p-4">
+        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#18191c] border border-[#26282d] rounded-xl p-4">
           {tab === "general" && (
             <div className="space-y-5">
               <div className="border-b border-[#35373c] pb-2">
@@ -166,7 +166,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
               </div>
 
               {loading ? (
-                <p className="text-xs text-[#949ba4]">Loading...</p>
+                <div className="flex items-center gap-2 py-2 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading...</span></div>
               ) : (
                 <>
                   <div className="space-y-1">

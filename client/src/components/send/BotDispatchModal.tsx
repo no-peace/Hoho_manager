@@ -6,6 +6,7 @@ import {
   Send,
   Server,
   Square,
+  RefreshCw,
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
@@ -496,15 +497,13 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               className="mb-2 w-full rounded-lg border border-[#111214] bg-[#1e1f22] px-3 py-1.5 text-xs text-[#dbdee1] placeholder-[#949ba4] outline-none focus:border-[#5865f2]"
             />
           )}
-          <div className="bg-[#1e1f22] border border-[#111214] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar">
+          <div className="bg-[#18191c] border border-[#26282d] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar">
             {!canUseServerBot ? (
               <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
                 Server bot access is required.
               </div>
             ) : isLoading ? (
-              <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
-                Fetching channels...
-              </div>
+              <div className="flex h-full items-center justify-center gap-2 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Fetching channels...</span></div>
             ) : channels.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
                 No channels found.
@@ -544,7 +543,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
         </section>
 
         {mode === "edit" && (
-          <section className="space-y-3 bg-[#1e1f22] p-3 rounded-lg border border-[#111214]">
+          <section className="space-y-3 rounded-xl border border-[#26282d] bg-[#18191c] p-3.5">
             <div>
               <label
                 htmlFor="dispatch-target-message-id"
@@ -568,7 +567,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                   Recent Bot Messages in Selected Channel
                 </p>
                 {isLoadingMessages ? (
-                  <p className="text-xs text-[#949ba4]">Loading messages...</p>
+                  <div className="flex items-center gap-2 py-2 text-xs text-[#949ba4]"><RefreshCw size={14} className="animate-spin text-[#5865f2]" /><span>Loading messages...</span></div>
                 ) : botMessages.length === 0 ? (
                   <p className="text-xs text-[#949ba4]">
                     No recent bot messages found.

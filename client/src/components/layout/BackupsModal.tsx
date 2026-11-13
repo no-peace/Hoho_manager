@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Edit3, Upload } from "lucide-react";
+import { Download, Edit3, Upload, RefreshCw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
@@ -319,13 +319,13 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
 
       <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 custom-scrollbar">
         {loadingTracked ? (
-          <p className="py-8 text-center text-xs text-[#949ba4]">Loading tracked messages…</p>
+          <div className="flex items-center justify-center gap-2 py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading tracked messages…</span></div>
         ) : visibleItems.length === 0 ? (
           <p className="py-8 text-center text-xs text-[#949ba4]">
             No items in this view yet. Save a template or enable tracking when dispatching a message.
           </p>
         ) : visibleItems.map((item) => (
-          <article key={item.key} className="space-y-2 rounded-lg border border-[#26282d] bg-[#1e1f22] p-3">
+          <article key={item.key} className="space-y-2 rounded-lg border border-[#26282d] bg-[#2b2d31] p-3 transition-[border-color,background-color] duration-150 hover:border-[#35373c]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

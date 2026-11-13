@@ -94,10 +94,7 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
         )}
 
         {loading ? (
-          <div className="text-center py-12 text-[#949ba4] text-xs">
-            <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-[#5865f2]" />
-            Loading audit logs...
-          </div>
+          <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading audit logs...</span></div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31] p-6 space-y-2">
             <Shield size={28} className="mx-auto text-[#5865f2] opacity-80" />
@@ -108,7 +105,7 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-[500px] border border-[#2b2d31] rounded-lg">
+          <div className="overflow-x-auto max-h-[500px] border border-[#26282d] bg-[#2b2d31] rounded-lg">
             <table className="w-full text-left text-xs text-[#dbdee1]">
               <thead className="bg-[#1e1f22] border-b border-[#2b2d31] text-[#949ba4] uppercase text-[10px] sticky top-0 tracking-wider">
                 <tr>
