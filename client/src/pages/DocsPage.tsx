@@ -143,7 +143,7 @@ export const DocsPage = () => {
 
       <div className="max-w-5xl mx-auto mt-8 px-6">
         {/* Hero Section */}
-        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#2b2d31] via-[#232428] to-[#1e1f22] border border-[#1e1f22] shadow-xl">
+        <div className="mb-8 rounded-xl bg-[#2b2d31] border border-[#26282d] p-5 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-2">
             <Sparkles size={14} /> <ShinyText text="FULL SYSTEM GUIDE & REFERENCE" />
           </div>
@@ -299,7 +299,7 @@ export const DocsPage = () => {
         </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
-        <section className="p-6 rounded-2xl bg-[#2b2d31] border border-[#1e1f22] space-y-4 shadow-sm">
+        <section className="p-6 rounded-xl bg-[#2b2d31] border border-[#26282d] space-y-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-white font-bold text-base">
             <Code2 size={18} className="text-[#949cf7]" /> Custom Executor Payloads & Auto-Updates
           </h2>

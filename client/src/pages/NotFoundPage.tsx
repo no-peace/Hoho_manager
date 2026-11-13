@@ -11,7 +11,7 @@ export const NotFoundPage: React.FC = () => {
     <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center p-4 sm:p-6 select-none">
       {/* Ambient background glow */
       /*<div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#5865f2]/10 blur-3xl" />*/}
-      <SpotlightCard className="w-full max-w-md space-y-5 rounded-2xl border border-[#35373c] bg-[#2b2d31] p-6 text-center shadow-xl sm:p-8">
+      <SpotlightCard className="w-full max-w-md space-y-5 rounded-xl border border-[#26282d] bg-[#2b2d31] p-6 text-center shadow-xl sm:p-8">
         <img
           src={HOHO_LOGO_URL}
           alt="HoHo Manager"

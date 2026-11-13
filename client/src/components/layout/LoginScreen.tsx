@@ -121,7 +121,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
       </header>
 
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
-        <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31] border border-[#111214] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+        <SpotlightCard className="lg:col-span-5 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
               <ShinyText text="COMPONENTS V2 & DYNAMIC TRACKING" />
@@ -179,7 +179,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
           </div>
         </SpotlightCard>
 
-        <SpotlightCard className="lg:col-span-7 min-w-0 bg-[#2b2d31] border border-[#111214] rounded-xl overflow-hidden shadow-xl flex flex-col">
+        <SpotlightCard className="lg:col-span-7 min-w-0 bg-[#2b2d31]/95 border border-[#26282d] rounded-xl overflow-hidden shadow-xl flex flex-col">
           <div className="bg-[#1e1f22] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-[#949ba4]">
               #announcements  Preview

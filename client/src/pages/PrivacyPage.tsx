@@ -38,7 +38,7 @@ export const PrivacyPage: React.FC = () => {
         </section>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#232428] p-5">
+          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#2b2d31] p-5">
             <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#949cf7]">
               <Lock size={14} /> Discord OAuth2 &amp; Sessions
             </h2>
@@ -47,7 +47,7 @@ export const PrivacyPage: React.FC = () => {
             </p>
           </SpotlightCard>
 
-          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#232428] p-5">
+          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#2b2d31] p-5">
             <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#57f287]">
               <Database size={14} /> Account &amp; Workspace Data
             </h2>
@@ -56,7 +56,7 @@ export const PrivacyPage: React.FC = () => {
             </p>
           </SpotlightCard>
 
-          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#232428] p-5">
+          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#2b2d31] p-5">
             <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#f0b232]">
               <Clock size={14} /> Backup Retention
             </h2>
@@ -65,7 +65,7 @@ export const PrivacyPage: React.FC = () => {
             </p>
           </SpotlightCard>
 
-          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#232428] p-5">
+          <SpotlightCard className="space-y-2 rounded-xl border border-[#26282d] bg-[#2b2d31] p-5">
             <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#949cf7]">
               <ShieldCheck size={14} /> Access &amp; Security
             </h2>
