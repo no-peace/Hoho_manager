@@ -757,7 +757,10 @@ export const Checkbox = ({ label, checked, onChange, className = "", disabled = 
     onClick={() => onChange(!checked)}
     className={"group inline-flex min-h-[28px] items-center gap-2 text-left text-sm font-normal text-[#dbdee1] active:scale-[0.97] transition-transform disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none " + className}>
     <motion.span
-      animate={UI_THEME_CONFIG.motion.squashStretch}
+      animate={{
+        scaleX: [...UI_THEME_CONFIG.motion.squashStretch.scaleX],
+        scaleY: [...UI_THEME_CONFIG.motion.squashStretch.scaleY],
+      }}
       transition={{ duration: 0.2, ease: UI_THEME_CONFIG.motion.easeInOut }}
       key={String(Boolean(checked))}
       className={"flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors " + (checked ? UI_THEME_CONFIG.field.checkboxBoxChecked : UI_THEME_CONFIG.field.checkboxBoxUnchecked)}>
