@@ -5,6 +5,15 @@ afterEach(() => {
   cleanup();
 });
 
+// Keep Motion on its JavaScript animation fallback in Happy DOM tests.
+// Happy DOM 21 exposes the Web Animations API, whose cancelled animations
+// reject their `finished` promises and create unhandled rejections in Vitest.
+// These tests verify UI behavior, not browser-native animation playback.
+Object.defineProperty(Element.prototype, "animate", {
+  configurable: true,
+  value: undefined,
+});
+
 // Polyfill matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
