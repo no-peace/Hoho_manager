@@ -11,3 +11,4 @@ d91b98af2f5014daed5341fd0d3cfcddf4630d46:server/tests/middleware.test.ts:discord
 f12fd37274165ff9a50e4a88d4ed28f39b749c7e:.github/workflows/ci.yml:generic-api-key:38
 918be7847eb058e75a5cfd07e77b5460c2c0d6de:.github/workflows/ci.yml:generic-api-key:27
 60d70f82d31f62c46bb303134837075233346283:server/src/utils/crypto.test.ts:generic-api-key:10
+03951b67ae4d67acd74f94f64149118baee514c8:.github/workflows/release.yml:generic-api-key:48
