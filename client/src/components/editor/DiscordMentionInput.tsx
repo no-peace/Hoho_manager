@@ -20,9 +20,7 @@ import {
 import { RichPicker } from "./RichPicker";
 import { VARIABLES } from "../ui/Field";
 import { useGlobalStore } from "../../store/globalStore";
-import { useDiscordCacheStore, type WeaoExploitItem } from "../../store/discordCacheStore";
 import api from "../../api/client";
-import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 export interface DiscordMentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -37,169 +35,33 @@ export interface DiscordMentionInputProps {
   showToolbar?: boolean;
 }
 
-type AutocompleteType =
-  | "user"
-  | "channel"
-  | "emoji"
-  | "variable"
-  | "exploit_name"
-  | "exploit_field"
-  | null;
+import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import api from "../../api/client";
+import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
+import {
+  COMMON_EMOJIS_LIST,
+  EXPLOIT_FIELD_OPTIONS,
+  type AutocompleteItem,
+  type AutocompleteType,
+} from "../../utils/mentionParser";
+import { AutocompletePopover } from "./MentionInput/AutocompletePopover";
 
-interface AutocompleteItem {
-  id: string;
-  title: string;
-  subtitle?: string;
-  icon?: React.ReactNode;
-  replacement: string;
-  /** When true, selecting this item keeps the dropdown open for the next chained step (e.g. `{exploit.Delta.`). */
-  keepOpen?: boolean;
+export interface DiscordMentionInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+  maxLength?: number;
+  label?: string;
+  className?: string;
   disabled?: boolean;
+  guildId?: string | null;
+  /** Controls toolbar visibility (defaults to true) */
+  showToolbar?: boolean;
 }
 
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
-
-const COMMON_EMOJIS_LIST = [
-  { name: "grinning", char: "😀" },
-  { name: "smiley", char: "😃" },
-  { name: "smile", char: "😄" },
-  { name: "grin", char: "😁" },
-  { name: "laughing", char: "😆" },
-  { name: "sweat_smile", char: "😅" },
-  { name: "rofl", char: "🤣" },
-  { name: "joy", char: "😂" },
-  { name: "wink", char: "😉" },
-  { name: "blush", char: "😊" },
-  { name: "innocent", char: "😇" },
-  { name: "heart_eyes", char: "😍" },
-  { name: "star_struck", char: "🤩" },
-  { name: "sunglasses", char: "😎" },
-  { name: "thinking", char: "🤔" },
-  { name: "fire", char: "🔥" },
-  { name: "sparkles", char: "✨" },
-  { name: "heart", char: "❤️" },
-  { name: "thumbsup", char: "👍" },
-  { name: "thumbsdown", char: "👎" },
-  { name: "clap", char: "👏" },
-  { name: "wave", char: "👋" },
-  { name: "white_check_mark", char: "✅" },
-  { name: "x", char: "❌" },
-  { name: "warning", char: "⚠️" },
-  { name: "bell", char: "🔔" },
-  { name: "tada", char: "🎉" },
-];
-
-interface ExploitFieldOption {
-  key: string;
-  label: string;
-  getPreview: (exp?: WeaoExploitItem) => string;
-}
-
-const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
-  {
-    key: "status",
-    label: "Status Badge (🟢 Updated / 🔴 Outdated)",
-    getPreview: (e) => (e ? (e.updateStatus ? "🟢 Updated" : "🔴 Outdated") : "🟢 Updated"),
-  },
-  {
-    key: "circle",
-    label: "Status Circle Only (🟢 / 🔴)",
-    getPreview: (e) => (e ? (e.updateStatus ? "🟢" : "🔴") : "🟢"),
-  },
-  {
-    key: "statusText",
-    label: "Status Text Only (Updated / Outdated)",
-    getPreview: (e) => (e ? (e.updateStatus ? "Updated" : "Outdated") : "Updated"),
-  },
-  {
-    key: "sunc",
-    label: "sUNC Percentage",
-    getPreview: (e) =>
-      typeof e?.suncPercentage === "number" ? `${e.suncPercentage}%` : "100%",
-  },
-  {
-    key: "unc",
-    label: "UNC Percentage",
-    getPreview: (e) =>
-      typeof e?.uncPercentage === "number" ? `${e.uncPercentage}%` : "99%",
-  },
-  {
-    key: "version",
-    label: "Exploit Version",
-    getPreview: (e) => e?.version || "v1.0.0",
-  },
-  {
-    key: "rbxversion",
-    label: "Target Roblox Version",
-    getPreview: (e) => e?.rbxversion || "version-latest",
-  },
-  {
-    key: "updatedDate",
-    label: "Last Updated Timestamp (UTC)",
-    getPreview: (e) => e?.updatedDate || "Recently",
-  },
-  {
-    key: "detected",
-    label: "Detection Status",
-    getPreview: (e) => (e ? (e.detected ? "Detected" : "Undetected") : "Undetected"),
-  },
-  {
-    key: "free",
-    label: "Pricing / Cost",
-    getPreview: (e) => (e ? (e.free ? "Free" : e.cost || "Paid") : "Free / Paid"),
-  },
-  {
-    key: "platform",
-    label: "Operating System / Platform",
-    getPreview: (e) => e?.platform || "Windows",
-  },
-  {
-    key: "decompiler",
-    label: "Decompiler Support",
-    getPreview: (e) => (e ? (e.decompiler ? "✅" : "❌") : "✅"),
-  },
-  {
-    key: "multiInject",
-    label: "Multi-Inject Support",
-    getPreview: (e) => (e ? (e.multiInject ? "✅" : "❌") : "✅"),
-  },
-  {
-    key: "keysystem",
-    label: "Key System Requirement",
-    getPreview: (e) => (e ? (e.keysystem ? "Key System" : "Keyless") : "🔑 / 🔓"),
-  },
-  {
-    key: "suncPassed",
-    label: "sUNC Passed Tests Count (Live Scrap)",
-    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
-  },
-  {
-    key: "suncFailed",
-    label: "sUNC Failed Tests Count (Live Scrap)",
-    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
-  },
-  {
-    key: "suncTime",
-    label: "sUNC Benchmark Duration (Seconds)",
-    getPreview: (e) => (e?.sunc?.suncScrap ? "Fetched from /api/sunc" : "N/A"),
-  },
-  {
-    key: "websitelink",
-    label: "Official Website URL",
-    getPreview: (e) => e?.websitelink || "https://...",
-  },
-  {
-    key: "discordlink",
-    label: "Official Discord Invite URL",
-    getPreview: (e) => e?.discordlink || "https://discord.gg/...",
-  },
-  {
-    key: "purchaselink",
-    label: "Official Purchase Link",
-    getPreview: (e) => e?.purchaselink || "https://...",
-  },
-];
 
 const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   value,
@@ -1183,55 +1045,14 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
         {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
-          <div
-            className={`absolute left-0 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
-              dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
-            }`}
-            style={{ maxHeight: "260px" }}
-          >
-            <div className="px-2.5 py-1.5 bg-[#1e1f22] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#313338] flex items-center justify-between">
-              {getHeaderLabel()}
-              <span className="text-[9px] lowercase font-normal text-[#949ba4]">
-                tab or enter to select
-              </span>
-            </div>
-
-            <div className="overflow-y-auto max-h-52 p-1 space-y-0.5 custom-scrollbar">
-              {acItems.map((item, idx) => {
-                const isSelected = idx === selectedIndex;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    disabled={item.disabled}
-                    onMouseEnter={() => setSelectedIndex(idx)}
-                    onClick={() => applyReplacement(item)}
-                    className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between gap-2 transition-colors ${
-                      item.disabled
-                        ? "opacity-70 cursor-default text-[#949ba4]"
-                        : isSelected
-                          ? "bg-[#5865f2] text-white"
-                          : "text-[#dbdee1] hover:bg-[#35373c] hover:text-white"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {item.icon}
-                      <span className="font-semibold truncate">{item.title}</span>
-                    </div>
-                    {item.subtitle && (
-                      <span
-                        className={`text-[10px] truncate shrink-0 max-w-[190px] ${
-                          isSelected ? "text-white/85" : "text-[#949ba4]"
-                        }`}
-                      >
-                        {item.subtitle}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <AutocompletePopover
+            headerLabel={getHeaderLabel()}
+            items={acItems}
+            selectedIndex={selectedIndex}
+            onSelectIndex={setSelectedIndex}
+            onApply={applyReplacement}
+            dropdownPosition={dropdownPosition}
+          />
         )}
       </div>
     </div>
