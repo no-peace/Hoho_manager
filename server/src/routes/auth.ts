@@ -31,8 +31,21 @@ interface DiscordUserGuild {
 // GET /api/auth/discord/login
 router.get("/discord/login", (_req, res) => {
   const clientId = env.discord.clientId || env.discord.applicationId;
-  if (!clientId) {
-    throw ApiError.badRequest("Discord Application ID / Client ID is not configured");
+  if (!clientId || !env.discord.clientSecret) {
+    log.error("Discord OAuth is not configured: DISCORD_CLIENT_ID (or DISCORD_APPLICATION_ID) and DISCORD_CLIENT_SECRET are required");
+    return res.redirect(`${env.clientOrigins[0] || "http://localhost:5173"}/?error=oauth_not_configured`);
+  }
+
+  let redirectUrl: URL;
+  try {
+    redirectUrl = new URL(env.discord.redirectUri);
+  } catch {
+    log.error("Discord OAuth redirect URI is invalid");
+    return res.redirect(`${env.clientOrigins[0] || "http://localhost:5173"}/?error=oauth_redirect_misconfigured`);
+  }
+  if (env.isProd && redirectUrl.protocol !== "https:") {
+    log.error("Discord OAuth redirect URI must use HTTPS in production");
+    return res.redirect(`${env.clientOrigins[0] || "http://localhost:5173"}/?error=oauth_redirect_misconfigured`);
   }
 
   const state = crypto.randomBytes(16).toString("hex");
@@ -87,6 +100,10 @@ router.get(
 
     const clientId = env.discord.clientId || env.discord.applicationId || "";
     const clientSecret = env.discord.clientSecret || "";
+    if (!clientId || !clientSecret) {
+      log.error("Discord OAuth callback reached without a configured client ID and client secret");
+      return res.redirect(`${clientBase}/?error=oauth_not_configured`);
+    }
 
     let tokenRes: Response;
     try {
@@ -108,12 +125,28 @@ router.get(
     }
 
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text();
-      log.error(`Discord token exchange failed: ${tokenRes.status} ${errBody}`);
-      return res.redirect(`${clientBase}/?error=token_exchange_failed`);
+      const errorBody = await tokenRes.text();
+      let discordError = "unknown_error";
+      let discordDescription = "";
+      try {
+        const parsed = JSON.parse(errorBody) as { error?: unknown; error_description?: unknown };
+        if (typeof parsed.error === "string") discordError = parsed.error;
+        if (typeof parsed.error_description === "string") discordDescription = parsed.error_description;
+      } catch {
+        // Do not log arbitrary non-JSON response bodies.
+      }
+      log.error(`Discord token exchange failed: HTTP ${tokenRes.status}; error=${discordError}; description=${discordDescription || "not provided"}`);
+      const publicCode = tokenRes.status === 400 || tokenRes.status === 401
+        ? "oauth_credentials_rejected"
+        : "token_exchange_failed";
+      return res.redirect(`${clientBase}/?error=${publicCode}`);
     }
 
-    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const tokenData = (await tokenRes.json()) as { access_token?: string };
+    if (!tokenData.access_token) {
+      log.error("Discord token exchange returned success without an access_token");
+      return res.redirect(`${clientBase}/?error=token_exchange_invalid_response`);
+    }
 
     // 1. Fetch authenticated user's Discord identity
     let userRes: Response;
@@ -128,7 +161,8 @@ router.get(
     }
 
     if (!userRes.ok) {
-      log.error(`Discord user fetch failed: ${userRes.status}`);
+      const errorBody = await userRes.text();
+      log.error(`Discord user profile fetch failed: HTTP ${userRes.status}; response=${errorBody.slice(0, 300)}`);
       return res.redirect(`${clientBase}/?error=fetch_user_failed`);
     }
 
@@ -149,6 +183,10 @@ router.get(
       if (guildsRes.ok) {
         const parsed = await guildsRes.json();
         if (Array.isArray(parsed)) userGuilds = parsed as DiscordUserGuild[];
+        else log.warn("Discord OAuth guild endpoint returned a non-array response");
+      } else {
+        const errorBody = await guildsRes.text();
+        log.warn(`Could not fetch user OAuth guilds: HTTP ${guildsRes.status}; response=${errorBody.slice(0, 300)}`);
       }
     } catch (err) {
       log.warn(`Could not fetch user OAuth guilds: ${err}`);
