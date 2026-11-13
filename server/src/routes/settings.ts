@@ -20,7 +20,7 @@ router.get("/auth", asyncHandler(async (req, res) => {
   const bufB = Buffer.from(String(env.adminApiKey ?? ""));
   const isAdminKey = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 
-  const sessionUser = getSessionUserFromRequest(req);
+  const sessionUser = await getSessionUserFromRequest(req);
   const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");
 
   let isHeadAdminUser = false;
