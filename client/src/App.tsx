@@ -743,7 +743,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             </div>
           </div>
         </SpotlightCard>
-      </div>
+      </main>
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
         <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
