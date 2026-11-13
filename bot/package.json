@@ -16,7 +16,7 @@
     "@dmb/shared": "*",
     "@sapphire/framework": "^5.5.1",
     "discord.js": "^14.27.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^18.0.10"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
