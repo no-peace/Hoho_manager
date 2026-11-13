@@ -590,7 +590,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3 sm:p-8 pb-4 select-none overflow-x-hidden">
+    <div className="relative min-h-[100dvh] w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-3 sm:p-8 pb-20 sm:pb-8 select-none overflow-x-hidden">
       <ThreeHeroCanvas />
       <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -606,6 +606,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
         </div>
         <nav aria-label="Public navigation" className="flex items-center gap-2">
           <a href="/docs" className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31]/90 hover:bg-[#35373c] border border-[#35373c] px-3.5 py-2 rounded-lg active:scale-[0.97] transition-all">Documentation</a>
+          <a href="/privacy" className="hidden sm:inline-flex text-xs font-semibold text-[#b5bac1] hover:text-white bg-[#232428]/80 hover:bg-[#2b2d31] border border-[#26282d] px-3 py-2 rounded-lg active:scale-[0.97] transition-all">Privacy</a>
         </nav>
       </header>
 
@@ -761,8 +762,21 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
         <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
-        <span>Discord OAuth2 sign-in (profile and server access)</span>
+        <div className="hidden sm:flex items-center gap-4">
+          <a href="/docs" className="hover:text-white transition-colors">Docs</a>
+          <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
+          <a href="https://github.com/no-peace/Hoho_manager" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+        </div>
+        <span className="sm:hidden">Discord OAuth2 sign-in</span>
       </footer>
+
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2">
+        <a href="/api/auth/discord/login" className="flex-1 py-2.5 px-4 rounded-xl bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
+          <span>Login with Discord</span>
+        </a>
+        <a href="/docs" className="py-2.5 px-3.5 rounded-xl bg-[#2b2d31] border border-[#35373c] text-[#dbdee1] font-semibold text-xs active:scale-[0.97] transition-transform">Docs</a>
+      </div>
     </div>
   );
 };
