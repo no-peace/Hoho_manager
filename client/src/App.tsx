@@ -13,6 +13,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "./components/ui/Button";
+import { CultMorphSurface, SkiperDynamicStatusPill } from "./components/ui/CultSkiperPrimitives";
 import { Modal } from "./components/ui/Modal";
 import { Header, HOHO_LOGO_URL } from "./components/layout/Header";
 import { SplitPane } from "./components/layout/SplitPane";
@@ -39,6 +40,7 @@ import { Toaster as SileoToaster } from "sileo";
 import { CountUpNumber, MagneticButton, ShinyText, SpotlightCard, SplitTextReveal } from "./components/reactbits/ReactBitsPrimitives";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
+const ThreeHeroCanvas = React.lazy(() => import("./components/reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })));
 const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
 const BotDispatchModal = React.lazy(() => import("./components/send/BotDispatchModal").then((module) => ({ default: module.BotDispatchModal })));
 
@@ -46,6 +48,10 @@ const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" 
   <img
     src={HOHO_LOGO_URL}
     alt="HoHo Manager"
+    width={36}
+    height={36}
+    decoding="async"
+    fetchPriority="high"
     className={`${className} rounded-xl object-cover bg-[#1e1f22] border border-[#35373c] shadow-md shrink-0`}
   />
 );
@@ -570,28 +576,26 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div className="min-h-screen w-full bg-[#1e1f22] text-[#dbdee1] flex flex-col justify-between p-4 sm:p-8 select-none">
-      <div className="max-w-6xl w-full mx-auto flex items-center justify-between">
+    <div className="relative min-h-screen w-full bg-[#18191c] text-[#dbdee1] flex flex-col justify-between p-4 sm:p-8 pb-20 sm:pb-8 select-none overflow-hidden">
+      <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>
+      <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HoHoLogoMark className="h-9 w-9" />
           <div>
             <span className="text-base font-bold text-white tracking-tight block leading-none">
               HoHo Manager
             </span>
-            <span className="text-[11px] text-[#949ba4]">
-              Discord Bot Message & Components V2 Builder
+            <span className="text-[11px] text-[#b5bac1]">
+              Discord Bot Message &amp; Components V2 Builder
             </span>
           </div>
         </div>
-        <a
-          href="/docs"
-          className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-3.5 py-2 rounded-lg transition-colors"
-        >
-          Documentation
-        </a>
-      </div>
+        <nav aria-label="Public navigation" className="flex items-center gap-2">
+          <a href="/docs" className="text-xs font-semibold text-[#dbdee1] hover:text-white bg-[#2b2d31]/90 hover:bg-[#35373c] border border-[#35373c] px-3.5 py-2 rounded-lg active:scale-[0.97] transition-all">Documentation</a>
+        </nav>
+      </header>
 
-      <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8">
+      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8">
         <SpotlightCard className="lg:col-span-5 bg-[#2b2d31] border border-[#111214] rounded-xl p-6 sm:p-8 shadow-xl space-y-6">
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#5865f2]/15 border border-[#5865f2]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
@@ -699,9 +703,7 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
                     <span data-showcase-badge className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1e1f22] text-[#dee0fc]">
                       {currentDemo.badge}
                     </span>
-                    <span className="text-[11px] text-[#57f287] font-semibold">
-                      Bot Dispatch
-                    </span>
+                    <SkiperDynamicStatusPill badge="Bot Dispatch" accentColor="#57f287" />
                   </div>
 
                   <h3 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h3>
@@ -741,11 +743,15 @@ const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => 
             </div>
           </div>
         </SpotlightCard>
-      </div>
+      </main>
 
-      <div className="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#949ba4] border-t border-[#2b2d31] pt-4">
-        <span>HoHo Manager  Discord Bot Message & Components V2 Studio</span>
+      <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#26282d] pt-4">
+        <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
         <span>Official Discord OAuth2 (identify, guilds)</span>
+        </footer>
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2">
+        <a href="/api/auth/discord/login" className="flex-1 py-2.5 px-4 rounded-xl bg-[#5865f2] active:scale-[0.97] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-transform">Login with Discord</a>
+        <a href="/docs" className="py-2.5 px-3.5 rounded-xl bg-[#2b2d31] border border-[#35373c] text-[#dbdee1] font-semibold text-xs active:scale-[0.97] transition-transform">Docs</a>
       </div>
     </div>
   );
@@ -758,7 +764,6 @@ export const App: React.FC = () => {
   const [botModalOpen, setBotModalOpen] = useState(false);
   const [botModalMode, setBotModalMode] = useState<"send" | "edit">("send");
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
-  const [addMsgMenuOpen, setAddMsgMenuOpen] = useState(false);
 
   const currentUser = useGlobalStore((state) => state.currentUser);
   const authLoading = useGlobalStore((state) => state.authLoading);
@@ -945,71 +950,35 @@ export const App: React.FC = () => {
                     <MessageEditor key={idx} index={idx} />
                   ))}
 
-                  <div className="relative mt-2 pb-4">
-                    <button
-                      type="button"
-                      onClick={() => setAddMsgMenuOpen((prev) => !prev)}
-                      disabled={displayMessages.length >= 10}
-                      className="w-full py-2.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors disabled:opacity-40"
-                    >
-                      <Plus size={15} /> Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)
-                    </button>
-
-                    {addMsgMenuOpen && (
-                      <div className="mt-2 rounded-lg bg-[#232428] border border-[#1e1f22] p-2 space-y-2 shadow-2xl">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addMessage({ flags: 0 });
-                            setAddMsgMenuOpen(false);
-                          }}
-                          className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
-                        >
-                          <div className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">
-                            TXT
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-white">
-                              Standard Message (Classic)
-                            </p>
-                            <p className="text-[11px] text-[#949ba4] mt-0.5">
-                              Classic message with content, embeds, attachments, and action rows.
-                            </p>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addMessage({
-                              flags: 32768,
-                              components: [
-                                {
-                                  _id: Math.random().toString(36).slice(2, 10),
-                                  type: 10,
-                                  content: "",
-                                },
-                              ],
-                            });
-                            setAddMsgMenuOpen(false);
-                          }}
-                          className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3"
-                        >
-                          <div className="p-2 rounded bg-[#5865f2]/20 text-[#949cf7] font-mono text-xs font-bold shrink-0">
-                            V2
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-white">
-                              Components V2 Message
-                            </p>
-                            <p className="text-[11px] text-[#949ba4] mt-0.5">
-                              Build layouts with containers, text blocks, galleries, files, separators, and action rows.
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <CultMorphSurface
+                    layoutId="cult-add-message-surface"
+                    triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
+                    triggerIcon={<Plus size={15} />}
+                    title="Choose message type"
+                    disabled={displayMessages.length >= 10}
+                    className="pb-4"
+                  >
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        disabled={displayMessages.length >= 10}
+                        onClick={() => addMessage({ flags: 0 })}
+                        className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3 disabled:opacity-40"
+                      >
+                        <span className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">TXT</span>
+                        <span><span className="block text-xs font-bold text-white">Standard Message (Classic)</span><span className="block text-[11px] text-[#949ba4] mt-0.5">Classic message with content, embeds, attachments, and action rows.</span></span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={displayMessages.length >= 10}
+                        onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })}
+                        className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-all flex items-start gap-3 disabled:opacity-40"
+                      >
+                        <span className="p-2 rounded bg-[#5865f2]/20 text-[#949cf7] font-mono text-xs font-bold shrink-0">V2</span>
+                        <span><span className="block text-xs font-bold text-white">Components V2 Message</span><span className="block text-[11px] text-[#949ba4] mt-0.5">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</span></span>
+                      </button>
+                    </div>
+                  </CultMorphSurface>
                 </div>
               </div>
             }

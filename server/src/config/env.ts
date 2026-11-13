@@ -133,6 +133,19 @@ export const validateEnv = (): string[] => {
       "DISCORD_APPLICATION_ID is not set  application command routes are limited.",
     );
   }
+  if (!env.discord.clientId || !env.discord.clientSecret) {
+    warnings.push(
+      "Discord OAuth is not configured. Set DISCORD_CLIENT_ID (or DISCORD_APPLICATION_ID) and DISCORD_CLIENT_SECRET; Discord login token exchange will fail without both.",
+    );
+  }
+  try {
+    const redirectUrl = new URL(env.discord.redirectUri);
+    if (env.isProd && redirectUrl.protocol !== "https:") {
+      warnings.push("DISCORD_REDIRECT_URI must use HTTPS in production and exactly match the Discord Developer Portal OAuth2 redirect URL.");
+    }
+  } catch {
+    warnings.push("DISCORD_REDIRECT_URI is not a valid absolute URL.");
+  }
   if (env.isProd && env.adminApiKey === "dev-admin-key") {
     warnings.push(
       "ADMIN_API_KEY is still the development default. Change it before deploying.",
