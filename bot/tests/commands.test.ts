@@ -214,7 +214,7 @@ describe("bot/commands: Slash Command Suite", () => {
       vi.mocked(api.sendMessage).mockRejectedValueOnce(new Error("Rate limited"));
 
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "test-user-send-error" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Test"),
