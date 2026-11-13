@@ -161,6 +161,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="sm:hidden w-9 h-1 rounded-full bg-[#4e5058] mx-auto mt-2 mb-0.5 shrink-0" aria-hidden="true" />
         {title && (
           <div className={UI_THEME_CONFIG.surfaces.modalHeader}>
             <h2 className="text-[14px] font-bold text-white uppercase tracking-wider truncate mr-2">
