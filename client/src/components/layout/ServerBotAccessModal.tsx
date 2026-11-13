@@ -18,7 +18,7 @@ export const ServerBotAccessModal = ({
   return (
     <Modal open={open} onClose={onClose} title="Bot Access" width="max-w-lg">
       <div className="space-y-4 text-sm text-[#dbdee1]">
-        <div className="rounded-lg border border-[#35373c] bg-[#1e1f22] p-4">
+        <div className="rounded-xl border border-[#26282d] bg-[#18191c] p-3.5">
           <div className="flex items-center gap-2 font-bold text-white">
             {hasAccess ? (
               <ShieldCheck size={17} className="text-[#57f287]" />
