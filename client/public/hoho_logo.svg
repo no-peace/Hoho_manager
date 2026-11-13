@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <defs>
+    <linearGradient id="hohoBg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5865F2" />
+      <stop offset="55%" stop-color="#4752C4" />
+      <stop offset="100%" stop-color="#1E1F22" />
+    </linearGradient>
+    <linearGradient id="hohoAccent" x1="24" y1="20" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#C9CDFB" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#hohoBg)" />
+  <rect x="4" y="4" width="120" height="120" rx="24" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="2" />
+  <path d="M34 36H48V58H80V36H94V92H80V70H48V92H34V36Z" fill="url(#hohoAccent)" />
+  <circle cx="96" cy="34" r="10" fill="#23A55A" stroke="#1E1F22" stroke-width="4" />
+</svg>
