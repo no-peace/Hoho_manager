@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
+import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
@@ -241,11 +242,11 @@ export const Header: React.FC<HeaderProps> = () => {
                       className="flex items-center gap-1 font-mono text-[11px] text-[#dbdee1] hover:text-white"
                     >
                       <span>{currentUser.id}</span>
-                      {copiedId ? (
-                        <Check size={12} className="text-[#57f287]" />
-                      ) : (
-                        <Copy size={12} className="text-[#949ba4]" />
-                      )}
+                      <AnimatedMorphIcon
+                        active={copiedId}
+                        activeIcon={<Check size={12} className="text-[#57f287]" />}
+                        inactiveIcon={<Copy size={12} className="text-[#949ba4]" />}
+                      />
                     </button>
                   </div>
 
