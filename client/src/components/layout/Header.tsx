@@ -70,16 +70,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
     (window.location.pathname.startsWith("/bots/") || window.location.pathname !== "/");
 
   useEffect(() => {
+    if (!userMenuOpen) return;
     const handleOutsideClick = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     };
-    if (userMenuOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") setUserMenuOpen(false); };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [userMenuOpen]);
 
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
 
   return (
     <>
-      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22] border-b border-[#111214] shadow-md w-full px-4 h-12 flex items-center justify-between font-sans shrink-0">
+      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-2.5 sm:px-4 h-12 flex items-center justify-between gap-1.5 font-sans shrink-0">
         {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
@@ -130,9 +130,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
         </div>
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           {hasDefaultBotAccess && (
-            <div className="w-32 sm:w-48 relative shrink">
+            <div className="w-28 sm:w-48 min-w-[100px] relative shrink">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
@@ -295,6 +295,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
+                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors">
+                      <BookOpen size={14} className="text-[#949cf7]" />
+                      <span>Documentation</span>
+                    </a>
+                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors">
+                      <Shield size={14} className="text-[#949ba4]" />
+                      <span>Privacy</span>
+                    </a>
 
                     {isAdmin && (
                       <>
