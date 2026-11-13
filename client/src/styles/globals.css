@@ -184,6 +184,14 @@ details summary::-webkit-details-marker {
   display: none;
 }
 
+.loading-dot {
+  animation: loading-dots 1s infinite;
+}
+
+.loading-dot:nth-child(1) { animation-delay: 0ms; }
+.loading-dot:nth-child(2) { animation-delay: 160ms; }
+.loading-dot:nth-child(3) { animation-delay: 320ms; }
+
 @layer components {
   .field {
     min-height: 36px;

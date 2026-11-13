@@ -92,6 +92,11 @@ export const UI_THEME_CONFIG = {
    * 4. Surfaces, Cards & Modals Configuration (Staging the Focus + Solid Drawing in 3D)
    */
   surfaces: {
+    toolbarGroup: "inline-flex items-center gap-1 rounded-lg bg-[#111214] p-1 border border-[#26282d]",
+    sectionCard: "rounded-xl bg-[#1e1f22] border border-[#26282d] p-3.5 space-y-3",
+    accordionHeader: "flex items-center justify-between h-10 px-3 bg-[#232428] select-none",
+    emptyState: "rounded-xl border border-dashed border-[#35373c] bg-[#1e1f22]/60 p-6 text-center text-xs text-[#949ba4]",
+    kbd: "inline-flex items-center justify-center rounded border border-[#35373c] bg-[#111214] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#b5bac1] shadow-[0_1px_0_0_#26282d]",
     appShell: "flex h-dvh flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden",
     headerBar:
       "sticky top-0 left-0 z-20 bg-[#1e1f22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-3 sm:px-4 h-12 flex items-center justify-between font-sans shrink-0",
