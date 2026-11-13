@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState, useEffect, useMemo } from "react";
 import type { ChangeEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 export const VARIABLES = [
   { group: "User / Clicker" },
@@ -724,21 +725,22 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
             if (event.key === "Enter" && open) { event.preventDefault(); if (options[activeIndex]) choose(options[activeIndex].value); }
             if (event.key === "Escape") setOpen(false);
           }}
-          className="flex w-full items-center justify-between rounded-lg border border-[#26282d] bg-[#18191c] px-3 py-2 text-xs text-[#f2f3f5] hover:border-[#3f4147] disabled:opacity-50">
-          <span>{selected?.label ?? "Select an option"}</span><ChevronDown size={14} className="text-[#949ba4]" />
+          className={UI_THEME_CONFIG.field.selectTrigger}>
+          <span>{selected?.label ?? "Select an option"}</span>
+          <ChevronDown size={14} className={"text-[#949ba4] transition-transform duration-150 " + (open ? "rotate-180 text-white" : "")} />
         </button>
         <AnimatePresence>
           {open && <motion.div id={`select-options-${name ?? "field"}`} role="listbox"
-            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.13, ease: [0.4, 0, 1, 1] } }}
+            initial={UI_THEME_CONFIG.motion.popoverPoses.initial}
+            animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
+            exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
             style={{ transformOrigin: "top center" }}
-            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-[#26282d] bg-[#18191c] p-1 shadow-xl">
+            className={UI_THEME_CONFIG.field.selectListbox}>
             {options.map((option, index) => <motion.button key={option.value} type="button" role="option" aria-selected={option.value === selectedValue}
               initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.15, delay: Math.min(index * 0.03, 0.18), ease: [0.16, 1, 0.3, 1] } }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.15, delay: Math.min(index * UI_THEME_CONFIG.motion.durations.staggerStep, UI_THEME_CONFIG.motion.durations.maxStaggerDelay), ease: UI_THEME_CONFIG.motion.easeOut } }}
               onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(option.value)}
-              className={`w-full rounded-md px-2.5 py-2 text-left text-xs active:scale-[0.97] transition-transform ${option.value === selectedValue ? "bg-[#5865f2] text-white" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]"}`}>
+              className={"w-full rounded-md px-2.5 py-2 text-left text-xs active:scale-[0.97] transition-transform " + (option.value === selectedValue ? "bg-[#5865f2] text-white font-semibold" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]")}>
               {option.label}
             </motion.button>)}
           </motion.div>}
@@ -753,13 +755,12 @@ export interface CheckboxProps { label?: ReactNode; checked?: boolean; onChange:
 export const Checkbox = ({ label, checked, onChange, className = "", disabled = false }: CheckboxProps) => (
   <button type="button" role="checkbox" aria-checked={Boolean(checked)} disabled={disabled}
     onClick={() => onChange(!checked)}
-    className={`group inline-flex items-center gap-2 text-left text-sm font-normal text-[#dbdee1] active:scale-[0.97] transition-transform disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+    className={"group inline-flex min-h-[28px] items-center gap-2 text-left text-sm font-normal text-[#dbdee1] active:scale-[0.97] transition-transform disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none " + className}>
     <motion.span
-      animate={{ scaleX: [1, 1.12, 1], scaleY: [1, 0.94, 1] }}
-      transition={{ duration: 0.18, ease: [0.45, 0, 0.55, 1] }}
+      animate={UI_THEME_CONFIG.motion.squashStretch}
+      transition={{ duration: 0.2, ease: UI_THEME_CONFIG.motion.easeInOut }}
       key={String(Boolean(checked))}
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${checked ? "border-[#5865f2] bg-[#5865f2] text-white" : "border-[#3f4147] bg-[#18191c] text-transparent group-hover:border-[#5865f2]/60"}`}
-    >
+      className={"flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors " + (checked ? UI_THEME_CONFIG.field.checkboxBoxChecked : UI_THEME_CONFIG.field.checkboxBoxUnchecked)}>
       <Check size={12} aria-hidden="true" />
     </motion.span>
     {label}
