@@ -22,15 +22,15 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
 
   return (
     <div
-      className={`absolute left-0 right-0 rounded-lg bg-[#2b2d31] border border-[#1e1f22] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-75 ${
+      className={`absolute left-0 right-0 rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150 ${
         dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
       }`}
       style={{ maxHeight: "260px" }}
     >
-      <div className="px-2.5 py-1.5 bg-[#1e1f22] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#313338] flex items-center justify-between">
+      <div className="px-3 py-1.5 bg-[#18191c] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#26282d] flex items-center justify-between">
         {headerLabel}
-        <span className="text-[9px] lowercase font-normal text-[#949ba4]">
-          tab or enter to select
+        <span className="text-[9px] lowercase font-normal text-[#949ba4] inline-flex items-center gap-1">
+          <kbd className="rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px]">Tab / Enter</kbd>
         </span>
       </div>
 
@@ -44,7 +44,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
               disabled={item.disabled}
               onMouseEnter={() => onSelectIndex(idx)}
               onClick={() => onApply(item)}
-              className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between gap-2 transition-colors ${
+              className={`w-full text-left px-2 py-1.5 rounded-md text-xs flex items-center justify-between gap-2 transition-colors ${
                 item.disabled
                   ? "opacity-70 cursor-default text-[#949ba4]"
                   : isSelected

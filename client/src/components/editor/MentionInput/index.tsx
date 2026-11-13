@@ -829,7 +829,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       </div>
 
       {/* Integrated Editor Box with Attached Toolbar Ribbon */}
-      <div className="relative w-full rounded-lg border border-[#232428] hover:border-[#35373c] focus-within:border-[#5865f2] bg-[#1e1f22] transition-colors">
+      <div className="relative w-full rounded-lg border border-[#26282d] hover:border-[#35373c] focus-within:border-[#5865f2] bg-[#1e1f22] transition-[border-color,box-shadow] duration-150">
         {showToolbar && (
           <MarkdownToolbar onFormat={(prefix, suffix, defaultText, isLinePrefix) =>
             formatSelection(prefix, suffix, defaultText, isLinePrefix)
