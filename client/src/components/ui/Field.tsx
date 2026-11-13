@@ -729,15 +729,18 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
         </button>
         <AnimatePresence>
           {open && <motion.div id={`select-options-${name ?? "field"}`} role="listbox"
-            initial={{ opacity: 0, scale: 0.97, y: -3 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: -3 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-            style={{ transformOrigin: "top" }}
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.13, ease: [0.4, 0, 1, 1] } }}
+            style={{ transformOrigin: "top center" }}
             className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-[#26282d] bg-[#18191c] p-1 shadow-xl">
-            {options.map((option, index) => <button key={option.value} type="button" role="option" aria-selected={option.value === selectedValue}
+            {options.map((option, index) => <motion.button key={option.value} type="button" role="option" aria-selected={option.value === selectedValue}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.15, delay: Math.min(index * 0.03, 0.18), ease: [0.16, 1, 0.3, 1] } }}
               onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(option.value)}
-              className={`w-full rounded-md px-2.5 py-2 text-left text-xs ${option.value === selectedValue ? "bg-[#5865f2] text-white" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]"}`}>
+              className={`w-full rounded-md px-2.5 py-2 text-left text-xs active:scale-[0.97] transition-transform ${option.value === selectedValue ? "bg-[#5865f2] text-white" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]"}`}>
               {option.label}
-            </button>)}
+            </motion.button>)}
           </motion.div>}
         </AnimatePresence>
         {required && <input type="hidden" name={name} value={selectedValue} />}
@@ -750,10 +753,15 @@ export interface CheckboxProps { label?: ReactNode; checked?: boolean; onChange:
 export const Checkbox = ({ label, checked, onChange, className = "", disabled = false }: CheckboxProps) => (
   <button type="button" role="checkbox" aria-checked={Boolean(checked)} disabled={disabled}
     onClick={() => onChange(!checked)}
-    className={`inline-flex items-center gap-2 text-left text-sm font-normal text-[#dbdee1] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
-    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-transform active:scale-95 ${checked ? "border-[#5865f2] bg-[#5865f2] text-white" : "border-[#3f4147] bg-[#18191c] text-transparent"}`}>
+    className={`group inline-flex items-center gap-2 text-left text-sm font-normal text-[#dbdee1] active:scale-[0.97] transition-transform disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+    <motion.span
+      animate={{ scaleX: [1, 1.12, 1], scaleY: [1, 0.94, 1] }}
+      transition={{ duration: 0.18, ease: [0.45, 0, 0.55, 1] }}
+      key={String(Boolean(checked))}
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${checked ? "border-[#5865f2] bg-[#5865f2] text-white" : "border-[#3f4147] bg-[#18191c] text-transparent group-hover:border-[#5865f2]/60"}`}
+    >
       <Check size={12} aria-hidden="true" />
-    </span>
+    </motion.span>
     {label}
   </button>
 );
