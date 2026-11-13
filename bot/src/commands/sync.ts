@@ -29,7 +29,7 @@ export class SyncCommand extends Command {
     const waitSec = checkCommandCooldown("sync", interaction.user.id, 10);
     if (waitSec > 0) {
       return interaction.reply({
-        content: `⏳ Please wait **${waitSec}s** before running `/sync` again.`,
+        content: "⏳ Please wait **" + waitSec + "s** before running `/sync` again.",
         flags: MessageFlags.Ephemeral,
       });
     }
