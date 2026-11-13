@@ -47,6 +47,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   const [customExpiry, setCustomExpiry] = useState<string | null>(null);
   const [mode, setMode] = useState<"send" | "edit">(initialMode);
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [channelQuery, setChannelQuery] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("bot_selected_channels") || "[]");
@@ -485,6 +486,16 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             </div>
           </div>
 
+          {channels.length > 5 && (
+            <input
+              type="text"
+              value={channelQuery}
+              onChange={(event) => setChannelQuery(event.target.value)}
+              placeholder="Filter channels by name..."
+              aria-label="Filter channels by name"
+              className="mb-2 w-full rounded-lg border border-[#111214] bg-[#1e1f22] px-3 py-1.5 text-xs text-[#dbdee1] placeholder-[#949ba4] outline-none focus:border-[#5865f2]"
+            />
+          )}
           <div className="bg-[#1e1f22] border border-[#111214] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar">
             {!canUseServerBot ? (
               <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
@@ -500,7 +511,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                {channels.map((channel) => {
+                {channels.filter((channel) => !channelQuery.trim() || channel.name.toLowerCase().includes(channelQuery.trim().toLowerCase())).map((channel) => {
                   const checked = selectedChannels.includes(channel.id);
                   return (
                     <button
