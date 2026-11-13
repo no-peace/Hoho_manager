@@ -19,8 +19,6 @@ import { Header, HOHO_LOGO_URL } from "./components/layout/Header";
 import { SplitPane } from "./components/layout/SplitPane";
 import { MessageEditor } from "./components/editor/MessageEditor";
 import { MessagePreview } from "./components/preview/MessagePreview";
-import { PropertyPanel } from "./components/editor/PropertyPanel";
-import { ServerBotAccessModal } from "./components/layout/ServerBotAccessModal";
 import { useMessageStore } from "./store/messageStore";
 import { useActionStore } from "./store/actionStore";
 import { useTemplateStore } from "./store/templateStore";
@@ -42,6 +40,8 @@ import { ThreeHeroCanvas } from "./components/reactbits/ThreeHeroCanvas";
 
 const DocsPage = React.lazy(() => import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })));
 const PrivacyPage = React.lazy(() => import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
+const PropertyPanel = React.lazy(() => import("./components/editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })));
+const ServerBotAccessModal = React.lazy(() => import("./components/layout/ServerBotAccessModal").then((module) => ({ default: module.ServerBotAccessModal })));
 
 const JsonModal = React.lazy(() => import("./components/editor/JsonModal").then((module) => ({ default: module.JsonModal })));
 const BotDispatchModal = React.lazy(() => import("./components/send/BotDispatchModal").then((module) => ({ default: module.BotDispatchModal })));
@@ -1035,7 +1035,7 @@ export const App: React.FC = () => {
         </div>
 
         {/* Selected Component Property & Flow Builder Panel */}
-        <PropertyPanel />
+        <React.Suspense fallback={null}><PropertyPanel /></React.Suspense>
       </main>
 
       {/* Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
@@ -1092,7 +1092,11 @@ export const App: React.FC = () => {
 
       <React.Suspense fallback={null}><JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} /></React.Suspense>
       <BackupsModal open={backupsOpen} onClose={() => setBackupsOpen(false)} />
-      <ServerBotAccessModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
+      {configModalOpen && (
+        <React.Suspense fallback={null}>
+          <ServerBotAccessModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
+        </React.Suspense>
+      )}
       <React.Suspense fallback={null}><BotDispatchModal
         open={botModalOpen}
         onClose={() => setBotModalOpen(false)}
