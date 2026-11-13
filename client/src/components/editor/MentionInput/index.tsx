@@ -14,15 +14,14 @@ import {
 import { RichPicker } from "../RichPicker";
 import { VARIABLES } from "../../ui/Field";
 import { useGlobalStore } from "../../../store/globalStore";
-import { useDiscordCacheStore } from "../../store/discordCacheStore";
+import { useDiscordCacheStore } from "../../../store/discordCacheStore";
 import api from "../../../api/client";
 import { getUserIdPlaceholderSuggestions } from "../../../utils/userPlaceholderAutocomplete";
 import {
   COMMON_EMOJIS_LIST,
   EXPLOIT_FIELD_OPTIONS,
   type AutocompleteItem,
-  type AutocompleteType,
-} from "../../utils/mentionParser";
+} from "../../../utils/mentionParser";
 import { AutocompletePopover } from "./AutocompletePopover";
 import { VariableMenu } from "./VariableMenu";
 import { EmojiMenu } from "./EmojiMenu";
