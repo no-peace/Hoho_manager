@@ -180,7 +180,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                 </div>
 
                 <div
-                  className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-all"
+                  className="rounded-lg bg-[#2b2d31] border border-[#1e1f22] p-4 space-y-3 transition-[border-color,background-color,box-shadow] duration-150 ease-out"
                   style={{
                     borderLeftWidth: "4px",
                     borderLeftColor: currentDemo.accent,

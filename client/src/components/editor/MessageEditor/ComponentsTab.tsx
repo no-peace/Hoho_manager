@@ -703,7 +703,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className={`rounded-lg bg-[#232428] border transition-all ${
+          className={`rounded-lg bg-[#232428] border transition-[background-color,border-color,box-shadow] duration-150 ease-out ${
             isSelected ? "border-[#5865f2] ring-1 ring-[#5865f2]" : "border-[#1e1f22]"
           }`}
           style={{

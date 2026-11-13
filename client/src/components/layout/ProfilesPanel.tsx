@@ -80,7 +80,7 @@ export const ProfilesPanel = () => {
             type="text" 
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-[border-color,box-shadow] duration-150 ease-out"
             placeholder="e.g. Production Bot"
           />
         </div>
@@ -91,7 +91,7 @@ export const ProfilesPanel = () => {
             type="password" 
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-[border-color,box-shadow] duration-150 ease-out"
             placeholder="Paste Discord Bot Token here"
           />
         </div>
@@ -102,7 +102,7 @@ export const ProfilesPanel = () => {
             type="text"
             value={applicationId}
             onChange={(e) => setApplicationId(e.target.value)}
-            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-[border-color,box-shadow] duration-150 ease-out"
             placeholder="Discord application ID"
           />
         </div>
@@ -113,7 +113,7 @@ export const ProfilesPanel = () => {
             type="text"
             value={publicKey}
             onChange={(e) => setPublicKey(e.target.value)}
-            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-all"
+            className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded p-2 text-sm focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2] outline-none transition-[border-color,box-shadow] duration-150 ease-out"
             placeholder="Discord application public key"
           />
         </div>

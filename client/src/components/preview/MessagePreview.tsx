@@ -199,7 +199,7 @@ export const MessagePreview = () => {
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 sm:p-4 custom-scrollbar">
         {/* Responsive Discord Preview Container */}
-        <div className="w-full max-w-4xl mx-auto transition-all">
+        <div className="w-full max-w-4xl mx-auto ">
 
           {isAllEmpty ? (
             <div className="mx-auto flex min-h-40 max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#4e5058] bg-[#2b2d31]/70 px-5 py-8 text-center">
@@ -239,7 +239,7 @@ export const MessagePreview = () => {
                   <div
                     key={index}
                     onClick={() => setActiveMessageIndex?.(index)}
-                    className={`group relative flex gap-3 p-2.5 rounded-xl transition-all cursor-pointer ${
+                    className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
                         ? "ring-2 ring-[#5865f2]/80 bg-[#5865f2]/5 shadow-sm"
                         : "hover:bg-[#2b2d31]/40"

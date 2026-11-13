@@ -248,7 +248,7 @@ export const DocsPage = () => {
                       <button
                         type="button"
                         onClick={() => copyToClipboard(item.tag)}
-                        className="text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] active:scale-[0.97] transition-all text-left"
+                        className="text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out text-left"
                         title="Click to copy"
                       >
                         <span>{item.tag}</span>

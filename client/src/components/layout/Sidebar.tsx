@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <button
           type="button"
           onClick={() => setActiveTab("templates")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-[background-color,border-color,color] duration-150 ease-out ${
             activeTab === "templates"
               ? "bg-[#5865f2] text-white shadow-sm"
               : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
@@ -139,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                       key={tpl.id}
                       type="button"
                       onClick={() => void loadTemplate(tpl.id)}
-                      className={`w-full text-left p-2.5 rounded-lg border transition-all flex items-start gap-2.5 ${
+                      className={`w-full text-left p-2.5 rounded-lg border transition-[background-color,border-color,color] duration-150 ease-out flex items-start gap-2.5 ${
                         isCurrent
                           ? "bg-[#5865f2]/15 border-[#5865f2] text-white"
                           : "bg-[#232428] hover:bg-[#35373c] border-[#1e1f22] text-[#dbdee1]"

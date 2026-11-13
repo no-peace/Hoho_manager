@@ -242,7 +242,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addEmbed();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Embed ({message.embeds?.length ?? 0}/10)
                 </button>
@@ -253,7 +253,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addComponent(ComponentType.ActionRow, null);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Action Row
                 </button>
@@ -266,7 +266,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     e.stopPropagation();
                     setAddMenuOpen(!addMenuOpen);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add <ChevronDown size={13} />
                 </button>
@@ -309,7 +309,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 ensureActive();
                 setLinkModalOpen(true);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-[0.97] transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out ${
                 message.message_link
                   ? "bg-[#5865f2]/20 text-[#dee0fc] border border-[#5865f2]/50 hover:bg-[#5865f2]/30"
                   : "bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] hover:text-white"
@@ -325,7 +325,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   e.stopPropagation();
                   setOptionsMenuOpen(!optionsMenuOpen);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
               >
                 <SlidersHorizontal size={13} /> Options <ChevronDown size={13} />
               </button>

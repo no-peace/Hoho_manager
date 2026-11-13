@@ -64,7 +64,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <button
               type="button"
               onClick={this.handleRetry}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] px-3.5 py-1.5 text-xs font-semibold text-white transition-all"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] px-3.5 py-1.5 text-xs font-semibold text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
             >
               <RotateCcw size={13} /> Retry Component
             </button>
@@ -85,21 +85,21 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <button
               type="button"
               onClick={this.handleRetry}
-              className="rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-white transition-all"
+              className="rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
             >
               Try Resume
             </button>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-lg bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-white transition-all"
+              className="rounded-lg bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
             >
               Reload Studio
             </button>
             <button
               type="button"
               onClick={this.resetDraft}
-              className="rounded-lg border border-[#383a40] hover:bg-[#da373c]/15 hover:text-[#f28b8b] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-[#dbdee1] transition-all"
+              className="rounded-lg border border-[#383a40] hover:bg-[#da373c]/15 hover:text-[#f28b8b] active:scale-[0.97] px-4 py-2 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
             >
               Reset Local Draft
             </button>

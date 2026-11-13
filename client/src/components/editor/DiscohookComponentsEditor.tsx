@@ -230,7 +230,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             e.stopPropagation();
                             select({ kind: "component", id: childId });
                           }}
-                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold cursor-pointer transition-all select-none ${getDiscordButtonClasses(
+                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold cursor-pointer transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none ${getDiscordButtonClasses(
                             child.style,
                             isSelected,
                           )} ${child.disabled ? "opacity-50" : ""}`}
@@ -305,7 +305,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           e.stopPropagation();
                           select({ kind: "component", id: childId });
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-[#1e1f22] border cursor-pointer transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-[#1e1f22] border cursor-pointer transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out ${
                           isSelected
                             ? "border-[#5865f2] ring-1 ring-[#5865f2]"
                             : "border-[#111214] hover:border-[#3f4147]"

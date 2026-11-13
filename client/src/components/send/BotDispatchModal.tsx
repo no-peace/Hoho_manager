@@ -388,7 +388,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           <button
             type="button"
             onClick={() => setMode("send")}
-            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-[background-color,border-color,color] duration-150 ease-out ${
               mode === "send"
                 ? "bg-[#5865f2] text-white shadow-sm"
                 : "text-[#b5bac1] hover:bg-[#2b2d31]"
@@ -399,7 +399,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           <button
             type="button"
             onClick={() => setMode("edit")}
-            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-[background-color,border-color,color] duration-150 ease-out ${
               mode === "edit"
                 ? "bg-[#faa61a] text-white shadow-sm"
                 : "text-[#b5bac1] hover:bg-[#2b2d31]"

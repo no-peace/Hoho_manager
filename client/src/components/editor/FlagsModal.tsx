@@ -31,7 +31,7 @@ export const FlagsModal: React.FC<FlagsModalProps> = ({ open, onClose }) => {
           {FLAG_ITEMS.map((item) => {
             const checked = hasFlag(item.flag);
             return (
-              <div key={item.flag} className={"rounded-xl border p-3 transition-all " + (checked ? "bg-[#5865f2]/10 border-[#5865f2]/60" : "bg-[#2b2d31] border-[#1e1f22]")}>
+              <div key={item.flag} className={"rounded-xl border p-3 transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out " + (checked ? "bg-[#5865f2]/10 border-[#5865f2]/60" : "bg-[#2b2d31] border-[#1e1f22]")}>
                 <Checkbox checked={checked} onChange={() => toggleFlag(item.flag)} className="w-full items-start"
                   label={<span className="flex-1 min-w-0">
                     <span className="text-xs sm:text-sm font-semibold text-white block">{item.title}</span>
