@@ -73,7 +73,7 @@ router.get("/discord/login", (_req, res) => {
 router.get(
   "/discord/callback",
   asyncHandler(async (req, res) => {
-    const { code, state, error, error_description } = req.query;
+    const { code, state, error } = req.query;
     const clientBase = env.clientOrigins[0] || "http://localhost:5173";
 
     if (error) {
