@@ -97,10 +97,10 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
         {isUrl ? <Link2 size={22} /> : isAudio ? <Music size={22} /> : <FileText size={22} />}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-[#5865f2] truncate" title={file.url ?? file.name}>
+        <p className="text-xs font-semibold text-[#949cf7] truncate" title={file.url ?? file.name}>
           {file.spoiler ? `SPOILER_${file.name}` : file.name}
         </p>
-        <p className="text-[11px] text-[#949ba4] mt-0.5">
+        <p className="text-[11px] text-[#b5bac1] mt-0.5">
           {isUrl ? "External URL" : formatBytes(file.size)}
         </p>
       </div>
