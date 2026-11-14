@@ -11,7 +11,7 @@ import { logger } from "../utils/logger.js";
 const log = logger.child("authorService");
 
 const DISCORD_USER_ID_REGEX = /^\d{17,20}$/;
-const USER_PLACEHOLDER_REGEX = /\{user\.(\d{17,20})\.([a-zA-Z0-9_]+)\}/g;
+const USER_PLACEHOLDER_REGEX = /\{user\.(\d{17,20})\.([a-zA-Z0-9_.]+)\}/g;
 const MAX_USER_LOOKUPS_PER_PAYLOAD = 10;
 const MEMBER_CACHE_TTL_MS = 60_000;
 const memberCache = new Map<string, { member: any; expiresAt: number }>();
