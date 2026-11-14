@@ -94,6 +94,8 @@ const inFlightSuncPromises = new Map<string, Promise<WeaoSuncData | null>>();
 const CHANGELOG_CACHE_TTL_MS = 15_000;
 const changelogCache = new Map<string, { data: unknown[]; fetchedAt: number }>();
 const inFlightChangelogs = new Map<string, Promise<unknown[]>>();
+export const getExploitChangelogComparison = (exploitName: string) =>
+  changelogComparisons.get(exploitName.trim().toLowerCase()) ?? { added: [], removed: [] };
 const changelogComparisons = new Map<string, { added: unknown[]; removed: unknown[] }>();
 
 let rateLimitedUntilMs = 0;
