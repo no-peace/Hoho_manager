@@ -1,10 +1,10 @@
 # HoHo Manager Playwright Audit
 
 - URL: https://hoho-manager.onrender.com/
-- Generated: 2026-11-14T07:03:00.268Z
+- Generated: 2026-11-14T08:10:19.176Z
 - Responsive widths: 320, 360, 390, 430, 768, 1280px
-- Passed: 25
-- Failed: 5
+- Passed: 28
+- Failed: 2
 - Skipped: 2
 
 | Status | Check | Details |
@@ -36,10 +36,10 @@
 | PASS | Studio 1280px horizontal overflow | viewport=1280px, document=1280px, body=1280px |
 | PASS | Header 1280px internal overflow | client=1280px, scroll=1280px |
 | SKIP | PropertyPanel responsive screenshots | Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it |
-| FAIL | Browser console errors | Permissions policy violation: unload is not allowed in this document. \| Permissions policy violation: unload is not allowed in this document. \| WebSocket connection to 'ws://127.0.0.1:6463/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED \| WebSocket connection to 'ws://127.0.0.1:6464/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED \| WebSocket connection to 'ws://127.0.0.1:6465/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED |
-| FAIL | Uncaught page errors | POST /auth/logout [401] \| POST /auth/logout [401] \| Starting password login |
+| PASS | Browser console errors | No console errors captured |
+| PASS | Uncaught page errors | None captured |
 | PASS | Failed network requests | None captured |
-| FAIL | HTTP error responses (4xx/5xx) | [{"status":401,"url":"https://discord.com/api/v9/auth/logout"},{"status":401,"url":"https://discord.com/api/v9/users/@me?with_analytics_token=true"},{"status":401,"url":"https://discord.com/api/v9/auth/logout"}] |
+| PASS | HTTP error responses (4xx/5xx) | None captured |
 | PASS | Message data safety | Saved message data is unchanged |
 
 ## Screenshot files
