@@ -210,6 +210,14 @@ router.get(
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     const rawIds = req.query.ids;
+    const guildId = typeof req.query.guildId === "string" ? req.query.guildId.trim() : "";
+    if (guildId && !/^\\d{17,20}$/.test(guildId)) throw ApiError.badRequest("`guildId` is invalid");
+    if (guildId && req.staffContext && !req.staffContext.isAdmin && req.staffContext.record) {
+      const allowedGuilds = parseAllowedIds(req.staffContext.record.allowed_guild_ids);
+      if (!allowedGuilds.includes("*") && !allowedGuilds.includes(guildId)) {
+        throw ApiError.forbidden(`You are not allowed to access guild ${guildId}`);
+      }
+    }
 
     if (typeof rawIds !== "string" || rawIds.length === 0) {
       throw ApiError.badRequest("`ids` query parameter is required");
@@ -235,6 +243,7 @@ router.get(
         globalName: string | null;
         avatarUrl: string;
         profileUrl: string;
+        nickname: string | null;
       }
     > = {};
     const failedIds: string[] = [];
@@ -250,10 +259,21 @@ router.get(
           continue;
         }
 
+        let nickname: string | null = null;
+        if (guildId) {
+          try {
+            const token = await discord.resolveBotToken();
+            const member = await discord.getGuildMember(guildId, id, token);
+            nickname = typeof (member as any)?.nick === "string" ? (member as any).nick : null;
+          } catch {
+            nickname = null;
+          }
+        }
         users[id] = {
           id: user.id,
           username: user.username,
           globalName: user.global_name ?? null,
+          nickname,
           avatarUrl: discord.getDiscordUserAvatarUrl(user),
           profileUrl: `https://discord.com/users/${user.id}`,
         };
