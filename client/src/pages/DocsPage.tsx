@@ -95,6 +95,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{exploit.Delta.changelogs}", desc: "Formatted WEAO changelog entries for the named exploit", example: "• New version released — Fixed injection", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[0:3]}", desc: "Only the first three changelog entries (zero-based slice)", example: "• Entry 1\\n• Entry 2\\n• Entry 3", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[2]}", desc: "Only the third changelog entry (zero-based index)", example: "• Entry 3", category: "exploit" },
+  { tag: "{exploit.Solara.changelogs[-3:]}", desc: "Only the latest three changelog entries", example: "• Latest entry 1\\n• Latest entry 2\\n• Latest entry 3", category: "exploit" },
   { tag: "{exploit.Delta.changelogs.compare}", desc: "Compare the latest WEAO changelog snapshot with the previous check and show added or removed entries", example: "New entries / Removed entries", category: "exploit" },
   { tag: "{exploit.Delta.purchaselink}", desc: "Official purchase URL", example: "https://...", category: "exploit" },
 
