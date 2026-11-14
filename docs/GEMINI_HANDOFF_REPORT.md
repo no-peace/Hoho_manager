@@ -4,7 +4,8 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Default branch:** `main`  
-**Current main commit:** `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`  
+**Latest inspected application/audit commit:** `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`  
+**Handoff update commit:** `08ec4fbab7f2e4d1324205bbff3391a6f655004e`  
 **Merged performance PR:** [#39](https://github.com/no-peace/Hoho_manager/pull/39)  
 **Last repository/audit refresh:** 2026-11-14 15:05 IST
 
