@@ -162,10 +162,10 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       const res = computeDropdownPosition({
         dropdownRect: { top: 100, bottom: 140, left: 50, width: 250 },
         innerWidth: 1024,
-        innerHeight: 800, // spaceBelow = 800 - 140 = 660 >= 260
+        innerHeight: 800, // 648px remains below the trigger after the 12px edge/gap allowance
       });
 
-      expect(res.spaceBelow).toBe(660);
+      expect(res.spaceBelow).toBe(648);
       expect(res.placeAbove).toBe(false);
       expect(res.calculatedTop).toBe(144); // bottom (140) + 4
       expect(res.calculatedMaxHeight).toBe(260);
@@ -175,11 +175,11 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       const res = computeDropdownPosition({
         dropdownRect: { top: 500, bottom: 540, left: 50, width: 250 },
         innerWidth: 1024,
-        innerHeight: 650, // spaceBelow = 650 - 540 = 110 < 260; spaceAbove = 500 > 110
+        innerHeight: 650, // 98px remains below; the space above is larger
       });
 
-      expect(res.spaceBelow).toBe(110);
-      expect(res.spaceAbove).toBe(500);
+      expect(res.spaceBelow).toBe(98);
+      expect(res.spaceAbove).toBe(492);
       expect(res.placeAbove).toBe(true);
       expect(res.calculatedTop).toBe(240); // 500 - 260 = 240
       expect(res.calculatedMaxHeight).toBe(260);
@@ -196,7 +196,7 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       expect(res.spaceAbove).toBe(50);
       expect(res.placeAbove).toBe(false);
       expect(res.calculatedTop).toBe(94); // bottom (90) + 4
-      expect(res.calculatedMaxHeight).toBe(144); // 160 - 16 = 144
+      expect(res.calculatedMaxHeight).toBe(148); // 160px below the trigger minus 12px of spacing
     });
 
     it("uses only the available space on a 180px viewport near the top edge", () => {
