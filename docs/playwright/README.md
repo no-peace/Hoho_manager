@@ -32,11 +32,19 @@ npm run audit
 
 The audit opens a clean browser context first to capture the unauthenticated LoginScreen, then opens a separate persistent Chromium profile at `.browser-profile` for your authenticated Studio session.
 
-1. The first browser captures LoginScreen at **320, 360, 390, 430, 768, and 1280px**.
-2. In the second browser, sign in with Discord manually if requested.
-3. In the Studio, select a message component so the **Component Inspector / PropertyPanel is open**.
-4. Return to PowerShell and press Enter. Keep Chromium open until the audit finishes.
-5. The script performs safe modal-open/cancel checks, checks whole-page overflow plus internal horizontal overflow in the Header and PropertyPanel, and captures screenshots.
+1. The first temporary Chromium window captures the unauthenticated LoginScreen at **320, 360, 390, 430, 768, and 1280px**, then closes.
+2. The second Chromium window is the **authenticated Studio audit window**. Sign in with Discord manually if requested. Do all preparation in this second window.
+3. To create the exact component needed for the inspector test in **Classic** mode:
+   - If you want to start clean, click **Clear all** in the top toolbar and confirm **Clear All**. This deletes the currently saved editor message, so do this only if you are comfortable clearing it.
+   - In the Message 1 card, scroll to its bottom action bar and click **Add Action Row**.
+   - In the new Action Row card, click **Add Button**.
+   - The app's store automatically selects the new button. You should see a right-side panel titled **Component Inspector**, with the button's properties underneath.
+   - If it does not open automatically, click the actual button pill inside the Action Row (not the **Add Button** control).
+4. Do not press Escape or close the inspector. Return to PowerShell and press Enter. Keep the second Chromium window open until the audit finishes.
+5. After Enter, the script waits up to **30 seconds** for the visible **Component Inspector** in that same browser window. If it cannot find it, the audit records a **FAIL** instead of silently marking the PropertyPanel screenshots as skipped.
+6. The script checks whole-page overflow and internal horizontal overflow in the Header and PropertyPanel, then captures screenshots at all six widths.
+
+**Components V2 alternative:** click the message's **Add** menu, choose **Action Row**, then click **Add Button** inside that row. The same **Component Inspector** should appear.
 
 The audit never clicks the Discord login button automatically, never presses Dispatch/Send, and never accepts destructive confirmations.
 
@@ -51,7 +59,7 @@ All output is written to `reports\`:
 - `property-panel-<width>.png` — PropertyPanel at each width, if it was open when you pressed Enter
 - `audit-report.md` and `audit-report.json` — results, overflow measurements, skips, and browser diagnostics
 
-If PropertyPanel screenshots are skipped, rerun the audit and select a component before pressing Enter. Do not edit or send the message during the audit.
+A successful full responsive audit must include `Component Inspector detected before responsive audit — PASS` and `PropertyPanel responsive screenshots — PASS`. A missing inspector is now a failure, not a skip. The script snapshots the already-prepared `dmb:message` value after you press Enter and verifies it is unchanged during the audit. It does not restore the state from before you manually clicked Clear all; that clear action is your own deliberate setup step. Do not edit or send the message while the audit is running.
 
 ## Analyze the GitHub Actions Lighthouse artifacts
 
