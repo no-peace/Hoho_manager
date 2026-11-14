@@ -94,6 +94,7 @@ const inFlightSuncPromises = new Map<string, Promise<WeaoSuncData | null>>();
 const CHANGELOG_CACHE_TTL_MS = 15_000;
 const changelogCache = new Map<string, { data: unknown[]; fetchedAt: number }>();
 const inFlightChangelogs = new Map<string, Promise<unknown[]>>();
+const changelogComparisons = new Map<string, { added: unknown[]; removed: unknown[] }>();
 
 let rateLimitedUntilMs = 0;
 
@@ -287,6 +288,12 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
         changelogs?: unknown[];
       }>(`/api/status/exploits/changelogs/${encodeURIComponent(exploitName.trim())}`);
       const entries = Array.isArray(response?.changelogs) ? response.changelogs : [];
+      const previous = cached?.data ?? [];
+      const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+      changelogComparisons.set(key, {
+        added: cached ? entries.filter((entry) => !previous.some((old) => same(old, entry))) : [],
+        removed: cached ? previous.filter((entry) => !entries.some((current) => same(current, entry))) : [],
+      });
       changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
       return entries;
     } catch (error) {
@@ -313,16 +320,25 @@ const formatChangelogEntry = (entry: unknown): string => {
   return [heading, body, stamp ? `(${stamp})` : ""].filter(Boolean).join(" — ") || JSON.stringify(entry);
 };
 
-export const formatExploitChangelogs = (entries: unknown[], selector = ""): string => {
+export const formatExploitChangelogs = (entries: unknown[], selector = "", comparison?: { added: unknown[]; removed: unknown[] }): string => {
   let selected = entries;
-  const match = selector.match(/^changelogs(?:\[(\d+)(?::(\d+))?\])?$/i);
+  if (selector.toLowerCase() === "changelogs.compare") {
+    const added = comparison?.added ?? [];
+    const removed = comparison?.removed ?? [];
+    const sections = [
+      added.length ? `**New entries**\\n${added.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n")}` : "**New entries**\\nNone",
+      removed.length ? `**Removed entries**\\n${removed.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n")}` : "**Removed entries**\\nNone",
+    ];
+    return sections.join("\\n\\n");
+  }
+  const match = selector.match(/^changelogs(?:\\[(\\d+)(?::(\\d+))?\\])?$/i);
   if (match?.[1] !== undefined) {
     const start = Number(match[1]);
     if (match[2] !== undefined) selected = entries.slice(start, Number(match[2]));
     else selected = entries.slice(start, start + 1);
   }
   if (!selected.length) return "No changelog entries found.";
-  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\n");
+  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n");
 };
 
 export const formatExploitField = (
@@ -488,7 +504,7 @@ export const interpolateWeaoPlaceholders = async (
     if (!scoped) continue;
 
     const keyLower = scoped.targetName.toLowerCase();
-    if (/^changelogs(?:\\[|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
+    if (/^changelogs(?:\\[|\\.|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
       changelogMap.set(keyLower, await getExploitChangelogs(scoped.targetName));
     }
     if (suncMap.has(keyLower)) continue;
@@ -512,10 +528,11 @@ export const interpolateWeaoPlaceholders = async (
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
           );
         if (!target) return fullMatch;
-        if (/^changelogs(?:\\[|$)/i.test(scoped.fieldName)) {
+        if (/^changelogs(?:\\[|\\.|$)/i.test(scoped.fieldName)) {
           return formatExploitChangelogs(
             changelogMap.get(target.title.toLowerCase()) ?? [],
             scoped.fieldName,
+            changelogComparisons.get(target.title.toLowerCase()),
           );
         }
         return formatExploitField(
