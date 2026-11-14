@@ -88,8 +88,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
       ? rawLabel.replace(/\{{1,2}\s*([a-zA-Z0-9_.$]+)\s*\}{1,2}/g, (match, rawKey: string) => {
           const key = rawKey.trim().toLowerCase();
           const username = currentUser?.username || "User";
-          const displayName = currentUser?.global_name || username;
-          const userId = currentUser?.id || "123456789012345678";
+                const userId = currentUser?.id || "123456789012345678";
           const guild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
           const map: Record<string, string> = {
             "user.tag": username,
