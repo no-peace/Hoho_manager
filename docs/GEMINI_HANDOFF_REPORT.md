@@ -4,10 +4,9 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Default branch:** `main`  
-**Current main commit:** `2aab9e6dc283fe2fd35011981d45af08b042de1a`  
-**Active performance branch:** `perf/mobile-lighthouse-optimizations`  
-**Performance branch commit at report start:** `d0e0d301e9b8b709bc77642f5da3286215b5423a`  
-**Open PR:** [#39](https://github.com/no-peace/Hoho_manager/pull/39)
+**Current main commit:** `3b5a0e6bed772d2c0a221212aa4e0492991a43f0`  
+**Merged performance PR:** [#39](https://github.com/no-peace/Hoho_manager/pull/39)  
+**Last verified:** 2026-11-14 09:22 IST
 
 ## 1. Read this first
 
@@ -72,29 +71,25 @@ Important follow-up implementation commits:
 
 The history also includes CI hardening, Node 22/26 support, server benchmark validation, dependency updates, and security workflows. PR #23 (the `he` 2.0.0 update) was merged into main as commit `2aab9e6d`. PR #27 was merged earlier. Security workflow hardening was merged as `0ed9b3be9e`.
 
-## 4. Current branch and open PR
+## 4. Current branch and merged PR
 
 PR #39: [Improve Lighthouse performance on mobile and desktop](https://github.com/no-peace/Hoho_manager/pull/39)
 
-Branch: `perf/mobile-lighthouse-optimizations`  
-Application/source implementation commit: `d0dfe37fd0b033ba4244db04ea2626cb335da751`
+PR #39 is **merged** into `main`. Its merge commit is the current main commit:
+`3b5a0e6bed772d2c0a221212aa4e0492991a43f0`.
 
-The PR contains:
-- `LoginScreen.tsx`: darker green demo-button background for white-text contrast and corrected showcase heading hierarchy.
-- `HoHoLogoMark.tsx`: optional `alt` prop.
-- `PublicPageHeader.tsx`: decorative logo gets `alt=""` beside the visible product name.
-- `client/vite.config.ts`: removed the broad forced React/Zustand/Sileo vendor chunk so Vite can split route-only libraries; added an explicit API proxy for `vite preview`.
-- `.github/workflows/lighthouse.yml`: build and start the API with a disposable SQLite database before running the production preview and Lighthouse.
-- `docs/hoho_v6_master_architecture_plan.md`: project-side V6 plan.
-- `docs/GEMINI_HANDOFF_REPORT.md`: this implementation and performance handoff.
+The merged work includes:
+- Login-page contrast and heading hierarchy improvements.
+- Accessible logo alt-text handling.
+- Route-aware Vite code splitting so studio-only dependencies are not eagerly loaded by the public login page.
+- A healthy local API and explicit API proxy in the Lighthouse preview workflow.
+- Updated Lighthouse and Gemini handoff documentation.
 
-The source implementation commit message is `split the login bundle and fix the lighthouse preview api` (natural wording, not a generated conventional-commit title). The later commits on this branch only updated the Gemini handoff documentation; no application source changed after the measured implementation.
-
-PR #39 remains open and unmerged. Check its live head SHA, mergeability, and checks again before merging.
+The latest commit history also contains documentation cleanups after the implementation. Check live `main` before making further changes; do not treat the old PR branch as active work.
 
 ## 5. CI and security state observed
 
-For the current PR #39 head `d0dfe37fd0b033ba4244db04ea2626cb335da751`:
+For current `main` commit `3b5a0e6bed772d2c0a221212aa4e0492991a43f0`:
 - CI run [43547638617](https://github.com/no-peace/Hoho_manager/actions/runs/43547638617): completed successfully on Node 22 and Node 26. Both jobs passed build, workspace typechecks, full tests, server performance benchmarks, benchmark JSON validation, and report upload.
 - Lighthouse run [43547638587](https://github.com/no-peace/Hoho_manager/actions/runs/43547638587): mobile and desktop jobs completed successfully; both uploaded Lighthouse reports.
 - Security run [43547638586](https://github.com/no-peace/Hoho_manager/actions/runs/43547638586): completed successfully. Dependency audit, secret scanning, and static security analysis all passed.
@@ -163,7 +158,7 @@ Both API startup and preview startup passed in the latest Lighthouse workflow. T
 
 ## 8. Recommended next technical work
 
-The two high-priority issues from the earlier report have been fixed and verified:
+The earlier performance issues have been fixed and merged:
 1. The broad manual chunk was removed; the initial login route no longer downloads the large eager `vendor-react` chunk.
 2. Lighthouse now starts a healthy local API and uses an explicit preview proxy; the 502 errors are gone and Best Practices is 100.
 
@@ -172,7 +167,6 @@ Remaining optional optimization work:
 - LCP is now about 2.2–2.26 seconds. Inspect the actual LCP element and resource timing before making further visual or asset changes.
 - Keep mobile and desktop Lighthouse runs in the workflow and compare medians, not individual best-case runs.
 - Do not lower Lighthouse assertions, hide API failures, or remove real app behavior to inflate scores.
-- Do not merge PR #39 until its latest required checks and mergeability are re-checked.
 
 ## 9. Human commit-message rule
 
@@ -198,9 +192,59 @@ You are reviewing and continuing an existing codebase, not starting a redesign f
 
 ## 11. Known limitations and open questions
 
-- PR #39 is still open and unmerged at the time of this update.
+- PR #39 is merged into `main` as commit `3b5a0e6bed772d2c0a221212aa4e0492991a43f0`.
 - Latest median Performance is 97 mobile and 80 desktop; the older V4 target of 99+ is not yet met.
 - About 29.4 KB of unused JavaScript remains in the initial entry bundle.
 - LCP remains around 2.2 seconds on both devices.
 - The implementation checks passed for source head `d0dfe37fd0b033ba4244db04ea2626cb335da751`. A subsequent documentation-only branch update also passed CI, Lighthouse, and Security on head `707f1373b6de4b2622298a135246b5389358392b` (CI run `43547912990`, Lighthouse run `43547912926`, Security run `43547912902`). The report may receive further documentation-only updates; always use the live PR head for current status.
 - Always refresh branch heads, PR state, and workflow runs before acting; this report is a snapshot, not a substitute for live repository verification.
+
+
+## 12. Final UI audit — 2026-11-14
+
+This section records a source-level UI audit performed against the merged `main` commit
+`3b5a0e6bed772d2c0a221212aa4e0492991a43f0`. This was **not** a complete browser screenshot audit: the production page could not be loaded through the available browser inspection path, so visual claims below are separated from confirmed source-level findings.
+
+### Findings and priority
+
+| Priority | Area | File | Finding | Confidence / next action |
+|---|---|---|---|---|
+| High | Header responsiveness | `client/src/components/layout/Header.tsx` | The logo/title, server selector, multiple studio actions, settings, staff controls and profile compete for horizontal space. Responsive text hiding exists, but the remaining controls may still become cramped at narrow widths. | Risk identified by source inspection; not visually confirmed. Test 320, 360, 390, 430, 640, 768 and 1024 px. |
+| High | Select dropdown viewport fit | `client/src/components/ui/SearchableDiscordSelect.tsx` | Dropdown max-height calculation applies a 120 px minimum even when the actual available space above/below the trigger is smaller. This can allow the menu to extend beyond a short viewport or near-edge trigger. | Confirmed code-level defect. Fix the available-height calculation and add tests for very short viewports and triggers near both edges. |
+| Medium | Firefox scrollbar theme | `client/src/styles/globals.css` | Root scrollbar defaults are light, while dark colors are conditional on `:root.dark`. Source search did not find code that applies the `dark` class. | Code-supported concern, not browser-confirmed. Verify Firefox in light and dark themes; ensure the dark class is actually applied or make defaults theme-aware. |
+| Medium | Mobile property panel | `client/src/components/editor/PropertyPanel.tsx` | The mobile bottom sheet and overlay need more coverage for short screens, keyboard-open state, long forms, many flow steps and safe-area behaviour. | Additional testing required; no confirmed visual defect. |
+| Medium | Mobile editor/preview state | `client/src/components/layout/SplitPane.tsx` | The inactive pane is conditionally unmounted when switching views. Component-local temporary state may be lost when the pane is recreated. | Verify actual user-visible state preservation before changing architecture. |
+
+### Areas reviewed
+
+Source inspection covered:
+- `StudioLayout.tsx`, `Header.tsx`, `SplitPane.tsx`, `Sidebar.tsx`, and `StudioModals.tsx`.
+- `MessageEditor/index.tsx`, `PropertyPanel.tsx`, `MessagePreview.tsx`, and `FlowBuilder.tsx`.
+- `SearchableDiscordSelect.tsx`, `globals.css`, and `uiThemeConfig.ts`.
+- Existing layout stress tests and login responsive regression tests.
+
+Some layout foundations appear structurally sound in source: desktop/mobile split-pane handling, wrapping preview toolbar, mobile property-panel overlay, modal scroll/focus handling, and flexible editor card layouts. These observations do not replace rendered browser testing.
+
+### Required visual regression matrix
+
+Check each relevant page/state at:
+- Widths: 320, 360, 390, 430, 640, 768, 1024, 1280 and 1440 px.
+- Browsers: Chromium and Firefox; include a real mobile browser if available.
+- States: signed-out login, authenticated studio, server selector open, header actions, editor with long content, preview, property panel open, flow builder with many steps, modal stack, docs/privacy/404 pages.
+- Interaction: keyboard navigation, dropdown placement, page scroll locking, focus return, mobile editor/preview switching, and state preservation.
+- Layout checks: horizontal overflow, clipped text, overlapping controls, incorrect stacking, safe-area insets and content hidden behind fixed bars.
+
+### Audit limitations
+
+- Production visual inspection was unavailable during this audit. Do not tell Gemini that screenshots or every viewport have already been visually verified.
+- The dropdown height issue is supported by the implementation logic; the other responsive findings are risks or test requests unless explicitly stated otherwise.
+- CI, Security and Lighthouse passing do not prove the absence of layout defects.
+
+### Instructions for Gemini — UI follow-up
+
+1. Start from live `main` at `3b5a0e6bed772d2c0a221212aa4e0492991a43f0`, not the stale PR state documented in older history.
+2. Inspect the current implementation and tests before proposing changes.
+3. Reproduce the dropdown overflow with viewport-edge and short-height test cases; fix the calculation without introducing a forced minimum that exceeds available space.
+4. Use actual browser screenshots at the viewport matrix above to decide whether the header, property panel, and split-pane concerns are real defects.
+5. Do not redesign components based only on source-level suspicion. Preserve editor behaviour, Discord payloads, keyboard accessibility and existing tests.
+6. Report each issue as reproduced, not reproduced, or not tested, with screenshot/test evidence.
