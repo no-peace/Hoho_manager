@@ -95,6 +95,7 @@ export const UserPlaceholderPreviewProvider = ({
   children: React.ReactNode;
 }) => {
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const currentUser = useGlobalStore((state) => state.currentUser);
   const [users, setUsers] = useState<Record<string, PreviewDiscordUser>>({});
   const [isResolvingUsers, setIsResolvingUsers] = useState(false);
   const attemptedIdsRef = useRef(new Set<string>());
@@ -117,8 +118,11 @@ export const UserPlaceholderPreviewProvider = ({
         // Invalid/transient editor state: leave placeholders unresolved.
       }
     }
+    if (currentUser?.id && /\\{user\\.(?:name|displayname)\\}/i.test(sourceSnapshot)) {
+      ids.add(currentUser.id);
+    }
     return [...ids];
-  }, [sourceSnapshot]);
+  }, [sourceSnapshot, currentUser?.id]);
 
   useEffect(() => {
     const pendingIds = requestedIds.filter(
@@ -186,15 +190,23 @@ export const UserPlaceholderPreviewProvider = ({
 
   const resolveUserPlaceholders = useCallback(
     (value: string): string =>
-      value.replace(
-        USER_PLACEHOLDER_REGEX,
-        (original, id: string, field: string) => {
-          const user = users[id];
+      value
+        .replace(
+          USER_PLACEHOLDER_REGEX,
+          (original, id: string, field: string) => {
+            const user = users[id];
+            if (!user) return original;
+            return getFieldValue(user, field) ?? original;
+          },
+        )
+        .replace(/\\{user\\.(name|displayname)\\}/gi, (original, field: string) => {
+          const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
-          return getFieldValue(user, field) ?? original;
-        },
-      ),
-    [users],
+          return field.toLowerCase() === "name"
+            ? user.nickname || user.username
+            : user.globalName || user.username;
+        }),
+    [users, currentUser?.id],
   );
 
   const contextValue = useMemo(
