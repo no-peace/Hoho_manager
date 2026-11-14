@@ -1,6 +1,6 @@
 {
   "appUrl": "https://hoho-manager.onrender.com/",
-  "generatedAt": "2026-11-14T08:40:51.010Z",
+  "generatedAt": "2026-11-14T08:56:01.097Z",
   "viewportWidths": [
     320,
     360,
@@ -10,202 +10,244 @@
     1280
   ],
   "totals": {
-    "passed": 30,
+    "passed": 38,
     "failed": 0,
-    "skipped": 2
+    "skipped": 1
   },
   "results": [
     {
       "name": "LoginScreen 320px horizontal overflow",
       "status": "PASS",
       "details": "viewport=320px, LoginScreen client=305px, scroll=305px",
-      "at": "2026-11-14T08:39:26.225Z"
+      "at": "2026-11-14T08:55:24.275Z"
     },
     {
       "name": "LoginScreen 360px horizontal overflow",
       "status": "PASS",
       "details": "viewport=360px, LoginScreen client=345px, scroll=345px",
-      "at": "2026-11-14T08:39:27.245Z"
+      "at": "2026-11-14T08:55:25.320Z"
     },
     {
       "name": "LoginScreen 390px horizontal overflow",
       "status": "PASS",
       "details": "viewport=390px, LoginScreen client=375px, scroll=375px",
-      "at": "2026-11-14T08:39:27.982Z"
+      "at": "2026-11-14T08:55:26.075Z"
     },
     {
       "name": "LoginScreen 430px horizontal overflow",
       "status": "PASS",
       "details": "viewport=430px, LoginScreen client=415px, scroll=415px",
-      "at": "2026-11-14T08:39:28.745Z"
+      "at": "2026-11-14T08:55:26.818Z"
     },
     {
       "name": "LoginScreen 768px horizontal overflow",
       "status": "PASS",
       "details": "viewport=768px, LoginScreen client=768px, scroll=768px",
-      "at": "2026-11-14T08:39:29.493Z"
+      "at": "2026-11-14T08:55:27.582Z"
     },
     {
       "name": "LoginScreen 1280px horizontal overflow",
       "status": "PASS",
       "details": "viewport=1280px, LoginScreen client=1280px, scroll=1280px",
-      "at": "2026-11-14T08:39:30.009Z"
+      "at": "2026-11-14T08:55:28.083Z"
     },
     {
       "name": "LoginScreen responsive screenshots",
       "status": "PASS",
       "details": "Captured widths: 320, 360, 390, 430, 768, 1280px",
-      "at": "2026-11-14T08:39:30.158Z"
+      "at": "2026-11-14T08:55:28.223Z"
     },
     {
       "name": "Application route responds",
       "status": "PASS",
       "details": "https://hoho-manager.onrender.com/",
-      "at": "2026-11-14T08:39:33.719Z"
+      "at": "2026-11-14T08:55:31.293Z"
+    },
+    {
+      "name": "Button Component Inspector detected before responsive audit",
+      "status": "PASS",
+      "details": "The visible Component Inspector is editing a Button",
+      "at": "2026-11-14T08:55:51.614Z"
     },
     {
       "name": "Existing message data snapshot",
       "status": "PASS",
       "details": "Existing value captured for restoration",
-      "at": "2026-11-14T08:40:44.022Z"
+      "at": "2026-11-14T08:55:52.124Z"
     },
     {
       "name": "App rendered visible content",
       "status": "PASS",
       "details": "HoHo Manager Select Server... ▼ Backups JSON Settings Staff Access 𝑷𝒆𝒂𝒄𝒆 Docs Message 1 CLASSIC THREAD Files Add UR",
-      "at": "2026-11-14T08:40:44.064Z"
+      "at": "2026-11-14T08:55:52.129Z"
     },
     {
       "name": "Studio 320px horizontal overflow",
       "status": "PASS",
       "details": "viewport=320px, document=320px, body=320px",
-      "at": "2026-11-14T08:40:44.528Z"
+      "at": "2026-11-14T08:55:52.630Z"
     },
     {
       "name": "Header 320px internal overflow",
       "status": "PASS",
       "details": "client=320px, scroll=320px",
-      "at": "2026-11-14T08:40:44.578Z"
+      "at": "2026-11-14T08:55:52.685Z"
+    },
+    {
+      "name": "PropertyPanel 320px internal overflow",
+      "status": "PASS",
+      "details": "client=320px, scroll=320px",
+      "at": "2026-11-14T08:55:53.214Z"
     },
     {
       "name": "Studio 360px horizontal overflow",
       "status": "PASS",
       "details": "viewport=360px, document=360px, body=360px",
-      "at": "2026-11-14T08:40:45.248Z"
+      "at": "2026-11-14T08:55:53.779Z"
     },
     {
       "name": "Header 360px internal overflow",
       "status": "PASS",
       "details": "client=360px, scroll=360px",
-      "at": "2026-11-14T08:40:45.271Z"
+      "at": "2026-11-14T08:55:53.799Z"
+    },
+    {
+      "name": "PropertyPanel 360px internal overflow",
+      "status": "PASS",
+      "details": "client=360px, scroll=360px",
+      "at": "2026-11-14T08:55:54.110Z"
     },
     {
       "name": "Studio 390px horizontal overflow",
       "status": "PASS",
       "details": "viewport=390px, document=390px, body=390px",
-      "at": "2026-11-14T08:40:45.882Z"
+      "at": "2026-11-14T08:55:54.671Z"
     },
     {
       "name": "Header 390px internal overflow",
       "status": "PASS",
       "details": "client=390px, scroll=390px",
-      "at": "2026-11-14T08:40:45.901Z"
+      "at": "2026-11-14T08:55:54.696Z"
+    },
+    {
+      "name": "PropertyPanel 390px internal overflow",
+      "status": "PASS",
+      "details": "client=390px, scroll=390px",
+      "at": "2026-11-14T08:55:55.025Z"
     },
     {
       "name": "Studio 430px horizontal overflow",
       "status": "PASS",
       "details": "viewport=430px, document=430px, body=430px",
-      "at": "2026-11-14T08:40:46.595Z"
+      "at": "2026-11-14T08:55:55.630Z"
     },
     {
       "name": "Header 430px internal overflow",
       "status": "PASS",
       "details": "client=430px, scroll=430px",
-      "at": "2026-11-14T08:40:46.615Z"
+      "at": "2026-11-14T08:55:55.665Z"
+    },
+    {
+      "name": "PropertyPanel 430px internal overflow",
+      "status": "PASS",
+      "details": "client=430px, scroll=430px",
+      "at": "2026-11-14T08:55:56.034Z"
     },
     {
       "name": "Studio 768px horizontal overflow",
       "status": "PASS",
       "details": "viewport=768px, document=768px, body=768px",
-      "at": "2026-11-14T08:40:47.259Z"
+      "at": "2026-11-14T08:55:56.669Z"
     },
     {
       "name": "Header 768px internal overflow",
       "status": "PASS",
       "details": "client=768px, scroll=768px",
-      "at": "2026-11-14T08:40:47.278Z"
+      "at": "2026-11-14T08:55:56.690Z"
+    },
+    {
+      "name": "PropertyPanel 768px internal overflow",
+      "status": "PASS",
+      "details": "client=768px, scroll=768px",
+      "at": "2026-11-14T08:55:57.078Z"
     },
     {
       "name": "Studio 1280px horizontal overflow",
       "status": "PASS",
       "details": "viewport=1280px, document=1280px, body=1280px",
-      "at": "2026-11-14T08:40:47.929Z"
+      "at": "2026-11-14T08:55:57.681Z"
     },
     {
       "name": "Header 1280px internal overflow",
       "status": "PASS",
       "details": "client=1280px, scroll=1280px",
-      "at": "2026-11-14T08:40:47.949Z"
+      "at": "2026-11-14T08:55:57.701Z"
+    },
+    {
+      "name": "PropertyPanel 1280px internal overflow",
+      "status": "PASS",
+      "details": "client=383px, scroll=383px",
+      "at": "2026-11-14T08:55:58.049Z"
     },
     {
       "name": "PropertyPanel responsive screenshots",
-      "status": "SKIP",
-      "details": "Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it",
-      "at": "2026-11-14T08:40:48.214Z"
+      "status": "PASS",
+      "details": "Captured at widths: 320, 360, 390, 430, 768, 1280px",
+      "at": "2026-11-14T08:55:58.172Z"
     },
     {
       "name": "JSON modal opens",
       "status": "PASS",
       "details": "JSON Data title and editor found",
-      "at": "2026-11-14T08:40:48.352Z"
+      "at": "2026-11-14T08:55:58.403Z"
     },
     {
       "name": "Backups modal opens",
       "status": "PASS",
       "details": "Dialog detected",
-      "at": "2026-11-14T08:40:49.399Z"
+      "at": "2026-11-14T08:55:59.428Z"
     },
     {
       "name": "Dispatch dialog opens",
       "status": "SKIP",
       "details": "Opened for inspection only; no send action is performed",
-      "at": "2026-11-14T08:40:50.140Z"
+      "at": "2026-11-14T08:56:00.209Z"
     },
     {
       "name": "Clear-all confirmation opens",
       "status": "PASS",
       "details": "Confirmation is not accepted; existing messages are left intact",
-      "at": "2026-11-14T08:40:50.730Z"
+      "at": "2026-11-14T08:56:00.816Z"
     },
     {
       "name": "Browser console errors",
       "status": "PASS",
       "details": "No console errors captured",
-      "at": "2026-11-14T08:40:51.006Z"
+      "at": "2026-11-14T08:56:01.091Z"
     },
     {
       "name": "Uncaught page errors",
       "status": "PASS",
       "details": "None captured",
-      "at": "2026-11-14T08:40:51.007Z"
+      "at": "2026-11-14T08:56:01.092Z"
     },
     {
       "name": "Failed network requests",
       "status": "PASS",
       "details": "None captured",
-      "at": "2026-11-14T08:40:51.007Z"
+      "at": "2026-11-14T08:56:01.092Z"
     },
     {
       "name": "HTTP error responses (4xx/5xx)",
       "status": "PASS",
       "details": "None captured",
-      "at": "2026-11-14T08:40:51.007Z"
+      "at": "2026-11-14T08:56:01.092Z"
     },
     {
       "name": "Message data safety",
       "status": "PASS",
       "details": "Saved message data is unchanged",
-      "at": "2026-11-14T08:40:51.010Z"
+      "at": "2026-11-14T08:56:01.096Z"
     }
   ],
   "diagnostics": {
