@@ -64,3 +64,25 @@ To run again, use `npm run audit`. To remove generated browser data and reports,
 ## Important limitations
 
 This is a repeatable smoke/regression audit, not a guarantee that every feature is correct. It does not dispatch messages, confirm destructive actions, delete saved backups, or test Discord-side delivery. Authentication and Discord OAuth are intentionally completed by you in the visible browser.
+
+
+## Full repository testing checklist
+
+The browser audit above is only a small UI smoke test. For the full application test plan, open **[TEST-CHECKLIST.md](./TEST-CHECKLIST.md)**. It explains what to test, exactly what to click or run, and what result you should expect across the frontend, authentication, editor, components/actions, backups/templates, API, database, Discord bot/relay, and deployment/security.
+
+**Important:** the full checklist commands must be run from the repository root (the folder containing the main `package.json`), not from this `docs/playwright` folder.
+
+Quick automated test sequence from the repository root:
+
+```powershell
+npm ci
+npm run typecheck
+npm test
+npm run build
+npm run verify:acceptance
+npm run benchmark:json
+```
+
+Then return to `docs/playwright` and run `npm run audit` for the browser smoke audit. Follow the manual checklist for behavior that automated tests cannot safely or realistically cover.
+
+Do not test live Discord sends, role actions, deletions, or flow side effects in a production server. Use a private test guild and disposable content.
