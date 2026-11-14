@@ -1,7 +1,7 @@
 # HoHo Manager Playwright Audit
 
 - URL: https://hoho-manager.onrender.com/
-- Generated: 2026-11-14T08:56:01.097Z
+- Generated: 2026-11-14T09:35:47.877Z
 - Responsive widths: 320, 360, 390, 430, 768, 1280px
 - Passed: 38
 - Failed: 0
