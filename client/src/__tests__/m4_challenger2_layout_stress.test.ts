@@ -26,18 +26,20 @@ function computeDropdownPosition({
   innerHeight: number;
 }) {
   const DROPDOWN_HEIGHT = 260;
-  const spaceBelow = innerHeight - dropdownRect.bottom;
-  const spaceAbove = dropdownRect.top;
+  const spaceBelow = Math.max(0, innerHeight - Math.max(dropdownRect.bottom, 8) - 12);
+  const spaceAbove = Math.max(0, Math.min(dropdownRect.top, innerHeight) - 8);
   const placeAbove = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
   const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), innerWidth - 16);
   const maxLeft = Math.max(8, innerWidth - dropdownWidth - 8);
   const dropdownLeft = Math.max(8, Math.min(dropdownRect.left, maxLeft));
+  const calculatedMaxHeight = Math.min(
+    DROPDOWN_HEIGHT,
+    placeAbove ? spaceAbove : spaceBelow,
+  );
+  const maxTop = Math.max(8, innerHeight - 8 - calculatedMaxHeight);
   const calculatedTop = placeAbove
-    ? Math.max(8, dropdownRect.top - Math.min(DROPDOWN_HEIGHT, spaceAbove - 8))
-    : dropdownRect.bottom + 4;
-  const calculatedMaxHeight = placeAbove
-    ? Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceAbove - 16))
-    : Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceBelow - 16));
+    ? Math.max(8, Math.min(maxTop, dropdownRect.top - calculatedMaxHeight))
+    : Math.max(8, Math.min(maxTop, dropdownRect.bottom + 4));
 
   return {
     dropdownLeft,
@@ -121,8 +123,8 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       for (let i = 0; i < 1000; i++) {
         // Viewport width between 100px and 3840px (4K)
         const innerWidth = Math.floor(100 + pseudoRandom() * 3740);
-        // Viewport height between 200px and 2160px
-        const innerHeight = Math.floor(200 + pseudoRandom() * 1960);
+        // Include very short viewports as well as desktop heights.
+        const innerHeight = Math.floor(180 + pseudoRandom() * 1980);
         // Trigger left between -500px and innerWidth + 500px
         const left = Math.floor(-500 + pseudoRandom() * (innerWidth + 1000));
         // Trigger width between 10px and 2000px
@@ -146,9 +148,11 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
         // INVARIANT 3: dropdownLeft + dropdownWidth <= innerWidth - 8
         expect(res.dropdownLeft + res.dropdownWidth).toBeLessThanOrEqual(innerWidth - 8);
 
-        // INVARIANT 4: maxHeight is bounded between 120 and 260
-        expect(res.calculatedMaxHeight).toBeGreaterThanOrEqual(120);
+        // INVARIANT 4: maxHeight never exceeds the available viewport space.
+        expect(res.calculatedMaxHeight).toBeGreaterThanOrEqual(0);
         expect(res.calculatedMaxHeight).toBeLessThanOrEqual(260);
+        expect(res.calculatedTop).toBeGreaterThanOrEqual(8);
+        expect(res.calculatedTop + res.calculatedMaxHeight).toBeLessThanOrEqual(innerHeight - 8);
       }
     });
   });
@@ -195,14 +199,41 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       expect(res.calculatedMaxHeight).toBe(144); // 160 - 16 = 144
     });
 
-    it("enforces minimum max-height of 120px under extreme vertical constraint", () => {
+    it("uses only the available space on a 180px viewport near the top edge", () => {
       const res = computeDropdownPosition({
         dropdownRect: { top: 20, bottom: 60, left: 50, width: 250 },
-        innerWidth: 1024,
-        innerHeight: 180, // spaceBelow = 120; spaceAbove = 20
+        innerWidth: 320,
+        innerHeight: 180,
       });
 
-      expect(res.calculatedMaxHeight).toBe(120);
+      expect(res.placeAbove).toBe(false);
+      expect(res.calculatedTop).toBe(64);
+      expect(res.calculatedMaxHeight).toBe(108);
+      expect(res.calculatedTop + res.calculatedMaxHeight).toBeLessThanOrEqual(172);
+    });
+
+    it("fits above a trigger near the bottom edge without crossing the top margin", () => {
+      const res = computeDropdownPosition({
+        dropdownRect: { top: 160, bottom: 180, left: 50, width: 250 },
+        innerWidth: 320,
+        innerHeight: 180,
+      });
+
+      expect(res.placeAbove).toBe(true);
+      expect(res.calculatedTop).toBe(8);
+      expect(res.calculatedMaxHeight).toBe(152);
+      expect(res.calculatedTop + res.calculatedMaxHeight).toBeLessThanOrEqual(172);
+    });
+
+    it("keeps a trigger outside the visible bottom edge from pushing the menu off-screen", () => {
+      const res = computeDropdownPosition({
+        dropdownRect: { top: 820, bottom: 860, left: 50, width: 250 },
+        innerWidth: 320,
+        innerHeight: 180,
+      });
+
+      expect(res.calculatedTop).toBeGreaterThanOrEqual(8);
+      expect(res.calculatedTop + res.calculatedMaxHeight).toBeLessThanOrEqual(172);
     });
   });
 
