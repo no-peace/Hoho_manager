@@ -1,16 +1,13 @@
 // server/src/routes/weao.ts
 import { Router } from "express";
-import { ComponentType, ButtonStyle } from "@dmb/shared";
 import type { ActionConfig, ActionType, DiscordMessagePayload, FlowRegistration } from "@dmb/shared";
 import { db } from "../config/database.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
 import {
   getAllExploits,
   findExploitByName,
-  getExploitSuncDetails,
   interpolateWeaoPlaceholders,
   getWeaoRateLimitStatus,
-  type WeaoExploitRecord,
 } from "../services/weaoService.js";
 import {
   templateRepository,
@@ -32,93 +29,6 @@ const listAllTemplateSummaries = async (): Promise<TemplateSummary[]> =>
       ORDER BY updated_at DESC`,
   );
 
-const buildAdaptiveExploitPayload = async (
-  exploit: WeaoExploitRecord,
-): Promise<DiscordMessagePayload> => {
-  const suncDetails = await getExploitSuncDetails(exploit);
-  const passed = suncDetails?.tests?.passed?.length;
-  const failed = suncDetails?.tests?.failed?.length;
-  const suncDisplay =
-    typeof exploit.suncPercentage === "number"
-      ? `${exploit.suncPercentage}%`
-      : typeof passed === "number" && typeof failed === "number" && passed + failed > 0
-        ? `${Math.round((passed / (passed + failed)) * 100)}% (${passed}/${passed + failed})`
-        : "N/A";
-
-  const buttons: any[] = [];
-  if (exploit.websitelink) {
-    buttons.push({
-      type: ComponentType.Button,
-      style: ButtonStyle.Link,
-      label: "Website",
-      emoji: { name: "🌐" },
-      url: exploit.websitelink,
-    });
-  }
-  if (exploit.discordlink) {
-    buttons.push({
-      type: ComponentType.Button,
-      style: ButtonStyle.Link,
-      label: "Discord",
-      emoji: { name: "💬" },
-      url: exploit.discordlink,
-    });
-  }
-  if (exploit.purchaselink) {
-    buttons.push({
-      type: ComponentType.Button,
-      style: ButtonStyle.Link,
-      label: "Purchase",
-      emoji: { name: "🛒" },
-      url: exploit.purchaselink,
-    });
-  }
-
-  return {
-    embeds: [
-      {
-        title: `${exploit.updateStatus ? "🟢" : "🔴"} ${exploit.title} — Executor Status`,
-        description: [
-          `> **Status:** ${exploit.updateStatus ? "🟢 **Updated & Working**" : "🔴 **Outdated / Patched**"}`,
-          `> **Version:** \`${exploit.version || "Unknown"}\` • **Platform:** \`${exploit.platform || "Windows"}\``,
-          `> **Pricing:** ${exploit.free ? "✨ **Free**" : `💎 **${exploit.cost || "Paid"}**`}`,
-        ].join("\n"),
-        color: exploit.updateStatus ? 0x23a55a : 0xda373c,
-        fields: [
-          {
-            name: "sUNC / UNC",
-            value: `**sUNC:** \`${suncDisplay}\`\n**UNC:** \`${typeof exploit.uncPercentage === "number" ? `${exploit.uncPercentage}%` : "N/A"}\``,
-            inline: true,
-          },
-          {
-            name: "Capabilities",
-            value: `**Decompiler:** ${exploit.decompiler ? "✅ Yes" : "❌ No"}\n**Multi-Inject:** ${exploit.multiInject ? "✅ Yes" : "❌ No"}`,
-            inline: true,
-          },
-          {
-            name: "Security & Key",
-            value: `${exploit.detected ? "⚠️ Detected" : "🛡️ Undetected"}\n**Key System:** ${exploit.keysystem ? "🔑 Required" : "🔓 Keyless"}`,
-            inline: true,
-          },
-        ],
-        footer: {
-          text: `HoHo Hub Status • Roblox Target: ${exploit.rbxversion || "Latest"} • Updated ${exploit.updatedDate || "Recently"}`,
-        },
-        timestamp: new Date().toISOString(),
-      },
-    ],
-    ...(buttons.length > 0
-      ? {
-          components: [
-            {
-              type: ComponentType.ActionRow,
-              components: buttons.slice(0, 5),
-            },
-          ],
-        }
-      : {}),
-  };
-};
 
 router.get(
   "/exploits",
@@ -212,15 +122,7 @@ router.post(
       (await customExecutorRepository.findById(exploitQuery));
 
     if (customExec) {
-      let basePayload: DiscordMessagePayload = {
-        embeds: [
-          {
-            title: customExec.title,
-            description: `# ${customExec.title}\n> Live status card for ${customExec.title}`,
-            color: 0x23a55a,
-          },
-        ],
-      };
+      let basePayload: DiscordMessagePayload | null = null;
 
       if (customExec.template_id) {
         const fullTemplate = await templateRepository.findById(customExec.template_id);
@@ -239,6 +141,10 @@ router.post(
             basePayload = parsed;
           }
         } catch {}
+      }
+
+      if (!basePayload) {
+        throw ApiError.notFound(`No saved message template is configured for "${customExec.title}"`);
       }
 
       const { payload: interpolated } = await interpolateWeaoPlaceholders(
