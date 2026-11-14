@@ -1,0 +1,236 @@
+import { chromium } from "playwright";
+import { mkdir, writeFile } from "node:fs/promises";
+import { createInterface } from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const REPORT_DIR = path.join(HERE, "reports");
+const PROFILE_DIR = path.join(HERE, ".browser-profile");
+const APP_URL = process.env.HOHO_URL || "https://hoho-manager.onrender.com/";
+const STORAGE_KEY = "dmb:message";
+
+const results = [];
+const consoleErrors = [];
+const pageErrors = [];
+const failedRequests = [];
+const badResponses = [];
+
+function record(name, status, details = "") {
+  results.push({ name, status, details, at: new Date().toISOString() });
+  const prefix = status === "PASS" ? "PASS" : status === "SKIP" ? "SKIP" : "FAIL";
+  console.log(`[${prefix}] ${name}${details ? ` — ${details}` : ""}`);
+}
+
+async function pause(ms = 350) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function visible(locator) {
+  try {
+    return (await locator.count()) > 0 && await locator.first().isVisible();
+  } catch {
+    return false;
+  }
+}
+
+async function clickIfVisible(locator) {
+  if (!(await visible(locator))) return false;
+  await locator.first().click({ timeout: 5000 });
+  return true;
+}
+
+async function closeDialog(page) {
+  await page.keyboard.press("Escape").catch(() => {});
+  await pause(250);
+}
+
+async function checkViewport(page, label) {
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    scroll: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth,
+  }));
+  const overflow = dimensions.scroll > dimensions.viewport + 2 ||
+    dimensions.body > dimensions.viewport + 2;
+  record(`${label} horizontal overflow`, overflow ? "FAIL" : "PASS",
+    `viewport=${dimensions.viewport}px, document=${dimensions.scroll}px, body=${dimensions.body}px`);
+  return !overflow;
+}
+
+async function main() {
+  await mkdir(REPORT_DIR, { recursive: true });
+  const context = await chromium.launchPersistentContext(PROFILE_DIR, {
+    headless: false,
+    viewport: { width: 1440, height: 960 },
+    args: ["--disable-dev-shm-usage"],
+  });
+
+  let page = context.pages()[0] || await context.newPage();
+  let originalStorage = null;
+  let storageSnapshotTaken = false;
+  let auditMutatedStorage = false;
+
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("requestfailed", (request) => {
+    failedRequests.push({ url: request.url(), error: request.failure()?.errorText || "unknown" });
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      badResponses.push({ status: response.status(), url: response.url() });
+    }
+  });
+
+  try {
+    console.log(`Opening ${APP_URL}`);
+    await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    record("Application route responds", page.url().startsWith(new URL(APP_URL).origin) ? "PASS" : "FAIL", page.url());
+
+    const rl = createInterface({ input, output });
+    await rl.question("\nSign in manually in Chromium. When HoHo Manager is fully loaded, return here and press Enter to begin the audit... ");
+    rl.close();
+
+    await page.waitForTimeout(1000);
+    originalStorage = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+    storageSnapshotTaken = true;
+    record("Existing message data snapshot", "PASS",
+      originalStorage === null ? "No existing dmb:message value" : "Existing value captured for restoration");
+
+    const appRoot = await page.locator("body").innerText().catch(() => "");
+    record("App rendered visible content", appRoot.trim().length > 0 ? "PASS" : "FAIL",
+      appRoot.trim().slice(0, 120).replace(/\s+/g, " "));
+
+    // Header JSON modal: inspect and close without applying changes.
+    const jsonButton = page.locator('button[title="Import or export JSON"], button[aria-label="Import or export JSON"]');
+    if (await clickIfVisible(jsonButton)) {
+      const jsonTitle = page.getByText("JSON Data", { exact: true });
+      const titleVisible = await visible(jsonTitle);
+      const textarea = page.locator('textarea[placeholder="Paste or edit message JSON..."]');
+      record("JSON modal opens", titleVisible && await visible(textarea) ? "PASS" : "FAIL",
+        titleVisible ? "JSON Data title and editor found" : "Expected JSON Data modal not found");
+      await clickIfVisible(page.getByRole("button", { name: "Cancel", exact: true }));
+      await closeDialog(page);
+    } else {
+      record("JSON modal opens", "SKIP", "JSON toolbar button not visible on this account/page");
+    }
+
+    // Backups modal is read-only here; it is only opened and dismissed.
+    const backupsButton = page.locator('button[title="Backups & saved messages"], button[aria-label="Backups and saved messages"]');
+    if (await clickIfVisible(backupsButton)) {
+      await pause(500);
+      const dialogCount = await page.locator('[role="dialog"]').count();
+      record("Backups modal opens", dialogCount > 0 ? "PASS" : "SKIP",
+        dialogCount > 0 ? "Dialog detected" : "No accessible dialog detected; modal may use a custom container");
+      await closeDialog(page);
+    } else {
+      record("Backups modal opens", "SKIP", "Backups button is not available");
+    }
+
+    // Dispatch is intentionally never confirmed.
+    const dispatchButton = page.locator('button[title="Dispatch message"], button[aria-label="Dispatch message"]');
+    if (await clickIfVisible(dispatchButton)) {
+      await pause(400);
+      const sendText = page.getByText(/dispatch|send message/i).first();
+      record("Dispatch dialog opens", await visible(sendText) ? "PASS" : "SKIP",
+        "Opened for inspection only; no send action is performed");
+      await closeDialog(page);
+    } else {
+      record("Dispatch dialog opens", "SKIP", "Dispatch button is not available");
+    }
+
+    // Clear All is opened and cancelled; destructive confirmation is never accepted.
+    const clearButton = page.locator('button[title="Clear all messages"], button[aria-label="Clear all messages"]');
+    if (await clickIfVisible(clearButton)) {
+      await pause(250);
+      const dialogText = await page.locator("body").innerText().catch(() => "");
+      const confirmationDetected = /clear all|delete all|are you sure/i.test(dialogText);
+      record("Clear-all confirmation opens", confirmationDetected ? "PASS" : "SKIP",
+        "Confirmation is not accepted; existing messages are left intact");
+      await closeDialog(page);
+    } else {
+      record("Clear-all confirmation opens", "SKIP", "Clear-all button is not available");
+    }
+
+    await checkViewport(page, "Desktop");
+    await page.screenshot({ path: path.join(REPORT_DIR, "desktop.png"), fullPage: true });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await pause(500);
+    await checkViewport(page, "Mobile");
+    await page.screenshot({ path: path.join(REPORT_DIR, "mobile.png"), fullPage: true });
+
+    record("Browser console errors", consoleErrors.length === 0 ? "PASS" : "FAIL",
+      consoleErrors.length ? consoleErrors.slice(0, 5).join(" | ") : "No console errors captured");
+    record("Uncaught page errors", pageErrors.length === 0 ? "PASS" : "FAIL",
+      pageErrors.length ? pageErrors.slice(0, 5).join(" | ") : "None captured");
+    record("Failed network requests", failedRequests.length === 0 ? "PASS" : "FAIL",
+      failedRequests.length ? JSON.stringify(failedRequests.slice(0, 5)) : "None captured");
+    record("HTTP error responses (4xx/5xx)", badResponses.length === 0 ? "PASS" : "FAIL",
+      badResponses.length ? JSON.stringify(badResponses.slice(0, 8)) : "None captured");
+  } catch (error) {
+    record("Audit execution", "FAIL", error?.stack || String(error));
+  } finally {
+    // This audit currently performs no intentional state mutation. Keep a defensive
+    // restore path in case a future check changes localStorage before completion.
+    if (storageSnapshotTaken && auditMutatedStorage) {
+      try {
+        await page.evaluate(({ key, value }) => {
+          if (value === null) localStorage.removeItem(key);
+          else localStorage.setItem(key, value);
+        }, { key: STORAGE_KEY, value: originalStorage });
+        await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+        record("Original message data restored", "PASS");
+      } catch (error) {
+        record("Original message data restored", "FAIL", String(error));
+      }
+    } else {
+      record("Message data safety", "PASS", "No message data was modified by this audit");
+    }
+
+    const passed = results.filter((item) => item.status === "PASS").length;
+    const failed = results.filter((item) => item.status === "FAIL").length;
+    const skipped = results.filter((item) => item.status === "SKIP").length;
+    const report = {
+      appUrl: APP_URL,
+      generatedAt: new Date().toISOString(),
+      totals: { passed, failed, skipped },
+      results,
+      diagnostics: { consoleErrors, pageErrors, failedRequests, badResponses },
+    };
+
+    await writeFile(path.join(REPORT_DIR, "audit-report.json"), JSON.stringify(report, null, 2));
+    const markdown = [
+      "# HoHo Manager Playwright Audit",
+      "",
+      `- URL: ${APP_URL}`,
+      `- Generated: ${report.generatedAt}`,
+      `- Passed: ${passed}`,
+      `- Failed: ${failed}`,
+      `- Skipped: ${skipped}`,
+      "",
+      "| Status | Check | Details |",
+      "|---|---|---|",
+      ...results.map((item) => `| ${item.status} | ${item.name.replace(/\|/g, "\\|")} | ${String(item.details).replace(/\|/g, "\\|").replace(/\n/g, " ")} |`),
+      "",
+      "## Notes",
+      "- This is a UI smoke audit, not proof of complete functional correctness.",
+      "- No Discord message was sent and no destructive confirmation was accepted.",
+      "- Screenshots are saved as desktop.png and mobile.png in this reports folder.",
+    ].join("\n");
+    await writeFile(path.join(REPORT_DIR, "audit-report.md"), markdown);
+    console.log(`\nAudit finished: ${passed} passed, ${failed} failed, ${skipped} skipped.`);
+    console.log(`Reports: ${REPORT_DIR}`);
+    await context.close();
+    process.exitCode = failed > 0 ? 1 : 0;
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
