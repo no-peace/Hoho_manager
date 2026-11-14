@@ -37,7 +37,7 @@ export function getUserIdPlaceholderSuggestions(
 ): UserIdPlaceholderSuggestion[] | null {
   const normalized = query.trim().replace(/^\{+/, "").toLowerCase();
 
-  const match = normalized.match(/^user\.(\d{1,20})(?:\.([a-z0-9_]*))?$/);
+  const match = normalized.match(/^user\.(\d{1,20})(?:\.([a-z0-9_.]*))?$/);
 
   if (!match) return null;
 
