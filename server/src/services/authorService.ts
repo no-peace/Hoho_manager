@@ -125,7 +125,7 @@ const getClanTag = (member: any, user: DiscordMemberSummary): string => {
 
   const displayName = member?.nick || user.global_name || user.username;
   const text = `${displayName} ${user.username}`;
-  const bracket = text.match(/[\\[\\(\\{]([A-Za-z0-9_\\-\\.]{1,16})[\\]\\)\\}]/);
+  const bracket = text.match(/[\[\(\{]([A-Za-z0-9_\\-\\.]{1,16})[\]\)\}]/);
   if (bracket) return bracket[1];
   const separator = text.match(/(?:^([A-Za-z0-9_\\-\\.]{2,8})\\s*[\\|\\-•:]|[\\|\\-•:]\\s*([A-Za-z0-9_\\-\\.]{2,8})$)/);
   return separator ? (separator[1] || separator[2]).trim() : "";
