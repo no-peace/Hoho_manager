@@ -77,7 +77,7 @@ The history also includes CI hardening, Node 22/26 support, server benchmark val
 PR #39: [Improve Lighthouse performance on mobile and desktop](https://github.com/no-peace/Hoho_manager/pull/39)
 
 Branch: `perf/mobile-lighthouse-optimizations`  
-Current head: `d0dfe37fd0b033ba4244db04ea2626cb335da751`
+Application/source implementation commit: `d0dfe37fd0b033ba4244db04ea2626cb335da751`
 
 The PR contains:
 - `LoginScreen.tsx`: darker green demo-button background for white-text contrast and corrected showcase heading hierarchy.
@@ -88,9 +88,9 @@ The PR contains:
 - `docs/hoho_v6_master_architecture_plan.md`: project-side V6 plan.
 - `docs/GEMINI_HANDOFF_REPORT.md`: this implementation and performance handoff.
 
-The latest commit message is `split the login bundle and fix the lighthouse preview api` (natural wording, not a generated conventional-commit title).
+The source implementation commit message is `split the login bundle and fix the lighthouse preview api` (natural wording, not a generated conventional-commit title). The later commits on this branch only updated the Gemini handoff documentation; no application source changed after the measured implementation.
 
-PR #39 remains open and unmerged. Check its current head SHA, mergeability, and checks again before merging.
+PR #39 remains open and unmerged. Check its live head SHA, mergeability, and checks again before merging.
 
 ## 5. CI and security state observed
 
@@ -202,5 +202,5 @@ You are reviewing and continuing an existing codebase, not starting a redesign f
 - Latest median Performance is 97 mobile and 80 desktop; the older V4 target of 99+ is not yet met.
 - About 29.4 KB of unused JavaScript remains in the initial entry bundle.
 - LCP remains around 2.2 seconds on both devices.
-- The latest CI, Lighthouse, and Security workflows all passed for head `d0dfe37fd0b033ba4244db04ea2626cb335da751`.
+- The implementation checks passed for source head `d0dfe37fd0b033ba4244db04ea2626cb335da751`. A subsequent documentation-only branch update also passed CI, Lighthouse, and Security on head `707f1373b6de4b2622298a135246b5389358392b` (CI run `43547912990`, Lighthouse run `43547912926`, Security run `43547912902`). The report may receive further documentation-only updates; always use the live PR head for current status.
 - Always refresh branch heads, PR state, and workflow runs before acting; this report is a snapshot, not a substitute for live repository verification.
