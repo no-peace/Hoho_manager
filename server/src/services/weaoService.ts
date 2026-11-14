@@ -97,6 +97,7 @@ const inFlightChangelogs = new Map<string, Promise<unknown[]>>();
 export const getExploitChangelogComparison = (exploitName: string) =>
   changelogComparisons.get(exploitName.trim().toLowerCase()) ?? { added: [], removed: [] };
 const changelogComparisons = new Map<string, { added: unknown[]; removed: unknown[] }>();
+const changelogBaselines = new Map<string, unknown[]>();
 
 let rateLimitedUntilMs = 0;
 
@@ -290,12 +291,17 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
         changelogs?: unknown[];
       }>(`/api/status/exploits/changelogs/${encodeURIComponent(exploitName.trim())}`);
       const entries = Array.isArray(response?.changelogs) ? response.changelogs : [];
-      const previous = cached?.data ?? [];
+      const baseline = changelogBaselines.get(key);
       const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
-      changelogComparisons.set(key, {
-        added: cached ? entries.filter((entry) => !previous.some((old) => same(old, entry))) : [],
-        removed: cached ? previous.filter((entry) => !entries.some((current) => same(current, entry))) : [],
-      });
+      if (!baseline) {
+        changelogBaselines.set(key, entries);
+        changelogComparisons.set(key, { added: [], removed: [] });
+      } else {
+        changelogComparisons.set(key, {
+          added: entries.filter((entry) => !baseline.some((old) => same(old, entry))),
+          removed: baseline.filter((old) => !entries.some((current) => same(current, old))),
+        });
+      }
       changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
       return entries;
     } catch (error) {
