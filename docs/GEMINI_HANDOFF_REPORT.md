@@ -248,3 +248,70 @@ Check each relevant page/state at:
 4. Use actual browser screenshots at the viewport matrix above to decide whether the header, property panel, and split-pane concerns are real defects.
 5. Do not redesign components based only on source-level suspicion. Preserve editor behaviour, Discord payloads, keyboard accessibility and existing tests.
 6. Report each issue as reproduced, not reproduced, or not tested, with screenshot/test evidence.
+
+## 13. Follow-up viewport fixes and verification — 2026-11-14
+
+### Implemented on main
+
+The dropdown positioning fix now derives its height from the actual visible viewport space and does not enforce a 120px minimum:
+
+- Available space below accounts for the 4px trigger gap and 8px bottom viewport margin.
+- Available space above is capped to the viewport's usable height, preserving 8px top and bottom margins even if the trigger is outside the visible viewport.
+- The dropdown's top position is clamped so `top + maxHeight` stays inside the viewport.
+- The 260px preferred height remains the maximum, not a forced height.
+
+Regression coverage was updated in:
+- `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
+- `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx`
+
+The tests cover 180px-tall viewports, triggers close to the top and bottom edges, triggers outside the visible viewport, and randomized viewport containment.
+
+Other fixes:
+- `:root` in `client/src/styles/globals.css` now defaults to `scrollbar-color: #1A1B1E #2B2D31`; the redundant `:root.dark` override was removed.
+- The scrollable inspector body in `PropertyPanel.tsx` now includes `pb-[env(safe-area-inset-bottom)]`.
+
+### CI and Lighthouse verification
+
+Verified against code commit `7d956098d202d52e9d8bdf6871a350a2f4daa2f5`:
+
+- CI run [43566662508](https://github.com/no-peace/Hoho_manager/actions/runs/43566662508): **passed** on Node 22 and Node 26. Both matrix jobs passed build, typecheck, full tests, server performance benchmarks, and benchmark JSON validation.
+- Lighthouse run [43566662513](https://github.com/no-peace/Hoho_manager/actions/runs/43566662513): **passed** for mobile and desktop. Each device completed three Lighthouse samples and uploaded its report artifact.
+  - Mobile artifact ID: `14103210770`
+  - Desktop artifact ID: `14102602624`
+- Security run [43566662547](https://github.com/no-peace/Hoho_manager/actions/runs/43566662547): **passed**.
+
+The Lighthouse workflow passing confirms the audit completed; it does not by itself establish a particular LCP node or coverage result. Do not infer score changes without reading the JSON reports.
+
+### Requested earlier Lighthouse run and LCP investigation
+
+Run [43547638587](https://github.com/no-peace/Hoho_manager/actions/runs/43547638587) completed successfully on both devices and uploaded `lighthouse-mobile` and `lighthouse-desktop` artifacts. GitHub artifact metadata identifies its source as branch `perf/mobile-lighthouse-optimizations`, commit `d0dfe37fd0b033ba4244db04ea2626cb335da751`.
+
+**The JSON coverage data and LCP node from that run have not been inspected.** The downloaded ZIPs could not be analyzed in this session. Therefore no conclusion is recorded about the exact unused-JavaScript sources or LCP element, and no bundle edit was made.
+
+Source-only observations in `client/src/App.tsx`:
+- `NotFoundPage` is statically imported rather than lazy-loaded.
+- The `not_found` route returns before the `authLoading` check.
+- On the normal application route, `authLoading` returns `SessionAuthLoader` before `LoginScreen` is rendered.
+
+These facts identify possible bundle/startup considerations, but they do not prove either is responsible for the Lighthouse LCP. Inspect the requested report's LCP node and resource timing before changing lazy loading or auth gating.
+
+### Browser screenshot status and Header decision
+
+The requested six-width screenshot pass has **not** been performed. Required widths are 320, 360, 390, 430, 768, and 1280 px for `Header.tsx`, `PropertyPanel.tsx`, and `LoginScreen.tsx`.
+
+No secondary Header actions were collapsed. The 320px/360px overflow condition has not been visually confirmed, so changing the action layout without screenshots would be speculative. Complete this matrix in an interactive browser session and only then decide whether actions need to collapse below 430px.
+
+### Protected PR #39 configuration
+
+No Vite configuration file was modified. `client/vite.config.ts` retains the existing `manualChunks` and `/api` preview proxy setup from PR #39.
+
+### Relevant implementation commits
+
+- `af002f4` — fix select dropdown height on short screens
+- `5e8cb4b` — cover select dropdown placement on short viewports
+- `1728e67` — test select dropdown near viewport edges
+- `02e72a6` — default root scrollbar colors to dark theme
+- `8a31fa9` — add safe area padding to the property panel
+- `f10d5b3` — keep dropdown margins inside the viewport
+- `02a996c` — cover triggers outside the viewport in layout tests
+- `7d95609` — fix crowded viewport expectations in layout tests
