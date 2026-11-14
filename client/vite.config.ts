@@ -33,6 +33,14 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    proxy: {
+      "/api": {
+        target: LOCAL_API_URL,
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     outDir: "dist",
     sourcemap: false,
@@ -45,9 +53,7 @@ export default defineConfig({
           if (id.includes("emoji-mart") || id.includes("@emoji-mart") || id.includes("chrono-node")) {
             return "vendor-pickers";
           }
-          if (id.includes("react") || id.includes("zustand") || id.includes("sileo")) {
-            return "vendor-react";
-          }
+          // Let Vite keep route-only React libraries in their lazy route chunks.
           return undefined;
         },
       },
