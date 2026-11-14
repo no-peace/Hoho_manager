@@ -41,8 +41,9 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const currentName = useTemplateStore((state) => state.currentName);
   const currentTemplateId = useTemplateStore((state) => state.currentId);
   const templateDirty = useTemplateStore((state) => state.dirty);
-  const editorData = useMessageStore((state) => state.data);
+  const editorData = useMessageStore((state) => state.data) as any;
   const getEditorPayload = useMessageStore((state) => state.getPayload);
+  const openBotModal = useGlobalStore((state) => state.openBotModal);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
   const { showToast, openConfirm } = useGlobalStore();
@@ -168,6 +169,31 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       showToast("Existing backup overwritten with the current editor content", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to overwrite backup", "error");
+    }
+  };
+
+  const handleEditTrackedMessage = (item: any) => {
+    try {
+      const rawPayload = item.source?.rawPayload;
+      if (typeof rawPayload !== "string") throw new Error("This tracked message has no saved source payload.");
+      const payload = JSON.parse(rawPayload);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("The saved tracked payload is invalid.");
+      }
+      const store = useMessageStore.getState();
+      store.load({
+        data: {
+          ...payload,
+          link_mode: "edit",
+          edit_channel_id: item.source.channelId,
+          edit_message_id: item.source.messageId,
+        },
+        mode: store.mode,
+      });
+      onClose();
+      openBotModal("edit");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to load tracked message", "error");
     }
   };
 
@@ -432,6 +458,11 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                     Overwrite Backup
                   </Button>
                 )}
+                {item.kind === "tracked" && item.source.rawPayload && (
+                  <Button size="sm" variant="secondary" onClick={() => handleEditTrackedMessage(item)}>
+                    Edit Bot Message
+                  </Button>
+                )}
                 {item.kind === "tracked" && editorData?.link_mode === "edit" &&
                   editorData?.edit_channel_id === item.source.channelId &&
                   editorData?.edit_message_id === item.source.messageId &&
@@ -444,7 +475,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                     }
                   })() && (
                     <Button size="sm" variant="primary" onClick={() => void handleOverwriteTrackedMessage(item)}>
-                      Edit Bot Message
+                      Overwrite Tracked Message
                     </Button>
                   )}
                 {item.kind === "template" && (
