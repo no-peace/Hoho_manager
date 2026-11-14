@@ -25,6 +25,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [filter, setFilter] = useState<"all" | "tracked" | "templates">("all");
   const [templateName, setTemplateName] = useState("");
   const [trackOnSave, setTrackOnSave] = useState(false);
+  const [addToBotCommand, setAddToBotCommand] = useState(false);
   const [expiryEnabled, setExpiryEnabled] = useState(true);
   const [scheduledExpiry, setScheduledExpiry] = useState<string | null>(
     () => new Date(getServerNow().getTime() + 14 * 86_400_000).toISOString(),
@@ -35,6 +36,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [editExpiresAt, setEditExpiresAt] = useState<string | null>(null);
   const [trackedList, setTrackedList] = useState<any[]>([]);
   const [loadingTracked, setLoadingTracked] = useState(false);
+  const currentUser = useGlobalStore((state) => state.currentUser);
   const currentName = useTemplateStore((state) => state.currentName);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
@@ -76,9 +78,23 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       const expiresAt = resolveNewExpiry();
       if (templateName.trim()) setCurrentName(templateName.trim());
       await saveCurrent(expiresAt, trackOnSave);
+      const savedName = templateName.trim() || currentName.trim() || "Untitled Backup";
       setTemplateName("");
       await refresh();
-      showToast("Backup saved successfully", "success");
+      if (addToBotCommand) {
+        if (!currentUser?.isAdmin) throw new Error("Head Admin access is required to add a bot command.");
+        const response = await api.templates.list(savedName);
+        const savedTemplate = response.templates.find((item) => item.name.toLowerCase() === savedName.toLowerCase());
+        if (!savedTemplate) throw new Error("Backup saved, but its template could not be found for command setup.");
+        await api.executors.upsert({
+          id: `backup_${savedTemplate.id}`,
+          title: savedTemplate.name,
+          enabled: true,
+          template_id: savedTemplate.id,
+        });
+      }
+      setAddToBotCommand(false);
+      showToast(addToBotCommand ? "Backup saved and added to /exploit" : "Backup saved successfully", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to save backup", "error");
     }
@@ -137,6 +153,32 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       showToast("Backup settings updated", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to update backup", "error");
+    }
+  };
+
+  const handleAddToBotCommand = async (item: any) => {
+    if (!currentUser?.isAdmin) {
+      showToast("Head Admin access is required to configure /exploit commands", "error");
+      return;
+    }
+    try {
+      const title = typeof item.source?.exploitName === "string" && item.source.exploitName.trim()
+        ? item.source.exploitName.trim()
+        : item.name;
+      const rawPayload = item.kind === "tracked" ? item.source?.rawPayload : null;
+      if (item.kind === "tracked" && !item.source?.templateId && !rawPayload) {
+        showToast("This tracked message has no saved payload to use as a command template", "error");
+        return;
+      }
+      await api.executors.upsert({
+        id: `backup_${item.id}`,
+        title,
+        enabled: true,
+        ...(item.kind === "template" ? { template_id: item.id } : { custom_payload: rawPayload }),
+      });
+      showToast("Added to /exploit. Messages sent through the command are tracked automatically.", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to add bot command", "error");
     }
   };
 
@@ -264,6 +306,14 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             label="Track Message"
             className="text-xs"
           />
+          {currentUser?.isAdmin && (
+            <Checkbox
+              checked={addToBotCommand}
+              onChange={setAddToBotCommand}
+              label="Add to /exploit command"
+              className="text-xs"
+            />
+          )}
           <Checkbox
             checked={expiryEnabled}
             onChange={setExpiryEnabled}
@@ -347,6 +397,11 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 {item.kind === "template" && (
                   <Button size="sm" variant="ghost" onClick={() => handleLoad(item.id)}>
                     Load
+                  </Button>
+                )}
+                {currentUser?.isAdmin && (
+                  <Button size="sm" variant="secondary" onClick={() => void handleAddToBotCommand(item)}>
+                    Add to Bot Commands
                   </Button>
                 )}
                 <button
