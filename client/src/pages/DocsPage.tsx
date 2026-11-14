@@ -1,12 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
 import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
-import {AnimatedMorphIcon } from "../components/ui/CultSkiperPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { motion } from "motion/react";
 import {
-  Copy,
-  Check,
   Search,
   User,
   Sparkles,
@@ -25,9 +22,9 @@ interface DocItem {
 const DOC_ITEMS: DocItem[] = [
   // User & Member
   { tag: "{user.mention}", desc: "Pings/mentions the interacting user (<@id>)", example: "@Nexus42", category: "user" },
-  { tag: "{user.name}", desc: "The member's exact username without discriminator", example: "nexus42", category: "user" },
+  { tag: "{user.name}", desc: "Server nickname, falling back to the account username", example: "Nexus", category: "user" },
   { tag: "{user.tag}", desc: "Alias for the user's username", example: "nexus42", category: "user" },
-  { tag: "{user.displayname}", desc: "Server nickname or global display name", example: "Nexus", category: "user" },
+  { tag: "{user.displayname}", desc: "Discord global display name, falling back to username", example: "Nexus", category: "user" },
   { tag: "{user.id}", desc: "Discord numeric Snowflake ID", example: "708504312862474282", category: "user" },
   { tag: "{user.avatar}", desc: "Direct CDN URL to the user's avatar image", example: "https://cdn.discordapp.com/...", category: "user" },
   { tag: "{user.roles}", desc: "Space-separated list of all role mentions the user has", example: "@Member @VIP", category: "user" },
@@ -95,6 +92,9 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{exploit.Delta.keysystem}", desc: "Key system status (Key System / Keyless)", example: "Key System", category: "exploit" },
   { tag: "{exploit.Delta.websitelink}", desc: "Official website URL", example: "https://deltaexploits.gg", category: "exploit" },
   { tag: "{exploit.Delta.discordlink}", desc: "Official Discord invite link", example: "https://discord.gg/...", category: "exploit" },
+  { tag: "{exploit.Delta.changelogs}", desc: "Formatted WEAO changelog entries for the named exploit", example: "• New version released — Fixed injection", category: "exploit" },
+  { tag: "{exploit.Delta.changelogs[0:3]}", desc: "Only the first three changelog entries (zero-based slice)", example: "• Entry 1\\n• Entry 2\\n• Entry 3", category: "exploit" },
+  { tag: "{exploit.Delta.changelogs[2]}", desc: "Only the third changelog entry (zero-based index)", example: "• Entry 3", category: "exploit" },
   { tag: "{exploit.Delta.purchaselink}", desc: "Official purchase URL", example: "https://...", category: "exploit" },
 
   // Dynamic Author Auto-Resolution
@@ -135,7 +135,7 @@ export const DocsPage = () => {
     <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-24">
       <PublicPageHeader activePage="docs" />
 
-      <div className="max-w-5xl mx-auto mt-8 px-6">
+      <div className="max-w-6xl mx-auto mt-8 px-4 sm:px-6">
         {/* Hero Section */}
         <div className="mb-8 rounded-xl bg-[#2b2d31] border border-[#26282d] p-5 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-2">
@@ -234,7 +234,7 @@ export const DocsPage = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
               Available Variables ({filteredItems.length})
             </span>
-            <span className="text-[11px] text-[#949ba4]">Click any tag or copy button to copy</span>
+            <span className="text-[11px] text-[#949ba4]">Click a variable tag to copy it</span>
           </div>
 
           <div className="overflow-x-auto">
@@ -244,8 +244,7 @@ export const DocsPage = () => {
                   <th className="px-5 py-3 font-semibold w-[28%]">Variable Tag</th>
                   <th className="px-5 py-3 font-semibold">Description</th>
                   <th className="px-5 py-3 font-semibold w-[24%]">Output Example</th>
-                  <th className="px-4 py-3 font-semibold w-16 text-right">Action</th>
-                </tr>
+                                  </tr>
               </thead>
               <tbody className="text-xs divide-y divide-[#1e1f22]">
                 {filteredItems.map((item) => (
@@ -258,32 +257,18 @@ export const DocsPage = () => {
                         title="Click to copy"
                       >
                         <span>{item.tag}</span>
-                        <kbd className="ml-2 hidden rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px] font-medium text-[#949ba4] xl:inline">Click to copy</kbd>
+                        <kbd className="ml-2 hidden rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px] font-medium text-[#949ba4] xl:inline">{copiedTag === item.tag ? "Copied" : "Click to copy"}</kbd>
                       </button>
                     </td>
                     <td className="px-5 py-3 text-[#dbdee1] leading-relaxed">{item.desc}</td>
                     <td className="px-5 py-3 font-mono text-[#949ba4] truncate max-w-[200px]">
                       {item.example}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(item.tag)}
-                        className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors inline-flex items-center justify-center"
-                        title="Copy tag"
-                      >
-                        <AnimatedMorphIcon
-                          active={copiedTag === item.tag}
-                          activeIcon={<Check size={13} className="text-[#23a55a]" />}
-                          inactiveIcon={<Copy size={13} />}
-                        />
-                      </button>
-                    </td>
                   </tr>
                 ))}
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-[#949ba4]">
+                    <td colSpan={3} className="px-5 py-8 text-center text-[#949ba4]">
                       No variables matching &ldquo;{search}&rdquo; in this category.
                     </td>
                   </tr>
