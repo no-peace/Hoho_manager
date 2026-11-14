@@ -1,32 +1,40 @@
 name: CI
+
 on:
   push:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-typecheck:
+  build-and-test:
+    name: Build, typecheck, and test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "26"]
+        node-version: ["22", "24", "26"]
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
 
       - name: Build all workspaces
@@ -35,7 +43,7 @@ jobs:
       - name: Typecheck all workspaces
         run: npm run typecheck
 
-      - name: Run tests
+      - name: Run test suites
         env:
           NODE_ENV: test
           ADMIN_API_KEY: ci-test-admin-key-0123456789abcdef
@@ -46,23 +54,32 @@ jobs:
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID || vars.DISCORD_APPLICATION_ID }}
         run: npm test
 
-      - name: Run server performance benchmarks
+      - name: Run server performance benchmark (Node 26 only)
+        if: matrix.node-version == '26'
         env:
           NODE_ENV: test
           ADMIN_API_KEY: ci-test-admin-key-0123456789abcdef
           ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           DATABASE_PATH: ":memory:"
           DISCORD_BOT_TOKEN: ci-test-bot-token
-        run: npm run benchmark:json | tee /dev/stderr | sed -n '/^{/,$p' > server-performance-report.json
         shell: bash
-
-      - name: Validate benchmark report JSON
-        run: node --input-type=module -e "import { readFileSync } from 'node:fs'; JSON.parse(readFileSync('server-performance-report.json', 'utf8'));"
+        run: |
+          set -euo pipefail
+          npm run benchmark:json 2> >(tee /dev/stderr) | tee server-performance-output.json
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const output = readFileSync("server-performance-output.json", "utf8");
+          const jsonStart = output.indexOf("{");
+          if (jsonStart < 0) throw new Error("Benchmark did not produce a JSON report.");
+          const report = JSON.parse(output.slice(jsonStart));
+          writeFileSync("server-performance-report.json", JSON.stringify(report, null, 2) + "\n");
+          NODE
 
       - name: Upload server performance report
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: always() && matrix.node-version == '26'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: server-performance-report-node-${{ matrix.node-version }}
+          name: server-performance-report-node-26
           path: server-performance-report.json
           if-no-files-found: ignore
+          retention-days: 14

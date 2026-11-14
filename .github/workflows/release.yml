@@ -7,34 +7,63 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Existing version tag to publish
+        description: Existing semantic-version tag to publish (example: v1.2.3)
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event.inputs.tag_name || github.ref }}
   cancel-in-progress: false
 
 jobs:
   verify:
-    name: Verify release
+    name: Verify exact release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
+
     steps:
-      - name: Check out source
-        uses: actions/checkout@v4
+      - name: Check out event commit to access repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid release tag '$RELEASE_TAG'. Expected a tag such as v1.2.3 or v1.2.3-rc.1."
+            exit 1
+          fi
+          git check-ref-format "refs/tags/$RELEASE_TAG"
+          if ! git ls-remote --exit-code origin "refs/tags/$RELEASE_TAG" >/dev/null; then
+            echo "::error::Tag '$RELEASE_TAG' does not exist on origin."
+            exit 1
+          fi
+
+      - name: Check out the exact release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag_name || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Confirm checked-out commit belongs to the requested tag
+        run: git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}"
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "26"
           cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
 
       - name: Build all workspaces
@@ -43,7 +72,7 @@ jobs:
       - name: Typecheck all workspaces
         run: npm run typecheck
 
-      - name: Run tests
+      - name: Run test suites
         env:
           NODE_ENV: test
           ADMIN_API_KEY: ci-test-admin-key-0123456789abcdef
@@ -55,12 +84,13 @@ jobs:
   publish:
     name: Publish GitHub release
     needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
-    runs-on: ubuntu-latest
     steps:
       - name: Create release with generated notes
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           generate_release_notes: true

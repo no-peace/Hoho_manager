@@ -8,11 +8,10 @@ on:
     - cron: "23 3 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: security-${{ github.workflow }}-${{ github.ref }}
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,11 +19,14 @@ jobs:
     name: Scan repository history for leaked secrets
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Check out full Git history
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Scan with Gitleaks
         run: |
@@ -35,7 +37,7 @@ jobs:
 
       - name: Upload redacted secret scan report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gitleaks-redacted-report
           path: gitleaks-report.json
@@ -46,12 +48,14 @@ jobs:
     name: Static security analysis
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
 
@@ -65,37 +69,37 @@ jobs:
     name: Audit npm dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "26"
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install locked dependencies
         run: npm ci
 
       - name: Check for high and critical npm vulnerabilities
-        id: audit
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           npm audit --audit-level=high --json > npm-audit-report.json
-          audit_status=$?
           node --input-type=module <<'NODE'
           import { readFileSync } from "node:fs";
           const report = JSON.parse(readFileSync("npm-audit-report.json", "utf8"));
           console.log("Dependency vulnerability summary:");
           console.log(JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2));
           NODE
-          exit "$audit_status"
 
       - name: Upload npm audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: npm-security-audit-report
           path: npm-audit-report.json

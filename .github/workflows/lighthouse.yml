@@ -6,37 +6,45 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: lighthouse-${{ github.workflow }}-${{ github.ref }}
+  group: lighthouse-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   lighthouse:
     name: Lighthouse (${{ matrix.formFactor }})
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         formFactor: [mobile, desktop]
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "26"
           cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
 
       - name: Build shared, client, and server
         run: npm run build:shared && npm run build:client && npm run build:server
 
       - name: Start API for Lighthouse
+        shell: bash
         run: |
+          set -euo pipefail
           NODE_ENV=test PORT=3001 DATABASE_URL=./data/lighthouse.sqlite npm run start --workspace server > /tmp/hoho-api.log 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null; then
@@ -49,7 +57,9 @@ jobs:
           exit 1
 
       - name: Start production preview
+        shell: bash
         run: |
+          set -euo pipefail
           npm run preview --workspace client -- --host 127.0.0.1 --port 4173 > /tmp/hoho-preview.log 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
@@ -66,8 +76,9 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lighthouse-${{ matrix.formFactor }}
           path: lhci-results/${{ matrix.formFactor }}
           if-no-files-found: ignore
+          retention-days: 14
