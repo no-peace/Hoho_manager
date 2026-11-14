@@ -704,7 +704,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
 
   useEffect(() => {
     if (!content) return;
-    const tokens = Array.from(content.matchAll(/\\{exploit\\.([^{}]+)\\.(changelogs(?:\\[\\d+(?::\\d+)?\\]|\\.compare)?)\\}/gi));
+    const tokens = Array.from(content.matchAll(/\\{exploit\\.([^{}]+)\\.(changelogs(?:\\[-?\\d+(?::-?\\d*)?\\]|\\.compare)?)\\}/gi));
     if (!tokens.length) return;
     let cancelled = false;
     const unique = new Map<string, { name: string; selector: string }>();
