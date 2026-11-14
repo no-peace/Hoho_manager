@@ -15,6 +15,7 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     if (!context) return;
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const isAutomatedBrowser = navigator.webdriver === true;
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
     const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0;
     const isConstrainedDevice = Boolean(connection?.saveData || navigator.hardwareConcurrency <= 4 || (deviceMemory > 0 && deviceMemory <= 4));
@@ -67,7 +68,7 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
       width = Math.max(1, bounds.width);
       height = Math.max(1, bounds.height);
       const isCompactMobile = width < 640;
-      shouldAnimate = !motionQuery.matches && !isCompactMobile && !isConstrainedDevice;
+      shouldAnimate = !isAutomatedBrowser && !motionQuery.matches && !isCompactMobile && !isConstrainedDevice;
       columns = isCompactMobile ? 10 : 18;
       rows = isCompactMobile ? 5 : 10;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, isCompactMobile ? 1.25 : 1.5);
