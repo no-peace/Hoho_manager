@@ -18,6 +18,15 @@ describe("WEAO changelog formatting", () => {
     ].join("\n"));
   });
 
+  it("formats the actual WEAO version/changelog/date response shape", () => {
+    expect(formatExploitChangelogs([{
+      version: "0.1.9a",
+      changelog: "[+] Added support\\n[+] Fixed injection",
+      timestamp: 1794528000,
+      date: "2026-11-13T00:00:00.000Z",
+    }])).toBe("• **0.1.9a** — [+] Added support\\n[+] Fixed injection — (2026-11-13T00:00:00.000Z)");
+  });
+
   it("supports zero-based start:end slicing", () => {
     expect(formatExploitChangelogs(entries, "changelogs[1:3]")).toBe([
       "• **Release 2** — Added support",
