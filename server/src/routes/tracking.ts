@@ -70,6 +70,8 @@ router.get(
           exploitName: m.exploit_name,
           authorUserId: m.author_user_id,
           name: m.name ?? null,
+          rawPayload: m.raw_payload ?? null,
+          exploitName: m.exploit_name ?? null,
           expiresAt: m.expires_at ?? null,
           createdAt: m.created_at,
           updatedAt: m.updated_at,
