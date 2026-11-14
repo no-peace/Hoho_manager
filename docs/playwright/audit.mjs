@@ -70,7 +70,6 @@ async function main() {
   let page = context.pages()[0] || await context.newPage();
   let originalStorage = null;
   let storageSnapshotTaken = false;
-  let auditMutatedStorage = false;
 
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
@@ -175,21 +174,26 @@ async function main() {
   } catch (error) {
     record("Audit execution", "FAIL", error?.stack || String(error));
   } finally {
-    // This audit currently performs no intentional state mutation. Keep a defensive
-    // restore path in case a future check changes localStorage before completion.
-    if (storageSnapshotTaken && auditMutatedStorage) {
+    // Verify the audit left the user's saved message data untouched. If a check or
+    // application side effect changed it, restore the exact original value.
+    if (storageSnapshotTaken) {
       try {
-        await page.evaluate(({ key, value }) => {
-          if (value === null) localStorage.removeItem(key);
-          else localStorage.setItem(key, value);
-        }, { key: STORAGE_KEY, value: originalStorage });
-        await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-        record("Original message data restored", "PASS");
+        const currentStorage = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+        if (currentStorage !== originalStorage) {
+          await page.evaluate(({ key, value }) => {
+            if (value === null) localStorage.removeItem(key);
+            else localStorage.setItem(key, value);
+          }, { key: STORAGE_KEY, value: originalStorage });
+          await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+          record("Original message data restored", "PASS", "A storage change was detected and the snapshot was restored");
+        } else {
+          record("Message data safety", "PASS", "Saved message data is unchanged");
+        }
       } catch (error) {
-        record("Original message data restored", "FAIL", String(error));
+        record("Original message data verification", "FAIL", String(error));
       }
     } else {
-      record("Message data safety", "PASS", "No message data was modified by this audit");
+      record("Message data safety", "SKIP", "Could not snapshot storage before the audit");
     }
 
     const passed = results.filter((item) => item.status === "PASS").length;
