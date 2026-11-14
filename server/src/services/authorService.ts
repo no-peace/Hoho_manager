@@ -85,6 +85,7 @@ const getUserField = (
 ): string | null => {
   switch (field.toLowerCase()) {
     case "name":
+      return user.username;
     case "displayname":
     case "globalname":
       return user.global_name || user.username;
@@ -94,9 +95,6 @@ const getUserField = (
     case "id":
       return user.id;
     case "avatar":
-    case "avatarurl":
-    case "icon":
-    case "pfp":
       return getDiscordUserAvatarUrl(user);
     case "url":
     case "profile":
@@ -115,20 +113,11 @@ const getUserField = (
 const snowflakeToUnix = (id: string): number =>
   Math.floor(Number((BigInt(id) >> 22n) + 1420070400000n) / 1000);
 
-const getClanTag = (member: any, user: DiscordMemberSummary): string => {
-  const official =
-    (typeof member?.clan === "string" ? member.clan : member?.clan?.tag) ??
-    (typeof member?.user?.clan === "string" ? member.user.clan : member?.user?.clan?.tag) ??
-    (typeof (user as any)?.clan === "string" ? (user as any).clan : (user as any)?.clan?.tag) ??
-    member?.primary_guild?.tag ?? member?.user?.primary_guild?.tag ?? member?.clan_tag;
-  if (typeof official === "string" && official.trim()) return official.trim();
-
-  const displayName = member?.nick || user.global_name || user.username;
-  const text = String(displayName) + " " + user.username;
-  const bracket = text.match(/\[([A-Za-z0-9_.-]{1,16})\]|\(([A-Za-z0-9_.-]{1,16})\)|\{([A-Za-z0-9_.-]{1,16})\}/);
-  if (bracket) return bracket[1] || bracket[2] || bracket[3];
-  const separator = text.match(/(?:^([A-Za-z0-9_.-]{2,8})\s*[|•:-]|[|•:-]\s*([A-Za-z0-9_.-]{2,8})$)/);
-  return separator ? (separator[1] || separator[2]).trim() : "";
+const getClanTag = (user: DiscordMemberSummary): string => {
+  const primaryGuild = (user as any).primary_guild;
+  if (primaryGuild?.identity_enabled !== true) return "";
+  const tag = primaryGuild?.tag;
+  return typeof tag === "string" && tag.trim() ? tag.trim() : "";
 };
 
 /**
@@ -236,15 +225,16 @@ export const resolveAuthorPlaceholders = async (
           ? member.roles.map((roleId: string) => `<@&${roleId}>`).join(" ")
           : member ? "None" : fullMatch;
       }
-      if (normalized === "clantag") return member ? getClanTag(member, user) : fullMatch;
+      if (normalized === "clantag") return getClanTag(user) || fullMatch;
       if (normalized === "joined" || normalized === "joined.date") {
         const joinedAt = typeof member?.joined_at === "string" ? Math.floor(Date.parse(member.joined_at) / 1000) : NaN;
         if (!Number.isFinite(joinedAt)) return fullMatch;
         return `<t:${joinedAt}:${normalized === "joined" ? "R" : "d"}>`;
       }
-      if (normalized === "displayname") {
-        return (typeof member?.nick === "string" && member.nick) || user.global_name || user.username;
+      if (normalized === "name") {
+        return (typeof member?.nick === "string" && member.nick.trim()) || user.username;
       }
+      if (normalized === "displayname") return user.global_name || user.username;
       return getUserField(user, field) ?? fullMatch;
     });
 
