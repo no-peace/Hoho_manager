@@ -2,6 +2,8 @@ import type { DiscordMessagePayload } from "@dmb/shared";
 import {
   getDiscordUser,
   getDiscordUserAvatarUrl,
+  getGuildMember,
+  resolveBotToken,
   type DiscordMemberSummary,
 } from "./discordService.js";
 import { logger } from "../utils/logger.js";
@@ -11,6 +13,8 @@ const log = logger.child("authorService");
 const DISCORD_USER_ID_REGEX = /^\d{17,20}$/;
 const USER_PLACEHOLDER_REGEX = /\{user\.(\d{17,20})\.([a-zA-Z0-9_]+)\}/g;
 const MAX_USER_LOOKUPS_PER_PAYLOAD = 10;
+const MEMBER_CACHE_TTL_MS = 60_000;
+const memberCache = new Map<string, { member: any; expiresAt: number }>();
 
 type AuthorObject = Record<string, unknown>;
 
@@ -99,9 +103,32 @@ const getUserField = (
       return `https://discord.com/users/${user.id}`;
     case "mention":
       return `<@${user.id}>`;
+    case "created":
+      return `<t:${snowflakeToUnix(user.id)}:d>`;
+    case "created.relative":
+      return `<t:${snowflakeToUnix(user.id)}:R>`;
     default:
       return null;
   }
+};
+
+const snowflakeToUnix = (id: string): number =>
+  Number((BigInt(id) >> 22n) + 1420070400000n / 1000n);
+
+const getClanTag = (member: any, user: DiscordMemberSummary): string => {
+  const official =
+    (typeof member?.clan === "string" ? member.clan : member?.clan?.tag) ??
+    (typeof member?.user?.clan === "string" ? member.user.clan : member?.user?.clan?.tag) ??
+    (typeof (user as any)?.clan === "string" ? (user as any).clan : (user as any)?.clan?.tag) ??
+    member?.primary_guild?.tag ?? member?.user?.primary_guild?.tag ?? member?.clan_tag;
+  if (typeof official === "string" && official.trim()) return official.trim();
+
+  const displayName = member?.nick || user.global_name || user.username;
+  const text = `${displayName} ${user.username}`;
+  const bracket = text.match(/[\\[\\(\\{]([A-Za-z0-9_\\-\\.]{1,16})[\\]\\)\\}]/);
+  if (bracket) return bracket[1];
+  const separator = text.match(/(?:^([A-Za-z0-9_\\-\\.]{2,8})\\s*[\\|\\-•:]|[\\|\\-•:]\\s*([A-Za-z0-9_\\-\\.]{2,8})$)/);
+  return separator ? (separator[1] || separator[2]).trim() : "";
 };
 
 /**
@@ -112,6 +139,7 @@ export const resolveAuthorPlaceholders = async (
   payload: DiscordMessagePayload,
   fallbackAuthorId?: string | null,
   profileId?: number | null,
+  guildId?: string | null,
 ): Promise<AuthorResolutionResult> => {
   const authorObjects = collectAuthorObjects(payload);
   const authorIds = authorObjects.map(getAuthorUserId);
@@ -146,6 +174,7 @@ export const resolveAuthorPlaceholders = async (
   }
 
   const userMap = new Map<string, DiscordMemberSummary>();
+  const memberMap = new Map<string, any>();
 
   // Sequential lookup keeps a single payload's outbound API traffic bounded.
   for (const id of allowedIds) {
@@ -165,10 +194,57 @@ export const resolveAuthorPlaceholders = async (
     }
   }
 
+  if (guildId && allowedIds.length > 0) {
+    let token: string | null = null;
+    try {
+      token = await resolveBotToken(profileId ?? null);
+    } catch (error) {
+      log.warn(`Could not resolve bot token for guild user placeholders: ${error instanceof Error ? error.name : "unknown error"}`);
+    }
+    if (token) {
+      for (const id of allowedIds) {
+        const cacheKey = `${guildId}:${id}`;
+        const cached = memberCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+          memberMap.set(id, cached.member);
+          continue;
+        }
+        try {
+          const member = await getGuildMember(guildId, id, token);
+          if (member) {
+            memberMap.set(id, member);
+            memberCache.set(cacheKey, { member, expiresAt: Date.now() + MEMBER_CACHE_TTL_MS });
+          }
+        } catch (error) {
+          const status = error && typeof error === "object" && "status" in error
+            ? String((error as { status: unknown }).status)
+            : "unknown";
+          if (status !== "404") log.warn(`Could not resolve guild member ${id} in ${guildId} (HTTP ${status})`);
+        }
+      }
+    }
+  }
+
   const interpolateString = (value: string): string =>
     value.replace(USER_PLACEHOLDER_REGEX, (fullMatch, id: string, field: string) => {
       const user = userMap.get(id);
       if (!user) return fullMatch;
+      const normalized = field.toLowerCase();
+      const member = memberMap.get(id);
+      if (normalized === "roles") {
+        return Array.isArray(member?.roles) && member.roles.length
+          ? member.roles.map((roleId: string) => `<@&${roleId}>`).join(" ")
+          : member ? "None" : fullMatch;
+      }
+      if (normalized === "clantag") return member ? getClanTag(member, user) : fullMatch;
+      if (normalized === "joined" || normalized === "joined.date") {
+        const joinedAt = typeof member?.joined_at === "string" ? Math.floor(Date.parse(member.joined_at) / 1000) : NaN;
+        if (!Number.isFinite(joinedAt)) return fullMatch;
+        return `<t:${joinedAt}:${normalized === "joined" ? "R" : "d"}>`;
+      }
+      if (normalized === "displayname") {
+        return (typeof member?.nick === "string" && member.nick) || user.global_name || user.username;
+      }
       return getUserField(user, field) ?? fullMatch;
     });
 
