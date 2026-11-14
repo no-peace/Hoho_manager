@@ -50,6 +50,19 @@ describe("getUserIdPlaceholderSuggestions", () => {
     ).toBeNull();
   });
 
+  it("suggests the full standard user field set for an ID", () => {
+    const suggestions = getUserIdPlaceholderSuggestions("user.123456789012345678.");
+    const tags = suggestions?.map((item) => item.tag) ?? [];
+    for (const field of ["roles", "clantag", "created", "created.relative", "joined", "joined.date"]) {
+      expect(tags).toContain(`{user.123456789012345678.${field}}`);
+    }
+  });
+
+  it("filters nested timestamp fields", () => {
+    const suggestions = getUserIdPlaceholderSuggestions("user.123456789012345678.created.");
+    expect(suggestions?.map((item) => item.tag)).toContain("{user.123456789012345678.created.relative}");
+  });
+
   it("keeps the entered ID prefix in every replacement", () => {
     const suggestions = getUserIdPlaceholderSuggestions("user.133342345");
 
