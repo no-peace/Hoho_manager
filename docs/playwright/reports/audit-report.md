@@ -1,10 +1,10 @@
 # HoHo Manager Playwright Audit
 
 - URL: https://hoho-manager.onrender.com/
-- Generated: 2026-11-14T08:10:19.176Z
+- Generated: 2026-11-14T08:40:51.010Z
 - Responsive widths: 320, 360, 390, 430, 768, 1280px
-- Passed: 28
-- Failed: 2
+- Passed: 30
+- Failed: 0
 - Skipped: 2
 
 | Status | Check | Details |
@@ -19,14 +19,10 @@
 | PASS | Application route responds | https://hoho-manager.onrender.com/ |
 | PASS | Existing message data snapshot | Existing value captured for restoration |
 | PASS | App rendered visible content | HoHo Manager Select Server... ▼ Backups JSON Settings Staff Access 𝑷𝒆𝒂𝒄𝒆 Docs Message 1 CLASSIC THREAD Files Add UR |
-| PASS | JSON modal opens | JSON Data title and editor found |
-| PASS | Backups modal opens | Dialog detected |
-| SKIP | Dispatch dialog opens | Opened for inspection only; no send action is performed |
-| PASS | Clear-all confirmation opens | Confirmation is not accepted; existing messages are left intact |
 | PASS | Studio 320px horizontal overflow | viewport=320px, document=320px, body=320px |
-| FAIL | Header 320px internal overflow | client=320px, scroll=367px |
+| PASS | Header 320px internal overflow | client=320px, scroll=320px |
 | PASS | Studio 360px horizontal overflow | viewport=360px, document=360px, body=360px |
-| FAIL | Header 360px internal overflow | client=360px, scroll=367px |
+| PASS | Header 360px internal overflow | client=360px, scroll=360px |
 | PASS | Studio 390px horizontal overflow | viewport=390px, document=390px, body=390px |
 | PASS | Header 390px internal overflow | client=390px, scroll=390px |
 | PASS | Studio 430px horizontal overflow | viewport=430px, document=430px, body=430px |
@@ -36,6 +32,10 @@
 | PASS | Studio 1280px horizontal overflow | viewport=1280px, document=1280px, body=1280px |
 | PASS | Header 1280px internal overflow | client=1280px, scroll=1280px |
 | SKIP | PropertyPanel responsive screenshots | Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it |
+| PASS | JSON modal opens | JSON Data title and editor found |
+| PASS | Backups modal opens | Dialog detected |
+| SKIP | Dispatch dialog opens | Opened for inspection only; no send action is performed |
+| PASS | Clear-all confirmation opens | Confirmation is not accepted; existing messages are left intact |
 | PASS | Browser console errors | No console errors captured |
 | PASS | Uncaught page errors | None captured |
 | PASS | Failed network requests | None captured |
