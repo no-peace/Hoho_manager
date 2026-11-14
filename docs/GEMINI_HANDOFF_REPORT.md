@@ -191,8 +191,8 @@ You are reviewing and continuing an existing codebase, not starting a redesign f
 2. Read the older V4 plan only for its historical context and specific earlier performance/SEO work.
 3. Inspect current `main`, PR #39, the current PR head, the actual workflow files, and the latest Lighthouse artifacts before recommending edits.
 4. Preserve existing tests and all Discord payload/API behavior. Do not rewrite working features merely for stylistic preference.
-5. Prioritize the eager `vendor-react` bundle and broken Lighthouse API preview described above.
-6. Run the same CI, security, mobile Lighthouse, and desktop Lighthouse workflows after changes.
+5. The eager `vendor-react` bundle and missing API in Lighthouse preview have already been fixed in the current PR. Do not repeat those changes; inspect the remaining 29.4 KB unused-JS opportunity and LCP evidence first.
+6. Run the same CI, security, mobile Lighthouse, and desktop Lighthouse workflows after any code changes.
 7. Report actual metrics and artifact evidence. State explicitly when a score is unchanged or regresses.
 8. Use human commit messages and keep this handoff report updated with commit SHAs and run URLs.
 
@@ -204,11 +204,3 @@ You are reviewing and continuing an existing codebase, not starting a redesign f
 - LCP remains around 2.2 seconds on both devices.
 - The latest CI, Lighthouse, and Security workflows all passed for head `d0dfe37fd0b033ba4244db04ea2626cb335da751`.
 - Always refresh branch heads, PR state, and workflow runs before acting; this report is a snapshot, not a substitute for live repository verification.
-
-
-
-- PR #39 is not merged at the point of this report.
-- The mobile performance median has not improved yet.
-- Desktop performance is noisy and remains below the V4 plan's aspirational 99+ target.
-- Best Practices is 96; investigate after fixing the Lighthouse API setup.
-- The report records the repository state and workflow artifacts observed on 2026-11-14. Always refresh branch heads, PR state, and workflow runs before acting.
