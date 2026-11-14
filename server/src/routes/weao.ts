@@ -7,6 +7,8 @@ import {
   getAllExploits,
   findExploitByName,
   interpolateWeaoPlaceholders,
+  getExploitChangelogs,
+  formatExploitChangelogs,
   getWeaoRateLimitStatus,
 } from "../services/weaoService.js";
 import {
@@ -29,6 +31,17 @@ const listAllTemplateSummaries = async (): Promise<TemplateSummary[]> =>
       ORDER BY updated_at DESC`,
   );
 
+
+router.get(
+  "/changelogs/:exploit",
+  asyncHandler(async (req, res) => {
+    const exploit = typeof req.params.exploit === "string" ? req.params.exploit.trim() : "";
+    if (!exploit) throw ApiError.badRequest("`exploit` is required");
+    const selector = typeof req.query.selector === "string" ? req.query.selector : "changelogs";
+    const entries = await getExploitChangelogs(exploit);
+    return res.json({ exploit, count: entries.length, entries, formatted: formatExploitChangelogs(entries, selector) });
+  }),
+);
 
 router.get(
   "/exploits",
