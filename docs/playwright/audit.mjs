@@ -162,10 +162,10 @@ async function captureStudioScreenshots(page) {
   }
 
   record("PropertyPanel responsive screenshots",
-    propertyPanelInitiallyVisible ? "PASS" : "SKIP",
+    propertyPanelInitiallyVisible ? "PASS" : "FAIL",
     propertyPanelInitiallyVisible
       ? `Captured at widths: ${VIEWPORTS.join(", ")}px`
-      : "Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it");
+      : "Required Component Inspector was not visible when responsive screenshots started; see the Component Inspector detected check above");
 
   await page.setViewportSize({ width: 1440, height: 960 });
 }
@@ -211,11 +211,32 @@ async function main() {
 
     const rl = createInterface({ input, output });
     await rl.question(
-      "\nSign in manually if needed. In the Studio, select a message component so the Component Inspector is open. Do not send messages or confirm destructive actions. Return here and press Enter when ready... ",
+      "\nIMPORTANT — use THIS SECOND Chromium window (the authenticated Studio window), not the first temporary LoginScreen window.\n" +
+      "1) Sign in if requested and wait until the Studio editor is visible.\n" +
+      "2) If you want a clean test message, use Clear all and confirm Clear All (this intentionally deletes the currently saved editor message).\n" +
+      "3) In the Classic message editor, click Add Action Row at the bottom of the Message card.\n" +
+      "4) In the new Action Row card, click Add Button. The app should select the new button automatically.\n" +
+      "   If the inspector does not open, click the actual button pill (not the Add Button control) once.\n" +
+      "5) Confirm the right-side panel says Component Inspector and shows the button's properties.\n" +
+      "Do NOT press Escape, close the inspector, or click Dispatch/Send. Then return here and press Enter.\n\nReady? ",
     );
     rl.close();
 
-    await page.waitForTimeout(1000);
+    // Give the user a final chance to select the component after pressing Enter.
+    // This is a required audit precondition, not an optional screenshot.
+    const inspector = page.locator("aside").filter({ hasText: "Component Inspector" }).first();
+    const inspectorReady = await inspector.waitFor({ state: "visible", timeout: 30000 })
+      .then(() => true)
+      .catch(() => false);
+    record(
+      "Component Inspector detected before responsive audit",
+      inspectorReady ? "PASS" : "FAIL",
+      inspectorReady
+        ? "Authenticated Studio contains a visible Component Inspector"
+        : "No visible Component Inspector in this Chromium window after 30 seconds. Check that you added an Action Row, added a Button, and selected the button pill.",
+    );
+
+    await page.waitForTimeout(500);
     originalStorage = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
     storageSnapshotTaken = true;
     record("Existing message data snapshot", "PASS",
@@ -326,7 +347,7 @@ async function main() {
       "- login-bottom-<width>.png: LoginScreen scrolled to the bottom when its content is taller than the viewport",
       "- header-<width>.png: authenticated Studio header",
       "- studio-<width>.png: full Studio page",
-      "- property-panel-<width>.png: Component Inspector, when it was open before the audit",
+      "- property-panel-<width>.png: Component Inspector at each width (required; missing inspector fails the audit)",
       "",
       "No Discord message was sent and no destructive confirmation was accepted.",
     ].join("\n");
