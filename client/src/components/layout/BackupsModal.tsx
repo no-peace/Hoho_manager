@@ -232,6 +232,11 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
         editMessageId: item.source.messageId,
         payload,
         flows,
+        track: true,
+        trackName: item.name,
+        ...(item.source.templateId ? { templateId: item.source.templateId } : {}),
+        ...(item.source.exploitName ? { exploitName: item.source.exploitName } : {}),
+        ...(item.expiresAt ? { expiresAt: item.expiresAt } : {}),
       });
       await refreshTracked();
       showToast("Existing bot message edited and tracking refreshed", "success");
