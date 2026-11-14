@@ -32,8 +32,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build shared package and client
-        run: npm run build:shared && npm run build:client
+      - name: Build shared, client, and server
+        run: npm run build:shared && npm run build:client && npm run build:server
+
+      - name: Start API for Lighthouse
+        run: |
+          NODE_ENV=test PORT=3001 DATABASE_URL=./data/lighthouse.sqlite npm run start --workspace server > /tmp/hoho-api.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/hoho-api.log
+          exit 1
 
       - name: Start production preview
         run: |

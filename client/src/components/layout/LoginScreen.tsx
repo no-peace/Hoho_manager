@@ -32,7 +32,7 @@ const DEMO_SHOWCASES = [
       "Build nested V2 Containers, Thumbnails, Media Galleries, Separators, and interactive Action Rows.",
     buttons: [
       { label: "Read Changelog", style: "bg-[#5865f2] text-white" },
-      { label: "Verify Role", style: "bg-[#23a55a] text-white" },
+      { label: "Verify Role", style: "bg-[#16803c] text-white" },
     ],
   },
   {
@@ -58,7 +58,7 @@ const DEMO_SHOWCASES = [
       "Attach multi-step role checks, ephemeral replies, DM notifications, and 5-input Discord Modals to any bot message button.",
     buttons: [
       { label: "Submit Application", style: "bg-[#5865f2] text-white" },
-      { label: "Claim Role", style: "bg-[#23a55a] text-white" },
+      { label: "Claim Role", style: "bg-[#16803c] text-white" },
     ],
   },
 ] as const;
@@ -193,7 +193,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                     <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#18191c] border border-[#26282d] text-[10px] font-bold uppercase tracking-wider text-[#dbdee1]"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
                   </div>
 
-                  <h3 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h3>
+                  <h2 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h2>
                   <p className="text-xs text-[#dbdee1] leading-relaxed">
                     {currentDemo.description}
                   </p>

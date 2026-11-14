@@ -2,10 +2,10 @@ import React from "react";
 
 export const HOHO_LOGO_URL = "/hoho_logo.svg";
 
-export const HoHoLogoMark: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
+export const HoHoLogoMark: React.FC<{ className?: string; alt?: string }> = ({ className = "h-8 w-8", alt = "HoHo Manager" }) => (
   <img
     src={HOHO_LOGO_URL}
-    alt="HoHo Manager"
+    alt={alt}
     width={36}
     height={36}
     decoding="async"
