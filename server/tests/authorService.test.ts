@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../src/services/discordService.js", () => ({
     getDiscordUser: vi.fn(),
+    getGuildMember: vi.fn(),
+    resolveBotToken: vi.fn().mockResolvedValue("test-bot-token"),
     getDiscordUserAvatarUrl: vi.fn((user: { id: string; avatar: string | null }) =>
         user.avatar
             ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`
@@ -12,6 +14,7 @@ vi.mock("../src/services/discordService.js", () => ({
 import {
     getDiscordUser,
     getDiscordUserAvatarUrl,
+    getGuildMember,
 } from "../src/services/discordService.js";
 import { resolveAuthorPlaceholders } from "../src/services/authorService.js";
 
@@ -29,6 +32,7 @@ const makeUser = (id: string, username: string, globalName: string | null = null
 describe("authorService", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(getGuildMember).mockResolvedValue(null);
         vi.mocked(getDiscordUser).mockImplementation(async (id) => {
             if (id === USER_A) return makeUser(USER_A, "peace", "Peace") as any;
             if (id === USER_B) return makeUser(USER_B, "other", "Other") as any;
@@ -123,6 +127,40 @@ describe("authorService", () => {
         );
     });
 
+
+    it("resolves guild-specific roles, clan tag, and join timestamps for an ID", async () => {
+        vi.mocked(getGuildMember).mockResolvedValue({
+            roles: ["111111111111111111", "222222222222222222"],
+            user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
+            nick: "[HOHO] Peace",
+            joined_at: "2024-06-15T12:00:00.000Z",
+        } as any);
+
+        const result = await resolveAuthorPlaceholders({
+            content: [
+                `{user.${USER_A}.roles}`,
+                `{user.${USER_A}.clantag}`,
+                `{user.${USER_A}.joined}`,
+                `{user.${USER_A}.joined.date}`,
+            ].join("|"),
+        } as any, null, null, "999999999999999999");
+
+        const joinedUnix = Math.floor(Date.parse("2024-06-15T12:00:00.000Z") / 1000);
+        expect((result.payload as any).content).toBe([
+            "<@&111111111111111111> <@&222222222222222222>",
+            "HOHO",
+            `<t:${joinedUnix}:R>`,
+            `<t:${joinedUnix}:d>`,
+        ].join("|"));
+        expect(getGuildMember).toHaveBeenCalledWith("999999999999999999", USER_A, "test-bot-token");
+    });
+
+    it("resolves account creation timestamps from the Discord snowflake", async () => {
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.created}|{user.${USER_A}.created.relative}`,
+        } as any);
+        expect((result.payload as any).content).toMatch(/^<t:\\d+:d>\\|<t:\\d+:R>$/);
+    });
 
     it("leaves placeholders unchanged when Discord lookup fails", async () => {
         vi.mocked(getDiscordUser).mockRejectedValueOnce(new Error("Discord unavailable"));
