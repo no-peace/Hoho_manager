@@ -74,101 +74,105 @@ The history also includes CI hardening, Node 22/26 support, server benchmark val
 
 ## 4. Current branch and open PR
 
-PR #39: [perf(client): improve mobile Lighthouse score](https://github.com/no-peace/Hoho_manager/pull/39)
+PR #39: [Improve Lighthouse performance on mobile and desktop](https://github.com/no-peace/Hoho_manager/pull/39)
 
-Branch: `perf/mobile-lighthouse-optimizations`
+Branch: `perf/mobile-lighthouse-optimizations`  
+Current head: `d0dfe37fd0b033ba4244db04ea2626cb335da751`
 
-The PR currently contains four source changes:
-- `LoginScreen.tsx`: darken the green “Verify Role” demo button to improve white-text contrast.
-- `LoginScreen.tsx`: correct the showcase heading level.
-- `HoHoLogoMark.tsx`: support an `alt` prop.
-- `PublicPageHeader.tsx`: use an empty alt for the decorative logo next to the visible product name.
-- `client/vite.config.ts`: remove the forced Motion/GSAP vendor chunk, although another broad `vendor-react` manual chunk still remains and is the next performance target.
+The PR contains:
+- `LoginScreen.tsx`: darker green demo-button background for white-text contrast and corrected showcase heading hierarchy.
+- `HoHoLogoMark.tsx`: optional `alt` prop.
+- `PublicPageHeader.tsx`: decorative logo gets `alt=""` beside the visible product name.
+- `client/vite.config.ts`: removed the broad forced React/Zustand/Sileo vendor chunk so Vite can split route-only libraries; added an explicit API proxy for `vite preview`.
+- `.github/workflows/lighthouse.yml`: build and start the API with a disposable SQLite database before running the production preview and Lighthouse.
+- `docs/hoho_v6_master_architecture_plan.md`: project-side V6 plan.
+- `docs/GEMINI_HANDOFF_REPORT.md`: this implementation and performance handoff.
 
-PR #39 was open and mergeable when this report was prepared. Do not merge it without checking the current head SHA, mergeability, and required checks again.
+The latest commit message is `split the login bundle and fix the lighthouse preview api` (natural wording, not a generated conventional-commit title).
+
+PR #39 remains open and unmerged. Check its current head SHA, mergeability, and checks again before merging.
 
 ## 5. CI and security state observed
 
-For PR #39 head `d0e0d301e9b8b709bc77642f5da3286215b5423a`:
-- CI run [43543844374](https://github.com/no-peace/Hoho_manager/actions/runs/43543844374): completed successfully.
-- Lighthouse run [43543844339](https://github.com/no-peace/Hoho_manager/actions/runs/43543844339): mobile and desktop jobs completed successfully and uploaded reports.
-- Security run [43543844542](https://github.com/no-peace/Hoho_manager/actions/runs/43543844542): completed successfully.
+For the current PR #39 head `d0dfe37fd0b033ba4244db04ea2626cb335da751`:
+- CI run [43547638617](https://github.com/no-peace/Hoho_manager/actions/runs/43547638617): completed successfully on Node 22 and Node 26. Both jobs passed build, workspace typechecks, full tests, server performance benchmarks, benchmark JSON validation, and report upload.
+- Lighthouse run [43547638587](https://github.com/no-peace/Hoho_manager/actions/runs/43547638587): mobile and desktop jobs completed successfully; both uploaded Lighthouse reports.
+- Security run [43547638586](https://github.com/no-peace/Hoho_manager/actions/runs/43547638586): completed successfully. Dependency audit, secret scanning, and static security analysis all passed.
 
-The CI run passed Node 22 and Node 26 build/typecheck/test steps and performance benchmarks. The Security run passed dependency audit, secret scanning, and static security analysis. These results apply to the exact PR head SHA above; re-check after any new commit.
+The CI workflow was triggered twice for the same commit because the branch push and PR update generated separate events. Both CI runs completed successfully. The latest complete check set is green for the exact head SHA above.
 
 ## 6. Lighthouse measurements and baseline
 
 ### Previous baseline
-Lighthouse run [43479437966](https://github.com/no-peace/Hoho_manager/actions/runs/43479437966), on the pre-PR39 code:
+
+Lighthouse run [43479437966](https://github.com/no-peace/Hoho_manager/actions/runs/43479437966), before the PR #39 changes:
 - Desktop Performance: 72, 72, 72; Accessibility: 94; Best Practices: 96; SEO: 100.
 - Mobile Performance: 94, 94, 94; Accessibility: 94; Best Practices: 96; SEO: 100.
 
-### PR #39 results
-Lighthouse run [43543844339](https://github.com/no-peace/Hoho_manager/actions/runs/43543844339):
-- Desktop Performance: 53, 73, 73; Accessibility: 100; Best Practices: 96; SEO: 100.
-- Mobile Performance: 89, 94, 94; Accessibility: 100; Best Practices: 96; SEO: 100.
+### PR #39 before the latest bundle/API fix
 
-Median comparison:
-| Device | Performance before | Performance on PR #39 | Accessibility before | Accessibility on PR #39 |
+Run [43543844339](https://github.com/no-peace/Hoho_manager/actions/runs/43543844339), head `d0e0d301e9b8b709bc77642f5da3286215b5423a`:
+- Desktop Performance: 53, 73, 73.
+- Mobile Performance: 89, 94, 94.
+- Accessibility: 100 on both devices; Best Practices: 96; SEO: 100.
+
+This was the intermediate state: mobile performance median was still 94 and desktop median was 73.
+
+### Latest PR #39 results
+
+Run [43547638587](https://github.com/no-peace/Hoho_manager/actions/runs/43547638587), current head `d0dfe37fd0b033ba4244db04ea2626cb335da751`:
+
+| Device | Performance runs | Median | Accessibility | Best Practices | SEO |
+|---|---|---:|---:|---:|---:|
+| Mobile | 98, 97, 97 | **97** | 100 | 100 | 100 |
+| Desktop | 80, 78, 81 | **80** | 100 | 100 | 100 |
+
+### Median comparison: intermediate PR #39 run → latest run
+
+| Metric | Mobile before | Mobile latest | Desktop before | Desktop latest |
 |---|---:|---:|---:|---:|
-| Mobile | 94 | 94 | 94 | 100 |
-| Desktop | 72 | 73 | 94 | 100 |
+| Performance | 94 | **97 (+3)** | 73 | **80 (+7)** |
+| FCP | 2.263 s | **1.807 s** | 2.186 s | **1.747 s** |
+| LCP | 2.724 s | **2.260 s** | 2.729 s | **2.187 s** |
+| TBT | 6 ms | **0 ms** | 39 ms | **22 ms** |
+| CLS | 0 | **0** | 0 | **0** |
 
-Do not describe the current PR as a proven performance improvement on mobile: the median score is unchanged. Desktop median is up by one point only, with run-to-run variation. Accessibility is consistently improved to 100 on both devices.
+### Payload and JavaScript comparison
 
-Representative PR #39 timing data:
-- Mobile: FCP about 2.16–2.30 s; LCP about 2.72–2.73 s; TBT 1–237 ms; CLS 0.
-- Desktop: FCP about 2.17–2.23 s; LCP about 2.72–2.74 s; TBT 16–454 ms in the three reports; CLS 0.
-- Initial page transfer: about 220 KB total.
-- JavaScript transfer: about 187 KB.
-- The reports have a clear unused-JavaScript opportunity of about 106 KiB.
+- Total initial transfer: about 220,270 bytes → **129,309 bytes** (about 41% lower).
+- JavaScript transfer: about 187,491 bytes → **95,550 bytes** (about 49% lower).
+- Unused JavaScript opportunity: about 108,643 bytes → **29,379 bytes** (about 73% lower).
+- The eager `vendor-react` chunk is gone. The login page no longer preloads the large shared chunk that contained studio-only dependencies.
+- The two previous 502 console errors for `/api/health` and `/api/auth/me` are gone.
+- Best Practices improved from 96 to **100** on both devices.
 
-### Main findings from the PR reports
-
-1. The initial `vendor-react` asset is approximately 496,620 bytes uncompressed / 158,153 bytes transferred. Lighthouse estimates 108,643 bytes (about 106 KiB) unused on the public login route. It is marked as a link preload and is downloaded immediately.
-2. `client/vite.config.ts` manually groups every dependency path containing `react`, plus Zustand and Sileo, into `vendor-react`. This is too broad: it can pull dependencies used by lazy studio pages/modals into an eagerly loaded shared chunk. The V6 performance follow-up should let Vite split route-only libraries naturally.
-3. The `vendor-icons` asset is about 31 KB raw / 11 KB transferred. It is not the largest problem; keep or remove that grouping only after checking build output.
-4. The decorative login canvas is already dynamically imported and its animation is disabled on compact mobile/constrained devices. Avoid reintroducing an eager animation runtime on the login route.
-5. Lighthouse records two 502 console/network errors: `/api/health` and `/api/auth/me`. The workflow currently builds and starts only the Vite preview server. The frontend proxies `/api` to port 3001, but no API server is started in that workflow. These are test-environment setup errors, not proof that the production API is broken.
-6. Best Practices remains 96 in the reports. Re-run after providing a healthy local API during Lighthouse collection to determine whether the 502s account for the remaining audit finding.
-7. LCP is consistently around 2.7 seconds on both devices, while CLS is zero. After chunk splitting and the API preview fix, inspect the next reports' LCP element and opportunities before making further visual changes.
+The new result is a measured improvement on both devices, not just a passing workflow. The V4 plan's aspirational 99+ performance target has not yet been reached, so do not describe the scores as perfect.
 
 ## 7. Lighthouse workflow design
 
 Current workflow: `.github/workflows/lighthouse.yml`.
 - Runs a matrix for mobile and desktop.
-- Builds shared + client.
-- Starts Vite preview at `127.0.0.1:4173`.
+- Builds shared, client, and server workspaces.
+- Starts the Express API on port 3001 with `NODE_ENV=test` and a disposable SQLite database at `./data/lighthouse.sqlite`.
+- Waits for `/api/health` to return success before starting Vite preview.
+- Vite preview explicitly proxies `/api` to the local API.
 - Runs three Lighthouse samples per device and uploads JSON/HTML artifacts.
-- The workflow currently does not start the Express API, so preview proxy requests fail.
+- No production secrets or Discord OAuth credentials are required for these audits.
 
-The next implementation should:
-- Build the server in the Lighthouse job after building shared/client.
-- Start the server on port 3001 with an isolated test SQLite database, e.g. `NODE_ENV=test`, `PORT=3001`, and `DATABASE_URL=./data/lighthouse.sqlite`.
-- Wait for `/api/health` to return success before starting Lighthouse.
-- Configure Vite preview to proxy `/api` to the same local API target (do not rely on an implicit preview default).
-- Do not add production secrets or Discord credentials to the Lighthouse workflow.
-- Confirm `/api/auth/me` returns the normal unauthenticated response and the health endpoint reports a ready database.
-- Re-run both devices and compare median results, not a single run.
+Both API startup and preview startup passed in the latest Lighthouse workflow. The latest reports contain no console/network 502 errors.
 
 ## 8. Recommended next technical work
 
-Priority 1 — Fix initial JavaScript chunking:
-- Remove the broad manual chunk rule that places every module with `react`, Zustand, or Sileo in `vendor-react`.
-- Preserve code splitting for lazily imported Docs, Privacy, Studio, modals, pickers, and animation dependencies.
-- Inspect generated assets and Lighthouse network requests to confirm studio-only motion/UI code is not downloaded on the login route.
-- Keep React itself and the minimal login dependencies in the initial graph.
+The two high-priority issues from the earlier report have been fixed and verified:
+1. The broad manual chunk was removed; the initial login route no longer downloads the large eager `vendor-react` chunk.
+2. Lighthouse now starts a healthy local API and uses an explicit preview proxy; the 502 errors are gone and Best Practices is 100.
 
-Priority 2 — Make Lighthouse API requests valid:
-- Start a disposable SQLite-backed server as part of the Lighthouse workflow.
-- Add explicit Vite preview proxy configuration.
-- Confirm the 502 errors disappear and inspect the Best Practices score.
-
-Priority 3 — Re-measure and decide:
-- Collect fresh mobile and desktop reports after both changes.
-- Compare median Performance, FCP, LCP, TBT, CLS, total transfer, and unused JS.
-- Do not chase a numeric target by weakening assertions or hiding real app behavior.
-- If LCP remains near 2.7 s, inspect the actual LCP element and resource timing before choosing the next optimization.
+Remaining optional optimization work:
+- Lighthouse still reports about 29.4 KB of unused JavaScript in the initial entry bundle. Inspect its coverage before removing any dependency; preserve login functionality and lazy route behavior.
+- LCP is now about 2.2–2.26 seconds. Inspect the actual LCP element and resource timing before making further visual or asset changes.
+- Keep mobile and desktop Lighthouse runs in the workflow and compare medians, not individual best-case runs.
+- Do not lower Lighthouse assertions, hide API failures, or remove real app behavior to inflate scores.
+- Do not merge PR #39 until its latest required checks and mergeability are re-checked.
 
 ## 9. Human commit-message rule
 
@@ -193,6 +197,15 @@ You are reviewing and continuing an existing codebase, not starting a redesign f
 8. Use human commit messages and keep this handoff report updated with commit SHAs and run URLs.
 
 ## 11. Known limitations and open questions
+
+- PR #39 is still open and unmerged at the time of this update.
+- Latest median Performance is 97 mobile and 80 desktop; the older V4 target of 99+ is not yet met.
+- About 29.4 KB of unused JavaScript remains in the initial entry bundle.
+- LCP remains around 2.2 seconds on both devices.
+- The latest CI, Lighthouse, and Security workflows all passed for head `d0dfe37fd0b033ba4244db04ea2626cb335da751`.
+- Always refresh branch heads, PR state, and workflow runs before acting; this report is a snapshot, not a substitute for live repository verification.
+
+
 
 - PR #39 is not merged at the point of this report.
 - The mobile performance median has not improved yet.
