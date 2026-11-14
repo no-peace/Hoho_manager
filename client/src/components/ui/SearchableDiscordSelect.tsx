@@ -223,18 +223,20 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
       {open && dropdownRect && createPortal(
         (() => {
           const DROPDOWN_HEIGHT = 260;
-          const spaceBelow = window.innerHeight - dropdownRect.bottom;
-          const spaceAbove = dropdownRect.top;
+          const spaceBelow = Math.max(0, window.innerHeight - Math.max(dropdownRect.bottom, 8) - 12);
+          const spaceAbove = Math.max(0, Math.min(dropdownRect.top, window.innerHeight) - 8);
           const placeAbove = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
           const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16);
           const maxLeft = Math.max(8, window.innerWidth - dropdownWidth - 8);
           const dropdownLeft = Math.max(8, Math.min(dropdownRect.left, maxLeft));
+          const calculatedMaxHeight = Math.min(
+            DROPDOWN_HEIGHT,
+            placeAbove ? spaceAbove : spaceBelow,
+          );
+          const maxTop = Math.max(8, window.innerHeight - 8 - calculatedMaxHeight);
           const calculatedTop = placeAbove
-            ? Math.max(8, dropdownRect.top - Math.min(DROPDOWN_HEIGHT, spaceAbove - 8))
-            : dropdownRect.bottom + 4;
-          const calculatedMaxHeight = placeAbove
-            ? Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceAbove - 16))
-            : Math.min(DROPDOWN_HEIGHT, Math.max(120, spaceBelow - 16));
+            ? Math.max(8, Math.min(maxTop, dropdownRect.top - calculatedMaxHeight))
+            : Math.max(8, Math.min(maxTop, dropdownRect.bottom + 4));
 
           return (
             <div
