@@ -77,6 +77,17 @@ async function captureLoginScreenshots(browser) {
     for (const width of VIEWPORTS) {
       await page.setViewportSize({ width, height: 900 });
       await pause(350);
+      const loginDimensions = await page.evaluate(() => {
+        const root = document.querySelector('[data-testid="login-screen-scroll-root"]');
+        return {
+          viewport: document.documentElement.clientWidth,
+          rootClient: root?.clientWidth ?? 0,
+          rootScroll: root?.scrollWidth ?? 0,
+        };
+      });
+      const loginOverflow = loginDimensions.rootScroll > loginDimensions.rootClient + 2;
+      record(`LoginScreen ${width}px horizontal overflow`, loginOverflow ? "FAIL" : "PASS",
+        `viewport=${loginDimensions.viewport}px, LoginScreen client=${loginDimensions.rootClient}px, scroll=${loginDimensions.rootScroll}px`);
       await page.screenshot({
         path: path.join(REPORT_DIR, `login-${width}.png`),
         fullPage: true,
@@ -101,6 +112,13 @@ async function captureStudioScreenshots(page) {
     await checkViewport(page, `Studio ${width}px`);
 
     if (await visible(header)) {
+      const headerDimensions = await header.evaluate((element) => ({
+        client: element.clientWidth,
+        scroll: element.scrollWidth,
+      }));
+      const headerOverflow = headerDimensions.scroll > headerDimensions.client + 2;
+      record(`Header ${width}px internal overflow`, headerOverflow ? "FAIL" : "PASS",
+        `client=${headerDimensions.client}px, scroll=${headerDimensions.scroll}px`);
       await header.screenshot({
         path: path.join(REPORT_DIR, `header-${width}.png`),
         animations: "disabled",
