@@ -8,6 +8,7 @@ import {
   findExploitByName,
   interpolateWeaoPlaceholders,
   getExploitChangelogs,
+  getExploitChangelogComparison,
   formatExploitChangelogs,
   getWeaoRateLimitStatus,
 } from "../services/weaoService.js";
@@ -39,7 +40,7 @@ router.get(
     if (!exploit) throw ApiError.badRequest("`exploit` is required");
     const selector = typeof req.query.selector === "string" ? req.query.selector : "changelogs";
     const entries = await getExploitChangelogs(exploit);
-    return res.json({ exploit, count: entries.length, entries, formatted: formatExploitChangelogs(entries, selector) });
+    return res.json({ exploit, count: entries.length, entries, formatted: formatExploitChangelogs(entries, selector, getExploitChangelogComparison(exploit)) });
   }),
 );
 
