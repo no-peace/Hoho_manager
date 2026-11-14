@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Existing semantic-version tag to publish (example: v1.2.3)
+        description: "Existing semantic-version tag to publish (example: v1.2.3)"
         required: true
         type: string
 

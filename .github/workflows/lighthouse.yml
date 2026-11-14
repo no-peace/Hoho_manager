@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           NODE_ENV=test PORT=3001 DATABASE_URL=./data/lighthouse.sqlite npm run start --workspace server > /tmp/hoho-api.log 2>&1 &
-          for attempt in {1..30}; do
+          for _ in {1..30}; do
             if curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null; then
               echo "API is ready"
               exit 0
@@ -61,7 +61,7 @@ jobs:
         run: |
           set -euo pipefail
           npm run preview --workspace client -- --host 127.0.0.1 --port 4173 > /tmp/hoho-preview.log 2>&1 &
-          for attempt in {1..30}; do
+          for _ in {1..30}; do
             if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
               echo "Preview server is ready"
               exit 0
