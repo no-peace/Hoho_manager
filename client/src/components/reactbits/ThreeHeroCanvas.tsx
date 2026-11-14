@@ -24,6 +24,8 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     let rows = 10;
     const frameInterval = 1000 / 30;
     let frameId = 0;
+    let startTimer: ReturnType<typeof setTimeout> | null = null;
+    let animationReady = false;
     let width = 1;
     let height = 1;
     let pointerX = 0;
@@ -76,8 +78,13 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
       canvas.height = Math.round(height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       draw();
-      if (shouldAnimate) start();
-      else stop();
+      if (shouldAnimate) scheduleStart();
+      else {
+        animationReady = false;
+        if (startTimer) clearTimeout(startTimer);
+        startTimer = null;
+        stop();
+      }
     };
 
     const stop = () => {
@@ -100,9 +107,19 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     };
 
     const start = () => {
-      if (disposed || !shouldAnimate || !isVisible || !isPageVisible || frameId) return;
+      if (disposed || !animationReady || !shouldAnimate || !isVisible || !isPageVisible || frameId) return;
       lastFrameTime = 0;
       frameId = window.requestAnimationFrame(tick);
+    };
+
+    const scheduleStart = () => {
+      if (!shouldAnimate || disposed) return;
+      if (startTimer) clearTimeout(startTimer);
+      startTimer = setTimeout(() => {
+        startTimer = null;
+        animationReady = true;
+        start();
+      }, 1500);
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -141,10 +158,12 @@ export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = 
     motionQuery.addEventListener?.("change", handleMotionChange);
 
     if (motionQuery.matches) draw();
-    else start();
+    else scheduleStart();
 
     return () => {
       disposed = true;
+      if (startTimer) clearTimeout(startTimer);
+      startTimer = null;
       stop();
       resizeObserver?.disconnect();
       visibilityObserver?.disconnect();
