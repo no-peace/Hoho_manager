@@ -1,0 +1,551 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#gitbook-main-content"
+  - banner [ref=e3]:
+    - generic [ref=e6]:
+      - link "WEAO API Reference" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e11]:
+        - generic [ref=e13]:
+          - textbox "Search" [ref=e17]:
+            - /placeholder: Search…
+          - generic [ref=e19]:
+            - generic [ref=e20]: Ctrl
+            - generic [ref=e22]: k
+        - alert [ref=e23]
+  - generic [ref=e25]:
+    - complementary [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - list [ref=e30]:
+            - listitem [ref=e31]:
+              - button "Reference" [disabled] [ref=e33]
+            - listitem [ref=e35]:
+              - link [ref=e36] [cursor=pointer]:
+                - /url: /
+                - button "WEAO API Reference" [expanded] [ref=e38]
+              - list [ref=e41]:
+                - listitem [ref=e42]:
+                  - link "Roblox versions" [ref=e43] [cursor=pointer]:
+                    - /url: /weao-api-reference/roblox-versions
+                - listitem [ref=e45]:
+                  - link "Exploits" [ref=e46] [cursor=pointer]:
+                    - /url: /weao-api-reference/exploits
+                - listitem [ref=e48]:
+                  - link "sUNC Data" [ref=e49] [cursor=pointer]:
+                    - /url: /weao-api-reference/sunc-data
+          - button "Scroll back"
+          - button "Scroll further"
+        - link "Powered by GitBook" [ref=e51] [cursor=pointer]:
+          - /url: https://www.gitbook.com/powered-by?utm_source=content&utm_medium=trademark&utm_campaign=hAYWB3jaSvIAdWaiASjS&utm_content=site_oCCDf
+    - main [ref=e57]:
+      - generic [ref=e58]:
+        - text: For the complete documentation index, see
+        - link "llms.txt" [ref=e59] [cursor=pointer]:
+          - /url: https://docs.weao.xyz/llms.txt
+        - text: . This page is also available as
+        - link "Markdown" [ref=e60] [cursor=pointer]:
+          - /url: https://docs.weao.xyz/weao-api-reference/exploits.md
+        - text: .
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - button "Copy" [ref=e65] [cursor=pointer]
+              - button "More" [ref=e69] [cursor=pointer]
+            - button "On this page" [ref=e72] [cursor=pointer]
+          - navigation "Breadcrumb" [ref=e75]:
+            - list [ref=e76]:
+              - listitem [ref=e77]:
+                - link "WEAO API Reference" [ref=e78] [cursor=pointer]:
+                  - /url: /
+          - heading "Exploits" [level=1] [ref=e79]
+          - paragraph [ref=e80]: WhatExpsAre.Online has a dedicated Exploit tracker which tracks 30+ exploits! Documentation for accessing them is below
+        - generic [ref=e82]:
+          - note "Information" [ref=e83]:
+            - generic [ref=e87]:
+              - paragraph [ref=e88]:
+                - strong [ref=e89]: "Reminder:"
+                - text: You can access these endpoints on
+                - strong [ref=e90]: any
+                - text: of our domains without restrictions. If you hit our
+                - strong [ref=e91]: rate limit
+                - text: ", reduce the"
+                - strong [ref=e92]: interval
+                - text: at which you are fetching our services.
+              - paragraph [ref=e93]:
+                - text: The user-agent
+                - code [ref=e94]:
+                  - strong [ref=e95]: WEAO-3PService
+                - text: is required to access any of WEAO's resources.
+              - paragraph [ref=e96]:
+                - strong [ref=e97]: "Main Domains:"
+              - list [ref=e98]:
+                - listitem [ref=e99]:
+                  - generic [ref=e100]: •
+                  - paragraph [ref=e103]: weao.xyz
+                - listitem [ref=e104]:
+                  - generic [ref=e105]: •
+                  - paragraph [ref=e108]: whatexpsare.online
+              - paragraph [ref=e109]:
+                - strong [ref=e110]: "Alternatives:"
+              - list [ref=e111]:
+                - listitem [ref=e112]:
+                  - generic [ref=e113]: •
+                  - paragraph [ref=e116]: whatexploitsaretra.sh
+                - listitem [ref=e117]:
+                  - generic [ref=e118]: •
+                  - paragraph [ref=e121]: weao.gg
+          - heading "Retrieving All Exploit Statuses Direct link to heading" [level=2] [ref=e122]:
+            - generic [ref=e123]: Retrieving All Exploit Statuses
+            - link "Direct link to heading" [ref=e125] [cursor=pointer]:
+              - /url: "#retrieving-all-exploit-statuses"
+          - paragraph [ref=e128]: This endpoint will return the latest status of all executors on WEAO.
+          - paragraph [ref=e129]: We've left some objects undocumented that are not being used, below are the main ones
+          - paragraph [ref=e130]: "You can obtain all exploit statuses via this route:"
+          - paragraph [ref=e131]:
+            - code [ref=e132]: GET
+            - code [ref=e133]: https://weao.xyz/api/status/exploits
+          - generic [ref=e134]:
+            - textbox "Search" [ref=e140]
+            - table [ref=e143]:
+              - rowgroup [ref=e144]:
+                - row [ref=e145]:
+                  - columnheader "Object" [ref=e146]
+                  - columnheader "Type" [ref=e147]
+                  - columnheader "What it is" [ref=e148]
+              - rowgroup [ref=e150]:
+                - row [ref=e151]:
+                  - cell [ref=e152]:
+                    - paragraph [ref=e154]:
+                      - code [ref=e155]: title
+                  - cell [ref=e156]:
+                    - paragraph [ref=e158]: string
+                  - cell [ref=e159]:
+                    - paragraph [ref=e161]: Name of the exploit
+                - row [ref=e162]:
+                  - cell [ref=e163]:
+                    - paragraph [ref=e165]:
+                      - code [ref=e166]: version
+                  - cell [ref=e167]:
+                    - paragraph [ref=e169]: string
+                  - cell [ref=e170]:
+                    - paragraph [ref=e172]: Version of the exploit
+                - row [ref=e173]:
+                  - cell [ref=e174]:
+                    - paragraph [ref=e176]:
+                      - code [ref=e177]: updatedDate
+                  - cell [ref=e178]:
+                    - paragraph [ref=e180]: string
+                  - cell [ref=e181]:
+                    - paragraph [ref=e183]: When the exploit was last updated
+                - row [ref=e184]:
+                  - cell [ref=e185]:
+                    - paragraph [ref=e187]:
+                      - code [ref=e188]: uncStatus
+                  - cell [ref=e189]:
+                    - paragraph [ref=e191]: boolean
+                  - cell [ref=e192]:
+                    - paragraph [ref=e194]: If the exploit supports the Unified Naming Convention
+                - row [ref=e195]:
+                  - cell [ref=e196]:
+                    - paragraph [ref=e198]:
+                      - code [ref=e199]: free
+                  - cell [ref=e200]:
+                    - paragraph [ref=e202]: boolean
+                  - cell [ref=e203]:
+                    - paragraph [ref=e205]: If the exploit is free or paid
+                - row [ref=e206]:
+                  - cell [ref=e207]:
+                    - paragraph [ref=e209]:
+                      - code [ref=e210]: detected
+                  - cell [ref=e211]:
+                    - paragraph [ref=e213]: boolean
+                  - cell [ref=e214]:
+                    - paragraph [ref=e216]: If the exploit is detected by Hyperion
+                - row [ref=e217]:
+                  - cell [ref=e218]:
+                    - paragraph [ref=e220]:
+                      - code [ref=e221]: rbxversion
+                  - cell [ref=e222]:
+                    - paragraph [ref=e224]: string
+                  - cell [ref=e225]:
+                    - paragraph [ref=e227]: Roblox version hash the exploit supports
+                - row [ref=e228]:
+                  - cell [ref=e229]:
+                    - paragraph [ref=e231]:
+                      - code [ref=e232]: updateStatus
+                  - cell [ref=e233]:
+                    - paragraph [ref=e235]: boolean
+                  - cell [ref=e236]:
+                    - paragraph [ref=e238]: If the exploit is updated
+                - row [ref=e239]:
+                  - cell [ref=e240]:
+                    - paragraph [ref=e242]:
+                      - code [ref=e243]: websitelink
+                  - cell [ref=e244]:
+                    - paragraph [ref=e246]: string
+                  - cell [ref=e247]:
+                    - paragraph [ref=e249]: Website of the exploit
+                - row [ref=e250]:
+                  - cell [ref=e251]:
+                    - paragraph [ref=e253]:
+                      - code [ref=e254]: discordlink
+                  - cell [ref=e255]:
+                    - paragraph [ref=e257]: string
+                  - cell [ref=e258]:
+                    - paragraph [ref=e260]: Discord of the exploit
+                - row [ref=e261]:
+                  - cell [ref=e262]:
+                    - paragraph [ref=e264]:
+                      - code [ref=e265]: purchaselink
+                  - cell [ref=e266]:
+                    - paragraph [ref=e268]: string
+                  - cell [ref=e269]:
+                    - paragraph [ref=e271]: Where the exploit can be purchased
+                - row [ref=e272]:
+                  - cell [ref=e273]:
+                    - paragraph [ref=e275]:
+                      - code [ref=e276]: platform
+                  - cell [ref=e277]:
+                    - paragraph [ref=e279]: string
+                  - cell [ref=e280]:
+                    - paragraph [ref=e282]: Platform of the exploit
+                - row [ref=e283]:
+                  - cell [ref=e284]:
+                    - paragraph [ref=e286]:
+                      - code [ref=e287]: type
+                  - cell [ref=e288]:
+                    - paragraph [ref=e290]: string
+                  - cell [ref=e291]:
+                    - paragraph [ref=e293]: Platform + Type of exploit, mexecutor = Mac Executor
+                - row [ref=e294]:
+                  - cell [ref=e295]:
+                    - paragraph [ref=e297]:
+                      - code [ref=e298]: cost
+                  - cell [ref=e299]:
+                    - paragraph [ref=e301]: string
+                  - cell [ref=e302]:
+                    - paragraph [ref=e304]: How much the exploit costs
+                - row [ref=e305]:
+                  - cell [ref=e306]:
+                    - paragraph [ref=e308]:
+                      - code [ref=e309]: decompiler
+                  - cell [ref=e310]:
+                    - paragraph [ref=e312]: boolean
+                  - cell [ref=e313]:
+                    - paragraph [ref=e315]: If the exploit has a decompiler
+                - row [ref=e316]:
+                  - cell [ref=e317]:
+                    - paragraph [ref=e319]:
+                      - code [ref=e320]: multiInject
+                  - cell [ref=e321]:
+                    - paragraph [ref=e323]: boolean
+                  - cell [ref=e324]:
+                    - paragraph [ref=e326]: If the exploit supports multi instance
+                - row [ref=e327]:
+                  - cell [ref=e328]:
+                    - paragraph [ref=e330]:
+                      - code [ref=e331]: raknet
+                  - cell [ref=e332]:
+                    - paragraph [ref=e334]: boolean
+                  - cell [ref=e335]:
+                    - paragraph [ref=e337]: If the exploit has support for the Raknet Library
+                - row [ref=e338]:
+                  - cell [ref=e339]:
+                    - paragraph [ref=e341]:
+                      - code [ref=e342]: suncPercentage
+                  - cell [ref=e343]:
+                    - paragraph [ref=e345]: number
+                  - cell [ref=e346]:
+                    - paragraph [ref=e348]: The sUNC percentage score as an int
+                - row [ref=e349]:
+                  - cell [ref=e350]:
+                    - paragraph [ref=e352]:
+                      - code [ref=e353]: uncPercentage
+                  - cell [ref=e354]:
+                    - paragraph [ref=e356]: number
+                  - cell [ref=e357]:
+                    - paragraph [ref=e359]: The UNC percentage score as an int
+                - row [ref=e360]:
+                  - cell [ref=e361]:
+                    - paragraph [ref=e363]:
+                      - code [ref=e364]: sunc
+                  - cell [ref=e365]:
+                    - paragraph [ref=e367]: object
+                  - cell [ref=e368]:
+                    - paragraph [ref=e370]: Contains sUNC scrap/key
+                - row [ref=e371]:
+                  - cell [ref=e372]:
+                    - paragraph [ref=e374]:
+                      - code [ref=e375]: suncScrap
+                  - cell [ref=e376]:
+                    - paragraph [ref=e378]: string
+                  - cell [ref=e379]:
+                    - paragraph [ref=e381]: sUNC scrap
+                - row [ref=e382]:
+                  - cell [ref=e383]:
+                    - paragraph [ref=e385]:
+                      - code [ref=e386]: suncKey
+                  - cell [ref=e387]:
+                    - paragraph [ref=e389]: string
+                  - cell [ref=e390]:
+                    - paragraph [ref=e392]: sUNC key
+                - row [ref=e393]:
+                  - cell [ref=e394]:
+                    - paragraph [ref=e396]:
+                      - code [ref=e397]: hidden
+                  - cell [ref=e398]:
+                    - paragraph [ref=e400]: boolean
+                  - cell [ref=e401]:
+                    - paragraph [ref=e403]: If the exploit is hidden on the WEAO frontend
+                - row [ref=e404]:
+                  - cell [ref=e405]:
+                    - paragraph [ref=e407]:
+                      - code [ref=e408]: keysystem
+                  - cell [ref=e409]:
+                    - paragraph [ref=e411]: boolean
+                  - cell [ref=e412]:
+                    - paragraph [ref=e414]: If the exploit has a key system (Only for free exploits)
+                - row [ref=e415]:
+                  - cell [ref=e416]:
+                    - paragraph [ref=e418]:
+                      - code [ref=e419]: clientmods
+                  - cell [ref=e420]:
+                    - paragraph [ref=e422]: boolean
+                  - cell [ref=e423]:
+                    - paragraph [ref=e425]: If true, exploit bypasses client modification bans, not banwaves
+          - paragraph [ref=e426]: "Example Response:"
+          - generic [ref=e427]:
+            - tablist [ref=e428]:
+              - tab "200 (OK)" [selected] [ref=e430] [cursor=pointer]
+              - tab "429 (Rate limit)" [ref=e433] [cursor=pointer]
+            - tabpanel "200 (OK)" [ref=e435]:
+              - generic [ref=e439]:
+                - generic [ref=e440]:
+                  - button "Copy" [ref=e441] [cursor=pointer]
+                  - status [ref=e443]
+                - code [ref=e445]:
+                  - generic [ref=e446]: "{"
+                  - generic [ref=e448]: "\"sunc\": {"
+                  - generic [ref=e450]: "\"suncScrap\": \"AitoAcj9n4VV2ykn\","
+                  - generic [ref=e452]: "\"suncKey\": \"NBMu87rj1kamn6cw8VpTu8neoIeJFPdN\""
+                  - generic [ref=e454]: "},"
+                  - generic [ref=e456]: "\"recommendedReason\": {"
+                  - generic [ref=e458]: "\"features\": []"
+                  - generic [ref=e460]: "},"
+                  - generic [ref=e462]: "\"_id\": \"67d6005efa8c791236079278\","
+                  - generic [ref=e464]: "\"title\": \"Potassium\","
+                  - generic [ref=e466]: "\"version\": \"1.7.9\","
+                  - generic [ref=e468]: "\"updatedDate\": \"07/24/2025 at 3:47 PM UTC\","
+                  - generic [ref=e470]: "\"uncStatus\": true,"
+                  - generic [ref=e472]: "\"free\": false,"
+                  - generic [ref=e474]: "\"detected\": true,"
+                  - generic [ref=e476]: "\"rbxversion\": \"version-2a06298afe3947ab\","
+                  - generic [ref=e478]: "\"updateStatus\": true,"
+                  - generic [ref=e480]: "\"websitelink\": \"https://potassium.pro\","
+                  - generic [ref=e482]: "\"discordlink\": \"https://discord.com/invite/potassium\","
+                  - generic [ref=e484]: "\"beta\": false,"
+                  - generic [ref=e486]: "\"platform\": \"Windows\","
+                  - generic [ref=e488]: "\"extype\": \"wexecutor\","
+                  - generic [ref=e490]: "\"roleId\": \"1350595821728698388\","
+                  - generic [ref=e492]: "\"purchaselink\": \"https://privana.sell.app/product/potassium?variant=329244&affiliate=weao\","
+                  - generic [ref=e494]: "\"index\": 7,"
+                  - generic [ref=e496]: "\"cost\": \"$20 Lifetime\","
+                  - generic [ref=e498]: "\"decompiler\": true,"
+                  - generic [ref=e500]: "\"multiInject\": true,"
+                  - generic [ref=e502]: "\"suncPercentage\": 100,"
+                  - generic [ref=e504]: "\"uncPercentage\": 99,"
+                  - generic [ref=e506]: "\"__v\": 1"
+                  - generic [ref=e508]: "},"
+                  - generic [ref=e510]: "{"
+                  - generic [ref=e512]: "\"recommendedReason\": {"
+                  - generic [ref=e514]: "\"features\": []"
+                  - generic [ref=e516]: "},"
+                  - generic [ref=e518]: "\"_id\": \"67e0d0d87d091e8f8b6d2a35\","
+                  - generic [ref=e520]: "\"title\": \"Matcha\","
+                  - generic [ref=e522]: "\"version\": \"1.6.0\","
+                  - generic [ref=e524]: "\"updatedDate\": \"07/24/2025 at 4:30 AM UTC\","
+                  - generic [ref=e526]: "\"uncStatus\": false,"
+                  - generic [ref=e528]: "\"free\": false,"
+                  - generic [ref=e530]: "\"detected\": false,"
+                  - generic [ref=e532]: "\"rbxversion\": \"version-2a06298afe3947ab\","
+                  - generic [ref=e534]: "\"updateStatus\": true,"
+                  - generic [ref=e536]: "\"websitelink\": \"https://discord.gg/AURAHhSMxc\","
+                  - generic [ref=e538]: "\"discordlink\": \"https://discord.gg/matchalol\","
+                  - generic [ref=e540]: "\"purchaselink\": \"https://bloxproducts.com/r/weao#Matcha\","
+                  - generic [ref=e542]: "\"beta\": false,"
+                  - generic [ref=e544]: "\"platform\": \"Windows\","
+                  - generic [ref=e546]: "\"extype\": \"wexternal\","
+                  - generic [ref=e548]: "\"roleId\": \"1353570443461660693\","
+                  - generic [ref=e550]: "\"index\": -1,"
+                  - generic [ref=e552]: "\"elementCertified\": true,"
+                  - generic [ref=e554]: "\"cost\": \"$11.50 Lifetime\","
+                  - generic [ref=e556]: "\"__v\": 1"
+                  - generic [ref=e558]: "},"
+                  - generic [ref=e560]: "{"
+                  - generic [ref=e562]: "\"recommendedReason\": {"
+                  - generic [ref=e564]: "\"features\": []"
+                  - generic [ref=e566]: "},"
+                  - generic [ref=e568]: "\"_id\": \"679553cd2eea89d30d0dae57\","
+                  - generic [ref=e570]: "\"title\": \"Xeno\","
+                  - generic [ref=e572]: "\"version\": \"1.2.45\","
+                  - generic [ref=e574]: "\"updatedDate\": \"07/24/2025 at 9:26 AM UTC\","
+                  - generic [ref=e576]: "\"uncStatus\": true,"
+                  - generic [ref=e578]: "\"free\": true,"
+                  - generic [ref=e580]: "\"detected\": true,"
+                  - generic [ref=e582]: "\"rbxversion\": \"version-2a06298afe3947ab\","
+                  - generic [ref=e584]: "\"updateStatus\": true,"
+                  - generic [ref=e586]: "\"websitelink\": \"https://www.xeno.onl/\","
+                  - generic [ref=e588]: "\"discordlink\": \"https://discord.gg/xe-no\","
+                  - generic [ref=e590]: "\"beta\": false,"
+                  - generic [ref=e592]: "\"platform\": \"Windows\","
+                  - generic [ref=e594]: "\"extype\": \"wexecutor\","
+                  - generic [ref=e596]: "\"roleId\": \"1332793088879497338\","
+                  - generic [ref=e598]: "\"index\": 9,"
+                  - generic [ref=e600]: "\"decompiler\": false,"
+                  - generic [ref=e602]: "\"multiInject\": true,"
+                  - generic [ref=e604]: "\"suncPercentage\": 41,"
+                  - generic [ref=e606]: "\"uncPercentage\": 81,"
+                  - generic [ref=e608]: "\"__v\": 1"
+                  - generic [ref=e610]: "},"
+                  - generic [ref=e612]: "{"
+                  - generic [ref=e614]: "\"sunc\": {"
+                  - generic [ref=e616]: "\"suncScrap\": \"35qeYipTXagsWR84\","
+                  - generic [ref=e618]: "\"suncKey\": \"zGh9TypaSJhGuYEKmDkvAQNgse7W2N5k\""
+                  - generic [ref=e620]: "},"
+                  - generic [ref=e622]: "\"recommendedReason\": {"
+                  - generic [ref=e624]: "\"features\": []"
+                  - generic [ref=e626]: "},"
+                  - generic [ref=e628]: "\"_id\": \"68084641b50548f01fd62713\","
+                  - generic [ref=e630]: "\"title\": \"Bunni.lol\","
+                  - generic [ref=e632]: "\"version\": \"2.2.2\","
+                  - generic [ref=e634]: "\"updatedDate\": \"07/24/2025 at 9:19 PM UTC\","
+                  - generic [ref=e636]: "\"uncStatus\": true,"
+                  - generic [ref=e638]: "\"free\": true,"
+                  - generic [ref=e640]: "\"detected\": true,"
+                  - generic [ref=e642]: "\"rbxversion\": \"version-2a06298afe3947ab\","
+                  - generic [ref=e644]: "\"updateStatus\": true,"
+                  - generic [ref=e646]: "\"websitelink\": \"https://realbunni.com/\","
+                  - generic [ref=e648]: "\"discordlink\": \"https://discord.gg/9DPW2G22cF\","
+                  - generic [ref=e650]: "\"beta\": false,"
+                  - generic [ref=e652]: "\"platform\": \"Windows\","
+                  - generic [ref=e654]: "\"extype\": \"wexecutor\","
+                  - generic [ref=e656]: "\"roleId\": \"1364416300444549151\","
+                  - generic [ref=e658]: "\"index\": 9,"
+                  - generic [ref=e660]: "\"elementCertified\": true,"
+                  - generic [ref=e662]: "\"decompiler\": true,"
+                  - generic [ref=e664]: "\"multiInject\": true,"
+                  - generic [ref=e666]: "\"suncPercentage\": 100,"
+                  - generic [ref=e668]: "\"uncPercentage\": 99,"
+                  - generic [ref=e670]: "\"__v\": 1,"
+                  - generic [ref=e672]: "\"purchaselink\": \"https://robloxcheatz.com/affiliate/weao\","
+                  - generic [ref=e674]: "\"keysystem\": true"
+                  - generic [ref=e676]: "},"
+                  - generic [ref=e678]: "{"
+                  - generic [ref=e680]: "\"recommendedReason\": {"
+                  - generic [ref=e682]: "\"features\": []"
+                  - generic [ref=e684]: "},"
+                  - generic [ref=e686]: "\"_id\": \"680ab721b50548f01fd62715\","
+                  - generic [ref=e688]: "\"title\": \"Photon\","
+                  - generic [ref=e690]: "\"version\": \"5.2\","
+                  - generic [ref=e692]: "\"updatedDate\": \"07/23/2025 at 11:51 PM UTC\","
+                  - generic [ref=e694]: "\"uncStatus\": false,"
+                  - generic [ref=e696]: "\"free\": false,"
+                  - generic [ref=e698]: "\"detected\": false,"
+                  - generic [ref=e700]: "\"rbxversion\": \"version-2a06298afe3947ab\","
+                  - generic [ref=e702]: "\"updateStatus\": true,"
+                  - generic [ref=e704]: "\"websitelink\": \"https://photonsys.sellpass.io/\","
+                  - generic [ref=e706]: "\"discordlink\": \"https://discord.gg/vro\","
+                  - generic [ref=e708]: "\"purchaselink\": \"https://photonsys.sellpass.io/products/Photon-Lifetime\","
+                  - generic [ref=e710]: "\"beta\": false,"
+                  - generic [ref=e712]: "\"platform\": \"Windows\","
+                  - generic [ref=e714]: "\"extype\": \"wexternal\","
+                  - generic [ref=e716]: "\"roleId\": \"1365085484455428147\","
+                  - generic [ref=e718]: "\"index\": 1,"
+                  - generic [ref=e720]: "\"elementCertified\": true,"
+                  - generic [ref=e722]: "\"cost\": \"$20 Lifetime\","
+                  - generic [ref=e724]: "\"__v\": 1"
+                  - generic [ref=e726]: "},"
+          - heading "Retrieving a exploit status Direct link to heading" [level=2] [ref=e728]:
+            - generic [ref=e729]: Retrieving a exploit status
+            - link "Direct link to heading" [ref=e731] [cursor=pointer]:
+              - /url: "#retrieving-a-exploit-status"
+          - paragraph [ref=e734]: "You can obtain a current exploit status via this route:"
+          - paragraph [ref=e735]:
+            - code [ref=e736]: GET
+            - code [ref=e737]: https://weao.xyz/api/status/exploits/[exploit]
+          - paragraph [ref=e738]: "Example Response:"
+          - generic [ref=e739]:
+            - tablist [ref=e740]:
+              - tab "200 (OK)" [selected] [ref=e742] [cursor=pointer]
+              - tab "429 (Rate limit)" [ref=e745] [cursor=pointer]
+            - tabpanel "200 (OK)" [ref=e747]:
+              - generic [ref=e751]:
+                - generic [ref=e752]:
+                  - button "Copy" [ref=e753] [cursor=pointer]
+                  - status [ref=e755]
+                - code [ref=e757]:
+                  - generic [ref=e758]: "{"
+                  - generic [ref=e760]: "\"_id\": \"66a679cc5b36b46c9327b0a7\","
+                  - generic [ref=e762]: "\"title\": \"Synapse Z\","
+                  - generic [ref=e764]: "\"version\": \"v0.13-638\","
+                  - generic [ref=e766]: "\"updatedDate\": \"8/14/2024 at 07:25 PM EST\","
+                  - generic [ref=e768]: "\"uncStatus\": true,"
+                  - generic [ref=e770]: "\"free\": false,"
+                  - generic [ref=e772]: "\"detected\": true,"
+                  - generic [ref=e774]: "\"rbxversion\": \"version-b67e7cbe150a4c59\","
+                  - generic [ref=e776]: "\"updateStatus\": false,"
+                  - generic [ref=e778]: "\"websitelink\": \"https://synz.lol\","
+                  - generic [ref=e780]: "\"discordlink\": \"https://discord.gg/synz\","
+                  - generic [ref=e782]: "\"beta\": false,"
+                  - generic [ref=e784]: "\"platform\": \"Windows\","
+                  - generic [ref=e786]: "\"extype\": \"wexecutor\","
+                  - generic [ref=e788]: "\"roleId\": \"1267164077503811686\","
+                  - generic [ref=e790]: "\"purchaselink\": \"https://synapsez.mysellix.io/\","
+                  - generic [ref=e792]: "\"index\": 3"
+                  - generic [ref=e794]: "}"
+          - heading "Retrieving exploit changelogs Direct link to heading" [level=2] [ref=e796]:
+            - generic [ref=e797]: Retrieving exploit changelogs
+            - link "Direct link to heading" [ref=e799] [cursor=pointer]:
+              - /url: "#retrieving-exploit-changelogs"
+          - paragraph [ref=e802]: "You can obtain a current exploit status via this route:"
+          - note "Information" [ref=e803]:
+            - paragraph [ref=e808]: Keep in mind we don't track changelogs for every exploit as it depends on whether or not their API has changelogs included.
+          - paragraph [ref=e809]:
+            - code [ref=e810]: GET
+            - code [ref=e811]: https://weao.xyz/api/status/exploits/changelogs/[exploit]
+          - paragraph [ref=e812]:
+            - code [ref=e813]: GET
+            - code [ref=e814]: https://weao.xyz/api/status/exploits/changelogs/[trackerId]
+          - paragraph [ref=e815]: "Example Response:"
+          - generic [ref=e816]:
+            - tablist [ref=e817]:
+              - tab "200 (OK)" [selected] [ref=e819] [cursor=pointer]
+            - tabpanel "200 (OK)" [ref=e821]:
+              - generic [ref=e825]:
+                - generic [ref=e826]:
+                  - button "Copy" [ref=e827] [cursor=pointer]
+                  - status [ref=e829]
+                - code [ref=e831]:
+                  - generic [ref=e832]: "{"
+                  - generic [ref=e834]: "\"trackerId\": \"WEAO0fc0936f\","
+                  - generic [ref=e836]: "\"name\": \"awpgg\","
+                  - generic [ref=e838]: "\"displayName\": \"AWP.GG\","
+                  - generic [ref=e840]: "\"changelogs\": [],"
+                  - generic [ref=e842]: "\"count\": 0"
+                  - generic [ref=e844]: "}"
+      - generic [ref=e846]:
+        - link "Previous Roblox versions" [ref=e847] [cursor=pointer]:
+          - /url: /weao-api-reference/roblox-versions
+          - generic [ref=e850]:
+            - generic [ref=e851]: Previous
+            - generic [ref=e852]: Roblox versions
+        - link "Next sUNC Data" [ref=e853] [cursor=pointer]:
+          - /url: /weao-api-reference/sunc-data
+          - generic [ref=e856]:
+            - generic [ref=e857]: Next
+            - generic [ref=e858]: sUNC Data
+      - paragraph [ref=e860]:
+        - text: Last updated
+        - time [ref=e861]: 4 months ago

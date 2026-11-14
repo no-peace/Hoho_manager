@@ -2,3 +2,4 @@ node_modules/
 .browser-profile/
 playwright.bat
 login.bat
+mcp_servers.bat

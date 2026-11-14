@@ -1,0 +1,84 @@
+- generic [active] [ref=f1e1]:
+  - link "Skip to content" [ref=f1e2] [cursor=pointer]:
+    - /url: "#gitbook-main-content"
+  - banner [ref=f1e3]:
+    - generic [ref=f1e6]:
+      - link "WEAO API Reference" [ref=f1e8] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f1e11]:
+        - generic [ref=f1e13]:
+          - textbox "Search" [ref=f1e17]:
+            - /placeholder: Search…
+          - generic [ref=f1e19]:
+            - generic [ref=f1e20]: Ctrl
+            - generic [ref=f1e22]: k
+        - alert [ref=f1e23]
+  - generic [ref=f1e25]:
+    - complementary [ref=f1e26]:
+      - generic [ref=f1e27]:
+        - generic [ref=f1e28]:
+          - list [ref=f1e30]:
+            - listitem [ref=f1e31]:
+              - button "Reference" [disabled] [ref=f1e33]
+            - listitem [ref=f1e35]:
+              - link [ref=f1e36] [cursor=pointer]:
+                - /url: /
+                - button "WEAO API Reference" [expanded] [ref=f1e38]
+              - list [ref=f1e41]:
+                - listitem [ref=f1e42]:
+                  - link "Roblox versions" [ref=f1e43] [cursor=pointer]:
+                    - /url: /weao-api-reference/roblox-versions
+                - listitem [ref=f1e45]:
+                  - link "Exploits" [ref=f1e46] [cursor=pointer]:
+                    - /url: /weao-api-reference/exploits
+                - listitem [ref=f1e48]:
+                  - link "sUNC Data" [ref=f1e49] [cursor=pointer]:
+                    - /url: /weao-api-reference/sunc-data
+          - button "Scroll back"
+          - button "Scroll further"
+        - link "Powered by GitBook" [ref=f1e51] [cursor=pointer]:
+          - /url: https://www.gitbook.com/powered-by?utm_source=content&utm_medium=trademark&utm_campaign=hAYWB3jaSvIAdWaiASjS&utm_content=site_oCCDf
+    - main [ref=f1e57]:
+      - generic [ref=f1e58]:
+        - text: For the complete documentation index, see
+        - link "llms.txt" [ref=f1e59] [cursor=pointer]:
+          - /url: https://docs.weao.xyz/llms.txt
+        - text: . This page is also available as
+        - link "Markdown" [ref=f1e60] [cursor=pointer]:
+          - /url: https://docs.weao.xyz/weao-api-reference.md
+        - text: .
+      - generic [ref=f1e61]:
+        - generic [ref=f1e62]:
+          - generic [ref=f1e64]:
+            - button "Copy" [ref=f1e65] [cursor=pointer]
+            - button "More" [ref=f1e69] [cursor=pointer]
+          - heading "WEAO API Reference" [level=1] [ref=f1e72]
+          - paragraph [ref=f1e73]: Learn about how the WEAO API Functions and the endpoints that are available for free to anybody
+        - generic [ref=f1e75]:
+          - note "Warning" [ref=f1e76]:
+            - generic [ref=f1e80]:
+              - paragraph [ref=f1e81]:
+                - text: "Receiving CORS errors? Check this out:"
+                - link "Click me!" [ref=f1e83] [cursor=pointer]:
+                  - /url: https://github.com/DevFaded/weao-proxy-api
+              - paragraph [ref=f1e86]: Otherwise, try fetching an endpoint with HTTP to see if that resolves any issues
+          - paragraph [ref=f1e87]:
+            - text: The user-agent
+            - code [ref=f1e88]:
+              - strong [ref=f1e89]: WEAO-3PService
+            - text: is required to access any of WEAO's resources.
+          - paragraph [ref=f1e90]: WEAO API Roblox version documentation
+          - link "Roblox versions" [ref=f1e91] [cursor=pointer]:
+            - /url: /weao-api-reference/roblox-versions
+          - paragraph [ref=f1e96]: WEAO API Exploit documentation
+          - link "Exploits" [ref=f1e97] [cursor=pointer]:
+            - /url: /weao-api-reference/exploits
+          - paragraph [ref=f1e106]: Pee cat
+      - link "Next Roblox versions" [ref=f1e108] [cursor=pointer]:
+        - /url: /weao-api-reference/roblox-versions
+        - generic [ref=f1e111]:
+          - generic [ref=f1e112]: Next
+          - generic [ref=f1e113]: Roblox versions
+      - paragraph [ref=f1e115]:
+        - text: Last updated
+        - time [ref=f1e116]: 1 year ago
