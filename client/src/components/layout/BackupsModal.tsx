@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Edit3, Upload, RefreshCw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../ui/Button";
@@ -45,7 +45,16 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const editorTargets = useMessageStore((state) => state.targets);
   const editorMode = useMessageStore((state) => state.mode);
   const editorFlows = useActionStore((state) => state.flows);
-  const [currentTemplateModified, setCurrentTemplateModified] = useState(false);
+  const [savedTemplateBaseline, setSavedTemplateBaseline] = useState<{ data: unknown; actions: unknown[] } | null>(null);
+  const currentDocument = useMemo(() => {
+    const messagesToSave = editorMessages && editorMessages.length > 0 ? editorMessages : [editorData];
+    return toQueryData(messagesToSave, editorTargets, editorMode);
+  }, [editorData, editorMessages, editorTargets, editorMode]);
+  const currentActions = useMemo(() => useActionStore.getState().toList(), [editorFlows]);
+  const currentTemplateModified = Boolean(savedTemplateBaseline && (
+    JSON.stringify(savedTemplateBaseline.data) !== JSON.stringify(currentDocument) ||
+    JSON.stringify(savedTemplateBaseline.actions) !== JSON.stringify(currentActions)
+  ));
   const getEditorPayload = useMessageStore((state) => state.getPayload);
   const openBotModal = useGlobalStore((state) => state.openBotModal);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
@@ -72,24 +81,22 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   useEffect(() => {
     if (!open || !currentTemplateId) {
-      setCurrentTemplateModified(false);
+      setSavedTemplateBaseline(null);
       return;
     }
     let cancelled = false;
     void api.templates.get(currentTemplateId).then(({ template }) => {
-      const store = useMessageStore.getState();
-      const messagesToSave = store.messages && store.messages.length > 0 ? store.messages : [store.data];
-      const currentDocument = toQueryData(messagesToSave, store.targets, store.mode);
-      const currentActions = useActionStore.getState().toList();
-      const changed =
-        JSON.stringify(template.data) !== JSON.stringify(currentDocument) ||
-        JSON.stringify(template.actions ?? []) !== JSON.stringify(currentActions);
-      if (!cancelled) setCurrentTemplateModified(changed);
+      if (!cancelled) {
+        setSavedTemplateBaseline({
+          data: template.data,
+          actions: template.actions ?? [],
+        });
+      }
     }).catch(() => {
-      if (!cancelled) setCurrentTemplateModified(false);
+      if (!cancelled) setSavedTemplateBaseline(null);
     });
     return () => { cancelled = true; };
-  }, [open, currentTemplateId, editorData, editorMessages, editorTargets, editorMode, editorFlows]);
+  }, [open, currentTemplateId]);
 
   if (!open) return null;
 
