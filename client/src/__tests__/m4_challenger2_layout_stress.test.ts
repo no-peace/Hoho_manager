@@ -752,3 +752,29 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     expect(source).toContain("window.innerWidth >= 1280");
   });
 });
+
+
+describe("Responsive Header layout containment", () => {
+  const filePath = path.resolve(__dirname, "../components/layout/Header.tsx");
+  const source = fs.readFileSync(filePath, "utf-8");
+
+  it("uses a three-column grid so the brand, toolbar, and account controls cannot overlap through flex shrink", () => {
+    expect(source).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
+    expect(source).toContain("justify-self-center");
+    expect(source).toContain("justify-self-end");
+  });
+
+  it("keeps the server selector at a usable compact width on phones and expands it at larger breakpoints", () => {
+    expect(source).toContain("w-9 sm:w-28 lg:w-48");
+    expect(source).toContain("shrink-0");
+  });
+
+  it("moves admin-only header actions out of the constrained phone header", () => {
+    expect(source).toContain('className="hidden sm:flex text-xs items-center');
+  });
+
+  it("reduces toolbar button padding on narrow screens while retaining desktop spacing", () => {
+    expect(source).toContain("px-1 sm:px-2");
+    expect(source).toContain("p-1 sm:p-1.5");
+  });
+});
