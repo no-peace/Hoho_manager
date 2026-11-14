@@ -1,7 +1,7 @@
 # Current implementation status — V8 (2026-11-14)
 
 **Working branch:** `feat/hoho-manager-weao-workspace-v8`  
-**Latest implementation commit:** `8ecf44014f5a210b9f987c49fd819ecd7f27da1d`  
+**Latest implementation commit:** `8f79fbf4ba20809a3b71a3f37f05f08eafe950cb`  
 **Base inspected:** `6f9ff254e94b1235eb6ca3c672be725d0d53f613`
 
 ## Implemented on the working branch
@@ -12,7 +12,7 @@
 - Reworked the studio into an Editor/Preview workspace with a dedicated wider desktop Inspector; the mobile Inspector remains a bottom sheet. Increased Inspector form sizing.
 - Reworked the mobile server selector into a bottom sheet with viewport clamping, search, Escape, and outside-click dismissal.
 - Added WEAO changelog retrieval using the existing WEAO request infrastructure, User-Agent, cache, timeout, and fallback handling. Supports exploit name or tracker ID.
-- Added changelog variable selectors: `{exploit.Solara.changelogs}`, `{exploit.Solara.changelogs[0:3]}`, `{exploit.Solara.changelogs[2]}`, `{exploit.Solara.changelogs[-3:]}`, and `{exploit.Solara.changelogs.compare}`. Comparison is between the current and previous in-process WEAO snapshot; the first fetch establishes the baseline.
+- Added changelog variable selectors: `{exploit.Solara.changelogs}`, `{exploit.Solara.changelogs[0:3]}`, `{exploit.Solara.changelogs[2]}`, `{exploit.Solara.changelogs[-3:]}`, and `{exploit.Solara.changelogs.compare}`. Comparison is against a stable in-process baseline captured on first fetch, so new/removed entries remain visible until the server restarts.
 - Added a preview API and live-preview rendering for changelog variables.
 - Removed generated/default exploit status messages. The bot autocomplete now lists only configured saved templates/custom command payloads; an unconfigured direct invocation is silently deleted.
 - Added an `Add to /exploit command` option when saving a backup, plus an action on existing backups/tracked messages. Command-dispatched messages are tracked through the existing send/tracker pipeline.
@@ -24,14 +24,14 @@
 ## External checks performed
 
 - WEAO API was opened with Playwright. `Delta` and `Wave` currently returned empty changelogs. `Solara` returned 121 entries and confirmed the actual item fields include `version`, `changelog`, `timestamp`, and `date`; the formatter supports these fields.
-- Production `/docs` was opened with Playwright for baseline inspection. This was the currently deployed main build, not the working branch.
+- Production `/docs` was opened with Playwright for baseline inspection. This was the currently deployed main build, not the working branch. The specified Discord bot-log channel was opened read-only: recent visible entries were staff-permission audit logs (Nov 11 and Nov 13); older scan/cancel logs were from Apr 14. No Discord message was sent.
 - No Discord message was sent. Any future Discord send/test remains restricted to the bot-log channel specified by the user.
 
 ## Verification status — not yet complete
 
 GitHub Actions runs were triggered for the working branch, but all three matrix jobs failed before runner allocation: each job reported `runner_id: 0`, an empty runner name, and no steps. The workflow logs endpoint returned 404 because no runner logs were produced. This is an infrastructure/runner failure, **not evidence that the code passed or failed compilation**. No green CI result is available yet.
 
-The branch has not been merged into `main` and has not been deployed to Render. Production Playwright, Render deployment/health checks, and the final responsive/functional audit remain pending. Do not describe this work as verified or deployed until those checks pass.
+The branch has not been merged into `main` and has not been deployed to Render. Draft PR: https://github.com/no-peace/Hoho_manager/pull/40. Production Playwright, Render deployment/health checks, and the final responsive/functional audit remain pending. Do not describe this work as verified or deployed until those checks pass.
 
 ---
 
