@@ -135,6 +135,22 @@ describe("authorService", () => {
     });
 
 
+    it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
+        vi.mocked(getGuildMember).mockResolvedValue({
+            user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
+            nick: "Server Nick",
+        } as any);
+
+        const result = await resolveAuthorPlaceholders(
+            { content: "{user.name}|{user.displayname}" } as any,
+            USER_A,
+            null,
+            "999999999999999999",
+        );
+
+        expect((result.payload as any).content).toBe("Server Nick|Peace");
+    });
+
     it("uses the destination server nickname for name and the global name for displayname", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
             user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
