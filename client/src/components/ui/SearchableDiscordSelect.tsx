@@ -231,7 +231,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           const maxLeft = Math.max(8, window.innerWidth - dropdownWidth - 8);
           const dropdownLeft = isMobile ? 12 : Math.max(8, Math.min(dropdownRect.left, maxLeft));
           const calculatedMaxHeight = isMobile
-            ? Math.min(520, Math.max(260, window.innerHeight - 48))
+            ? Math.min(520, Math.max(120, window.innerHeight - 32))
             : Math.min(DROPDOWN_HEIGHT, placeAbove ? spaceAbove : spaceBelow);
           const maxTop = Math.max(8, window.innerHeight - 8 - calculatedMaxHeight);
           const calculatedTop = isMobile
