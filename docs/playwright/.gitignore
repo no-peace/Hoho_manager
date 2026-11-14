@@ -1,1 +1,4 @@
-node_modules/\n.browser-profile/\nreports/\nlighthouse-input/\n
+node_modules/
+.browser-profile/
+reports/
+lighthouse-input/
