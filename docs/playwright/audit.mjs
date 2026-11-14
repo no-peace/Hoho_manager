@@ -10,6 +10,7 @@ const REPORT_DIR = path.join(HERE, "reports");
 const PROFILE_DIR = path.join(HERE, ".browser-profile");
 const APP_URL = process.env.HOHO_URL || "https://hoho-manager.onrender.com/";
 const STORAGE_KEY = "dmb:message";
+const VIEWPORTS = [320, 360, 390, 430, 768, 1280];
 
 const results = [];
 const consoleErrors = [];
@@ -49,18 +50,99 @@ async function closeDialog(page) {
 async function checkViewport(page, label) {
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
-    scroll: document.documentElement.scrollWidth,
+    document: document.documentElement.scrollWidth,
     body: document.body.scrollWidth,
   }));
-  const overflow = dimensions.scroll > dimensions.viewport + 2 ||
+  const overflow = dimensions.document > dimensions.viewport + 2 ||
     dimensions.body > dimensions.viewport + 2;
   record(`${label} horizontal overflow`, overflow ? "FAIL" : "PASS",
-    `viewport=${dimensions.viewport}px, document=${dimensions.scroll}px, body=${dimensions.body}px`);
+    `viewport=${dimensions.viewport}px, document=${dimensions.document}px, body=${dimensions.body}px`);
   return !overflow;
+}
+
+async function captureLoginScreenshots(browser) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  try {
+    await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+    const loginRoot = page.locator('[data-testid="login-screen-scroll-root"]');
+    try {
+      await loginRoot.waitFor({ state: "visible", timeout: 25000 });
+    } catch {
+      record("LoginScreen screenshots", "SKIP",
+        "Unauthenticated LoginScreen did not render within 25 seconds; check site availability or auth loading");
+      return;
+    }
+
+    for (const width of VIEWPORTS) {
+      await page.setViewportSize({ width, height: 900 });
+      await pause(350);
+      await page.screenshot({
+        path: path.join(REPORT_DIR, `login-${width}.png`),
+        fullPage: true,
+        animations: "disabled",
+      });
+    }
+    record("LoginScreen responsive screenshots", "PASS",
+      `Captured widths: ${VIEWPORTS.join(", ")}px`);
+  } finally {
+    await context.close();
+  }
+}
+
+async function captureStudioScreenshots(page) {
+  const propertyPanel = page.locator("aside").filter({ hasText: "Component Inspector" }).first();
+  const header = page.locator("header").first();
+  const propertyPanelInitiallyVisible = await visible(propertyPanel);
+
+  for (const width of VIEWPORTS) {
+    await page.setViewportSize({ width, height: 900 });
+    await pause(400);
+    await checkViewport(page, `Studio ${width}px`);
+
+    if (await visible(header)) {
+      await header.screenshot({
+        path: path.join(REPORT_DIR, `header-${width}.png`),
+        animations: "disabled",
+      }).catch((error) => record(`Header screenshot ${width}px`, "FAIL", String(error)));
+    } else {
+      record(`Header screenshot ${width}px`, "SKIP", "No visible header on the current route");
+    }
+
+    await page.screenshot({
+      path: path.join(REPORT_DIR, `studio-${width}.png`),
+      fullPage: true,
+      animations: "disabled",
+    });
+
+    if (await visible(propertyPanel)) {
+      await propertyPanel.screenshot({
+        path: path.join(REPORT_DIR, `property-panel-${width}.png`),
+        animations: "disabled",
+      }).catch((error) => record(`PropertyPanel screenshot ${width}px`, "FAIL", String(error)));
+    }
+  }
+
+  record("PropertyPanel responsive screenshots",
+    propertyPanelInitiallyVisible ? "PASS" : "SKIP",
+    propertyPanelInitiallyVisible
+      ? `Captured at widths: ${VIEWPORTS.join(", ")}px`
+      : "Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it");
+
+  await page.setViewportSize({ width: 1440, height: 960 });
 }
 
 async function main() {
   await mkdir(REPORT_DIR, { recursive: true });
+  const browser = await chromium.launch({ headless: false, args: ["--disable-dev-shm-usage"] });
+
+  try {
+    console.log("Capturing the unauthenticated LoginScreen at all requested widths...");
+    await captureLoginScreenshots(browser);
+  } finally {
+    await browser.close();
+  }
+
   const context = await chromium.launchPersistentContext(PROFILE_DIR, {
     headless: false,
     viewport: { width: 1440, height: 960 },
@@ -79,19 +161,20 @@ async function main() {
     failedRequests.push({ url: request.url(), error: request.failure()?.errorText || "unknown" });
   });
   page.on("response", (response) => {
-    if (response.status() >= 400) {
-      badResponses.push({ status: response.status(), url: response.url() });
-    }
+    if (response.status() >= 400) badResponses.push({ status: response.status(), url: response.url() });
   });
 
   try {
-    console.log(`Opening ${APP_URL}`);
+    console.log(`Opening authenticated audit session: ${APP_URL}`);
     await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
-    record("Application route responds", page.url().startsWith(new URL(APP_URL).origin) ? "PASS" : "FAIL", page.url());
+    record("Application route responds",
+      page.url().startsWith(new URL(APP_URL).origin) ? "PASS" : "FAIL", page.url());
 
     const rl = createInterface({ input, output });
-    await rl.question("\nSign in manually in Chromium. When HoHo Manager is fully loaded, return here and press Enter to begin the audit... ");
+    await rl.question(
+      "\nSign in manually if needed. In the Studio, select a message component so the Component Inspector is open. Do not send messages or confirm destructive actions. Return here and press Enter when ready... ",
+    );
     rl.close();
 
     await page.waitForTimeout(1000);
@@ -104,33 +187,26 @@ async function main() {
     record("App rendered visible content", appRoot.trim().length > 0 ? "PASS" : "FAIL",
       appRoot.trim().slice(0, 120).replace(/\s+/g, " "));
 
-    // Header JSON modal: inspect and close without applying changes.
     const jsonButton = page.locator('button[title="Import or export JSON"], button[aria-label="Import or export JSON"]');
     if (await clickIfVisible(jsonButton)) {
       const jsonTitle = page.getByText("JSON Data", { exact: true });
-      const titleVisible = await visible(jsonTitle);
       const textarea = page.locator('textarea[placeholder="Paste or edit message JSON..."]');
+      const titleVisible = await visible(jsonTitle);
       record("JSON modal opens", titleVisible && await visible(textarea) ? "PASS" : "FAIL",
         titleVisible ? "JSON Data title and editor found" : "Expected JSON Data modal not found");
       await clickIfVisible(page.getByRole("button", { name: "Cancel", exact: true }));
       await closeDialog(page);
-    } else {
-      record("JSON modal opens", "SKIP", "JSON toolbar button not visible on this account/page");
-    }
+    } else record("JSON modal opens", "SKIP", "JSON toolbar button not visible");
 
-    // Backups modal is read-only here; it is only opened and dismissed.
     const backupsButton = page.locator('button[title="Backups & saved messages"], button[aria-label="Backups and saved messages"]');
     if (await clickIfVisible(backupsButton)) {
       await pause(500);
       const dialogCount = await page.locator('[role="dialog"]').count();
       record("Backups modal opens", dialogCount > 0 ? "PASS" : "SKIP",
-        dialogCount > 0 ? "Dialog detected" : "No accessible dialog detected; modal may use a custom container");
+        dialogCount > 0 ? "Dialog detected" : "No accessible dialog detected");
       await closeDialog(page);
-    } else {
-      record("Backups modal opens", "SKIP", "Backups button is not available");
-    }
+    } else record("Backups modal opens", "SKIP", "Backups button is not available");
 
-    // Dispatch is intentionally never confirmed.
     const dispatchButton = page.locator('button[title="Dispatch message"], button[aria-label="Dispatch message"]');
     if (await clickIfVisible(dispatchButton)) {
       await pause(400);
@@ -138,11 +214,8 @@ async function main() {
       record("Dispatch dialog opens", await visible(sendText) ? "PASS" : "SKIP",
         "Opened for inspection only; no send action is performed");
       await closeDialog(page);
-    } else {
-      record("Dispatch dialog opens", "SKIP", "Dispatch button is not available");
-    }
+    } else record("Dispatch dialog opens", "SKIP", "Dispatch button is not available");
 
-    // Clear All is opened and cancelled; destructive confirmation is never accepted.
     const clearButton = page.locator('button[title="Clear all messages"], button[aria-label="Clear all messages"]');
     if (await clickIfVisible(clearButton)) {
       await pause(250);
@@ -151,17 +224,9 @@ async function main() {
       record("Clear-all confirmation opens", confirmationDetected ? "PASS" : "SKIP",
         "Confirmation is not accepted; existing messages are left intact");
       await closeDialog(page);
-    } else {
-      record("Clear-all confirmation opens", "SKIP", "Clear-all button is not available");
-    }
+    } else record("Clear-all confirmation opens", "SKIP", "Clear-all button is not available");
 
-    await checkViewport(page, "Desktop");
-    await page.screenshot({ path: path.join(REPORT_DIR, "desktop.png"), fullPage: true });
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await pause(500);
-    await checkViewport(page, "Mobile");
-    await page.screenshot({ path: path.join(REPORT_DIR, "mobile.png"), fullPage: true });
+    await captureStudioScreenshots(page);
 
     record("Browser console errors", consoleErrors.length === 0 ? "PASS" : "FAIL",
       consoleErrors.length ? consoleErrors.slice(0, 5).join(" | ") : "No console errors captured");
@@ -174,8 +239,6 @@ async function main() {
   } catch (error) {
     record("Audit execution", "FAIL", error?.stack || String(error));
   } finally {
-    // Verify the audit left the user's saved message data untouched. If a check or
-    // application side effect changed it, restore the exact original value.
     if (storageSnapshotTaken) {
       try {
         const currentStorage = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
@@ -186,15 +249,11 @@ async function main() {
           }, { key: STORAGE_KEY, value: originalStorage });
           await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
           record("Original message data restored", "PASS", "A storage change was detected and the snapshot was restored");
-        } else {
-          record("Message data safety", "PASS", "Saved message data is unchanged");
-        }
+        } else record("Message data safety", "PASS", "Saved message data is unchanged");
       } catch (error) {
         record("Original message data verification", "FAIL", String(error));
       }
-    } else {
-      record("Message data safety", "SKIP", "Could not snapshot storage before the audit");
-    }
+    } else record("Message data safety", "SKIP", "Could not snapshot storage before the audit");
 
     const passed = results.filter((item) => item.status === "PASS").length;
     const failed = results.filter((item) => item.status === "FAIL").length;
@@ -202,6 +261,7 @@ async function main() {
     const report = {
       appUrl: APP_URL,
       generatedAt: new Date().toISOString(),
+      viewportWidths: VIEWPORTS,
       totals: { passed, failed, skipped },
       results,
       diagnostics: { consoleErrors, pageErrors, failedRequests, badResponses },
@@ -213,6 +273,7 @@ async function main() {
       "",
       `- URL: ${APP_URL}`,
       `- Generated: ${report.generatedAt}`,
+      `- Responsive widths: ${VIEWPORTS.join(", ")}px`,
       `- Passed: ${passed}`,
       `- Failed: ${failed}`,
       `- Skipped: ${skipped}`,
@@ -221,14 +282,17 @@ async function main() {
       "|---|---|---|",
       ...results.map((item) => `| ${item.status} | ${item.name.replace(/\|/g, "\\|")} | ${String(item.details).replace(/\|/g, "\\|").replace(/\n/g, " ")} |`),
       "",
-      "## Notes",
-      "- This is a UI smoke audit, not proof of complete functional correctness.",
-      "- No Discord message was sent and no destructive confirmation was accepted.",
-      "- Screenshots are saved as desktop.png and mobile.png in this reports folder.",
+      "## Screenshot files",
+      "- login-<width>.png: unauthenticated LoginScreen",
+      "- header-<width>.png: authenticated Studio header",
+      "- studio-<width>.png: full Studio page",
+      "- property-panel-<width>.png: Component Inspector, when it was open before the audit",
+      "",
+      "No Discord message was sent and no destructive confirmation was accepted.",
     ].join("\n");
     await writeFile(path.join(REPORT_DIR, "audit-report.md"), markdown);
     console.log(`\nAudit finished: ${passed} passed, ${failed} failed, ${skipped} skipped.`);
-    console.log(`Reports: ${REPORT_DIR}`);
+    console.log(`Reports and screenshots: ${REPORT_DIR}`);
     await context.close();
     process.exitCode = failed > 0 ? 1 : 0;
   }
