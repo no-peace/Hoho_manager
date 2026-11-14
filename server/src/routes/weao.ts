@@ -77,7 +77,9 @@ router.get(
     }
 
     // Convert custom executors to exploit records
-    const customRecords: any[] = customExecutors.map((c) => ({
+    const customRecords: any[] = customExecutors
+      .filter((c) => Boolean(c.template_id || c.custom_payload))
+      .map((c) => ({
       _id: `custom_${c.id}`,
       title: c.title,
       version: "Custom",
