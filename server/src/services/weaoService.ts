@@ -315,7 +315,7 @@ const formatChangelogEntry = (entry: unknown): string => {
   const record = entry as Record<string, unknown>;
   const title = [record.title, record.name, record.version].find((value) => typeof value === "string" && value.trim());
   const description = [record.description, record.message, record.content, record.changelog, record.text].find((value) => typeof value === "string" && value.trim());
-  const date = [record.date, record.createdAt, record.timestamp, record.updatedAt].find((value) => typeof value === "string" || typeof value === "number");
+  const date = [record.date, record.createdAt, record.updatedAt, record.timestamp].find((value) => typeof value === "string" || typeof value === "number");
   const heading = typeof title === "string" ? `**${title.trim()}**` : "";
   const body = typeof description === "string" ? description.trim() : "";
   const stamp = date !== undefined ? String(date) : "";
