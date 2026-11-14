@@ -165,7 +165,11 @@ router.post(
       const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
       const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
-      const targetGuildId = targetChannelId
+      // Guild context is only needed for ID-scoped member placeholders. Avoid an
+      // extra Discord API lookup on ordinary sends (including admin-key sends).
+      const payloadText = JSON.stringify(weaoInterpolated);
+      const needsGuildContext = /\\{user\\.\\d{17,20}\\./i.test(payloadText);
+      const targetGuildId = targetChannelId && needsGuildContext
         ? await discord.getChannelGuildId(targetChannelId).catch(() => null)
         : null;
 
