@@ -165,13 +165,27 @@ router.post(
       const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
       const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
-      // Guild context is only needed for ID-scoped member placeholders. Avoid an
-      // extra Discord API lookup on ordinary sends (including admin-key sends).
-      const payloadText = JSON.stringify(weaoInterpolated);
-      const needsGuildContext = /\\{user\\.\\d{17,20}\\./i.test(payloadText);
-      const targetGuildId = targetChannelId && needsGuildContext
+      // Use the destination guild's member nickname for {user.name}.
+      const targetGuildId = targetChannelId
         ? await discord.getChannelGuildId(targetChannelId).catch(() => null)
         : null;
+      let senderMember: any = null;
+      if (targetGuildId && senderDiscordId) {
+        try {
+          const botToken = await discord.resolveBotToken(profileId);
+          senderMember = await discord.getGuildMember(targetGuildId, senderDiscordId, botToken);
+        } catch {
+          senderMember = null;
+        }
+      }
+      const senderGlobalName =
+        typeof senderMember?.user?.global_name === "string" && senderMember.user.global_name
+          ? senderMember.user.global_name
+          : senderName;
+      const senderNickname =
+        typeof senderMember?.nick === "string" && senderMember.nick.trim()
+          ? senderMember.nick.trim()
+          : senderName;
 
       const sendVars: Record<string, string> = {
         now: `<t:${unixNow}:f>`,
@@ -201,9 +215,9 @@ router.post(
           ? {
             "user.id": senderDiscordId,
             "user.mention": `<@${senderDiscordId}>`,
-            "user.name": senderName,
+            "user.name": senderNickname,
             "user.tag": senderName,
-            "user.displayname": senderName,
+            "user.displayname": senderGlobalName,
           }
           : {}),
       };
