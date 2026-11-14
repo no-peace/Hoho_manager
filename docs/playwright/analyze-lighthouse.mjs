@@ -29,6 +29,13 @@ function auditValue(lhr, id) {
 
 function extractLcpNode(lhr) {
   const audit = lhr.audits?.["largest-contentful-paint-element"];
+  if (audit?.scoreDisplayMode === "error" && audit?.errorMessage) {
+    return {
+      auditTitle: audit.title || "Largest Contentful Paint element",
+      summary: `Lighthouse gatherer error: ${audit.errorMessage}`,
+      url: null,
+    };
+  }
   const item = audit?.details?.items?.[0];
   const node = item?.items?.[0]?.node || item?.node || item?.element;
   return {
