@@ -93,6 +93,19 @@ async function captureLoginScreenshots(browser) {
         fullPage: true,
         animations: "disabled",
       });
+      const loginScrollMetrics = await loginRoot.evaluate((element) => ({
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+      }));
+      if (loginScrollMetrics.scrollHeight > loginScrollMetrics.clientHeight + 2) {
+        await loginRoot.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+        await pause(150);
+        await page.screenshot({
+          path: path.join(REPORT_DIR, `login-bottom-${width}.png`),
+          animations: "disabled",
+        });
+        await loginRoot.evaluate((element) => { element.scrollTop = 0; });
+      }
     }
     record("LoginScreen responsive screenshots", "PASS",
       `Captured widths: ${VIEWPORTS.join(", ")}px`);
@@ -134,6 +147,13 @@ async function captureStudioScreenshots(page) {
     });
 
     if (await visible(propertyPanel)) {
+      const panelDimensions = await propertyPanel.evaluate((element) => ({
+        client: element.clientWidth,
+        scroll: element.scrollWidth,
+      }));
+      const panelOverflow = panelDimensions.scroll > panelDimensions.client + 2;
+      record(`PropertyPanel ${width}px internal overflow`, panelOverflow ? "FAIL" : "PASS",
+        `client=${panelDimensions.client}px, scroll=${panelDimensions.scroll}px`);
       await propertyPanel.screenshot({
         path: path.join(REPORT_DIR, `property-panel-${width}.png`),
         animations: "disabled",
@@ -301,7 +321,8 @@ async function main() {
       ...results.map((item) => `| ${item.status} | ${item.name.replace(/\|/g, "\\|")} | ${String(item.details).replace(/\|/g, "\\|").replace(/\n/g, " ")} |`),
       "",
       "## Screenshot files",
-      "- login-<width>.png: unauthenticated LoginScreen",
+      "- login-<width>.png: unauthenticated LoginScreen (top)",
+      "- login-bottom-<width>.png: LoginScreen scrolled to the bottom when its content is taller than the viewport",
       "- header-<width>.png: authenticated Studio header",
       "- studio-<width>.png: full Studio page",
       "- property-panel-<width>.png: Component Inspector, when it was open before the audit",
