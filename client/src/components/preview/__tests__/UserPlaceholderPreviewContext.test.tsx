@@ -167,6 +167,7 @@ describe("UserPlaceholderPreviewContext", () => {
     expect(resolveUsersMock).toHaveBeenCalledWith(
       [USER_A],
       expect.any(AbortSignal),
+      undefined,
     );
   });
 });
