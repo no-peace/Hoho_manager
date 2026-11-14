@@ -189,11 +189,11 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
       const res = computeDropdownPosition({
         dropdownRect: { top: 50, bottom: 90, left: 50, width: 250 },
         innerWidth: 1024,
-        innerHeight: 250, // spaceBelow = 160 < 260; spaceAbove = 50 <= 160
+        innerHeight: 250, // 148px remains below and 42px remains above the trigger
       });
 
-      expect(res.spaceBelow).toBe(160);
-      expect(res.spaceAbove).toBe(50);
+      expect(res.spaceBelow).toBe(148);
+      expect(res.spaceAbove).toBe(42);
       expect(res.placeAbove).toBe(false);
       expect(res.calculatedTop).toBe(94); // bottom (90) + 4
       expect(res.calculatedMaxHeight).toBe(148); // 160px below the trigger minus 12px of spacing
