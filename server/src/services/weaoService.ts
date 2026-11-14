@@ -511,7 +511,7 @@ export const interpolateWeaoPlaceholders = async (
     }
     if (suncMap.has(keyLower)) continue;
     const found =
-      allExploits.find((e) => e.title.toLowerCase() === keyLower) ??
+      allExploits.find((e) => e.title.toLowerCase() === keyLower || e._id.toLowerCase() === keyLower) ??
       allExploits.find((e) => e.title.toLowerCase().includes(keyLower));
     if (found && needsDetailedSunc) {
       suncMap.set(found.title.toLowerCase(), await getExploitSuncDetails(found));
@@ -524,7 +524,7 @@ export const interpolateWeaoPlaceholders = async (
       if (scoped) {
         const target =
           allExploits.find(
-            (e) => e.title.toLowerCase() === scoped.targetName.toLowerCase(),
+            (e) => e.title.toLowerCase() === scoped.targetName.toLowerCase() || e._id.toLowerCase() === scoped.targetName.toLowerCase(),
           ) ??
           allExploits.find((e) =>
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
@@ -532,9 +532,9 @@ export const interpolateWeaoPlaceholders = async (
         if (!target) return fullMatch;
         if (/^changelogs(?:\\[|\\.|$)/i.test(scoped.fieldName)) {
           return formatExploitChangelogs(
-            changelogMap.get(target.title.toLowerCase()) ?? [],
+            changelogMap.get(scoped.targetName.toLowerCase()) ?? [],
             scoped.fieldName,
-            changelogComparisons.get(target.title.toLowerCase()),
+            changelogComparisons.get(scoped.targetName.toLowerCase()),
           );
         }
         return formatExploitField(
