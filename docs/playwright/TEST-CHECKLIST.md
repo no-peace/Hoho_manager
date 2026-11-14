@@ -37,13 +37,168 @@ Run each command separately in PowerShell. A successful command returns to the p
 | A07 | `npm run verify:acceptance` | Existing production-readiness assertions | All listed acceptance checks pass |
 | A08 | `npm run benchmark:json` | Server performance benchmark gates | Completes and emits valid JSON/report |
 | A09 | `npm run dev` | Starts local server/client/bot dev processes | No startup crash; check browser and terminal logs |
-| A10 | `npm run audit` from `docs/playwright` | Browser smoke audit | Read the generated report; no unexplained FAIL entries |
+| A10 | Follow section **1A — Browser audit for beginners** | Responsive browser audit | All six viewport widths are captured; review every FAIL and SKIP in the report |
 
 Notes:
 - `npm run dev` starts the API, web client, and bot together. It may require valid local environment configuration. Do not paste secrets into issue reports.
 - `npm run verify:acceptance` runs build/type/test/benchmark-related checks and source invariants; it is not a replacement for the manual checks below.
 - If the benchmark command is unavailable or fails because the machine is resource-constrained, record the full output rather than silently marking it passed.
 - For CI parity, the repository workflow builds, typechecks, tests, and runs server benchmarks on Node 22 and Node 26. A local pass on one Node version does not prove both matrix versions pass.
+
+## 1A. Browser audit for beginners (Windows 10/11)
+
+This section is written for someone who has never used a terminal. Follow it in order. You do not need to write or edit code. The Playwright audit opens the website, takes screenshots, checks layout, and writes reports. It does not send Discord messages.
+
+### What you need
+- A Windows 10/11 PC with internet access.
+- Your GitHub account access to download the repository and Lighthouse artifacts.
+- A HoHo Manager account that can sign in to the live website.
+- About 10–20 minutes for the browser audit.
+
+### Step 1 — Install Node.js (one time only)
+1. Open https://nodejs.org/.
+2. Download the current **LTS** version for Windows (64-bit Windows Installer `.msi`).
+3. Open the downloaded installer, keep the default options, and click **Next** until **Install** appears.
+4. Click **Install**, approve the Windows permission prompt if shown, and finish the installer.
+5. Close any PowerShell windows that were already open.
+6. Press the Windows key, type **PowerShell**, and open **Windows PowerShell**.
+7. Copy this command, paste it into PowerShell, and press Enter:
+
+```powershell
+node --version
+```
+
+8. It must print Node version 22 or newer and below 27 (for example, v22.x or v24.x). If `node` is not recognized, restart Windows and try again. If it still fails, stop and report the exact message.
+
+### Step 2 — Download the latest repository files
+1. Open https://github.com/no-peace/Hoho_manager.
+2. Confirm the branch selector says **main**.
+3. Click the green **Code** button, then click **Download ZIP**.
+4. Open your Windows **Downloads** folder.
+5. Right-click `Hoho_manager-main.zip` and choose **Extract All...**, then click **Extract**.
+6. Open the extracted `Hoho_manager-main` folder, then open `docs`, then `playwright`.
+7. You should be inside a folder whose path ends with `Hoho_manager-main\docs\playwright`.
+
+### Step 3 — Open PowerShell in the correct folder
+1. Keep the `docs\playwright` folder open in File Explorer.
+2. Click the address bar at the top of File Explorer.
+3. Type `powershell` and press Enter.
+4. A PowerShell window opens. Its current folder path must end with `docs\playwright`.
+5. If it does not, close that window and repeat these steps from the correct folder.
+
+### Step 4 — Install the audit tools (one time for this downloaded copy)
+Copy each command below, paste it into PowerShell, and press Enter. Wait for each command to finish before running the next one.
+
+```powershell
+npm install
+```
+
+Then run:
+
+```powershell
+npx playwright install chromium
+```
+
+These commands may take a few minutes. Warnings are not automatically failures. If you see `npm ERR!` or the command ends unsuccessfully, stop and save the complete error text.
+
+### Step 5 — Run the responsive browser audit
+Run:
+
+```powershell
+npm run audit
+```
+
+Two Chromium browser sessions open in sequence.
+
+**First browser — LoginScreen**
+1. A clean browser opens the live website while signed out.
+2. Wait for the LoginScreen. The script captures widths **320, 360, 390, 430, 768, and 1280 pixels**.
+3. Do not click **Login with Discord** in this first browser.
+4. It closes automatically when the screenshots are finished.
+5. If the LoginScreen does not appear, the report will say SKIP. Do not mark this check as passed.
+
+**Second browser — Studio, Header, and PropertyPanel**
+1. A second browser opens with its own saved browser profile.
+2. If signed out, sign in using the normal Discord login. The script does not enter your password or perform the login for you.
+3. Wait for the Studio to finish loading.
+4. Make sure the **Component Inspector** (PropertyPanel) is visible. Open or create a message, add a component if there is none (for example, a button), then click that component in the editor/preview or Layers list. Look for the panel titled **Component Inspector**.
+5. Do not click Dispatch/Send. Do not confirm Clear All, Delete, or any other destructive action.
+6. Return to PowerShell. It will be waiting for you. Press Enter once.
+7. Leave the browser open and do not interact with the app until PowerShell says **Audit finished**.
+
+The audit captures the Studio at all six widths, takes separate Header and PropertyPanel screenshots when visible, and checks horizontal overflow. It may open safe dialogs to inspect them, but it does not confirm an action or send a message.
+
+If PropertyPanel screenshots are marked **SKIP**, close the browser, run `npm run audit` again, and select a component before pressing Enter. SKIP is not a pass.
+
+### Step 6 — Review the screenshots and audit report
+1. In File Explorer, open `docs\playwright\reports`.
+2. Look for these files:
+
+| File | Contents |
+|---|---|
+| `login-320.png` through `login-1280.png` | LoginScreen at six widths |
+| `header-320.png` through `header-1280.png` | Header at six widths |
+| `property-panel-320.png` through `property-panel-1280.png` | PropertyPanel at six widths, if it was open |
+| `studio-320.png` through `studio-1280.png` | Full Studio screenshots |
+| `audit-report.md` | Readable test results |
+| `audit-report.json` | Detailed results and browser/network diagnostics |
+
+3. Double-click PNG files to open them. Check that text and buttons are visible, do not overlap, and are not cut off at narrow widths.
+4. Right-click `audit-report.md`, choose **Open with**, then **Notepad**.
+5. Read the totals and Status column: **PASS** means the check passed; **FAIL** means a problem was detected; **SKIP** means the check could not be performed. SKIP is never a pass.
+6. Pay particular attention to Header at 320px and 360px, LoginScreen overflow entries, and PropertyPanel screenshots at the same widths.
+7. Do not change source code based only on screenshots. Share the report and screenshots for review.
+
+### Step 7 — Download Lighthouse artifacts from GitHub
+1. Open https://github.com/no-peace/Hoho_manager/actions.
+2. Click **Lighthouse** in the workflow list.
+3. Open the run you want to inspect. The earlier requested run is https://github.com/no-peace/Hoho_manager/actions/runs/43547638587.
+4. Find the **Artifacts** section on the run page.
+5. Download both `lighthouse-mobile` and `lighthouse-desktop`.
+6. In your extracted repository copy, open `docs\playwright`.
+7. Create a folder named `lighthouse-input` if it does not exist. Inside it, create two folders: `mobile` and `desktop`.
+8. In Downloads, right-click the mobile ZIP, choose **Extract All...**, and extract it into `docs\playwright\lighthouse-input\mobile`.
+9. Extract the desktop ZIP into `docs\playwright\lighthouse-input\desktop`.
+10. Keep the original JSON filenames and folder structure. Do not rename the JSON files.
+
+**Run provenance warning:** run 43547638587 was previously identified as belonging to branch `perf/mobile-lighthouse-optimizations`, not the current `main` branch. Its results describe that run, not the latest main commit.
+
+### Step 8 — Analyze the Lighthouse JSON
+Make sure the PowerShell window is still open in `docs\playwright`. If not, reopen it using Step 3. Run:
+
+```powershell
+npm run analyze:lighthouse
+```
+
+Open `docs\playwright\reports`. The analyzer creates `lighthouse-analysis.md` and `lighthouse-analysis.json`. They include performance scores, LCP, FCP, CLS, TBT, the LCP element if the JSON contains it, and the largest estimated unused-JavaScript entries.
+
+**Coverage clarification:** standard Lighthouse JSON does not normally include full Chrome DevTools runtime JavaScript coverage (the exact code executed during the test). The `unused-javascript` audit estimates unused bytes for that page load; it is not full code coverage. If the LCP node is absent, the analyzer reports that instead of guessing.
+
+### Step 9 — Send the results for review
+1. In File Explorer, open `docs\playwright`.
+2. Right-click the `reports` folder.
+3. Choose **Compress to ZIP file** (or **Send to → Compressed (zipped) folder**, depending on your Windows version).
+4. Attach the ZIP to your ChatGPT conversation.
+5. If PropertyPanel was skipped, explain whether you could open the Component Inspector.
+6. Before sharing, inspect screenshots for Discord usernames, server names, message contents, or other private information. Blur or remove anything you do not want to share.
+7. Never share passwords, OAuth tokens, bot tokens, cookies, or the `.browser-profile` folder.
+
+### Step 10 — Common problems
+- **`node` or `npm` is not recognized:** restart Windows, open a new PowerShell window, and retry Step 1. Reinstall Node.js LTS if necessary.
+- **`npm ERR!` during install:** save the full error text. Do not delete random files or change package versions.
+- **Playwright says Chromium is missing:** run `npx playwright install chromium` again.
+- **Website does not open:** check internet access and try the site manually in Chrome. Do not mark the audit passed.
+- **Discord login fails:** stop and report the visible error. Never send passwords or tokens.
+- **PropertyPanel is SKIP:** rerun the audit and select a component before pressing Enter.
+- **PowerShell appears stuck:** wait two minutes. If there is no activity, press Ctrl+C, record the last message, and report it. Do not start multiple audit copies.
+- **A FAIL appears:** keep the report and screenshots. Do not attempt code fixes yourself.
+
+### Step 11 — Keep these files private
+- Keep `reports` until the results have been reviewed and shared.
+- Keep `lighthouse-input` until Lighthouse analysis is complete.
+- Do not share `.browser-profile`; it can contain signed-in browser session data.
+- Do not commit screenshots, generated reports, browser profiles, or Lighthouse JSON to GitHub. These local folders are ignored by the Playwright `.gitignore`.
+
 
 ## 2. Frontend routes, startup, and global layout
 
