@@ -225,15 +225,21 @@ async function main() {
     // Give the user a final chance to select the component after pressing Enter.
     // This is a required audit precondition, not an optional screenshot.
     const inspector = page.locator("aside").filter({ hasText: "Component Inspector" }).first();
-    const inspectorReady = await inspector.waitFor({ state: "visible", timeout: 30000 })
+    const inspectorVisible = await inspector.waitFor({ state: "visible", timeout: 30000 })
       .then(() => true)
       .catch(() => false);
+    const inspectorHeading = inspectorVisible
+      ? (await inspector.locator("h2").first().innerText().catch(() => "")).trim()
+      : "";
+    const buttonInspectorReady = inspectorVisible && /^button$/i.test(inspectorHeading);
     record(
-      "Component Inspector detected before responsive audit",
-      inspectorReady ? "PASS" : "FAIL",
-      inspectorReady
-        ? "Authenticated Studio contains a visible Component Inspector"
-        : "No visible Component Inspector in this Chromium window after 30 seconds. Check that you added an Action Row, added a Button, and selected the button pill.",
+      "Button Component Inspector detected before responsive audit",
+      buttonInspectorReady ? "PASS" : "FAIL",
+      buttonInspectorReady
+        ? 'The visible Component Inspector is editing a Button'
+        : inspectorVisible
+          ? `Inspector is open, but its selected component heading is "${inspectorHeading || "missing"}", not "Button". Click the actual button pill in the Action Row.`
+          : "No visible Component Inspector in this Chromium window after 30 seconds. Check that you added an Action Row, added a Button, and selected the button pill.",
     );
 
     await page.waitForTimeout(500);
