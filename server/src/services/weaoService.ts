@@ -410,7 +410,7 @@ export const formatExploitField = (
   }
 };
 
-const PLACEHOLDER_REGEX = /\{([a-zA-Z0-9_.: \[\]-]+)\}/g;
+const PLACEHOLDER_REGEX = /\{([a-zA-Z0-9_.:\s\[\]-]+)\}/g;
 
 const parseScopedExploitToken = (
   inner: string,
