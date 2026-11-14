@@ -36,6 +36,12 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.created.relative}", desc: "Account age as a relative timestamp (e.g. 5 years ago)", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
+  { tag: "{user.<id>.roles}", desc: "Roles held by the specified Discord user in the target server", example: "@Member @VIP", category: "user" },
+  { tag: "{user.<id>.clantag}", desc: "Clan tag for the specified Discord user", example: "HOHO", category: "user" },
+  { tag: "{user.<id>.created}", desc: "Specified user's account creation date", example: "<t:1571875200:d>", category: "user" },
+  { tag: "{user.<id>.created.relative}", desc: "Specified user's account age", example: "<t:1571875200:R>", category: "user" },
+  { tag: "{user.<id>.joined}", desc: "Specified user's server join time", example: "<t:1655251200:R>", category: "user" },
+  { tag: "{user.<id>.joined.date}", desc: "Specified user's server join date", example: "<t:1655251200:d>", category: "user" },
 
   // Server & Channel
   { tag: "{server.id}", desc: "Current Discord Guild (Server) ID", example: "906426036772818954", category: "server" },
