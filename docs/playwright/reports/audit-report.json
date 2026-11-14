@@ -1,0 +1,254 @@
+{
+  "appUrl": "https://hoho-manager.onrender.com/",
+  "generatedAt": "2026-11-14T07:03:00.268Z",
+  "viewportWidths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1280
+  ],
+  "totals": {
+    "passed": 25,
+    "failed": 5,
+    "skipped": 2
+  },
+  "results": [
+    {
+      "name": "LoginScreen 320px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=320px, LoginScreen client=305px, scroll=305px",
+      "at": "2026-11-14T07:00:29.448Z"
+    },
+    {
+      "name": "LoginScreen 360px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=360px, LoginScreen client=345px, scroll=345px",
+      "at": "2026-11-14T07:00:30.487Z"
+    },
+    {
+      "name": "LoginScreen 390px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=390px, LoginScreen client=375px, scroll=375px",
+      "at": "2026-11-14T07:00:31.253Z"
+    },
+    {
+      "name": "LoginScreen 430px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=430px, LoginScreen client=415px, scroll=415px",
+      "at": "2026-11-14T07:00:31.998Z"
+    },
+    {
+      "name": "LoginScreen 768px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=768px, LoginScreen client=768px, scroll=768px",
+      "at": "2026-11-14T07:00:32.783Z"
+    },
+    {
+      "name": "LoginScreen 1280px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=1280px, LoginScreen client=1280px, scroll=1280px",
+      "at": "2026-11-14T07:00:33.279Z"
+    },
+    {
+      "name": "LoginScreen responsive screenshots",
+      "status": "PASS",
+      "details": "Captured widths: 320, 360, 390, 430, 768, 1280px",
+      "at": "2026-11-14T07:00:33.423Z"
+    },
+    {
+      "name": "Application route responds",
+      "status": "PASS",
+      "details": "https://hoho-manager.onrender.com/",
+      "at": "2026-11-14T07:00:36.261Z"
+    },
+    {
+      "name": "Existing message data snapshot",
+      "status": "PASS",
+      "details": "Existing value captured for restoration",
+      "at": "2026-11-14T07:02:52.960Z"
+    },
+    {
+      "name": "App rendered visible content",
+      "status": "PASS",
+      "details": "HoHo Manager Select Server... ▼ Backups JSON Settings Staff Access 𝑷𝒆𝒂𝒄𝒆 Docs Message 1 CLASSIC THREAD Files Add UR",
+      "at": "2026-11-14T07:02:53.004Z"
+    },
+    {
+      "name": "JSON modal opens",
+      "status": "PASS",
+      "details": "JSON Data title and editor found",
+      "at": "2026-11-14T07:02:53.119Z"
+    },
+    {
+      "name": "Backups modal opens",
+      "status": "PASS",
+      "details": "Dialog detected",
+      "at": "2026-11-14T07:02:54.148Z"
+    },
+    {
+      "name": "Dispatch dialog opens",
+      "status": "SKIP",
+      "details": "Opened for inspection only; no send action is performed",
+      "at": "2026-11-14T07:02:54.908Z"
+    },
+    {
+      "name": "Clear-all confirmation opens",
+      "status": "PASS",
+      "details": "Confirmation is not accepted; existing messages are left intact",
+      "at": "2026-11-14T07:02:55.495Z"
+    },
+    {
+      "name": "Studio 320px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=320px, document=320px, body=320px",
+      "at": "2026-11-14T07:02:56.216Z"
+    },
+    {
+      "name": "Header 320px internal overflow",
+      "status": "FAIL",
+      "details": "client=320px, scroll=367px",
+      "at": "2026-11-14T07:02:56.263Z"
+    },
+    {
+      "name": "Studio 360px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=360px, document=360px, body=360px",
+      "at": "2026-11-14T07:02:57.095Z"
+    },
+    {
+      "name": "Header 360px internal overflow",
+      "status": "FAIL",
+      "details": "client=360px, scroll=367px",
+      "at": "2026-11-14T07:02:57.113Z"
+    },
+    {
+      "name": "Studio 390px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=390px, document=390px, body=390px",
+      "at": "2026-11-14T07:02:57.712Z"
+    },
+    {
+      "name": "Header 390px internal overflow",
+      "status": "PASS",
+      "details": "client=390px, scroll=390px",
+      "at": "2026-11-14T07:02:57.731Z"
+    },
+    {
+      "name": "Studio 430px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=430px, document=430px, body=430px",
+      "at": "2026-11-14T07:02:58.343Z"
+    },
+    {
+      "name": "Header 430px internal overflow",
+      "status": "PASS",
+      "details": "client=430px, scroll=430px",
+      "at": "2026-11-14T07:02:58.365Z"
+    },
+    {
+      "name": "Studio 768px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=768px, document=768px, body=768px",
+      "at": "2026-11-14T07:02:59.028Z"
+    },
+    {
+      "name": "Header 768px internal overflow",
+      "status": "PASS",
+      "details": "client=768px, scroll=768px",
+      "at": "2026-11-14T07:02:59.052Z"
+    },
+    {
+      "name": "Studio 1280px horizontal overflow",
+      "status": "PASS",
+      "details": "viewport=1280px, document=1280px, body=1280px",
+      "at": "2026-11-14T07:02:59.715Z"
+    },
+    {
+      "name": "Header 1280px internal overflow",
+      "status": "PASS",
+      "details": "client=1280px, scroll=1280px",
+      "at": "2026-11-14T07:02:59.739Z"
+    },
+    {
+      "name": "PropertyPanel responsive screenshots",
+      "status": "SKIP",
+      "details": "Before pressing Enter, select a message component so the Component Inspector is open; rerun the audit to capture it",
+      "at": "2026-11-14T07:03:00.250Z"
+    },
+    {
+      "name": "Browser console errors",
+      "status": "FAIL",
+      "details": "Permissions policy violation: unload is not allowed in this document. | Permissions policy violation: unload is not allowed in this document. | WebSocket connection to 'ws://127.0.0.1:6463/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED | WebSocket connection to 'ws://127.0.0.1:6464/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED | WebSocket connection to 'ws://127.0.0.1:6465/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "at": "2026-11-14T07:03:00.263Z"
+    },
+    {
+      "name": "Uncaught page errors",
+      "status": "FAIL",
+      "details": "POST /auth/logout [401] | POST /auth/logout [401] | Starting password login",
+      "at": "2026-11-14T07:03:00.263Z"
+    },
+    {
+      "name": "Failed network requests",
+      "status": "PASS",
+      "details": "None captured",
+      "at": "2026-11-14T07:03:00.264Z"
+    },
+    {
+      "name": "HTTP error responses (4xx/5xx)",
+      "status": "FAIL",
+      "details": "[{\"status\":401,\"url\":\"https://discord.com/api/v9/auth/logout\"},{\"status\":401,\"url\":\"https://discord.com/api/v9/users/@me?with_analytics_token=true\"},{\"status\":401,\"url\":\"https://discord.com/api/v9/auth/logout\"}]",
+      "at": "2026-11-14T07:03:00.264Z"
+    },
+    {
+      "name": "Message data safety",
+      "status": "PASS",
+      "details": "Saved message data is unchanged",
+      "at": "2026-11-14T07:03:00.267Z"
+    }
+  ],
+  "diagnostics": {
+    "consoleErrors": [
+      "Permissions policy violation: unload is not allowed in this document.",
+      "Permissions policy violation: unload is not allowed in this document.",
+      "WebSocket connection to 'ws://127.0.0.1:6463/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6464/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6465/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6466/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6467/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6468/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6469/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6470/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6471/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "WebSocket connection to 'ws://127.0.0.1:6472/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: the server responded with a status of 401 ()",
+      "Failed to load resource: the server responded with a status of 401 ()",
+      "Failed to load resource: the server responded with a status of 401 ()",
+      "%c[KeybindsStore] \nfont-weight: bold;\ncolor: purple;\n [kb store] KeybindStore: Looking for callback action TOGGLE_OVERLAY_INPUT_LOCK but it doesn't exist in this version. Skipping",
+      "%c[KeybindsStore] \nfont-weight: bold;\ncolor: purple;\n [kb store] KeybindStore: Looking for callback action SOUNDBOARD_HOLD but it doesn't exist in this version. Skipping",
+      "%c[KeybindsStore] \nfont-weight: bold;\ncolor: purple;\n [kb store] KeybindStore: Looking for callback action SAVE_CLIP but it doesn't exist in this version. Skipping",
+      "%c[KeybindsStore] \nfont-weight: bold;\ncolor: purple;\n [kb store] KeybindStore: Looking for callback action SAVE_SCREENSHOT but it doesn't exist in this version. Skipping"
+    ],
+    "pageErrors": [
+      "POST /auth/logout [401]",
+      "POST /auth/logout [401]",
+      "Starting password login"
+    ],
+    "failedRequests": [],
+    "badResponses": [
+      {
+        "status": 401,
+        "url": "https://discord.com/api/v9/auth/logout"
+      },
+      {
+        "status": 401,
+        "url": "https://discord.com/api/v9/users/@me?with_analytics_token=true"
+      },
+      {
+        "status": 401,
+        "url": "https://discord.com/api/v9/auth/logout"
+      }
+    ]
+  }
+}
