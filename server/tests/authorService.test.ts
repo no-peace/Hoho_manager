@@ -27,6 +27,7 @@ const makeUser = (id: string, username: string, globalName: string | null = null
     global_name: globalName,
     nickname: null,
     avatar: "avatar_hash",
+    primary_guild: { identity_enabled: true, tag: "HOHO", identity_guild_id: "999999999999999999" },
 });
 
 describe("authorService", () => {
@@ -101,7 +102,7 @@ describe("authorService", () => {
         expect(getDiscordUser).not.toHaveBeenCalled();
     });
 
-    it("resolves supported user variables including avatarurl", async () => {
+    it("resolves canonical avatar and leaves removed aliases unchanged", async () => {
         const result = await resolveAuthorPlaceholders({
             content: [
                 `{user.${USER_A}.name}`,
@@ -109,24 +110,43 @@ describe("authorService", () => {
                 `{user.${USER_A}.id}`,
                 `{user.${USER_A}.url}`,
                 `{user.${USER_A}.mention}`,
+                `{user.${USER_A}.avatar}`,
                 `{user.${USER_A}.avatarurl}`,
+                `{user.${USER_A}.icon}`,
+                `{user.${USER_A}.pfp}`,
                 `{user.${USER_A}.unknown}`,
             ].join("|"),
         } as any);
 
         expect((result.payload as any).content).toBe(
             [
-                "Peace",
+                "peace",
                 "peace",
                 USER_A,
                 `https://discord.com/users/${USER_A}`,
                 `<@${USER_A}>`,
                 `https://cdn.discordapp.com/avatars/${USER_A}/avatar_hash.png?size=1024`,
+                `{user.${USER_A}.avatarurl}`,
+                `{user.${USER_A}.icon}`,
+                `{user.${USER_A}.pfp}`,
                 `{user.${USER_A}.unknown}`,
             ].join("|"),
         );
     });
 
+
+    it("uses the destination server nickname for name and the global name for displayname", async () => {
+        vi.mocked(getGuildMember).mockResolvedValue({
+            user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
+            nick: "Server Nick",
+        } as any);
+
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.name}|{user.${USER_A}.displayname}`,
+        } as any, null, null, "999999999999999999");
+
+        expect((result.payload as any).content).toBe("Server Nick|Peace");
+    });
 
     it("resolves guild-specific roles, clan tag, and join timestamps for an ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
