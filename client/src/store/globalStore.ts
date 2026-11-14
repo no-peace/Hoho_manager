@@ -107,6 +107,31 @@ interface GlobalState {
 
 const STORAGE_KEY = "hoho_global_state";
 const BOT_IDENTITY_CACHE_KEY = "bot_identity_cache";
+const HAS_SESSION_HINT_KEY = "hoho_has_session";
+
+const hasSessionHint = (): boolean => {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(HAS_SESSION_HINT_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const hasOAuthCallback = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.has("login") || params.has("setup");
+};
+
+const setSessionHint = (hasSession: boolean): void => {
+  try {
+    if (typeof localStorage === "undefined") return;
+    if (hasSession) localStorage.setItem(HAS_SESSION_HINT_KEY, "1");
+    else localStorage.removeItem(HAS_SESSION_HINT_KEY);
+  } catch {
+    // Storage can be unavailable; server-side session verification remains authoritative.
+  }
+};
 
 const loadInitialState = (): { selectedGuildId: string | null; isSidebarOpen: boolean } => {
   const isNarrow = typeof window !== "undefined" && window.innerWidth <= 1100;
@@ -241,7 +266,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
         return { botIdentity: identity };
       }),
     currentUser: null,
-    authLoading: true,
+    authLoading: hasSessionHint() || hasOAuthCallback(),
     serverTimeOffsetMs: 0,
     syncServerTime: async () => {
       try {
@@ -258,24 +283,28 @@ export const useGlobalStore = create<GlobalState>((set) => {
     setCurrentUser: (user) => set({ currentUser: user }),
     setAuthLoading: (loading) => set({ authLoading: loading }),
     fetchCurrentUser: async () => {
-      set({ authLoading: true });
-      try {
-        try {
-          const health = await fetch("/api/health");
+      const healthPromise = fetch("/api/health")
+        .then(async (health) => {
           if (health.ok) {
             const json = await health.json();
             if (typeof json.time === "string") {
               set({ serverTimeOffsetMs: new Date(json.time).getTime() - Date.now() });
             }
           }
-        } catch {
+        })
+        .catch(() => {
           // Authentication can still proceed when health is temporarily unavailable.
-        }
-        const res = await api.auth.me();
+        });
+
+      try {
+        const [res] = await Promise.all([api.auth.me(), healthPromise]);
         const user = res?.user ?? null;
+        setSessionHint(Boolean(user));
         set({ currentUser: user, authLoading: false });
         return user;
       } catch {
+        await healthPromise;
+        setSessionHint(false);
         set({ currentUser: null, authLoading: false });
         return null;
       }
