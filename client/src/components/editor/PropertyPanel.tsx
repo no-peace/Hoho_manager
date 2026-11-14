@@ -125,7 +125,7 @@ export const PropertyPanel = () => {
         )}
 
         {/* Inspector Body */}
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3.5 custom-scrollbar">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3.5 pb-[env(safe-area-inset-bottom)] custom-scrollbar">
           {activeTab === "flow" && hasFlow ? (
             <FlowBuilder component={component} />
           ) : (
