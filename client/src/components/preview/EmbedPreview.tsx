@@ -62,7 +62,6 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   const resolvePlainVars = (text?: string): string => {
     if (!text || !text.includes("{")) return text ?? "";
     const username = currentUser?.username || "User";
-    const displayName = currentUser?.global_name || username;
     const userId = currentUser?.id || "123456789012345678";
     const avatarUrl =
       currentUser?.avatarUrl ||
