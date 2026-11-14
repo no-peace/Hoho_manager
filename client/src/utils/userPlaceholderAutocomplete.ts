@@ -24,6 +24,12 @@ const USER_PROFILE_FIELDS = [
   { key: "icon", label: "Icon", desc: "Alias for avatar URL" },
   { key: "pfp", label: "Profile picture", desc: "Alias for avatar URL" },
   { key: "mention", label: "Mention", desc: "Discord mention for this user" },
+  { key: "roles", label: "Server roles", desc: "Space-separated mentions for this user's server roles" },
+  { key: "clantag", label: "Clan tag", desc: "Official Discord clan tag or a tag parsed from the member name" },
+  { key: "created", label: "Account created", desc: "Discord account creation date" },
+  { key: "created.relative", label: "Account age", desc: "Relative Discord account creation timestamp" },
+  { key: "joined", label: "Server joined", desc: "Relative timestamp for when the user joined this server" },
+  { key: "joined.date", label: "Server join date", desc: "Discord timestamp for the server join date" },
 ] as const;
 
 export function getUserIdPlaceholderSuggestions(
