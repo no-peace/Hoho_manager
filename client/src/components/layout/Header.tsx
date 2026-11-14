@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
 
   return (
     <>
-      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-2.5 sm:px-4 h-12 flex items-center justify-between gap-1.5 font-sans shrink-0">
+      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-2.5 sm:px-4 h-12 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 font-sans shrink-0">
         {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
@@ -124,16 +124,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
               fetchPriority="high"
               className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
             />
-            <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden sm:inline m-0">
+            <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
               HoHo Manager
             </h1>
           </a>
         </div>
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+        <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
           {hasDefaultBotAccess && (
-            <div className="w-28 sm:w-48 min-w-0 relative shrink">
+            <div className="w-9 sm:w-28 lg:w-48 min-w-0 relative shrink-0">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
@@ -143,9 +143,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
             </div>
           )}
 
-          <div className="inline-flex items-center gap-1 rounded-lg bg-[#111214] p-1 border border-[#26282d]">
+          <div className="inline-flex items-center gap-0 sm:gap-1 rounded-lg bg-[#111214] p-0.5 sm:p-1 border border-[#26282d] shrink-0">
             {onOpenBackups && (
-              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1 sm:px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <Archive size={14} /><span className="hidden xl:inline">Backups</span>
               </button>
             )}
@@ -155,17 +155,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
               </button>
             )}
             {onShare && (
-              <button type="button" onClick={() => void onShare()} title="Copy message JSON" aria-label="Copy message JSON" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={() => void onShare()} title="Copy message JSON" aria-label="Copy message JSON" className="rounded-md border border-transparent bg-transparent p-1 sm:p-1.5 text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <Share2 size={14} />
               </button>
             )}
             {onClearAll && (
-              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#f28b8b] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#da373c]/15 active:scale-[0.97]">
+              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-md border border-transparent bg-transparent p-1 sm:p-1.5 text-[#f28b8b] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#da373c]/15 active:scale-[0.97]">
                 <Trash2 size={14} />
               </button>
             )}
             {onOpenSend && (
-              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-md border border-[#248046] bg-[#248046] px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
+              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-md border border-[#248046] bg-[#248046] px-1 sm:px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
                 <Send size={14} />
               </button>
             )}
@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Head Admin Settings"
             >
               <Settings size={14} className="text-[#949ba4]" />
@@ -195,12 +195,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
         </div>
 
         {/* Right: Staff Access + Authenticated User Profile + Docs */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-self-end gap-2 min-w-0">
           {isAdmin && (
             <button
               type="button"
               onClick={() => setAccessOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Staff Access Controls"
             >
               <Shield size={14} />
