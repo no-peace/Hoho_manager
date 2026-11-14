@@ -119,9 +119,12 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
       }
 
       // 3. Resolve author details (name, avatar, profile link from Discord user ID)
+      const guildId = await discord.getChannelGuildId(record.channel_id).catch(() => null);
       const authorRes = await resolveAuthorPlaceholders(
         resolvedPayload,
         record.author_user_id,
+        null,
+        guildId,
       );
       resolvedPayload = authorRes.payload;
 
