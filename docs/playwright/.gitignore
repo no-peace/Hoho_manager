@@ -1,2 +1,4 @@
 node_modules/
 .browser-profile/
+playwright.bat
+login.bat
