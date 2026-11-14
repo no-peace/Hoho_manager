@@ -322,7 +322,7 @@ export const formatExploitChangelogs = (entries: unknown[], selector = ""): stri
     else selected = entries.slice(start, start + 1);
   }
   if (!selected.length) return "No changelog entries found.";
-  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n");
+  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\n");
 };
 
 export const formatExploitField = (
@@ -410,7 +410,7 @@ export const formatExploitField = (
   }
 };
 
-const PLACEHOLDER_REGEX = /\{([a-zA-Z0-9_.: -]+)\}/g;
+const PLACEHOLDER_REGEX = /\{([a-zA-Z0-9_.: \[\]-]+)\}/g;
 
 const parseScopedExploitToken = (
   inner: string,
