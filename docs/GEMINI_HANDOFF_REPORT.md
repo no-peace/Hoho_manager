@@ -376,3 +376,47 @@ The report records that the Button Component Inspector was visible and editing a
 5. Check current GitHub Actions results for the latest `main` SHA before claiming CI, Lighthouse, or Security is green. If runs are absent, run the documented checks rather than assuming success.
 6. Continue the full feature checklist in a disposable test guild/environment. Never send messages or confirm destructive actions in production.
 7. Keep this handoff updated with exact commit SHAs, workflow run URLs, measured metrics, and report evidence after future changes.
+
+
+## 15. Production Playwright follow-up — 2026-11-14
+
+### Browser findings
+
+A fresh Playwright session loaded the authenticated production Studio at `https://hoho-manager.onrender.com/`. The initial page and API loaded successfully. The browser console reported **0 errors and 0 warnings**; inspected API requests (`/api/health`, `/api/auth/me`, `/api/config`, Discord identity/guild channels/roles/emojis, templates, and user resolution) returned HTTP 200.
+
+A targeted geometry audit found a header-control overlap that the earlier document-level horizontal-overflow checks did not detect:
+
+| Viewport | Result |
+|---:|---|
+| 320px | Header controls overlap: server selector/toolbar, Settings/Staff Access, and adjacent right-side controls |
+| 360px | Server selector overlaps toolbar; Settings overlaps Staff Access |
+| 390px | Server selector overlaps toolbar |
+| 430px | No measured header-control overlap |
+| 640px | Brand/title overlaps server selector |
+| 768px | Brand/title overlaps server selector |
+| 1024px | No measured header-control overlap |
+| 1280px | No measured header-control overlap |
+| 1440px | No measured header-control overlap |
+
+The document width matched the viewport at all tested widths. This demonstrates why checking only horizontal overflow is insufficient: controls can overlap while the page remains within the viewport.
+
+No message dispatch, destructive confirmation, or editor-data mutation was performed.
+
+### Fix committed
+
+The header layout was changed from a three-child flex row using `justify-between` to a three-column grid with a shrinkable center column. The server selector now has compact, breakpoint-based widths; the title appears from the medium breakpoint; admin-only header actions are hidden on phones (they remain available from the account menu); and toolbar button padding is reduced on narrow screens.
+
+- `5f1f4f7a476f9e99cc8d74038db88e0f61818f0d` — `fix the header layout on narrow screens`
+- `d8aa0b86f78c8c8b8e881f7b1f94a188d87a354d` — `cover the responsive header layout`
+
+A source-level regression test was added to the existing layout stress suite for the grid columns, compact server selector, mobile admin-action behavior, and responsive toolbar padding.
+
+### Verification still required
+
+- CI and Security were triggered for both commits above. At the time of this handoff update, the newest run set for `d8aa0b86f78c8c8b8e881f7b1f94a188d87a354d` was still pending; check the live Actions runs before calling the fix verified.
+- Re-run the Playwright geometry audit against the newly deployed production commit at 320, 360, 390, 430, 640, 768, 1024, 1280, and 1440px. The current production deployment may still serve the pre-fix header until Render deploys the new commit.
+- Inspect the actual screenshots after the patch; the source change and regression test are not substitutes for browser verification.
+- Render service logs/deploy state were not inspected in this pass because the Render workspace selection requires owner confirmation. The only listed workspace was `My Workspace`; ask the owner to confirm it before reading service resources.
+- Animation inspection was not completed in this pass. Do not claim motion/transition behavior has been visually audited.
+
+Keep the existing safety boundary: no live Discord dispatch or destructive production action. Use a private test guild for those checks.
