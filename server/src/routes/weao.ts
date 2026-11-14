@@ -11,6 +11,7 @@ import {
   getExploitChangelogComparison,
   formatExploitChangelogs,
   getWeaoRateLimitStatus,
+  type WeaoExploitRecord,
 } from "../services/weaoService.js";
 import {
   templateRepository,
