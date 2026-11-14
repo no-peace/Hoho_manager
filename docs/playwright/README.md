@@ -59,7 +59,7 @@ All output is written to `reports\`:
 - `property-panel-<width>.png` — required Component Inspector screenshot at each width; the audit fails if the panel is missing
 - `audit-report.md` and `audit-report.json` — results, overflow measurements, skips, and browser diagnostics
 
-A successful full responsive audit must include `Component Inspector detected before responsive audit — PASS` and `PropertyPanel responsive screenshots — PASS`. A missing inspector is now a failure, not a skip. The script snapshots the already-prepared `dmb:message` value after you press Enter and verifies it is unchanged during the audit. It does not restore the state from before you manually clicked Clear all; that clear action is your own deliberate setup step. Do not edit or send the message while the audit is running.
+A successful full responsive audit must include `Button Component Inspector detected before responsive audit — PASS` and `PropertyPanel responsive screenshots — PASS`. A missing inspector is now a failure, not a skip. The script snapshots the already-prepared `dmb:message` value after you press Enter and verifies it is unchanged during the audit. It does not restore the state from before you manually clicked Clear all; that clear action is your own deliberate setup step. Do not edit or send the message while the audit is running.
 
 ## Analyze the GitHub Actions Lighthouse artifacts
 
