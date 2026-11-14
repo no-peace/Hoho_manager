@@ -225,6 +225,9 @@ async function main() {
     record("App rendered visible content", appRoot.trim().length > 0 ? "PASS" : "FAIL",
       appRoot.trim().slice(0, 120).replace(/\s+/g, " "));
 
+    // Capture the selected Component Inspector before modal checks press Escape and clear selection.
+    await captureStudioScreenshots(page);
+
     const jsonButton = page.locator('button[title="Import or export JSON"], button[aria-label="Import or export JSON"]');
     if (await clickIfVisible(jsonButton)) {
       const jsonTitle = page.getByText("JSON Data", { exact: true });
@@ -263,8 +266,6 @@ async function main() {
         "Confirmation is not accepted; existing messages are left intact");
       await closeDialog(page);
     } else record("Clear-all confirmation opens", "SKIP", "Clear-all button is not available");
-
-    await captureStudioScreenshots(page);
 
     record("Browser console errors", consoleErrors.length === 0 ? "PASS" : "FAIL",
       consoleErrors.length ? consoleErrors.slice(0, 5).join(" | ") : "No console errors captured");

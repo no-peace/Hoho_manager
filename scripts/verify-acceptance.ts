@@ -72,10 +72,31 @@ const items: ChecklistItem[] = [
   {
     id: "8.4.1",
     category: "Invariants",
-    description: "INV-1: Flag 1 << 15 and ?with_components=true appended on webhook sends",
+    description: "INV-1: Components V2 flag is applied and component webhook requests include with_components=true",
     verify: () => {
+      const constants = fs.readFileSync(path.join("shared", "src", "constants.ts"), "utf8");
+      const payloadBuilder = fs.readFileSync(path.join("client", "src", "utils", "discord.ts"), "utf8");
       const discordService = fs.readFileSync(path.join("server", "src", "services", "discordService.ts"), "utf8");
-      return discordService.includes("with_components=true");
+
+      const flagIsDefined = /IsComponentsV2\s*:\s*1\s*<<\s*15/.test(constants);
+      const flagIsApplied = /payload\.flags\s*=\s*\(extData\.flags\s*\?\?\s*0\)\s*\|\s*MessageFlags\.IsComponentsV2/.test(payloadBuilder);
+
+      const followupStart = discordService.indexOf("export const createFollowupMessage");
+      const editStart = discordService.indexOf("export const editOriginalResponse");
+      const deferStart = discordService.indexOf("export const deferResponse");
+      if (followupStart < 0 || editStart <= followupStart || deferStart <= editStart) return false;
+
+      const followup = discordService.slice(followupStart, editStart);
+      const editOriginal = discordService.slice(editStart, deferStart);
+      const addsComponentQuery = (source: string) =>
+        source.includes("new URLSearchParams()") &&
+        source.includes('payload.components && payload.components.length > 0') &&
+        source.includes('params.set("with_components", "true")') &&
+        source.includes("const query = params.toString()") &&
+        source.includes("${query}");
+
+      return flagIsDefined && flagIsApplied &&
+        addsComponentQuery(followup) && addsComponentQuery(editOriginal);
     },
   },
   {
