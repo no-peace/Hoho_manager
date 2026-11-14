@@ -147,6 +147,14 @@ export const resolveAuthorPlaceholders = async (
   const serialized = JSON.stringify(payload);
   const placeholderMatches = Array.from(serialized.matchAll(USER_PLACEHOLDER_REGEX));
   const requestedIds = new Set<string>();
+  const hasInteractionName = /\\{user\\.(?:name|displayname)\\}/i.test(serialized);
+  const interactionUserId =
+    hasInteractionName &&
+    typeof fallbackAuthorId === "string" &&
+    DISCORD_USER_ID_REGEX.test(fallbackAuthorId.trim())
+      ? fallbackAuthorId.trim()
+      : null;
+  if (interactionUserId) requestedIds.add(interactionUserId);
 
   for (const id of authorIds) {
     if (id) requestedIds.add(id);
@@ -236,6 +244,14 @@ export const resolveAuthorPlaceholders = async (
       }
       if (normalized === "displayname") return user.global_name || user.username;
       return getUserField(user, field) ?? fullMatch;
+    }).replace(/\\{user\\.(name|displayname)\\}/gi, (fullMatch, field: string) => {
+      if (!interactionUserId) return fullMatch;
+      const user = userMap.get(interactionUserId);
+      if (!user) return fullMatch;
+      const member = memberMap.get(interactionUserId);
+      return field.toLowerCase() === "name"
+        ? (typeof member?.nick === "string" && member.nick.trim()) || user.username
+        : user.global_name || user.username;
     });
 
   const walk = (node: unknown): unknown => {
