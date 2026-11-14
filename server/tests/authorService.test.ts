@@ -135,6 +135,19 @@ describe("authorService", () => {
     });
 
 
+    it("does not expose a primary guild tag when the user has disabled that identity", async () => {
+        vi.mocked(getDiscordUser).mockResolvedValue({
+            ...makeUser(USER_A),
+            primary_guild: { identity_enabled: false, tag: "HOHO" },
+        } as any);
+
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.clantag}`,
+        } as any);
+
+        expect((result.payload as any).content).toBe(`{user.${USER_A}.clantag}`);
+    });
+
     it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
             user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
