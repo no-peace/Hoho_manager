@@ -13,7 +13,7 @@ export const PublicPageHeader: React.FC<{ activePage: PublicPage }> = ({ activeP
   return (
     <header className="sticky top-0 z-50 flex min-h-14 items-center justify-between gap-3 border-b border-[#26282d] bg-[#18191c]/90 px-4 py-2 backdrop-blur-md sm:px-6">
       <a href="/" className="flex min-w-0 items-center gap-2.5">
-        <HoHoLogoMark className="h-8 w-8" />
+        <HoHoLogoMark alt="" className="h-8 w-8" />
         <span className="min-w-0">
           <span className="block truncate text-sm font-bold leading-tight text-white">HoHo Manager</span>
           <span className="hidden text-[10px] leading-tight text-[#949ba4] sm:block">Discord Bot Message &amp; Components V2 Builder</span>
