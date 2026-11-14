@@ -25,6 +25,13 @@ describe("WEAO changelog formatting", () => {
     ].join("\n"));
   });
 
+  it("supports negative slicing for the latest entries", () => {
+    expect(formatExploitChangelogs(entries, "changelogs[-2:]")).toBe([
+      "• **Release 3** — Improved stability",
+      "• Legacy plain-text entry",
+    ].join("\\n"));
+  });
+
   it("supports a single zero-based entry index", () => {
     expect(formatExploitChangelogs(entries, "changelogs[2]")).toBe(
       "• **Release 3** — Improved stability",
