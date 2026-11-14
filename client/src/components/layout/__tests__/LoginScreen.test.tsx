@@ -3,27 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { LoginScreen, AUTH_ERROR_MESSAGES } from "../LoginScreen";
 
-vi.mock("gsap", () => ({
-  default: {
-    context: () => ({ revert: vi.fn() }),
-    timeline: () => ({ fromTo: vi.fn().mockReturnThis() }),
-  },
-}));
-
 vi.mock("../../reactbits/ThreeHeroCanvas", () => ({
   ThreeHeroCanvas: () => <div aria-hidden="true" />,
-}));
-
-vi.mock("../../reactbits/ReactBitsPrimitives", () => ({
-  ShinyText: ({ text }: { text: string }) => <span>{text}</span>,
-  SpotlightCard: ({ children, className = "" }: React.PropsWithChildren<{ className?: string }>) => (
-    <div className={className}>{children}</div>
-  ),
-  SplitTextReveal: ({ text }: { text: string }) => <span>{text}</span>,
-}));
-
-vi.mock("../../ui/CultSkiperPrimitives", () => ({
-  SkiperDynamicStatusPill: ({ badge }: { badge: string }) => <span>{badge}</span>,
 }));
 
 describe("LoginScreen mobile and desktop regressions", () => {
