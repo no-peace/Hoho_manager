@@ -53,7 +53,7 @@ The script opens a separate Chromium profile in `docs/playwright/.browser-profil
 - Desktop and mobile viewport overflow
 - Desktop and mobile screenshots
 
-The audit uses a temporary message only during the JSON-import check. It snapshots the existing `dmb:message` localStorage value and restores it in a `finally` cleanup, then reloads the page. Do not close the audit browser while the script is running.
+The audit does not import test messages or intentionally edit saved content. It snapshots `dmb:message` before testing and verifies the value at cleanup; if it changed unexpectedly, the exact original value is restored and the page is reloaded. Do not close the audit browser while the script is running.
 
 ## Stop / cleanup
 
