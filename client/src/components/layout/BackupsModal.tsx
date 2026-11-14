@@ -125,7 +125,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
         const savedTemplate = response.templates.find((item) => item.name.toLowerCase() === savedName.toLowerCase());
         if (!savedTemplate) throw new Error("Backup saved, but its template could not be found for command setup.");
         await api.executors.upsert({
-          id: `backup_${savedTemplate.id}`,
+          id: `template_${savedTemplate.id}`,
           title: savedTemplate.name,
           enabled: true,
           template_id: savedTemplate.id,
@@ -267,7 +267,11 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
         return;
       }
       await api.executors.upsert({
-        id: `backup_${item.id}`,
+        id: item.source?.templateId
+          ? `template_${item.source.templateId}`
+          : item.kind === "template"
+            ? `template_${item.id}`
+            : `tracked_${item.id}`,
         title,
         enabled: true,
         ...(item.kind === "template" ? { template_id: item.id } : { custom_payload: rawPayload }),
