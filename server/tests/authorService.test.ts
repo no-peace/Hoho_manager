@@ -159,7 +159,7 @@ describe("authorService", () => {
         const result = await resolveAuthorPlaceholders({
             content: `{user.${USER_A}.created}|{user.${USER_A}.created.relative}`,
         } as any);
-        expect((result.payload as any).content).toMatch(/^<t:\\d+:d>\\|<t:\\d+:R>$/);
+        expect((result.payload as any).content).toMatch(/^<t:\d+:d>\|<t:\d+:R>$/);
     });
 
     it("leaves placeholders unchanged when Discord lookup fails", async () => {
