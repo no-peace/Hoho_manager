@@ -333,11 +333,14 @@ export const formatExploitChangelogs = (entries: unknown[], selector = "", compa
     ];
     return sections.join("\\n\\n");
   }
-  const match = selector.match(/^changelogs(?:\\[(\\d+)(?::(\\d+))?\\])?$/i);
+  const match = selector.match(/^changelogs(?:\\[(-?\\d+)(?::(-?\\d*))?\\])?$/i);
   if (match?.[1] !== undefined) {
     const start = Number(match[1]);
-    if (match[2] !== undefined) selected = entries.slice(start, Number(match[2]));
-    else selected = entries.slice(start, start + 1);
+    if (match[2] !== undefined) {
+      selected = entries.slice(start, match[2] === "" ? undefined : Number(match[2]));
+    } else {
+      selected = start < 0 ? entries.slice(start) : entries.slice(start, start + 1);
+    }
   }
   if (!selected.length) return "No changelog entries found.";
   return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n");
