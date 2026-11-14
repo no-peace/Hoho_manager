@@ -126,7 +126,7 @@ Two Chromium browser sessions open in sequence.
 6. Return to PowerShell. It will be waiting for you. Press Enter once.
 7. Leave the browser open and do not interact with the app until PowerShell says **Audit finished**.
 
-The audit captures the Studio at all six widths, takes separate Header and PropertyPanel screenshots when visible, and checks horizontal overflow. It may open safe dialogs to inspect them, but it does not confirm an action or send a message.
+The audit captures the Studio at all six widths, takes separate Header and PropertyPanel screenshots when visible, and checks whole-page overflow plus internal horizontal overflow in the Header and PropertyPanel. It may open safe dialogs to inspect them, but it does not confirm an action or send a message.
 
 If PropertyPanel screenshots are marked **SKIP**, close the browser, run `npm run audit` again, and select a component before pressing Enter. SKIP is not a pass.
 
@@ -136,7 +136,8 @@ If PropertyPanel screenshots are marked **SKIP**, close the browser, run `npm ru
 
 | File | Contents |
 |---|---|
-| `login-320.png` through `login-1280.png` | LoginScreen at six widths |
+| `login-320.png` through `login-1280.png` | LoginScreen at six widths (top of page) |
+| `login-bottom-<width>.png` | Bottom of LoginScreen when its content is taller than the viewport |
 | `header-320.png` through `header-1280.png` | Header at six widths |
 | `property-panel-320.png` through `property-panel-1280.png` | PropertyPanel at six widths, if it was open |
 | `studio-320.png` through `studio-1280.png` | Full Studio screenshots |
