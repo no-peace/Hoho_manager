@@ -103,6 +103,13 @@ export interface HealthResponse {
   uptimeSeconds: number;
   time: string;
   database: { connected: boolean; users: number | null };
+  weao: {
+    changelogs: (exploit: string, selector = "changelogs") =>
+      request<{ exploit: string; count: number; entries: unknown[]; formatted: string }>(
+        `/api/weao/changelogs/${encodeURIComponent(exploit)}?selector=${encodeURIComponent(selector)}`,
+      ),
+  },
+
   discord: {
     publicKeyConfigured: boolean;
     botTokenConfigured: boolean;
