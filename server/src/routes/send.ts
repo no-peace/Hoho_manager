@@ -165,6 +165,9 @@ router.post(
       const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
       const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
+      const targetGuildId = targetChannelId
+        ? await discord.getChannelGuildId(targetChannelId).catch(() => null)
+        : null;
 
       const sendVars: Record<string, string> = {
         now: `<t:${unixNow}:f>`,
@@ -222,7 +225,12 @@ router.post(
       let authorResolved = weaoInterpolated;
       try {
         const { resolveAuthorPlaceholders } = await import("../services/authorService.js");
-        const aRes = await resolveAuthorPlaceholders(weaoInterpolated, null, profileId);
+        const aRes = await resolveAuthorPlaceholders(
+          weaoInterpolated,
+          null,
+          profileId,
+          targetGuildId,
+        );
         authorResolved = aRes.payload;
       } catch (error) {
         log.warn(
