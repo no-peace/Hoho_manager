@@ -81,6 +81,7 @@ const intToRgb = (color: number): { r: number; g: number; b: number; hex: string
 
 const UserMention: React.FC<{ id: string }> = ({ id }) => {
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const [changelogValues, setChangelogValues] = useState<Record<string, string>>({});
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const rolesMap = useDiscordCacheStore((state) => state.roles);
   const fetchGuilds = useDiscordCacheStore((state) => state.fetchGuilds);
@@ -701,6 +702,28 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
     }
   }, [content, fetchWeaoExploits]);
 
+  useEffect(() => {
+    if (!content) return;
+    const tokens = Array.from(content.matchAll(/\{exploit\.([^{}.]+)\.(changelogs(?:\[\d+(?::\d+)?\])?)\}/gi));
+    if (!tokens.length) return;
+    let cancelled = false;
+    const unique = new Map<string, { name: string; selector: string }>();
+    for (const match of tokens) {
+      const name = match[1]?.trim();
+      const selector = match[2]?.trim() || "changelogs";
+      if (name) unique.set(`${name.toLowerCase()}.${selector.toLowerCase()}`, { name, selector });
+    }
+    void Promise.all([...unique.entries()].map(async ([key, item]) => {
+      try {
+        const result = await api.weao.changelogs(item.name, item.selector);
+        if (!cancelled) setChangelogValues((current) => ({ ...current, [key]: result.formatted }));
+      } catch {
+        if (!cancelled) setChangelogValues((current) => ({ ...current, [key]: "Changelogs unavailable." }));
+      }
+    }));
+    return () => { cancelled = true; };
+  }, [content]);
+
   if (!content) return null;
 
   const unixNow = Math.floor(Date.now() / 1000);
@@ -771,6 +794,9 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
             const parts = rest.split(":");
             targetName = (parts[0] || "").trim();
             fieldName = parts.slice(1).join(":").trim() || "status";
+          }
+          if (/^changelogs(?:\[|$)/i.test(fieldName)) {
+            return changelogValues[`${targetName.toLowerCase()}.${fieldName.toLowerCase()}`] ?? full;
           }
           const found =
             weaoExploits.find((e) => e.title.toLowerCase() === targetName.toLowerCase()) ??
