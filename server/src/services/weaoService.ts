@@ -8,7 +8,7 @@ const WEAO_PRIMARY_BASE = "https://weao.xyz";
 const WEAO_FALLBACK_BASE = "https://whatexpsare.online";
 const WEAO_USER_AGENT = "WEAO-3PService";
 
-const EXPLOITS_CACHE_TTL_MS = 60_000;
+const EXPLOITS_CACHE_TTL_MS = 30_000;
 const SUNC_CACHE_TTL_MS = 15 * 60_000;
 const MAX_SUNC_CACHE_ENTRIES = 250;
 const REQUEST_TIMEOUT_MS = 8_000;
