@@ -113,7 +113,7 @@ const getUserField = (
 };
 
 const snowflakeToUnix = (id: string): number =>
-  Number((BigInt(id) >> 22n) + 1420070400000n / 1000n);
+  Math.floor(Number((BigInt(id) >> 22n) + 1420070400000n) / 1000);
 
 const getClanTag = (member: any, user: DiscordMemberSummary): string => {
   const official =
