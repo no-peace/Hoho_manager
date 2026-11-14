@@ -36,7 +36,7 @@ The audit opens a clean browser context first to capture the unauthenticated Log
 2. In the second browser, sign in with Discord manually if requested.
 3. In the Studio, select a message component so the **Component Inspector / PropertyPanel is open**.
 4. Return to PowerShell and press Enter. Keep Chromium open until the audit finishes.
-5. The script performs safe modal-open/cancel checks, checks horizontal overflow, and captures screenshots.
+5. The script performs safe modal-open/cancel checks, checks whole-page overflow plus internal horizontal overflow in the Header and PropertyPanel, and captures screenshots.
 
 The audit never clicks the Discord login button automatically, never presses Dispatch/Send, and never accepts destructive confirmations.
 
@@ -44,7 +44,8 @@ The audit never clicks the Discord login button automatically, never presses Dis
 
 All output is written to `reports\`:
 
-- `login-<width>.png` — LoginScreen at each width
+- `login-<width>.png` — top of LoginScreen at each width
+- `login-bottom-<width>.png` — bottom of LoginScreen when its content is taller than the viewport
 - `header-<width>.png` — Header at each width
 - `studio-<width>.png` — full Studio page at each width
 - `property-panel-<width>.png` — PropertyPanel at each width, if it was open when you pressed Enter
