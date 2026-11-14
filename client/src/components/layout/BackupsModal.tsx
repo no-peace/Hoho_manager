@@ -40,8 +40,12 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const currentUser = useGlobalStore((state) => state.currentUser);
   const currentName = useTemplateStore((state) => state.currentName);
   const currentTemplateId = useTemplateStore((state) => state.currentId);
-  const templateDirty = useTemplateStore((state) => state.dirty);
   const editorData = useMessageStore((state) => state.data) as any;
+  const editorMessages = useMessageStore((state) => state.messages);
+  const editorTargets = useMessageStore((state) => state.targets);
+  const editorMode = useMessageStore((state) => state.mode);
+  const editorFlows = useActionStore((state) => state.flows);
+  const [currentTemplateModified, setCurrentTemplateModified] = useState(false);
   const getEditorPayload = useMessageStore((state) => state.getPayload);
   const openBotModal = useGlobalStore((state) => state.openBotModal);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
@@ -65,6 +69,27 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   useEffect(() => {
     if (open) void refreshTracked();
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !currentTemplateId) {
+      setCurrentTemplateModified(false);
+      return;
+    }
+    let cancelled = false;
+    void api.templates.get(currentTemplateId).then(({ template }) => {
+      const store = useMessageStore.getState();
+      const messagesToSave = store.messages && store.messages.length > 0 ? store.messages : [store.data];
+      const currentDocument = toQueryData(messagesToSave, store.targets, store.mode);
+      const currentActions = useActionStore.getState().toList();
+      const changed =
+        JSON.stringify(template.data) !== JSON.stringify(currentDocument) ||
+        JSON.stringify(template.actions ?? []) !== JSON.stringify(currentActions);
+      if (!cancelled) setCurrentTemplateModified(changed);
+    }).catch(() => {
+      if (!cancelled) setCurrentTemplateModified(false);
+    });
+    return () => { cancelled = true; };
+  }, [open, currentTemplateId, editorData, editorMessages, editorTargets, editorMode, editorFlows]);
 
   if (!open) return null;
 
@@ -453,7 +478,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                {item.kind === "template" && currentTemplateId === item.id && templateDirty && (
+                {item.kind === "template" && currentTemplateId === item.id && currentTemplateModified && (
                   <Button size="sm" variant="primary" onClick={() => void handleOverwriteBackup(item)}>
                     Overwrite Backup
                   </Button>
