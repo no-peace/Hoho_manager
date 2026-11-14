@@ -133,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           {hasDefaultBotAccess && (
-            <div className="hidden min-[400px]:block w-28 sm:w-48 min-w-[100px] relative shrink">
+            <div className="w-28 sm:w-48 min-w-0 relative shrink">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
