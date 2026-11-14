@@ -162,8 +162,12 @@ router.post(
 
       const unixNow = Math.floor(Date.now() / 1000);
       const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
-      const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
-      const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
+      const requestedAuthorId =
+        typeof req.body?.authorUserId === "string" && /^\\d{17,20}$/.test(req.body.authorUserId)
+          ? req.body.authorUserId
+          : "";
+      const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? requestedAuthorId;
+      const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
       // Use the destination guild's member nickname for {user.name}.
       const targetGuildId = targetChannelId
@@ -178,14 +182,17 @@ router.post(
           senderMember = null;
         }
       }
+      const resolvedSenderName =
+        senderName ||
+        (typeof senderMember?.user?.username === "string" ? senderMember.user.username : "User");
       const senderGlobalName =
         typeof senderMember?.user?.global_name === "string" && senderMember.user.global_name
           ? senderMember.user.global_name
-          : senderName;
+          : resolvedSenderName;
       const senderNickname =
         typeof senderMember?.nick === "string" && senderMember.nick.trim()
           ? senderMember.nick.trim()
-          : senderName;
+          : resolvedSenderName;
 
       const sendVars: Record<string, string> = {
         now: `<t:${unixNow}:f>`,
@@ -216,7 +223,7 @@ router.post(
             "user.id": senderDiscordId,
             "user.mention": `<@${senderDiscordId}>`,
             "user.name": senderNickname,
-            "user.tag": senderName,
+            "user.tag": resolvedSenderName,
             "user.displayname": senderGlobalName,
           }
           : {}),
@@ -377,6 +384,7 @@ router.post(
           messageId: sentId,
           templateId: req.body?.templateId ? Number(req.body.templateId) : null,
           exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
+          authorUserId: senderDiscordId || null,
           rawPayload: uninterpolatedCleanMsg,
           resolvedPayload: finalMessages[index],
           name: typeof req.body?.trackName === "string" ? req.body.trackName : null,
