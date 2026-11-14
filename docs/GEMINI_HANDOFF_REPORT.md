@@ -4,19 +4,20 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Default branch:** `main`  
-**Current main commit:** `3b5a0e6bed772d2c0a221212aa4e0492991a43f0`  
+**Current main commit:** `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`  
 **Merged performance PR:** [#39](https://github.com/no-peace/Hoho_manager/pull/39)  
-**Last verified:** 2026-11-14 09:22 IST
+**Last repository/audit refresh:** 2026-11-14 15:05 IST
 
 ## 1. Read this first
 
 This report is the current project handoff. Read it together with:
 
-1. [V6 master implementation plan](./hoho_v6_master_architecture_plan.md) — the latest 14-stage plan supplied for the work.
-2. [V4 Lighthouse/UI plan](./hoho_v4_lighthouse_sileo_skiper_cult_three_plan.md) — the older six-batch plan, useful for the historical Lighthouse targets and design rationale.
-3. The actual current source on `main` and the active PR branch. Source code and tests are the final authority; commit titles alone are not proof that a requirement is complete.
+1. [Full repository test checklist](./playwright/TEST-CHECKLIST.md) — broad automated and manual acceptance checklist.
+2. [Playwright UI audit guide](./playwright/README.md) — exact browser audit setup, safe operating steps, screenshots, and Lighthouse artifact analysis.
+3. [GitHub Actions workflow guide](../.github/WORKFLOWS.md) — current CI, Lighthouse, Security, Release, and workflow-validation responsibilities.
+4. The actual current source on `main`, current workflow runs, and committed audit artifacts. Source code and test output are the final authority; commit titles alone are not proof that a requirement is complete.
 
-The V6 plan is newer than the V4 plan. The V6 plan focuses on the full UI, loader, studio, editor, bot-message, and test-preservation pass. The V4 plan describes earlier Lighthouse, accessibility, SEO, Sileo, Skiper/Cult, canvas, and public-page work.
+The historical V4 and V6 plan files were removed from the current repository in the latest documentation/workflow cleanup. Do not follow stale links to those deleted paths. Use the current source, [full repository test checklist](./playwright/TEST-CHECKLIST.md), [Playwright audit guide](./playwright/README.md), and [GitHub Actions workflow guide](../.github/WORKFLOWS.md) for the live project state. If the owner supplies a separate copy of either historical plan, treat it as historical context rather than proof of current implementation.
 
 ## 2. What the project is
 
@@ -315,3 +316,62 @@ No Vite configuration file was modified. `client/vite.config.ts` retains the exi
 - `f10d5b3` — keep dropdown margins inside the viewport
 - `02a996c` — cover triggers outside the viewport in layout tests
 - `7d95609` — fix crowded viewport expectations in layout tests
+
+
+## 14. Latest repository changes and responsive UI audit — 2026-11-14
+
+This section supersedes older repository-head and browser-audit status statements above. It was prepared from the live repository history and committed audit reports. Current `main` head observed: `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`.
+
+### Changes since the previous handoff checkpoint
+
+The repository advanced 31 commits from `7d956098d202d52e9d8bdf6871a350a2f4daa2f5` to `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`. The comparison reports these relevant changes:
+
+- **Responsive server selector:** `1987cdd2dbbe09a03e9365b86d26ebc128a0b240` updates `client/src/components/layout/Header.tsx` so the server selector remains available at narrow widths rather than being hidden below 400px.
+- **Action Row selection behavior:** `64f861bdf9ada99815618643a83a2dbda4379d9b` changes `client/src/store/messageStore.ts`; adding an Action Row no longer opens an inspector for a structural container with no useful inspector inputs. The inspector remains closed until a child component is added/selected.
+- **Components V2 acceptance invariant:** `9623066fab751bc8569d39d3f9eed2c97ff27c66` strengthens `scripts/verify-acceptance.ts`. It checks the Components V2 flag definition, application in the payload builder, and `with_components=true` query handling in both follow-up and edit-original webhook request paths.
+- **Responsive audit reliability:** `9623066fab751bc8569d39d3f9eed2c97ff27c66`, `5f637dfb83468c7898c7b1983fa16c05557e75c6`, `6c406d203f7c3800a5ae1f58f7eae6415691039d`, `5e96fb95eb12396d404627bc4469e55e69d61625`, and `fdad81a5bc88eb7664c29f48f6a20294869d44f7` refine the Playwright audit setup so the correct Button Component Inspector is present before screenshots are captured. A missing inspector is a failure, not a silent skip. The audit snapshots existing `dmb:message` data and verifies that it remains unchanged.
+- **Workflow hardening:** commits `413a84a379f074bec0d50ce87fc0685534f576c9` and `39eb6a90eaa1f38f04097906498c629b17c25fab` organize and validate GitHub Actions workflows, add workflow-validation/actionlint coverage, and correct shell/YAML validation findings. See [workflow guide](../.github/WORKFLOWS.md).
+- **Audit documentation and tooling:** `docs/playwright/README.md`, `docs/playwright/TEST-CHECKLIST.md`, `docs/playwright/audit.mjs`, and `docs/playwright/analyze-lighthouse.mjs` now describe the repeatable audit process, exact Button Inspector preparation, safe test boundaries, and Lighthouse JSON analysis.
+- **Historical plans removed:** `docs/hoho_v4_lighthouse_sileo_skiper_cult_three_plan.md` and `docs/hoho_v6_master_architecture_plan.md` were removed from the repository in this range. The earlier section 1 links to those paths were stale and have been replaced with current repository documentation links.
+
+### Latest committed browser audit
+
+The committed audit report was regenerated at `2026-11-14T09:35:47.877Z` (UTC) against the production URL `https://hoho-manager.onrender.com/`.
+
+| Result | Count |
+|---|---:|
+| Passed | 38 |
+| Failed | 0 |
+| Skipped | 1 |
+
+The one skipped check is intentional: the Dispatch dialog was opened for inspection, but no Discord send action was performed. No destructive confirmation was accepted.
+
+The audit covered LoginScreen, Studio, Header, and PropertyPanel at **320, 360, 390, 430, 768, and 1280px**. It verified whole-page and internal horizontal overflow, captured LoginScreen/Header/Studio/Component Inspector screenshots, opened JSON and Backups dialogs, and checked that the saved message data was unchanged. The recorded diagnostics contain no browser console errors, uncaught page errors, failed network requests, or HTTP 4xx/5xx responses.
+
+Committed evidence:
+- `docs/playwright/reports/audit-report.md`
+- `docs/playwright/reports/audit-report.json`
+- `docs/playwright/reports/login-*.png`
+- `docs/playwright/reports/header-*.png`
+- `docs/playwright/reports/studio-*.png`
+- `docs/playwright/reports/property-panel-*.png`
+
+The report records that the Button Component Inspector was visible and editing a Button before the responsive audit. This closes the earlier gap where the PropertyPanel screenshots could be skipped because no component was selected.
+
+### Verification status — do not overstate
+
+- The committed Playwright report is a successful production browser smoke/responsive audit: **38 PASS, 0 FAIL, 1 intentional SKIP**.
+- The report itself is committed at head `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`.
+- A CI/Lighthouse/Security workflow result for this exact head was not returned by the commit-workflow/status lookup during this refresh. Do not claim that all three workflows passed on `e534596` without checking the live Actions page.
+- The latest earlier full CI/Lighthouse/Security verification explicitly recorded in section 13 remains tied to code commit `7d956098d202d52e9d8bdf6871a350a2f4daa2f5`, with the run IDs listed there.
+- The responsive audit is not a complete feature acceptance pass. It does not send Discord messages, validate Discord-side delivery, test every manual checklist item, or prove every UI state works.
+
+### Instructions for Gemini — next actions
+
+1. Start from the live `main` head, currently recorded here as `e5345969b2f7fbac0e2780ca061d18f17dd12bfe`; refresh it before editing.
+2. Read this handoff, `docs/playwright/README.md`, `docs/playwright/TEST-CHECKLIST.md`, and `.github/WORKFLOWS.md`. The former V4/V6 plan paths no longer exist on current `main`.
+3. Inspect the committed screenshots and both audit report formats. Do not repeat the already-passing six-width overflow audit without a reason; use it as the current baseline.
+4. Preserve the narrow-screen server selector and the Action Row selection behavior. Do not regress the Components V2 acceptance invariant.
+5. Check current GitHub Actions results for the latest `main` SHA before claiming CI, Lighthouse, or Security is green. If runs are absent, run the documented checks rather than assuming success.
+6. Continue the full feature checklist in a disposable test guild/environment. Never send messages or confirm destructive actions in production.
+7. Keep this handoff updated with exact commit SHAs, workflow run URLs, measured metrics, and report evidence after future changes.
