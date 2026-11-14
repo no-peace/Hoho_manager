@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { NotFoundPage } from "./pages/NotFoundPage";
+const NotFoundPage = React.lazy(() =>
+  import("./pages/NotFoundPage").then((module) => ({ default: module.NotFoundPage })),
+);
 import { HoHoLogoMark, LoginScreen } from "./components/layout/LoginScreen";
 import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
-import { useActionStore } from "./store/actionStore";
 import api from "./api/client";
 
 const DocsPage = React.lazy(() =>
@@ -38,14 +39,14 @@ export const App: React.FC = () => {
   const authLoading = useGlobalStore((state) => state.authLoading);
   const fetchCurrentUser = useGlobalStore((state) => state.fetchCurrentUser);
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
-  const fetchActionTypes = useActionStore((state) => state.fetchActionTypes);
 
   useEffect(() => {
     void (async () => {
       const user = await fetchCurrentUser();
       if (!user) return;
 
-      void fetchActionTypes();
+      const { useActionStore } = await import("./store/actionStore");
+      void useActionStore.getState().fetchActionTypes();
 
       const params = new URLSearchParams(window.location.search);
       if (params.get("setup") === "1" || user.isFirstLogin || user.needsBotConfig) {
@@ -68,7 +69,7 @@ export const App: React.FC = () => {
         // Custom Bot mode fallback
       }
     })();
-  }, [fetchActionTypes, fetchCurrentUser, setConfigModalOpen]);
+  }, [fetchCurrentUser, setConfigModalOpen]);
 
   if (route === "docs") {
     return (
@@ -92,9 +93,9 @@ export const App: React.FC = () => {
 
   if (route === "not_found") {
     return (
-      <>
+      <React.Suspense fallback={null}>
         <NotFoundPage />
-      </>
+      </React.Suspense>
     );
   }
 
