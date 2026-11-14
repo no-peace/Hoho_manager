@@ -31,6 +31,17 @@ describe("WEAO changelog formatting", () => {
     );
   });
 
+  it("formats a comparison of added and removed entries", () => {
+    expect(formatExploitChangelogs(entries, "changelogs.compare", {
+      added: [entries[2]],
+      removed: [entries[0]],
+    })).toContain("**New entries**");
+    expect(formatExploitChangelogs(entries, "changelogs.compare", {
+      added: [entries[2]],
+      removed: [entries[0]],
+    })).toContain("**Removed entries**");
+  });
+
   it("returns a stable empty state for an empty changelog", () => {
     expect(formatExploitChangelogs([], "changelogs[0:3]")).toBe(
       "No changelog entries found.",
