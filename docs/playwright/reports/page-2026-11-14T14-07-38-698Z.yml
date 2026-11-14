@@ -1,0 +1,167 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e10]:
+      - banner [ref=e11]:
+        - link [ref=e13] [cursor=pointer]:
+          - /url: /
+          - heading "HoHo Manager" [level=1] [ref=e15]
+        - generic [ref=e16]:
+          - combobox "Select Server..." [ref=e19] [cursor=pointer]:
+            - generic [ref=e20]: "906426036772818954"
+            - generic [ref=e21]: ▼
+          - generic [ref=e22]:
+            - button "Backups and saved messages" [ref=e23]:
+              - generic [ref=e27]: Backups
+            - button "Import or export JSON" [ref=e28]:
+              - generic [ref=e34]: JSON
+            - button "Copy message JSON" [ref=e35]
+            - button "Clear all messages" [ref=e42]
+            - button "Dispatch message" [ref=e46]
+          - button "Settings" [ref=e50]
+        - generic [ref=e55]:
+          - button "Staff Access" [ref=e56]
+          - button "𝑷𝒆𝒂𝒄𝒆 𝑷𝒆𝒂𝒄𝒆" [ref=e61]:
+            - img "𝑷𝒆𝒂𝒄𝒆" [ref=e62]
+            - generic [ref=e63]: 𝑷𝒆𝒂𝒄𝒆
+          - link "Docs" [ref=e67] [cursor=pointer]:
+            - /url: /docs
+      - main [ref=e71]:
+        - generic [ref=e73]:
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - generic [ref=e79]:
+                  - button "Collapse Message" [ref=e80]
+                  - generic [ref=e83]: Message 1
+                  - generic [ref=e84]: Components V2
+                - generic [ref=e85]:
+                  - button "Rename Message" [ref=e86]
+                  - button "Duplicate Message" [ref=e89]
+                  - button "Delete Message" [disabled] [ref=e93]
+              - generic [ref=e97]:
+                - generic [ref=e99]:
+                  - button "Thread" [ref=e101]
+                  - generic [ref=e105]:
+                    - generic [ref=e106]:
+                      - button "Files" [ref=e107]
+                      - generic [ref=e111]:
+                        - button "Add URL" [ref=e112]
+                        - button "Upload" [ref=e117]
+                    - generic [ref=e123] [cursor=pointer]:
+                      - paragraph [ref=e126]: Drop files here or browse
+                      - paragraph [ref=e127]: Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
+                - generic [ref=e128]:
+                  - generic [ref=e129]:
+                    - generic [ref=e130]: 113/4000 characters
+                    - generic [ref=e131]: 2/40 top-level components
+                  - generic [ref=e132]:
+                    - generic [ref=e133]:
+                      - generic [ref=e134]:
+                        - generic [ref=e135]: "Text #1"
+                        - generic [ref=e136]:
+                          - button "Move Down" [ref=e137]
+                          - button "Duplicate" [ref=e140]
+                          - button "Delete" [ref=e144]
+                      - generic [ref=e148]:
+                        - generic [ref=e149]:
+                          - generic [ref=e151]:
+                            - text: Content
+                            - generic [ref=e152]: 0/4000
+                          - generic [ref=e153]:
+                            - toolbar "Markdown formatting" [ref=e154]:
+                              - button "Bold" [ref=e155]
+                              - button "Italic" [ref=e158]
+                              - button "Underline" [ref=e161]
+                              - button "Strikethrough" [ref=e164]
+                              - button "Inline Code" [ref=e169]
+                              - button "Code Block" [ref=e173]
+                              - button "Spoiler" [ref=e179]
+                              - button "Quote" [ref=e185]
+                              - button "Relative Timestamp" [ref=e190]: time:R
+                            - 'textbox "Write markdown, @mentions, #channels, :emojis:, or {status} / {sunc}…" [ref=e194]'
+                            - button "Quick Mentions, Timestamps & Emojis" [ref=e196]
+                        - button "Add Accessory" [ref=e200]
+                    - generic [ref=e204]:
+                      - generic [ref=e205]:
+                        - generic [ref=e206]: "Text #2"
+                        - generic [ref=e207]:
+                          - button "Move Up" [ref=e208]
+                          - button "Duplicate" [ref=e211]
+                          - button "Delete" [ref=e215]
+                      - generic [ref=e219]:
+                        - generic [ref=e220]:
+                          - generic [ref=e222]:
+                            - text: Content
+                            - generic [ref=e223]: 113/4000
+                          - generic [ref=e224]:
+                            - toolbar "Markdown formatting" [ref=e225]:
+                              - button "Bold" [ref=e226]
+                              - button "Italic" [ref=e229]
+                              - button "Underline" [ref=e232]
+                              - button "Strikethrough" [ref=e235]
+                              - button "Inline Code" [ref=e240]
+                              - button "Code Block" [ref=e244]
+                              - button "Spoiler" [ref=e250]
+                              - button "Quote" [ref=e256]
+                              - button "Relative Timestamp" [ref=e261]: time:R
+                            - 'textbox "Write markdown, @mentions, #channels, :emojis:, or {status} / {sunc}…" [ref=e265]': "Tracked Component V2 placeholder test Name: {user.997799913746341958.name} Roles: {user.997799913746341958.roles}"
+                            - button "Quick Mentions, Timestamps & Emojis" [ref=e267]
+                        - button "Add Accessory" [ref=e271]
+                - generic [ref=e275]:
+                  - button "Add" [ref=e277]
+                  - button "Set Link" [ref=e281]
+                  - button "Options" [ref=e286]
+            - button "Add Message (1/10)" [ref=e291] [cursor=pointer]
+          - separator "Resize editor and preview (double-click to reset)" [ref=e294]
+          - generic [ref=e299]:
+            - generic [ref=e300]:
+              - generic [ref=e301]:
+                - heading "Live Preview" [level=2] [ref=e302]
+                - generic [ref=e306]: "Message 1: Components V2"
+              - button "Cozy" [ref=e308]
+            - generic "Message 1 (Active)" [ref=e312] [cursor=pointer]:
+              - generic [ref=e314]:
+                - paragraph [ref=e315]:
+                  - generic [ref=e316]: HoHo Manager
+                  - generic [ref=e317]: APP
+                  - generic [ref=e318]: Today at 19:36
+                - generic [ref=e320]:
+                  - generic [ref=e322]:
+                    - paragraph [ref=e323]: Tracked Component V2 placeholder test
+                    - paragraph [ref=e324]: "Name: 𝑷𝒆𝒂𝒄𝒆"
+                    - paragraph [ref=e325]: "Roles: {user.997799913746341958.roles}"
+                  - paragraph [ref=e326]: "flags: 32768 (IsComponentsV2)"
+    - status [ref=e327]
+  - dialog [ref=e329]:
+    - generic [ref=e330]:
+      - heading "Dispatch via Server Bot" [level=2] [ref=e331]
+      - button "Close dialog" [ref=e332]
+    - generic [ref=e337]:
+      - generic [ref=e338]:
+        - button "Send New Message" [ref=e339]
+        - button "Edit Existing" [ref=e343]
+      - generic [ref=e346]:
+        - generic [ref=e347]:
+          - heading "1. Server Bot Identity" [level=4] [ref=e348]
+          - button "View Bot Access" [ref=e349]
+        - generic [ref=e351]:
+          - paragraph [ref=e352]: HoHo Manager
+          - paragraph [ref=e353]: Configured server bot
+      - generic [ref=e354]:
+        - generic [ref=e355]:
+          - heading "2. Select Target Channel(s)" [level=4] [ref=e356]
+          - generic [ref=e357]:
+            - button "Select All" [ref=e358]
+            - button "Clear" [ref=e359]
+        - textbox "Filter channels by name" [ref=e360]:
+          - /placeholder: Filter channels by name...
+          - text: bot-log
+        - button "# 〔📝〕bot-log" [active] [pressed] [ref=e732]
+      - generic [ref=e749]:
+        - checkbox "Track this message (Auto-update dynamic variables)" [checked] [ref=e750] [cursor=pointer]
+        - generic [ref=e754]:
+          - generic [ref=e755]: Optional retention expiry
+          - button "No expiry" [ref=e757]
+    - generic [ref=e761]:
+      - button "Cancel" [ref=e762] [cursor=pointer]
+      - button "Dispatch to 1" [ref=e775] [cursor=pointer]

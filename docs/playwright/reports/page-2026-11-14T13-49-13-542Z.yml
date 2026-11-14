@@ -1,0 +1,112 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - banner [ref=f2e4]:
+        - link [ref=f2e6] [cursor=pointer]:
+          - /url: /
+          - heading "HoHo Manager" [level=1] [ref=f2e8]
+        - generic [ref=f2e9]:
+          - combobox "Select Server..." [ref=f2e12] [cursor=pointer]:
+            - generic [ref=f2e14]: ▼
+          - generic [ref=f2e15]:
+            - button "Backups and saved messages" [ref=f2e16]
+            - button "Import or export JSON" [ref=f2e20]
+            - button "Copy message JSON" [ref=f2e26]
+            - button "Clear all messages" [ref=f2e33]
+            - button "Dispatch message" [ref=f2e37]
+          - button "Settings" [ref=f2e41]
+        - generic [ref=f2e46]:
+          - button "Staff Access" [ref=f2e47]
+          - button "𝑷𝒆𝒂𝒄𝒆 𝑷𝒆𝒂𝒄𝒆" [ref=f2e52]:
+            - img "𝑷𝒆𝒂𝒄𝒆" [ref=f2e53]
+            - generic [ref=f2e54]: 𝑷𝒆𝒂𝒄𝒆
+          - link "Docs" [ref=f2e58] [cursor=pointer]:
+            - /url: /docs
+      - main [ref=f2e62]:
+        - generic [ref=f2e67]:
+          - generic [ref=f2e68]:
+            - generic [ref=f2e69]:
+              - generic [ref=f2e70]:
+                - button "Collapse Message" [ref=f2e71]
+                - generic [ref=f2e74]: Message 1
+                - generic [ref=f2e75]: Classic
+              - generic [ref=f2e76]:
+                - button "Rename Message" [ref=f2e77]
+                - button "Duplicate Message" [ref=f2e80]
+                - button "Delete Message" [disabled] [ref=f2e84]
+            - generic [ref=f2e88]:
+              - generic [ref=f2e89]:
+                - generic [ref=f2e90]:
+                  - button "Thread" [ref=f2e92]
+                  - generic [ref=f2e96]:
+                    - generic [ref=f2e97]:
+                      - button "Files" [ref=f2e98]
+                      - generic [ref=f2e102]:
+                        - button "Add URL" [ref=f2e103]
+                        - button "Upload" [ref=f2e108]
+                    - generic [ref=f2e114] [cursor=pointer]:
+                      - paragraph [ref=f2e117]: Drop files here or browse
+                      - paragraph [ref=f2e118]: Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
+                - generic [ref=f2e119]:
+                  - generic [ref=f2e121]:
+                    - text: Content
+                    - generic [ref=f2e122]: 48/2000
+                  - generic [ref=f2e123]:
+                    - toolbar "Markdown formatting" [ref=f2e124]:
+                      - button "Bold" [ref=f2e125]
+                      - button "Italic" [ref=f2e128]
+                      - button "Underline" [ref=f2e131]
+                      - button "Strikethrough" [ref=f2e134]
+                      - button "Inline Code" [ref=f2e139]
+                      - button "Code Block" [ref=f2e143]
+                      - button "Spoiler" [ref=f2e149]
+                      - button "Quote" [ref=f2e155]
+                      - button "Relative Timestamp" [ref=f2e160]: time:R
+                    - 'textbox "Say something… (type @, #, :, or {status} / {sunc})" [ref=f2e164]': Playwright test from HoHo Manager — 14 Nov 2026.
+                    - button "Quick Mentions, Timestamps & Emojis" [ref=f2e166]
+              - generic [ref=f2e170]:
+                - button "Add Embed (0/10)" [ref=f2e171]
+                - button "Add Action Row" [ref=f2e173]
+                - button "Set Link" [ref=f2e175]
+                - button "Options" [ref=f2e180]
+          - button "Add Message (1/10)" [ref=f2e185] [cursor=pointer]
+      - navigation "Mobile workspace navigation" [ref=f2e188]:
+        - button "Editor 1" [pressed] [ref=f2e189]:
+          - generic [ref=f2e193]: Editor
+          - generic [ref=f2e194]: "1"
+        - button "Preview" [ref=f2e195]
+        - button "Dispatch" [ref=f2e201]
+    - status [ref=f2e206]
+  - dialog [ref=f2e649]:
+    - generic [ref=f2e650]:
+      - heading "Dispatch via Server Bot" [level=2] [ref=f2e651]
+      - button "Close dialog" [active] [ref=f2e652]
+    - generic [ref=f2e657]:
+      - generic [ref=f2e658]:
+        - button "Send New Message" [ref=f2e659]
+        - button "Edit Existing" [ref=f2e663]
+      - generic [ref=f2e666]:
+        - generic [ref=f2e667]:
+          - heading "1. Server Bot Identity" [level=4] [ref=f2e668]
+          - button "View Bot Access" [ref=f2e669]
+        - generic [ref=f2e671]:
+          - paragraph [ref=f2e672]: HoHo Manager
+          - paragraph [ref=f2e673]: Configured server bot
+      - generic [ref=f2e674]:
+        - generic [ref=f2e675]:
+          - heading "2. Select Target Channel(s)" [level=4] [ref=f2e676]
+          - generic [ref=f2e677]:
+            - button "Select All" [ref=f2e678]
+            - button "Clear" [ref=f2e679]
+        - textbox "Filter channels by name" [ref=f2e680]:
+          - /placeholder: Filter channels by name...
+          - text: helper-chat
+        - button "# 〔🌎〕helper-chat" [pressed] [ref=f2e683]
+      - generic [ref=f2e688]:
+        - checkbox "Track this message (Auto-update dynamic variables)" [ref=f2e689] [cursor=pointer]
+        - generic [ref=f2e693]:
+          - generic [ref=f2e694]: Optional retention expiry
+          - button "No expiry" [ref=f2e696]
+    - generic [ref=f2e700]:
+      - button "Cancel" [ref=f2e701] [cursor=pointer]
+      - button "Dispatch to 1" [ref=f2e702] [cursor=pointer]

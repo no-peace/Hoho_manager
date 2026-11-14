@@ -1,0 +1,63 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - link "HoHo Manager Discord Bot Message & Components V2 Builder" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e6]:
+        - generic [ref=e7]: HoHo Manager
+        - generic [ref=e8]: Discord Bot Message & Components V2 Builder
+    - navigation "Public navigation" [ref=e9]:
+      - link "Studio" [ref=e10] [cursor=pointer]:
+        - /url: /
+      - link "Docs" [ref=e11] [cursor=pointer]:
+        - /url: /docs
+      - link "Privacy" [ref=e12] [cursor=pointer]:
+        - /url: /privacy
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: COMPONENTS V2 & DYNAMIC TRACKING
+        - heading "HoHo Manager Studio" [level=1] [ref=e17]
+        - paragraph [ref=e18]: Sign in with Discord to verify your account, shared servers, and staff access before opening the message studio.
+      - button "Login with Discord" [ref=e19] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e28]:
+          - strong [ref=e29]: "Mutual-Guild & Role Check:"
+          - text: Verifies shared servers and active staff permissions on every request.
+        - generic [ref=e34]:
+          - strong [ref=e35]: "24-Hour Session Expiry:"
+          - text: Sessions automatically expire every 24 hours.
+        - generic [ref=e40]:
+          - strong [ref=e41]: "Workspace Backups:"
+          - text: Save, restore, import, and export message configurations from the studio.
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]: "#announcements Preview"
+        - tablist "Preview showcase modes" [ref=e45]:
+          - tab "Components V2" [selected] [ref=e46]
+          - tab "Live Status & Variables" [ref=e47]
+          - tab "Button & Modal Flows" [ref=e48]
+      - generic [ref=e50]:
+        - img "HoHo Manager" [ref=e51]
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - generic [ref=e54]: HoHo Bot
+            - generic [ref=e55]: APP
+            - generic [ref=e56]: Today at 12:00 PM
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - generic [ref=e59]: IS_COMPONENTS_V2 (32768)
+              - generic [ref=e60]: Bot Dispatch
+            - heading "Release v4.2 Layout Containers & Sections" [level=2] [ref=e62]
+            - paragraph [ref=e63]: Build nested V2 Containers, Thumbnails, Media Galleries, Separators, and interactive Action Rows.
+            - generic [ref=e64]:
+              - button "Read Changelog" [ref=e65]
+              - button "Verify Role" [ref=e66]
+  - contentinfo [ref=e67]:
+    - generic [ref=e68]: HoHo Manager • Discord Bot Message & Components V2 Studio
+    - generic [ref=e69]:
+      - link "Docs" [ref=e70] [cursor=pointer]:
+        - /url: /docs
+      - link "Privacy Policy" [ref=e71] [cursor=pointer]:
+        - /url: /privacy
+      - link "HoHo Hub Discord" [ref=e72] [cursor=pointer]:
+        - /url: https://discord.gg/hohohub

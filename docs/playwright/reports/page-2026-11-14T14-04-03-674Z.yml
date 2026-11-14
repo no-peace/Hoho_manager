@@ -1,0 +1,94 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e10]:
+      - banner [ref=e11]:
+        - link [ref=e13] [cursor=pointer]:
+          - /url: /
+          - heading "HoHo Manager" [level=1] [ref=e15]
+        - generic [ref=e16]:
+          - combobox "Select Server..." [expanded] [ref=e19] [cursor=pointer]:
+            - generic [ref=e21]: ▼
+          - generic [ref=e22]:
+            - button "Backups and saved messages" [ref=e23]:
+              - generic [ref=e27]: Backups
+            - button "Import or export JSON" [ref=e28]:
+              - generic [ref=e34]: JSON
+            - button "Copy message JSON" [ref=e35]
+            - button "Clear all messages" [ref=e42]
+            - button "Dispatch message" [ref=e46]
+          - button "Settings" [ref=e50]
+        - generic [ref=e55]:
+          - button "Staff Access" [ref=e56]
+          - button "𝑷𝒆𝒂𝒄𝒆 𝑷𝒆𝒂𝒄𝒆" [ref=e61]:
+            - img "𝑷𝒆𝒂𝒄𝒆" [ref=e62]
+            - generic [ref=e63]: 𝑷𝒆𝒂𝒄𝒆
+          - link "Docs" [ref=e67] [cursor=pointer]:
+            - /url: /docs
+      - main [ref=e71]:
+        - generic [ref=e73]:
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - generic [ref=e79]:
+                  - button "Collapse Message" [ref=e80]
+                  - generic [ref=e83]: Message 1
+                  - generic [ref=e84]: Classic
+                - generic [ref=e85]:
+                  - button "Rename Message" [ref=e86]
+                  - button "Duplicate Message" [ref=e89]
+                  - button "Delete Message" [disabled] [ref=e93]
+              - generic [ref=e97]:
+                - generic [ref=e98]:
+                  - generic [ref=e99]:
+                    - button "Thread" [ref=e101]
+                    - generic [ref=e105]:
+                      - generic [ref=e106]:
+                        - button "Files" [ref=e107]
+                        - generic [ref=e111]:
+                          - button "Add URL" [ref=e112]
+                          - button "Upload" [ref=e117]
+                      - generic [ref=e123] [cursor=pointer]:
+                        - paragraph [ref=e126]: Drop files here or browse
+                        - paragraph [ref=e127]: Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
+                  - generic [ref=e128]:
+                    - generic [ref=e130]:
+                      - text: Content
+                      - generic [ref=e131]: 48/2000
+                    - generic [ref=e132]:
+                      - toolbar "Markdown formatting" [ref=e133]:
+                        - button "Bold" [ref=e134]
+                        - button "Italic" [ref=e137]
+                        - button "Underline" [ref=e140]
+                        - button "Strikethrough" [ref=e143]
+                        - button "Inline Code" [ref=e148]
+                        - button "Code Block" [ref=e152]
+                        - button "Spoiler" [ref=e158]
+                        - button "Quote" [ref=e164]
+                        - button "Relative Timestamp" [ref=e169]: time:R
+                      - 'textbox "Say something… (type @, #, :, or {status} / {sunc})" [ref=e173]': Playwright test from HoHo Manager — 14 Nov 2026.
+                      - button "Quick Mentions, Timestamps & Emojis" [ref=e175]
+                - generic [ref=e179]:
+                  - button "Add Embed (0/10)" [ref=e180]
+                  - button "Add Action Row" [ref=e182]
+                  - button "Set Link" [ref=e184]
+                  - button "Options" [ref=e189]
+            - button "Add Message (1/10)" [ref=e194] [cursor=pointer]
+          - separator "Resize editor and preview (double-click to reset)" [ref=e197]
+          - generic [ref=e202]:
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - heading "Live Preview" [level=2] [ref=e205]
+                - generic [ref=e209]: "Message 1: Classic"
+              - button "Cozy" [ref=e211]
+            - generic "Message 1 (Active)" [ref=e215] [cursor=pointer]:
+              - generic [ref=e217]:
+                - paragraph [ref=e218]:
+                  - generic [ref=e219]: HoHo Manager
+                  - generic [ref=e220]: APP
+                  - generic [ref=e221]: Today at 19:33
+                - paragraph [ref=e224]: Playwright test from HoHo Manager — 14 Nov 2026.
+    - status [ref=e225]
+  - generic [ref=e226]:
+    - textbox "Search guild options" [active] [ref=e228]:
+      - /placeholder: Search...
+    - generic "[ HoHo Community ]" [ref=e230] [cursor=pointer]
