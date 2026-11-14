@@ -27,7 +27,7 @@ function computeDropdownPosition({
 }) {
   const DROPDOWN_HEIGHT = 260;
   const spaceBelow = Math.max(0, innerHeight - Math.max(dropdownRect.bottom, 8) - 12);
-  const spaceAbove = Math.max(0, Math.min(dropdownRect.top, innerHeight) - 8);
+  const spaceAbove = Math.min(Math.max(0, dropdownRect.top - 8), Math.max(0, innerHeight - 16));
   const placeAbove = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
   const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), innerWidth - 16);
   const maxLeft = Math.max(8, innerWidth - dropdownWidth - 8);
