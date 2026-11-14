@@ -795,7 +795,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
             targetName = (parts[0] || "").trim();
             fieldName = parts.slice(1).join(":").trim() || "status";
           }
-          if (/^changelogs(?:\[|$)/i.test(fieldName)) {
+          if (/^changelogs(?:\[|\.|$)/i.test(fieldName)) {
             return changelogValues[`${targetName.toLowerCase()}.${fieldName.toLowerCase()}`] ?? full;
           }
           const found =
