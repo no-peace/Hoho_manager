@@ -73,10 +73,7 @@ const getFieldValue = (
     case "profile":
       return user.profileUrl;
 
-    case "avatarurl":
     case "avatar":
-    case "icon":
-    case "pfp":
       return user.avatarUrl;
 
     case "mention":
