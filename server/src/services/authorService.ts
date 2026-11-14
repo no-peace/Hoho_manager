@@ -124,10 +124,10 @@ const getClanTag = (member: any, user: DiscordMemberSummary): string => {
   if (typeof official === "string" && official.trim()) return official.trim();
 
   const displayName = member?.nick || user.global_name || user.username;
-  const text = `${displayName} ${user.username}`;
-  const bracket = text.match(/\\[([A-Za-z0-9_.-]{1,16})\\]|\\(([A-Za-z0-9_.-]{1,16})\\)|\\{([A-Za-z0-9_.-]{1,16})\\}/);
+  const text = String(displayName) + " " + user.username;
+  const bracket = text.match(/\[([A-Za-z0-9_.-]{1,16})\]|\(([A-Za-z0-9_.-]{1,16})\)|\{([A-Za-z0-9_.-]{1,16})\}/);
   if (bracket) return bracket[1] || bracket[2] || bracket[3];
-  const separator = text.match(/(?:^([A-Za-z0-9_.-]{2,8})\\s*[|•:-]|[|•:-]\\s*([A-Za-z0-9_.-]{2,8})$)/);
+  const separator = text.match(/(?:^([A-Za-z0-9_.-]{2,8})\s*[|•:-]|[|•:-]\s*([A-Za-z0-9_.-]{2,8})$)/);
   return separator ? (separator[1] || separator[2]).trim() : "";
 };
 
