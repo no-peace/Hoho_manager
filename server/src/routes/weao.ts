@@ -188,7 +188,7 @@ router.get(
         backupTemplateId: e.backupTemplateId ?? matchedTemplate?.id ?? null,
         backupTemplateName: e.backupTemplateName ?? matchedTemplate?.name ?? null,
       };
-    });
+    }).filter((exploit) => exploit.hasBackupTemplate);
 
     res.json({
       exploits: results,
@@ -345,17 +345,7 @@ router.post(
       });
     }
 
-    const fallbackPayload = await buildAdaptiveExploitPayload(exploit);
-    const authorRes = await resolveAuthorPlaceholders(fallbackPayload);
-    return res.json({
-      source: "adaptive_default",
-      templateId: null,
-      templateName: null,
-      exploit,
-      payload: authorRes.payload,
-      actionsCount: 0,
-      flows: [],
-    });
+    throw ApiError.notFound(`No saved message template is configured for "${exploit.title}"`);
   }),
 );
 
