@@ -135,6 +135,7 @@ export const api = {
     flows?: FlowRegistration[];
     templateId?: number | null;
     exploitName?: string | null;
+    authorUserId?: string | null;
   }) =>
     request<SendSuccessResponse>("/api/send", {
       method: "POST",
@@ -147,6 +148,7 @@ export const api = {
         ...(body.flows ? { flows: body.flows } : {}),
         ...(body.templateId ? { templateId: body.templateId } : {}),
         ...(body.exploitName ? { exploitName: body.exploitName } : {}),
+        ...(body.authorUserId ? { authorUserId: body.authorUserId } : {}),
       },
     }),
 
