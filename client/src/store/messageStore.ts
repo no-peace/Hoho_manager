@@ -507,7 +507,12 @@ export const useMessageStore = create<MessageState>()(
           const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return {
             ...syncDataToMessages(nextData, state),
-            selection: { kind: "component", id: created._id as string },
+            // Action Rows are structural containers; they have no useful inspector
+            // inputs. Keep the inspector closed until the user adds/selects a child.
+            selection:
+              type === ComponentType.ActionRow
+                ? null
+                : { kind: "component", id: created._id as string },
           };
         }),
 
