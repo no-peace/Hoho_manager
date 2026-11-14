@@ -34,6 +34,7 @@ const mockUser = {
   id: USER_A,
   username: "peace",
   globalName: "Peace",
+  nickname: null,
   avatarUrl: "https://cdn.discordapp.com/avatars/test.png",
   profileUrl: `https://discord.com/users/${USER_A}`,
 };
