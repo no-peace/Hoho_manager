@@ -8,6 +8,7 @@ import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
 import { useTemplates } from "../../hooks/useTemplates";
 import { useTemplateStore } from "../../store/templateStore";
 import { useMessageStore } from "../../store/messageStore";
+import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore, getServerNow } from "../../store/globalStore";
 import { downloadJson, parseImportedJson, toQueryData } from "../../utils/exportImport";
 import api from "../../api/client";
@@ -38,6 +39,10 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [loadingTracked, setLoadingTracked] = useState(false);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const currentName = useTemplateStore((state) => state.currentName);
+  const currentTemplateId = useTemplateStore((state) => state.currentId);
+  const templateDirty = useTemplateStore((state) => state.dirty);
+  const editorData = useMessageStore((state) => state.data);
+  const getEditorPayload = useMessageStore((state) => state.getPayload);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
   const { showToast, openConfirm } = useGlobalStore();
@@ -153,6 +158,34 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       showToast("Backup settings updated", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to update backup", "error");
+    }
+  };
+
+  const handleOverwriteBackup = async (item: any) => {
+    try {
+      await saveCurrent(item.expiresAt ?? null, item.isTracked);
+      await refresh();
+      showToast("Existing backup overwritten with the current editor content", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to overwrite backup", "error");
+    }
+  };
+
+  const handleOverwriteTrackedMessage = async (item: any) => {
+    try {
+      const payload = useMessageStore.getState().getPayload();
+      const flows = useActionStore.getState().toRegistrations();
+      await api.send({
+        mode: "bot",
+        channelId: item.source.channelId,
+        editMessageId: item.source.messageId,
+        payload,
+        flows,
+      });
+      await refreshTracked();
+      showToast("Existing bot message edited and tracking refreshed", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to edit tracked bot message", "error");
     }
   };
 
@@ -394,6 +427,26 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                {item.kind === "template" && currentTemplateId === item.id && templateDirty && (
+                  <Button size="sm" variant="primary" onClick={() => void handleOverwriteBackup(item)}>
+                    Overwrite Backup
+                  </Button>
+                )}
+                {item.kind === "tracked" && editorData?.link_mode === "edit" &&
+                  editorData?.edit_channel_id === item.source.channelId &&
+                  editorData?.edit_message_id === item.source.messageId &&
+                  (() => {
+                    try {
+                      return Boolean(item.source.rawPayload) &&
+                        JSON.stringify(getEditorPayload()) !== JSON.stringify(JSON.parse(item.source.rawPayload));
+                    } catch {
+                      return false;
+                    }
+                  })() && (
+                    <Button size="sm" variant="primary" onClick={() => void handleOverwriteTrackedMessage(item)}>
+                      Edit Bot Message
+                    </Button>
+                  )}
                 {item.kind === "template" && (
                   <Button size="sm" variant="ghost" onClick={() => handleLoad(item.id)}>
                     Load
