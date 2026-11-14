@@ -91,6 +91,9 @@ let exploitsCache: { data: WeaoExploitRecord[]; fetchedAt: number } | null = nul
 let inFlightExploitsPromise: Promise<WeaoExploitRecord[]> | null = null;
 const suncCache = new Map<string, { data: WeaoSuncData; fetchedAt: number }>();
 const inFlightSuncPromises = new Map<string, Promise<WeaoSuncData | null>>();
+const CHANGELOG_CACHE_TTL_MS = 15_000;
+const changelogCache = new Map<string, { data: unknown[]; fetchedAt: number }>();
+const inFlightChangelogs = new Map<string, Promise<unknown[]>>();
 
 let rateLimitedUntilMs = 0;
 
@@ -270,6 +273,58 @@ export const getExploitSuncDetails = async (
   return promise;
 };
 
+export const getExploitChangelogs = async (exploitName: string): Promise<unknown[]> => {
+  const key = exploitName.trim().toLowerCase();
+  if (!key) return [];
+  const cached = changelogCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < CHANGELOG_CACHE_TTL_MS) return cached.data;
+  const existing = inFlightChangelogs.get(key);
+  if (existing) return existing;
+
+  const request = (async () => {
+    try {
+      const response = await fetchWeaoJson<{
+        changelogs?: unknown[];
+      }>(`/api/status/exploits/changelogs/${encodeURIComponent(exploitName.trim())}`);
+      const entries = Array.isArray(response?.changelogs) ? response.changelogs : [];
+      changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
+      return entries;
+    } catch (error) {
+      log.warn(`Failed to fetch WEAO changelogs for ${exploitName}: ${error instanceof Error ? error.message : String(error)}`);
+      return cached?.data ?? [];
+    } finally {
+      inFlightChangelogs.delete(key);
+    }
+  })();
+  inFlightChangelogs.set(key, request);
+  return request;
+};
+
+const formatChangelogEntry = (entry: unknown): string => {
+  if (typeof entry === "string") return entry.trim();
+  if (!entry || typeof entry !== "object") return String(entry ?? "");
+  const record = entry as Record<string, unknown>;
+  const title = [record.title, record.name, record.version].find((value) => typeof value === "string" && value.trim());
+  const description = [record.description, record.message, record.content, record.changelog, record.text].find((value) => typeof value === "string" && value.trim());
+  const date = [record.date, record.createdAt, record.timestamp, record.updatedAt].find((value) => typeof value === "string" || typeof value === "number");
+  const heading = typeof title === "string" ? `**${title.trim()}**` : "";
+  const body = typeof description === "string" ? description.trim() : "";
+  const stamp = date !== undefined ? String(date) : "";
+  return [heading, body, stamp ? `(${stamp})` : ""].filter(Boolean).join(" — ") || JSON.stringify(entry);
+};
+
+export const formatExploitChangelogs = (entries: unknown[], selector = ""): string => {
+  let selected = entries;
+  const match = selector.match(/^changelogs(?:\[(\d+)(?::(\d+))?\])?$/i);
+  if (match?.[1] !== undefined) {
+    const start = Number(match[1]);
+    if (match[2] !== undefined) selected = entries.slice(start, Number(match[2]));
+    else selected = entries.slice(start, start + 1);
+  }
+  if (!selected.length) return "No changelog entries found.";
+  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n");
+};
+
 export const formatExploitField = (
   exploit: WeaoExploitRecord,
   field: string,
@@ -416,6 +471,7 @@ export const interpolateWeaoPlaceholders = async (
     /suncPassed|suncFailed|suncTime|\.sunc\}|:sunc\}|\{sunc\}/i.test(serialized);
 
   const suncMap = new Map<string, WeaoSuncData | null>();
+  const changelogMap = new Map<string, unknown[]>();
   if (primaryExploit && needsDetailedSunc) {
     suncMap.set(
       primaryExploit.title.toLowerCase(),
@@ -432,6 +488,9 @@ export const interpolateWeaoPlaceholders = async (
     if (!scoped) continue;
 
     const keyLower = scoped.targetName.toLowerCase();
+    if (/^changelogs(?:\\[|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
+      changelogMap.set(keyLower, await getExploitChangelogs(scoped.targetName));
+    }
     if (suncMap.has(keyLower)) continue;
     const found =
       allExploits.find((e) => e.title.toLowerCase() === keyLower) ??
@@ -453,6 +512,12 @@ export const interpolateWeaoPlaceholders = async (
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
           );
         if (!target) return fullMatch;
+        if (/^changelogs(?:\\[|$)/i.test(scoped.fieldName)) {
+          return formatExploitChangelogs(
+            changelogMap.get(target.title.toLowerCase()) ?? [],
+            scoped.fieldName,
+          );
+        }
         return formatExploitField(
           target,
           scoped.fieldName,
