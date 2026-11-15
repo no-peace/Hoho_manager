@@ -50,13 +50,17 @@ router.get("/discord/login", (_req, res) => {
   }
 
   const state = crypto.randomBytes(16).toString("hex");
-  res.cookie("oauth_state", state, {
+  const codeVerifier = crypto.randomBytes(32).toString("base64url");
+  const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+  const oauthCookieOptions = {
     httpOnly: true,
     secure: env.isProd,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: 10 * 60 * 1000,
     path: "/",
-  });
+  };
+  res.cookie("oauth_state", state, oauthCookieOptions);
+  res.cookie("oauth_pkce_verifier", codeVerifier, oauthCookieOptions);
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -64,6 +68,8 @@ router.get("/discord/login", (_req, res) => {
     redirect_uri: env.discord.redirectUri,
     scope: "identify guilds",
     state,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
     prompt: "consent",
   });
 
@@ -77,26 +83,30 @@ router.get(
     const { code, state, error } = req.query;
     const clientBase = env.clientOrigins[0] || "http://localhost:5173";
 
-    if (error) {
-      log.warn(`OAuth authorization was not completed by Discord: ${String(error)}`);
-      return res.redirect(`${clientBase}/?error=oauth_denied`);
-    }
-
-    if (!code || typeof code !== "string") {
-      throw ApiError.badRequest("Authorization code is required");
-    }
-
     const cookies = parseCookies(req.headers.cookie);
     const cookieState = cookies.oauth_state;
+    const codeVerifier = cookies.oauth_pkce_verifier;
     const stateMatches =
       typeof state === "string" &&
       typeof cookieState === "string" &&
       Buffer.byteLength(state) === Buffer.byteLength(cookieState) &&
       crypto.timingSafeEqual(Buffer.from(state), Buffer.from(cookieState));
+    const verifierIsValid =
+      typeof codeVerifier === "string" && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier);
     res.clearCookie("oauth_state", { path: "/" });
-    if ((env.isProd || cookieState !== undefined) && !stateMatches) {
-      log.warn("OAuth state parameter mismatch or missing");
+    res.clearCookie("oauth_pkce_verifier", { path: "/" });
+    if (!stateMatches || !verifierIsValid) {
+      log.warn("OAuth state or PKCE verifier was missing or invalid");
       return res.redirect(`${clientBase}/?error=invalid_oauth_state`);
+    }
+
+    if (error) {
+      log.warn("OAuth authorization was not completed by Discord");
+      return res.redirect(`${clientBase}/?error=oauth_denied`);
+    }
+
+    if (!code || typeof code !== "string") {
+      throw ApiError.badRequest("Authorization code is required");
     }
 
     const clientId = env.discord.clientId || env.discord.applicationId || "";
@@ -117,6 +127,7 @@ router.get(
           grant_type: "authorization_code",
           code,
           redirect_uri: env.discord.redirectUri,
+          code_verifier: codeVerifier,
         }),
         signal: AbortSignal.timeout(10_000),
       });
