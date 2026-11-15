@@ -146,9 +146,9 @@ export const validateEnv = (): string[] => {
   } catch {
     warnings.push("DISCORD_REDIRECT_URI is not a valid absolute URL.");
   }
-  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key")) {
+  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key" || env.adminApiKey.length < 32)) {
     warnings.push(
-      "ADMIN_API_KEY is missing or still uses the development default. Production startup must be blocked until a unique secret is configured.",
+      "ADMIN_API_KEY is missing, too short, or still uses the development default. Production startup requires a unique secret of at least 32 characters.",
     );
   }
   if (env.isProd && !process.env.SESSION_SECRET?.trim()) {
