@@ -99,8 +99,8 @@ export const env: Env = Object.freeze({
     clientSecret: str("DISCORD_CLIENT_SECRET"),
     redirectUri: str("DISCORD_REDIRECT_URI", "http://localhost:3001/api/auth/discord/callback")!,
   }),
-  adminApiKey: str("ADMIN_API_KEY", "dev-admin-key") ?? "dev-admin-key",
-  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", "dev-session-secret")) ?? "dev-session-secret",
+  adminApiKey: str("ADMIN_API_KEY", isProd ? "" : "dev-admin-key") ?? "",
+  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", isProd ? "" : "dev-session-secret")) ?? "",
   encryptionKey: str("ENCRYPTION_KEY"),
   rateLimit: Object.freeze({
     windowMs: int("RATE_LIMIT_WINDOW_MS", 60_000),
@@ -146,9 +146,14 @@ export const validateEnv = (): string[] => {
   } catch {
     warnings.push("DISCORD_REDIRECT_URI is not a valid absolute URL.");
   }
-  if (env.isProd && env.adminApiKey === "dev-admin-key") {
+  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key")) {
     warnings.push(
-      "ADMIN_API_KEY is still the development default. Change it before deploying.",
+      "ADMIN_API_KEY is missing or still uses the development default. Production startup must be blocked until a unique secret is configured.",
+    );
+  }
+  if (env.isProd && !process.env.SESSION_SECRET?.trim()) {
+    warnings.push(
+      "SESSION_SECRET is not set. Sessions currently fall back to ADMIN_API_KEY; configure a separate high-entropy secret for key separation.",
     );
   }
   if (env.isProd && !env.encryptionKey) {
