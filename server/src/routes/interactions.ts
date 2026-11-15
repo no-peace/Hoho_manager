@@ -86,11 +86,11 @@ const isRelayable = (value: unknown): value is DiscordInteraction => {
       : undefined;
 
   return (
-    typeof record.id === "string" && /^\\d{17,20}$/.test(record.id) &&
+    typeof record.id === "string" && /^\d{17,20}$/.test(record.id) &&
     typeof record.token === "string" &&
     record.token.length > 0 && record.token.length <= 512 &&
     /^[A-Za-z0-9._-]+$/.test(record.token) &&
-    typeof record.application_id === "string" && /^\\d{17,20}$/.test(record.application_id) &&
+    typeof record.application_id === "string" && /^\d{17,20}$/.test(record.application_id) &&
     (!env.discord.applicationId || record.application_id === env.discord.applicationId) &&
     (record.type === InteractionType.MessageComponent || record.type === InteractionType.ModalSubmit) &&
     typeof customId === "string" && customId.length > 0 && customId.length <= 100
