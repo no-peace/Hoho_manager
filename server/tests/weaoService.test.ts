@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { formatExploitChangelogs } from "../src/services/weaoService.js";
+import { describe, expect, it, vi } from "vitest";
+import { formatExploitChangelogs, getExploitChangelogs, getExploitChangelogComparison, interpolateWeaoPlaceholders } from "../src/services/weaoService.js";
 
 describe("WEAO changelog formatting", () => {
   const entries = [
@@ -62,5 +62,55 @@ describe("WEAO changelog formatting", () => {
     expect(formatExploitChangelogs([], "changelogs[0:3]")).toBe(
       "No changelog entries found.",
     );
+  });
+  it("resolves changelog variables by WEAO tracker ID", async () => {
+    const fetchMock = vi.fn(async (input: any) => {
+      const url = String(input);
+      if (url.includes("/api/status/exploits/changelogs/123456789")) {
+        return new Response(JSON.stringify({ changelogs: [{ title: "Tracked release", description: "Tracker ID lookup works" }] }), {
+          status: 200, headers: { "content-type": "application/json" },
+        });
+      }
+      if (url.includes("/api/status/exploits")) {
+        return new Response("[]", { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response("Not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const result = await interpolateWeaoPlaceholders({ content: "{exploit.123456789.changelogs}" } as any);
+      expect((result.payload as any).content).toBe("• **Tracked release** — Tracker ID lookup works");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("compares each successful changelog fetch with the immediately previous snapshot", async () => {
+    const snapshots = [
+      [{ title: "Old entry" }, { title: "Retained entry" }],
+      [{ title: "Retained entry" }, { title: "New entry" }],
+    ];
+    let requestIndex = 0;
+    const fetchMock = vi.fn(async () => {
+      const changelogs = snapshots[Math.min(requestIndex++, snapshots.length - 1)];
+      return new Response(JSON.stringify({ changelogs }), {
+        status: 200, headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-16T00:00:00.000Z"));
+    try {
+      await getExploitChangelogs("Comparison Regression");
+      vi.setSystemTime(Date.now() + 16_000);
+      await getExploitChangelogs("Comparison Regression");
+      expect(getExploitChangelogComparison("Comparison Regression")).toEqual({
+        added: [{ title: "New entry" }],
+        removed: [{ title: "Old entry" }],
+      });
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
   });
 });
