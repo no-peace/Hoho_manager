@@ -71,9 +71,10 @@ const assertStaffGuildAllowed = async (
 
 router.post(
   "/",
-  multipartParser,
+  // Authenticate and rate-limit before buffering multipart uploads.
   attachUser,
   sendLimiter,
+  multipartParser,
   requireStaffPermission((req) =>
     typeof req.body?.editMessageId === "string" &&
       req.body.editMessageId.trim() !== ""
