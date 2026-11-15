@@ -1,4 +1,6 @@
+import crypto from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { env } from "../src/config/env.js";
 
 const revocationMocks = vi.hoisted(() => ({
   getUserRevokedAt: vi.fn<() => Promise<number>>(),
@@ -53,6 +55,24 @@ describe("database-backed auth session revocation", () => {
     revocationMocks.getGlobalRevokedAt.mockResolvedValue(Date.now() + 1);
 
     await expect(verifySessionToken(signedToken)).resolves.toBeNull();
+  });
+
+  const signClaims = (claims: Record<string, unknown>): string => {
+    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+    const secret = env.sessionSecret || env.adminApiKey || "dev-only-session-secret";
+    const signature = crypto.createHmac("sha256", secret).update(`${header}.${payload}`).digest("base64url");
+    return `${header}.${payload}.${signature}`;
+  };
+
+  it("rejects signed session claims without a valid expiry window", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const base = { id: "123456789012345678", username: "Session Test", role: "editor", iat: now };
+
+    await expect(verifySessionToken(signClaims(base))).resolves.toBeNull();
+    await expect(verifySessionToken(signClaims({ ...base, exp: now - 1 }))).resolves.toBeNull();
+    await expect(verifySessionToken(signClaims({ ...base, exp: now + 86_401 }))).resolves.toBeNull();
+    await expect(verifySessionToken(signClaims({ ...base, id: "not-a-snowflake", exp: now + 60 }))).resolves.toBeNull();
   });
 
   it("persists user and global revocation requests", async () => {
