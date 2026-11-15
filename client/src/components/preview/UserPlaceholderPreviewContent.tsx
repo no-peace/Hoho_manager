@@ -34,6 +34,9 @@ const UserPlaceholderPreviewContext =
 const collectUserIds = (value: unknown, ids: Set<string>): void => {
   if (typeof value === "string") {
     for (const match of value.matchAll(USER_PLACEHOLDER_REGEX)) {
+      const field = match[2]?.toLowerCase();
+      // Removed legacy aliases do not trigger a Discord lookup by themselves.
+      if (field === "avatarurl" || field === "icon" || field === "pfp") continue;
       if (match[1]) ids.add(match[1]);
     }
     return;
@@ -74,6 +77,7 @@ const getFieldValue = (
       return user.profileUrl;
 
     case "avatar":
+    case "avatarurl":
       return user.avatarUrl;
 
     case "mention":
@@ -115,7 +119,7 @@ export const UserPlaceholderPreviewProvider = ({
         // Invalid/transient editor state: leave placeholders unresolved.
       }
     }
-    if (currentUser?.id && /\\{user\\.(?:name|displayname)\\}/i.test(sourceSnapshot)) {
+    if (currentUser?.id && /\{user\.(?:name|displayname)\}/i.test(sourceSnapshot)) {
       ids.add(currentUser.id);
     }
     return [...ids];
@@ -196,7 +200,7 @@ export const UserPlaceholderPreviewProvider = ({
             return getFieldValue(user, field) ?? original;
           },
         )
-        .replace(/\\{user\\.(name|displayname)\\}/gi, (original, field: string) => {
+        .replace(/\{user\.(name|displayname)\}/gi, (original, field: string) => {
           const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
           return field.toLowerCase() === "name"
