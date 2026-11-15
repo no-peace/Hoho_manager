@@ -105,6 +105,44 @@ export const createApp = (): Express => {
     }),
   );
 
+  // Cookie-authenticated state changes must originate from an explicitly trusted
+  // frontend origin. Machine-to-machine requests without browser session cookies
+  // remain supported when they do not send an Origin header.
+  if (env.isProd) {
+    app.use((req, res, next) => {
+      if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+        return next();
+      }
+
+      let requestOrigin = req.get("origin");
+      if (!requestOrigin) {
+        const referer = req.get("referer");
+        if (referer) {
+          try {
+            requestOrigin = new URL(referer).origin;
+          } catch {
+            requestOrigin = undefined;
+          }
+        }
+      }
+
+      if (requestOrigin && env.clientOrigins.includes(requestOrigin)) return next();
+
+      const hasSessionCookie = (req.headers.cookie ?? "")
+        .split(";")
+        .some((cookie) => cookie.trim().startsWith("dmb_session="));
+
+      if (requestOrigin || hasSessionCookie) {
+        return res.status(403).json({
+          error: "Request origin is not allowed",
+          code: "origin_not_allowed",
+        });
+      }
+
+      return next();
+    });
+  }
+
   // Discord-signed interaction delivery remains exempt from the generic limiter.
   // The gateway relay is machine-authenticated, so rate-limit it separately.
   app.use("/api/interactions/relay", apiLimiter);
