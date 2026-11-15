@@ -291,17 +291,14 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
         changelogs?: unknown[];
       }>(`/api/status/exploits/changelogs/${encodeURIComponent(exploitName.trim())}`);
       const entries = Array.isArray(response?.changelogs) ? response.changelogs : [];
-      const baseline = changelogBaselines.get(key);
+      const previous = changelogBaselines.get(key);
       const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
-      if (!baseline) {
-        changelogBaselines.set(key, entries);
-        changelogComparisons.set(key, { added: [], removed: [] });
-      } else {
-        changelogComparisons.set(key, {
-          added: entries.filter((entry) => !baseline.some((old) => same(old, entry))),
-          removed: baseline.filter((old) => !entries.some((current) => same(current, old))),
-        });
-      }
+      changelogComparisons.set(key, previous ? {
+        added: entries.filter((entry) => !previous.some((old) => same(old, entry))),
+        removed: previous.filter((old) => !entries.some((current) => same(current, old))),
+      } : { added: [], removed: [] });
+      // Advance the baseline after each successful fetch so comparisons are incremental.
+      changelogBaselines.set(key, entries);
       changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
       return entries;
     } catch (error) {
@@ -538,14 +535,16 @@ export const interpolateWeaoPlaceholders = async (
           allExploits.find((e) =>
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
           );
-        if (!target) return fullMatch;
-        if (/^changelogs(?:\[|\.|$)/i.test(scoped.fieldName)) {
+        const isChangelogField = /^changelogs(?:\[|\.|$)/i.test(scoped.fieldName);
+        const isTrackerId = /^[A-Za-z0-9_-]{1,128}$/.test(scoped.targetName);
+        if (isChangelogField && (target || isTrackerId)) {
           return formatExploitChangelogs(
             changelogMap.get(scoped.targetName.toLowerCase()) ?? [],
             scoped.fieldName,
             changelogComparisons.get(scoped.targetName.toLowerCase()),
           );
         }
+        if (!target) return fullMatch;
         return formatExploitField(
           target,
           scoped.fieldName,
