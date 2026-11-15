@@ -171,6 +171,7 @@ describe("authorService", () => {
             "777777777777777777",
         );
 
+        expect(getGuildMember).toHaveBeenCalledWith("777777777777777777", USER_A, "test-bot-token");
         expect((result.payload as any).content).toBe("LEGACY");
     });
 
