@@ -45,6 +45,15 @@ const getSecret = (): string => {
   return secret || "dev-only-session-secret";
 };
 
+/** Accept sessions signed with the previous admin-key fallback during key separation. */
+const getVerificationSecrets = (): string[] => {
+  const secrets = [...new Set([env.sessionSecret, env.adminApiKey].filter(Boolean))];
+  if (secrets.length === 0 && env.isProd) {
+    throw new Error("CRITICAL: SESSION_SECRET or ADMIN_API_KEY must be configured in production");
+  }
+  return secrets.length > 0 ? secrets : ["dev-only-session-secret"];
+};
+
 export const createSessionToken = (user: SessionUser): string => {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
   const nowMs = Date.now();
@@ -67,10 +76,13 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const [h, p, s] = parts;
-    const expected = crypto.createHmac("sha256", getSecret()).update(`${h}.${p}`).digest("base64url");
     const bufA = Buffer.from(s);
-    const bufB = Buffer.from(expected);
-    if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) return null;
+    const validSignature = getVerificationSecrets().some((secret) => {
+      const expected = crypto.createHmac("sha256", secret).update(`${h}.${p}`).digest("base64url");
+      const bufB = Buffer.from(expected);
+      return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+    });
+    if (!validSignature) return null;
 
     const data: unknown = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
     if (data === null || typeof data !== "object" || Array.isArray(data)) return null;
