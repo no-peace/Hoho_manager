@@ -6,6 +6,8 @@ import { env } from "../src/config/env.js";
 import { db, initializeDatabase } from "../src/config/database.js";
 import * as discordService from "../src/services/discordService.js";
 import { staffRepository } from "../src/repositories/staffRepository.js";
+import { userRepository } from "../src/repositories/userRepository.js";
+import { templateRepository } from "../src/repositories/templateRepository.js";
 
 // Mock outbound discord service calls with importOriginal
 vi.mock("../src/services/discordService.js", async (importOriginal) => {
@@ -485,18 +487,28 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
 
   // 11. /api/weao
   describe("GET /api/weao/exploits", () => {
-    it("rejects anonymous access to template-backed exploit metadata", async () => {
-      const res = await fetch(`${baseUrl}/api/weao/exploits?q=delta`);
-      expect(res.status).toBe(401);
-    });
+    it("does not expose another user’s private template as an exploit backup", async () => {
+      const owner = await userRepository.upsert({
+        discordId: "323456789012345678",
+        username: "private-template-owner",
+        role: "editor",
+      });
+      expect(owner).toBeDefined();
+      await templateRepository.create({
+        userId: owner!.id,
+        name: "Delta",
+        data: { content: "PRIVATE TEMPLATE CONTENT" },
+        isPublic: 0,
+      });
 
-    it("returns only authenticated callers visible exploit backups", async () => {
       const res = await fetch(`${baseUrl}/api/weao/exploits?q=delta`, {
         headers: { "x-admin-key": env.adminApiKey },
       });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(Array.isArray(json.exploits)).toBe(true);
+      expect(json.exploits.some((exploit: { title: string }) => exploit.title === "Delta")).toBe(false);
+      expect(JSON.stringify(json)).not.toContain("PRIVATE TEMPLATE CONTENT");
     });
   });
 });
