@@ -232,7 +232,7 @@ export const requireStaffPermission = (
       }
     }
 
-    if (req.method !== "GET") {
+    if (req.method !== "GET" && action !== "weao") {
       const granularCooldowns = parseNumberRecord(record.granular_cooldowns);
       const effectiveCooldown =
         typeof granularCooldowns[action] === "number"
