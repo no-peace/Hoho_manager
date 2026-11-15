@@ -1,4 +1,6 @@
+import crypto from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { env } from "../src/config/env.js";
 import { decrypt, encrypt } from "../src/utils/crypto.js";
 
 const splitPayload = (payload: string): [string, string, string] => {
@@ -10,6 +12,21 @@ const splitPayload = (payload: string): [string, string, string] => {
 };
 
 describe("AES-256-GCM secret encryption", () => {
+  it("decrypts values encrypted with the legacy admin-key-derived key", () => {
+    const plaintext = "legacy-discord-bot-token";
+    const key = crypto.createHash("sha256").update(env.adminApiKey).digest();
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv, { authTagLength: 16 });
+    const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+    const payload = [
+      iv.toString("base64url"),
+      cipher.getAuthTag().toString("base64url"),
+      ciphertext.toString("base64url"),
+    ].join(".");
+
+    expect(decrypt(payload)).toBe(plaintext);
+  });
+
   it("round-trips encrypted values", () => {
     const plaintext = "discord-bot-token-test-value";
     expect(decrypt(encrypt(plaintext))).toBe(plaintext);
