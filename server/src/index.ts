@@ -13,6 +13,10 @@ const start = async (): Promise<void> => {
 
   for (const warning of validateEnv()) log.warn(warning);
 
+  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key")) {
+    throw new Error("CRITICAL: Set a unique ADMIN_API_KEY before starting in production.");
+  }
+
   await initializeDatabase();
   log.info("Database ready");
 
