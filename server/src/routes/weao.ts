@@ -22,6 +22,7 @@ import { customExecutorRepository } from "../repositories/customExecutorReposito
 import { resolveAuthorPlaceholders } from "../services/authorService.js";
 import { logger } from "../utils/logger.js";
 import { attachUser, requireUser } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 
 const log = logger.child("weaoRoute");
 const router = Router();
@@ -52,6 +53,7 @@ router.get(
 
 router.get(
   "/exploits",
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res) => {
     const userId = requireUser(req).id;
     const q = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
@@ -131,6 +133,7 @@ router.get(
 
 router.post(
   "/resolve-exploit",
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res) => {
     const userId = requireUser(req).id;
     const exploitQuery =
