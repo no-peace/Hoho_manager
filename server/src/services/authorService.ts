@@ -113,27 +113,11 @@ const getUserField = (
 const snowflakeToUnix = (id: string): number =>
   Math.floor(Number((BigInt(id) >> 22n) + 1420070400000n) / 1000);
 
-const getClanTag = (user: DiscordMemberSummary, member?: any): string => {
+const getClanTag = (user: DiscordMemberSummary): string => {
   const primaryGuild = user.primary_guild;
-  if (
-    primaryGuild?.identity_enabled === true &&
-    typeof primaryGuild.tag === "string" &&
-    primaryGuild.tag.trim()
-  ) {
-    return primaryGuild.tag.trim();
-  }
-
-  // Older servers often put a short clan tag directly in a nickname.
-  // This fallback uses only text already visible on the Discord profile/member.
-  const candidates = [member?.nick, user.nickname, user.global_name, user.username];
-  console.log("DEBUG_CLANTAG", { memberNick: member?.nick, userNickname: user.nickname, username: user.username });
-  for (const candidate of candidates) {
-    if (typeof candidate !== "string") continue;
-    const match = candidate.match(/\[([A-Za-z0-9_-]{1,16})\]|\(([A-Za-z0-9_-]{1,16})\)|\{([A-Za-z0-9_-]{1,16})\}/);
-    const tag = match?.slice(1).find(Boolean)?.trim();
-    if (tag) return tag;
-  }
-  return "";
+  if (primaryGuild?.identity_enabled !== true) return "";
+  const tag = primaryGuild.tag;
+  return typeof tag === "string" && tag.trim() ? tag.trim() : "";
 };
 
 /**
@@ -249,7 +233,7 @@ export const resolveAuthorPlaceholders = async (
           ? member.roles.map((roleId: string) => `<@&${roleId}>`).join(" ")
           : member ? "None" : fullMatch;
       }
-      if (normalized === "clantag") return getClanTag(user, member) || fullMatch;
+      if (normalized === "clantag") return getClanTag(user) || fullMatch;
       if (normalized === "joined" || normalized === "joined.date") {
         const joinedAt = typeof member?.joined_at === "string" ? Math.floor(Date.parse(member.joined_at) / 1000) : NaN;
         if (!Number.isFinite(joinedAt)) return fullMatch;
