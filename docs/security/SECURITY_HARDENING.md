@@ -95,6 +95,7 @@ CORS controls browser response access; by itself it does not stop a cross-site f
 - Template service ownership checks are enforced server-side.
 - SQL repository calls use parameterized values in the reviewed paths.
 - Dependabot is already configured for weekly npm and GitHub Actions updates.
+- The existing security workflow runs Gitleaks, Semgrep security rules, and `npm audit --audit-level=high`; its push trigger now covers all branches.
 
 ## Production configuration required
 
