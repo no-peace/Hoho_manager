@@ -28,10 +28,36 @@ export const createApp = (): Express => {
   if (env.isProd) app.set("trust proxy", 1);
 
   if (env.isProd) {
+    const allowedHttpsHosts = new Set(
+      [...env.clientOrigins, env.discord.redirectUri].flatMap((value) => {
+        try {
+          return [new URL(value).host.toLowerCase()];
+        } catch {
+          return [];
+        }
+      }),
+    );
+
     app.use((req, res, next) => {
       const forwardedProto = req.headers["x-forwarded-proto"];
-      if (forwardedProto && forwardedProto !== "https") {
-        return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+      const externalProto =
+        typeof forwardedProto === "string"
+          ? forwardedProto.split(",")[0]?.trim().toLowerCase()
+          : undefined;
+
+      if (externalProto && externalProto !== "https") {
+        let requestedHost: string;
+        try {
+          requestedHost = new URL(`https://${req.get("host") ?? ""}`).host.toLowerCase();
+        } catch {
+          return res.status(400).json({ error: "Invalid host header" });
+        }
+
+        if (!allowedHttpsHosts.has(requestedHost)) {
+          return res.status(400).json({ error: "Unrecognized host" });
+        }
+
+        return res.redirect(301, `https://${requestedHost}${req.originalUrl}`);
       }
       next();
     });
@@ -48,7 +74,7 @@ export const createApp = (): Express => {
             useDefaults: true,
             directives: {
               defaultSrc: ["'self'"],
-              scriptSrc: ["'self'", "'unsafe-inline'"],
+              scriptSrc: ["'self'"],
               styleSrc: ["'self'", "'unsafe-inline'"],
               imgSrc: ["'self'", "data:", "blob:", "https:"],
               mediaSrc: ["'self'", "data:", "blob:", "https:"],
