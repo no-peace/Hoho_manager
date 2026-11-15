@@ -85,7 +85,7 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
       (claims.exp as number) - (claims.iat as number) > SESSION_TTL_SECONDS
     ) return null;
     if (
-      typeof claims.id !== "string" || !/^\\d{17,20}$/.test(claims.id) ||
+      typeof claims.id !== "string" || !/^\d{17,20}$/.test(claims.id) ||
       typeof claims.username !== "string" || !claims.username.trim()
     ) return null;
 
@@ -94,7 +94,11 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
       typeof claims.iatMs === "number" && Number.isSafeInteger(claims.iatMs)
         ? claims.iatMs
         : (claims.iat as number) * 1000;
-    if (tokenIssuedMs > Date.now() + 60_000 || tokenIssuedMs < ((claims.iat as number) * 1000) - 1000) {
+    if (
+      tokenIssuedMs > Date.now() + 60_000 ||
+      tokenIssuedMs < (claims.iat as number) * 1000 ||
+      tokenIssuedMs > ((claims.iat as number) * 1000) + 999
+    ) {
       return null;
     }
 
