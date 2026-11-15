@@ -99,8 +99,8 @@ export const env: Env = Object.freeze({
     clientSecret: str("DISCORD_CLIENT_SECRET"),
     redirectUri: str("DISCORD_REDIRECT_URI", "http://localhost:3001/api/auth/discord/callback")!,
   }),
-  adminApiKey: str("ADMIN_API_KEY", "dev-admin-key") ?? "dev-admin-key",
-  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", "dev-session-secret")) ?? "dev-session-secret",
+  adminApiKey: str("ADMIN_API_KEY", isProd ? "" : "dev-admin-key") ?? "",
+  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", isProd ? "" : "dev-session-secret")) ?? "",
   encryptionKey: str("ENCRYPTION_KEY"),
   rateLimit: Object.freeze({
     windowMs: int("RATE_LIMIT_WINDOW_MS", 60_000),
@@ -146,15 +146,19 @@ export const validateEnv = (): string[] => {
   } catch {
     warnings.push("DISCORD_REDIRECT_URI is not a valid absolute URL.");
   }
-  if (env.isProd && env.adminApiKey === "dev-admin-key") {
+  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key" || env.adminApiKey.length < 32)) {
     warnings.push(
-      "ADMIN_API_KEY is still the development default. Change it before deploying.",
+      "ADMIN_API_KEY is missing, too short, or still uses the development default. Production startup requires a unique secret of at least 32 characters.",
     );
   }
-  if (env.isProd && !env.encryptionKey) {
+  if (env.isProd && !process.env.SESSION_SECRET?.trim()) {
     warnings.push(
-      "ENCRYPTION_KEY is not set. Stored bot tokens are encrypted with a key derived " +
-        "from ADMIN_API_KEY; set a dedicated key before deploying.",
+      "SESSION_SECRET is not set. Sessions currently fall back to ADMIN_API_KEY; configure a separate high-entropy secret for key separation.",
+    );
+  }
+  if (env.isProd && (!env.encryptionKey || env.encryptionKey.length < 32)) {
+    warnings.push(
+      "ENCRYPTION_KEY is missing or too short. Production startup requires a dedicated key of at least 32 characters.",
     );
   }
 

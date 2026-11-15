@@ -20,6 +20,13 @@ export const requireUser = (req: Request): UserRecord => {
   return req.user;
 };
 
+/** Reject anonymous requests before routes buffer or process expensive request bodies. */
+export const requireUserOrAdminKey: RequestHandler = (req, _res, next) => {
+  const adminKey = req.get("x-admin-key");
+  if (req.user || (adminKey && safeEqual(adminKey, env.adminApiKey))) return next();
+  return next(ApiError.unauthorized());
+};
+
 /**
  * Resolve the acting user onto `req.user`.
  *

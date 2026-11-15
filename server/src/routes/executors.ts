@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { requireHeadAdmin } from "../middleware/auth.js";
+import { attachUser, requireHeadAdmin } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -9,8 +10,11 @@ const router = Router();
 const EXECUTOR_ID_REGEX = /^[a-z0-9_-]{2,64}$/;
 const DISCORD_SNOWFLAKE_REGEX = /^\d{17,20}$/;
 
+router.use(attachUser);
+
 router.get(
   "/",
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res, next) => {
     const wantsAll = req.query.all === "true";
     if (wantsAll) {

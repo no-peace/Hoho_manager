@@ -28,10 +28,36 @@ export const createApp = (): Express => {
   if (env.isProd) app.set("trust proxy", 1);
 
   if (env.isProd) {
+    const allowedHttpsHosts = new Set(
+      [...env.clientOrigins, env.discord.redirectUri].flatMap((value) => {
+        try {
+          return [new URL(value).host.toLowerCase()];
+        } catch {
+          return [];
+        }
+      }),
+    );
+
     app.use((req, res, next) => {
       const forwardedProto = req.headers["x-forwarded-proto"];
-      if (forwardedProto && forwardedProto !== "https") {
-        return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+      const externalProto =
+        typeof forwardedProto === "string"
+          ? forwardedProto.split(",")[0]?.trim().toLowerCase()
+          : undefined;
+
+      if (externalProto && externalProto !== "https") {
+        let requestedHost: string;
+        try {
+          requestedHost = new URL(`https://${req.get("host") ?? ""}`).host.toLowerCase();
+        } catch {
+          return res.status(400).json({ error: "Invalid host header" });
+        }
+
+        if (!allowedHttpsHosts.has(requestedHost)) {
+          return res.status(400).json({ error: "Unrecognized host" });
+        }
+
+        return res.redirect(301, `https://${requestedHost}${req.originalUrl}`);
       }
       next();
     });
@@ -48,7 +74,7 @@ export const createApp = (): Express => {
             useDefaults: true,
             directives: {
               defaultSrc: ["'self'"],
-              scriptSrc: ["'self'", "'unsafe-inline'"],
+              scriptSrc: ["'self'"],
               styleSrc: ["'self'", "'unsafe-inline'"],
               imgSrc: ["'self'", "data:", "blob:", "https:"],
               mediaSrc: ["'self'", "data:", "blob:", "https:"],
@@ -79,7 +105,47 @@ export const createApp = (): Express => {
     }),
   );
 
-  // 2. Interactions (raw body, no rate limit).
+  // Cookie-authenticated state changes must originate from an explicitly trusted
+  // frontend origin. Machine-to-machine requests without browser session cookies
+  // remain supported when they do not send an Origin header.
+  if (env.isProd) {
+    app.use((req, res, next) => {
+      if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+        return next();
+      }
+
+      let requestOrigin = req.get("origin");
+      if (!requestOrigin) {
+        const referer = req.get("referer");
+        if (referer) {
+          try {
+            requestOrigin = new URL(referer).origin;
+          } catch {
+            requestOrigin = undefined;
+          }
+        }
+      }
+
+      if (requestOrigin && env.clientOrigins.includes(requestOrigin)) return next();
+
+      const hasSessionCookie = (req.headers.cookie ?? "")
+        .split(";")
+        .some((cookie) => cookie.trim().startsWith("dmb_session="));
+
+      if (requestOrigin || hasSessionCookie) {
+        return res.status(403).json({
+          error: "Request origin is not allowed",
+          code: "origin_not_allowed",
+        });
+      }
+
+      return next();
+    });
+  }
+
+  // Discord-signed interaction delivery remains exempt from the generic limiter.
+  // The gateway relay is machine-authenticated, so rate-limit it separately.
+  app.use("/api/interactions/relay", apiLimiter);
   app.use("/api/interactions", interactionsRouter);
 
   // 3. Body parsers.

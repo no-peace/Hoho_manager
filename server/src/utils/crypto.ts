@@ -17,26 +17,28 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12; // 96-bit nonce, the GCM recommendation
 const AUTH_TAG_LENGTH = 16; // 128-bit authentication tag
 
-let cachedKey: Buffer | null = null;
+let cachedEncryptionKey: Buffer | null = null;
+let cachedDecryptionKeys: Buffer[] | null = null;
 
-const deriveKey = (): Buffer => {
-  const secret = env.encryptionKey ?? env.adminApiKey;
-  if (!env.encryptionKey) {
-    logger.warn(
-      "ENCRYPTION_KEY is not set  deriving one from ADMIN_API_KEY. " +
-        "Set ENCRYPTION_KEY before deploying; rotating it will invalidate stored tokens.",
-    );
-  }
+const deriveKey = (secret: string): Buffer =>
   // Always SHA-256 the material down to exactly 32 bytes.
-  return crypto.createHash("sha256").update(secret).digest();
-};
+  crypto.createHash("sha256").update(secret).digest();
 
-const getKey = (): Buffer => (cachedKey ??= deriveKey());
+const getEncryptionKey = (): Buffer =>
+  (cachedEncryptionKey ??= deriveKey(env.encryptionKey || env.adminApiKey));
+
+/** Keep the old admin-key-derived key as a read-only migration fallback. */
+const getDecryptionKeys = (): Buffer[] => {
+  if (cachedDecryptionKeys) return cachedDecryptionKeys;
+  const secrets = [...new Set([env.encryptionKey, env.adminApiKey].filter((value): value is string => Boolean(value)))];
+  cachedDecryptionKeys = secrets.map(deriveKey);
+  return cachedDecryptionKeys;
+};
 
 /** Encrypt a string. Output: `<iv>.<tag>.<ciphertext>`, all base64url. */
 export const encrypt = (plaintext: string): string => {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv, {
+  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), iv, {
     authTagLength: AUTH_TAG_LENGTH,
   });
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
@@ -58,18 +60,25 @@ export const decrypt = (payload: string): string | null => {
     const tag = Buffer.from(tagPart, "base64url");
     if (iv.length !== IV_LENGTH || tag.length !== AUTH_TAG_LENGTH) return null;
 
-    const decipher = crypto.createDecipheriv(
-      ALGORITHM,
-      getKey(),
-      iv,
-      { authTagLength: AUTH_TAG_LENGTH },
-    );
-    decipher.setAuthTag(tag);
-    const decrypted = Buffer.concat([
-      decipher.update(Buffer.from(dataPart, "base64url")),
-      decipher.final(),
-    ]);
-    return decrypted.toString("utf8");
+    for (const key of getDecryptionKeys()) {
+      try {
+        const decipher = crypto.createDecipheriv(
+          ALGORITHM,
+          key,
+          iv,
+          { authTagLength: AUTH_TAG_LENGTH },
+        );
+        decipher.setAuthTag(tag);
+        const decrypted = Buffer.concat([
+          decipher.update(Buffer.from(dataPart, "base64url")),
+          decipher.final(),
+        ]);
+        return decrypted.toString("utf8");
+      } catch {
+        // Try the next configured key during the admin-key -> dedicated-key migration.
+      }
+    }
+    throw new Error("No configured key could authenticate this encrypted value");
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.error(`Failed to decrypt a stored secret (wrong key?): ${reason}`);

@@ -21,17 +21,23 @@ import { actionRepository } from "../repositories/actionRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { resolveAuthorPlaceholders } from "../services/authorService.js";
 import { logger } from "../utils/logger.js";
+import { attachUser, requireUser } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 
 const log = logger.child("weaoRoute");
 const router = Router();
 
-/** List all saved templates across users so `/exploit` can match any saved exploit backup. */
-const listAllTemplateSummaries = async (): Promise<TemplateSummary[]> =>
+/** Only expose templates owned by the caller or explicitly marked public. */
+const listVisibleTemplateSummaries = async (userId: number): Promise<TemplateSummary[]> =>
   db.query<TemplateSummary>(
     `SELECT id, user_id, name, description, preview_image_url, is_public, created_at, updated_at
        FROM templates
+      WHERE is_public = 1 OR user_id = @userId
       ORDER BY updated_at DESC`,
+    { userId },
   );
+
+router.use(attachUser);
 
 
 router.get(
@@ -47,11 +53,13 @@ router.get(
 
 router.get(
   "/exploits",
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res) => {
+    const userId = requireUser(req).id;
     const q = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
 
     let exploits: WeaoExploitRecord[] = [];
-    let templates: TemplateSummary[] = [];
+    let templates: TemplateSummary[] = await listVisibleTemplateSummaries(userId);
     let customExecutors: any[] = [];
 
     try {
@@ -70,11 +78,10 @@ router.get(
       );
     }
 
-    try {
-      templates = await listAllTemplateSummaries();
-    } catch (err) {
-      log.warn("Failed to list templates from summaries:", err);
-    }
+    const visibleTemplateIds = new Set(templates.map((template) => template.id));
+    customExecutors = customExecutors.filter(
+      (executor) => !executor.template_id || visibleTemplateIds.has(executor.template_id),
+    );
 
     // Convert custom executors to exploit records
     const customRecords: any[] = customExecutors
@@ -126,7 +133,9 @@ router.get(
 
 router.post(
   "/resolve-exploit",
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res) => {
+    const userId = requireUser(req).id;
     const exploitQuery =
       typeof req.body?.exploit === "string" ? req.body.exploit.trim() : "";
     if (!exploitQuery) {
@@ -143,7 +152,13 @@ router.post(
 
       if (customExec.template_id) {
         const fullTemplate = await templateRepository.findById(customExec.template_id);
-        const rawDoc = fullTemplate?.data as any;
+        if (
+          !fullTemplate ||
+          (fullTemplate.user_id !== userId && !fullTemplate.is_public)
+        ) {
+          throw ApiError.notFound("Configured backup template not found");
+        }
+        const rawDoc = fullTemplate.data as any;
         basePayload =
           rawDoc?.messages?.[0]?.data?.data ??
           rawDoc?.messages?.[0]?.data ??
@@ -214,7 +229,7 @@ router.post(
       throw ApiError.notFound(`No exploit matching "${exploitQuery}" found`);
     }
 
-    const allTemplates = await listAllTemplateSummaries();
+    const allTemplates = await listVisibleTemplateSummaries(userId);
     const matchedSummary =
       allTemplates.find(
         (t: TemplateSummary) => t.name.trim().toLowerCase() === exploit.title.toLowerCase(),

@@ -37,6 +37,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+
       - name: Validate standalone Playwright audit syntax
         run: node --check docs/playwright/audit.mjs
 
