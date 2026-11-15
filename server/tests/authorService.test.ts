@@ -168,7 +168,7 @@ describe("authorService", () => {
             { content: `{user.${USER_A}.clantag}` } as any,
             null,
             null,
-            "999999999999999999",
+            "777777777777777777",
         );
 
         expect((result.payload as any).content).toBe("LEGACY");
