@@ -63,6 +63,7 @@ export const createSessionToken = (user: SessionUser): string => {
 
 export const verifySessionToken = async (token: string): Promise<SessionUser | null> => {
   try {
+    if (typeof token !== "string" || token.length > 8192) return null;
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const [h, p, s] = parts;
@@ -71,17 +72,31 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
     const bufB = Buffer.from(expected);
     if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) return null;
 
-    const data = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
-    if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
-    if (!data.id || !data.username) return null;
+    const data: unknown = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
+    if (data === null || typeof data !== "object" || Array.isArray(data)) return null;
+    const claims = data as Record<string, unknown>;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (
+      !Number.isSafeInteger(claims.exp) ||
+      !Number.isSafeInteger(claims.iat) ||
+      (claims.exp as number) <= nowSeconds ||
+      (claims.iat as number) > nowSeconds + 60 ||
+      (claims.exp as number) <= (claims.iat as number) ||
+      (claims.exp as number) - (claims.iat as number) > SESSION_TTL_SECONDS
+    ) return null;
+    if (
+      typeof claims.id !== "string" || !/^\\d{17,20}$/.test(claims.id) ||
+      typeof claims.username !== "string" || !claims.username.trim()
+    ) return null;
 
-    const userId = String(data.id);
+    const userId = claims.id;
     const tokenIssuedMs =
-      typeof data.iatMs === "number"
-        ? data.iatMs
-        : typeof data.iat === "number"
-          ? data.iat * 1000
-          : 0;
+      typeof claims.iatMs === "number" && Number.isSafeInteger(claims.iatMs)
+        ? claims.iatMs
+        : (claims.iat as number) * 1000;
+    if (tokenIssuedMs > Date.now() + 60_000 || tokenIssuedMs < ((claims.iat as number) * 1000) - 1000) {
+      return null;
+    }
 
     const [globalRevokedAtMs, userRevokedAtMs] = await Promise.all([
       sessionRevocationRepository.getGlobalRevokedAt(),
@@ -96,14 +111,14 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
 
     return {
       id: userId,
-      username: String(data.username),
-      global_name: data.global_name ?? null,
-      avatar: data.avatar ?? null,
-      role: data.role ?? "editor",
+      username: claims.username,
+      global_name: typeof claims.global_name === "string" ? claims.global_name : null,
+      avatar: typeof claims.avatar === "string" ? claims.avatar : null,
+      role: claims.role === "admin" ? "admin" : "editor",
       hasDefaultBotAccess:
-        typeof data.hasDefaultBotAccess === "boolean" ? data.hasDefaultBotAccess : undefined,
-      isFirstLogin: typeof data.isFirstLogin === "boolean" ? data.isFirstLogin : undefined,
-      mutualGuilds: Array.isArray(data.mutualGuilds) ? data.mutualGuilds : undefined,
+        typeof claims.hasDefaultBotAccess === "boolean" ? claims.hasDefaultBotAccess : undefined,
+      isFirstLogin: typeof claims.isFirstLogin === "boolean" ? claims.isFirstLogin : undefined,
+      mutualGuilds: Array.isArray(claims.mutualGuilds) ? claims.mutualGuilds as MutualGuildInfo[] : undefined,
     };
   } catch {
     return null;
