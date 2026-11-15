@@ -192,7 +192,7 @@ describe("authorService", () => {
                 `{user.${USER_A}.joined}`,
                 `{user.${USER_A}.joined.date}`,
             ].join("|"),
-        } as any, null, null, "999999999999999999");
+        } as any, null, null, "888888888888888888");
 
         const joinedUnix = Math.floor(Date.parse("2024-06-15T12:00:00.000Z") / 1000);
         expect((result.payload as any).content).toBe([
@@ -201,7 +201,7 @@ describe("authorService", () => {
             `<t:${joinedUnix}:R>`,
             `<t:${joinedUnix}:d>`,
         ].join("|"));
-        expect(getGuildMember).toHaveBeenCalledWith("999999999999999999", USER_A, "test-bot-token");
+        expect(getGuildMember).toHaveBeenCalledWith("888888888888888888", USER_A, "test-bot-token");
     });
 
     it("resolves account creation timestamps from the Discord snowflake", async () => {
