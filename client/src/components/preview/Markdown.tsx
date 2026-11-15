@@ -81,7 +81,6 @@ const intToRgb = (color: number): { r: number; g: number; b: number; hex: string
 
 const UserMention: React.FC<{ id: string }> = ({ id }) => {
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
-  const [changelogValues, setChangelogValues] = useState<Record<string, string>>({});
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const rolesMap = useDiscordCacheStore((state) => state.roles);
   const fetchGuilds = useDiscordCacheStore((state) => state.fetchGuilds);
@@ -693,6 +692,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const currentUser = useGlobalStore((state) => state.currentUser);
+  const [changelogValues, setChangelogValues] = useState<Record<string, string>>({});
   const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
@@ -704,7 +704,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
 
   useEffect(() => {
     if (!content) return;
-    const tokens = Array.from(content.matchAll(/\\{exploit\\.([^{}]+)\\.(changelogs(?:\\[-?\\d+(?::-?\\d*)?\\]|\\.compare)?)\\}/gi));
+    const tokens = Array.from(content.matchAll(/\{exploit\.([^{}]+)\.(changelogs(?:\[-?\d+(?::-?\d*)?\]|\.compare)?)\}/gi));
     if (!tokens.length) return;
     let cancelled = false;
     const unique = new Map<string, { name: string; selector: string }>();
