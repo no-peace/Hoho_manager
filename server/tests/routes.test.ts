@@ -485,8 +485,15 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
 
   // 11. /api/weao
   describe("GET /api/weao/exploits", () => {
-    it("returns exploits list without error", async () => {
+    it("rejects anonymous access to template-backed exploit metadata", async () => {
       const res = await fetch(`${baseUrl}/api/weao/exploits?q=delta`);
+      expect(res.status).toBe(401);
+    });
+
+    it("returns only authenticated callers visible exploit backups", async () => {
+      const res = await fetch(`${baseUrl}/api/weao/exploits?q=delta`, {
+        headers: { "x-admin-key": env.adminApiKey },
+      });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(Array.isArray(json.exploits)).toBe(true);
