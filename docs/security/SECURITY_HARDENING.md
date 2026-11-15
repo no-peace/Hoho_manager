@@ -108,6 +108,21 @@ Before deploying this branch, verify the Render environment:
 5. Set `CLIENT_ORIGIN` to the exact HTTPS frontend origin(s), without a trailing slash.
 6. Keep `DISCORD_REDIRECT_URI` HTTPS and exactly matched in the Discord Developer Portal.
 
+## Local validation results
+
+Validated on Node.js 24 in an isolated temporary worktree, not in the user's existing modified checkout:
+
+- Shared package: 42 tests passed.
+- Server: 225 tests passed.
+- Client: 190 tests passed.
+- Bot: 27 tests passed.
+- Total: 484 tests passed.
+- Typecheck: all workspaces passed.
+- Build: all workspaces passed.
+- `npm audit --audit-level=high`: 0 vulnerabilities.
+
+The new SSRF regression suite contains four checks and passed. GitHub Actions checks for the draft PR had not yet reported a run at the time this report was updated. The security workflow still needs to complete before merge.
+
 ## Residual risks and limits
 
 - Express rate limiting currently uses its default in-memory store. If the service runs multiple instances, limits are per instance; use a shared store for cluster-wide enforcement.
