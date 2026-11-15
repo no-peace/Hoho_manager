@@ -147,7 +147,7 @@ export const resolveAuthorPlaceholders = async (
   const serialized = JSON.stringify(payload);
   const placeholderMatches = Array.from(serialized.matchAll(USER_PLACEHOLDER_REGEX));
   const requestedIds = new Set<string>();
-  const hasInteractionName = /\\{user\\.(?:name|displayname)\\}/i.test(serialized);
+  const hasInteractionName = /\{user\.(?:name|displayname)\}/i.test(serialized);
   const interactionUserId =
     hasInteractionName &&
     typeof fallbackAuthorId === "string" &&
@@ -244,7 +244,7 @@ export const resolveAuthorPlaceholders = async (
       }
       if (normalized === "displayname") return user.global_name || user.username;
       return getUserField(user, field) ?? fullMatch;
-    }).replace(/\\{user\\.(name|displayname)\\}/gi, (fullMatch, field: string) => {
+    }).replace(/\{user\.(name|displayname)\}/gi, (fullMatch, field: string) => {
       if (!interactionUserId) return fullMatch;
       const user = userMap.get(interactionUserId);
       if (!user) return fullMatch;
