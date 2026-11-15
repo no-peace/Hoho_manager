@@ -126,6 +126,7 @@ const getClanTag = (user: DiscordMemberSummary, member?: any): string => {
   // Older servers often put a short clan tag directly in a nickname.
   // This fallback uses only text already visible on the Discord profile/member.
   const candidates = [member?.nick, user.nickname, user.global_name, user.username];
+  console.log("DEBUG_CLANTAG", { memberNick: member?.nick, userNickname: user.nickname, username: user.username });
   for (const candidate of candidates) {
     if (typeof candidate !== "string") continue;
     const match = candidate.match(/\[([A-Za-z0-9_-]{1,16})\]|\(([A-Za-z0-9_-]{1,16})\)|\{([A-Za-z0-9_-]{1,16})\}/);
