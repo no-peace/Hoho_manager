@@ -334,12 +334,12 @@ export const formatExploitChangelogs = (entries: unknown[], selector = "", compa
     const added = comparison?.added ?? [];
     const removed = comparison?.removed ?? [];
     const sections = [
-      added.length ? `**New entries**\\n${added.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n")}` : "**New entries**\\nNone",
-      removed.length ? `**Removed entries**\\n${removed.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n")}` : "**Removed entries**\\nNone",
+      added.length ? `**New entries**\n${added.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\n")}` : "**New entries**\nNone",
+      removed.length ? `**Removed entries**\n${removed.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\n")}` : "**Removed entries**\nNone",
     ];
-    return sections.join("\\n\\n");
+    return sections.join("\n\n");
   }
-  const match = selector.match(/^changelogs(?:\\[(-?\\d+)(?::(-?\\d*))?\\])?$/i);
+  const match = selector.match(/^changelogs(?:\[(-?\d+)(?::(-?\d*))?\])?$/i);
   if (match?.[1] !== undefined) {
     const start = Number(match[1]);
     if (match[2] !== undefined) {
@@ -349,7 +349,7 @@ export const formatExploitChangelogs = (entries: unknown[], selector = "", compa
     }
   }
   if (!selected.length) return "No changelog entries found.";
-  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\\n");
+  return selected.map((entry) => `• ${formatChangelogEntry(entry)}`).join("\n");
 };
 
 export const formatExploitField = (
@@ -515,7 +515,7 @@ export const interpolateWeaoPlaceholders = async (
     if (!scoped) continue;
 
     const keyLower = scoped.targetName.toLowerCase();
-    if (/^changelogs(?:\\[|\\.|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
+    if (/^changelogs(?:\[|\.|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
       changelogMap.set(keyLower, await getExploitChangelogs(scoped.targetName));
     }
     if (suncMap.has(keyLower)) continue;
@@ -539,7 +539,7 @@ export const interpolateWeaoPlaceholders = async (
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
           );
         if (!target) return fullMatch;
-        if (/^changelogs(?:\\[|\\.|$)/i.test(scoped.fieldName)) {
+        if (/^changelogs(?:\[|\.|$)/i.test(scoped.fieldName)) {
           return formatExploitChangelogs(
             changelogMap.get(scoped.targetName.toLowerCase()) ?? [],
             scoped.fieldName,
