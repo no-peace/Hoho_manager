@@ -27,6 +27,7 @@ const makeUser = (id: string, username: string, globalName: string | null = null
     global_name: globalName,
     nickname: null,
     avatar: "avatar_hash",
+    primary_guild: { identity_enabled: true, tag: "HOHO", identity_guild_id: "999999999999999999" },
 });
 
 describe("authorService", () => {
@@ -101,7 +102,7 @@ describe("authorService", () => {
         expect(getDiscordUser).not.toHaveBeenCalled();
     });
 
-    it("resolves supported user variables including avatarurl", async () => {
+    it("resolves canonical avatar and leaves removed aliases unchanged", async () => {
         const result = await resolveAuthorPlaceholders({
             content: [
                 `{user.${USER_A}.name}`,
@@ -109,24 +110,81 @@ describe("authorService", () => {
                 `{user.${USER_A}.id}`,
                 `{user.${USER_A}.url}`,
                 `{user.${USER_A}.mention}`,
+                `{user.${USER_A}.avatar}`,
                 `{user.${USER_A}.avatarurl}`,
+                `{user.${USER_A}.icon}`,
+                `{user.${USER_A}.pfp}`,
                 `{user.${USER_A}.unknown}`,
             ].join("|"),
         } as any);
 
         expect((result.payload as any).content).toBe(
             [
-                "Peace",
+                "peace",
                 "peace",
                 USER_A,
                 `https://discord.com/users/${USER_A}`,
                 `<@${USER_A}>`,
                 `https://cdn.discordapp.com/avatars/${USER_A}/avatar_hash.png?size=1024`,
+                `{user.${USER_A}.avatarurl}`,
+                `{user.${USER_A}.icon}`,
+                `{user.${USER_A}.pfp}`,
                 `{user.${USER_A}.unknown}`,
             ].join("|"),
         );
     });
 
+
+    it("does not expose a primary guild tag when the user has disabled that identity", async () => {
+        vi.mocked(getDiscordUser).mockResolvedValue({
+            ...makeUser(USER_A),
+            primary_guild: { identity_enabled: false, tag: "HOHO" },
+        } as any);
+
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.clantag}`,
+        } as any);
+
+        expect((result.payload as any).content).toBe(`{user.${USER_A}.clantag}`);
+    });
+
+    it("resolves an enabled primary guild tag without selected-server membership", async () => {
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.clantag}`,
+        } as any);
+
+        expect((result.payload as any).content).toBe("HOHO");
+        expect(getGuildMember).not.toHaveBeenCalled();
+    });
+
+    it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
+        vi.mocked(getGuildMember).mockResolvedValue({
+            user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
+            nick: "Server Nick",
+        } as any);
+
+        const result = await resolveAuthorPlaceholders(
+            { content: "{user.name}|{user.displayname}" } as any,
+            USER_A,
+            null,
+            "999999999999999999",
+        );
+
+        expect((result.payload as any).content).toBe("Server Nick|Peace");
+    });
+
+    it("uses the destination server nickname for name and the global name for displayname", async () => {
+        vi.mocked(getGuildMember).mockResolvedValue({
+            user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
+            nick: "Server Nick",
+        } as any);
+
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.name}|{user.${USER_A}.displayname}`,
+        } as any, null, null, "999999999999999999");
+
+        expect((result.payload as any).content).toBe("Server Nick|Peace");
+    });
 
     it("resolves guild-specific roles, clan tag, and join timestamps for an ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
@@ -143,7 +201,7 @@ describe("authorService", () => {
                 `{user.${USER_A}.joined}`,
                 `{user.${USER_A}.joined.date}`,
             ].join("|"),
-        } as any, null, null, "999999999999999999");
+        } as any, null, null, "888888888888888888");
 
         const joinedUnix = Math.floor(Date.parse("2024-06-15T12:00:00.000Z") / 1000);
         expect((result.payload as any).content).toBe([
@@ -152,7 +210,7 @@ describe("authorService", () => {
             `<t:${joinedUnix}:R>`,
             `<t:${joinedUnix}:d>`,
         ].join("|"));
-        expect(getGuildMember).toHaveBeenCalledWith("999999999999999999", USER_A, "test-bot-token");
+        expect(getGuildMember).toHaveBeenCalledWith("888888888888888888", USER_A, "test-bot-token");
     });
 
     it("resolves account creation timestamps from the Discord snowflake", async () => {

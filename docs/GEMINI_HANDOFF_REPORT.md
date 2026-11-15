@@ -1,3 +1,45 @@
+# Current implementation status — V8 follow-up (2026-11-16)
+
+**Working branch:** `feat/v8-performance-and-variable-fixes`  
+**Base branch:** `feat/hoho-manager-weao-workspace-v8`  
+**Code implementation commit:** `d8765efc05898841588ea3d5f9ca7202253ba565`  
+**Draft PR:** [#42](https://github.com/no-peace/Hoho_manager/pull/42)  
+**Base inspected:** `8ea473f782c2196b6cdbf2bd8d0d8fe9457174e9`
+
+## What was already present in the V8 base
+
+The supplied V8 plans were checked against the current feature branch before editing. These items were already implemented in the base and were not duplicated:
+
+- Parallel startup health/session requests and session-hint auth rendering.
+- Lazy loading for the not-found page and action-store runtime.
+- Deferred login canvas animation, automated-browser suppression, and constrained-device/reduced-motion handling.
+- Lighthouse gatherer-error reporting in `docs/playwright/analyze-lighthouse.mjs`.
+- The responsive mobile server selector, including its mobile bottom-sheet presentation and viewport-aware positioning.
+- WEAO changelog retrieval, formatting/selectors, preview support, and searchable variable documentation.
+
+These are source-level findings only. No new Lighthouse score or full browser-audit result is claimed.
+
+## Follow-up changes in PR #42
+
+- ID-based `{user.<id>.clantag}` uses Discord `primary_guild` only when `identity_enabled === true`; it does not require membership in the currently selected server.
+- The docs now distinguish interaction-user variables from ID-based account lookups. Existing legacy nickname-tag parsing remains on interaction-user variables.
+- WEAO changelog placeholders can resolve by tracker ID even when the tracker ID is not in the exploit catalogue.
+- Changelog comparisons now compare each successful fetch with the immediately previous successful snapshot, rather than retaining the first snapshot for the process lifetime.
+- Added regression tests for primary-guild lookup without selected-server membership, tracker-ID changelog resolution, and incremental snapshot comparison.
+
+## Verification status
+
+- `npm test` with a test-only `DISCORD_BOT_TOKEN`: **passed, 481 tests** (shared 42, server 222, client 190, bot 27).
+- `npm run typecheck`: **passed** across all workspaces.
+- `npm run build`: **passed** across shared, client, server, and bot workspaces.
+- Playwright and Lighthouse have **not** been run for this follow-up; they require separate authorization under the project workflow.
+- GitHub Actions were not used. Do not infer a CI result from the local validation above.
+
+## Merge and deployment status
+
+PR #42 is a draft targeting `feat/hoho-manager-weao-workspace-v8`. It is separate from security PR #41. It has not been merged into `main`; Render production has not been updated. No 99+ Lighthouse score is claimed for this follow-up.
+---
+
 # HoHo Manager — Gemini Handoff & Implementation Report
 
 **Prepared:** 2026-11-14  
@@ -420,3 +462,13 @@ A source-level regression test was added to the existing layout stress suite for
 - Animation inspection was not completed in this pass. Do not claim motion/transition behavior has been visually audited.
 
 Keep the existing safety boundary: no live Discord dispatch or destructive production action. Use a private test guild for those checks.
+
+
+## 2026-11-14 verification addendum
+
+- Latest branch head: `bf490f197c60a5b89d99280a2bc13894f16af1cb`.
+- GitHub Actions CI, Security, and Lighthouse runs were retried. Their jobs again terminated without allocating runners: zero executed steps, no job logs, and no test assertions. This is an Actions execution/infrastructure blocker, not a passing result and not evidence of a code-level test failure.
+- Render workspace `My Workspace` was explicitly approved and inspected. The existing `Hoho_manager` production service remains connected to `main`; pull-request previews are disabled. No production service settings or production deployment were changed.
+- A separate temporary Render service was not created because the existing app's runtime configuration/secrets cannot safely be cloned with the available Render integration. Do not point a preview at production secrets or mutate the production service merely to test a PR.
+- PR #40 remains open and draft. The branch is not merged or deployed. Final branch Playwright and Render health verification remain outstanding.
+- No Discord messages were sent.

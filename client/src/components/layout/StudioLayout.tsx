@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Edit3, Eye, Plus, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { Header } from "./Header";
-import { SplitPane } from "./SplitPane";
 import { MessageEditor } from "../editor/MessageEditor";
 import { MessagePreview } from "../preview/MessagePreview";
 import { CultMorphSurface } from "../ui/CultSkiperPrimitives";
@@ -103,27 +102,37 @@ export const StudioLayout: React.FC = () => {
       )}
 
       <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        <div className="flex min-h-0 flex-1">
-          <SplitPane
-            initialRatio={0.48}
-            minRatio={0.3}
-            maxRatio={0.7}
-            mobileActivePane={mobileView === "editor" ? "left" : "right"}
-            onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
-            left={
-              <div className="flex flex-col h-full bg-[#2b2d31] border-r border-[#1e1f22] w-full min-w-0 overflow-y-auto xl:overflow-hidden custom-scrollbar">
-                <div className="flex-1 xl:overflow-y-auto p-2.5 sm:p-3 space-y-3 custom-scrollbar">
+        <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#2b2d31]">
+          <div className="hidden shrink-0 items-center gap-1 border-b border-[#1e1f22] bg-[#232428] px-3 py-2 xl:flex">
+            <button
+              type="button"
+              onClick={() => setMobileView("editor")}
+              aria-pressed={mobileView === "editor"}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${mobileView === "editor" ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:bg-[#35373c] hover:text-white"}`}
+            >
+              <Edit3 size={15} className="mr-2 inline" /> Editor
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileView("preview")}
+              aria-pressed={mobileView === "preview"}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${mobileView === "preview" ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:bg-[#35373c] hover:text-white"}`}
+            >
+              <Eye size={15} className="mr-2 inline" /> Live Preview
+            </button>
+            <span className="ml-auto hidden text-xs text-[#72767d] sm:inline">Workspace</span>
+          </div>
+
+          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+            {mobileView === "editor" ? (
+              <div className="flex h-full min-w-0 flex-col overflow-y-auto custom-scrollbar">
+                <div className="flex-1 space-y-3 p-3 sm:p-4">
                   {displayMessages.map((_, idx) => (
                     <MessageEditor key={idx} index={idx} />
                   ))}
-
                   <CultMorphSurface
                     layoutId="cult-add-message-surface"
-                    triggerLabel={
-                      <>
-                        Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)
-                      </>
-                    }
+                    triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
                     triggerIcon={<Plus size={15} />}
                     title="Choose Message Mode"
                     disabled={displayMessages.length >= 10}
@@ -133,57 +142,36 @@ export const StudioLayout: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => addMessage({ flags: 0 })}
-                        className="w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 flex items-start gap-3 active:scale-[0.98]"
+                        className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]"
                       >
-                        <div className="p-2 rounded bg-[#1e1f22] text-[#dbdee1] font-mono text-xs font-bold shrink-0">
-                          TXT
-                        </div>
+                        <div className="shrink-0 rounded bg-[#1e1f22] p-2 font-mono text-xs font-bold text-[#dbdee1]">TXT</div>
                         <div>
-                          <p className="text-xs font-bold text-white">Standard Message (Classic)</p>
-                          <p className="text-[11px] text-[#949ba4] mt-0.5">
-                            Classic message with content, embeds, attachments, and action rows.
-                          </p>
+                          <p className="text-sm font-bold text-white">Standard Message (Classic)</p>
+                          <p className="mt-0.5 text-xs text-[#949ba4]">Classic message with content, embeds, attachments, and action rows.</p>
                         </div>
                       </button>
-
                       <button
                         type="button"
-                        onClick={() =>
-                          addMessage({
-                            flags: 32768,
-                            components: [
-                              {
-                                _id: Math.random().toString(36).slice(2, 10),
-                                type: 10,
-                                content: "",
-                              },
-                            ],
-                          })
-                        }
-                        className="relative w-full rounded-lg bg-[#2b2d31] hover:bg-[#35373c] border border-[#1e1f22] hover:border-[#5865f2] p-3 text-left transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 flex items-start gap-3 active:scale-[0.98]"
+                        onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })}
+                        className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]"
                       >
-                        <div className="p-2 rounded bg-[#5865f2]/20 text-[#949cf7] font-mono text-xs font-bold shrink-0">
-                          V2
-                        </div>
+                        <div className="shrink-0 rounded bg-[#5865f2]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
                         <div>
-                          <p className="text-xs font-bold text-white">Components V2 Message</p>
-                          <p className="text-[11px] text-[#949ba4] mt-0.5">
-                            Build layouts with containers, text blocks, galleries, files, separators, and action rows.
-                          </p>
+                          <p className="text-sm font-bold text-white">Components V2 Message</p>
+                          <p className="mt-0.5 text-xs text-[#949ba4]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p>
                         </div>
                       </button>
                     </div>
                   </CultMorphSurface>
                 </div>
               </div>
-            }
-            right={
-              <div className="flex flex-col h-full bg-[#313338] w-full min-w-0">
+            ) : (
+              <div className="h-full min-w-0 overflow-y-auto bg-[#313338] p-3 sm:p-5 custom-scrollbar">
                 <MessagePreview />
               </div>
-            }
-          />
-        </div>
+            )}
+          </div>
+        </section>
 
         <React.Suspense fallback={null}>
           <PropertyPanel />

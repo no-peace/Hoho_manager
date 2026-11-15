@@ -93,7 +93,7 @@ export const listWeaoExploits = async (query = ""): Promise<WeaoExploitChoice[]>
 export const resolveWeaoExploit = async (
   exploitName: string,
 ): Promise<{
-  source: "backup_template" | "adaptive_default";
+  source: "backup_template" | "custom_executor";
   templateName: string | null;
   exploit: WeaoExploitChoice;
   payload: Record<string, unknown>;
@@ -135,6 +135,7 @@ export const api = {
     flows?: FlowRegistration[];
     templateId?: number | null;
     exploitName?: string | null;
+    authorUserId?: string | null;
   }) =>
     request<SendSuccessResponse>("/api/send", {
       method: "POST",
@@ -147,6 +148,7 @@ export const api = {
         ...(body.flows ? { flows: body.flows } : {}),
         ...(body.templateId ? { templateId: body.templateId } : {}),
         ...(body.exploitName ? { exploitName: body.exploitName } : {}),
+        ...(body.authorUserId ? { authorUserId: body.authorUserId } : {}),
       },
     }),
 

@@ -692,6 +692,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const currentUser = useGlobalStore((state) => state.currentUser);
+  const [changelogValues, setChangelogValues] = useState<Record<string, string>>({});
   const { resolveUserPlaceholders } = useUserPlaceholderPreview();
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
@@ -700,6 +701,28 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
       void fetchWeaoExploits();
     }
   }, [content, fetchWeaoExploits]);
+
+  useEffect(() => {
+    if (!content) return;
+    const tokens = Array.from(content.matchAll(/\{exploit\.([^{}]+)\.(changelogs(?:\[-?\d+(?::-?\d*)?\]|\.compare)?)\}/gi));
+    if (!tokens.length) return;
+    let cancelled = false;
+    const unique = new Map<string, { name: string; selector: string }>();
+    for (const match of tokens) {
+      const name = match[1]?.trim();
+      const selector = match[2]?.trim() || "changelogs";
+      if (name) unique.set(`${name.toLowerCase()}.${selector.toLowerCase()}`, { name, selector });
+    }
+    void Promise.all([...unique.entries()].map(async ([key, item]) => {
+      try {
+        const result = await api.weao.changelogs(item.name, item.selector);
+        if (!cancelled) setChangelogValues((current) => ({ ...current, [key]: result.formatted }));
+      } catch {
+        if (!cancelled) setChangelogValues((current) => ({ ...current, [key]: "Changelogs unavailable." }));
+      }
+    }));
+    return () => { cancelled = true; };
+  }, [content]);
 
   if (!content) return null;
 
@@ -771,6 +794,9 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
             const parts = rest.split(":");
             targetName = (parts[0] || "").trim();
             fieldName = parts.slice(1).join(":").trim() || "status";
+          }
+          if (/^changelogs(?:\[|\.|$)/i.test(fieldName)) {
+            return changelogValues[`${targetName.toLowerCase()}.${fieldName.toLowerCase()}`] ?? full;
           }
           const found =
             weaoExploits.find((e) => e.title.toLowerCase() === targetName.toLowerCase()) ??

@@ -435,6 +435,12 @@ export interface SendRequestBody {
   messages?: DiscordMessagePayload[];
   channelId?: string;
   editMessageId?: string;
+  authorUserId?: string;
+  track?: boolean;
+  trackName?: string;
+  expiresAt?: string;
+  templateId?: number;
+  exploitName?: string;
   attachments?: DiscordAttachmentPayload[];
   /**
    * Ordered action flows for the components in this message, keyed by

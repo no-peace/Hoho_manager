@@ -60,6 +60,12 @@ export interface DiscordMemberSummary {
   global_name: string | null;
   nickname: string | null;
   avatar: string | null;
+  primary_guild?: {
+    identity_guild_id?: string | null;
+    identity_enabled?: boolean | null;
+    tag?: string | null;
+    badge?: string | null;
+  } | null;
 }
 
 export type DiscordMember = DiscordMemberSummary;
@@ -604,6 +610,12 @@ export const getDiscordUser = async (
       username?: string;
       global_name?: string | null;
       avatar?: string | null;
+      primary_guild?: {
+        identity_guild_id?: string | null;
+        identity_enabled?: boolean | null;
+        tag?: string | null;
+        badge?: string | null;
+      } | null;
     }>("GET", `/users/${encodeURIComponent(userId)}`, { token });
 
     if (
@@ -621,6 +633,7 @@ export const getDiscordUser = async (
       global_name: data.global_name ?? null,
       nickname: null,
       avatar: data.avatar ?? null,
+      primary_guild: data.primary_guild ?? null,
     };
 
     // Only successful, validated responses enter the TTL cache.

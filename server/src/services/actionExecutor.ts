@@ -49,35 +49,19 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   const userId = user?.id ?? "unknown";
 
   const username = user?.username ?? "User";
-  const displayname = member?.nick ?? user?.global_name ?? username;
-
-  // 1. Official Discord Clan Tag (member.clan.tag, user.clan.tag, member.clan string, primary_guild.tag)
+  const nickname = typeof member?.nick === "string" && member.nick.trim() ? member.nick.trim() : username;
+  const displayname = user?.global_name ?? username;
+  const primaryGuild = (user as any)?.primary_guild;
   const officialClanTag =
-    (typeof member?.clan === "string" ? member.clan : member?.clan?.tag) ??
-    (typeof (user as any)?.clan === "string" ? (user as any).clan : (user as any)?.clan?.tag) ??
-    member?.user?.clan?.tag ??
-    (user as any)?.primary_guild?.tag ??
-    (member as any)?.primary_guild?.tag ??
-    (member as any)?.clan_tag ??
-    (user as any)?.clan_tag;
-
-  // 2. Bracketed or separator-delimited tag in nickname, display name, or username
-  // Matches: [TAG], (TAG), {TAG}, TAG | Name, Name | TAG, TAG - Name, Name - TAG, TAG • Name
-  const textToScan = `${displayname} ${username}`;
-  const bracketMatch = textToScan.match(/[\[\(\{]([A-Za-z0-9_\-\.]{1,16})[\]\)\}]/);
-  const separatorMatch = !bracketMatch
-    ? textToScan.match(/(?:^([A-Za-z0-9_\-\.]{2,8})\s*[\|\-•:]|[\|\-•:]\s*([A-Za-z0-9_\-\.]{2,8})$)/)
-    : null;
-  const sepTag = separatorMatch ? separatorMatch[1] || separatorMatch[2] : null;
-
-  const clantag =
-    typeof officialClanTag === "string" && officialClanTag.trim()
-      ? officialClanTag.trim()
-      : bracketMatch
-      ? bracketMatch[1]
-      : sepTag
-      ? sepTag.trim()
-      : "";
+    (typeof member?.clan?.tag === "string" && member.clan.tag.trim()) ||
+    (primaryGuild?.identity_enabled === true &&
+      typeof primaryGuild?.tag === "string" &&
+      primaryGuild.tag.trim()) ||
+    "";
+  const parsedClanTag = [nickname, username].map((value) =>
+    value.match(/(?:\[([^\[\]]{1,16})\]|\(([^()]{1,16})\)|\{([^{}]{1,16})\})/),
+  ).map((match) => match?.slice(1).find(Boolean)?.trim() || "").find(Boolean) || "";
+  const clantag = officialClanTag || parsedClanTag;
 
   const unixNow = Math.floor(Date.now() / 1000);
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
@@ -94,7 +78,7 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   const variables: Record<string, unknown> = {
     // User
     "user.mention": `<@${userId}>`,
-    "user.name": username,
+    "user.name": nickname,
     "user.tag": username,
     "user.displayname": displayname,
     "user.id": userId,

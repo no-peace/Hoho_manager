@@ -315,6 +315,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
       } catch {
         // Ignore network errors on logout
       } finally {
+        setSessionHint(false);
         set({ currentUser: null, configModalOpen: false });
         if (typeof localStorage !== "undefined") {
           localStorage.removeItem("staff_id");

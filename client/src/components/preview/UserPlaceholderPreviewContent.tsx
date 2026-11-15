@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import api from "../../api/client";
+import { useGlobalStore } from "../../store/globalStore";
 
 const USER_PLACEHOLDER_REGEX = /\{user\.(\d{17,20})\.([a-zA-Z0-9_]+)\}/g;
 const MAX_IDS_PER_REQUEST = 10;
@@ -17,6 +18,7 @@ export interface PreviewDiscordUser {
   id: string;
   username: string;
   globalName: string | null;
+  nickname: string | null;
   avatarUrl: string;
   profileUrl: string;
 }
@@ -32,6 +34,9 @@ const UserPlaceholderPreviewContext =
 const collectUserIds = (value: unknown, ids: Set<string>): void => {
   if (typeof value === "string") {
     for (const match of value.matchAll(USER_PLACEHOLDER_REGEX)) {
+      const field = match[2]?.toLowerCase();
+      // Removed legacy aliases do not trigger a Discord lookup by themselves.
+      if (field === "avatarurl" || field === "icon" || field === "pfp") continue;
       if (match[1]) ids.add(match[1]);
     }
     return;
@@ -55,6 +60,7 @@ const getFieldValue = (
 ): string | null => {
   switch (field.toLowerCase()) {
     case "name":
+      return user.nickname || user.username;
     case "displayname":
     case "globalname":
       return user.globalName || user.username;
@@ -70,10 +76,8 @@ const getFieldValue = (
     case "profile":
       return user.profileUrl;
 
-    case "avatarurl":
     case "avatar":
-    case "icon":
-    case "pfp":
+    case "avatarurl":
       return user.avatarUrl;
 
     case "mention":
@@ -91,6 +95,8 @@ export const UserPlaceholderPreviewProvider = ({
   source: unknown;
   children: React.ReactNode;
 }) => {
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const currentUser = useGlobalStore((state) => state.currentUser);
   const [users, setUsers] = useState<Record<string, PreviewDiscordUser>>({});
   const [isResolvingUsers, setIsResolvingUsers] = useState(false);
   const attemptedIdsRef = useRef(new Set<string>());
@@ -113,8 +119,11 @@ export const UserPlaceholderPreviewProvider = ({
         // Invalid/transient editor state: leave placeholders unresolved.
       }
     }
+    if (currentUser?.id && /\{user\.(?:name|displayname)\}/i.test(sourceSnapshot)) {
+      ids.add(currentUser.id);
+    }
     return [...ids];
-  }, [sourceSnapshot]);
+  }, [sourceSnapshot, currentUser?.id]);
 
   useEffect(() => {
     const pendingIds = requestedIds.filter(
@@ -141,7 +150,7 @@ export const UserPlaceholderPreviewProvider = ({
           if (cancelled) return;
 
           const batch = pendingIds.slice(index, index + MAX_IDS_PER_REQUEST);
-          const response = await api.discord.resolveUsers(batch, controller.signal);
+          const response = await api.discord.resolveUsers(batch, controller.signal, selectedGuildId || undefined);
 
           for (const [id, user] of Object.entries(response.users ?? {})) {
             if (
@@ -178,19 +187,27 @@ export const UserPlaceholderPreviewProvider = ({
       // An aborted batch may be retried if its ID is still present next time.
       for (const id of pendingIds) attemptedIdsRef.current.delete(id);
     };
-  }, [requestedIds, users]);
+  }, [requestedIds, users, selectedGuildId]);
 
   const resolveUserPlaceholders = useCallback(
     (value: string): string =>
-      value.replace(
-        USER_PLACEHOLDER_REGEX,
-        (original, id: string, field: string) => {
-          const user = users[id];
+      value
+        .replace(
+          USER_PLACEHOLDER_REGEX,
+          (original, id: string, field: string) => {
+            const user = users[id];
+            if (!user) return original;
+            return getFieldValue(user, field) ?? original;
+          },
+        )
+        .replace(/\{user\.(name|displayname)\}/gi, (original, field: string) => {
+          const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
-          return getFieldValue(user, field) ?? original;
-        },
-      ),
-    [users],
+          return field.toLowerCase() === "name"
+            ? user.nickname || user.username
+            : user.globalName || user.username;
+        }),
+    [users, currentUser?.id],
   );
 
   const contextValue = useMemo(

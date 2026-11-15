@@ -62,7 +62,6 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
   const resolvePlainVars = (text?: string): string => {
     if (!text || !text.includes("{")) return text ?? "";
     const username = currentUser?.username || "User";
-    const displayName = currentUser?.global_name || username;
     const userId = currentUser?.id || "123456789012345678";
     const avatarUrl =
       currentUser?.avatarUrl ||
@@ -74,9 +73,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
         ? `https://cdn.discordapp.com/icons/${previewGuild.id}/${previewGuild.icon}.png`
         : "https://cdn.discordapp.com/embed/avatars/1.png";
     const map: Record<string, string> = {
-      "user.name": username,
       "user.tag": username,
-      "user.displayname": displayName,
       "user.id": userId,
       "user.avatar": avatarUrl,
       "user.clantag": "HOHO",

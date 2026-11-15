@@ -108,6 +108,13 @@ router.post(
     }
     const profileId: number | null = null;
     const staffCtx = req.staffContext;
+    const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
+    const requestedAuthorId =
+      typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
+        ? req.body.authorUserId
+        : "";
+    const senderDiscordId = staffCtx?.staffId ?? (staffCtx?.isAdmin ? "" : dbUser?.discord_id ?? requestedAuthorId);
+    const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
     if (mode === "bot" && profileId === null) {
@@ -161,17 +168,35 @@ router.post(
       }
 
       const unixNow = Math.floor(Date.now() / 1000);
-      const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
-      const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? "";
-      const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "User";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
-      // Guild context is only needed for ID-scoped member placeholders. Avoid an
-      // extra Discord API lookup on ordinary sends (including admin-key sends).
-      const payloadText = JSON.stringify(weaoInterpolated);
-      const needsGuildContext = /\\{user\\.\\d{17,20}\\./i.test(payloadText);
-      const targetGuildId = targetChannelId && needsGuildContext
+      // Use the destination guild's member nickname for {user.name}.
+      const hasGuildScopedUserPlaceholder =
+        /\{user\.\d{17,20}\.(?:name|roles|joined(?:\.date)?)\}/i.test(
+          JSON.stringify(weaoInterpolated),
+        );
+      const targetGuildId = targetChannelId && (senderDiscordId || hasGuildScopedUserPlaceholder)
         ? await discord.getChannelGuildId(targetChannelId).catch(() => null)
         : null;
+      let senderMember: any = null;
+      if (targetGuildId && senderDiscordId) {
+        try {
+          const botToken = await discord.resolveBotToken(profileId);
+          senderMember = await discord.getGuildMember(targetGuildId, senderDiscordId, botToken);
+        } catch {
+          senderMember = null;
+        }
+      }
+      const resolvedSenderName =
+        senderName ||
+        (typeof senderMember?.user?.username === "string" ? senderMember.user.username : "User");
+      const senderGlobalName =
+        typeof senderMember?.user?.global_name === "string" && senderMember.user.global_name
+          ? senderMember.user.global_name
+          : resolvedSenderName;
+      const senderNickname =
+        typeof senderMember?.nick === "string" && senderMember.nick.trim()
+          ? senderMember.nick.trim()
+          : resolvedSenderName;
 
       const sendVars: Record<string, string> = {
         now: `<t:${unixNow}:f>`,
@@ -201,9 +226,9 @@ router.post(
           ? {
             "user.id": senderDiscordId,
             "user.mention": `<@${senderDiscordId}>`,
-            "user.name": senderName,
-            "user.tag": senderName,
-            "user.displayname": senderName,
+            "user.name": senderNickname,
+            "user.tag": resolvedSenderName,
+            "user.displayname": senderGlobalName,
           }
           : {}),
       };
@@ -363,6 +388,7 @@ router.post(
           messageId: sentId,
           templateId: req.body?.templateId ? Number(req.body.templateId) : null,
           exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
+          authorUserId: senderDiscordId || null,
           rawPayload: uninterpolatedCleanMsg,
           resolvedPayload: finalMessages[index],
           name: typeof req.body?.trackName === "string" ? req.body.trackName : null,

@@ -34,6 +34,7 @@ const mockUser = {
   id: USER_A,
   username: "peace",
   globalName: "Peace",
+  nickname: null,
   avatarUrl: "https://cdn.discordapp.com/avatars/test.png",
   profileUrl: `https://discord.com/users/${USER_A}`,
 };
@@ -63,7 +64,7 @@ describe("UserPlaceholderPreviewContext", () => {
     vi.useRealTimers();
   });
 
-  it("resolves username, profile URL and avatar URL", async () => {
+  it("resolves canonical avatar and leaves removed aliases unchanged", async () => {
     render(
       <UserPlaceholderPreviewProvider
         source={{
@@ -71,7 +72,7 @@ describe("UserPlaceholderPreviewContext", () => {
           embeds: [
             {
               url: `{user.${USER_A}.url}`,
-              image: { url: `{user.${USER_A}.avatarurl}` },
+              image: { url: `{user.${USER_A}.avatar}` },
             },
           ],
         }}
@@ -95,6 +96,23 @@ describe("UserPlaceholderPreviewContext", () => {
     expect(screen.getByTestId("resolved").textContent).toBe(
       `peace|https://discord.com/users/${USER_A}|${mockUser.avatarUrl}`,
     );
+  });
+
+  it("does not resolve removed ID-scoped avatar aliases", async () => {
+    const aliases = [
+      `{user.${USER_A}.avatarurl}`,
+      `{user.${USER_A}.icon}`,
+      `{user.${USER_A}.pfp}`,
+    ].join("|");
+    render(
+      <UserPlaceholderPreviewProvider source={aliases}>
+        <Preview value={aliases} />
+      </UserPlaceholderPreviewProvider>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(screen.getByTestId("resolved").textContent).toBe(aliases);
   });
 
   it("keeps unknown fields unchanged", async () => {
@@ -149,6 +167,7 @@ describe("UserPlaceholderPreviewContext", () => {
     expect(resolveUsersMock).toHaveBeenCalledWith(
       [USER_A],
       expect.any(AbortSignal),
+      undefined,
     );
   });
 });

@@ -223,34 +223,40 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
       {open && dropdownRect && createPortal(
         (() => {
           const DROPDOWN_HEIGHT = 260;
+          const isMobile = window.innerWidth < 640;
           const spaceBelow = Math.max(0, window.innerHeight - Math.max(dropdownRect.bottom, 8) - 12);
           const spaceAbove = Math.min(Math.max(0, dropdownRect.top - 8), Math.max(0, window.innerHeight - 16));
           const placeAbove = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
-          const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16);
+          const dropdownWidth = isMobile ? Math.max(0, window.innerWidth - 24) : Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16);
           const maxLeft = Math.max(8, window.innerWidth - dropdownWidth - 8);
-          const dropdownLeft = Math.max(8, Math.min(dropdownRect.left, maxLeft));
-          const calculatedMaxHeight = Math.min(
-            DROPDOWN_HEIGHT,
-            placeAbove ? spaceAbove : spaceBelow,
-          );
+          const dropdownLeft = isMobile ? 12 : Math.max(8, Math.min(dropdownRect.left, maxLeft));
+          const calculatedMaxHeight = isMobile
+            ? Math.min(520, Math.max(120, window.innerHeight - 32))
+            : Math.min(DROPDOWN_HEIGHT, placeAbove ? spaceAbove : spaceBelow);
           const maxTop = Math.max(8, window.innerHeight - 8 - calculatedMaxHeight);
-          const calculatedTop = placeAbove
-            ? Math.max(8, Math.min(maxTop, dropdownRect.top - calculatedMaxHeight))
-            : Math.max(8, Math.min(maxTop, dropdownRect.bottom + 4));
+          const calculatedTop = isMobile
+            ? Math.max(16, window.innerHeight - calculatedMaxHeight - 16)
+            : placeAbove
+              ? Math.max(8, Math.min(maxTop, dropdownRect.top - calculatedMaxHeight))
+              : Math.max(8, Math.min(maxTop, dropdownRect.bottom + 4));
 
           return (
-            <div
-              ref={portalRef}
-              style={{
-                position: "fixed",
-                top: calculatedTop,
-                left: dropdownLeft,
-                width: dropdownWidth,
-                maxHeight: calculatedMaxHeight,
-                zIndex: 99999,
-              }}
-              className="bg-[#2b2d31] border border-[#26282d] rounded-lg shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-            >
+            <>
+              {isMobile && (
+                <div className="fixed inset-0 z-[99998] bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
+              )}
+              <div
+                ref={portalRef}
+                style={{
+                  position: "fixed",
+                  top: calculatedTop,
+                  left: dropdownLeft,
+                  width: dropdownWidth,
+                  maxHeight: calculatedMaxHeight,
+                  zIndex: 99999,
+                }}
+                className={`bg-[#2b2d31] border border-[#26282d] ${isMobile ? "rounded-2xl" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+              >
               <div className="p-2 shrink-0 bg-[#18191c] border-b border-[#26282d]">
                 <input
                   type="text"
@@ -325,6 +331,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                 )}
               </div>
             </div>
+            </>
           );
         })(),
         document.body

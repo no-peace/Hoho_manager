@@ -11,18 +11,16 @@ export interface UserIdPlaceholderSuggestion {
 }
 
 const USER_PROFILE_FIELDS = [
-  { key: "name", label: "Display name", desc: "Display name, falling back to username" },
-  { key: "displayname", label: "Display name alias", desc: "Alias for display name" },
+  { key: "name", label: "Server nickname", desc: "Selected server nickname, falling back to username" },
+  { key: "displayname", label: "Global display name", desc: "Discord global display name, falling back to username" },
   { key: "globalname", label: "Global name", desc: "Discord global display name" },
   { key: "username", label: "Username", desc: "Discord username" },
   { key: "tag", label: "Username alias", desc: "Alias for username" },
   { key: "id", label: "User ID", desc: "Discord user ID" },
   { key: "url", label: "Profile URL", desc: "Discord profile URL" },
   { key: "profile", label: "Profile URL alias", desc: "Alias for profile URL" },
-  { key: "avatarurl", label: "Avatar URL", desc: "Direct profile picture URL" },
-  { key: "avatar", label: "Avatar", desc: "Alias for avatar URL" },
-  { key: "icon", label: "Icon", desc: "Alias for avatar URL" },
-  { key: "pfp", label: "Profile picture", desc: "Alias for avatar URL" },
+  { key: "avatar", label: "Avatar URL", desc: "Direct profile picture URL" },
+  { key: "avatarurl", label: "Avatar URL alias", desc: "Alias for the avatar URL" },
   { key: "mention", label: "Mention", desc: "Discord mention for this user" },
   { key: "roles", label: "Server roles", desc: "Space-separated mentions for this user's server roles" },
   { key: "clantag", label: "Clan tag", desc: "Official Discord clan tag or a tag parsed from the member name" },

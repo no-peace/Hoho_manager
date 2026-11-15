@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Edit3, Upload, RefreshCw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../ui/Button";
@@ -8,6 +8,7 @@ import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
 import { useTemplates } from "../../hooks/useTemplates";
 import { useTemplateStore } from "../../store/templateStore";
 import { useMessageStore } from "../../store/messageStore";
+import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore, getServerNow } from "../../store/globalStore";
 import { downloadJson, parseImportedJson, toQueryData } from "../../utils/exportImport";
 import api from "../../api/client";
@@ -25,6 +26,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [filter, setFilter] = useState<"all" | "tracked" | "templates">("all");
   const [templateName, setTemplateName] = useState("");
   const [trackOnSave, setTrackOnSave] = useState(false);
+  const [addToBotCommand, setAddToBotCommand] = useState(false);
   const [expiryEnabled, setExpiryEnabled] = useState(true);
   const [scheduledExpiry, setScheduledExpiry] = useState<string | null>(
     () => new Date(getServerNow().getTime() + 14 * 86_400_000).toISOString(),
@@ -35,7 +37,26 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [editExpiresAt, setEditExpiresAt] = useState<string | null>(null);
   const [trackedList, setTrackedList] = useState<any[]>([]);
   const [loadingTracked, setLoadingTracked] = useState(false);
+  const currentUser = useGlobalStore((state) => state.currentUser);
   const currentName = useTemplateStore((state) => state.currentName);
+  const currentTemplateId = useTemplateStore((state) => state.currentId);
+  const editorData = useMessageStore((state) => state.data) as any;
+  const editorMessages = useMessageStore((state) => state.messages);
+  const editorTargets = useMessageStore((state) => state.targets);
+  const editorMode = useMessageStore((state) => state.mode);
+  const editorFlows = useActionStore((state) => state.flows);
+  const [savedTemplateBaseline, setSavedTemplateBaseline] = useState<{ data: unknown; actions: unknown[] } | null>(null);
+  const currentDocument = useMemo(() => {
+    const messagesToSave = editorMessages && editorMessages.length > 0 ? editorMessages : [editorData];
+    return toQueryData(messagesToSave, editorTargets, editorMode);
+  }, [editorData, editorMessages, editorTargets, editorMode]);
+  const currentActions = useMemo(() => useActionStore.getState().toList(), [editorFlows]);
+  const currentTemplateModified = Boolean(savedTemplateBaseline && (
+    JSON.stringify(savedTemplateBaseline.data) !== JSON.stringify(currentDocument) ||
+    JSON.stringify(savedTemplateBaseline.actions) !== JSON.stringify(currentActions)
+  ));
+  const getEditorPayload = useMessageStore((state) => state.getPayload);
+  const openBotModal = useGlobalStore((state) => state.openBotModal);
   const setCurrentName = useTemplateStore((state) => state.setCurrentName);
   const remove = useTemplateStore((state) => state.remove);
   const { showToast, openConfirm } = useGlobalStore();
@@ -58,6 +79,25 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     if (open) void refreshTracked();
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !currentTemplateId) {
+      setSavedTemplateBaseline(null);
+      return;
+    }
+    let cancelled = false;
+    void api.templates.get(currentTemplateId).then(({ template }) => {
+      if (!cancelled) {
+        setSavedTemplateBaseline({
+          data: template.data,
+          actions: template.actions ?? [],
+        });
+      }
+    }).catch(() => {
+      if (!cancelled) setSavedTemplateBaseline(null);
+    });
+    return () => { cancelled = true; };
+  }, [open, currentTemplateId]);
+
   if (!open) return null;
 
   const resolveNewExpiry = (): string | null => {
@@ -76,9 +116,23 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       const expiresAt = resolveNewExpiry();
       if (templateName.trim()) setCurrentName(templateName.trim());
       await saveCurrent(expiresAt, trackOnSave);
+      const savedName = templateName.trim() || currentName.trim() || "Untitled Backup";
       setTemplateName("");
       await refresh();
-      showToast("Backup saved successfully", "success");
+      if (addToBotCommand) {
+        if (!currentUser?.isAdmin) throw new Error("Head Admin access is required to add a bot command.");
+        const response = await api.templates.list(savedName);
+        const savedTemplate = response.templates.find((item) => item.name.toLowerCase() === savedName.toLowerCase());
+        if (!savedTemplate) throw new Error("Backup saved, but its template could not be found for command setup.");
+        await api.executors.upsert({
+          id: `template_${savedTemplate.id}`,
+          title: savedTemplate.name,
+          enabled: true,
+          template_id: savedTemplate.id,
+        });
+      }
+      setAddToBotCommand(false);
+      showToast(addToBotCommand ? "Backup saved and added to /exploit" : "Backup saved successfully", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to save backup", "error");
     }
@@ -137,6 +191,94 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       showToast("Backup settings updated", "success");
     } catch (error: any) {
       showToast(error?.message || "Failed to update backup", "error");
+    }
+  };
+
+  const handleOverwriteBackup = async (item: any) => {
+    try {
+      await saveCurrent(item.expiresAt ?? null, item.isTracked);
+      await refresh();
+      showToast("Existing backup overwritten with the current editor content", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to overwrite backup", "error");
+    }
+  };
+
+  const handleEditTrackedMessage = (item: any) => {
+    try {
+      const rawPayload = item.source?.rawPayload;
+      if (typeof rawPayload !== "string") throw new Error("This tracked message has no saved source payload.");
+      const payload = JSON.parse(rawPayload);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("The saved tracked payload is invalid.");
+      }
+      const store = useMessageStore.getState();
+      store.load({
+        data: {
+          ...payload,
+          link_mode: "edit",
+          edit_channel_id: item.source.channelId,
+          edit_message_id: item.source.messageId,
+        },
+        mode: store.mode,
+      });
+      onClose();
+      openBotModal("edit");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to load tracked message", "error");
+    }
+  };
+
+  const handleOverwriteTrackedMessage = async (item: any) => {
+    try {
+      const payload = useMessageStore.getState().getPayload();
+      const flows = useActionStore.getState().toRegistrations();
+      await api.send({
+        mode: "bot",
+        channelId: item.source.channelId,
+        editMessageId: item.source.messageId,
+        payload,
+        flows,
+        track: true,
+        trackName: item.name,
+        ...(item.source.templateId ? { templateId: item.source.templateId } : {}),
+        ...(item.source.exploitName ? { exploitName: item.source.exploitName } : {}),
+        ...(item.expiresAt ? { expiresAt: item.expiresAt } : {}),
+      });
+      await refreshTracked();
+      showToast("Existing bot message edited and tracking refreshed", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to edit tracked bot message", "error");
+    }
+  };
+
+  const handleAddToBotCommand = async (item: any) => {
+    if (!currentUser?.isAdmin) {
+      showToast("Head Admin access is required to configure /exploit commands", "error");
+      return;
+    }
+    try {
+      const title = typeof item.source?.exploitName === "string" && item.source.exploitName.trim()
+        ? item.source.exploitName.trim()
+        : item.name;
+      const rawPayload = item.kind === "tracked" ? item.source?.rawPayload : null;
+      if (item.kind === "tracked" && !item.source?.templateId && !rawPayload) {
+        showToast("This tracked message has no saved payload to use as a command template", "error");
+        return;
+      }
+      await api.executors.upsert({
+        id: item.source?.templateId
+          ? `template_${item.source.templateId}`
+          : item.kind === "template"
+            ? `template_${item.id}`
+            : `tracked_${item.id}`,
+        title,
+        enabled: true,
+        ...(item.kind === "template" ? { template_id: item.id } : { custom_payload: rawPayload }),
+      });
+      showToast("Added to /exploit. Messages sent through the command are tracked automatically.", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to add bot command", "error");
     }
   };
 
@@ -264,6 +406,14 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             label="Track Message"
             className="text-xs"
           />
+          {currentUser?.isAdmin && (
+            <Checkbox
+              checked={addToBotCommand}
+              onChange={setAddToBotCommand}
+              label="Add to /exploit command"
+              className="text-xs"
+            />
+          )}
           <Checkbox
             checked={expiryEnabled}
             onChange={setExpiryEnabled}
@@ -344,9 +494,39 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                {item.kind === "template" && currentTemplateId === item.id && currentTemplateModified && (
+                  <Button size="sm" variant="primary" onClick={() => void handleOverwriteBackup(item)}>
+                    Overwrite Backup
+                  </Button>
+                )}
+                {item.kind === "tracked" && item.source.rawPayload && (
+                  <Button size="sm" variant="secondary" onClick={() => handleEditTrackedMessage(item)}>
+                    Edit Bot Message
+                  </Button>
+                )}
+                {item.kind === "tracked" && editorData?.link_mode === "edit" &&
+                  editorData?.edit_channel_id === item.source.channelId &&
+                  editorData?.edit_message_id === item.source.messageId &&
+                  (() => {
+                    try {
+                      return Boolean(item.source.rawPayload) &&
+                        JSON.stringify(getEditorPayload()) !== JSON.stringify(JSON.parse(item.source.rawPayload));
+                    } catch {
+                      return false;
+                    }
+                  })() && (
+                    <Button size="sm" variant="primary" onClick={() => void handleOverwriteTrackedMessage(item)}>
+                      Overwrite Tracked Message
+                    </Button>
+                  )}
                 {item.kind === "template" && (
                   <Button size="sm" variant="ghost" onClick={() => handleLoad(item.id)}>
                     Load
+                  </Button>
+                )}
+                {currentUser?.isAdmin && (
+                  <Button size="sm" variant="secondary" onClick={() => void handleAddToBotCommand(item)}>
+                    Add to Bot Commands
                   </Button>
                 )}
                 <button

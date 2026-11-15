@@ -165,7 +165,7 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
 
 let pollingTimer: NodeJS.Timeout | null = null;
 
-export const startMessageTrackerPolling = (intervalMs = 3 * 60_000): void => {
+export const startMessageTrackerPolling = (intervalMs = 30_000): void => {
   if (pollingTimer) return;
   pollingTimer = setInterval(() => {
     syncTrackedMessages().catch((err) => {

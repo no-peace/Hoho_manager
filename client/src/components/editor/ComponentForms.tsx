@@ -79,7 +79,7 @@ const MediaGalleryForm = ({ component, update }: ComponentFormProps) => {
   return (
     <>
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+        <span className="text-sm font-bold uppercase tracking-wider text-[#949ba4]">
           Gallery items
         </span>
         <Button
@@ -289,7 +289,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
       />
 
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+        <span className="text-sm font-bold uppercase tracking-wider text-[#949ba4]">
           Options
         </span>
         <Button

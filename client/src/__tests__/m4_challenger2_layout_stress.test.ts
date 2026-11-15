@@ -242,9 +242,9 @@ describe("Challenge OF-01: SearchableDiscordSelect Viewport Math & Containment",
     const source = fs.readFileSync(filePath, "utf-8");
 
     it("contains exact clamping formula preventing negative left and right overflow", () => {
-      expect(source).toContain("const dropdownWidth = Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16)");
+      expect(source).toContain("const dropdownWidth = isMobile ? Math.max(0, window.innerWidth - 24) : Math.min(Math.max(dropdownRect.width, 220), window.innerWidth - 16)");
       expect(source).toContain("const maxLeft = Math.max(8, window.innerWidth - dropdownWidth - 8)");
-      expect(source).toContain("const dropdownLeft = Math.max(8, Math.min(dropdownRect.left, maxLeft))");
+      expect(source).toContain("const dropdownLeft = isMobile ? 12 : Math.max(8, Math.min(dropdownRect.left, maxLeft))");
     });
 
     it("contains vertical space checking logic with 260px boundary", () => {
@@ -765,7 +765,7 @@ describe("Responsive Header layout containment", () => {
   });
 
   it("keeps the server selector at a usable compact width on phones and expands it at larger breakpoints", () => {
-    expect(source).toContain("w-9 sm:w-28 lg:w-48");
+    expect(source).toContain("w-[104px] sm:w-32 lg:w-48");
     expect(source).toContain("shrink-0");
   });
 
