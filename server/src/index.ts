@@ -19,6 +19,9 @@ const start = async (): Promise<void> => {
   if (env.isProd && process.env.SESSION_SECRET?.trim() && env.sessionSecret.length < 32) {
     throw new Error("CRITICAL: SESSION_SECRET must contain at least 32 characters in production.");
   }
+  if (env.isProd && (!env.encryptionKey || env.encryptionKey.length < 32)) {
+    throw new Error("CRITICAL: Set a dedicated ENCRYPTION_KEY with at least 32 characters before starting in production.");
+  }
 
   await initializeDatabase();
   log.info("Database ready");
