@@ -13,8 +13,11 @@ const start = async (): Promise<void> => {
 
   for (const warning of validateEnv()) log.warn(warning);
 
-  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key")) {
-    throw new Error("CRITICAL: Set a unique ADMIN_API_KEY before starting in production.");
+  if (env.isProd && (!env.adminApiKey || env.adminApiKey === "dev-admin-key" || env.adminApiKey.length < 32)) {
+    throw new Error("CRITICAL: Set a unique ADMIN_API_KEY with at least 32 characters before starting in production.");
+  }
+  if (env.isProd && process.env.SESSION_SECRET?.trim() && env.sessionSecret.length < 32) {
+    throw new Error("CRITICAL: SESSION_SECRET must contain at least 32 characters in production.");
   }
 
   await initializeDatabase();
