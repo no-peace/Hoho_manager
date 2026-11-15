@@ -108,6 +108,13 @@ router.post(
     }
     const profileId: number | null = null;
     const staffCtx = req.staffContext;
+    const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
+    const requestedAuthorId =
+      typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
+        ? req.body.authorUserId
+        : "";
+    const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? requestedAuthorId;
+    const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
     if (mode === "bot" && profileId === null) {
@@ -161,13 +168,6 @@ router.post(
       }
 
       const unixNow = Math.floor(Date.now() / 1000);
-      const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
-      const requestedAuthorId =
-        typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
-          ? req.body.authorUserId
-          : "";
-      const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? requestedAuthorId;
-      const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
       const targetChannelId = typeof channelId === "string" ? channelId : "";
       // Use the destination guild's member nickname for {user.name}.
       const hasGuildScopedUserPlaceholder =
