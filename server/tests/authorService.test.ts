@@ -172,6 +172,7 @@ describe("authorService", () => {
         );
 
         expect(getGuildMember).toHaveBeenCalledWith("777777777777777777", USER_A, "test-bot-token");
+        expect(await getGuildMember.mock.results[0]?.value).toEqual({ nick: "[LEGACY] peace" });
         expect((result.payload as any).content).toBe("LEGACY");
     });
 
