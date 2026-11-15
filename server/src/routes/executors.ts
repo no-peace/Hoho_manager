@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireHeadAdmin } from "../middleware/auth.js";
+import { attachUser, requireHeadAdmin, requireUser } from "../middleware/auth.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -8,6 +8,8 @@ import { validateMessagePayload } from "../utils/validation.js";
 const router = Router();
 const EXECUTOR_ID_REGEX = /^[a-z0-9_-]{2,64}$/;
 const DISCORD_SNOWFLAKE_REGEX = /^\d{17,20}$/;
+
+router.use(attachUser);
 
 router.get(
   "/",
@@ -20,6 +22,7 @@ router.get(
         return res.json({ executors: list });
       });
     }
+    requireUser(req);
     const list = await customExecutorRepository.list(true);
     return res.json({ executors: list });
   }),
