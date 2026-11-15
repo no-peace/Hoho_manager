@@ -1,38 +1,43 @@
-# Current implementation status — V8 (2026-11-14)
+# Current implementation status — V8 follow-up (2026-11-16)
 
-**Working branch:** `feat/hoho-manager-weao-workspace-v8`  
-**Latest implementation commit:** `bf490f197c60a5b89d99280a2bc13894f16af1cb`  
-**Base inspected:** `6f9ff254e94b1235eb6ca3c672be725d0d53f613`
+**Working branch:** `feat/v8-performance-and-variable-fixes`  
+**Base branch:** `feat/hoho-manager-weao-workspace-v8`  
+**Code implementation commit:** `d8765efc05898841588ea3d5f9ca7202253ba565`  
+**Draft PR:** [#42](https://github.com/no-peace/Hoho_manager/pull/42)  
+**Base inspected:** `8ea473f782c2196b6cdbf2bd8d0d8fe9457174e9`
 
-## Implemented on the working branch
+## What was already present in the V8 base
 
-- Removed ID-scoped avatar aliases; only `{user.<id>.avatar}` remains. Normal `{user.avatar}` is untouched.
-- Preserved Discord `primary_guild` and resolve the clan tag only when `identity_enabled === true` and a tag exists.
-- `{user.name}` now uses the selected/destination server nickname, falling back to username. `{user.displayname}` uses Discord global display name, falling back to username. The live preview now requests selected-server nickname data for the current user and ID-scoped users.
-- Reworked the studio into an Editor/Preview workspace with a dedicated wider desktop Inspector; the mobile Inspector remains a bottom sheet. Increased Inspector form sizing.
-- Reworked the mobile server selector into a bottom sheet with viewport clamping, search, Escape, and outside-click dismissal.
-- Added WEAO changelog retrieval using the existing WEAO request infrastructure, User-Agent, cache, timeout, and fallback handling. Supports exploit name or tracker ID.
-- Added changelog variable selectors: `{exploit.Solara.changelogs}`, `{exploit.Solara.changelogs[0:3]}`, `{exploit.Solara.changelogs[2]}`, `{exploit.Solara.changelogs[-3:]}`, and `{exploit.Solara.changelogs.compare}`. Comparison is against a stable in-process baseline captured on first fetch, so new/removed entries remain visible until the server restarts.
-- Added a preview API and live-preview rendering for changelog variables.
-- Removed generated/default exploit status messages. The bot autocomplete now lists only configured saved templates/custom command payloads; an unconfigured direct invocation is silently deleted.
-- Added an `Add to /exploit command` option when saving a backup, plus an action on existing backups/tracked messages. Command-dispatched messages are tracked through the existing send/tracker pipeline.
-- Added change detection and overwrite actions for the loaded backup and loaded tracked bot message. Tracked messages can be opened in edit mode; the overwrite action edits the existing Discord message.
-- Updated variable docs: removed the Action column, made the variable tag itself the copy target, and documented changelog selectors/comparison.
-- Increased tracked-message sync cadence to 30 seconds and reduced WEAO exploit cache TTL to 30 seconds.
-- Deferred the decorative login canvas animation by 1.5 seconds. Existing branch source already had parallel health/session startup checks, session-hint auth rendering, lazy NotFoundPage/action-store loading, automated-browser canvas suppression, and Lighthouse gatherer-error reporting; those were verified rather than duplicated.
+The supplied V8 plans were checked against the current feature branch before editing. These items were already implemented in the base and were not duplicated:
 
-## External checks performed
+- Parallel startup health/session requests and session-hint auth rendering.
+- Lazy loading for the not-found page and action-store runtime.
+- Deferred login canvas animation, automated-browser suppression, and constrained-device/reduced-motion handling.
+- Lighthouse gatherer-error reporting in `docs/playwright/analyze-lighthouse.mjs`.
+- The responsive mobile server selector, including its mobile bottom-sheet presentation and viewport-aware positioning.
+- WEAO changelog retrieval, formatting/selectors, preview support, and searchable variable documentation.
 
-- WEAO API was opened with Playwright. `Delta` and `Wave` currently returned empty changelogs. `Solara` returned 121 entries and confirmed the actual item fields include `version`, `changelog`, `timestamp`, and `date`; the formatter supports these fields.
-- Production `/docs` was opened with Playwright for baseline inspection. This was the currently deployed main build, not the working branch. The specified Discord bot-log channel was opened read-only: recent visible entries were staff-permission audit logs (Nov 11 and Nov 13); older scan/cancel logs were from Apr 14. No Discord message was sent.
-- No Discord message was sent. Any future Discord send/test remains restricted to the bot-log channel specified by the user.
+These are source-level findings only. No new Lighthouse score or full browser-audit result is claimed.
 
-## Verification status — not yet complete
+## Follow-up changes in PR #42
 
-GitHub Actions runs were triggered for the working branch, but all three matrix jobs failed before runner allocation: each job reported `runner_id: 0`, an empty runner name, and no steps. The workflow logs endpoint returned 404 because no runner logs were produced. This is an infrastructure/runner failure, **not evidence that the code passed or failed compilation**. No green CI result is available yet.
+- ID-based `{user.<id>.clantag}` uses Discord `primary_guild` only when `identity_enabled === true`; it does not require membership in the currently selected server.
+- The docs now distinguish interaction-user variables from ID-based account lookups. Existing legacy nickname-tag parsing remains on interaction-user variables.
+- WEAO changelog placeholders can resolve by tracker ID even when the tracker ID is not in the exploit catalogue.
+- Changelog comparisons now compare each successful fetch with the immediately previous successful snapshot, rather than retaining the first snapshot for the process lifetime.
+- Added regression tests for primary-guild lookup without selected-server membership, tracker-ID changelog resolution, and incremental snapshot comparison.
 
-The branch has not been merged into `main` and has not been deployed to Render. Draft PR: https://github.com/no-peace/Hoho_manager/pull/40. Production Playwright, Render deployment/health checks, and the final responsive/functional audit remain pending. Do not describe this work as verified or deployed until those checks pass.
+## Verification status
 
+- `npm test` with a test-only `DISCORD_BOT_TOKEN`: **passed, 481 tests** (shared 42, server 222, client 190, bot 27).
+- `npm run typecheck`: **passed** across all workspaces.
+- `npm run build`: **passed** across shared, client, server, and bot workspaces.
+- Playwright and Lighthouse have **not** been run for this follow-up; they require separate authorization under the project workflow.
+- GitHub Actions were not used. Do not infer a CI result from the local validation above.
+
+## Merge and deployment status
+
+PR #42 is a draft targeting `feat/hoho-manager-weao-workspace-v8`. It is separate from security PR #41. It has not been merged into `main`; Render production has not been updated. No 99+ Lighthouse score is claimed for this follow-up.
 ---
 
 # HoHo Manager — Gemini Handoff & Implementation Report

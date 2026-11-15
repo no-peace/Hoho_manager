@@ -34,7 +34,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
   { tag: "{user.<id>.roles}", desc: "Roles held by the specified Discord user in the target server", example: "@Member @VIP", category: "user" },
-  { tag: "{user.<id>.clantag}", desc: "Clan tag for the specified Discord user", example: "HOHO", category: "user" },
+  { tag: "{user.<id>.clantag}", desc: "Official primary-guild tag when that identity is enabled. Does not require selected-server membership", example: "HOHO", category: "user" },
   { tag: "{user.<id>.created}", desc: "Specified user's account creation date", example: "<t:1571875200:d>", category: "user" },
   { tag: "{user.<id>.created.relative}", desc: "Specified user's account age", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.<id>.joined}", desc: "Specified user's server join time", example: "<t:1655251200:R>", category: "user" },
@@ -93,6 +93,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{exploit.Delta.websitelink}", desc: "Official website URL", example: "https://deltaexploits.gg", category: "exploit" },
   { tag: "{exploit.Delta.discordlink}", desc: "Official Discord invite link", example: "https://discord.gg/...", category: "exploit" },
   { tag: "{exploit.Delta.changelogs}", desc: "Formatted WEAO changelog entries for the named exploit", example: "• New version released — Fixed injection", category: "exploit" },
+  { tag: "{exploit.<trackerId>.changelogs}", desc: "Formatted WEAO changelog entries fetched by tracker ID", example: "• Release 1 — Fixed injection", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[0:3]}", desc: "Only the first three changelog entries (zero-based slice)", example: "• Entry 1\\n• Entry 2\\n• Entry 3", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[2]}", desc: "Only the third changelog entry (zero-based index)", example: "• Entry 3", category: "exploit" },
   { tag: "{exploit.Solara.changelogs[-3:]}", desc: "Only the latest three changelog entries", example: "• Latest entry 1\\n• Latest entry 2\\n• Latest entry 3", category: "exploit" },
@@ -100,7 +101,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{exploit.Delta.purchaselink}", desc: "Official purchase URL", example: "https://...", category: "exploit" },
 
   // Dynamic Author Auto-Resolution
-  { tag: "{user.<id>.name}", desc: "Fetches and injects any Discord user's global name / username by ID", example: "Nexus42", category: "author" },
+  { tag: "{user.<id>.name}", desc: "Server nickname when the user belongs to the selected server; otherwise their account username", example: "Nexus42", category: "author" },
   { tag: "{user.<id>.avatar}", desc: "Fetches user's current avatar CDN link (auto-updates when they change pfp)", example: "https://cdn.discordapp.com/avatars/...", category: "author" },
   { tag: "{user.<id>.url}", desc: "Direct profile link to the user (https://discord.com/users/<id>)", example: "https://discord.com/users/708504312862474282", category: "author" },
   { tag: "{user.<id>.mention}", desc: "Pings/mentions the specific user by ID (<@id>)", example: "<@708504312862474282>", category: "author" },
@@ -149,6 +150,7 @@ export const DocsPage = () => {
           <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
             Use <code className="text-[#949cf7] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
+            Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Roles and join dates require selected-server membership; primary-guild clan tags do not. Interaction-user clan tags also retain legacy nickname parsing.
           </p>
         </div>
 

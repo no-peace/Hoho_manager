@@ -148,6 +148,15 @@ describe("authorService", () => {
         expect((result.payload as any).content).toBe(`{user.${USER_A}.clantag}`);
     });
 
+    it("resolves an enabled primary guild tag without selected-server membership", async () => {
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.clantag}`,
+        } as any);
+
+        expect((result.payload as any).content).toBe("HOHO");
+        expect(getGuildMember).not.toHaveBeenCalled();
+    });
+
     it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
             user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,

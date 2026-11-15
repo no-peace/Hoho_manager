@@ -114,9 +114,9 @@ const snowflakeToUnix = (id: string): number =>
   Math.floor(Number((BigInt(id) >> 22n) + 1420070400000n) / 1000);
 
 const getClanTag = (user: DiscordMemberSummary): string => {
-  const primaryGuild = (user as any).primary_guild;
+  const primaryGuild = user.primary_guild;
   if (primaryGuild?.identity_enabled !== true) return "";
-  const tag = primaryGuild?.tag;
+  const tag = primaryGuild.tag;
   return typeof tag === "string" && tag.trim() ? tag.trim() : "";
 };
 
