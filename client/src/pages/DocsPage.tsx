@@ -34,7 +34,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
   { tag: "{user.<id>.roles}", desc: "Roles held by the specified Discord user in the target server", example: "@Member @VIP", category: "user" },
-  { tag: "{user.<id>.clantag}", desc: "Official primary-guild tag when enabled; otherwise a visible legacy nickname/username tag. Does not require selected-server membership", example: "HOHO", category: "user" },
+  { tag: "{user.<id>.clantag}", desc: "Official primary-guild tag when that identity is enabled. Does not require selected-server membership", example: "HOHO", category: "user" },
   { tag: "{user.<id>.created}", desc: "Specified user's account creation date", example: "<t:1571875200:d>", category: "user" },
   { tag: "{user.<id>.created.relative}", desc: "Specified user's account age", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.<id>.joined}", desc: "Specified user's server join time", example: "<t:1655251200:R>", category: "user" },
@@ -150,7 +150,7 @@ export const DocsPage = () => {
           <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
             Use <code className="text-[#949cf7] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
-            Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Roles and join dates require selected-server membership; primary-guild clan tags do not.
+            Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Roles and join dates require selected-server membership; primary-guild clan tags do not. Interaction-user clan tags also retain legacy nickname parsing.
           </p>
         </div>
 
