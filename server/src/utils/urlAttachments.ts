@@ -1,4 +1,6 @@
 import dns from "node:dns/promises";
+import http from "node:http";
+import https from "node:https";
 import net from "node:net";
 import type { DiscordAttachmentFile } from "../services/discordService.js";
 import { ApiError } from "./errors.js";
@@ -26,15 +28,24 @@ const IPV4_BLOCKED_CIDRS = [
   "169.254.0.0/16",
   "172.16.0.0/12",
   "192.0.0.0/24",
+  "192.0.2.0/24",
+  "192.88.99.0/24",
   "192.168.0.0/16",
   "198.18.0.0/15",
+  "198.51.100.0/24",
+  "203.0.113.0/24",
   "224.0.0.0/4",
   "240.0.0.0/4",
 ];
 
 const IPV6_BLOCKED_CIDRS = [
-  "::/128",
+  "::/96",
   "::1/128",
+  "64:ff9b::/96",
+  "64:ff9b:1::/48",
+  "2001::/23",
+  "2002::/16",
+  "2001:db8::/32",
   "fc00::/7",
   "fe80::/10",
   "ff00::/8",
@@ -102,7 +113,13 @@ const isBlockedIp = (rawIp: string): boolean => {
   return true;
 };
 
-const assertSafeRemoteUrl = async (rawUrl: string): Promise<URL> => {
+interface SafeRemoteTarget {
+  url: URL;
+  address: string;
+  family: 4 | 6;
+}
+
+const assertSafeRemoteUrl = async (rawUrl: string): Promise<SafeRemoteTarget> => {
   let parsed: URL;
   try {
     parsed = new URL(rawUrl);
@@ -126,7 +143,7 @@ const assertSafeRemoteUrl = async (rawUrl: string): Promise<URL> => {
     if (isBlockedIp(hostname)) {
       throw ApiError.badRequest(`Blocked internal or private IP address: ${hostname}`);
     }
-    return parsed;
+    return { url: parsed, address: hostname, family: net.isIP(hostname) as 4 | 6 };
   }
 
   const records = await dns.lookup(hostname, { all: true, verbatim: true });
@@ -139,8 +156,42 @@ const assertSafeRemoteUrl = async (rawUrl: string): Promise<URL> => {
     }
   }
 
-  return parsed;
+  const selected = records[0];
+  return { url: parsed, address: selected.address, family: selected.family as 4 | 6 };
 };
+
+/**
+ * Connect only to the address validated above. This avoids a second DNS lookup
+ * between validation and the TCP connection (DNS-rebinding SSRF).
+ */
+const requestPinned = (target: SafeRemoteTarget): Promise<http.IncomingMessage> =>
+  new Promise((resolve, reject) => {
+    const { url, address, family } = target;
+    const hostname = url.hostname.replace(/^\\[|\\]$/g, "").toLowerCase();
+    const pinnedLookup = (
+      _requestedHostname: string,
+      _options: unknown,
+      callback: (...args: any[]) => void,
+    ): void => callback(null, address, family);
+    const options = {
+      protocol: url.protocol,
+      hostname,
+      port: url.port || undefined,
+      path: `${url.pathname}${url.search}`,
+      method: "GET",
+      family,
+      agent: false,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      lookup: pinnedLookup,
+      ...(url.protocol === "https:" && !net.isIP(hostname) ? { servername: hostname } : {}),
+    } as https.RequestOptions;
+
+    const request = url.protocol === "https:"
+      ? https.request(options, resolve)
+      : http.request(options, resolve);
+    request.on("error", reject);
+    request.end();
+  });
 
 /** Strip path separators and characters Discord rejects in filenames. */
 const sanitizeFilename = (value: string): string => {
@@ -183,7 +234,8 @@ export const fetchUrlAttachments = async (
       throw ApiError.badRequest("Attachment URLs must start with http:// or https://");
     }
 
-    const parsed = await assertSafeRemoteUrl(rawUrl);
+    const safeTarget = await assertSafeRemoteUrl(rawUrl);
+    const parsed = safeTarget.url;
 
     const rawName =
       typeof input?.filename === "string" && input.filename.trim() !== ""
@@ -193,84 +245,67 @@ export const fetchUrlAttachments = async (
     const filename = isSpoiler && !/^SPOILER_/i.test(rawName) ? `SPOILER_${rawName}` : rawName;
     const safeFilename = sanitizeFilename(filename);
 
-    let response: Response;
+    let response: http.IncomingMessage;
     try {
-      response = await fetch(parsed, {
-        redirect: "error",
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
+      response = await requestPinned(safeTarget);
     } catch (err) {
       throw ApiError.badRequest(
         `Could not download attachment "${safeFilename}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
 
-    if (!response.ok) {
+    const status = response.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      response.resume();
       throw ApiError.badRequest(
-        `Could not download attachment "${safeFilename}": HTTP ${response.status}`,
+        `Could not download attachment "${safeFilename}": HTTP ${status}`,
       );
     }
 
-    const contentLength = Number(response.headers.get("content-length") ?? "0");
-    if (Number.isFinite(contentLength) && contentLength > MAX_FILE_SIZE) {
+    const contentLengthHeader = response.headers["content-length"];
+    const contentLength = Number(
+      Array.isArray(contentLengthHeader) ? contentLengthHeader[0] : contentLengthHeader ?? "0",
+    );
+    const remainingTotal = MAX_TOTAL_URL_ATTACHMENT_SIZE - totalReceived;
+    const maxAllowed = Math.min(MAX_FILE_SIZE, remainingTotal);
+    if (Number.isFinite(contentLength) && contentLength > maxAllowed) {
+      response.destroy();
       throw ApiError.badRequest(
-        `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
+        contentLength > MAX_FILE_SIZE
+          ? `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`
+          : "Combined URL attachments exceed maximum allowed size of 50 MB",
       );
     }
-    if (
-      Number.isFinite(contentLength) &&
-      contentLength > 0 &&
-      totalReceived + contentLength > MAX_TOTAL_URL_ATTACHMENT_SIZE
-    ) {
-      throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
-    }
 
-    let buffer: ArrayBuffer;
-    if (response.body && typeof response.body.getReader === "function") {
-      const reader = response.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let received = 0;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          received += value.byteLength;
-          if (received > MAX_FILE_SIZE) {
-            await reader.cancel().catch(() => {});
-            throw ApiError.badRequest(
-              `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
-            );
-          }
-          if (totalReceived + received > MAX_TOTAL_URL_ATTACHMENT_SIZE) {
-            await reader.cancel().catch(() => {});
-            throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
-          }
-          chunks.push(value);
+    const chunks: Buffer[] = [];
+    let received = 0;
+    try {
+      for await (const chunk of response) {
+        const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        received += bytes.byteLength;
+        if (received > maxAllowed) {
+          response.destroy();
+          throw ApiError.badRequest(
+            received > MAX_FILE_SIZE
+              ? `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`
+              : "Combined URL attachments exceed maximum allowed size of 50 MB",
+          );
         }
+        chunks.push(bytes);
       }
-      const merged = new Uint8Array(received);
-      let offset = 0;
-      for (const chunk of chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.byteLength;
-      }
-      buffer = merged.buffer;
-      totalReceived += received;
-    } else {
-      buffer = await response.arrayBuffer();
-      if (buffer.byteLength > MAX_FILE_SIZE) {
-        throw ApiError.badRequest(
-          `Attachment "${safeFilename}" exceeds maximum allowed size of 25 MB`,
-        );
-      }
-      if (totalReceived + buffer.byteLength > MAX_TOTAL_URL_ATTACHMENT_SIZE) {
-        throw ApiError.badRequest("Combined URL attachments exceed maximum allowed size of 50 MB");
-      }
-      totalReceived += buffer.byteLength;
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      throw ApiError.badRequest(
+        `Could not read attachment "${safeFilename}": ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
+    const buffer = Buffer.concat(chunks, received);
+    totalReceived += received;
+    const contentTypeHeader = response.headers["content-type"];
     const type =
-      response.headers.get("content-type")?.split(";")[0]?.trim() || "application/octet-stream";
+      (Array.isArray(contentTypeHeader) ? contentTypeHeader[0] : contentTypeHeader)?.split(";")[0]?.trim() ||
+      "application/octet-stream";
     resolved.push({
       file: new Blob([buffer], { type }),
       filename: safeFilename,
