@@ -167,7 +167,7 @@ const assertSafeRemoteUrl = async (rawUrl: string): Promise<SafeRemoteTarget> =>
 const requestPinned = (target: SafeRemoteTarget): Promise<http.IncomingMessage> =>
   new Promise((resolve, reject) => {
     const { url, address, family } = target;
-    const hostname = url.hostname.replace(/^\\[|\\]$/g, "").toLowerCase();
+    const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
     const pinnedLookup = (
       _requestedHostname: string,
       _options: unknown,
@@ -256,7 +256,7 @@ export const fetchUrlAttachments = async (
 
     const status = response.statusCode ?? 0;
     if (status < 200 || status >= 300) {
-      response.resume();
+      response.destroy();
       throw ApiError.badRequest(
         `Could not download attachment "${safeFilename}": HTTP ${status}`,
       );
