@@ -156,10 +156,9 @@ export const validateEnv = (): string[] => {
       "SESSION_SECRET is not set. Sessions currently fall back to ADMIN_API_KEY; configure a separate high-entropy secret for key separation.",
     );
   }
-  if (env.isProd && !env.encryptionKey) {
+  if (env.isProd && (!env.encryptionKey || env.encryptionKey.length < 32)) {
     warnings.push(
-      "ENCRYPTION_KEY is not set. Stored bot tokens are encrypted with a key derived " +
-        "from ADMIN_API_KEY; set a dedicated key before deploying.",
+      "ENCRYPTION_KEY is missing or too short. Production startup requires a dedicated key of at least 32 characters.",
     );
   }
 
