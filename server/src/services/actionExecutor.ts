@@ -52,12 +52,16 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   const nickname = typeof member?.nick === "string" && member.nick.trim() ? member.nick.trim() : username;
   const displayname = user?.global_name ?? username;
   const primaryGuild = (user as any)?.primary_guild;
-  const clantag =
-    primaryGuild?.identity_enabled === true &&
-    typeof primaryGuild?.tag === "string" &&
-    primaryGuild.tag.trim()
-      ? primaryGuild.tag.trim()
-      : "";
+  const officialClanTag =
+    (typeof member?.clan?.tag === "string" && member.clan.tag.trim()) ||
+    (primaryGuild?.identity_enabled === true &&
+      typeof primaryGuild?.tag === "string" &&
+      primaryGuild.tag.trim()) ||
+    "";
+  const parsedClanTag = [nickname, username].map((value) =>
+    value.match(/(?:\[([^\[\]]{1,16})\]|\(([^()]{1,16})\)|\{([^{}]{1,16})\})/),
+  ).map((match) => match?.slice(1).find(Boolean)?.trim() || "").find(Boolean) || "";
+  const clantag = officialClanTag || parsedClanTag;
 
   const unixNow = Math.floor(Date.now() / 1000);
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
