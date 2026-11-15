@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { InteractionResponseType } from "@dmb/shared";
+import { InteractionResponseType, InteractionType } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { requireAdminKey } from "../middleware/auth.js";
 import { requireInteraction, verifyDiscordSignature } from "../middleware/verifyDiscordSignature.js";
@@ -79,10 +79,21 @@ router.post(
 const isRelayable = (value: unknown): value is DiscordInteraction => {
   if (value === null || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
+  const data = record.data;
+  const customId =
+    data !== null && typeof data === "object"
+      ? (data as Record<string, unknown>).custom_id
+      : undefined;
+
   return (
-    typeof record.id === "string" &&
+    typeof record.id === "string" && /^\\d{17,20}$/.test(record.id) &&
     typeof record.token === "string" &&
-    typeof record.application_id === "string"
+    record.token.length > 0 && record.token.length <= 512 &&
+    /^[A-Za-z0-9._-]+$/.test(record.token) &&
+    typeof record.application_id === "string" && /^\\d{17,20}$/.test(record.application_id) &&
+    (!env.discord.applicationId || record.application_id === env.discord.applicationId) &&
+    (record.type === InteractionType.MessageComponent || record.type === InteractionType.ModalSubmit) &&
+    typeof customId === "string" && customId.length > 0 && customId.length <= 100
   );
 };
 
