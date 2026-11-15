@@ -148,6 +148,32 @@ describe("authorService", () => {
         expect((result.payload as any).content).toBe(`{user.${USER_A}.clantag}`);
     });
 
+    it("resolves an enabled primary guild tag without selected-server membership", async () => {
+        const result = await resolveAuthorPlaceholders({
+            content: `{user.${USER_A}.clantag}`,
+        } as any);
+
+        expect((result.payload as any).content).toBe("HOHO");
+        expect(getGuildMember).not.toHaveBeenCalled();
+    });
+
+    it("falls back to a visible legacy nickname tag when primary guild identity is unavailable", async () => {
+        vi.mocked(getDiscordUser).mockResolvedValue({
+            ...makeUser(USER_A),
+            primary_guild: { identity_enabled: false, tag: "HIDDEN" },
+        } as any);
+        vi.mocked(getGuildMember).mockResolvedValue({ nick: "[LEGACY] peace" } as any);
+
+        const result = await resolveAuthorPlaceholders(
+            { content: `{user.${USER_A}.clantag}` } as any,
+            null,
+            null,
+            "999999999999999999",
+        );
+
+        expect((result.payload as any).content).toBe("LEGACY");
+    });
+
     it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
             user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,
