@@ -262,9 +262,9 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
     it("accepts POST /api/interactions/relay with valid x-admin-key and complete payload", async () => {
       const interaction = {
         type: 3,
-        id: "relay_test_100",
-        application_id: "app_relay_100",
-        token: "tok_relay",
+        id: "123456789012345678",
+        application_id: env.discord.applicationId ?? "223456789012345678",
+        token: "tok_relay_1234567890",
         data: { custom_id: "action:dud" },
       };
 
