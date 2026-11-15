@@ -113,7 +113,7 @@ router.post(
       typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
         ? req.body.authorUserId
         : "";
-    const senderDiscordId = staffCtx?.staffId ?? dbUser?.discord_id ?? requestedAuthorId;
+    const senderDiscordId = staffCtx?.staffId ?? (staffCtx?.isAdmin ? "" : dbUser?.discord_id ?? requestedAuthorId);
     const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
