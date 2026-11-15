@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attachUser, requireHeadAdmin, requireUser } from "../middleware/auth.js";
+import { attachUser, requireHeadAdmin, requireUserOrAdminKey } from "../middleware/auth.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -13,6 +13,7 @@ router.use(attachUser);
 
 router.get(
   "/",
+  requireUserOrAdminKey,
   asyncHandler(async (req, res, next) => {
     const wantsAll = req.query.all === "true";
     if (wantsAll) {
@@ -22,7 +23,6 @@ router.get(
         return res.json({ executors: list });
       });
     }
-    requireUser(req);
     const list = await customExecutorRepository.list(true);
     return res.json({ executors: list });
   }),
