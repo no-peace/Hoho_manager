@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attachUser, requireRole } from "../middleware/auth.js";
+import { attachUser, requireUserOrAdminKey } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
 import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
@@ -73,7 +73,7 @@ router.post(
   "/",
   // Reject anonymous/non-user traffic and apply per-user limits before buffering uploads.
   attachUser,
-  requireRole("editor"),
+  requireUserOrAdminKey,
   sendLimiter,
   multipartParser,
   requireStaffPermission((req) =>
