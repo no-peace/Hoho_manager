@@ -79,7 +79,9 @@ export const createApp = (): Express => {
     }),
   );
 
-  // 2. Interactions (raw body, no rate limit).
+  // Discord-signed interaction delivery remains exempt from the generic limiter.
+  // The gateway relay is machine-authenticated, so rate-limit it separately.
+  app.use("/api/interactions/relay", apiLimiter);
   app.use("/api/interactions", interactionsRouter);
 
   // 3. Body parsers.
