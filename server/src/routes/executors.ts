@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { attachUser, requireHeadAdmin, requireUserOrAdminKey } from "../middleware/auth.js";
+import { attachUser, requireHeadAdmin } from "../middleware/auth.js";
+import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -13,7 +14,7 @@ router.use(attachUser);
 
 router.get(
   "/",
-  requireUserOrAdminKey,
+  requireStaffPermission("weao"),
   asyncHandler(async (req, res, next) => {
     const wantsAll = req.query.all === "true";
     if (wantsAll) {
