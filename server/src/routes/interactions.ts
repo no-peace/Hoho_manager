@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import { InteractionResponseType, InteractionType } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { requireAdminKey } from "../middleware/auth.js";
+import { env } from "../config/env.js";
 import { requireInteraction, verifyDiscordSignature } from "../middleware/verifyDiscordSignature.js";
 import {
   cleanupDeferredInteraction,
