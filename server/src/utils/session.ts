@@ -127,7 +127,7 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
 
 export const parseCookies = (cookieHeader?: string): Record<string, string> => {
   if (!cookieHeader) return {};
-  const cookies: Record<string, string> = {};
+  const cookies: Record<string, string> = Object.create(null) as Record<string, string>;
   for (const pair of cookieHeader.split(";")) {
     const idx = pair.indexOf("=");
     if (idx < 0) continue;
