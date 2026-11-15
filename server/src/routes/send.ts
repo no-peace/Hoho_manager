@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attachUser } from "../middleware/auth.js";
+import { attachUser, requireRole } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
 import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
@@ -71,8 +71,9 @@ const assertStaffGuildAllowed = async (
 
 router.post(
   "/",
-  // Authenticate and rate-limit before buffering multipart uploads.
+  // Reject anonymous/non-user traffic and apply per-user limits before buffering uploads.
   attachUser,
+  requireRole("editor"),
   sendLimiter,
   multipartParser,
   requireStaffPermission((req) =>
