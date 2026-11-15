@@ -38,6 +38,7 @@ The production environment previously inherited `dev-admin-key` when `ADMIN_API_
 - Production startup stops if `ADMIN_API_KEY` is missing, equals the development default, or is shorter than 32 characters.
 - A separate `SESSION_SECRET` is documented and recommended. The current admin-key fallback remains for compatibility, and verification accepts both configured session and admin keys during rotation; newly issued sessions use the configured session secret.
 - A weak explicitly configured production `SESSION_SECRET` is rejected at startup.
+- Production startup also requires a dedicated `ENCRYPTION_KEY` of at least 32 characters. New secrets use it; decryption retains the admin-key-derived legacy key as a migration fallback so existing stored bot tokens remain readable.
 
 ### High — Anonymous upload requests could consume multipart processing resources
 
@@ -102,9 +103,9 @@ Before deploying this branch, verify the Render environment:
 1. Set `NODE_ENV=production`.
 2. Set `ADMIN_API_KEY` to a unique random value of at least 32 characters. The server will now refuse to start with a missing, default, or short value.
 3. Set `SESSION_SECRET` to a separate random value of at least 32 characters. Session verification supports the previous admin-key fallback during rotation, so existing sessions can age out naturally.
-4. Set `CLIENT_ORIGIN` to the exact HTTPS frontend origin(s), without a trailing slash.
-5. Keep `DISCORD_REDIRECT_URI` HTTPS and exactly matched in the Discord Developer Portal.
-6. Set a dedicated `ENCRYPTION_KEY` before relying on production token-at-rest encryption. Do not rotate it casually: existing encrypted bot tokens may require a planned migration or re-encryption.
+4. Set a dedicated `ENCRYPTION_KEY` to a random value of at least 32 characters. Production startup now refuses to run without it. Existing admin-key-encrypted bot tokens remain decryptable during migration; new values use the dedicated key.
+5. Set `CLIENT_ORIGIN` to the exact HTTPS frontend origin(s), without a trailing slash.
+6. Keep `DISCORD_REDIRECT_URI` HTTPS and exactly matched in the Discord Developer Portal.
 
 ## Residual risks and limits
 
