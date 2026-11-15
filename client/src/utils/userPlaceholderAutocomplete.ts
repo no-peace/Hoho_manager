@@ -20,6 +20,7 @@ const USER_PROFILE_FIELDS = [
   { key: "url", label: "Profile URL", desc: "Discord profile URL" },
   { key: "profile", label: "Profile URL alias", desc: "Alias for profile URL" },
   { key: "avatar", label: "Avatar URL", desc: "Direct profile picture URL" },
+  { key: "avatarurl", label: "Avatar URL alias", desc: "Alias for the avatar URL" },
   { key: "mention", label: "Mention", desc: "Discord mention for this user" },
   { key: "roles", label: "Server roles", desc: "Space-separated mentions for this user's server roles" },
   { key: "clantag", label: "Clan tag", desc: "Official Discord clan tag or a tag parsed from the member name" },
