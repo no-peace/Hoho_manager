@@ -37,6 +37,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Audit npm dependencies for high and critical advisories
+        run: npm audit --audit-level=high
+
       - name: Validate standalone Playwright audit syntax
         run: node --check docs/playwright/audit.mjs
 
