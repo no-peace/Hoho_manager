@@ -211,7 +211,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const rawIds = req.query.ids;
     const guildId = typeof req.query.guildId === "string" ? req.query.guildId.trim() : "";
-    if (guildId && !/^\\d{17,20}$/.test(guildId)) throw ApiError.badRequest("`guildId` is invalid");
+    if (guildId && !/^\d{17,20}$/.test(guildId)) throw ApiError.badRequest("`guildId` is invalid");
     if (guildId && req.staffContext && !req.staffContext.isAdmin && req.staffContext.record) {
       const allowedGuilds = parseAllowedIds(req.staffContext.record.allowed_guild_ids);
       if (!allowedGuilds.includes("*") && !allowedGuilds.includes(guildId)) {
