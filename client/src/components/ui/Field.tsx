@@ -177,7 +177,7 @@ const useFloatingMenuStyle = (anchor: HTMLElement | null | undefined, menuWidth:
       const width = Math.min(menuWidth, window.innerWidth - 16);
       const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
       const top = side === "top" ? Math.max(viewportTop + 4, rect.top - maxHeight - 6) : rect.bottom + 6;
-      setStyle({ position: "fixed", top, left, width, maxHeight, zIndex: 1000 });
+      setStyle({ position: "fixed", top, left, width, maxHeight, zIndex: 60 });
     };
     update();
     window.addEventListener("resize", update);
