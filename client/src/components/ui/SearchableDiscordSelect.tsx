@@ -180,7 +180,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
             return (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 bg-[#2b2d31] border border-[#1e1f22] text-[#dbdee1] px-2 py-0.5 rounded text-xs max-w-full min-w-0"
+                className="inline-flex items-center gap-1 bg-[#161A23] border border-[#1D2230] text-[#F1F3F9] px-2 py-0.5 rounded text-xs max-w-full min-w-0"
               >
                 <span className="truncate min-w-0 max-w-[180px]" title={label}>{label}</span>
                 <button
@@ -189,7 +189,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                     e.stopPropagation();
                     toggleSelection(id);
                   }}
-                  className="text-[#949ba4] hover:text-[#da373c] ml-1 font-bold text-xs focus-visible:outline-none shrink-0"
+                  className="text-[#A1A8B8] hover:text-[#F87171] ml-1 font-bold text-xs focus-visible:outline-none shrink-0"
                   aria-label={`Remove ${label}`}
                 >
                   ×
@@ -202,7 +202,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
       {/* Main Trigger Button */}
       <div
-        className="w-full min-w-0 bg-[#1e1f22] border border-[#111214] rounded px-3 py-1.5 text-xs text-[#dbdee1] cursor-pointer flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+        className="w-full min-w-0 bg-[#1D2230] border border-[#272D3A] rounded px-3 py-1.5 text-xs text-[#F1F3F9] cursor-pointer flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
         onClick={() => setOpen(!open)}
         tabIndex={0}
         role="combobox"
@@ -216,8 +216,8 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           }
         }}
       >
-        <span className="truncate min-w-0 flex-1 text-[#dbdee1]">{displayValue}</span>
-        <span className="text-[10px] text-[#949ba4] shrink-0 ml-2">▼</span>
+        <span className="truncate min-w-0 flex-1 text-[#F1F3F9]">{displayValue}</span>
+        <span className="text-[10px] text-[#A1A8B8] shrink-0 ml-2">▼</span>
       </div>
 
       {open && dropdownRect && createPortal(
@@ -243,7 +243,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           return (
             <>
               {isMobile && (
-                <div className="fixed inset-0 z-[99998] bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
+                <div className="fixed inset-0 z-[9998] bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
               )}
               <div
                 ref={portalRef}
@@ -253,15 +253,15 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                   left: dropdownLeft,
                   width: dropdownWidth,
                   maxHeight: calculatedMaxHeight,
-                  zIndex: 99999,
+                  zIndex: 10000,
                 }}
-                className={`bg-[#2b2d31] border border-[#26282d] ${isMobile ? "rounded-2xl" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+                className={`bg-[#161A23] border border-[#272D3A] ${isMobile ? "rounded-2xl" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
               >
-              <div className="p-2 shrink-0 bg-[#18191c] border-b border-[#26282d]">
+              <div className="p-2 shrink-0 bg-[#10131A] border-b border-[#272D3A]">
                 <input
                   type="text"
                   aria-label={type === "member" ? "Search username or enter 17-20 digit ID" : `Search ${type} options`}
-                  className="w-full bg-[#1e1f22] text-[#dbdee1] text-xs px-2 py-1.5 rounded outline-none border border-[#111214] focus:border-[#5865f2]"
+                  className="w-full bg-[#1D2230] text-[#F1F3F9] text-xs px-2 py-1.5 rounded outline-none border border-[#272D3A] focus:border-[#818CF8]"
                   placeholder={type === "member" ? "Search username or enter 17-20 digit ID..." : "Search..."}
                   value={search}
                   autoFocus
@@ -274,7 +274,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
               </div>
 
               {!guildId && type === "member" && (
-                <div className="p-2 text-[11px] text-[#949ba4] italic border-b border-[#35373c] bg-[#1e1f22]/50">
+                <div className="p-2 text-[11px] text-[#A1A8B8] italic border-b border-[#252B3A] bg-[#1D2230]/50">
                   Select a server in the header to search by name, or enter a 17-20 digit user ID.
                 </div>
               )}
@@ -282,16 +282,16 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
               <div className="overflow-y-auto flex-1 p-1">
                 {isSnowflake && (
                   <div
-                    className="px-2 py-1.5 text-xs text-[#5865f2] hover:bg-[#35373c] cursor-pointer rounded font-medium flex items-center justify-between border-b border-[#35373c]/50 mb-1"
+                    className="px-2 py-1.5 text-xs text-[#818CF8] hover:bg-[#252B3A] cursor-pointer rounded font-medium flex items-center justify-between border-b border-[#252B3A]/50 mb-1"
                     onClick={handleManualId}
                   >
                     <span>Use ID: {search.trim()}</span>
-                    <span className="text-[10px] text-[#949ba4] bg-[#1e1f22] px-1 rounded">Press Enter</span>
+                    <span className="text-[10px] text-[#A1A8B8] bg-[#1D2230] px-1 rounded">Press Enter</span>
                   </div>
                 )}
 
                 {filteredOptions.length === 0 && !isSnowflake ? (
-                  <div className="px-2 py-3 text-xs text-[#949ba4] text-center italic">
+                  <div className="px-2 py-3 text-xs text-[#A1A8B8] text-center italic">
                     {type === "member" && search.length < 2 && guildId
                       ? "Type at least 2 characters to search..."
                       : "No options found"}
@@ -303,7 +303,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                       <div
                         key={opt.id}
                         className={`px-2 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between gap-2 min-w-0 ${
-                          isSelected ? "bg-[#5865f2] text-white" : "text-[#dbdee1] hover:bg-[#35373c]"
+                          isSelected ? "bg-[#818CF8] text-white" : "text-[#F1F3F9] hover:bg-[#252B3A]"
                         }`}
                         onClick={() => toggleSelection(opt.id, opt)}
                         title={opt.name}
@@ -314,10 +314,10 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                               <img
                                 src={`https://cdn.discordapp.com/avatars/${opt.id}/${opt.avatar}.webp?size=24`}
                                 alt=""
-                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#1e1f22]"
+                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#1D2230]"
                               />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#5865f2] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+                              <div className="w-5 h-5 rounded-full bg-[#818CF8] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
                                 {opt.name.charAt(0).toUpperCase()}
                               </div>
                             )

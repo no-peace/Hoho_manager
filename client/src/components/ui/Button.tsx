@@ -49,7 +49,7 @@ export const Button = ({
         aria-hidden="true"
       />
     ) : (
-      Icon && <Icon size={size === "sm" ? 13 : 15} aria-hidden="true" />
+      Icon && <Icon size={size === "xs" || size === "sm" ? 13 : 15} aria-hidden="true" />
     )}
     {children}
   </button>

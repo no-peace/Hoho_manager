@@ -48,7 +48,7 @@ export const AnimatedMorphIcon: React.FC<AnimatedMorphIconProps> = ({
         initial={{ scale: 0.9, opacity: 0.55 }}
         animate={{ scale: 1.65, opacity: 0 }}
         transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none absolute inset-0 rounded-full border border-[#57f287]"
+        className="pointer-events-none absolute inset-0 rounded-full border border-[#34D399]"
         aria-hidden="true"
       />
     )}
@@ -108,7 +108,7 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
             type="button"
             onClick={() => setOpen(true)}
             disabled={disabled}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform duration-75 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-[8px] bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform duration-75 cursor-pointer"
           >
             {triggerIcon}
             <span>{triggerLabel}</span>
@@ -131,17 +131,17 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
               transition: { duration: 0.13, ease: [0.4, 0, 1, 1] },
             }}
             style={{ transformOrigin: "top center" }}
-            className="rounded-xl bg-[#18191c] border border-[#26282d] p-2.5 space-y-2 shadow-2xl overflow-hidden"
+            className="rounded-[10px] bg-[#161A23] border border-[#272D3A] p-3 space-y-2 shadow-xl overflow-hidden"
           >
             {title && (
               <div className="flex items-center justify-between px-1.5 pb-1 border-b border-[#26282d]">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#949cf7]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A5B4FC]">
                   {title}
                 </span>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="text-[10px] font-semibold text-[#949ba4] hover:text-white px-1.5 py-0.5 rounded hover:bg-[#2b2d31] active:scale-[0.97]"
+                  className="text-[10px] font-semibold text-[#A1A8B8] hover:text-white px-1.5 py-0.5 rounded hover:bg-[#1D2230] active:scale-[0.97]"
                 >
                   Close
                 </button>
@@ -166,7 +166,7 @@ export const SkiperDynamicStatusPill: React.FC<{
     drag="x"
     dragConstraints={{ left: 0, right: 0 }}
     dragElastic={0.18}
-    className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#18191c] border border-[#26282d] text-[10px] font-bold uppercase tracking-wider text-[#dbdee1] shadow-inner cursor-grab active:cursor-grabbing"
+    className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#18191c] border border-[#26282d] text-[10px] font-bold uppercase tracking-wider text-[#F1F3F9] shadow-inner cursor-grab active:cursor-grabbing"
   >
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.span

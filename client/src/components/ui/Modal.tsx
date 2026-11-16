@@ -41,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   width = "max-w-md",
-  zIndex = "z-[9990]",
+  zIndex = "z-[9999]",
   className = "",
   closeOnBackdropClick = true,
   closeOnEscape = true,
@@ -161,24 +161,24 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sm:hidden w-9 h-1 rounded-full bg-[#4e5058] mx-auto mt-2 mb-0.5 shrink-0" aria-hidden="true" />
+        <div className="sm:hidden w-9 h-1 rounded-full bg-[#343C4E] mx-auto mt-2 mb-0.5 shrink-0" aria-hidden="true" />
         {title && (
           <div className={UI_THEME_CONFIG.surfaces.modalHeader}>
-            <h2 className="text-[14px] font-bold text-white uppercase tracking-wider truncate mr-2">
+            <h2 className="text-[16px] font-semibold text-[#F1F3F9] truncate mr-2">
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-[#b5bac1] hover:text-white transition-colors shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
-              aria-label="Close dialog"
+              className="text-[#A1A8B8] hover:text-[#F1F3F9] transition-colors shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+              aria-label="Close modal"
             >
               <X size={18} />
             </button>
           </div>
         )}
 
-        <div className="p-5 overflow-y-auto text-[#dbdee1] flex-1 text-sm leading-relaxed custom-scrollbar">
+        <div className="px-5 py-4 overflow-y-auto text-[#F1F3F9] flex-1 text-sm leading-relaxed custom-scrollbar">
           <ErrorBoundary level="modal" fallbackTitle="Dialog Content Error">
             {children}
           </ErrorBoundary>

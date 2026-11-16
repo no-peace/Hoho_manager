@@ -102,8 +102,8 @@ export const DateTimePickerPopover = ({
   return (
     <div className={`relative inline-block ${className}`}>
       <button ref={triggerRef} type="button" onClick={() => setOpen((current) => !current)}
-        className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-[#2b2d31] bg-[#1e1f22] px-3 py-1.5 text-xs font-medium text-[#dbdee1] hover:border-[#3f4147]">
-        <CalendarDays size={13} className="text-[#949ba4]" />
+        className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-[#161A23] bg-[#1D2230] px-3 py-1.5 text-xs font-medium text-[#F1F3F9] hover:border-[#3f4147]">
+        <CalendarDays size={13} className="text-[#A1A8B8]" />
         <span className="tabular-nums">{label ?? placeholder}</span>
       </button>
       {open && createPortal(
@@ -115,49 +115,49 @@ export const DateTimePickerPopover = ({
               animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] } }}
               exit={{ opacity: 0, scale: 0.95, y: position.above ? 4 : -4, transition: { duration: 0.13, ease: [0.4, 0, 1, 1] } }}
               style={{ position: "fixed", top: position.top, left: position.left, transform: position.above ? "translateY(-100%)" : undefined, transformOrigin: position.above ? "bottom left" : "top left" }}
-              className="z-[10050] w-[292px] rounded-xl border border-[#26282d] bg-[#18191c] p-3 shadow-xl">
+              className="z-[10050] w-[292px] rounded-[10px] border border-[#272D3A] bg-[#161A23] p-3 shadow-xl">
               <div className="mb-3">
-                <div className="text-sm font-semibold text-[#f2f3f5]">{selected.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</div>
+                <div className="text-sm font-semibold text-[#F1F3F9]">{selected.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
                     disabled={!allowPastDates && (visibleMonth.getFullYear() < today.getFullYear() || (visibleMonth.getFullYear() === today.getFullYear() && visibleMonth.getMonth() <= today.getMonth()))}
-                    className="rounded-md p-1.5 text-[#949ba4] hover:bg-[#2b2d31] disabled:opacity-30"><ChevronLeft size={15} /></button>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#dbdee1]">{visibleMonth.toLocaleDateString([], { month: "long", year: "numeric" })}</span>
+                    className="rounded-md p-1.5 text-[#A1A8B8] hover:bg-[#161A23] disabled:opacity-30"><ChevronLeft size={15} /></button>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#F1F3F9]">{visibleMonth.toLocaleDateString([], { month: "long", year: "numeric" })}</span>
                   <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
-                    className="rounded-md p-1.5 text-[#949ba4] hover:bg-[#2b2d31]"><ChevronRight size={15} /></button>
+                    className="rounded-md p-1.5 text-[#A1A8B8] hover:bg-[#161A23]"><ChevronRight size={15} /></button>
                 </div>
               </div>
-              <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-semibold text-[#949ba4]">
+              <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-semibold text-[#A1A8B8]">
                 {["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((day) => <span key={day} className="py-1">{day}</span>)}
               </div>
-              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-[#232428] bg-[#232428]">
+              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-[8px] border border-[#272D3A] bg-[#1D2230]">
                 {days.map((day, index) => {
-                  if (!day) return <span key={index} className="h-8 bg-[#1a1b1e]" />;
+                  if (!day) return <span key={index} className="h-8 bg-[#10131A]" />;
                   const disabled = !allowPastDates && startOfDay(day) < today;
                   const active = dateKey(day) === selectedKey;
                   return <button key={dateKey(day)} type="button" disabled={disabled} onClick={() => chooseDay(day)}
-                    className={`h-8 bg-[#2b2d31] text-xs tabular-nums ${disabled ? "cursor-not-allowed bg-[#1a1b1e] text-[#4e5058]" : active ? "bg-[#5865f2] font-bold text-white" : "font-medium text-[#f2f3f5] hover:bg-[#35373c]"}`}>{day.getDate()}</button>;
+                    className={`h-8 bg-[#161A23] text-xs tabular-nums ${disabled ? "cursor-not-allowed bg-[#10131A] text-[#6F788A]" : active ? "bg-[#818CF8] font-bold text-white" : "font-medium text-[#F1F3F9] hover:bg-[#252B3A]"}`}>{day.getDate()}</button>;
                 })}
               </div>
-              <div className="mt-3 border-t border-[#26282d] pt-3">
-                <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-[#949ba4]"><Clock size={12} /> TIME</div>
+              <div className="mt-3 border-t border-[#272D3A] pt-3">
+                <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-[#A1A8B8]"><Clock size={12} /> TIME</div>
                 <div className="flex items-center gap-1.5">
-                  <button type="button" aria-label="Decrease hour" onClick={() => changeTime((selected.getHours() + 23) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">−</button>
+                  <button type="button" aria-label="Decrease hour" onClick={() => changeTime((selected.getHours() + 23) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#161A23] bg-[#1D2230] text-sm text-white">−</button>
                   <span className="min-w-6 text-center text-xs font-semibold tabular-nums text-white">{pad(hour12)}</span>
-                  <button type="button" aria-label="Increase hour" onClick={() => changeTime((selected.getHours() + 1) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">+</button>
-                  <span className="text-xs text-[#949ba4]">:</span>
-                  <button type="button" aria-label="Decrease minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 55 : 59)) % 60)} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">−</button>
+                  <button type="button" aria-label="Increase hour" onClick={() => changeTime((selected.getHours() + 1) % 24, selected.getMinutes())} className="h-8 w-7 rounded-md border border-[#161A23] bg-[#1D2230] text-sm text-white">+</button>
+                  <span className="text-xs text-[#A1A8B8]">:</span>
+                  <button type="button" aria-label="Decrease minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 55 : 59)) % 60)} className="h-8 w-7 rounded-md border border-[#161A23] bg-[#1D2230] text-sm text-white">−</button>
                   <span className="min-w-6 text-center text-xs font-semibold tabular-nums text-white">{pad(selected.getMinutes())}</span>
-                  <button type="button" aria-label="Increase minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 5 : 1)) % 60)} className="h-8 w-7 rounded-md border border-[#2b2d31] bg-[#232428] text-sm text-white">+</button>
-                  <button type="button" onClick={() => changeTime(selected.getHours() >= 12 ? selected.getHours() - 12 : selected.getHours() + 12, selected.getMinutes())} className="h-8 rounded-md border border-[#2b2d31] bg-[#232428] px-2 text-xs font-semibold text-white">{selected.getHours() >= 12 ? "PM" : "AM"}</button>
+                  <button type="button" aria-label="Increase minute" onClick={(event) => changeTime(selected.getHours(), (selected.getMinutes() + (event.shiftKey ? 5 : 1)) % 60)} className="h-8 w-7 rounded-md border border-[#161A23] bg-[#1D2230] text-sm text-white">+</button>
+                  <button type="button" onClick={() => changeTime(selected.getHours() >= 12 ? selected.getHours() - 12 : selected.getHours() + 12, selected.getMinutes())} className="h-8 rounded-md border border-[#161A23] bg-[#1D2230] px-2 text-xs font-semibold text-white">{selected.getHours() >= 12 ? "PM" : "AM"}</button>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {["+1h", "+24h", "14d"].map((preset) => <button key={preset} type="button" onClick={() => { const next = new Date(selected); next.setTime(next.getTime() + (preset === "+1h" ? 3600000 : preset === "+24h" ? 86400000 : 14 * 86400000)); setSelected(next); }} className="rounded-md border border-[#2b2d31] px-2 py-1 text-[10px] font-semibold text-[#b5bac1] hover:bg-[#2b2d31]">{preset}</button>)}
+                  {["+1h", "+24h", "14d"].map((preset) => <button key={preset} type="button" onClick={() => { const next = new Date(selected); next.setTime(next.getTime() + (preset === "+1h" ? 3600000 : preset === "+24h" ? 86400000 : 14 * 86400000)); setSelected(next); }} className="rounded-md border border-[#161A23] px-2 py-1 text-[10px] font-semibold text-[#A1A8B8] hover:bg-[#161A23]">{preset}</button>)}
                 </div>
               </div>
               <div className="mt-3 flex justify-between">
-                <button type="button" onClick={() => { onChange(null); setOpen(false); }} className="rounded-md px-2 py-1.5 text-xs text-[#949ba4] hover:bg-[#2b2d31]">Clear</button>
-                <button type="button" onClick={() => { onChange(selected.toISOString()); setOpen(false); }} className="rounded-md bg-[#5865f2] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#4752c4]">Apply</button>
+                <button type="button" onClick={() => { onChange(null); setOpen(false); }} className="rounded-md px-2 py-1.5 text-xs text-[#A1A8B8] hover:bg-[#161A23]">Clear</button>
+                <button type="button" onClick={() => { onChange(selected.toISOString()); setOpen(false); }} className="rounded-md bg-[#818CF8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#6366F1]">Apply</button>
               </div>
             </motion.div>
           </>
