@@ -1138,3 +1138,11 @@ The implementation follows the actual golden commit source where the plan's pros
 ### Required next step
 
 Run the full test, typecheck, and build commands against the implementation head; inspect and fix every failure before calling this complete. Then perform desktop and mobile visual checks against the golden layout and record actual CI/test results here.
+
+
+## Gemini V12 implementation — Batch 1 (in progress, 2026-11-16)
+
+- Branch: `feat/v12-ultimate-ux-implementation` (branched from `main`).
+- Implemented source changes: atmospheric radial-gradient/grid backdrop utilities; full-viewport constellation nodes/filaments plus lower perspective wave field; immediate static canvas paint with reduced-motion/mobile-safe behavior and idle-started desktop animation capped at approximately 29 FPS; login header flush to viewport edges with page padding moved to content wrapper; upgraded auth/showcase cards to the current studio surface palette while preserving the existing 5/7-column layout and controls.
+- Files changed in this batch: `client/src/styles/globals.css`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/layout/LoginScreen.tsx`.
+- Source-level guard checks passed in the update script: login backdrop class present and both existing grid column spans retained. Automated tests, typecheck, build, visual QA, and Lighthouse have not yet been run.
