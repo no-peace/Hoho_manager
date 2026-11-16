@@ -248,7 +248,7 @@ export const DocsPage = () => {
             <span className="text-[11px] text-[#949ba4]">Copy a variable tag with the copy icon</span>
           </div>
 
-          <div className="hidden overflow-x-auto sm:block">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22] bg-[#232428]">
@@ -274,7 +274,7 @@ export const DocsPage = () => {
             </table>
           </div>
 
-          <div className="space-y-2 p-3 sm:hidden">
+          <div className="space-y-2 p-3 md:hidden">
             {filteredItems.map((item) => (
               <article key={item.tag} className={UI_THEME_CONFIG.surfaces.docsVariableCard}>
                 <div className="flex min-w-0 items-start justify-between gap-2">
