@@ -21,6 +21,7 @@ export interface ExtendedMessageData extends MessageData {
   edit_message_id?: string;
   message_reference?: DiscordMessageReference;
   exploit_name?: string;
+  thread_id?: string;
 }
 
 export interface ParsedDiscordMessageLink {
