@@ -58,6 +58,8 @@ export interface Env {
   readonly nodeEnv: string;
   readonly isProd: boolean;
   readonly isDev: boolean;
+  /** Explicit opt-in for the local-only developer login route. */
+  readonly devAuthBypass: boolean;
   readonly port: number;
   readonly clientOrigins: readonly string[];
   readonly databaseUrl: string;
@@ -83,6 +85,8 @@ export const env: Env = Object.freeze({
   nodeEnv,
   isProd,
   isDev: !isProd,
+  // Never enable this in production, even if the environment variable is set.
+  devAuthBypass: !isProd && str("DEV_AUTH_BYPASS", "false") === "true",
   port: int("PORT", 3001),
   clientOrigins: Object.freeze(
     (str("CLIENT_ORIGIN", "http://localhost:5173") ?? "")
