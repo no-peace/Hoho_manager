@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AlertCircle, Clock, Lock, ShieldCheck, X } from "lucide-react";
 import { HoHoLogoMark } from "./HoHoLogoMark";
+import { api } from "../../api/client";
 import { PublicPageHeader } from "./PublicPageHeader";
 const ThreeHeroCanvas = React.lazy(() =>
   import("../reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })),
@@ -66,6 +67,8 @@ const DEMO_SHOWCASES = [
 export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError }) => {
   const [activeShowcase, setActiveShowcase] = useState<number>(0);
   const [clickedBtn, setClickedBtn] = useState<string | null>(null);
+  const [devLoginError, setDevLoginError] = useState<string | null>(null);
+  const [devLoginLoading, setDevLoginLoading] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -114,6 +117,35 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             </svg>
             <span>Login with Discord</span>
           </button>
+
+          {import.meta.env.DEV && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled={devLoginLoading}
+                onClick={async () => {
+                  setDevLoginLoading(true);
+                  setDevLoginError(null);
+                  try {
+                    await api.auth.devLogin();
+                    window.location.reload();
+                  } catch (error) {
+                    setDevLoginError(error instanceof Error ? error.message : "Local developer login failed.");
+                    setDevLoginLoading(false);
+                  }
+                }}
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-lg border border-[#57f287]/40 bg-[#57f287]/10 hover:bg-[#57f287]/15 disabled:opacity-60 text-[#8ff0ad] font-semibold text-sm transition-colors cursor-pointer"
+              >
+                {devLoginLoading ? "Starting local session…" : "Continue as Local Developer"}
+              </button>
+              <p className="text-[11px] text-[#A1A8B8] text-center">
+                Development-only test account. Discord login remains available above.
+              </p>
+              {devLoginError && (
+                <p role="alert" className="text-xs text-[#f28b8b] text-center">{devLoginError}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2.5 pt-2 border-t border-[#272D3A]">
             <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
