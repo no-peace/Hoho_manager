@@ -10,12 +10,10 @@ import {
   ChevronRight,
   Radio,
   Workflow,
-  ExternalLink,
   Layers,
 } from "lucide-react";
 import { LayersPanel } from "../editor/LayersPanel";
 import { useGlobalStore } from "../../store/globalStore";
-import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useTemplates } from "../../hooks/useTemplates";
 import { api } from "../../api/client";
@@ -47,7 +45,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const setIsSidebarOpen = useGlobalStore((state) => state.setIsSidebarOpen);
   const { templates, currentId, loadTemplate, refresh } = useTemplates();
   const flows = useActionStore((state) => state.flows);
-  const messageData = useMessageStore((state) => state.data);
 
   const handleClose = () => {
     if (onClose) onClose();
@@ -213,9 +210,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
             ) : filteredTracked.map((item) => (
               <a
                 key={item.id}
-                href={`https://discord.com/channels/@me/${encodeURIComponent(item.channelId)}/${encodeURIComponent(item.messageId)}`}
-                target="_blank"
-                rel="noreferrer"
                 className="flex min-h-[48px] items-start gap-2 rounded-[8px] border border-[#202531] bg-[#161A23] p-2.5 transition-colors hover:border-[#818CF8]/50 hover:bg-[#1D2230]"
                 title="Open tracked message in Discord"
               >
@@ -224,8 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                   <span className="block truncate text-xs font-semibold text-[#F1F3F9]">{item.name || item.exploitName || `Message ${item.messageId.slice(-6)}`}</span>
                   <span className="mt-1 block truncate font-mono text-[9px] text-[#6F788A]">#{item.channelId} · {item.messageId.slice(-8)}</span>
                 </span>
-                <ExternalLink size={11} className="mt-0.5 shrink-0 text-[#6F788A]" />
-              </a>
+              </div>
             ))
           )}
 
