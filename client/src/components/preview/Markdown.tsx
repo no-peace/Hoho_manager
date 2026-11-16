@@ -739,7 +739,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   const previewVars: Record<string, string> = {
     "user.mention": /^\d{17,20}$/.test(previewUserId) ? `<@${previewUserId}>` : `@${previewDisplay}`,
     "user.name": previewUsername,
-    "user.tag": previewUsername,
+    "user.username": previewUsername,
     "user.displayname": previewDisplay,
     "user.id": previewUserId,
     "user.avatar":
