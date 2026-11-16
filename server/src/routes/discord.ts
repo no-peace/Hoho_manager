@@ -227,6 +227,7 @@ router.get(
         avatarUrl: string;
         profileUrl: string;
         nickname: string | null;
+        clanTag: string | null;
       }
     > = {};
     const failedIds: string[] = [];
@@ -257,6 +258,12 @@ router.get(
           username: user.username,
           globalName: user.global_name ?? null,
           nickname,
+          clanTag:
+            user.primary_guild?.identity_enabled === true &&
+            typeof user.primary_guild.tag === "string" &&
+            user.primary_guild.tag.trim()
+              ? user.primary_guild.tag.trim()
+              : null,
           avatarUrl: discord.getDiscordUserAvatarUrl(user),
           profileUrl: `https://discord.com/users/${user.id}`,
         };
