@@ -90,7 +90,6 @@ const getUserField = (
     case "globalname":
       return user.global_name || user.username;
     case "username":
-    case "tag":
       return user.username;
     case "id":
       return user.id;
