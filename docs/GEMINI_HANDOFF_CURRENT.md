@@ -752,3 +752,45 @@ The V10 plan's proposed nine-field list (`created_at`, `joined_at`) does not mat
 - These are utility-level regression tests, not a React DOM test proving the autocomplete popover is visibly rendered; component-level interaction coverage remains a possible further improvement.
 
 **Test-authoring commits:** `ab1162fe6fd0a2a9337a7943b296d0bd51664fbb`, `20dad46162c1cb45cc37d0c4ccfac66620918c97`, `c99443e1ccd24b8a71aa2dec5ebc19503dbe8acb`.
+
+
+## V10 Batch 7 — Message Editor four-tab modernization (2026-11-16)
+
+Implemented the Batch 7 source changes directly on `main`.
+
+### Implemented
+- Replaced the stacked MessageEditor sections with four workspace tabs: **Content**, **Embeds**, **Components V2**, and **Actions**. Embed, component, and action badges reflect the active message's current data.
+- Added the compact workspace quick actions: **Import Message Link**, **Clear All**, and a mode badge/button for switching between Classic and Components V2.
+- Moved the classic Action Row and Components V2 add controls into the Components tab.
+- The Actions tab now derives its list from the current message's component tree (including nested components and accessories), and only displays flows whose custom IDs are present on that message. Selecting a flow selects its component and signals the existing PropertyPanel to open the FlowBuilder tab.
+- Reworked ContentTab around a prominent Message Content composer and collapsible target/thread and webhook identity sections. Populated sections auto-expand. Existing thread ID and forum thread-name semantics are retained; no forum-tag field was invented because the current message model/editor does not expose one.
+- Kept FileAttachmentsSection as a collapsible advanced section with its existing attachment count and upload/URL workflows; polished the dropzone and filename metadata styling.
+- Updated MarkdownToolbar and RichPicker surfaces/controls to use the SaaS studio palette and compact toolbar styling.
+- Updated the MessageEditor Vitest file to cover the four tabs, tab state preservation, message-scoped action listing, direct FlowBuilder inspector handoff, Clear All confirmation, and existing message-header behavior.
+
+### Files changed
+- `client/src/components/editor/MessageEditor/index.tsx`
+- `client/src/components/editor/MessageEditor/ContentTab.tsx`
+- `client/src/components/editor/FileAttachmentsSection.tsx`
+- `client/src/components/editor/PropertyPanel.tsx`
+- `client/src/components/editor/MentionInput/MarkdownToolbar.tsx`
+- `client/src/components/editor/RichPicker.tsx`
+- `client/src/components/editor/__tests__/MessageEditor.test.tsx`
+
+### Validation and limitations
+- Test files were authored/updated, but **no tests were executed**, per the owner's preference to run them after implementation.
+- No build or TypeScript typecheck was run. No browser/Playwright visual QA was run.
+- This is a source-level implementation, not a claim of zero errors. The RichPicker retains its existing four functional categories (Mentions, Time, Emojis, Variables); its internal picker behavior was not restructured merely to relabel categories.
+- Clear All is scoped to the current message's content/settings and the editor's attachment collection; it removes action flows associated with components in that message and leaves unrelated flow registrations untouched.
+- Existing global attachment state is shared by the editor store, so Clear All clears that attachment collection as well.
+
+**Batch 7 commits:**
+- `b24fe4c91df593e6467d55cb722d2f5a1b837b3c` — four-tab workspace
+- `028e5185d24413d6464d4687df4126235e1cdf27` — ContentTab modernization
+- `006007df3a44e8180c63a2b030081098b5524d5e` — attachment styling
+- `105cf2353bca91b02458f00413f5cbadce73a0ad` — inspector FlowBuilder handoff
+- `d2b76f9331ceeab213ccd154209836edd65171f4` — MarkdownToolbar styling
+- `0f6ff67b19a3ba015a9ea4e87ac4628d49f350f7` — RichPicker styling
+- `2a8b3ccd303eccd4fcef9a88cd7faeb046c56398` — MessageEditor regression tests
+
+**Current main head:** `2a8b3ccd303eccd4fcef9a88cd7faeb046c56398`.
