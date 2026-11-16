@@ -74,7 +74,6 @@ describe("MessageEditor", () => {
     expect(collapseBtn).toBeDefined();
     fireEvent.click(collapseBtn);
 
-    // After collapsing, title changes to Expand Message
     expect(screen.getByTitle("Expand Message")).toBeDefined();
   });
 });
