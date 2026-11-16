@@ -92,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                 onClick={() => setLayersOpen(!layersOpen)}
                 className="w-full flex items-center justify-between p-2.5 bg-[#272D3A]/60 hover:bg-[#272D3A] transition-colors text-left"
               >
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">
+                <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#A1A8B8]">
                   Layers & Hierarchy
                 </span>
                 {layersOpen ? (
@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         {activeTab === "templates" && (
           <div className="p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">
+              <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#A1A8B8]">
                 Saved Templates ({templates.length})
               </span>
               <button
@@ -150,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                         <p className="text-xs font-semibold truncate text-[#f2f3f5]">
                           {tpl.name || "Untitled Template"}
                         </p>
-                        <p className="text-[10px] text-[#A1A8B8] mt-0.5">
+                        <p className="text-[0.625rem] text-[#A1A8B8] mt-0.5">
                           {new Date(tpl.updated_at).toLocaleDateString()}
                         </p>
                       </div>
