@@ -318,7 +318,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
             </div>
           </div>,
           document.body,
-        )}}
+        )}
       </div>
       {hint && <span className="mt-1 block text-[11px] text-[#949ba4]">{hint}</span>}
     </div>
