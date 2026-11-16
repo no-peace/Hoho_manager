@@ -746,10 +746,11 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     expect(source).toMatch(/<Modal\s+open=\{open\}/);
   });
 
-  it("verifies SplitPane breakpoint updated to 1280px (OF-08)", () => {
+  it("verifies SplitPane uses the shared 1200px desktop breakpoint", () => {
     const filePath = path.resolve(__dirname, "../components/layout/SplitPane.tsx");
     const source = fs.readFileSync(filePath, "utf-8");
-    expect(source).toContain("window.innerWidth >= 1280");
+    expect(source).toContain("window.innerWidth >= 1200");
+    expect(source).toContain("window.innerWidth >= 1200");
   });
 });
 
@@ -758,8 +759,10 @@ describe("Responsive Header layout containment", () => {
   const filePath = path.resolve(__dirname, "../components/layout/Header.tsx");
   const source = fs.readFileSync(filePath, "utf-8");
 
-  it("uses a three-column grid so the brand, toolbar, and account controls cannot overlap through flex shrink", () => {
-    expect(source).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
+  it("uses the shared three-column grid so the brand, toolbar, and account controls stay separated", () => {
+    const themePath = path.resolve(__dirname, "../config/uiThemeConfig.ts");
+    const themeSource = fs.readFileSync(themePath, "utf-8");
+    expect(themeSource).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
     expect(source).toContain("justify-self-center");
     expect(source).toContain("justify-self-end");
   });
