@@ -67,7 +67,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       }}
       onClick={() => id && select({ kind: "embed", id })}
     >
-      {/* ── Embed Card Header (Title & Global Actions) ── */}
       <div className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230] select-none ${isOpen ? "border-b border-[#1D2230]" : ""}`}>
         <div className="flex items-center gap-2 min-w-0">
           <button
@@ -147,7 +146,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
       {isOpen && (
         <div className="p-3 space-y-3 font-sans text-xs">
-          {/* ── 1. Accent Color Strip ── */}
           <div className="flex items-center justify-between p-2 rounded bg-[#1D2230] border border-[#10131A]">
             <div className="flex items-center gap-2">
               <div
@@ -186,7 +184,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             </div>
           )}
 
-          {/* ── 2. Author Sub-Section ── */}
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
@@ -291,7 +288,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          {/* ── 3. Body Sub-Section (Title & Description) ── */}
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
@@ -366,7 +362,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          {/* ── 4. Fields Sub-Section (Draggable 25 Fields Grid) ── */}
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[#1D2230]">
               <button
@@ -487,7 +482,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          {/* ── 5. Images Sub-Section (Image & Thumbnail URLs) ── */}
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
@@ -541,7 +535,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          {/* ── 6. Footer Sub-Section (Text, Icon & Timestamp) ── */}
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
