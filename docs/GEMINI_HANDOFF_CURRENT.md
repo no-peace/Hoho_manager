@@ -1189,3 +1189,11 @@ Run the full test, typecheck, and build commands against the implementation head
 - `editorSmoothScroll.ts`: skips Lenis initialization on coarse-pointer devices and leaves native momentum scrolling in place; desktop wheel smoothing remains enabled.
 - Removed the now-unused `useMessageStore` import from `ActionRowPreview.tsx` after centralizing preview component selection in `MessagePreview`.
 - Validation: source-level transition and pointer-gating guards passed. Lighthouse and runtime verification remain pending.
+
+
+## Gemini V12 implementation — Batch 7 test additions (2026-11-16)
+
+- `LoginScreen.test.tsx`: added assertions for the atmospheric backdrop, grid overlay, preserved 5/7 layout, and Discord OAuth CTA.
+- `MessageEditor.test.tsx`: added regression coverage for a Select Menu opening in Live Preview while still notifying the inspector-selection callback, and for editing the selected message's V2 `TextDisplay` block when the selected index differs from the active index.
+- Source/repository mismatch recorded: the current `LoginScreen.tsx` does not contain a Guest Sandbox CTA; it contains a development-only `Continue as Local Developer` control. The implementation did not invent a new guest-authentication path without an existing handler/contract.
+- Test execution, typecheck, production build, browser QA, and Lighthouse remain unverified in the current GitHub-only editing session. Run the repository scripts before merging.
