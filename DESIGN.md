@@ -35,5 +35,23 @@ When changing a repeated UI pattern:
 - **Display & UI Body:** `Geist Sans`, `-apple-system`, `sans-serif`
 - **Code, Snowflakes & Counters:** `Geist Mono`, `JetBrains Mono`, `monospace` with `tabular-nums`
 
+## 3.1 Layout & Measurement Units
+
+Use these units consistently for new UI and when touching existing styles. Prefer responsive constraints over blindly replacing every fixed dimension.
+
+- **Typography: `rem`.** Use Tailwind's default text utilities (which are rem-based) or explicit rem values for custom sizes. Do not introduce pixel-based font sizes. Keep the browser root size user-adjustable; do not set a fixed `html { font-size: ...px }`.
+- **Parent-relative layout: `%`.** Use percentages for widths/heights that should scale with the containing block. Prefer `w-full` / `h-full` where appropriate, and combine fluid sizing with rem-based `min-width`, `max-width`, or `clamp()` constraints when a component needs a readable limit.
+- **Viewport-sized sections: `vw` and dynamic viewport height.** Use `100vw` only for genuinely viewport-edge-to-edge width. For nested/full-width content, prefer `100%` to avoid scrollbar-induced horizontal overflow. Use `100dvh` for full-screen height so mobile browser chrome and dynamic viewports are handled correctly; use `svh` only when a stable small viewport is specifically required.
+- **Borders: `px`.** Keep structural border widths in pixels (normally `1px`; use `2px` only when the visual hierarchy requires it). Do not convert border thickness to rem.
+- **Component sizing and spacing:** Prefer rem-based spacing and dimensions for controls, panels, and readable max-widths. Fixed pixel dimensions are acceptable only for device-pixel details, canvas drawing, hairline alignment, or third-party/protocol fidelity.
+- **Breakpoints:** Use the existing Tailwind responsive breakpoints and the documented 1200px Studio workspace transition. Breakpoint thresholds are media-query conditions, not component sizing, so pixel thresholds remain appropriate.
+- **Motion, transforms, shadows, and canvas coordinates:** Keep units appropriate to the underlying CSS or rendering API; this convention does not require converting every numeric value to rem.
+
+### Migration and review policy
+1. Apply the convention to new code and every file being materially revised.
+2. When migrating existing UI, preserve rendered dimensions at the default 16px root size (for example, 12px becomes `0.75rem`).
+3. Do not mass-convert Discord message preview values when a pixel value is deliberately reproducing Discord's rendered output; document that fidelity exception at the component.
+4. Check both narrow mobile and wide desktop layouts after changing units. Percentage sizing must not cause controls or text columns to collapse.
+
 ## 4. The 20 UX & Disney Animation Rules
 All 20 rules (Squash & Stretch, Solid Drawing in 3D, Anticipation, Appeal, Staging, Fitts's Law, Pose to Pose, Bigger Hit Areas, Follow Through, Hick's Law, Slow In/Out, Miller's Law, Arcs, Doherty Threshold, Secondary Action, Postel's Law, Snappy Timing, Jakob's Law, Exaggerated Feedback, Frequency of Use) are codified in `client/src/config/uiThemeConfig.ts`.

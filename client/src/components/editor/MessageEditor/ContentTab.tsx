@@ -36,11 +36,11 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             onClick={() => setThreadOpen(!threadOpen)}
             className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#F1F3F9] hover:bg-[#282a2e] transition-colors"
           >
-            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-[#A1A8B8]">
+            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[0.6875rem] text-[#A1A8B8]">
               {threadOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Thread
             </span>
             {(message.thread_id || message.thread_name) && (
-              <span className="text-[10px] text-[#949cf7] font-semibold truncate max-w-[150px]">
+              <span className="text-[0.625rem] text-[#949cf7] font-semibold truncate max-w-[150px]">
                 {message.thread_id ? "Existing thread" : `#${message.thread_name}`}
               </span>
             )}
@@ -49,7 +49,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           {threadOpen && (
             <div className="p-3 pt-1 border-t border-[#272D3A] space-y-2.5">
               <div>
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">
+                <label className="mb-1 block text-[0.625rem] font-bold uppercase tracking-wider text-[#A1A8B8]">
                   Existing Thread ID
                 </label>
                 <input
@@ -61,18 +61,18 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     ensureActive();
                     setExtendedField("thread_id", event.target.value);
                   }}
-                  className="w-full rounded border border-[#161A23] bg-[#272D3A] px-2.5 py-1.5 text-xs text-[#F1F3F9] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full rounded border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-xs text-[#F1F3F9] focus:border-[#818CF8] focus:outline-none"
                 />
-                <p className="mt-1 text-[10px] leading-relaxed text-[#A1A8B8]">
+                <p className="mt-1 text-[0.625rem] leading-relaxed text-[#A1A8B8]">
                   When set, this existing thread takes priority over the selected channel and forum thread name.
                 </p>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider">
+                  <label className="text-[0.625rem] font-bold text-[#A1A8B8] uppercase tracking-wider">
                     Forum Thread Name
                   </label>
-                  <span className="text-[10px] text-[#A1A8B8] font-mono tabular-nums">
+                  <span className="text-[0.625rem] text-[#A1A8B8] font-mono tabular-nums">
                     {message.thread_name?.length || 0}/100
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     ensureActive();
                     setField("thread_name", e.target.value);
                   }}
-                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#272D3A] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
             </div>
@@ -95,10 +95,10 @@ export const ContentTab: React.FC<ContentTabProps> = ({
         {/* Linked Discord Message Status Bar */}
         {message.message_link && (
           <div className="rounded-lg border border-[#272D3A] bg-[#161A23] px-3 py-2 flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">
+            <span className="text-[0.625rem] font-bold uppercase tracking-wider text-[#A1A8B8]">
               Linked Discord Message
             </span>
-            <div className="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc]">
+            <div className="flex items-center gap-1.5 text-[0.6875rem] px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc]">
               <Link size={12} />
               <span>
                 {message.link_mode === "edit"

@@ -5,7 +5,6 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Preview of an action row's controls.
@@ -78,7 +77,6 @@ export const renderButtonEmoji = (emoji: any) => {
 
 export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
-  const selectComponent = useMessageStore((state) => state.select);
   const emojiNode = renderButtonEmoji((button as any).emoji);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
@@ -109,11 +107,6 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
       data-preview-interactive="true"
       type="button"
       disabled={button.disabled}
-      onClick={(event) => {
-        if (!button._id) return;
-        event.stopPropagation();
-        selectComponent({ kind: "component", id: button._id });
-      }}
       className={[
         "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
         BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[ButtonStyle.Primary],
@@ -284,7 +277,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
   const placeholderText = select.placeholder || defaultPlaceholder;
 
   return (
-    <div className="relative w-full max-w-[400px]" ref={containerRef}>
+    <div className="relative w-full max-w-[400px]" ref={containerRef} data-preview-component-id={select._id} data-preview-interactive="true" data-preview-select="true">
       {/* Trigger Bar */}
       <button
         type="button"
@@ -313,7 +306,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
 
         <div className="flex items-center gap-1.5 shrink-0">
           {isMulti && hasSelection && (
-            <span className="px-1.5 py-0.5 rounded bg-[#2b2d31] text-[10px] text-[#949ba4] font-mono">
+            <span className="px-1.5 py-0.5 rounded bg-[#2b2d31] text-[0.625rem] text-[#949ba4] font-mono">
               {selectedValues.length}/{maxValues}
             </span>
           )}
@@ -337,7 +330,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
           style={{ maxHeight: "250px" }}
         >
           {isMulti && (
-            <div className="px-3 py-1.5 mb-1 border-b border-[#1e1f22] flex items-center justify-between text-[11px] text-[#949ba4] font-medium select-none">
+            <div className="px-3 py-1.5 mb-1 border-b border-[#1e1f22] flex items-center justify-between text-[0.6875rem] text-[#949ba4] font-medium select-none">
               <span>Select up to {maxValues} options</span>
               <span className="font-mono tabular-nums">{selectedValues.length}/{maxValues} selected</span>
             </div>
@@ -374,7 +367,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
                           {opt.label}
                         </div>
                         {opt.description && (
-                          <div className="truncate text-[11px] text-[#949ba4]">
+                          <div className="truncate text-[0.6875rem] text-[#949ba4]">
                             {opt.description}
                           </div>
                         )}

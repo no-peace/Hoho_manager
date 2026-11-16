@@ -714,7 +714,10 @@ export const useMessageStore = create<MessageState>()(
             activeMessageIndex: index,
             data: currentMsg,
             mode: resolveMessageMode(currentMsg, state.mode),
-            selection: null,
+            selection:
+              state.selection?.kind === "message" && state.selection.index === index
+                ? state.selection
+                : null,
           };
         }),
 

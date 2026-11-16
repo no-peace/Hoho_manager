@@ -45,7 +45,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
             <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
               Spoiler
             </span>
-            <span className="text-[11px] text-[#949ba4] mt-2">Click to view</span>
+            <span className="text-[0.6875rem] text-[#949ba4] mt-2">Click to view</span>
           </div>
         ) : (
           <div className="relative group">
@@ -58,7 +58,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
               <button
                 type="button"
                 onClick={() => setSpoilerHidden(true)}
-                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white text-[0.625rem] uppercase font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 Hide
               </button>
@@ -81,7 +81,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
             <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
               Spoiler
             </span>
-            <span className="text-[11px] text-[#949ba4] mt-2">Click to view video</span>
+            <span className="text-[0.6875rem] text-[#949ba4] mt-2">Click to view video</span>
           </div>
         ) : (
           <video
@@ -103,7 +103,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
         <p className="text-xs font-semibold text-[#949cf7] truncate" title={file.url ?? file.name}>
           {file.spoiler ? `SPOILER_${file.name}` : file.name}
         </p>
-        <p className="text-[11px] text-[#b5bac1] mt-0.5">
+        <p className="text-[0.6875rem] text-[#b5bac1] mt-0.5">
           {isUrl ? "External URL" : formatBytes(file.size)}
         </p>
       </div>
@@ -185,7 +185,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
             <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
             <Eye size={14} className="text-[#5865f2]" /> Live Preview
           </h2>
-          <span className="rounded-md bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 text-[10px] font-semibold text-[#b9bcf8]">
+          <span className="rounded-md bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 text-[0.625rem] font-semibold text-[#b9bcf8]">
             Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
           </span>
         </div>
@@ -199,7 +199,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                   key={i}
                   type="button"
                   onClick={() => handleSelectMessage(i)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors ${
+                  className={`px-2 py-0.5 rounded-md text-[0.625rem] font-bold transition-colors ${
                     i === activeMessageIndex
                       ? "bg-[#5865f2] text-white shadow-xs"
                       : "text-[#949ba4] hover:text-white"
@@ -255,19 +255,19 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                 return (
                   <div
                     key={index}
-                    onClick={(event) => handleMessageCardClick(event, index)}
-                    onClickCapture={(event) => {
+                    onClick={(event) => {
                       const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
-                      if (!componentId) return;
-                      event.stopPropagation();
-                      setActiveMessageIndex?.(index);
-                      const isInteractive = componentElement?.dataset.previewInteractive === "true";
-                      onSelectPreviewComponent?.(index, componentId, isInteractive);
-                      if (!onSelectPreviewComponent) {
-                        handleSelectMessage(index);
-                        selectComponent({ kind: "component", id: componentId });
+                      if (componentId) {
+                        setActiveMessageIndex?.(index);
+                        const isInteractive = componentElement?.dataset.previewInteractive === "true";
+                        onSelectPreviewComponent?.(index, componentId, isInteractive);
+                        if (!onSelectPreviewComponent) {
+                          selectComponent({ kind: "component", id: componentId });
+                        }
+                        return;
                       }
+                      handleMessageCardClick(event, index);
                     }}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
@@ -312,10 +312,10 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                       {/* Discord-style message header */}
                       {!isConsecutive && (
                         <p className="flex items-center gap-2">
-                          <span className="text-[15px] font-medium text-[#f2f3f5]">
+                          <span className="text-[0.9375rem] font-medium text-[#f2f3f5]">
                             {effectiveUsername}
                           </span>
-                          <span className="rounded bg-[#5865f2] px-1 py-px text-[10px] font-semibold text-white">
+                          <span className="rounded bg-[#5865f2] px-1 py-px text-[0.625rem] font-semibold text-white">
                             APP
                           </span>
                           <span className="text-xs text-[#949ba4]">
@@ -334,7 +334,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                                   <TopLevelComponent component={component} />
                                 </div>
                               ))}
-                            <p className="mt-2 font-mono text-[10px] text-[#949ba4]">
+                            <p className="mt-2 font-mono text-[0.625rem] text-[#949ba4]">
                               flags: {MessageFlags.IsComponentsV2} (IsComponentsV2)
                             </p>
                           </div>
@@ -343,7 +343,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                             {message.content && (
                               <Markdown
                                 content={message.content}
-                                className="text-[15px] text-[#dbdee1] leading-relaxed break-words"
+                                className="text-[0.9375rem] text-[#dbdee1] leading-relaxed break-words"
                               />
                             )}
 

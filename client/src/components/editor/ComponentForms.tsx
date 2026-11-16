@@ -59,7 +59,7 @@ const SectionForm = ({ component, update }: ComponentFormProps) => (
         }
       />
     )}
-    <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
+    <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8]">
       Section text items are individual TextDisplay components. Edit them directly in the message card.
     </p>
   </>
@@ -93,7 +93,7 @@ const MediaGalleryForm = ({ component, update }: ComponentFormProps) => {
       </div>
 
       {items.length === 0 && (
-        <p className="text-[11px] text-[#A1A8B8]">No images yet. Add one to start the gallery.</p>
+        <p className="text-[0.6875rem] text-[#A1A8B8]">No images yet. Add one to start the gallery.</p>
       )}
 
       <div className="space-y-2">
@@ -136,7 +136,7 @@ const ContainerForm = ({ component, update }: ComponentFormProps) => (
       value={component.accent_color ?? null}
       onChange={(accent_color) => update({ accent_color })}
     />
-    <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
+    <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8]">
       {component.components?.length ?? 0} child component(s). Use the inline "+ Add Component to
       Container" button on the canvas to add elements into this container.
     </p>
@@ -176,7 +176,7 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
 
   return (
     <>
-      <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8] mb-2">
+      <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8] mb-2">
         {children.length} control(s). An action row holds up to {Limits.components.actionRowButtons}{" "}
         buttons, or a single select menu.
       </p>
@@ -253,7 +253,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
           onChange={(event) => update({ sku_id: event.target.value })}
         />
       ) : (
-        <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
+        <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8]">
           What this button executes is configured on the <span className="text-white font-semibold">Flow</span> tab above.
         </p>
       )}
@@ -314,9 +314,9 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         {options.map((option, index) => (
           <div key={option._id} className="p-2.5 rounded-lg border border-[#272D3A] bg-[#1D2230] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-[#A1A8B8]">Option {index + 1}</span>
+              <span className="text-[0.6875rem] font-medium text-[#A1A8B8]">Option {index + 1}</span>
               <div className="flex items-center gap-2">
-                <Checkbox label="Default" checked={Boolean(option.default)} onChange={(checked) => replaceOption(index, { default: checked })} className="text-[11px]" />
+                <Checkbox label="Default" checked={Boolean(option.default)} onChange={(checked) => replaceOption(index, { default: checked })} className="text-[0.6875rem]" />
                 <IconButton
                   icon={Trash2}
                   size={12}
@@ -384,7 +384,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         />
       </div>
 
-      <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
+      <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8]">
         What this select triggers is configured on the <span className="text-white font-semibold">Flow</span> tab above.
       </p>
     </>
@@ -419,7 +419,7 @@ const EntitySelectForm = ({ component, update }: ComponentFormProps) => (
       />
     </div>
 
-    <p className="rounded bg-[#1D2230] border border-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
+    <p className="rounded bg-[#10131A] border border-[#272D3A] text-[#A1A8B8] px-2.5 py-2 text-[0.6875rem] text-[#A1A8B8]">
       Discord supplies the available users, roles, or channels when this menu opens.
     </p>
   </>

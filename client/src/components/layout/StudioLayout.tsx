@@ -119,7 +119,7 @@ export const StudioLayout: React.FC = () => {
       />
 
       {currentUser && !currentUser.hasDefaultBotAccess && !currentUser.isAdmin && (
-        <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-3 py-1 flex items-center justify-between text-[11px] shrink-0">
+        <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-3 py-1 flex items-center justify-between text-[0.6875rem] shrink-0">
           <span className="text-[#F1F3F9] truncate">
             <strong className="text-[#f0b232]">Custom Bot Mode:</strong> Use your own Bot Profile to dispatch messages.
           </span>
@@ -167,7 +167,7 @@ export const StudioLayout: React.FC = () => {
           onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
           className="min-h-0 min-w-0 flex-1"
         />
-        <React.Suspense fallback={null}><PropertyPanel /></React.Suspense>
+        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={() => { setMobileView("editor"); useMessageStore.getState().select(null); }} /></React.Suspense>
       </main>
 
       {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
@@ -193,7 +193,7 @@ export const StudioLayout: React.FC = () => {
             Editor
           </span>
           <span
-            className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}
+            className={`relative z-10 text-[0.625rem] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}
           >
             <CountUpNumber value={displayMessages.length} />
           </span>

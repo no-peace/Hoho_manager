@@ -270,27 +270,15 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
     setCurrentUser: (user) => set({ currentUser: user }),
     setAuthLoading: (loading) => set({ authLoading: loading }),
     fetchCurrentUser: async () => {
-      const healthPromise = fetch("/api/health")
-        .then(async (health) => {
-          if (health.ok) {
-            const json = await health.json();
-            if (typeof json.time === "string") {
-              set({ serverTimeOffsetMs: new Date(json.time).getTime() - Date.now() });
-            }
-          }
-        })
-        .catch(() => {
-          // Authentication can still proceed when health is temporarily unavailable.
-        });
-
       try {
-        const [res] = await Promise.all([api.auth.me(), healthPromise]);
+        // Session verification is the only request required to resolve auth state.
+        // Keep the optional health/clock endpoint out of the initial navigation path.
+        const res = await api.auth.me();
         const user = res?.user ?? null;
         setSessionHint(Boolean(user));
         set({ currentUser: user, authLoading: false });
         return user;
       } catch {
-        await healthPromise;
         setSessionHint(false);
         set({ currentUser: null, authLoading: false });
         return null;

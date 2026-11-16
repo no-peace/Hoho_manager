@@ -258,7 +258,7 @@ details summary::-webkit-details-marker {
     border: 1px solid var(--border-default);
     background-color: var(--bg-interactive);
     padding: 0.5rem 0.75rem;
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     color: var(--text-primary);
     outline: none;
     transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
@@ -273,7 +273,7 @@ details summary::-webkit-details-marker {
   .field-label {
     margin-bottom: 0.375rem;
     display: block;
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     font-weight: 500;
     color: var(--text-secondary);
   }
@@ -371,4 +371,17 @@ details summary::-webkit-details-marker {
   .app-loading-indicator span {
     animation: none;
   }
+}
+
+
+/* Studio atmospheric login backdrop — static gradients, no layout shift */
+.hoho-studio-backdrop {
+  background-color: #0B0D12;
+  background-image: radial-gradient(ellipse 75% 55% at 18% 14%, rgba(129,140,248,.16) 0%, rgba(99,102,241,.05) 45%, transparent 72%), radial-gradient(ellipse 65% 50% at 84% 22%, rgba(167,139,250,.12) 0%, rgba(129,140,248,.04) 48%, transparent 74%), radial-gradient(ellipse 70% 55% at 76% 88%, rgba(52,211,153,.09) 0%, rgba(59,130,246,.04) 50%, transparent 75%), linear-gradient(180deg,#0B0D12 0%,#10131A 52%,#0B0D12 100%);
+}
+.hoho-studio-grid-overlay {
+  background-size: 44px 44px;
+  background-image: linear-gradient(to right,rgba(129,140,248,.065) 1px,transparent 1px),linear-gradient(to bottom,rgba(129,140,248,.065) 1px,transparent 1px);
+  mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
+  -webkit-mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
 }

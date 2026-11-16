@@ -1,186 +1,94 @@
 import React, { useEffect, useRef } from "react";
 
-/**
- * Lightweight perspective particle field used as a decorative login backdrop.
- * Draws a still frame for reduced-motion users and animates only when allowed.
- */
-export const ThreeHeroCanvas: React.FC<{ className?: string }> = ({ className = "" }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+interface ConstellationNode {
+  xRatio: number; yRatio: number; radius: number; color: string;
+  alpha: number; phase: number; speed: number;
+}
 
+const CONSTELLATION_NODES: ConstellationNode[] = [
+  { xRatio:.08,yRatio:.14,radius:2.2,color:"129, 140, 248",alpha:.55,phase:.2,speed:.9 },
+  { xRatio:.19,yRatio:.09,radius:1.8,color:"167, 139, 250",alpha:.42,phase:1.1,speed:.7 },
+  { xRatio:.15,yRatio:.26,radius:2.5,color:"129, 140, 248",alpha:.62,phase:2,speed:1.1 },
+  { xRatio:.28,yRatio:.19,radius:1.7,color:"96, 165, 250",alpha:.38,phase:.7,speed:.8 },
+  { xRatio:.36,yRatio:.11,radius:2.1,color:"129, 140, 248",alpha:.48,phase:1.6,speed:1 },
+  { xRatio:.48,yRatio:.16,radius:1.9,color:"167, 139, 250",alpha:.4,phase:2.5,speed:.85 },
+  { xRatio:.63,yRatio:.10,radius:2.4,color:"129, 140, 248",alpha:.58,phase:.4,speed:.95 },
+  { xRatio:.74,yRatio:.18,radius:2.6,color:"52, 211, 153",alpha:.52,phase:1.9,speed:.75 },
+  { xRatio:.86,yRatio:.12,radius:2,color:"129, 140, 248",alpha:.48,phase:2.8,speed:1.05 },
+  { xRatio:.91,yRatio:.27,radius:2.3,color:"167, 139, 250",alpha:.54,phase:.9,speed:.8 },
+  { xRatio:.79,yRatio:.33,radius:1.8,color:"96, 165, 250",alpha:.4,phase:1.4,speed:.9 },
+  { xRatio:.11,yRatio:.44,radius:2.1,color:"52, 211, 153",alpha:.46,phase:2.2,speed:.7 },
+  { xRatio:.24,yRatio:.38,radius:1.9,color:"129, 140, 248",alpha:.42,phase:3,speed:.85 },
+  { xRatio:.88,yRatio:.48,radius:2.2,color:"129, 140, 248",alpha:.5,phase:1.2,speed:.95 },
+];
+const CONSTELLATION_EDGES: Array<[number,number]> = [[0,1],[0,2],[1,3],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[7,9],[7,10],[9,10],[2,11],[2,12],[3,12],[10,13]];
+
+export const ThreeHeroCanvas: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || typeof window === "undefined") return;
-
+    if (!canvas) return;
     const context = canvas.getContext("2d", { alpha: true });
     if (!context) return;
-
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const isAutomatedBrowser = navigator.webdriver === true;
-    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0;
-    const isConstrainedDevice = Boolean(connection?.saveData || navigator.hardwareConcurrency <= 4 || (deviceMemory > 0 && deviceMemory <= 4));
-    let shouldAnimate = false;
-    let columns = 18;
-    let rows = 10;
-    const frameInterval = 1000 / 30;
-    let frameId = 0;
-    let startTimer: ReturnType<typeof setTimeout> | null = null;
-    let animationReady = false;
-    let width = 1;
-    let height = 1;
-    let pointerX = 0;
-    let pointerY = 0;
-    let time = 0;
-    let lastFrameTime = 0;
-    let isVisible = true;
-    let isPageVisible = !document.hidden;
-    let disposed = false;
-
-    const draw = () => {
-      context.clearRect(0, 0, width, height);
-      const centerX = width * 0.5 + pointerX * 12;
-      const centerY = height * 0.54 + pointerY * 8;
-      for (let row = 0; row < rows; row += 1) {
-        const depth = row * 54 + 130;
-        const scale = 340 / (340 + depth);
-        const alpha = Math.max(0.07, (1 - row / rows) * 0.38);
-        const spacingX = columns <= 12 ? 52 : 62;
-        const radius = Math.max(0.7, 2.1 * scale);
-        for (let color = 0; color < 2; color += 1) {
-          context.beginPath();
-          for (let column = 0; column < columns; column += 1) {
-            if (((row + column) % 6 === 0) !== (color === 1)) continue;
-            const worldX = (column - (columns - 1) / 2) * spacingX;
-            const wave = motionQuery.matches ? 0 : Math.sin(column * 0.38 + time + row * 0.12) * 12;
-            const x = centerX + worldX * scale;
-            const y = centerY + (row * 32 + wave + 48) * scale;
-            context.moveTo(x + radius, y);
-            context.arc(x, y, radius, 0, Math.PI * 2);
-          }
-          context.fillStyle = color === 1
-            ? "rgba(87, 242, 135, " + alpha + ")"
-            : "rgba(148, 156, 247, " + alpha + ")";
-          context.fill();
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0, idleId: number | null = null, timeoutId: number | null = null;
+    let width = 0, height = 0, lastFrame = 0, disposed = false;
+    const resize = () => {
+      const parent = canvas.parentElement;
+      width = parent?.clientWidth || window.innerWidth;
+      height = parent?.clientHeight || window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.max(1, Math.floor(width*dpr));
+      canvas.height = Math.max(1, Math.floor(height*dpr));
+      canvas.style.width = width+"px"; canvas.style.height = height+"px";
+      context.setTransform(dpr,0,0,dpr,0,0);
+    };
+    const draw = (time: number) => {
+      context.clearRect(0,0,width,height);
+      const nodes = CONSTELLATION_NODES.map(n => ({...n,x:n.xRatio*width+Math.sin(time*n.speed+n.phase)*10,y:n.yRatio*height+Math.cos(time*n.speed*.85+n.phase)*8}));
+      context.lineWidth = 1;
+      for (const [a,b] of CONSTELLATION_EDGES) {
+        const from=nodes[a],to=nodes[b]; if(!from||!to) continue;
+        const gradient=context.createLinearGradient(from.x,from.y,to.x,to.y);
+        gradient.addColorStop(0,`rgba(${from.color},.16)`); gradient.addColorStop(1,`rgba(${to.color},.16)`);
+        context.strokeStyle=gradient; context.beginPath(); context.moveTo(from.x,from.y); context.lineTo(to.x,to.y); context.stroke();
+      }
+      for (const n of nodes) {
+        const alpha=n.alpha*(.85+.15*Math.sin(time*1.6+n.phase));
+        context.fillStyle=`rgba(${n.color},${alpha*.24})`; context.beginPath(); context.arc(n.x,n.y,n.radius*3.4,0,Math.PI*2); context.fill();
+        context.fillStyle=`rgba(${n.color},${alpha})`; context.beginPath(); context.arc(n.x,n.y,n.radius,0,Math.PI*2); context.fill();
+      }
+      const cols=width<640?14:24, rows=width<640?7:10, horizon=height*.52;
+      for(let row=0;row<rows;row++){
+        const depth=row/Math.max(1,rows-1), scale=.42+depth*.78;
+        for(let col=0;col<cols;col++){
+          const nx=(col-(cols-1)/2)/((cols-1)/2);
+          const wave=Math.sin(col*.42+time*1.15+row*.35)*12+Math.cos(row*.55-time*.9)*8;
+          const x=width*.5+nx*(width*.56)*scale, y=horizon+depth*(height*.44)+wave*scale;
+          const rgb=(row+col)%7===0?"52, 211, 153":row%2===0?"129, 140, 248":"167, 139, 250";
+          context.fillStyle=`rgba(${rgb},${Math.min(.58,.16+depth*.36)})`; context.beginPath(); context.arc(x,y,Math.max(1,1.15+depth*1.35),0,Math.PI*2); context.fill();
         }
       }
     };
-
-    const resize = () => {
-      const bounds = canvas.getBoundingClientRect();
-      width = Math.max(1, bounds.width);
-      height = Math.max(1, bounds.height);
-      const isCompactMobile = width < 640;
-      shouldAnimate = !isAutomatedBrowser && !motionQuery.matches && !isCompactMobile && !isConstrainedDevice;
-      columns = isCompactMobile ? 10 : 18;
-      rows = isCompactMobile ? 5 : 10;
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, isCompactMobile ? 1.25 : 1.5);
-      canvas.width = Math.round(width * pixelRatio);
-      canvas.height = Math.round(height * pixelRatio);
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      draw();
-      if (shouldAnimate) scheduleStart();
-      else {
-        animationReady = false;
-        if (startTimer) clearTimeout(startTimer);
-        startTimer = null;
-        stop();
-      }
+    const tick=(timestamp:number)=>{
+      if(disposed)return;
+      if(timestamp-lastFrame>=34){lastFrame=timestamp;draw(timestamp*.001);}
+      frame=window.requestAnimationFrame(tick);
     };
-
-    const stop = () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      frameId = 0;
+    const start=()=>{if(!disposed&&!mediaQuery.matches&&!frame)frame=window.requestAnimationFrame(tick);};
+    resize(); draw(1.25);
+    const win=window as Window & {requestIdleCallback?:(cb:()=>void,opts?:{timeout:number})=>number;cancelIdleCallback?:(id:number)=>void};
+    if(!mediaQuery.matches && window.innerWidth>=640 && (navigator.hardwareConcurrency||8)>4){
+      if(typeof win.requestIdleCallback==="function") idleId=win.requestIdleCallback(start,{timeout:1200});
+      else timeoutId=window.setTimeout(start,450);
+    }
+    window.addEventListener("resize",resize);
+    return ()=>{
+      disposed=true; window.cancelAnimationFrame(frame);
+      if(idleId!==null&&typeof win.cancelIdleCallback==="function")win.cancelIdleCallback(idleId);
+      if(timeoutId!==null)window.clearTimeout(timeoutId);
+      window.removeEventListener("resize",resize);
     };
-
-    const tick = (timestamp: number) => {
-      frameId = 0;
-      if (disposed || !shouldAnimate || !isVisible || !isPageVisible) return;
-
-      if (timestamp - lastFrameTime >= frameInterval) {
-        lastFrameTime = timestamp;
-        time += 0.035;
-        draw();
-      }
-
-      // Schedule exactly one next frame. Never create parallel animation loops.
-      frameId = window.requestAnimationFrame(tick);
-    };
-
-    const start = () => {
-      if (disposed || !animationReady || !shouldAnimate || !isVisible || !isPageVisible || frameId) return;
-      lastFrameTime = 0;
-      frameId = window.requestAnimationFrame(tick);
-    };
-
-    const scheduleStart = () => {
-      if (!shouldAnimate || disposed) return;
-      if (startTimer) clearTimeout(startTimer);
-      startTimer = setTimeout(() => {
-        startTimer = null;
-        animationReady = true;
-        start();
-      }, 1500);
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      pointerX = (event.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
-      pointerY = (event.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
-    };
-
-    const handleVisibilityChange = () => {
-      isPageVisible = !document.hidden;
-      if (isPageVisible) start();
-      else stop();
-    };
-
-    const handleMotionChange = () => {
-      resize();
-    };
-
-    resize();
-    const resizeObserver = typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(resize)
-      : null;
-    resizeObserver?.observe(canvas);
-    if (!resizeObserver) window.addEventListener("resize", resize, { passive: true });
-
-    const visibilityObserver = typeof IntersectionObserver !== "undefined"
-      ? new IntersectionObserver(([entry]) => {
-          isVisible = Boolean(entry?.isIntersecting);
-          if (isVisible) start();
-          else stop();
-        }, { threshold: 0 })
-      : null;
-    visibilityObserver?.observe(canvas);
-
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    motionQuery.addEventListener?.("change", handleMotionChange);
-
-    if (motionQuery.matches) draw();
-    else scheduleStart();
-
-    return () => {
-      disposed = true;
-      if (startTimer) clearTimeout(startTimer);
-      startTimer = null;
-      stop();
-      resizeObserver?.disconnect();
-      visibilityObserver?.disconnect();
-      if (!resizeObserver) window.removeEventListener("resize", resize);
-      window.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      motionQuery.removeEventListener?.("change", handleMotionChange);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 h-full w-full opacity-60 ${className}`}
-    />
-  );
+  },[]);
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full opacity-90" />;
 };
-
-export default ThreeHeroCanvas;

@@ -11,16 +11,23 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 type PanelTab = "properties" | "flow";
 
-export const PropertyPanel = () => {
+export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => void } = {}) => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
-  const messageData = (messages && messages[activeMessageIndex]) || data;
+  const targetMessageIndex = selection?.kind === "message" ? selection.index : activeMessageIndex;
+  const messageData = (messages && messages[targetMessageIndex]) || data;
+  const isV2Message = Boolean((messageData.flags ?? 0) & (1 << 15));
+  const primaryTextDisplay = isV2Message
+    ? (messageData.components || []).find((component) => component.type === ComponentType.TextDisplay)
+    : undefined;
   const components = messageData.components || [];
   const select = useMessageStore((state) => state.select);
   const setContent = useMessageStore((state) => state.setContent);
+  const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
+  const addComponent = useMessageStore((state) => state.addComponent);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
@@ -70,19 +77,41 @@ export const PropertyPanel = () => {
               <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Message Quick Edit</span>
               <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
             </div>
-            <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={onOpenFullEditor} className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A]">Open Full Editor</button>
+              <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
+            </div>
           </div>
           <div className="min-h-0 overflow-y-auto p-3.5" data-message-quick-editor>
-            <label htmlFor="preview-message-content" className="mb-2 block text-xs font-semibold text-[#A1A8B8]">Message content</label>
+            <label htmlFor="preview-message-content" className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#A1A8B8]">
+              {isV2Message ? "Text Display content" : "Message content"}
+              {isV2Message && <span className="rounded border border-[#818CF8]/30 bg-[#818CF8]/10 px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#A5B4FC]">Components V2 Text Block</span>}
+            </label>
             <textarea
               id="preview-message-content"
-              value={messageData.content ?? ""}
-              onChange={(event) => setContent(event.target.value)}
+              value={isV2Message ? (primaryTextDisplay?.content ?? "") : (messageData.content ?? "")}
+              onChange={(event) => {
+                if (selection.index !== activeMessageIndex) setActiveMessageIndex(selection.index);
+                if (!isV2Message) {
+                  setContent(event.target.value);
+                  return;
+                }
+                if (primaryTextDisplay?._id) {
+                  updateComponentById(primaryTextDisplay._id, { content: event.target.value });
+                  return;
+                }
+                addComponent(ComponentType.TextDisplay);
+                const createdSelection = useMessageStore.getState().selection;
+                if (createdSelection?.kind === "component") {
+                  updateComponentById(createdSelection.id, { content: event.target.value });
+                  select({ kind: "message", index: selection.index });
+                }
+              }}
               placeholder="Write your message..."
               rows={6}
               className="w-full min-h-32 resize-y rounded-lg border border-[#303746] bg-[#0F1219] p-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-[#687184] focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
             />
-            <p className="mt-2 text-[11px] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
+            <p className="mt-2 text-[0.6875rem] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
           </div>
         </aside>
       </>

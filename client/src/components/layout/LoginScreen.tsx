@@ -71,23 +71,45 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
   const [devLoginLoading, setDevLoginLoading] = useState(false);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    // Keep the compact mobile login experience static; the tabs remain interactive.
+    // Automatic showcase rotation is only useful on larger screens and can add
+    // avoidable main-thread work during mobile rendering.
+    const isReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isNarrowScreen = window.matchMedia("(max-width: 767px)").matches;
+    if (isReducedMotion || isNarrowScreen) return;
+
+    const timer = window.setInterval(() => {
       setActiveShowcase((prev) => (prev + 1) % DEMO_SHOWCASES.length);
     }, 6500);
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const [showHeroCanvas, setShowHeroCanvas] = useState(false);
+
+  useEffect(() => {
+    // The decorative canvas is intentionally excluded from touch/mobile and
+    // reduced-motion sessions so it cannot compete with the login content.
+    const canvasQuery = window.matchMedia(
+      "(min-width: 768px) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+    );
+    const syncCanvasVisibility = () => setShowHeroCanvas(canvasQuery.matches);
+    syncCanvasVisibility();
+    canvasQuery.addEventListener("change", syncCanvasVisibility);
+    return () => canvasQuery.removeEventListener("change", syncCanvasVisibility);
   }, []);
 
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div data-testid="login-screen-scroll-root" className="relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#10131A] text-[#F1F3F9] flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 select-none">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden"><React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense></div>
+    <div data-testid="login-screen-scroll-root" className="hoho-studio-backdrop relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar text-[#F1F3F9] flex flex-col justify-between select-none">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true"><div className="hoho-studio-grid-overlay absolute inset-0" /><div className="absolute -top-28 left-1/4 h-[26rem] w-[38rem] -translate-x-1/2 rounded-full bg-[#818CF8]/14 blur-[64px] sm:blur-[110px]" /><div className="absolute top-1/3 right-[-6rem] h-[24rem] w-[32rem] rounded-full bg-[#A78BFA]/10 blur-[72px] sm:blur-[120px]" /><div className="absolute -bottom-24 left-1/2 h-[22rem] w-[36rem] -translate-x-1/2 rounded-full bg-[#34D399]/8 blur-[72px] sm:blur-[120px]" />{showHeroCanvas && <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>}</div>
       <PublicPageHeader activePage="studio" />
 
+      <div className="relative z-10 flex flex-1 flex-col justify-between px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8">
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
-        <div className="relative isolate overflow-hidden lg:col-span-5 min-w-0 bg-[#2b2d31]/95 border border-[#272D3A] rounded-xl p-4 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+        <div className="relative isolate overflow-hidden lg:col-span-5 min-w-0 bg-[#161A23]/90 backdrop-blur-sm sm:backdrop-blur-xl border border-[#272D3A] rounded-2xl p-4 sm:p-8 shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] space-y-5 sm:space-y-6">
           <div className="space-y-2">
-            <span className="inline-block px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc] text-[11px] font-semibold uppercase tracking-wider">
+            <span className="inline-block px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc] text-[0.6875rem] font-semibold uppercase tracking-wider">
               COMPONENTS V2 & DYNAMIC TRACKING
             </span>
             <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -138,7 +160,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               >
                 {devLoginLoading ? "Starting local session…" : "Continue as Local Developer"}
               </button>
-              <p className="text-[11px] text-[#A1A8B8] text-center">
+              <p className="text-[0.6875rem] text-[#A1A8B8] text-center">
                 Development-only test account. Discord login remains available above.
               </p>
               {devLoginError && (
@@ -172,12 +194,12 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
           </div>
         </div>
 
-        <div className="relative isolate overflow-hidden lg:col-span-7 min-w-0 bg-[#2b2d31]/95 border border-[#272D3A] rounded-xl overflow-hidden shadow-xl flex flex-col">
-          <div className="bg-[#272D3A] px-4 py-2.5 border-b border-[#111214] flex flex-wrap items-center justify-between gap-2">
+        <div className="relative isolate overflow-hidden lg:col-span-7 min-w-0 bg-[#161A23]/90 backdrop-blur-sm sm:backdrop-blur-xl border border-[#272D3A] rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col">
+          <div className="bg-[#10131A] px-4 py-2.5 border-b border-[#272D3A] flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-[#A1A8B8]">
               #announcements  Preview
             </span>
-            <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#111214] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full">
+            <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#10131A] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full">
               {DEMO_SHOWCASES.map((item, idx) => (
                 <button
                   key={item.id}
@@ -188,7 +210,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                     setActiveShowcase(idx);
                     setClickedBtn(null);
                   }}
-                  className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${activeShowcase === idx
+                  className={`px-2.5 py-1 rounded text-[0.6875rem] font-bold transition-colors ${activeShowcase === idx
                     ? "bg-[#818CF8] text-[#10131A]"
                     : "text-[#A1A8B8] hover:text-white"
                     }`}
@@ -199,30 +221,30 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             </div>
           </div>
 
-          <div className="p-3 sm:p-6 bg-[#313338] space-y-4">
+          <div className="p-3 sm:p-6 bg-[#10131A]/90 space-y-4">
             <div className="flex items-start gap-3.5">
               <HoHoLogoMark className="h-10 w-10" />
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-white">HoHo Bot</span>
-                  <span className="rounded bg-[#818CF8] px-1.5 py-0.5 text-[10px] font-bold text-[#10131A]">
+                  <span className="rounded bg-[#818CF8] px-1.5 py-0.5 text-[0.625rem] font-bold text-[#10131A]">
                     APP
                   </span>
                   <span className="text-xs text-[#A1A8B8]">Today at 12:00 PM</span>
                 </div>
 
                 <div
-                  className="rounded-lg bg-[#2b2d31] border border-[#272D3A] p-4 space-y-3 transition-[border-color,background-color,box-shadow] duration-150 ease-out"
+                  className="rounded-lg bg-[#1D2230] border border-[#272D3A] p-4 space-y-3 transition-[border-color,background-color,box-shadow] duration-150 ease-out"
                   style={{
                     borderLeftWidth: "4px",
                     borderLeftColor: currentDemo.accent,
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span data-showcase-badge className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#272D3A] text-[#dee0fc]">
+                    <span data-showcase-badge className="text-[0.625rem] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#10131A] text-[#A1A8B8]">
                       {currentDemo.badge}
                     </span>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#10131A] border border-[#272D3A] text-[10px] font-bold uppercase tracking-wider text-[#F1F3F9]"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#10131A] border border-[#272D3A] text-[0.625rem] font-bold uppercase tracking-wider text-[#F1F3F9]"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
                   </div>
 
                   <h2 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h2>
@@ -244,7 +266,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                   </div>
 
                   {clickedBtn && (
-                    <div className="mt-2 p-2.5 rounded bg-[#272D3A] border border-[#252B3A] text-[11px] text-[#F1F3F9] flex items-center justify-between">
+                    <div className="mt-2 p-2.5 rounded bg-[#10131A] border border-[#272D3A] text-[0.6875rem] text-[#F1F3F9] flex items-center justify-between">
                       <span>
                         Action triggered: <strong>{clickedBtn}</strong>
                       </span>
@@ -264,7 +286,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
         </div>
       </main>
 
-      <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#b5bac1] border-t border-[#272D3A] pt-4">
+      <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[0.6875rem] text-[#b5bac1] border-t border-[#272D3A] pt-4">
         <span>HoHo Manager • Discord Bot Message &amp; Components V2 Studio</span>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <a href="/docs" className="hover:text-white transition-colors">Docs</a>
@@ -273,6 +295,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
         </div>
         <span className="sm:hidden">Discord OAuth2 sign-in</span>
       </footer>
+      </div>
 
     </div>
   );

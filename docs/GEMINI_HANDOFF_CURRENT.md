@@ -1138,3 +1138,154 @@ The implementation follows the actual golden commit source where the plan's pros
 ### Required next step
 
 Run the full test, typecheck, and build commands against the implementation head; inspect and fix every failure before calling this complete. Then perform desktop and mobile visual checks against the golden layout and record actual CI/test results here.
+
+
+## Gemini V12 implementation — Batch 1 (in progress, 2026-11-16)
+
+- Branch: `feat/v12-ultimate-ux-implementation` (branched from `main`).
+- Implemented source changes: atmospheric radial-gradient/grid backdrop utilities; full-viewport constellation nodes/filaments plus lower perspective wave field; immediate static canvas paint with reduced-motion/mobile-safe behavior and idle-started desktop animation capped at approximately 29 FPS; login header flush to viewport edges with page padding moved to content wrapper; upgraded auth/showcase cards to the current studio surface palette while preserving the existing 5/7-column layout and controls.
+- Files changed in this batch: `client/src/styles/globals.css`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/layout/LoginScreen.tsx`.
+- Source-level guard checks passed in the update script: login backdrop class present and both existing grid column spans retained. Automated tests, typecheck, build, visual QA, and Lighthouse have not yet been run.
+
+
+## Gemini V12 implementation — Batch 2 (2026-11-16)
+
+- Updated the live-preview click path to use a single bubble-phase message-card handler. Component clicks are routed to `onSelectPreviewComponent` without capture-phase propagation cancellation, so child controls can receive their own click handlers first.
+- Select preview roots now advertise `data-preview-component-id`, `data-preview-interactive="true"`, and `data-preview-select="true"`; button preview's duplicate selection handler was removed. `AutoComponent` no longer performs its own competing selection routing.
+- Preserved the current StudioLayout desktop/mobile routing contract: ordinary components remain routed to the editor on desktop; interactive controls open the inspector; mobile retains its quick inspector behavior. The card handler ignores component descendants for blank-card navigation.
+- Files: `MessagePreview.tsx`, `ActionRowPreview.tsx`, `ComponentPreview.tsx`.
+- Validation: source transformation guards passed. Automated interaction tests, typecheck, build, and browser QA remain pending.
+
+
+## Gemini V12 implementation — Batch 3 (2026-11-16)
+
+- `PropertyPanel.tsx`: message quick-edit resolves the selected message using `selection.index`; classic messages edit `content`, while Components V2 messages edit the first `TextDisplay` block. If a V2 message has no text block, the editor creates one, writes the initial text, then restores the message quick-edit selection. The UI identifies the field with a `Components V2 Text Block` badge.
+- Added an `Open Full Editor` action to the quick-edit header. `StudioLayout.tsx` switches to the Editor pane and clears the overlay selection.
+- `messageStore.ts`: changing the active index preserves the matching message quick-edit selection, preventing the sheet from closing during the first edit when the selected message differs from the active message.
+- Files: `PropertyPanel.tsx`, `StudioLayout.tsx`, `messageStore.ts`.
+- Validation: source-level guards passed. Runtime state behavior, tests, typecheck, and build remain pending.
+
+
+## Gemini V12 implementation — Batch 4 (2026-11-16)
+
+- `FlowBuilder.tsx`: replaced legacy semantic utility names with explicit SaaS Studio hex tokens for the heading, custom ID, server-mode note, and unsaved warning. Updated the mode label to `Server Bot mode`.
+- `StepList.tsx` was inspected and left unchanged: the V12 plan specifies no concrete StepList code change, and its existing nested-flow/editor behavior is outside the identified token defect.
+- Validation: source-level legacy-token and wording guards passed. Tests, typecheck, and production build remain pending.
+
+
+## Gemini V12 implementation — Batch 5 (2026-11-16)
+
+- Corrected the two inverted thread input surface tokens in `ContentTab.tsx`.
+- Recessed the targeted helper callout surfaces in `ComponentForms.tsx` using `#10131A` with `#272D3A` borders and secondary text.
+- Updated add-button/add-select dashed borders in `DiscohookComponentsEditor.tsx` to the studio border and hover palette.
+- Replaced legacy Discord-gray surfaces in `Header.tsx` and `Sidebar.tsx` with the studio surface hierarchy.
+- Updated `client/index.html` theme color to `#0B0D12` and body foreground/background utility classes.
+- Validation: all six files matched expected legacy patterns and source-level checks passed. Full test/typecheck/build verification remains pending.
+
+
+## Gemini V12 implementation — Batch 6 (2026-11-16)
+
+- `uiThemeConfig.ts`: removed `border-color` and `box-shadow` from the shared button base transition list, retaining transform, background, text color, and opacity transitions.
+- `editorSmoothScroll.ts`: skips Lenis initialization on coarse-pointer devices and leaves native momentum scrolling in place; desktop wheel smoothing remains enabled.
+- Removed the now-unused `useMessageStore` import from `ActionRowPreview.tsx` after centralizing preview component selection in `MessagePreview`.
+- Validation: source-level transition and pointer-gating guards passed. Lighthouse and runtime verification remain pending.
+
+
+## Gemini V12 implementation — Batch 7 test additions (2026-11-16)
+
+- `LoginScreen.test.tsx`: added assertions for the atmospheric backdrop, grid overlay, preserved 5/7 layout, and Discord OAuth CTA.
+- `MessageEditor.test.tsx`: added regression coverage for a Select Menu opening in Live Preview while still notifying the inspector-selection callback, and for editing the selected message's V2 `TextDisplay` block when the selected index differs from the active index.
+- Source/repository mismatch recorded: the current `LoginScreen.tsx` does not contain a Guest Sandbox CTA; it contains a development-only `Continue as Local Developer` control. The implementation did not invent a new guest-authentication path without an existing handler/contract.
+- Test execution, typecheck, production build, browser QA, and Lighthouse remain unverified in the current GitHub-only editing session. Run the repository scripts before merging.
+
+
+## V12 implementation checkpoint — pre-CI review (2026-11-16)
+
+- Base branch snapshot: `main` at `bb7ab2cd97ad55736b02ef7fe095982a70313a4f` (the commit that added the Gemini V12 plan).
+- Working branch: `feat/v12-ultimate-ux-implementation`.
+- Completed implementation batches: 1–6 source changes, plus Batch 7 regression-test additions. The V12 changes are isolated to the working branch; `main` has not been modified.
+- Batch 1–6 changed files: login screen/canvas/global styles; live preview click routing; mobile V2 quick-edit and message-store selection synchronization; FlowBuilder token cleanup; thread inputs/helper callouts/header/sidebar/index theme; shared button transitions and desktop-only Lenis wheel smoothing.
+- Batch 7 test additions cover the login backdrop/layout, Select Menu interaction routing, and selected-message V2 TextDisplay editing.
+- The current LoginScreen has no Guest Sandbox control or guest-auth handler. It retains the existing Discord OAuth CTA and development-only local-login action; no speculative guest-login implementation was added.
+- `client/index.html` body now uses the explicit `#0B0D12` / `#F1F3F9` studio theme classes. The theme-color meta tag is `#0B0D12`.
+- Verification state: no local Node execution was available through the GitHub editing path. Tests, typecheck, production build, browser QA, and Lighthouse are NOT yet verified. CI should be triggered through a draft PR and its exact results recorded before merge.
+
+
+## V12 pull request and CI status (2026-11-16)
+
+- Draft pull request: [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44).
+- Working branch: `feat/v12-ultimate-ux-implementation`; target: `main`.
+- GitHub reports the PR as open and mergeable. It is intentionally left as a draft pending verification.
+- Post-implementation source guards were re-run against the branch and passed for preview event routing, Select Menu metadata, V2 quick-edit wiring, message-index selection preservation, FlowBuilder tokens, button transition tokens, coarse-pointer scroll gating, and login theme utilities.
+- GitHub Actions currently reports zero workflow runs/check-runs for the PR head; therefore CI has not executed or reported a result yet. Do not treat the authored regression tests as passing until the CI workflow runs.
+- Required pre-merge verification remains: `npm run build`, `npm run typecheck`, `npm test`, browser QA for desktop/mobile preview interactions and login layout, then Lighthouse Navigation/Snapshot/Timespan measurements.
+
+
+## V12 continuation — mobile Lighthouse and unit-system optimisation (2026-11-17)
+
+**Branch:** `feat/v12-ultimate-ux-implementation`  
+**PR:** [#44](https://github.com/no-peace/Hoho_manager/pull/44)  
+**Starting head for this continuation:** `0d186123d0dbec379198e0fa6d1f06d3cdc27973`
+
+### Lighthouse evidence supplied by the owner
+
+The latest local mobile Lighthouse Navigation report shows Performance 96 while Accessibility, Best Practices, and SEO are 100. Diagnostics supplied:
+- Critical request tree includes `/api/health` and `/api/auth/me`, each taking approximately 428–429 ms.
+- App stylesheet transfer is approximately 13.9 KiB and is reported as render-blocking.
+- The initial JS asset is approximately 75.6 KiB, with an estimated 29.9 KiB unused.
+- LCP element is a login description paragraph; element render delay is approximately 310 ms.
+- A preconnect candidate to `http://localhost:3001` is estimated to save approximately 150 ms.
+
+These are the owner's local Lighthouse measurements, not measurements reproduced by this continuation.
+
+### Changes implemented in this continuation
+
+1. **Auth bootstrap request reduction — `client/src/store/globalStore.ts`**
+   - Removed the redundant `/api/health` request from `fetchCurrentUser()`.
+   - Session resolution now awaits only `/api/auth/me`; it no longer waits for health/clock data in either success or failure paths.
+   - Kept the explicit `syncServerTime()` method separate for callers that genuinely need server-clock synchronization.
+   - Expected effect: removes one initial-navigation API request and its 428–429 ms dependency-tree entry. The auth request itself remains; no claim is made that its server latency has been reduced.
+
+2. **Mobile login render work — `client/src/components/layout/LoginScreen.tsx`**
+   - The decorative `ThreeHeroCanvas` is now mounted only on fine-pointer screens at 768px and wider, and only when reduced motion is not requested. The lazy module is therefore not requested by the mobile login route.
+   - Automatic showcase rotation is disabled on narrow screens and for reduced-motion users; the tabs remain manually interactive.
+   - Reduced the large blurred background effects on small screens and lowered card backdrop blur on mobile.
+   - Migrated the login screen's custom 10px/11px typography utilities to equivalent rem values.
+
+3. **Initial JavaScript chunking — `client/vite.config.ts`**
+   - Removed the forced `vendor-icons` manual chunk. The previous rule merged every Lucide icon imported by the lazy Studio route into one shared chunk that could be pulled into the public login route.
+   - Rollup is now allowed to split icon modules according to actual route usage. This is intended to reduce login-route unused JS; only the production bundle and Lighthouse artifact can confirm the result.
+
+4. **Measurement units**
+   - `client/src/config/uiThemeConfig.ts`: shared typography utilities now use equivalent rem sizes; the desktop inspector width was converted from 440px to 27.5rem.
+   - `client/src/styles/globals.css`: global field font sizes use rem.
+   - `client/index.html`: first-paint splash typography uses rem.
+   - V12-touched files migrated custom pixel typography utilities to equivalent rem values: `ContentTab.tsx`, `ComponentForms.tsx`, `DiscohookComponentsEditor.tsx`, `Header.tsx`, `Sidebar.tsx`, `StudioLayout.tsx`, `PropertyPanel.tsx`, `FlowBuilder.tsx`, `MessagePreview.tsx`, `ActionRowPreview.tsx`, and `SplitPane.tsx`.
+   - `DESIGN.md` now documents the unit policy: rem typography; percentage-based parent-relative sizing; vw only for true viewport-edge width; 100dvh for dynamic full-screen height; px for border thickness; and justified exceptions for breakpoints, canvas/protocol fidelity, and other CSS primitives.
+
+### Decisions / items intentionally not changed
+
+- The global stylesheet remains a normal render-blocking stylesheet. Converting it to asynchronous CSS delivery without a measured critical-CSS extraction could cause FOUC and CLS; the 13.9 KiB file should be reassessed after production build output is available.
+- The `localhost:3001` preconnect candidate was not added blindly. The current app uses a same-origin `/api` path behind the Vite preview proxy; preconnecting to a development-only origin would not be correct for production. Revisit only if the production architecture actually serves the API on a distinct origin.
+- No backend health or auth endpoint implementation was changed. The report alone does not establish whether the remaining `/api/auth/me` latency is server processing, cold start, or proxy overhead.
+- No claim of a 100 Performance score is made. Performance scores are lab measurements and must be re-run on the production preview build.
+
+### Verification status
+
+- GitHub accepted the source updates on the existing V12 branch.
+- GitHub Actions currently reports zero workflow runs for the latest branch head despite `.github/workflows/ci.yml` and `.github/workflows/lighthouse.yml` declaring pull-request triggers. Therefore typecheck, tests, production build, and Lighthouse have not yet been executed for these changes.
+- The local Desktop Commander connection was unavailable during this continuation (MCP endpoint returned 404), so local Node/Vite/Lighthouse execution could not be started from the connected desktop.
+- Required verification: run the PR CI and both mobile/desktop Lighthouse workflows; inspect the production bundle's chunk graph; compare mobile LCP, render delay, unused JS, and performance score against the supplied baseline. Do not merge until CI is green and the mobile Lighthouse regression check is reviewed.
+
+
+### Post-change source guards (2026-11-17)
+
+- Re-fetched the updated branch files from GitHub and checked the auth bootstrap no longer references `/api/health`, while still calling `/api/auth/me`.
+- Confirmed the login canvas is conditionally mounted only for fine-pointer screens at 768px+ with reduced motion disabled; narrow/reduced-motion sessions also skip automatic showcase rotation.
+- Confirmed the forced `vendor-icons` manual chunk is absent.
+- Confirmed shared theme typography has no remaining `text-[Npx]` arbitrary pixel font utilities and global CSS has no pixel `font-size` declarations.
+- Confirmed the V12-touched files `ContentTab.tsx`, `ComponentForms.tsx`, `DiscohookComponentsEditor.tsx`, `Header.tsx`, `Sidebar.tsx`, `StudioLayout.tsx`, `PropertyPanel.tsx`, `FlowBuilder.tsx`, `MessagePreview.tsx`, `ActionRowPreview.tsx`, and `SplitPane.tsx` contain no remaining `text-[Npx]` utilities.
+- Confirmed the first-paint HTML splash typography uses rem and the unit policy is present in `DESIGN.md`.
+- These are source-content guards only. They are not substitutes for Vitest, TypeScript, production build, browser QA, or Lighthouse execution.
+- Latest implementation head before this handoff append: `b8dd14ac20c8bd58ba01e02db4962f1a133c633b`.
+- Latest GitHub Actions query still returned zero runs and zero commit statuses for the branch. Desktop Commander and Playwright MCP endpoints both returned HTTP 404 during this session; local test/Lighthouse execution remains blocked by tool availability.
