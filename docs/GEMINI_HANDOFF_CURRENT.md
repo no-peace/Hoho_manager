@@ -1,6 +1,18 @@
+## Lighthouse follow-up — contrast and font loading (2026-11-16)
+
+## Lighthouse follow-up — contrast and font loading (2026-11-16)
+
+Implemented on `main`:
+
+- `client/src/components/layout/LoginScreen.tsx`: changed foreground text on the `#818CF8` lavender controls to dark `#10131A` for the Discord login CTA, active Components V2 showcase tab, APP badge, and purple showcase action buttons. The CTA hover state now uses `#5B5FEA` with white text (4.9:1 contrast); pressed state uses `#4F46E5` with white text (6.28:1). This preserves the primary lavender brand color while meeting WCAG AA for normal text.
+- `client/src/styles/globals.css`: removed the Google Fonts CSS `@import`, which placed font stylesheet discovery behind the main stylesheet.
+- `client/index.html`: added preconnects for Google Fonts and gstatic, and changed the same Inter/JetBrains Mono stylesheet to a non-blocking preload-to-stylesheet pattern with a no-JavaScript fallback. The font families and requested weights are unchanged; `display=swap` remains enabled.
+
+Validation: source-level checks confirmed the old Google Fonts `@import` is absent, the HTML contains the preconnects/non-blocking font stylesheet/fallback, and the four reported lavender/white UI elements now use accessible foreground colors. WCAG ratios were calculated from the authored hex values: #10131A on #818CF8 = 6.23:1; white on #5B5FEA = 4.92:1; white on #4F46E5 = 6.29:1. No test suite, typecheck, production build, or new Lighthouse run has been executed in this environment. Re-run Lighthouse against a production `vite preview` build to measure the actual performance impact and confirm the accessibility score.
+
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Updated:** 2026-11-16 (latest continuation: message-card click navigation and Lighthouse performance diagnosis)  
+**Updated:** 2026-11-16 (latest continuation: Lighthouse contrast and font-loading fixes)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
