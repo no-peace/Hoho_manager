@@ -14,7 +14,11 @@ type PanelTab = "properties" | "flow";
 export const PropertyPanel = () => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
-  const components = useMessageStore((state) => state.data.components);
+  const messages = useMessageStore((state) => state.messages);
+  const data = useMessageStore((state) => state.data);
+  const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
+  const messageData = (messages && messages[activeMessageIndex]) || data;
+  const components = messageData.components || [];
   const select = useMessageStore((state) => state.select);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
@@ -61,7 +65,7 @@ export const PropertyPanel = () => {
       >
         {/* Mobile Drag Pill */}
         <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
-          <div className="h-1 w-10 rounded-full bg-[#4e5058]" />
+          <div className="h-1 w-10 rounded-full bg-[#252B3A]" />
         </div>
 
         {/* Inspector Header */}
@@ -97,7 +101,7 @@ export const PropertyPanel = () => {
 
         {/* Properties / Action Flow Tabs */}
         {hasFlow && (
-          <div className="mx-3.5 mt-3 flex gap-1 rounded-lg border border-[#111214] bg-[#272D3A] p-1 shrink-0">
+          <div className="mx-3.5 mt-3 flex gap-1 rounded-lg border border-[#272D3A] bg-[#272D3A] p-1 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab("properties")}
