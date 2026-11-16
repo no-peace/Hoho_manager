@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
-import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
+import { SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { UI_THEME_CONFIG } from "../config/uiThemeConfig";
 import { motion } from "motion/react";
@@ -36,6 +36,11 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.created.relative}", desc: "Account age as a relative timestamp (e.g. 5 years ago)", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
+  { tag: "{user.<id>.username}", desc: "Discord username of the specified account", example: "nexus42", category: "user" },
+  { tag: "{user.<id>.tag}", desc: "Alias for the specified account username", example: "nexus42", category: "user" },
+  { tag: "{user.<id>.displayname}", desc: "Global display name, falling back to username", example: "Nexus", category: "user" },
+  { tag: "{user.<id>.globalname}", desc: "Alias for the global display name", example: "Nexus", category: "user" },
+  { tag: "{user.<id>.profile}", desc: "Direct Discord profile URL", example: "https://discord.com/users/708504312862474282", category: "user" },
   { tag: "{user.<id>.roles}", desc: "Roles held by the specified Discord user in the target server", example: "@Member @VIP", category: "user" },
   { tag: "{user.<id>.clantag}", desc: "Official primary-guild tag when that identity is enabled. Does not require selected-server membership", example: "HOHO", category: "user" },
   { tag: "{user.<id>.created}", desc: "Specified user's account creation date", example: "<t:1571875200:d>", category: "user" },
@@ -58,11 +63,15 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{now}", desc: "Current short time in user's timezone (<t:unix:t>)", example: "12:00 PM", category: "time" },
   { tag: "{now.t}", desc: "Discord Style :t — Short Time (<t:unix:t>)", example: "12:00 PM", category: "time" },
   { tag: "{now.T}", desc: "Discord Style :T — Long Time with seconds (<t:unix:T>)", example: "12:00:45 PM", category: "time" },
-  { tag: "{now.time}", desc: "Alias for Long Time with seconds (<t:unix:T>)", example: "12:00:45 PM", category: "time" },
+  { tag: "{now.time}", desc: "Long Time with seconds (<t:unix:T>)", example: "12:00:45 PM", category: "time" },
+  { tag: "{now.short_time}", desc: "Short Time (<t:unix:t>)", example: "12:00 PM", category: "time" },
   { tag: "{now.d}", desc: "Discord Style :d — Short Date (<t:unix:d>)", example: "11/11/2026", category: "time" },
-  { tag: "{now.date}", desc: "Alias for Short Date (<t:unix:d>)", example: "11/11/2026", category: "time" },
+  { tag: "{now.date}", desc: "Long Date (<t:unix:D>)", example: "November 11, 2026", category: "time" },
+  { tag: "{now.short_date}", desc: "Short Date (<t:unix:d>)", example: "11/11/2026", category: "time" },
   { tag: "{now.D}", desc: "Discord Style :D — Long Date (<t:unix:D>)", example: "November 11, 2026", category: "time" },
   { tag: "{now.longdate}", desc: "Alias for Long Date (<t:unix:D>)", example: "November 11, 2026", category: "time" },
+  { tag: "{now.datetime}", desc: "Long Date & Time (<t:unix:F>)", example: "Wednesday, November 11, 2026 12:00 PM", category: "time" },
+  { tag: "{now.short_datetime}", desc: "Short Date & Time (<t:unix:f>)", example: "Nov 11, 2026 12:00 PM", category: "time" },
   { tag: "{now.f}", desc: "Discord Style :f — Short Date/Time (<t:unix:f>)", example: "November 11, 2026 12:00 PM", category: "time" },
   { tag: "{now.short}", desc: "Alias for Short Date/Time (<t:unix:f>)", example: "Nov 11, 2026 12:00 PM", category: "time" },
   { tag: "{now.F}", desc: "Discord Style :F — Long Weekday, Date & Time (<t:unix:F>)", example: "Wednesday, November 11, 2026 12:00 PM", category: "time" },
@@ -71,6 +80,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{now.relative}", desc: "Alias for Relative Time (<t:unix:R>)", example: "just now", category: "time" },
   { tag: "{now.unix}", desc: "Raw numeric Unix epoch timestamp in seconds", example: "1794380400", category: "time" },
   { tag: "{now.iso}", desc: "ISO-8601 UTC timestamp string", example: "2026-11-11T12:00:00.000Z", category: "time" },
+  { tag: "{timestamp}", desc: "Alias for the long date and time timestamp (<t:unix:F>)", example: "Wednesday, November 11, 2026 12:00 PM", category: "time" },
 
   // Forms, Modals & Select Menus
   { tag: "{selected}", desc: "Comma-separated list of values selected in a dropdown", example: "opt_vip, opt_beta", category: "form" },
@@ -142,53 +152,53 @@ export const DocsPage = () => {
   }, [search, activeCategory]);
 
   return (
-    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#313338] text-[#dbdee1] font-sans selection:bg-[#5865f2]/30 selection:text-white pb-24">
+    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#0B0D12] text-[#F1F3F9] font-sans selection:bg-[#818CF8]/30 selection:text-white pb-24">
       <PublicPageHeader activePage="docs" />
 
       <div className="max-w-6xl mx-auto mt-8 px-4 sm:px-6">
         {/* Hero Section */}
-        <div className="mb-8 rounded-xl bg-[#2b2d31] border border-[#26282d] p-5 sm:p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-[#5865f2] font-bold text-xs uppercase tracking-wider mb-2">
-            <Sparkles size={14} /> <ShinyText text="FULL SYSTEM GUIDE & REFERENCE" />
+        <div className="mb-8 rounded-xl bg-[#161A23] border border-[#272D3A] p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-[#818CF8] font-bold text-xs uppercase tracking-wider mb-2">
+            <Sparkles size={14} /> FULL SYSTEM GUIDE & REFERENCE
           </div>
           <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
             <SplitTextReveal text="Variables, Dynamic Tracking & Executors" />
           </h1>
-          <p className="text-[#b5bac1] text-sm leading-relaxed max-w-3xl">
+          <p className="text-[#A1A8B8] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
-            Use <code className="text-[#949cf7] font-mono bg-[#1e1f22] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
+            Use <code className="text-[#A78BFA] font-mono bg-[#1D2230] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
             Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Roles and join dates require selected-server membership; primary-guild clan tags do not. Interaction-user clan tags also retain legacy nickname parsing.
           </p>
         </div>
 
         {/* Feature Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <h2 className="flex items-center gap-2 text-[#949cf7] font-bold text-xs uppercase tracking-wider mb-1.5">
+          <section className="p-4 rounded-xl bg-[#161A23] border border-[#1D2230]">
+            <h2 className="flex items-center gap-2 text-[#A78BFA] font-bold text-xs uppercase tracking-wider mb-1.5">
               <User size={14} /> Author Profile Auto-Fetch
             </h2>
-            <p className="text-xs text-[#b5bac1] leading-relaxed">
-              Set embed author URL to <code className="text-white bg-[#1e1f22] px-1 rounded">https://discord.com/users/USER_ID</code>.
+            <p className="text-xs text-[#A1A8B8] leading-relaxed">
+              Set embed author URL to <code className="text-white bg-[#1D2230] px-1 rounded">https://discord.com/users/USER_ID</code>.
               The bot automatically fetches their username, avatar pfp, and Discord link, and keeps them
             </p>
-          </SpotlightCard>
+          </section>
 
-          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <h2 className="flex items-center gap-2 text-[#57f287] font-bold text-xs uppercase tracking-wider mb-1.5">
+          <SpotlightCard className="p-4 rounded-xl bg-[#161A23] border border-[#1D2230]">
+            <h2 className="flex items-center gap-2 text-[#34D399] font-bold text-xs uppercase tracking-wider mb-1.5">
               <RefreshCw size={14} /> Live Message Auto-Tracking
             </h2>
-            <p className="text-xs text-[#b5bac1] leading-relaxed">
-              Messages containing <code className="text-white bg-[#1e1f22] px-1 rounded">{"{exploit.*}"}</code> or developer author tokens are auto-registered into the tracking daemon.
+            <p className="text-xs text-[#A1A8B8] leading-relaxed">
+              Messages containing <code className="text-white bg-[#1D2230] px-1 rounded">{"{exploit.*}"}</code> or developer author tokens are auto-registered into the tracking daemon.
               When status or profiles change, the bot automatically edits existing messages.
             </p>
           </SpotlightCard>
 
-          <SpotlightCard className="p-4 rounded-xl bg-[#2b2d31] border border-[#1e1f22]">
-            <h2 className="flex items-center gap-2 text-[#faa61a] font-bold text-xs uppercase tracking-wider mb-1.5">
+          <SpotlightCard className="p-4 rounded-xl bg-[#161A23] border border-[#1D2230]">
+            <h2 className="flex items-center gap-2 text-[#FBBF24] font-bold text-xs uppercase tracking-wider mb-1.5">
               <Terminal size={14} /> Slash Commands & Sync
             </h2>
-            <p className="text-xs text-[#b5bac1] leading-relaxed">
-              Use <code className="text-white bg-[#1e1f22] px-1 rounded">/exploit</code> to send customized executor status cards with custom templates, and <code className="text-white bg-[#1e1f22] px-1 rounded">/sync</code> to immediately reconcile all tracked messages in your server.
+            <p className="text-xs text-[#A1A8B8] leading-relaxed">
+              Use <code className="text-white bg-[#1D2230] px-1 rounded">/exploit</code> to send customized executor status cards with custom templates, and <code className="text-white bg-[#1D2230] px-1 rounded">/sync</code> to immediately reconcile all tracked messages in your server.
             </p>
           </SpotlightCard>
         </div>
@@ -196,13 +206,13 @@ export const DocsPage = () => {
         {/* Search & Category Filter */}
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mb-6">
           <div className="relative w-full sm:w-80">
-            <Search size={15} className="absolute left-3 top-2.5 text-[#949ba4]" />
+            <Search size={15} className="absolute left-3 top-2.5 text-[#A1A8B8]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search variables or syntax..."
-              className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] pl-9 pr-3 py-2 rounded-lg border border-[#2b2d31] focus:border-[#5865f2] focus:outline-none"
+              className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] pl-9 pr-3 py-2 rounded-lg border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
             />
           </div>
 
@@ -223,13 +233,13 @@ export const DocsPage = () => {
                 className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   activeCategory === cat.id
                     ? "text-white"
-                    : "text-[#949ba4] hover:text-white bg-[#2b2d31] border border-[#1e1f22] hover:bg-[#35373c]"
+                    : "text-[#A1A8B8] hover:text-white bg-[#161A23] border border-[#1D2230] hover:bg-[#252B3A]"
                 }`}
               >
                 {activeCategory === cat.id && (
                   <motion.span
                     layoutId="docsCategoryPill"
-                    className="absolute inset-0 rounded-lg bg-[#5865f2]"
+                    className="absolute inset-0 rounded-lg bg-[#818CF8]"
                     transition={{ type: "spring", stiffness: 520, damping: 38 }}
                   />
                 )}
@@ -242,34 +252,34 @@ export const DocsPage = () => {
         {/* Variables Table */}
         <SpotlightCard className={UI_THEME_CONFIG.surfaces.docsTableCard}>
           <div className={UI_THEME_CONFIG.surfaces.docsTableHeader}>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8]">
               Available Variables ({filteredItems.length})
             </span>
-            <span className="text-[11px] text-[#949ba4]">Copy a variable tag with the copy icon</span>
+            <span className="text-[11px] text-[#A1A8B8]">Copy a variable tag with the copy icon</span>
           </div>
 
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22] bg-[#232428]">
+                <tr className="text-[11px] uppercase tracking-wider text-[#A1A8B8] border-b border-[#1D2230] bg-[#1D2230]">
                   <th className="px-5 py-3 font-semibold w-[28%]">Variable Tag</th>
                   <th className="px-5 py-3 font-semibold">Description</th>
                   <th className="px-5 py-3 font-semibold w-[24%]">Output Example</th>
                 </tr>
               </thead>
-              <tbody className="text-xs divide-y divide-[#1e1f22]">
+              <tbody className="text-xs divide-y divide-[#1D2230]">
                 {filteredItems.map((item) => (
-                  <tr key={item.tag} className="hover:bg-[#1e1f22]/40 transition-colors">
+                  <tr key={item.tag} className="hover:bg-[#1D2230]/40 transition-colors">
                     <td className="px-5 py-3 font-mono">
                       <button type="button" onClick={() => void copyToClipboard(item.tag)} className={UI_THEME_CONFIG.surfaces.docsCopyButton} title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
                         <span>{item.tag}</span>{copiedTag === item.tag ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                       </button>
                     </td>
-                    <td className="px-5 py-3 text-[#dbdee1] leading-relaxed">{item.desc}</td>
-                    <td className="px-5 py-3 font-mono text-[#949ba4] break-all max-w-[200px]">{item.example}</td>
+                    <td className="px-5 py-3 text-[#F1F3F9] leading-relaxed">{item.desc}</td>
+                    <td className="px-5 py-3 font-mono text-[#A1A8B8] break-all max-w-[200px]">{item.example}</td>
                   </tr>
                 ))}
-                {filteredItems.length === 0 && <tr><td colSpan={3} className="px-5 py-8 text-center text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</td></tr>}
+                {filteredItems.length === 0 && <tr><td colSpan={3} className="px-5 py-8 text-center text-[#A1A8B8]">No variables matching &ldquo;{search}&rdquo; in this category.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -278,31 +288,31 @@ export const DocsPage = () => {
             {filteredItems.map((item) => (
               <article key={item.tag} className={UI_THEME_CONFIG.surfaces.docsVariableCard}>
                 <div className="flex min-w-0 items-start justify-between gap-2">
-                  <code className="min-w-0 break-all text-xs font-semibold text-[#b9bcf8]">{item.tag}</code>
-                  <button type="button" onClick={() => void copyToClipboard(item.tag)} className="shrink-0 rounded-md border border-[#5865f2]/40 bg-[#1e1f22] p-2 text-[#b9bcf8] hover:bg-[#35373c]" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
+                  <code className="min-w-0 break-all text-xs font-semibold text-[#A5B4FC]">{item.tag}</code>
+                  <button type="button" onClick={() => void copyToClipboard(item.tag)} className="shrink-0 rounded-md border border-[#818CF8]/40 bg-[#1D2230] p-2 text-[#A5B4FC] hover:bg-[#252B3A]" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
                     {copiedTag === item.tag ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
                   </button>
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-[#dbdee1]">{item.desc}</p>
-                <p className="mt-2 break-all rounded bg-[#18191c] p-2 font-mono text-[11px] text-[#949ba4]">{item.example}</p>
+                <p className="mt-2 text-xs leading-relaxed text-[#F1F3F9]">{item.desc}</p>
+                <p className="mt-2 break-all rounded bg-[#10131A] p-2 font-mono text-[11px] text-[#A1A8B8]">{item.example}</p>
               </article>
             ))}
-            {filteredItems.length === 0 && <p className="py-8 text-center text-xs text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</p>}
+            {filteredItems.length === 0 && <p className="py-8 text-center text-xs text-[#A1A8B8]">No variables matching &ldquo;{search}&rdquo; in this category.</p>}
           </div>
         </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
-        <section className="p-6 rounded-xl bg-[#2b2d31] border border-[#26282d] space-y-4 shadow-sm">
+        <section className="p-6 rounded-xl bg-[#161A23] border border-[#272D3A] space-y-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-white font-bold text-base">
-            <Code2 size={18} className="text-[#949cf7]" /> Custom Executor Payloads & Auto-Updates
+            <Code2 size={18} className="text-[#A78BFA]" /> Custom Executor Payloads & Auto-Updates
           </h2>
-          <p className="text-xs text-[#b5bac1] leading-relaxed">
+          <p className="text-xs text-[#A1A8B8] leading-relaxed">
             You can fully customize executor messages by creating custom executor templates.
             Provide your own Discohook/Discord JSON payload. The bot inspects embed authors and auto-fetches the owner&apos;s name and avatar directly from Discord.
           </p>
 
-          <div className="bg-[#1e1f22] rounded-xl p-4 border border-[#111214] font-mono text-xs text-[#dbdee1] overflow-x-auto">
-            <pre className="text-[11px] leading-relaxed text-[#b5bac1]">
+          <div className="bg-[#1D2230] rounded-xl p-4 border border-[#10131A] font-mono text-xs text-[#F1F3F9] overflow-x-auto">
+            <pre className="text-[11px] leading-relaxed text-[#A1A8B8]">
 {`{
   "embeds": [
     {
@@ -319,16 +329,16 @@ export const DocsPage = () => {
 }`}
             </pre>
           </div>
-          <p className="text-[11px] text-[#949ba4]">
-            💡 Notice that the <code className="text-white font-mono bg-[#111214] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#111214] px-1 rounded">author.icon_url</code> are omitted: When the message is sent, the server attempts to fetch the Discord user and fills blank author name and icon fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
+          <p className="text-[11px] text-[#A1A8B8]">
+            💡 Notice that the <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.icon_url</code> are omitted: When the message is sent, the server attempts to fetch the Discord user and fills blank author name and icon fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
           </p>
         </section>
 
         {/* Internal Links & Official Backlinks Footer */}
-        <footer className="mt-10 pt-6 border-t border-[#26282d] flex flex-wrap items-center justify-between gap-4 text-xs text-[#949ba4]">
+        <footer className="mt-10 pt-6 border-t border-[#272D3A] flex flex-wrap items-center justify-between gap-4 text-xs text-[#A1A8B8]">
           <div className="flex items-center gap-4">
             <a href="/" className="hover:text-white transition-colors font-semibold">Studio Builder</a>
-            <a href="/docs" className="text-[#949cf7] font-semibold">Documentation</a>
+            <a href="/docs" className="text-[#A78BFA] font-semibold">Documentation</a>
             <a href="/privacy" className="hover:text-white transition-colors font-semibold">Privacy &amp; Bot Policy</a>
           </div>
           <div className="flex items-center gap-4">

@@ -22,13 +22,13 @@ const StudioModals = React.lazy(() =>
 );
 
 const SessionAuthLoader: React.FC = () => (
-  <div className="h-dvh w-full bg-[#1e1f22] text-[#dbdee1] flex flex-col items-center justify-center gap-3 select-none font-sans">
-    <HoHoLogoMark className="h-11 w-11 rounded-xl border border-[#35373c] shadow-md" />
+  <div className="h-dvh w-full bg-[#0B0D12] text-[#F1F3F9] flex flex-col items-center justify-center gap-3 select-none font-sans">
+    <HoHoLogoMark className="h-11 w-11 rounded-xl border border-[#272D3A] shadow-md" />
     <div className="flex items-center gap-2">
+      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#818CF8]" aria-hidden="true" />
       <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
       <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
-      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
-      <span className="ml-1 text-xs font-medium text-[#949ba4]">Verifying Discord session…</span>
+      <span className="ml-1 text-xs font-medium text-[#A1A8B8]">Verifying Discord session…</span>
     </div>
   </div>
 );

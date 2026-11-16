@@ -215,7 +215,7 @@ router.post(
 
       const sendVars: Record<string, string> = {
         ...timestampVars,
-        now: `<t:${unixNow}:f>`,
+        now: `<t:${unixNow}:t>`,
         "now.t": `<t:${unixNow}:t>`,
         "now.T": `<t:${unixNow}:T>`,
         "now.d": `<t:${unixNow}:d>`,
