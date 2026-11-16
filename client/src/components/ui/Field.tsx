@@ -121,15 +121,28 @@ const getAutocompleteVariables = (query: string) => {
   // An empty array means it is an ID query with no matching field.
   if (idSuggestions !== null) return idSuggestions;
 
-  const q = query.toLowerCase().replace(/^\{+/, "");
+  const q = query.trim().toLowerCase().replace(/^\\{+/, "");
 
-  return ACTUAL_VARIABLES.filter(
-    (v) =>
-      !q ||
-      v.tag.toLowerCase().includes(q) ||
-      v.desc.toLowerCase().includes(q) ||
-      v.label.toLowerCase().includes(q),
-  ).slice(0, 8);
+  // This picker is also used by standalone TextField/TextArea controls,
+  // so expose WEAO while its prefix is still being typed.
+  const availableVariables = [
+    ...ACTUAL_VARIABLES,
+    {
+      tag: "{exploit.",
+      label: "WEAO",
+      desc: "Live WEAO exploit status and properties",
+    },
+  ];
+
+  return availableVariables
+    .filter(
+      (v) =>
+        !q ||
+        v.tag.toLowerCase().includes(q) ||
+        v.desc.toLowerCase().includes(q) ||
+        v.label.toLowerCase().includes(q),
+    )
+    .slice(0, 20);
 };
 
 interface VariableAutocompleteProps {
