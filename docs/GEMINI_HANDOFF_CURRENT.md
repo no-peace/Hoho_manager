@@ -1209,3 +1209,13 @@ Run the full test, typecheck, and build commands against the implementation head
 - The current LoginScreen has no Guest Sandbox control or guest-auth handler. It retains the existing Discord OAuth CTA and development-only local-login action; no speculative guest-login implementation was added.
 - `client/index.html` body now uses the explicit `#0B0D12` / `#F1F3F9` studio theme classes. The theme-color meta tag is `#0B0D12`.
 - Verification state: no local Node execution was available through the GitHub editing path. Tests, typecheck, production build, browser QA, and Lighthouse are NOT yet verified. CI should be triggered through a draft PR and its exact results recorded before merge.
+
+
+## V12 pull request and CI status (2026-11-16)
+
+- Draft pull request: [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44).
+- Working branch: `feat/v12-ultimate-ux-implementation`; target: `main`.
+- GitHub reports the PR as open and mergeable. It is intentionally left as a draft pending verification.
+- Post-implementation source guards were re-run against the branch and passed for preview event routing, Select Menu metadata, V2 quick-edit wiring, message-index selection preservation, FlowBuilder tokens, button transition tokens, coarse-pointer scroll gating, and login theme utilities.
+- GitHub Actions currently reports zero workflow runs/check-runs for the PR head; therefore CI has not executed or reported a result yet. Do not treat the authored regression tests as passing until the CI workflow runs.
+- Required pre-merge verification remains: `npm run build`, `npm run typecheck`, `npm test`, browser QA for desktop/mobile preview interactions and login layout, then Lighthouse Navigation/Snapshot/Timespan measurements.
