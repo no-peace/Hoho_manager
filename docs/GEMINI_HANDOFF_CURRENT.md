@@ -665,6 +665,42 @@ You are continuing a live codebase, not starting a new project.
 13. Update this handoff after every merged implementation batch with actual commits, tests, and screenshots/artifacts.
 14. If you discover more defects, record them with evidence and severity. Do not make unrequested removals.
 
+## V10 Batch 14 continuation — comments-only scope — 2026-11-16
+
+The owner explicitly requested that Batch 14's **tests work be left out**. Accordingly:
+- No test files were edited, added, or removed as part of this continuation.
+- No test commands were run. This is not a test-pass or zero-regression claim.
+- The requested work was limited to the Batch 14 comments cleanup.
+
+### Comments cleanup committed
+Removed comments that merely repeated the immediately following JSX structure or UI label from:
+- `client/src/App.tsx`
+- `client/src/components/actions/StepList.tsx`
+- `client/src/components/editor/AllowedMentionsModal.tsx`
+- `client/src/components/editor/MessageEditor/ContentTab.tsx`
+- `client/src/components/editor/PropertyPanel.tsx`
+- `client/src/components/layout/Header.tsx`
+- `client/src/components/layout/SettingsModal.tsx`
+- `client/src/components/layout/Sidebar.tsx`
+- `client/src/components/preview/MessagePreview.tsx`
+- `client/src/pages/NotFoundPage.tsx`
+- `client/src/components/editor/DiscohookComponentsEditor.tsx`
+- `client/src/components/editor/EmbedEditor.tsx`
+- `client/src/components/editor/FileAttachmentsSection.tsx`
+- `client/src/components/editor/MessageEditor/index.tsx`
+- `client/src/components/ui/SearchableDiscordSelect.tsx`
+
+Retained comments that document security/authorization boundaries, Discord/API constraints, fallback behavior, state semantics, cache behavior, or non-obvious architecture. The broader sweep is scoped to the source files changed by V9/V10; comments that provide useful context were not removed merely to reduce comment count.
+
+### Validation status
+- GitHub source edits committed directly to `main`.
+- No npm tests, build, typecheck, Terminal, or Playwright run was performed.
+- Browser/responsive visual QA remains unverified.
+- Batch 14's tests and final verification checklist remain intentionally open, per owner instruction.
+
+**Latest comments-cleanup commit:** `81111303c2a4991487058108e7afb5d12bd1ec71`
+**Branch head before this handoff update:** `81111303c2a4991487058108e7afb5d12bd1ec71`
+
 ---
 
 **End of current handoff.**
