@@ -11,7 +11,6 @@ import {
   KeyRound,
   Archive,
   FileJson,
-  Share2,
   Trash2,
   Send,
 } from "lucide-react";
@@ -45,12 +44,11 @@ export const getDiscordAvatarUrl = (
 export interface HeaderProps {
   onOpenBackups?: () => void;
   onOpenJson?: () => void;
-  onShare?: () => void;
   onClearAll?: () => void;
   onOpenSend?: (mode: "send" | "edit") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onShare, onClearAll, onOpenSend }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -152,11 +150,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onSha
             {onOpenJson && (
               <button type="button" onClick={onOpenJson} title="Import or export JSON" aria-label="Import or export JSON" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
                 <FileJson size={14} /><span className="hidden xl:inline">JSON</span>
-              </button>
-            )}
-            {onShare && (
-              <button type="button" onClick={() => void onShare()} title="Copy message JSON" aria-label="Copy message JSON" className="rounded-md border border-transparent bg-transparent p-1 sm:p-1.5 text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
-                <Share2 size={14} />
               </button>
             )}
             {onClearAll && (
