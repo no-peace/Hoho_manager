@@ -105,7 +105,6 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{exploit.Delta.websitelink}", desc: "Official website URL", example: "https://deltaexploits.gg", category: "exploit" },
   { tag: "{exploit.Delta.discordlink}", desc: "Official Discord invite link", example: "https://discord.gg/...", category: "exploit" },
   { tag: "{exploit.Delta.changelogs}", desc: "Formatted WEAO changelog entries for the named exploit", example: "• New version released — Fixed injection", category: "exploit" },
-  { tag: "{exploit.Delta.changelog}", desc: "Singular alias for the formatted WEAO changelog entries", example: "• New version released — Fixed injection", category: "exploit" },
   { tag: "{exploit.<trackerId>.changelogs}", desc: "Formatted WEAO changelog entries fetched by tracker ID", example: "• Release 1 — Fixed injection", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[0:3]}", desc: "Only the first three changelog entries (zero-based slice)", example: "• Entry 1\\n• Entry 2\\n• Entry 3", category: "exploit" },
   { tag: "{exploit.Delta.changelogs[2]}", desc: "Only the third changelog entry (zero-based index)", example: "• Entry 3", category: "exploit" },
