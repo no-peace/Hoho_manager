@@ -306,7 +306,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
 
         <div className="flex items-center gap-1.5 shrink-0">
           {isMulti && hasSelection && (
-            <span className="px-1.5 py-0.5 rounded bg-[#2b2d31] text-[10px] text-[#949ba4] font-mono">
+            <span className="px-1.5 py-0.5 rounded bg-[#2b2d31] text-[0.625rem] text-[#949ba4] font-mono">
               {selectedValues.length}/{maxValues}
             </span>
           )}
@@ -330,7 +330,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
           style={{ maxHeight: "250px" }}
         >
           {isMulti && (
-            <div className="px-3 py-1.5 mb-1 border-b border-[#1e1f22] flex items-center justify-between text-[11px] text-[#949ba4] font-medium select-none">
+            <div className="px-3 py-1.5 mb-1 border-b border-[#1e1f22] flex items-center justify-between text-[0.6875rem] text-[#949ba4] font-medium select-none">
               <span>Select up to {maxValues} options</span>
               <span className="font-mono tabular-nums">{selectedValues.length}/{maxValues} selected</span>
             </div>
@@ -367,7 +367,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
                           {opt.label}
                         </div>
                         {opt.description && (
-                          <div className="truncate text-[11px] text-[#949ba4]">
+                          <div className="truncate text-[0.6875rem] text-[#949ba4]">
                             {opt.description}
                           </div>
                         )}
