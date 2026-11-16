@@ -7,7 +7,7 @@
 **Latest application source commit:** `6ac5d0632a23edb346024913c446709797fad4fa`  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
-**Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
+**Status:** Source-level implementation of all 12 reported issues is committed on `main`; npm checks and browser validation are still pending.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
 
