@@ -27,7 +27,7 @@ export const SplitPane = ({
   const [ratio, setRatio] = useState(initialRatio);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
+    typeof window !== "undefined" ? window.innerWidth >= 1200 : true,
   );
   const draggingRef = useRef(false);
   const touchStartXRef = useRef<number | null>(null);
@@ -35,7 +35,7 @@ export const SplitPane = ({
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 1280);
+    const onResize = () => setIsDesktop(window.innerWidth >= 1200);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -82,7 +82,7 @@ export const SplitPane = ({
     };
   }, [onPointerMove, stopDragging]);
 
-  // Mobile & Tablet (< 1280px): Full-width single pane switched via bottom navigation or horizontal swipe
+  // Mobile & tablet (< 1200px): one full-width pane, switched without unmounting either pane
   if (!isDesktop) {
     return (
       <div
@@ -111,36 +111,32 @@ export const SplitPane = ({
         <motion.div
           aria-hidden={mobileActivePane !== "left"}
           inert={mobileActivePane !== "left"}
-          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "left" ? "z-10" : "pointer-events-none z-0"}`}
+          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "left" ? "z-10" : "invisible pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "left" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "left" ? 0 : -8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "left" ? "auto" : "none" }}
         >
-          {mobileActivePane === "left" ? (
-            <ErrorBoundary level="pane" fallbackTitle="Editor Pane Error">
-              {left}
-            </ErrorBoundary>
-          ) : null}
+          <ErrorBoundary level="pane" fallbackTitle="Editor Pane Error">
+            {left}
+          </ErrorBoundary>
         </motion.div>
         <motion.div
           aria-hidden={mobileActivePane !== "right"}
           inert={mobileActivePane !== "right"}
-          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "right" ? "z-10" : "pointer-events-none z-0"}`}
+          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "right" ? "z-10" : "invisible pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "right" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "right" ? 0 : 8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "right" ? "auto" : "none" }}
         >
-          {mobileActivePane === "right" ? (
-            <ErrorBoundary level="pane" fallbackTitle="Live Preview Error">
-              {right}
-            </ErrorBoundary>
-          ) : null}
+          <ErrorBoundary level="pane" fallbackTitle="Live Preview Error">
+            {right}
+          </ErrorBoundary>
         </motion.div>
       </div>
     );
   }
 
-  // Desktop (>= 1280px): Resizable side-by-side Studio Workbench with Drag Visual Cues
+  // Wide screens (>= 1200px): resizable side-by-side Studio workbench
   return (
     <div ref={containerRef} className={`flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}>
       <div className="flex min-h-0 min-w-0 flex-col shrink-0" style={{ width: `${ratio * 100}%` }}>
