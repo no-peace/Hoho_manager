@@ -113,7 +113,6 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
 
         {isEnabled && (
           <div className="space-y-4 animate-in fade-in duration-150">
-            {/* Automatic parse flags */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Broadcast & Auto Mentions
@@ -127,7 +126,6 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
               </div>
             </div>
 
-            {/* Explicit User IDs */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Explicit Allowed Users (IDs)
@@ -166,7 +164,6 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
               )}
             </div>
 
-            {/* Explicit Role IDs */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Explicit Allowed Roles (IDs)
