@@ -64,7 +64,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                   className="w-full rounded border border-[#232428] bg-[#1e1f22] px-2.5 py-1.5 text-xs text-[#dbdee1] focus:border-[#5865f2] focus:outline-none"
                 />
                 <p className="mt-1 text-[10px] leading-relaxed text-[#949ba4]">
-                  When set, messages are sent into this existing thread instead of the selected channel.
+                  When set, this existing thread takes priority over the selected channel and forum thread name.
                 </p>
               </div>
               <div>
