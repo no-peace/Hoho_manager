@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getUserIdPlaceholderSuggestions } from "../userPlaceholderAutocomplete";
+import { getUserIdPlaceholderSuggestions, isValidDiscordSnowflake } from "../userPlaceholderAutocomplete";
 
 describe("getUserIdPlaceholderSuggestions", () => {
   it("suggests fields while a Discord ID is being typed", () => {
@@ -8,9 +8,6 @@ describe("getUserIdPlaceholderSuggestions", () => {
     expect(suggestions).not.toBeNull();
     expect(suggestions?.some(
       (item) => item.tag === "{user.133342345.name}",
-    )).toBe(true);
-    expect(suggestions?.some(
-      (item) => item.tag === "{user.133342345.avatarurl}",
     )).toBe(true);
   });
 
@@ -25,8 +22,11 @@ describe("getUserIdPlaceholderSuggestions", () => {
       (item) => item.tag.toLowerCase().includes(".ava"),
     )).toBe(true);
     expect(suggestions?.some(
-      (item) => item.tag === "{user.123456789012345678.avatarurl}",
+      (item) => item.tag === "{user.123456789012345678.avatar}",
     )).toBe(true);
+    expect(suggestions?.some(
+      (item) => item.tag === "{user.123456789012345678.avatarurl}",
+    )).toBe(false);
   });
 
   it("suggests fields after a complete ID and trailing dot", () => {
@@ -42,6 +42,13 @@ describe("getUserIdPlaceholderSuggestions", () => {
   it("does not treat ordinary user variables as ID-based variables", () => {
     expect(getUserIdPlaceholderSuggestions("user.")).toBeNull();
     expect(getUserIdPlaceholderSuggestions("user.name")).toBeNull();
+  });
+
+  it("requires a complete Discord Snowflake before suggesting resolved fields", () => {
+    expect(getUserIdPlaceholderSuggestions("user.123.")).toBeNull();
+    expect(getUserIdPlaceholderSuggestions("user.123.avatar")).toBeNull();
+    expect(isValidDiscordSnowflake("123456789012345678")).toBe(true);
+    expect(isValidDiscordSnowflake("1234567890123456")).toBe(false);
   });
 
   it("does not accept more than 20 ID digits", () => {

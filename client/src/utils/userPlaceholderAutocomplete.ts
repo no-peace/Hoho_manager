@@ -20,15 +20,18 @@ const USER_PROFILE_FIELDS = [
   { key: "url", label: "Profile URL", desc: "Discord profile URL" },
   { key: "profile", label: "Profile URL alias", desc: "Alias for profile URL" },
   { key: "avatar", label: "Avatar URL", desc: "Direct profile picture URL" },
-  { key: "avatarurl", label: "Avatar URL alias", desc: "Alias for the avatar URL" },
   { key: "mention", label: "Mention", desc: "Discord mention for this user" },
   { key: "roles", label: "Server roles", desc: "Space-separated mentions for this user's server roles" },
-  { key: "clantag", label: "Clan tag", desc: "Official Discord clan tag or a tag parsed from the member name" },
+  { key: "clantag", label: "Clan tag", desc: "User's Discord server/clan tag (empty if not a server member)" },
   { key: "created", label: "Account created", desc: "Discord account creation date" },
   { key: "created.relative", label: "Account age", desc: "Relative Discord account creation timestamp" },
   { key: "joined", label: "Server joined", desc: "Relative timestamp for when the user joined this server" },
   { key: "joined.date", label: "Server join date", desc: "Discord timestamp for the server join date" },
 ] as const;
+
+export function isValidDiscordSnowflake(id: string): boolean {
+  return /^\d{17,20}$/.test(id);
+}
 
 export function getUserIdPlaceholderSuggestions(
   query: string,
@@ -41,6 +44,7 @@ export function getUserIdPlaceholderSuggestions(
 
   const userId = match[1];
   const fieldQuery = (match[2] ?? "").trim();
+  if (match[2] !== undefined && !isValidDiscordSnowflake(userId)) return null;
 
   return USER_PROFILE_FIELDS
     .filter((field) => {

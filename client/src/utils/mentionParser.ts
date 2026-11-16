@@ -176,46 +176,78 @@ export const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
 export const detectAutocompleteToken = (
   text: string,
   cursorPos: number,
+  weaoExploits: readonly WeaoExploitItem[] = [],
 ): DetectedToken | null => {
   const beforeCursor = text.slice(0, cursorPos);
+  const braceMatch = beforeCursor.match(/(\{{1,2})([^{}\r\n]*)$/);
 
-  const exploitFieldMatch = beforeCursor.match(
-    /(\{{1,2})exploit\.([a-zA-Z0-9_.-]+)\.([a-zA-Z0-9_]*)$/i,
-  );
-  if (exploitFieldMatch) {
-    const fieldQuery = exploitFieldMatch[3] || "";
-    const isFieldPrefix = fieldQuery.length > 0 && EXPLOIT_FIELD_OPTIONS.some(
-      (field) => field.key.toLowerCase().startsWith(fieldQuery.toLowerCase()),
-    );
-    if (isFieldPrefix) {
+  if (braceMatch) {
+    const token = braceMatch[2] ?? "";
+    const start = cursorPos - braceMatch[0].length;
+    if (!/\s/.test(token)) {
+      if (token.toLowerCase().startsWith("exploit.")) {
+        const afterPrefix = token.slice("exploit.".length);
+        const sortedKnown = [...weaoExploits].sort((a, b) => b.title.length - a.title.length);
+        const matchedKnown = sortedKnown.find((exploit) =>
+          afterPrefix.toLowerCase().startsWith(`${exploit.title.toLowerCase()}.`),
+        );
+
+        if (matchedKnown) {
+          const fieldQuery = afterPrefix.slice(matchedKnown.title.length + 1);
+          if (!fieldQuery.includes(".")) {
+            return {
+              type: "exploit_field",
+              exploitTarget: matchedKnown.title,
+              query: fieldQuery,
+              start,
+              end: cursorPos,
+            };
+          }
+        }
+
+        const lastDotIndex = afterPrefix.lastIndexOf(".");
+        if (lastDotIndex > 0) {
+          const candidateName = afterPrefix.slice(0, lastDotIndex);
+          const fieldQuery = afterPrefix.slice(lastDotIndex + 1);
+          const isPartialDottedExploit = sortedKnown.some(
+            (exploit) =>
+              exploit.title.includes(".") &&
+              exploit.title.toLowerCase().startsWith(`${candidateName.toLowerCase()}.`) &&
+              exploit.title.toLowerCase() !== candidateName.toLowerCase(),
+          );
+          const isKnownExploit = sortedKnown.some(
+            (exploit) => exploit.title.toLowerCase() === candidateName.toLowerCase(),
+          );
+          const isKnownField = EXPLOIT_FIELD_OPTIONS.some(
+            (field) => field.key.toLowerCase() === fieldQuery.toLowerCase(),
+          );
+
+          if (!isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField)) {
+            return {
+              type: "exploit_field",
+              exploitTarget: candidateName,
+              query: fieldQuery,
+              start,
+              end: cursorPos,
+            };
+          }
+        }
+
+        return {
+          type: "exploit_name",
+          query: afterPrefix,
+          start,
+          end: cursorPos,
+        };
+      }
+
       return {
-        type: "exploit_field",
-        exploitTarget: exploitFieldMatch[2],
-        query: fieldQuery,
-        start: cursorPos - exploitFieldMatch[0].length,
+        type: "variable",
+        query: token,
+        start,
         end: cursorPos,
       };
     }
-  }
-
-  const exploitNameMatch = beforeCursor.match(/(\{{1,2})exploit\.([a-zA-Z0-9_.-]*)$/i);
-  if (exploitNameMatch) {
-    return {
-      type: "exploit_name",
-      query: exploitNameMatch[2] || "",
-      start: cursorPos - exploitNameMatch[0].length,
-      end: cursorPos,
-    };
-  }
-
-  const varMatch = beforeCursor.match(/(\{{1,2})([a-zA-Z0-9_.]*)$/);
-  if (varMatch) {
-    return {
-      type: "variable",
-      query: varMatch[2] || "",
-      start: cursorPos - varMatch[0].length,
-      end: cursorPos,
-    };
   }
 
   const userMatch = beforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_.-]{0,32})$/);
@@ -252,4 +284,17 @@ export const detectAutocompleteToken = (
   }
 
   return null;
+};
+
+export const replaceDetectedToken = (
+  text: string,
+  token: Pick<DetectedToken, "start" | "end">,
+  replacement: string,
+): { value: string; cursor: number } => {
+  const start = Math.max(0, Math.min(text.length, token.start));
+  const end = Math.max(start, Math.min(text.length, token.end));
+  return {
+    value: text.slice(0, start) + replacement + text.slice(end),
+    cursor: start + replacement.length,
+  };
 };

@@ -39,7 +39,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
         { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
         { menuWidth: rect.width, maxMenuHeight: maxHeight, margin: 12, gap: 6 },
       );
-      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
+      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 10000 });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -76,13 +76,13 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
   return typeof document === "undefined" ? null : createPortal(
     <div
       ref={containerRef}
-      className="fixed rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150"
+      className="fixed rounded-[10px] bg-[#161A23] border border-[#272D3A] shadow-xl overflow-hidden z-[10000] animate-in fade-in zoom-in-95 duration-150"
       style={floatingStyle}
     >
-      <div className="px-3 py-1.5 bg-[#18191c] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#26282d] flex items-center justify-between">
+      <div className="px-3 py-1.5 bg-[#10131A] text-[10px] font-medium text-[#A1A8B8] border-b border-[#202531] flex items-center justify-between">
         {headerLabel}
         <span className="text-[9px] lowercase font-normal text-[#949ba4] inline-flex items-center gap-1">
-          <kbd className="rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px]">Tab / Enter</kbd>
+          <kbd className="rounded border border-[#272D3A] bg-[#1D2230] px-1 py-0.5 font-mono text-[9px]">Tab / Enter</kbd>
         </span>
       </div>
 
@@ -105,8 +105,8 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
                 item.disabled
                   ? "opacity-70 cursor-default text-[#949ba4]"
                   : isSelected
-                    ? "bg-[#5865f2] text-white"
-                    : "text-[#dbdee1] hover:bg-[#35373c] hover:text-white"
+                    ? "bg-[#818CF8]/15 text-[#F1F3F9] border-l-2 border-[#818CF8]"
+                    : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
               }`}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -116,7 +116,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
               {item.subtitle && (
                 <span
                   className={`text-[10px] truncate shrink-0 max-w-[190px] ${
-                    isSelected ? "text-white/85" : "text-[#949ba4]"
+                    isSelected ? "text-[#E5E7F3]" : "text-[#6F788A]"
                   }`}
                 >
                   {item.subtitle}

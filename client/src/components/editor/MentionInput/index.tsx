@@ -23,10 +23,9 @@ import {
   EXPLOIT_FIELD_OPTIONS,
   detectAutocompleteToken,
   type AutocompleteItem,
+  replaceDetectedToken,
 } from "../../../utils/mentionParser";
 import { AutocompletePopover } from "./AutocompletePopover";
-import { VariableMenu } from "./VariableMenu";
-import { EmojiMenu } from "./EmojiMenu";
 
 export interface DiscordMentionInputProps {
   value: string;
@@ -192,98 +191,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
    */
   const checkAutocomplete = useCallback(
     (text: string, cursorPos: number) => {
-      const textBeforeCursor = text.slice(0, cursorPos);
-
-      // 1A. Check `{` for Dynamic Variables (`{user.*`, `{now.*`, etc.) & WEAO (`{exploit.<Name>.<Field>`)
-      const openBraceIdx = textBeforeCursor.lastIndexOf("{");
-      if (openBraceIdx !== -1) {
-        const tokenSinceBrace = textBeforeCursor.slice(openBraceIdx);
-        // Only active if there is no `}` or newline between `{` and cursor
-        if (!/[}\n\r]/.test(tokenSinceBrace)) {
-          const lowerToken = tokenSinceBrace.toLowerCase();
-
-          // Once `{exploit.` is present -> Stage 1 (Exploit Name) or Stage 2 (Exploit Field)
-          if (lowerToken.startsWith("{exploit.")) {
-            const afterPrefix = tokenSinceBrace.slice("{exploit.".length);
-
-            const sortedKnown = [...weaoExploits].sort(
-              (a, b) => b.title.length - a.title.length,
-            );
-            const matchedKnown = sortedKnown.find((exp) =>
-              afterPrefix.toLowerCase().startsWith(`${exp.title.toLowerCase()}.`),
-            );
-
-            if (matchedKnown) {
-              const fieldPart = afterPrefix.slice(matchedKnown.title.length + 1);
-              if (!fieldPart.includes(".")) {
-                setAcType("exploit_field");
-                setAcExploitTarget(matchedKnown.title);
-                setAcQuery(fieldPart);
-                setAcCursorStart(openBraceIdx);
-                setAcCursorEnd(cursorPos);
-                setSelectedIndex(0);
-                return;
-              }
-            }
-
-            const lastDotIdx = afterPrefix.lastIndexOf(".");
-            if (lastDotIdx > 0) {
-              const candidateName = afterPrefix.slice(0, lastDotIdx);
-              const fieldPart = afterPrefix.slice(lastDotIdx + 1);
-              const isPartialDottedExploit = sortedKnown.some(
-                (exp) =>
-                  exp.title.includes(".") &&
-                  exp.title.toLowerCase().startsWith(`${candidateName.toLowerCase()}.`) &&
-                  exp.title.toLowerCase() !== candidateName.toLowerCase(),
-              );
-              const isKnownExploit = sortedKnown.some(
-                (exp) => exp.title.toLowerCase() === candidateName.toLowerCase(),
-              );
-              const isKnownField = EXPLOIT_FIELD_OPTIONS.some(
-                (field) => field.key.toLowerCase() === fieldPart.toLowerCase(),
-              );
-              if (!isPartialDottedExploit && (isKnownExploit || fieldPart === "" || isKnownField)) {
-                setAcType("exploit_field");
-                setAcExploitTarget(candidateName);
-                setAcQuery(fieldPart);
-                setAcCursorStart(openBraceIdx);
-                setAcCursorEnd(cursorPos);
-                setSelectedIndex(0);
-                return;
-              }
-            }
-
-            setAcType("exploit_name");
-            setAcExploitTarget("");
-            setAcQuery(afterPrefix);
-            setAcCursorStart(openBraceIdx);
-            setAcCursorEnd(cursorPos);
-            setSelectedIndex(0);
-            return;
-          }
-
-          // Any other `{...` token (including `{`, `{u`, `{user.`, `{ex`, `{now`)
-          const varQuery = tokenSinceBrace.slice(1);
-          if (!/\s/.test(varQuery)) {
-            setAcType("variable");
-            setAcExploitTarget("");
-            setAcQuery(varQuery);
-            setAcCursorStart(openBraceIdx);
-            setAcCursorEnd(cursorPos);
-            setSelectedIndex(0);
-            return;
-          }
-        }
-      }
-
-      // Use the shared pure parser for @user, #channel, and :emoji tokens.
-      const detected = detectAutocompleteToken(text, cursorPos);
-      if (
-        detected &&
-        (detected.type === "user" ||
-          detected.type === "channel" ||
-          detected.type === "emoji")
-      ) {
+      const detected = detectAutocompleteToken(text, cursorPos, weaoExploits);
+      if (detected?.type) {
         setAcType(detected.type);
         setAcExploitTarget(detected.exploitTarget ?? "");
         setAcQuery(detected.query);
@@ -295,6 +204,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
       setAcType(null);
       setAcQuery("");
+      setAcExploitTarget("");
     },
     [weaoExploits],
   );
@@ -581,15 +491,16 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     (item: AutocompleteItem) => {
       if (item.disabled || acCursorStart < 0 || acCursorEnd < 0) return;
 
-      const before = value.slice(0, acCursorStart);
-      const after = value.slice(acCursorEnd);
       const insertText = item.keepOpen
         ? item.replacement
         : item.replacement.endsWith(" ")
           ? item.replacement
           : `${item.replacement} `;
-      const nextValue = before + insertText + after;
-      const newPos = before.length + insertText.length;
+      const { value: nextValue, cursor: newPos } = replaceDetectedToken(
+        value,
+        { start: acCursorStart, end: acCursorEnd },
+        insertText,
+      );
 
       onChange(nextValue);
 
@@ -924,38 +835,17 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           )}
         </div>
 
-        {/* Inline Autocomplete Dropdown Popup */}
         {acType && acItems.length > 0 && (
-          acType === "variable" ? (
-            <VariableMenu
-              items={acItems}
-              selectedIndex={selectedIndex}
-              onSelectIndex={setSelectedIndex}
-              onApply={applyReplacement}
-              dropdownPosition={dropdownPosition}
-              maxHeight={dropdownMaxHeight}
-              anchor={textareaRef.current}
-            />
-          ) : acType === "emoji" ? (
-            <EmojiMenu
-              items={acItems}
-              selectedIndex={selectedIndex}
-              onSelectIndex={setSelectedIndex}
-              onApply={applyReplacement}
-              dropdownPosition={dropdownPosition}
-            />
-          ) : (
-            <AutocompletePopover
-              headerLabel={getHeaderLabel()}
-              items={acItems}
-              selectedIndex={selectedIndex}
-              onSelectIndex={setSelectedIndex}
-              onApply={applyReplacement}
-              onClose={() => setAcType(null)}
-              maxHeight={dropdownMaxHeight}
-              anchor={textareaRef.current}
-            />
-          )
+          <AutocompletePopover
+            headerLabel={getHeaderLabel()}
+            items={acItems}
+            selectedIndex={selectedIndex}
+            onSelectIndex={setSelectedIndex}
+            onApply={applyReplacement}
+            onClose={() => setAcType(null)}
+            maxHeight={dropdownMaxHeight}
+            anchor={textareaRef.current}
+          />
         )}
       </div>
     </div>
