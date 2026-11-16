@@ -18,12 +18,23 @@ export function buildTimestampVariables(date: Date = new Date()): Record<string,
   };
 }
 
-export interface VariableInterpolationOptions {\n  preserveUnknown?: boolean;\n}\n\nexport const replaceVariables = <T>(\n  value: T,\n  variables: Record<string, unknown>,\n  options: VariableInterpolationOptions = {},\n): T => {
+export interface VariableInterpolationOptions {
+  preserveUnknown?: boolean;
+}
+
+export const replaceVariables = <T>(
+  value: T,
+  variables: Record<string, unknown>,
+  options: VariableInterpolationOptions = {},
+): T => {
   if (typeof value === "string") {
     return value.replace(VARIABLE_PATTERN, (match, rawKey: string) => {
       const key = rawKey.trim();
       const replacement = variables[key];
-      return replacement === undefined\n        ? options.preserveUnknown === false ? "" : match\n        : String(replacement);
+      if (replacement === undefined) {
+        return options.preserveUnknown === false ? "" : match;
+      }
+      return String(replacement);
     }) as T;
   }
   if (Array.isArray(value)) return value.map((entry) => replaceVariables(entry, variables, options)) as T;
