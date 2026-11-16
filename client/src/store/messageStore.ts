@@ -11,7 +11,7 @@ import type {
 import { useActionStore } from "./actionStore.js"
 import { ComponentType, DEFAULT_EMBED_COLOR, EDITOR_MODES, uid } from "../utils/constants";
 import type { EditorMode } from "../utils/constants";
-import { createComponent, newButton } from "../utils/componentsV2";
+import { createComponent, newButton, newTextDisplay } from "../utils/componentsV2";
 import { toDiscordPayload, validateMessage } from "../utils/discord";
 import {
   findComponent,
@@ -241,9 +241,31 @@ export const useMessageStore = create<MessageState>()(
           const targetMsg = state.messages[index] ?? state.data ?? createEmptyMessage();
           const currentFlags = targetMsg.flags ?? 0;
           const nextFlags = isV2 ? currentFlags | 32768 : currentFlags & ~32768;
+          const existingComponents = targetMsg.components ?? [];
+
+          // Convert classic message text into a V2 Text Display and retain action rows.
+          // In the reverse direction, fold top-level Text Displays back into message content.
+          const convertedContent = isV2
+            ? ""
+            : [
+                targetMsg.content ?? "",
+                ...existingComponents
+                  .filter((component) => component.type === ComponentType.TextDisplay)
+                  .map((component) => component.content ?? ""),
+              ]
+                .filter((part) => part.length > 0)
+                .join("\n\n");
+          const convertedComponents = isV2
+            ? [
+                ...(targetMsg.content ? [newTextDisplay(targetMsg.content)] : []),
+                ...existingComponents,
+              ]
+            : existingComponents.filter((component) => component.type === ComponentType.ActionRow);
 
           const updatedMsg: MessageData = {
             ...targetMsg,
+            content: convertedContent,
+            components: convertedComponents,
             flags: nextFlags,
           };
           (updatedMsg as any).mode = mode;
@@ -256,6 +278,7 @@ export const useMessageStore = create<MessageState>()(
             messages: nextMessages,
             data: isCurrent ? updatedMsg : state.data,
             mode: isCurrent ? mode : state.mode,
+            selection: null,
           };
         }),
 
