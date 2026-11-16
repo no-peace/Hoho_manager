@@ -1,14 +1,136 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Updated:** 2026-11-16  
+**Updated:** 2026-11-16 (latest continuation: preview/editor interaction, conversion safety, and typecheck repair)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest implementation head before this handoff update:** `0cbaf34549c974439ddbf6ca09d22e3432720af6`  
+**Latest source implementation head before this handoff update:** `38a4fe8a5ba9eceee3e0389cbfe69a6be42fd74d`  
 **Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
-**Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 is in progress; full runtime/release verification remains open. Do not describe this branch as tested or release-ready.
+**Current status:** V9/V10 historical work and V11 layout restoration are recorded below. The latest preview/editor UX, button-label autocomplete restriction, safe Classic/V2 conversion, toast copy, and logo-frame changes are committed to `main`. The owner ran `npm run typecheck` and found two missing-import errors in `PropertyPanel.tsx`; the missing import has since been restored in commit `38a4fe8a`. The owner has not yet rerun typecheck. Tests, production build, and browser visual QA remain unverified. Do not describe the branch as fully tested or release-ready.
+
+
+## Latest authoritative continuation — preview editing, inspector overlay, conversion safety, and typecheck repair (2026-11-16)
+
+**This section is the newest source-of-truth for the latest work.** It supersedes earlier statements below that describe the preview inspector as opening on desktop for every component, describe the inspector as a docked third pane, or describe the previous logo frame/toast state. The repository's current main source is authoritative.
+
+### Owner's requested interaction contract
+
+#### Desktop (wide workspace)
+- Clicking ordinary text/content in the Discord preview selects the corresponding message, smoothly scrolls the **left MessageEditor** to that message, and focuses the first editable field in that message. The cursor is moved to the end of a text input/textarea where supported.
+- Ordinary preview content must **not** open the right-side Component Inspector. This avoids duplicate editing surfaces and preserves the editor + preview workspace rather than creating a permanent three-pane layout.
+- Clicking an interactive button in the preview opens the Component Inspector as a **floating overlay** on the right. It sits above the existing workspace and must not resize/reflow the editor or preview.
+- Preview click capture stops propagation so selecting a nested component does not also trigger the message-card click handler.
+- The clicked message is kept active when a component is selected.
+
+#### Mobile / narrow workspace
+- Clicking any identifiable component/content in the preview selects that component and opens the quick Component Inspector over the **Preview tab**. It must not force a switch to the Editor tab.
+- The Editor tab remains available for adding/managing content; preview quick-edit is not intended to replace the full editor.
+- The inspector remains an overlay/bottom sheet, not a third persistent pane.
+
+### Latest preview/inspector implementation
+
+- client/src/components/preview/MessagePreview.tsx: delegates component selection through onSelectPreviewComponent; detects whether the clicked preview target is interactive; stops event propagation; updates the active message.
+- client/src/components/preview/ComponentPreview.tsx, ActionRowPreview.tsx, and ContainerPreview.tsx: expose component IDs on preview DOM elements so delegated selection can identify the clicked component. Preview buttons are explicitly marked interactive.
+- client/src/components/layout/StudioLayout.tsx: desktop ordinary content routes to the left editor scroll/focus behavior; desktop interactive button clicks select the component for the floating inspector; mobile component clicks select the component while leaving the Preview tab active.
+- client/src/utils/editorSmoothScroll.ts: provides editor Lenis scrolling and focuses the first editable field in the selected message after navigation.
+- client/src/components/editor/PropertyPanel.tsx: inspector is styled as a floating desktop overlay and mobile bottom-sheet overlay. It does not reserve a permanent third column. It should only render when a component is selected.
+- Note: desktop currently classifies preview button controls as interactive targets. The user's explicit requirement was “button or action flow” for desktop inspector opening; verify that action-flow entry points still open the inspector/FlowBuilder as intended. Do not broaden the desktop inspector to ordinary text/container content without asking the owner.
+
+### Button Label variable restrictions
+
+- client/src/components/editor/ComponentForms.tsx: the standard Discord button Label field passes variables={false} to Field, disabling variable autocomplete and quick-picker insertion.
+- client/src/components/editor/MessageEditor/ComponentsTab.tsx: the V2 section accessory Button Label field also passes variables={false}.
+- This restriction is intentional because Discord button labels are literal text and do not support the app's message-variable interpolation.
+- Do not disable autocomplete for other fields unless Discord's payload semantics also disallow variable values.
+
+### Classic ↔ Components V2 conversion safety
+
+- client/src/store/messageStore.ts: Classic → V2 moves existing message content into a V2 Text Display and retains existing action rows. V2 → Classic projects Text Display content back into Classic message content and retains Action Rows. Text fragments are joined with actual newline separators.
+- client/src/components/editor/MessageEditor/index.tsx: conversion checks component compatibility before changing mode. Conversion is refused with a short warning when the target format cannot represent the source content safely.
+- V2 → Classic is blocked for unsupported V2 component types and when projected text exceeds Classic's 2,000-character content limit.
+- Classic → V2 is blocked when embeds are present or components are not supported action rows/interactive children. Existing content is not silently discarded.
+- Important: this is a conservative subset conversion, not a universal lossless converter for every Discord component type. If a future component type is added, update the compatibility checks and tests before allowing conversion.
+
+### Toast and logo refinements
+
+- Conversion warning copy was shortened to reduce overflow in the warning toast. The original screenshot showed a long warning string; this change shortened the message content. The toast component's global layout/styling has not been independently redesigned or browser-verified.
+- Header and logo wrapper styling no longer adds the dark rounded badge background/border around the logo:
+  - client/src/components/layout/Header.tsx
+  - client/src/components/layout/HoHoLogoMark.tsx
+  - client/src/App.tsx loading-logo wrapper
+- The underlying client/public/hoho_logo.svg artwork was not edited. Only the surrounding CSS frame/background treatment was removed. If the owner meant removing a shape drawn inside the SVG artwork itself, that remains a separate asset-edit request and must be confirmed visually.
+
+### Latest commits for this continuation
+
+The following commits are on main (newest first). They are grouped here for Gemini's review; fetch the current files before making further changes.
+
+- 38a4fe8a5ba9eceee3e0389cbfe69a6be42fd74d — restore missing UI_THEME_CONFIG import in PropertyPanel after the owner reported two TS2304 errors.
+- 15cf0fef87bf909ad9359336a0038ba32dfeab88 — remove session-loading logo badge frame.
+- a730cd75099f0abc7029ed833fde779afccb8fd6 — keep clicked preview message active.
+- 2b9cc782339d11961f7d262e5b23691f88080a12 — shorten conversion warning toast copy.
+- f1f2cf83a079c2be098103c6c1dc1293836003cd — remove unused theme import (the subsequent typecheck exposed that the import was still required by header/body classes; restored in 38a4fe8a).
+- 2d6fddb8210b093d61aea5d8848cb6818b087c09 — prevent preview click propagation into message-card click.
+- 0a79b3632d1908c71f13d03aa861b1e57af3b746 — remove logo badge styling in HoHoLogoMark.
+- d20d0d280fadc64be9195c577b81ae18a1356d46 — remove logo badge styling in Header.
+- 3272a5bd7f53f5b9bfae45b6acb17994c7819c0b — make desktop inspector an overlay instead of a third pane.
+- fed216eb31e05b208e6d7dbdd5dc2982fbd2db56 — desktop left-editor navigation and mobile preview quick-inspector behavior.
+- d5c1af976dcbdee8af498e538713ae68309b33fb — route preview component clicks by viewport and component type.
+- b735f688383e1aebd513e5a2c64198850576ab3f — mark preview button targets interactive.
+- 2033b6850aa7da4ccf42ccf2586687c320c04aba — add message-editor focus after preview navigation.
+- c40ac0b01e143d5dd503bb4c6564b8075b663c02 — enable top-level V2 container preview selection.
+- b2a9f318c795cff55398426e588de663428eeb31 — use real newline separators for V2-to-Classic content.
+- e0f563c6e4ad34e3197c6f39e4f5e6b9bf65a3f4 — validate conversion component compatibility and limits.
+- 07e838db3b565673d115023a9cd4b30bedca42ff — harden inspector focus for non-text controls and repeated selections.
+- e12ea4316a6950c541fb15e33b0b489218746b87 — guard Classic/V2 conversion.
+- e5a4ad023be176c6ed75b63e365e9a62653b3739 — preserve text and action rows during mode conversion.
+- 2721d4ac92dc63c3ba4fe1a123012c0a2449dd85 — disable variable insertion for V2 section accessory labels.
+- 2867c11f2896d4cc93e5943e66f970292ad3ab43 — disable variable insertion for standard Discord button labels.
+- cd0672623e538ddf25207532ccf366e45c6e0cb7 — focus selected component's first editable inspector field.
+- 1d9498c13aef0f7e3fa674f82092e056bda514b8 and ae4451af96ddb557ef02fa9a2b797bf9a24d6f18 — expose preview component IDs for selection.
+
+### Latest owner-reported typecheck failure and repair
+
+The owner ran npm run typecheck and reported exactly two errors in client/src/components/editor/PropertyPanel.tsx:
+
+- TS2304 at line 85: UI_THEME_CONFIG not found for inspectorHeader.
+- TS2304 at line 146: UI_THEME_CONFIG not found for inspectorBody.
+
+Root cause: a cleanup edit removed the import while the component still referenced UI_THEME_CONFIG.surfaces.inspectorHeader and inspectorBody.
+
+Repair committed:
+- Restored import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";.
+- Commit: 38a4fe8a5ba9eceee3e0389cbfe69a6be42fd74d.
+- Re-fetched the committed file and verified the import is present.
+- **The owner has not yet rerun npm run typecheck after this repair.** Do not state that typecheck passes. No other compiler output is known from the reported run; that does not establish that no further errors exist.
+
+### Validation status after latest changes
+
+- GitHub source review and targeted string/source checks were performed for the changed files.
+- The owner has tested some prior changes locally and confirmed the earlier syntax fix was working; this does not validate the latest changes as a whole.
+- Latest owner-run typecheck: failed with the two missing-import errors above; source fix committed, rerun pending.
+- Assistant did not run npm run typecheck, npm test, npm run build, Playwright, or browser visual QA.
+- No screenshot-based desktop/mobile verification exists for the latest overlay behavior.
+- Do not report zero errors, a clean build, test pass, or release readiness until the owner reruns checks and the relevant visual workflows are actually exercised.
+
+### Exact next actions for Gemini
+
+1. Read this entire handoff. Treat this latest continuation as authoritative over older status paragraphs and historical V11 notes.
+2. Fetch current main and inspect the latest versions of PropertyPanel.tsx, StudioLayout.tsx, MessagePreview.tsx, MessageEditor/index.tsx, messageStore.ts, and editorSmoothScroll.ts.
+3. Ask the owner to rerun npm run typecheck after commit 38a4fe8a; capture the complete output. If there are additional errors, fix them in source and update this handoff with the actual output and commit.
+4. Run/ask owner to run npm test and npm run build separately; record actual results and test counts. Do not infer one from another.
+5. Perform desktop and mobile browser QA for the exact interaction contract above:
+   - desktop ordinary content click -> active message, smooth left-editor scroll, editable cursor focus, no inspector;
+   - desktop button click -> floating right overlay, no column resize;
+   - mobile any component click -> inspector overlay while remaining on Preview tab;
+   - editor tab remains accessible for adding/managing components;
+   - no duplicate message click firing or stale selection.
+6. Verify the logo against the owner's intended asset: current code removes the CSS badge frame but does not edit the internal SVG artwork.
+7. Inspect the toast visually. The message text was shortened, but toast layout itself has not been visually verified.
+8. Update this file after every implementation/verification batch with exact commit SHAs, commands actually run, output, screenshots/artifacts, and outstanding defects. Never copy historical test counts into current validation.
+
+---
 
 ## Follow-up implementation after the previous checkpoint — 2026-11-16
 
