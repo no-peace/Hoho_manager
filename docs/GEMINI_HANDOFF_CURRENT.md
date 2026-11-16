@@ -8,7 +8,75 @@
 **Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
-**Current status:** V9/V10 historical work and V11 layout restoration are recorded below. The latest preview/editor UX, button-label autocomplete restriction, safe Classic/V2 conversion, toast copy, and logo-frame changes are committed to `main`. The owner ran `npm run typecheck` and found two missing-import errors in `PropertyPanel.tsx`; the missing import has since been restored in commit `38a4fe8a`. The owner has not yet rerun typecheck. Tests, production build, and browser visual QA remain unverified. Do not describe the branch as fully tested or release-ready.
+**Current status:** Latest November 16 Lighthouse follow-up and branded loading-screen changes are recorded at the top of this handoff. Navigation reports show mobile 97/100 Performance and desktop 100/100, with 100 Accessibility on both. Privacy page now has a semantic main landmark. Initial HTML and React Suspense/auth loading states now display the centered HoHo logo. Automated tests, typecheck, production build, and browser visual QA have not been run for these latest changes; see the latest continuation below.
+
+
+## Latest continuation — November 16 Lighthouse review and branded loading screen
+
+**Repository:** `no-peace/Hoho_manager`  
+**Branch:** `main`  
+**Implementation commits (in order):**
+- `2f72614daaf5919a415aaec2fc36f30a2c2bd599` — branded React loading fallback
+- `fb31dd7e7a7db325d895075e55870d3212d7c0b9` — loading-screen styling
+- `4df9a57a7a6c5bbaea2297a11057a074d2025b71` — static first-paint loading splash in HTML
+- `f0f464976acfa6e3e15dbde9939c985b93e6ed32` — semantic main landmark on Privacy page
+
+### Lighthouse reports reviewed
+
+The user supplied five PDF reports in the conversation: desktop Navigation, desktop Snapshot, desktop Timespan, mobile Navigation, and mobile Snapshot. The mobile Timespan PDF was not present, so no conclusions are recorded for it. These captures are local Lighthouse runs against `http://127.0.0.1:4173/`, dated 2026-11-16; they are not production-site measurements.
+
+**Navigation mode — homepage**
+| Metric | Earlier mobile baseline | New mobile | New desktop |
+|---|---:|---:|---:|
+| Performance | 94 | 97 | 100 |
+| Accessibility | 96 | 100 | 100 |
+| Best Practices | 100 | 100 | 100 |
+| SEO | 100 | 100 | 100 |
+| FCP | 2.0 s | 2.0 s | 0.5 s |
+| LCP | 2.8 s | 2.3 s | 0.6 s |
+| TBT | 32 ms | 30 ms | 0 ms |
+| CLS | 0.0035 | 0.007 | 0.002 |
+
+Interpretation: mobile Performance improved by 3 points and LCP by 0.5 s; Accessibility reached 100 on both Navigation runs. CLS remains very low; mobile CLS increased slightly versus the earlier capture. The earlier four lavender/white contrast failures are no longer reported as Navigation accessibility failures.
+
+**Snapshot mode — separate audit state**
+- Desktop Snapshot: Accessibility 24/24.
+- Mobile Snapshot: Accessibility 17/18; report is a separate `/privacy` page snapshot, not the homepage Navigation run. The report also called out the lack of a main landmark as a manual accessibility check. The Privacy page was updated to wrap its page content in `<main id="main-content">`, after its public header.
+- Do not conflate Snapshot audit counts with Navigation Lighthouse category scores. Re-run the mobile Snapshot to verify the landmark improvement and identify the remaining 17/18 issue from a fresh report.
+
+**Desktop Timespan mode**
+- Report recorded 22/23 Performance checks, 90 ms TBT, 50 ms INP, and 0.036 CLS.
+- It also recorded approximately 2.2 s main-thread work, one 135 ms long task, and a non-composited animation involving a button color/border-color transition.
+- Lighthouse warned that a page navigation occurred during the Timespan run and that this mode is not recommended for auditing page navigations. Do not compare this score/CLS directly with Navigation mode. The mobile Timespan report was not supplied.
+- The trace did not provide sufficient reliable evidence to identify a specific button transition safely. Do not remove transitions globally based on this one navigation-contaminated run; repeat a clean interaction-only Timespan trace and inspect the exact affected element first.
+
+### Remaining performance observation
+
+The Navigation reports show a smaller remaining render-blocking request from the app's local CSS (roughly 50 ms desktop / 160 ms mobile in the reviewed captures; Lighthouse estimated about 150 ms potential mobile savings). The app imports its global Tailwind stylesheet from `client/src/main.tsx`, and Vite emits/loads the production CSS asset. Do not blindly make this stylesheet asynchronous: it contains the initial layout and theme rules, and deferring it can cause a flash of unstyled content and layout shift. Reassess with the generated production asset and a fresh Navigation trace before changing CSS delivery.
+
+### Branded loading-screen implementation
+
+The user reported that the app initially displayed a blank screen and requested the existing HoHo logo centered in the loading state.
+
+Implemented:
+- `client/index.html`: the initially empty `#root` now contains a small static first-paint splash using `/hoho_logo.svg`, centered on the existing dark background. Inline critical styles keep the splash visible before the React bundle executes. React's `createRoot` render replaces this static markup when the app mounts.
+- `client/src/App.tsx`: introduced a reusable `AppLoadingScreen` and used it for all React Suspense fallbacks that previously rendered `null`. The auth-loading state uses the same branded screen with the status text “Verifying Discord session…”.
+- `client/src/styles/globals.css`: added a centered logo treatment, subtle indigo halo, restrained breathing animation, animated three-dot indicator, and `prefers-reduced-motion` handling. No external image or new dependency was added.
+- `client/src/pages/PrivacyPage.tsx`: added the semantic main landmark identified in the mobile Snapshot review.
+
+### Validation status and next actions
+
+Source-level checks were performed while editing: each target file was re-fetched from GitHub before update; expected loading component, Suspense fallback replacement, static logo path, reduced-motion styles, and Privacy main landmark were checked in the authored content. GitHub accepted and committed the four changes listed above.
+
+**Not performed:** `npm test`, `npm run typecheck`, `npm run build`, Playwright/browser interaction, visual screenshot comparison, or fresh Lighthouse Navigation/Snapshot/Timespan runs. Do not state that compilation, tests, visual behavior, or Lighthouse scores are verified for these latest commits.
+
+Recommended next verification:
+1. Run `npm run typecheck`, `npm test`, and `npm run build` from the repository root; fix any failures before release.
+2. Check first paint on a cold load, auth verification, and lazy route/chunk loading on desktop and mobile. Confirm React cleanly replaces the static HTML splash.
+3. Re-run desktop and mobile Navigation and the mobile Privacy Snapshot against the same production preview build.
+4. Capture a clean interaction-only Timespan trace without navigation; identify the exact non-composited button animation before making a targeted transition change.
+5. Reassess the generated CSS render-blocking request from the production build. Avoid async stylesheet delivery unless it preserves first paint and CLS.
+
 
 ## Lighthouse follow-up — contrast and font loading (2026-11-16)
 
