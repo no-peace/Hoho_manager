@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Edit3, Eye, Plus, Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { Header } from "./Header";
 import { MessageEditor } from "../editor/MessageEditor";
@@ -10,8 +10,8 @@ import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useTemplateStore } from "../../store/templateStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { copyTextToClipboard } from "../../utils/clipboard";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
+import { SplitPane } from "./SplitPane";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
@@ -52,15 +52,6 @@ export const StudioLayout: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [setBackupsModalOpen, openBotModal]);
 
-  const handleShare = async () => {
-    const payload = useMessageStore.getState().getPayload();
-    const text = JSON.stringify(payload, null, 2);
-    const copied = await copyTextToClipboard(text);
-    if (copied) {
-      showToast("Message JSON payload copied to clipboard!", "success");
-    }
-  };
-
   const handleClearAll = () => {
     openConfirm({
       title: "Clear All Messages",
@@ -81,7 +72,6 @@ export const StudioLayout: React.FC = () => {
       <Header
         onOpenBackups={() => setBackupsModalOpen(true)}
         onOpenJson={() => setJsonModalOpen(true)}
-        onShare={handleShare}
         onClearAll={handleClearAll}
         onOpenSend={openBotModal}
       />
@@ -101,87 +91,46 @@ export const StudioLayout: React.FC = () => {
         </div>
       )}
 
-      <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#2b2d31]">
-          <div className="hidden shrink-0 items-center gap-1 border-b border-[#1e1f22] bg-[#232428] px-3 py-2 xl:flex">
-            <button
-              type="button"
-              onClick={() => setMobileView("editor")}
-              aria-pressed={mobileView === "editor"}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${mobileView === "editor" ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:bg-[#35373c] hover:text-white"}`}
-            >
-              <Edit3 size={15} className="mr-2 inline" /> Editor
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileView("preview")}
-              aria-pressed={mobileView === "preview"}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${mobileView === "preview" ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:bg-[#35373c] hover:text-white"}`}
-            >
-              <Eye size={15} className="mr-2 inline" /> Live Preview
-            </button>
-            <span className="ml-auto hidden text-xs text-[#72767d] sm:inline">Workspace</span>
-          </div>
-
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-            {mobileView === "editor" ? (
-              <div className="flex h-full min-w-0 flex-col overflow-y-auto custom-scrollbar">
-                <div className="flex-1 space-y-3 p-3 sm:p-4">
-                  {displayMessages.map((_, idx) => (
-                    <MessageEditor key={idx} index={idx} />
-                  ))}
-                  <CultMorphSurface
-                    layoutId="cult-add-message-surface"
-                    triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
-                    triggerIcon={<Plus size={15} />}
-                    title="Choose Message Mode"
-                    disabled={displayMessages.length >= 10}
-                    className="mt-2 pb-4"
-                  >
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => addMessage({ flags: 0 })}
-                        className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]"
-                      >
-                        <div className="shrink-0 rounded bg-[#1e1f22] p-2 font-mono text-xs font-bold text-[#dbdee1]">TXT</div>
-                        <div>
-                          <p className="text-sm font-bold text-white">Standard Message (Classic)</p>
-                          <p className="mt-0.5 text-xs text-[#949ba4]">Classic message with content, embeds, attachments, and action rows.</p>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })}
-                        className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]"
-                      >
-                        <div className="shrink-0 rounded bg-[#5865f2]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
-                        <div>
-                          <p className="text-sm font-bold text-white">Components V2 Message</p>
-                          <p className="mt-0.5 text-xs text-[#949ba4]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p>
-                        </div>
-                      </button>
-                    </div>
-                  </CultMorphSurface>
-                </div>
+      <main className="relative flex min-h-0 flex-1 overflow-hidden">
+        <SplitPane
+          left={
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[#2b2d31]">
+              <div className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar sm:p-4">
+                {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
+                <CultMorphSurface
+                  layoutId="cult-add-message-surface"
+                  triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
+                  triggerIcon={<Plus size={15} />}
+                  title="Choose Message Mode"
+                  disabled={displayMessages.length >= 10}
+                  className="mt-2 pb-4"
+                >
+                  <div className="space-y-2">
+                    <button type="button" onClick={() => addMessage({ flags: 0 })} className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]">
+                      <div className="shrink-0 rounded bg-[#1e1f22] p-2 font-mono text-xs font-bold text-[#dbdee1]">TXT</div>
+                      <div><p className="text-sm font-bold text-white">Standard Message (Classic)</p><p className="mt-0.5 text-xs text-[#949ba4]">Classic message with content, embeds, attachments, and action rows.</p></div>
+                    </button>
+                    <button type="button" onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })} className="flex w-full items-start gap-3 rounded-lg border border-[#1e1f22] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#5865f2] hover:bg-[#35373c]">
+                      <div className="shrink-0 rounded bg-[#5865f2]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
+                      <div><p className="text-sm font-bold text-white">Components V2 Message</p><p className="mt-0.5 text-xs text-[#949ba4]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p></div>
+                    </button>
+                  </div>
+                </CultMorphSurface>
               </div>
-            ) : (
-              <div className="h-full min-w-0 overflow-y-auto bg-[#313338] p-3 sm:p-5 custom-scrollbar">
-                <MessagePreview />
-              </div>
-            )}
-          </div>
-        </section>
-
-        <React.Suspense fallback={null}>
-          <PropertyPanel />
-        </React.Suspense>
+            </div>
+          }
+          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview /></div>}
+          mobileActivePane={mobileView === "editor" ? "left" : "right"}
+          onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
+          className="min-h-0 min-w-0 flex-1"
+        />
+        <React.Suspense fallback={null}><PropertyPanel /></React.Suspense>
       </main>
 
       {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
       <nav
         aria-label="Mobile workspace navigation"
-        className="xl:hidden flex items-center bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        className="min-[1200px]:hidden flex items-center bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         <button
           type="button"
