@@ -146,6 +146,84 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("channelId");
     });
 
+    it("sends directly to an existing thread when threadId is supplied", async () => {
+      const threadId = "123456789012345678";
+      const res = await fetch(`${baseUrl}/api/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+        },
+        body: JSON.stringify({
+          mode: "bot",
+          threadId,
+          payload: { content: "Thread destination regression test" },
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(discordService.sendChannelMessage).toHaveBeenCalledWith(
+        threadId,
+        { content: "Thread destination regression test" },
+        expect.objectContaining({ profileId: null }),
+      );
+    });
+
+    it("rejects malformed thread IDs before dispatch", async () => {
+      const res = await fetch(`${baseUrl}/api/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+        },
+        body: JSON.stringify({
+          mode: "bot",
+          threadId: "not-a-discord-id",
+          payload: { content: "Must not send" },
+        }),
+      });
+
+      expect(res.status).toBe(400);
+      expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+    });
+
+    it("checks staff channel allowlists against the destination thread ID", async () => {
+      const staffId = "223456789012345678";
+      const threadId = "323456789012345678";
+
+      await staffRepository.create({
+        discord_user_id: staffId,
+        discord_username: "thread_permission_test",
+        granted_by_discord_id: "987654321098765432",
+        can_send_messages: 1,
+        cooldown_seconds: 0,
+        max_messages_per_hour: 10,
+        allowed_channel_ids: JSON.stringify(["parent_channel"]),
+        allowed_guild_ids: JSON.stringify(["*"]),
+      });
+
+      try {
+        const res = await fetch(`${baseUrl}/api/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-staff-id": staffId,
+          },
+          body: JSON.stringify({
+            mode: "bot",
+            channelId: "parent_channel",
+            threadId,
+            payload: { content: "Must be blocked" },
+          }),
+        });
+
+        expect(res.status).toBe(403);
+        expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+      } finally {
+        await staffRepository.delete(staffId);
+      }
+    });
+
     it("rejects webhook mode even when webhookUrl is missing", async () => {
       const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
