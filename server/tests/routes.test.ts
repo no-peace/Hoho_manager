@@ -516,6 +516,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           avatarUrl: `https://cdn.discordapp.com/avatars/${USER_A}/avatar_hash.png?size=1024`,
           profileUrl: `https://discord.com/users/${USER_A}`,
           nickname: null,
+          clanTag: null,
         });
 
         expect(discordService.getDiscordUser).toHaveBeenCalledTimes(1);
