@@ -24,7 +24,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
   setField,
   setExtendedField,
 }) => {
-  const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name));
+  const [threadOpen, setThreadOpen] = useState(Boolean(message.thread_name || message.thread_id));
 
   return (
     <div className="space-y-3">
@@ -39,7 +39,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-[#949ba4]">
               {threadOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Thread
             </span>
-            {message.thread_name && (
+            {(message.thread_id || message.thread_name) && (
               <span className="text-[10px] text-[#949cf7] font-semibold truncate max-w-[150px]">
                 #{message.thread_name}
               </span>
@@ -48,6 +48,25 @@ export const ContentTab: React.FC<ContentTabProps> = ({
 
           {threadOpen && (
             <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
+              <div>
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#949ba4]">
+                  Existing Thread ID
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={message.thread_id || ""}
+                  placeholder="Paste an existing Discord thread ID"
+                  onChange={(event) => {
+                    ensureActive();
+                    setExtendedField("thread_id", event.target.value);
+                  }}
+                  className="w-full rounded border border-[#232428] bg-[#1e1f22] px-2.5 py-1.5 text-xs text-[#dbdee1] focus:border-[#5865f2] focus:outline-none"
+                />
+                <p className="mt-1 text-[10px] leading-relaxed text-[#949ba4]">
+                  When set, messages are sent into this existing thread instead of the selected channel.
+                </p>
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
