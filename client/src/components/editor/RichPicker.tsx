@@ -187,12 +187,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
+      if (addCustomModalOpen) return;
       if (containerRef.current?.contains(target) || anchor?.contains(target)) return;
       onClose();
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, [onClose, anchor, addCustomModalOpen]);
 
   // Insert handler with shiftKey check
   const handleInsert = (text: string, e?: React.MouseEvent) => {
