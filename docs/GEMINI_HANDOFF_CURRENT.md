@@ -704,3 +704,20 @@ Retained comments that document security/authorization boundaries, Discord/API c
 ---
 
 **End of current handoff.**
+
+## V10 Batch 14 continuation — sidebar reconciliation (2026-11-16)
+
+- Replaced the previous `Elements | Templates` drawer switcher with the planned `Templates | Tracked | Actions` segmented navigation.
+- Templates remain connected to the existing `useTemplates` workflow and load the selected saved template into the editor.
+- Tracked now reads from the existing permission-filtered `GET /api/tracking/messages` endpoint, provides local search and refresh, and displays the channel/message identifiers without inventing a Discord guild URL (the API response does not include a guild ID).
+- Actions lists the action flows currently registered in the active editor state, keyed by their component custom IDs, and shows configured step counts. It does not create or mutate flows; editing remains in the existing component inspector/FlowBuilder.
+- Preserved the Layers & Hierarchy panel as a collapsible section beneath the three-way navigation so the layer-tree workflow is not lost.
+- No API, persistence, permission, or server behavior was changed.
+
+### Remaining validation and known plan alignment
+
+- The user requested that automated tests be left for their own run after implementation. No tests were run or modified as part of this continuation.
+- `npm run build` and `npm run typecheck` have not been run in this environment. Do not report compilation as verified.
+- Browser-based desktop/mobile visual QA and screenshots have not been performed. The live app was not launched or interacted with during this source-only pass.
+- The V10 Batch 7 MessageEditor currently renders Content, Embeds, and Components V2 as stacked sections rather than the plan's four-way Content / Embeds / Components V2 / Actions tab bar. This remains a documented UI-plan discrepancy; do not mark every V10 design detail complete.
+- Current main head after this continuation: `03a454cf3d3e102074b64767ed1730be212a5a44`.
