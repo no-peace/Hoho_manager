@@ -20,10 +20,10 @@ describe("variable autocomplete token detection", () => {
     });
   });
 
-  it("detects the exploit namespace as a variable query before a name is selected", () => {
+  it("routes the completed exploit namespace to exploit-name autocomplete", () => {
     expect(detectAutocompleteToken("{exploit.", 9)).toMatchObject({
-      type: "variable",
-      query: "exploit.",
+      type: "exploit_name",
+      query: "",
       start: 0,
       end: 9,
     });
