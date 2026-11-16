@@ -96,4 +96,3 @@ it("requires a valid 17–20 digit snowflake once a field separator is entered",
     expect(isValidDiscordSnowflake("123456789012345678901")).toBe(false);
   });
 });
-});
