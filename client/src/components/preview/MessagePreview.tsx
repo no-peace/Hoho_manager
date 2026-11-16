@@ -111,9 +111,10 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
 
 interface MessagePreviewProps {
   onSelectMessage?: (index: number) => void;
+  onSelectPreviewComponent?: (index: number, componentId: string, isInteractive: boolean) => void;
 }
 
-export const MessagePreview = ({ onSelectMessage }: MessagePreviewProps) => {
+export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: MessagePreviewProps) => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
@@ -244,8 +245,12 @@ export const MessagePreview = ({ onSelectMessage }: MessagePreviewProps) => {
                       const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
                       if (!componentId) return;
-                      handleSelectMessage(index);
-                      selectComponent({ kind: "component", id: componentId });
+                      const isInteractive = componentElement?.dataset.previewInteractive === "true";
+                      onSelectPreviewComponent?.(index, componentId, isInteractive);
+                      if (!onSelectPreviewComponent) {
+                        handleSelectMessage(index);
+                        selectComponent({ kind: "component", id: componentId });
+                      }
                     }}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
