@@ -26,6 +26,15 @@ describe("variableInterpolation", () => {
       .toEqual({ content: ["Peace", "Peace"], flags: 0 });
   });
 
+  it("resolves long and short time placeholders to their distinct Discord formats", () => {
+    const date = new Date("2026-11-16T12:00:00.000Z");
+    const unix = Math.floor(date.getTime() / 1000);
+    const variables = buildTimestampVariables(date);
+
+    expect(replaceVariables("{now.time}|{now.short_time}", variables))
+      .toBe(`<t:${unix}:T>|<t:${unix}:t>`);
+  });
+
   it("builds the complete Discord timestamp variable set", () => {
     const date = new Date("2026-11-16T12:00:00.000Z");
     const unix = Math.floor(date.getTime() / 1000);
