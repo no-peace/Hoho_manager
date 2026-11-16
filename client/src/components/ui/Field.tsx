@@ -85,7 +85,12 @@ const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void
     if (!open) return;
     if (wrapRef.current) {
       const rect = wrapRef.current.getBoundingClientRect();
-      setPos(rect.top < 430 ? "bottom" : "top");
+      const viewport = window.visualViewport;
+      const top = viewport?.offsetTop ?? 0;
+      const height = viewport?.height ?? window.innerHeight;
+      const above = Math.max(0, rect.top - top - 12);
+      const below = Math.max(0, top + height - rect.bottom - 12);
+      setPos(above > below ? "top" : "bottom");
     }
     const handleOutside = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
@@ -161,9 +166,13 @@ const VariableAutocompletePopover = ({
   selectedIndex = 0,
 }: VariableAutocompleteProps) => {
   const filtered = useMemo(
-    () =>getAutocompleteVariables(query),
+    () => getAutocompleteVariables(query),
     [query],
   );
+  const selectedOptionRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    selectedOptionRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex, filtered]);
 
   if (filtered.length === 0) return null;
 
@@ -180,6 +189,7 @@ const VariableAutocompletePopover = ({
       <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
         {filtered.map((item, idx) => (
           <button
+            ref={idx === selectedIndex ? selectedOptionRef : undefined}
             key={item.tag}
             type="button"
             className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
@@ -267,6 +277,10 @@ const EmojiAutocompletePopover = ({
     }
     return list;
   }, [q, guildEmojis]);
+  const selectedOptionRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    selectedOptionRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex, filtered]);
 
   if (filtered.length === 0) return null;
 
@@ -283,6 +297,7 @@ const EmojiAutocompletePopover = ({
       <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
         {filtered.map((item, idx) => (
           <button
+            ref={idx === selectedIndex ? selectedOptionRef : undefined}
             key={item.key}
             type="button"
             className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors ${
@@ -316,7 +331,12 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
   const getDropdownPos = (): "top" | "bottom" => {
     if (!inputRef.current) return "bottom";
     const rect = inputRef.current.getBoundingClientRect();
-    return window.innerHeight - rect.bottom < 220 && rect.top > 220 ? "top" : "bottom";
+    const viewport = window.visualViewport;
+    const top = viewport?.offsetTop ?? 0;
+    const height = viewport?.height ?? window.innerHeight;
+    const above = Math.max(0, rect.top - top - 12);
+    const below = Math.max(0, top + height - rect.bottom - 12);
+    return above > below ? "top" : "bottom";
   };
 
   const checkInlineVariable = (val: string, cursor: number) => {
@@ -508,7 +528,12 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
   const getDropdownPos = (): "top" | "bottom" => {
     if (!textAreaRef.current) return "bottom";
     const rect = textAreaRef.current.getBoundingClientRect();
-    return window.innerHeight - rect.bottom < 220 && rect.top > 220 ? "top" : "bottom";
+    const viewport = window.visualViewport;
+    const top = viewport?.offsetTop ?? 0;
+    const height = viewport?.height ?? window.innerHeight;
+    const above = Math.max(0, rect.top - top - 12);
+    const below = Math.max(0, top + height - rect.bottom - 12);
+    return above > below ? "top" : "bottom";
   };
 
   const checkInlineVariable = (val: string, cursor: number) => {
