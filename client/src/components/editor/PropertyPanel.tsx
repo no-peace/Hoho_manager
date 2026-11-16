@@ -7,6 +7,7 @@ import { COMPONENT_FORMS } from "./ComponentForms";
 import { componentLabel, isInteractiveComponent } from "../../utils/componentsV2";
 import { findComponent } from "../../utils/tree";
 import { useMessageStore } from "../../store/messageStore";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 type PanelTab = "properties" | "flow";
 
