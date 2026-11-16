@@ -31,7 +31,22 @@ export const StudioLayout: React.FC = () => {
   const isMobileWorkspace = () => window.matchMedia("(max-width: 1199px)").matches;
 
   const handlePreviewMessageSelect = (index: number) => {
-    if (isMobileWorkspace()) return;
+    // A message-card click is an explicit navigation action (unlike scrolling the preview).
+    // Clear any component inspector selection before moving to the full message editor.
+    useMessageStore.getState().select(null);
+
+    if (isMobileWorkspace()) {
+      setMobileView("editor");
+      // Wait for the mobile pane to become visible before scrolling/focusing its editor field.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollToMessageEditor(index);
+          requestAnimationFrame(() => focusMessageEditor(index));
+        });
+      });
+      return;
+    }
+
     scrollToMessageEditor(index);
     requestAnimationFrame(() => requestAnimationFrame(() => focusMessageEditor(index)));
   };
