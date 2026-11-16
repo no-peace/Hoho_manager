@@ -41,7 +41,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             </span>
             {(message.thread_id || message.thread_name) && (
               <span className="text-[10px] text-[#949cf7] font-semibold truncate max-w-[150px]">
-                #{message.thread_name}
+                {message.thread_id ? "Existing thread" : `#${message.thread_name}`}
               </span>
             )}
           </button>
