@@ -255,19 +255,19 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                 return (
                   <div
                     key={index}
-                    onClick={(event) => handleMessageCardClick(event, index)}
-                    onClickCapture={(event) => {
+                    onClick={(event) => {
                       const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
-                      if (!componentId) return;
-                      event.stopPropagation();
-                      setActiveMessageIndex?.(index);
-                      const isInteractive = componentElement?.dataset.previewInteractive === "true";
-                      onSelectPreviewComponent?.(index, componentId, isInteractive);
-                      if (!onSelectPreviewComponent) {
-                        handleSelectMessage(index);
-                        selectComponent({ kind: "component", id: componentId });
+                      if (componentId) {
+                        setActiveMessageIndex?.(index);
+                        const isInteractive = componentElement?.dataset.previewInteractive === "true";
+                        onSelectPreviewComponent?.(index, componentId, isInteractive);
+                        if (!onSelectPreviewComponent) {
+                          selectComponent({ kind: "component", id: componentId });
+                        }
+                        return;
                       }
+                      handleMessageCardClick(event, index);
                     }}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
