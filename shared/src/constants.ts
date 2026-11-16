@@ -137,7 +137,7 @@ export const ACTION_SEPARATOR = ":";
 export const AdaptiveFields = [
   "user.id",
   "user.name",
-  "user.tag",
+  "user.username",
   "channel.id",
   "guild.id",
   "message.id",
