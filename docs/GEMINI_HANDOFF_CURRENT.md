@@ -5,7 +5,7 @@
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
 **Inspected application source baseline:** `e9bdc62131b28760e6810454f68922cf3adcab4b`  
-**Current main after handoff documentation updates:** `70b5ed1b81d8818f0722a7b0cddcb895236833ac`  
+**Current branch:** `main` (read the live branch head before implementation; only handoff documents changed after the inspected application source baseline)  
 **Repository tree:** 301 tracked files; tree response was not truncated  
 **Status:** Planning and source inspection only. No application files have been changed. No Terminal or Playwright tools were used.
 
@@ -13,7 +13,7 @@
 
 ## 1. Current repository state
 
-- GitHub `main` currently points to `70b5ed1b81d8818f0722a7b0cddcb895236833ac`. The application source baseline reviewed for this plan is `e9bdc62131b28760e6810454f68922cf3adcab4b`; the intervening commits only updated the Gemini handoff documents.
+- The application source baseline reviewed for this plan is `e9bdc62131b28760e6810454f68922cf3adcab4b`. Subsequent commits only updated the Gemini handoff documents; read the live `main` head before implementation.
 - The repository currently has one remote branch: `main`.
 - There are no open pull requests at the time of inspection.
 - The latest commit is the security-hardening merge. It follows V8 feature integration.
