@@ -358,8 +358,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             variant="primary"
             className={`${
               mode === "edit"
-                ? "bg-[#faa61a] hover:bg-[#d88c0e]"
-                : "bg-[#248046] hover:bg-[#1a6334]"
+                ? "bg-[#FBBF24] hover:bg-[#d88c0e]"
+                : "bg-[#818CF8] hover:bg-[#6366F1]"
             } text-white border-none flex items-center gap-2`}
             onClick={() => void handleDispatch()}
             loading={isSending}
@@ -384,14 +384,14 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       }
     >
       <div className="flex flex-col gap-5">
-        <div className="flex bg-[#1e1f22] p-1 rounded-md border border-[#111214] shrink-0">
+        <div className="flex bg-[#1D2230] p-1 rounded-md border border-[#10131A] shrink-0">
           <button
             type="button"
             onClick={() => setMode("send")}
             className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-[background-color,border-color,color] duration-150 ease-out ${
               mode === "send"
-                ? "bg-[#5865f2] text-white shadow-sm"
-                : "text-[#b5bac1] hover:bg-[#2b2d31]"
+                ? "bg-[#818CF8] text-[#0B0D12] shadow-sm"
+                : "text-[#A1A8B8] hover:bg-[#161A23]"
             }`}
           >
             <Send size={14} /> Send New Message
@@ -401,8 +401,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             onClick={() => setMode("edit")}
             className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded text-[11px] font-bold uppercase transition-[background-color,border-color,color] duration-150 ease-out ${
               mode === "edit"
-                ? "bg-[#faa61a] text-white shadow-sm"
-                : "text-[#b5bac1] hover:bg-[#2b2d31]"
+                ? "bg-[#FBBF24] text-white shadow-sm"
+                : "text-[#A1A8B8] hover:bg-[#161A23]"
             }`}
           >
             <Edit3 size={14} /> Edit Existing
@@ -411,19 +411,19 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
 
         <section>
           <div className="flex justify-between items-end mb-2">
-            <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
+            <h4 className="text-[12px] font-bold text-[#A1A8B8] uppercase">
               1. Server Bot Identity
             </h4>
             <button
               type="button"
               onClick={openBotAccess}
-              className="text-[11px] font-bold text-[#5865f2] hover:underline"
+              className="text-[11px] font-bold text-[#818CF8] hover:underline"
             >
               View Bot Access
             </button>
           </div>
 
-          <div className="p-3 rounded-lg border border-[#5865f2]/50 bg-[#5865f2]/10 flex items-center gap-3">
+          <div className="p-3 rounded-lg border border-[#818CF8]/50 bg-[#818CF8]/10 flex items-center gap-3">
             {botIdentity?.avatar ? (
               <img
                 src={botIdentity.avatar}
@@ -431,7 +431,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#818CF8] flex items-center justify-center text-white shrink-0">
                 <Server size={20} />
               </div>
             )}
@@ -439,7 +439,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               <p className="text-[14px] font-bold text-white truncate">
                 {botIdentity?.username || "HoHo Bot"}
               </p>
-              <p className="text-[11px] text-[#949ba4] truncate">
+              <p className="text-[11px] text-[#A1A8B8] truncate">
                 {canUseServerBot
                   ? "Configured server bot"
                   : "Your account does not have permission to use this bot"}
@@ -448,11 +448,11 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           </div>
 
           {!canUseServerBot && (
-            <div className="mt-2 p-3 rounded-lg bg-[#1e1f22] border border-[#f0b232]/40 text-center space-y-2">
-              <p className="text-xs text-[#dbdee1] font-semibold">
+            <div className="mt-2 p-3 rounded-lg bg-[#1D2230] border border-[#FBBF24]/40 text-center space-y-2">
+              <p className="text-xs text-[#F1F3F9] font-semibold">
                 Server Bot Access Required
               </p>
-              <p className="text-[11px] text-[#949ba4]">
+              <p className="text-[11px] text-[#A1A8B8]">
                 Ask a Head Admin to grant your account staff access to the configured server bot.
               </p>
               <Button size="sm" variant="primary" onClick={openBotAccess}>
@@ -464,7 +464,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
 
         <section>
           <div className="flex justify-between items-end mb-2">
-            <h4 className="text-[12px] font-bold text-[#b5bac1] uppercase">
+            <h4 className="text-[12px] font-bold text-[#A1A8B8] uppercase">
               2. Select Target Channel(s)
             </h4>
             <div className="flex gap-3">
@@ -472,7 +472,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 type="button"
                 onClick={() => setSelectedChannels(channels.map((channel) => channel.id))}
                 disabled={!canUseServerBot || channels.length === 0}
-                className="text-[11px] font-bold text-[#5865f2] hover:underline uppercase tracking-wide disabled:opacity-40"
+                className="text-[11px] font-bold text-[#818CF8] hover:underline uppercase tracking-wide disabled:opacity-40"
               >
                 Select All
               </button>
@@ -480,7 +480,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 type="button"
                 onClick={() => setSelectedChannels([])}
                 disabled={selectedChannels.length === 0}
-                className="text-[11px] font-bold text-[#f28b8b] hover:underline uppercase tracking-wide disabled:opacity-40"
+                className="text-[11px] font-bold text-[#F87171] hover:underline uppercase tracking-wide disabled:opacity-40"
               >
                 Clear
               </button>
@@ -494,18 +494,18 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               onChange={(event) => setChannelQuery(event.target.value)}
               placeholder="Filter channels by name..."
               aria-label="Filter channels by name"
-              className="mb-2 w-full rounded-lg border border-[#111214] bg-[#1e1f22] px-3 py-1.5 text-xs text-[#dbdee1] placeholder-[#949ba4] outline-none focus:border-[#5865f2]"
+              className="mb-2 w-full rounded-lg border border-[#10131A] bg-[#1D2230] px-3 py-1.5 text-xs text-[#F1F3F9] placeholder-[#A1A8B8] outline-none focus:border-[#818CF8]"
             />
           )}
-          <div className="bg-[#18191c] border border-[#26282d] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar">
+          <div className="bg-[#10131A] border border-[#272D3A] rounded-lg p-2 h-44 overflow-y-auto custom-scrollbar">
             {!canUseServerBot ? (
-              <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
+              <div className="flex h-full items-center justify-center text-sm text-[#A1A8B8]">
                 Server bot access is required.
               </div>
             ) : isLoading ? (
-              <div className="flex h-full items-center justify-center gap-2 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Fetching channels...</span></div>
+              <div className="flex h-full items-center justify-center gap-2 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Fetching channels...</span></div>
             ) : channels.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-[#949ba4]">
+              <div className="flex h-full items-center justify-center text-sm text-[#A1A8B8]">
                 No channels found.
               </div>
             ) : (
@@ -519,17 +519,17 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                       onClick={() => toggleChannel(channel.id)}
                       aria-pressed={checked}
                       className={`w-full flex items-center gap-3 p-2 rounded text-left transition-colors ${
-                        checked ? "bg-[#35373c]" : "hover:bg-[#2b2d31]"
+                        checked ? "bg-[#252B3A]" : "hover:bg-[#161A23]"
                       }`}
                     >
                       {checked ? (
-                        <CheckSquare size={16} className="text-[#5865f2]" />
+                        <CheckSquare size={16} className="text-[#818CF8]" />
                       ) : (
-                        <Square size={16} className="text-[#949ba4]" />
+                        <Square size={16} className="text-[#A1A8B8]" />
                       )}
                       <span
                         className={`text-[13px] font-medium ${
-                          checked ? "text-white" : "text-[#dbdee1]"
+                          checked ? "text-white" : "text-[#F1F3F9]"
                         }`}
                       >
                         # {channel.name}
@@ -543,11 +543,11 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
         </section>
 
         {mode === "edit" && (
-          <section className="space-y-3 rounded-xl border border-[#26282d] bg-[#18191c] p-3.5">
+          <section className="space-y-3 rounded-xl border border-[#272D3A] bg-[#10131A] p-3.5">
             <div>
               <label
                 htmlFor="dispatch-target-message-id"
-                className="block text-[11px] font-bold text-[#b5bac1] uppercase mb-1"
+                className="block text-[11px] font-bold text-[#A1A8B8] uppercase mb-1"
               >
                 3. Target Message ID(s)
               </label>
@@ -557,19 +557,19 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 value={targetMessageId}
                 onChange={(event) => setTargetMessageId(event.target.value)}
                 placeholder="Enter a message ID or select a recent bot message below..."
-                className="w-full bg-[#2b2d31] text-[#dbdee1] border border-[#111214] rounded px-3 py-1.5 text-xs font-mono outline-none focus:border-[#5865f2]"
+                className="w-full bg-[#161A23] text-[#F1F3F9] border border-[#10131A] rounded px-3 py-1.5 text-xs font-mono outline-none focus:border-[#818CF8]"
               />
             </div>
 
             {selectedChannels.length === 1 && (
               <div>
-                <p className="text-[11px] font-bold text-[#949ba4] uppercase mb-1.5">
+                <p className="text-[11px] font-bold text-[#A1A8B8] uppercase mb-1.5">
                   Recent Bot Messages in Selected Channel
                 </p>
                 {isLoadingMessages ? (
-                  <div className="flex items-center gap-2 py-2 text-xs text-[#949ba4]"><RefreshCw size={14} className="animate-spin text-[#5865f2]" /><span>Loading messages...</span></div>
+                  <div className="flex items-center gap-2 py-2 text-xs text-[#A1A8B8]"><RefreshCw size={14} className="animate-spin text-[#818CF8]" /><span>Loading messages...</span></div>
                 ) : botMessages.length === 0 ? (
-                  <p className="text-xs text-[#949ba4]">
+                  <p className="text-xs text-[#A1A8B8]">
                     No recent bot messages found.
                   </p>
                 ) : (
@@ -581,14 +581,14 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                         onClick={() => loadMessageIntoEditor(message.id)}
                         className={`w-full p-2 rounded text-xs text-left flex items-center justify-between ${
                           targetMessageId === message.id
-                            ? "bg-[#5865f2]/20 border border-[#5865f2]"
-                            : "bg-[#2b2d31] hover:bg-[#35373c]"
+                            ? "bg-[#818CF8]/20 border border-[#818CF8]"
+                            : "bg-[#161A23] hover:bg-[#252B3A]"
                         }`}
                       >
-                        <span className="truncate flex-1 mr-2 text-[#dbdee1]">
+                        <span className="truncate flex-1 mr-2 text-[#F1F3F9]">
                           {message.content}
                         </span>
-                        <span className="font-mono text-[10px] text-[#949ba4] shrink-0">
+                        <span className="font-mono text-[10px] text-[#A1A8B8] shrink-0">
                           {loadedMessageId === message.id
                             ? "Loaded ✓"
                             : message.id.slice(-6)}
@@ -602,7 +602,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           </section>
         )}
 
-        <section className="space-y-3 rounded-lg border border-[#26282d] bg-[#18191c] p-3">
+        <section className="space-y-3 rounded-lg border border-[#272D3A] bg-[#10131A] p-3">
           <Checkbox
             checked={trackAfterSend}
             onChange={setTrackAfterSend}
@@ -610,7 +610,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             className="text-xs font-medium"
           />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] text-[#949ba4]">Optional retention expiry</span>
+            <span className="text-[11px] text-[#A1A8B8]">Optional retention expiry</span>
             <DateTimePickerPopover value={customExpiry} onChange={setCustomExpiry} placeholder="No expiry" />
           </div>
         </section>
@@ -620,8 +620,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             role="status"
             className={`p-3 rounded border text-xs leading-relaxed break-words [overflow-wrap:anywhere] ${
               /success|successfully/i.test(sendResult)
-                ? "bg-[#23a55a]/10 border-[#23a55a]/30 text-[#57f287]"
-                : "bg-[#da373c]/10 border-[#da373c]/30 text-[#f28b8b]"
+                ? "bg-[#34D399]/10 border-[#34D399]/30 text-[#34D399]"
+                : "bg-[#F87171]/10 border-[#F87171]/30 text-[#F87171]"
             }`}
           >
             {sendResult}

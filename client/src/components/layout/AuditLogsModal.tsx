@@ -57,11 +57,11 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
     <Modal open={open} onClose={onClose} title="Guild Audit Logs" width="max-w-4xl">
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="text-xs text-[#949ba4]">
+          <div className="text-xs text-[#A1A8B8]">
             {guildId ? (
-              <span>Viewing audit log events for guild ID: <code className="text-[#dbdee1] bg-[#1e1f22] px-1 py-0.5 rounded">{guildId}</code></span>
+              <span>Viewing audit log events for guild ID: <code className="text-[#F1F3F9] bg-[#1D2230] px-1 py-0.5 rounded">{guildId}</code></span>
             ) : (
-              <span className="text-[#f0b232] flex items-center gap-1">
+              <span className="text-[#FBBF24] flex items-center gap-1">
                 <AlertCircle size={14} /> Please select a server first in the top bar.
               </span>
             )}
@@ -72,13 +72,13 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
               placeholder="Filter action (e.g. SEND_MESSAGE)..."
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="bg-[#1e1f22] border border-[#35373c] rounded px-2.5 py-1 text-xs text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none focus:border-[#5865f2] w-full sm:w-56"
+              className="bg-[#1D2230] border border-[#252B3A] rounded px-2.5 py-1 text-xs text-[#F1F3F9] placeholder-[#6F788A] focus:outline-none focus:border-[#818CF8] w-full sm:w-56"
             />
             <button
               type="button"
               onClick={fetchLogs}
               disabled={loading || !guildId}
-              className="p-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#949ba4] hover:text-white transition-colors disabled:opacity-50"
+              className="p-1.5 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#A1A8B8] hover:text-white transition-colors disabled:opacity-50"
               title="Refresh logs"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -87,27 +87,27 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
         </div>
 
         {error && (
-          <div className="p-3 rounded bg-[#da373c]/20 border border-[#da373c]/40 text-[#f28b8b] text-xs flex items-center gap-2">
+          <div className="p-3 rounded bg-[#F87171]/20 border border-[#F87171]/40 text-[#F87171] text-xs flex items-center gap-2">
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading audit logs...</span></div>
+          <div className="flex items-center justify-center gap-2 rounded-[8px] border border-[#272D3A] bg-[#161A23] px-3 py-4 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Loading audit logs...</span></div>
         ) : logs.length === 0 ? (
-          <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31] p-6 space-y-2">
-            <Shield size={28} className="mx-auto text-[#5865f2] opacity-80" />
-            <p className="font-semibold text-[#dbdee1]">Audit Logs Stream to Discord</p>
-            <p className="max-w-md mx-auto text-[11px] text-[#949ba4]">
+          <div className="text-center py-12 text-[#A1A8B8] text-xs bg-[#1D2230] rounded-lg border border-[#161A23] p-6 space-y-2">
+            <Shield size={28} className="mx-auto text-[#818CF8] opacity-80" />
+            <p className="font-semibold text-[#F1F3F9]">Audit Logs Stream to Discord</p>
+            <p className="max-w-md mx-auto text-[11px] text-[#A1A8B8]">
               Audit events are dispatched directly to your configured Discord log channel to prevent SQLite storage bloat.
               You can configure which events are sent in <span className="text-white font-semibold">Head Admin Settings</span>.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-[500px] border border-[#26282d] bg-[#2b2d31] rounded-lg">
-            <table className="w-full text-left text-xs text-[#dbdee1]">
-              <thead className="bg-[#1e1f22] border-b border-[#2b2d31] text-[#949ba4] uppercase text-[10px] sticky top-0 tracking-wider">
+          <div className="overflow-x-auto max-h-[500px] border border-[#272D3A] bg-[#161A23] rounded-lg">
+            <table className="w-full text-left text-xs text-[#F1F3F9]">
+              <thead className="bg-[#1D2230] border-b border-[#161A23] text-[#A1A8B8] uppercase text-[10px] sticky top-0 tracking-wider">
                 <tr>
                   <th className="px-3 py-2">Timestamp</th>
                   <th className="px-3 py-2">Action / Type</th>
@@ -116,30 +116,30 @@ export const AuditLogsModal: React.FC<AuditLogsModalProps> = ({ open, onClose, g
                   <th className="px-3 py-2">Details / Reason</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2b2d31] bg-[#2b2d31]/50">
+              <tbody className="divide-y divide-[#161A23] bg-[#161A23]/50">
                 {logs.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-[#35373c]/40 transition-colors">
-                    <td className="px-3 py-2 whitespace-nowrap text-[#949ba4] font-mono text-[11px]">
+                  <tr key={entry.id} className="hover:bg-[#252B3A]/40 transition-colors">
+                    <td className="px-3 py-2 whitespace-nowrap text-[#A1A8B8] font-mono text-[11px]">
                       {entry.created_at ? new Date(entry.created_at).toLocaleString() : "-"}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="bg-[#5865f2]/20 text-[#5865f2] px-1.5 py-0.5 rounded font-mono font-semibold text-[11px]">
+                      <span className="bg-[#818CF8]/20 text-[#818CF8] px-1.5 py-0.5 rounded font-mono font-semibold text-[11px]">
                         {entry.type}
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px]">
                       {entry.user_name ? (
-                        <span className="text-[#dbdee1]">{entry.user_name}</span>
+                        <span className="text-[#F1F3F9]">{entry.user_name}</span>
                       ) : entry.user_id ? (
-                        <span className="text-[#949ba4]">{entry.user_id}</span>
+                        <span className="text-[#A1A8B8]">{entry.user_id}</span>
                       ) : (
-                        <span className="text-[#6d6f78]">system</span>
+                        <span className="text-[#6F788A]">system</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-[#949ba4]">
+                    <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-[#A1A8B8]">
                       {entry.channel_id || "-"}
                     </td>
-                    <td className="px-3 py-2 text-xs text-[#dbdee1] max-w-xs truncate" title={entry.reason || entry.details || ""}>
+                    <td className="px-3 py-2 text-xs text-[#F1F3F9] max-w-xs truncate" title={entry.reason || entry.details || ""}>
                       {entry.reason || entry.details || "-"}
                     </td>
                   </tr>

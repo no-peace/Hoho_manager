@@ -83,11 +83,11 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
     <Modal open={open} onClose={onClose} title="Active Sessions" width="max-w-3xl">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="text-xs text-[#949ba4]">
+          <div className="text-xs text-[#A1A8B8]">
             {guildId ? (
-              <span>Active authorized sessions for guild: <code className="text-[#dbdee1] bg-[#1e1f22] px-1 py-0.5 rounded">{guildId}</code></span>
+              <span>Active authorized sessions for guild: <code className="text-[#F1F3F9] bg-[#1D2230] px-1 py-0.5 rounded">{guildId}</code></span>
             ) : (
-              <span className="text-[#f0b232] flex items-center gap-1">
+              <span className="text-[#FBBF24] flex items-center gap-1">
                 <AlertCircle size={14} /> Please select a server first in the top bar.
               </span>
             )}
@@ -96,7 +96,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
             type="button"
             onClick={fetchSessions}
             disabled={loading || !guildId}
-            className="p-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#949ba4] hover:text-white transition-colors disabled:opacity-50"
+            className="p-1.5 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#A1A8B8] hover:text-white transition-colors disabled:opacity-50"
             title="Refresh sessions"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -104,16 +104,16 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
         </div>
 
         {error && (
-          <div className="p-3 rounded bg-[#da373c]/20 border border-[#da373c]/40 text-[#f28b8b] text-xs flex items-center gap-2">
+          <div className="p-3 rounded bg-[#F87171]/20 border border-[#F87171]/40 text-[#F87171] text-xs flex items-center gap-2">
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading active sessions...</span></div>
+          <div className="flex items-center justify-center gap-2 rounded-[8px] border border-[#272D3A] bg-[#161A23] px-3 py-4 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Loading active sessions...</span></div>
         ) : sessions.length === 0 ? (
-          <div className="text-center py-12 text-[#949ba4] text-xs bg-[#1e1f22] rounded-lg border border-[#2b2d31]">
+          <div className="text-center py-12 text-[#A1A8B8] text-xs bg-[#1D2230] rounded-lg border border-[#161A23]">
             <Key size={24} className="mx-auto mb-2 opacity-50" />
             No active sessions found for this server.
           </div>
@@ -124,7 +124,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
               return (
                 <div
                   key={s.tokenId}
-                  className="bg-[#2b2d31] border border-[#26282d] hover:border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-4 transition-[border-color,background-color] duration-150"
+                  className="bg-[#161A23] border border-[#272D3A] hover:border-[#252B3A] rounded-lg p-3 flex items-center justify-between gap-4 transition-[border-color,background-color] duration-150"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -134,35 +134,35 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
                       <button
                         type="button"
                         onClick={() => handleCopy(s.tokenId)}
-                        className="text-[#949ba4] hover:text-white p-0.5"
+                        className="text-[#A1A8B8] hover:text-white p-0.5"
                         title="Copy session token"
                       >
                         {copiedToken === s.tokenId ? (
-                          <Check size={12} className="text-[#57f287]" />
+                          <Check size={12} className="text-[#34D399]" />
                         ) : (
                           <Copy size={12} />
                         )}
                       </button>
 
                       {s.me && (
-                        <span className="text-[10px] bg-[#5865f2]/20 text-[#5865f2] border border-[#5865f2]/40 font-semibold px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] bg-[#818CF8]/20 text-[#818CF8] border border-[#818CF8]/40 font-semibold px-1.5 py-0.2 rounded">
                           Current Session (You)
                         </span>
                       )}
                       {s.owner && (
-                        <span className="text-[10px] bg-[#57f287]/20 text-[#57f287] border border-[#57f287]/40 font-semibold px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                        <span className="text-[10px] bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/40 font-semibold px-1.5 py-0.2 rounded flex items-center gap-0.5">
                           <ShieldCheck size={10} /> Guild Owner
                         </span>
                       )}
                       {isExpired && (
-                        <span className="text-[10px] bg-[#da373c]/20 text-[#f28b8b] border border-[#da373c]/40 font-semibold px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] bg-[#F87171]/20 text-[#F87171] border border-[#F87171]/40 font-semibold px-1.5 py-0.2 rounded">
                           Expired
                         </span>
                       )}
                     </div>
 
-                    <div className="text-[11px] text-[#949ba4] flex items-center gap-3">
-                      <span>Permissions: <code className="text-[#dbdee1]">{s.permissions}</code></span>
+                    <div className="text-[11px] text-[#A1A8B8] flex items-center gap-3">
+                      <span>Permissions: <code className="text-[#F1F3F9]">{s.permissions}</code></span>
                       <span>Created: {new Date(s.createdAt).toLocaleDateString()}</span>
                       <span>Expires: {new Date(s.expiresAt).toLocaleDateString()}</span>
                     </div>
@@ -173,7 +173,7 @@ export const SessionsModal: React.FC<SessionsModalProps> = ({ open, onClose, gui
                       type="button"
                       onClick={() => handleRevoke(s.tokenId)}
                       disabled={revokingId === s.tokenId}
-                      className="px-2.5 py-1 text-xs font-medium rounded text-[#f28b8b] hover:bg-[#da373c]/20 border border-[#da373c]/30 hover:border-[#da373c] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="px-2.5 py-1 text-xs font-medium rounded text-[#F87171] hover:bg-[#F87171]/20 border border-[#F87171]/30 hover:border-[#F87171] transition-colors flex items-center gap-1.5 disabled:opacity-50"
                       title="Revoke session"
                     >
                       <Trash2 size={13} />

@@ -134,7 +134,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
   if (!isHeadAdmin) {
     return (
       <Modal open={open} onClose={onClose} title="Settings" width="max-w-md">
-        <p className="text-sm text-[#f28b8b] text-center p-4">You do not have Head Admin access to view settings.</p>
+        <p className="text-sm text-[#F87171] text-center p-4">You do not have Head Admin access to view settings.</p>
       </Modal>
     );
   }
@@ -143,34 +143,34 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
       <div className="flex flex-col sm:flex-row gap-4 h-[75vh] min-w-0">
         {/* Sidebar */}
-        <div className="w-full sm:w-44 bg-[#18191c] border border-[#26282d] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
+        <div className="w-full sm:w-44 bg-[#10131A] border border-[#272D3A] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
           <button
             onClick={() => tab}
-            className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#5865f2] text-white" : "text-[#b5bac1] hover:bg-[#35373c]"}`}
+            className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#818CF8] text-white" : "text-[#A1A8B8] hover:bg-[#252B3A]"}`}
           >
             General
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#18191c] border border-[#26282d] rounded-xl p-4">
+        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#10131A] border border-[#272D3A] rounded-xl p-4">
           {tab === "general" && (
             <div className="space-y-5">
-              <div className="border-b border-[#35373c] pb-2">
-                <h3 className="font-bold text-[#dbdee1] uppercase text-xs tracking-wider">
+              <div className="border-b border-[#252B3A] pb-2">
+                <h3 className="font-bold text-[#F1F3F9] uppercase text-xs tracking-wider">
                   General Settings {selectedGuildId ? `(Guild: ${selectedGuildId})` : "(Global)"}
                 </h3>
-                <p className="text-[11px] text-[#949ba4] mt-0.5">
+                <p className="text-[11px] text-[#A1A8B8] mt-0.5">
                   Configure Discord log streaming, audit event dispatch, and authorized Head Admins.
                 </p>
               </div>
 
               {loading ? (
-                <div className="flex items-center gap-2 py-2 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading...</span></div>
+                <div className="flex items-center gap-2 py-2 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Loading...</span></div>
               ) : (
                 <>
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-[#b5bac1] uppercase tracking-wider">
+                    <label className="block text-[11px] font-bold text-[#A1A8B8] uppercase tracking-wider">
                       Audit Log Channel
                     </label>
                     <SearchableDiscordSelect
@@ -183,16 +183,16 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                   </div>
 
                   {/* Configurable Discord Logging Events */}
-                  <div className="space-y-3 pt-2 border-t border-[#2b2d31]">
+                  <div className="space-y-3 pt-2 border-t border-[#161A23]">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <Bell size={13} className="text-[#5865f2]" />
-                          <h4 className="text-xs font-bold text-[#dbdee1] uppercase tracking-wider">
+                          <Bell size={13} className="text-[#818CF8]" />
+                          <h4 className="text-xs font-bold text-[#F1F3F9] uppercase tracking-wider">
                             Discord Log Channel Events
                           </h4>
                         </div>
-                        <p className="text-[11px] text-[#949ba4]">
+                        <p className="text-[11px] text-[#A1A8B8]">
                           Choose which events dispatch embeds to your Discord log channel ({enabledEvents.length}/{ALL_LOG_EVENTS.length} enabled)
                         </p>
                       </div>
@@ -201,7 +201,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                         <button
                           type="button"
                           onClick={() => setEnabledEvents([...DEFAULT_LOG_EVENTS])}
-                          className="px-2 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[10px] font-semibold text-[#dbdee1] transition-colors"
+                          className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[10px] font-semibold text-[#F1F3F9] transition-colors"
                         >
                           Select All
                         </button>
@@ -220,14 +220,14 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                               "RATE_LIMIT_HIT",
                             ])
                           }
-                          className="px-2 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[10px] font-semibold text-[#5865f2] transition-colors"
+                          className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[10px] font-semibold text-[#818CF8] transition-colors"
                         >
                           Recommended
                         </button>
                         <button
                           type="button"
                           onClick={() => setEnabledEvents([])}
-                          className="px-2 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[10px] font-semibold text-[#f28b8b] transition-colors"
+                          className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[10px] font-semibold text-[#F87171] transition-colors"
                         >
                           Disable All
                         </button>
@@ -242,17 +242,17 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                         return (
                           <div
                             key={category}
-                            className="bg-[#111214]/60 border border-[#2b2d31] rounded-lg p-3 space-y-2"
+                            className="bg-[#10131A]/60 border border-[#161A23] rounded-lg p-3 space-y-2"
                           >
-                            <div className="flex items-center justify-between border-b border-[#2b2d31] pb-1.5">
-                              <span className="text-[11px] font-bold text-[#b5bac1] uppercase tracking-wider flex items-center gap-1.5">
-                                <Shield size={12} className="text-[#949ba4]" />
+                            <div className="flex items-center justify-between border-b border-[#161A23] pb-1.5">
+                              <span className="text-[11px] font-bold text-[#A1A8B8] uppercase tracking-wider flex items-center gap-1.5">
+                                <Shield size={12} className="text-[#A1A8B8]" />
                                 {category}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => toggleCategory(catEvents)}
-                                className="text-[10px] text-[#949ba4] hover:text-white transition-colors"
+                                className="text-[10px] text-[#A1A8B8] hover:text-white transition-colors"
                               >
                                 {allSelected ? "Deselect category" : "Select category"}
                               </button>
@@ -267,14 +267,14 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                                     onClick={() => toggleEvent(event)}
                                     className={`flex items-center gap-2 px-2.5 py-1.5 rounded cursor-pointer transition-colors text-xs select-none ${
                                       checked
-                                        ? "bg-[#5865f2]/15 text-white border border-[#5865f2]/30"
-                                        : "bg-[#1e1f22] text-[#949ba4] hover:text-[#dbdee1] border border-transparent"
+                                        ? "bg-[#818CF8]/15 text-white border border-[#818CF8]/30"
+                                        : "bg-[#1D2230] text-[#A1A8B8] hover:text-[#F1F3F9] border border-transparent"
                                     }`}
                                   >
                                     {checked ? (
-                                      <CheckSquare size={14} className="text-[#5865f2] shrink-0" />
+                                      <CheckSquare size={14} className="text-[#818CF8] shrink-0" />
                                     ) : (
-                                      <Square size={14} className="text-[#4e5058] shrink-0" />
+                                      <Square size={14} className="text-[#343C4E] shrink-0" />
                                     )}
                                     <span className="truncate font-medium">{label}</span>
                                   </label>
@@ -287,8 +287,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                     </div>
                   </div>
 
-                  <div className="space-y-1 pt-2 border-t border-[#2b2d31]">
-                    <label className="block text-[11px] font-bold text-[#b5bac1] uppercase tracking-wider">
+                  <div className="space-y-1 pt-2 border-t border-[#161A23]">
+                    <label className="block text-[11px] font-bold text-[#A1A8B8] uppercase tracking-wider">
                       Head Admin IDs (Select Users)
                     </label>
                     <SearchableDiscordSelect
@@ -299,7 +299,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                       onChange={(val) => setData({ ...data, head_admin_ids: val as string[] })}
                       placeholder="Search or enter user IDs..."
                     />
-                    <p className="text-[11px] text-[#949ba4]">
+                    <p className="text-[11px] text-[#A1A8B8]">
                       Head Admins have full configuration permissions across all bots, logging, and staff management.
                     </p>
                   </div>

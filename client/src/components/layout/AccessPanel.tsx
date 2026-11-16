@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2, Edit2, ShieldAlert, RefreshCw } from "lucide-react";
+import { Plus, Save, Trash2, Edit2, ShieldAlert, RefreshCw, Loader2 } from "lucide-react";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, TextField } from "../ui/Field";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
@@ -97,14 +97,14 @@ export const AccessPanel = () => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#2b2d31] overflow-hidden rounded-md border border-[#1e1f22]">
-      <div className="flex items-center justify-between border-b border-[#1e1f22] px-5 py-4 shrink-0 bg-[#1e1f22]">
+    <div className="flex h-full flex-col bg-[#161A23] overflow-hidden rounded-md border border-[#1D2230]">
+      <div className="flex items-center justify-between border-b border-[#1D2230] px-5 py-4 shrink-0 bg-[#1D2230]">
         <div>
-          <h2 className="text-lg font-bold text-[#dbdee1] flex items-center gap-2">
-            <ShieldAlert size={20} className="text-[#faa61a]" />
+          <h2 className="text-lg font-bold text-[#F1F3F9] flex items-center gap-2">
+            <ShieldAlert size={20} className="text-[#FBBF24]" />
             Staff Access Management
           </h2>
-          <p className="text-sm text-[#949ba4]">Control who can use this tool and what they can do.</p>
+          <p className="text-sm text-[#A1A8B8]">Control who can use this tool and what they can do.</p>
         </div>
         {!editingId && (
           <Button icon={Plus} onClick={handleCreate} variant="primary">
@@ -113,20 +113,20 @@ export const AccessPanel = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-[#dbdee1]">
-        {error && <div className="mb-4 p-3 bg-[#da373c]/10 border border-[#da373c]/30 text-[#da373c] rounded">{error}</div>}
+      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-[#F1F3F9]">
+        {error && <div className="mb-4 p-3 bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] rounded">{error}</div>}
 
         {currentUser && !editingId && (
-          <div className="mb-4 flex items-center justify-between p-3 rounded-lg bg-[#1e1f22] border border-[#35373c]/50">
+          <div className="mb-4 flex items-center justify-between p-3 rounded-lg bg-[#1D2230] border border-[#252B3A]/50">
             <div className="flex items-center gap-3">
               {currentUser.avatar ? (
                 <img
                   src={currentUser.avatarUrl || `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`}
                   alt={currentUser.username}
-                  className="w-8 h-8 rounded-full object-cover border border-[#35373c]"
+                  className="w-8 h-8 rounded-full object-cover border border-[#252B3A]"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 rounded-full bg-[#818CF8] flex items-center justify-center text-white text-xs font-bold">
                   {currentUser.username.slice(0, 2).toUpperCase()}
                 </div>
               )}
@@ -135,27 +135,27 @@ export const AccessPanel = () => {
                   <span className="text-xs font-bold text-white">
                     {currentUser.global_name || currentUser.username}
                   </span>
-                  <span className="text-[10px] font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">
+                  <span className="text-[10px] font-mono text-[#A1A8B8] bg-[#161A23] px-1.5 py-0.5 rounded border border-[#10131A]">
                     {currentUser.id}
                   </span>
                   {currentUser.isAdmin && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#f0b232] bg-[#f0b232]/10 px-1.5 py-0.2 rounded">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#FBBF24] bg-[#FBBF24]/10 px-1.5 py-0.2 rounded">
                       Head Admin
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#949ba4]">Authenticated Operator</p>
+                <p className="text-[11px] text-[#A1A8B8]">Authenticated Operator</p>
               </div>
             </div>
-            <span className="text-[11px] font-semibold text-[#57f287] flex items-center gap-1.5 bg-[#57f287]/10 px-2 py-1 rounded">
-              <span className="w-2 h-2 rounded-full bg-[#57f287]" /> Active Session
+            <span className="text-[11px] font-semibold text-[#34D399] flex items-center gap-1.5 bg-[#34D399]/10 px-2 py-1 rounded">
+              <span className="w-2 h-2 rounded-full bg-[#34D399]" /> Active Session
             </span>
           </div>
         )}
 
         {editingId ? (
-          <div className="max-w-3xl space-y-6 bg-[#1e1f22] p-5 rounded-lg border border-[#111214]">
-            <h3 className="text-md font-semibold text-[#dbdee1] border-b border-[#35373c] pb-2 mb-4">
+          <div className="max-w-3xl space-y-6 bg-[#1D2230] p-5 rounded-lg border border-[#10131A]">
+            <h3 className="text-md font-semibold text-[#F1F3F9] border-b border-[#252B3A] pb-2 mb-4">
               {isCreating ? "Grant New Access" : `Edit Access: ${formData.discord_username || formData.discord_user_id}`}
             </h3>
 
@@ -163,7 +163,7 @@ export const AccessPanel = () => {
               {isCreating ? (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-bold text-[#949ba4]">Select User or enter ID</label>
+                    <label className="block text-[11px] font-bold text-[#A1A8B8]">Select User or enter ID</label>
                     {currentUser && (
                       <button
                         type="button"
@@ -175,7 +175,7 @@ export const AccessPanel = () => {
                             discord_avatar: currentUser.avatar,
                           })
                         }
-                        className="text-[11px] text-[#5865f2] hover:underline font-semibold"
+                        className="text-[11px] text-[#818CF8] hover:underline font-semibold"
                         title="Fill with my authenticated Discord ID"
                       >
                         Grant to Myself
@@ -198,19 +198,19 @@ export const AccessPanel = () => {
                     placeholder="Search member..."
                   />
                   {formData.discord_user_id && (
-                    <div className="mt-2 flex items-center gap-3 p-2.5 rounded bg-[#2b2d31] border border-[#35373c]/50">
+                    <div className="mt-2 flex items-center gap-3 p-2.5 rounded bg-[#161A23] border border-[#252B3A]/50">
                       {formData.discord_avatar ? (
                         <img
                           src={`https://cdn.discordapp.com/avatars/${formData.discord_user_id}/${formData.discord_avatar}.png`}
                           alt=""
-                          className="w-8 h-8 rounded-full object-cover border border-[#35373c]"
+                          className="w-8 h-8 rounded-full object-cover border border-[#252B3A]"
                           onError={(e) => {
                             const defaultAvatar = `https://cdn.discordapp.com/embed/avatars/${(BigInt(formData.discord_user_id || "0") >> 22n) % 6n}.png`;
                             (e.target as HTMLImageElement).src = defaultAvatar;
                           }}
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#818CF8] flex items-center justify-center text-white text-xs font-bold shrink-0">
                           {(formData.discord_global_name || formData.discord_username || "U").slice(0, 2).toUpperCase()}
                         </div>
                       )}
@@ -219,12 +219,12 @@ export const AccessPanel = () => {
                           <span className="text-xs font-bold text-white truncate">
                             {formData.discord_global_name || formData.discord_username || "Selected User"}
                           </span>
-                          <span className="text-[10px] font-mono text-[#949ba4] bg-[#1e1f22] px-1.5 py-0.2 rounded border border-[#111214]">
+                          <span className="text-[10px] font-mono text-[#A1A8B8] bg-[#1D2230] px-1.5 py-0.2 rounded border border-[#10131A]">
                             {formData.discord_user_id}
                           </span>
                         </div>
                         {formData.discord_username && (
-                          <p className="text-[11px] text-[#949ba4] truncate">@{formData.discord_username}</p>
+                          <p className="text-[11px] text-[#A1A8B8] truncate">@{formData.discord_username}</p>
                         )}
                       </div>
                     </div>
@@ -247,8 +247,8 @@ export const AccessPanel = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-[#dbdee1]">Action Permissions</h4>
-              <div className="grid grid-cols-2 gap-3 bg-[#2b2d31] p-3 rounded border border-[#111214]">
+              <h4 className="text-sm font-semibold text-[#F1F3F9]">Action Permissions</h4>
+              <div className="grid grid-cols-2 gap-3 bg-[#161A23] p-3 rounded border border-[#10131A]">
                 <Checkbox
                   label="Can Send Messages"
                   checked={formData.can_send_messages === 1}
@@ -288,8 +288,8 @@ export const AccessPanel = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-[#dbdee1]">Mention Permissions</h4>
-              <div className="grid grid-cols-3 gap-3 bg-[#2b2d31] p-3 rounded border border-[#111214]">
+              <h4 className="text-sm font-semibold text-[#F1F3F9]">Mention Permissions</h4>
+              <div className="grid grid-cols-3 gap-3 bg-[#161A23] p-3 rounded border border-[#10131A]">
                 <Checkbox
                   label="Can @everyone"
                   checked={formData.can_mention_everyone === 1}
@@ -309,7 +309,7 @@ export const AccessPanel = () => {
               
               {!formData.can_mention_roles && (
                 <div>
-                  <label className="block text-[11px] font-bold text-[#949ba4] mb-1">Allowed Role Mentions (Specific)</label>
+                  <label className="block text-[11px] font-bold text-[#A1A8B8] mb-1">Allowed Role Mentions (Specific)</label>
                   <SearchableDiscordSelect
                     type="role"
                     multiple
@@ -323,8 +323,8 @@ export const AccessPanel = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-[#dbdee1]">Channel Allowlist</h4>
-              <div className="bg-[#2b2d31] p-3 rounded border border-[#111214] space-y-3">
+              <h4 className="text-sm font-semibold text-[#F1F3F9]">Channel Allowlist</h4>
+              <div className="bg-[#161A23] p-3 rounded border border-[#10131A] space-y-3">
                 <Checkbox
                   label="Allow ALL channels (*)"
                   checked={allChannelsAllowed}
@@ -333,7 +333,7 @@ export const AccessPanel = () => {
                 
                 {!allChannelsAllowed && (
                   <div>
-                    <label className="block text-[11px] font-bold text-[#949ba4] mb-1">Allowed Channel IDs</label>
+                    <label className="block text-[11px] font-bold text-[#A1A8B8] mb-1">Allowed Channel IDs</label>
                     <SearchableDiscordSelect
                       type="channel"
                       multiple
@@ -362,7 +362,7 @@ export const AccessPanel = () => {
               />
             </div>
 
-            <div className="flex gap-2 pt-4 border-t border-[#35373c]">
+            <div className="flex gap-2 pt-4 border-t border-[#252B3A]">
               <Checkbox
                 label="Account Active"
                 checked={formData.is_active === 1}
@@ -378,9 +378,9 @@ export const AccessPanel = () => {
         ) : (
           <div className="space-y-2">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 rounded-lg border border-[#26282d] bg-[#18191c] p-4 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading...</span></div>
+              <div className="flex items-center justify-center gap-2 rounded-[8px] border border-[#272D3A] bg-[#161A23] px-3 py-3 text-xs text-[#A1A8B8]"><Loader2 size={15} className="animate-spin text-[#818CF8]" /><span>Loading staff access…</span></div>
             ) : records.length === 0 ? (
-              <div className="text-[#949ba4] p-8 text-center bg-[#1e1f22] rounded border border-dashed border-[#35373c]">
+              <div className="text-[#A1A8B8] p-8 text-center bg-[#1D2230] rounded border border-dashed border-[#252B3A]">
                 No staff members configured. Click &quot;Grant Access&quot; to add one.
               </div>
             ) : (
@@ -390,29 +390,29 @@ export const AccessPanel = () => {
                 const avatarSrc = record.avatarUrl || (record.discord_avatar ? `https://cdn.discordapp.com/avatars/${record.discord_user_id}/${record.discord_avatar}.png` : defaultAvatar);
 
                 return (
-                  <div key={record.discord_user_id} className={`flex items-center justify-between gap-3 rounded-lg border border-[#26282d] bg-[#2b2d31] p-3 transition-[border-color,background-color,opacity] duration-150 hover:border-[#35373c] ${record.is_active ? 'bg-[#1e1f22] border-[#35373c]' : 'bg-[#2b2d31] border-[#1e1f22] opacity-60'}`}>
+                  <div key={record.discord_user_id} className={`flex items-center justify-between gap-3 rounded-lg border border-[#272D3A] bg-[#161A23] p-3 transition-[border-color,background-color,opacity] duration-150 hover:border-[#252B3A] ${record.is_active ? 'bg-[#1D2230] border-[#252B3A]' : 'bg-[#161A23] border-[#1D2230] opacity-60'}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <img
                         src={avatarSrc}
                         alt=""
-                        className="w-9 h-9 rounded-full object-cover border border-[#35373c] shrink-0 bg-[#2b2d31]"
+                        className="w-9 h-9 rounded-full object-cover border border-[#252B3A] shrink-0 bg-[#161A23]"
                         onError={(e) => { (e.target as HTMLImageElement).src = defaultAvatar; }}
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <strong className="text-[#dbdee1]">{record.discord_global_name || record.discord_username || 'Unknown Staff'}</strong>
+                          <strong className="text-[#F1F3F9]">{record.discord_global_name || record.discord_username || 'Unknown Staff'}</strong>
                           {record.discord_username && (
-                            <span className="text-xs text-[#949ba4]">@{record.discord_username}</span>
+                            <span className="text-xs text-[#A1A8B8]">@{record.discord_username}</span>
                           )}
                           {isCurrentUser && (
-                            <span className="text-[10px] font-bold text-[#5865f2] bg-[#5865f2]/15 border border-[#5865f2]/30 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-bold text-[#818CF8] bg-[#818CF8]/15 border border-[#818CF8]/30 px-1.5 py-0.5 rounded">
                               (You)
                             </span>
                           )}
-                          <span className="text-xs font-mono text-[#949ba4] bg-[#2b2d31] px-1.5 py-0.5 rounded border border-[#111214]">{record.discord_user_id}</span>
-                          {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#f28b8b] bg-[#da373c]/10 px-1.5 py-0.5 rounded">Disabled</span>}
+                          <span className="text-xs font-mono text-[#A1A8B8] bg-[#161A23] px-1.5 py-0.5 rounded border border-[#10131A]">{record.discord_user_id}</span>
+                          {!record.is_active && <span className="text-[10px] uppercase font-bold text-[#F87171] bg-[#F87171]/10 px-1.5 py-0.5 rounded">Disabled</span>}
                         </div>
-                        <div className="text-xs text-[#949ba4] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <div className="text-xs text-[#A1A8B8] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                           <span>Cooldown: {record.cooldown_seconds}s</span>
                           <span>Max/hr: {record.max_messages_per_hour}</span>
                           <span>Channels: {record.allowed_channel_ids.length === 0 ? 'NONE' : record.allowed_channel_ids.includes('*') ? 'ALL' : record.allowed_channel_ids.length}</span>
@@ -421,8 +421,8 @@ export const AccessPanel = () => {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0 ml-2">
-                      <IconButton icon={Edit2} label="Edit" onClick={() => handleEdit(record)} className="text-[#b5bac1] hover:text-white" />
-                      <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#f28b8b] hover:bg-[#da373c]/10" />
+                      <IconButton icon={Edit2} label="Edit" onClick={() => handleEdit(record)} className="text-[#A1A8B8] hover:text-white" />
+                      <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#F87171] hover:bg-[#F87171]/10" />
                     </div>
                   </div>
                 );
