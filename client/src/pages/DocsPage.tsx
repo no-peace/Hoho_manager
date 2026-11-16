@@ -289,7 +289,6 @@ export const DocsPage = () => {
             ))}
             {filteredItems.length === 0 && <p className="py-8 text-center text-xs text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</p>}
           </div>
-          </div>
         </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
