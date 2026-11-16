@@ -18,6 +18,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
@@ -96,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
   return (
     <>
-      <header className="sticky top-0 left-0 z-20 bg-[#1E1F22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-2.5 sm:px-4 h-12 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 font-sans shrink-0">
+      <header className={UI_THEME_CONFIG.surfaces.studioHeaderBar}>
         {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
