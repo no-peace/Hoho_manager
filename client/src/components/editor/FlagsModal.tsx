@@ -26,16 +26,16 @@ export const FlagsModal: React.FC<FlagsModalProps> = ({ open, onClose }) => {
     <Modal open={open} onClose={onClose} title="Message Flags" width="max-w-md"
       footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
       <div className="space-y-4">
-        <p className="text-xs text-[#b5bac1]">Control how Discord displays and notifies recipients about this message.</p>
+        <p className="text-xs text-[#A1A8B8]">Control how Discord displays and notifies recipients about this message.</p>
         <div className="space-y-2.5">
           {FLAG_ITEMS.map((item) => {
             const checked = hasFlag(item.flag);
             return (
-              <div key={item.flag} className={"rounded-xl border p-3 transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out " + (checked ? "bg-[#5865f2]/10 border-[#5865f2]/60" : "bg-[#2b2d31] border-[#1e1f22]")}>
+              <div key={item.flag} className={"rounded-xl border p-3 transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out " + (checked ? "bg-[#818CF8]/10 border-[#818CF8]/60" : "bg-[#161A23] border-[#1D2230]")}>
                 <Checkbox checked={checked} onChange={() => toggleFlag(item.flag)} className="w-full items-start"
                   label={<span className="flex-1 min-w-0">
                     <span className="text-xs sm:text-sm font-semibold text-white block">{item.title}</span>
-                    <span className="text-xs text-[#b5bac1] block mt-0.5">{item.desc}</span>
+                    <span className="text-xs text-[#A1A8B8] block mt-0.5">{item.desc}</span>
                   </span>} />
               </div>
             );

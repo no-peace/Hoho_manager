@@ -386,14 +386,14 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   return (
     <Modal open={open} onClose={onClose} title="Backups & Tracking" width="max-w-2xl">
-      <section className="space-y-3 rounded-xl border border-[#26282d] bg-[#18191c] p-3">
+      <section className="space-y-3 rounded-xl border border-[#272D3A] bg-[#10131A] p-3">
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={templateName}
             onChange={(event) => setTemplateName(event.target.value)}
             placeholder="Template / Tracked Backup name..."
-            className="min-w-0 flex-1 rounded-lg border border-[#26282d] bg-[#232428] px-3 py-2 text-xs text-[#f2f3f5] outline-none focus:border-[#5865f2]"
+            className="min-w-0 flex-1 rounded-lg border border-[#272D3A] bg-[#10131A] px-3 py-2 text-xs text-[#F1F3F9] outline-none focus:border-[#818CF8]"
           />
           <Button size="sm" variant="primary" onClick={() => void handleSave()}>
             Save Backup
@@ -428,13 +428,13 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             />
           )}
         </div>
-        <p className="text-[10px] text-[#949ba4]">
+        <p className="text-[10px] text-[#A1A8B8]">
           Tracking keeps dynamic user and exploit placeholders synchronized. New backups expire after 14 days by default.
         </p>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-[#26282d] bg-[#1e1f22] p-1 overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex items-center gap-1 rounded-lg border border-[#272D3A] bg-[#1D2230] p-1 overflow-x-auto no-scrollbar max-w-full">
           {([
             ["all", `All · ${items.length}`],
             ["tracked", `Tracked Only · ${items.filter((item) => item.isTracked).length}`],
@@ -444,7 +444,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors shrink-0 whitespace-nowrap ${filter === value ? "bg-[#5865f2] text-white" : "text-[#949ba4] hover:text-white"}`}
+              className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors shrink-0 whitespace-nowrap ${filter === value ? "bg-[#818CF8] text-white" : "text-[#A1A8B8] hover:text-white"}`}
             >
               {label}
             </button>
@@ -469,23 +469,23 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
 
       <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 custom-scrollbar">
         {loadingTracked ? (
-          <div className="flex items-center justify-center gap-2 py-6 text-xs text-[#949ba4]"><RefreshCw size={15} className="animate-spin text-[#5865f2]" /><span>Loading tracked messages…</span></div>
+          <div className="flex items-center justify-center gap-2 py-6 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Loading tracked messages…</span></div>
         ) : visibleItems.length === 0 ? (
-          <p className="py-8 text-center text-xs text-[#949ba4]">
+          <p className="py-8 text-center text-xs text-[#A1A8B8]">
             No items in this view yet. Save a template or enable tracking when dispatching a message.
           </p>
         ) : visibleItems.map((item) => (
-          <article key={item.key} className="space-y-2 rounded-lg border border-[#26282d] bg-[#2b2d31] p-3 transition-[border-color,background-color] duration-150 hover:border-[#35373c]">
+          <article key={item.key} className="space-y-2 rounded-lg border border-[#272D3A] bg-[#161A23] p-3 transition-[border-color,background-color] duration-150 hover:border-[#252B3A]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-xs font-semibold text-[#f2f3f5]">{item.name}</p>
-                  <span className="rounded border border-[#35373c] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#949ba4]">
+                  <p className="truncate text-xs font-semibold text-[#F1F3F9]">{item.name}</p>
+                  <span className="rounded border border-[#252B3A] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#A1A8B8]">
                     {item.kind === "template" ? "Saved template" : "Tracked message"}
                   </span>
-                  {item.isTracked && <span className="rounded border border-[#5865f2]/40 px-1.5 py-0.5 text-[9px] text-[#aab0ff]">Tracking on</span>}
+                  {item.isTracked && <span className="rounded border border-[#818CF8]/40 px-1.5 py-0.5 text-[9px] text-[#aab0ff]">Tracking on</span>}
                 </div>
-                <p className="mt-1 truncate text-[10px] text-[#949ba4]">
+                <p className="mt-1 truncate text-[10px] text-[#A1A8B8]">
                   {item.kind === "template"
                     ? `Updated ${new Date(item.updatedAt).toLocaleString()}`
                     : `Channel ${item.source.channelId} · Message ${item.source.messageId}`}
@@ -532,15 +532,15 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                 <button
                   type="button"
                   onClick={() => item.kind === "template" ? beginEditTemplate(item.source) : beginEditTracked(item.source)}
-                  className="rounded-md p-2 text-[#949ba4] hover:bg-[#2b2d31] hover:text-white"
+                  className="rounded-md p-2 text-[#A1A8B8] hover:bg-[#161A23] hover:text-white"
                   title="Edit backup settings"
                 >
                   <Edit3 size={13} />
                 </button>
                 {item.kind === "template" ? (
-                  <button type="button" onClick={() => handleDeleteTemplate(item.id)} className="rounded-md p-2 text-[#949ba4] hover:bg-[#da373c]/15 hover:text-[#f28b8b]" title="Delete backup">×</button>
+                  <button type="button" onClick={() => handleDeleteTemplate(item.id)} className="rounded-md p-2 text-[#A1A8B8] hover:bg-[#F87171]/15 hover:text-[#F87171]" title="Delete backup">×</button>
                 ) : (
-                  <button type="button" onClick={() => void handleUntrack(item.id)} className="rounded-md px-2 py-1 text-[10px] text-[#f28b8b] hover:bg-[#da373c]/15">Untrack</button>
+                  <button type="button" onClick={() => void handleUntrack(item.id)} className="rounded-md px-2 py-1 text-[10px] text-[#F87171] hover:bg-[#F87171]/15">Untrack</button>
                 )}
               </div>
             </div>
@@ -553,14 +553,14 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
                   exit={{ opacity: 0, scale: 0.98, y: -4 }}
                   transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                   style={{ transformOrigin: "top left" }}
-                  className="space-y-3 border-t border-[#2b2d31] pt-3"
+                  className="space-y-3 border-t border-[#161A23] pt-3"
                 >
                   <input
                     type="text"
                     value={editName}
                     onChange={(event) => setEditName(event.target.value)}
                     placeholder="Backup name"
-                    className="w-full rounded-lg border border-[#35373c] bg-[#232428] px-3 py-2 text-xs text-[#f2f3f5] outline-none focus:border-[#5865f2]"
+                    className="w-full rounded-lg border border-[#252B3A] bg-[#10131A] px-3 py-2 text-xs text-[#F1F3F9] outline-none focus:border-[#818CF8]"
                   />
                   <div className="flex flex-wrap items-center gap-4">
                     <Checkbox checked={editTracked} onChange={setEditTracked} label="Track Message" className="text-xs" />

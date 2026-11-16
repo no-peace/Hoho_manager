@@ -56,28 +56,28 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
     <Modal open={open} onClose={onClose} title="JSON Data" width="max-w-2xl">
       <div className="space-y-3 font-sans">
         {errorMessage && (
-          <div className="p-2.5 rounded bg-[#da373c]/20 border border-[#da373c]/40 text-[#f28b8b] text-xs break-words [overflow-wrap:anywhere]">
+          <div className="p-2.5 rounded bg-[#F87171]/20 border border-[#F87171]/40 text-[#F87171] text-xs break-words [overflow-wrap:anywhere]">
             {errorMessage}
           </div>
         )}
         <textarea
           value={jsonText}
           onChange={(e) => setJsonText(e.target.value)}
-          className="w-full h-80 bg-[#1e1f22] text-[#dbdee1] font-mono text-xs p-3 rounded border border-[#313338] focus:border-[#5865f2] outline-none resize-none custom-scrollbar"
+          className="w-full h-80 bg-[#1D2230] text-[#F1F3F9] font-mono text-xs p-3 rounded border border-[#313338] focus:border-[#818CF8] outline-none resize-none custom-scrollbar"
           placeholder="Paste or edit message JSON..."
         />
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs text-[#dbdee1] hover:text-white hover:bg-[#35373c] rounded transition-colors"
+            className="px-3 py-1.5 text-xs text-[#F1F3F9] hover:text-white hover:bg-[#252B3A] rounded transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="px-4 py-1.5 bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold rounded shadow-sm transition-colors"
+            className="px-4 py-1.5 bg-[#818CF8] hover:bg-[#6366F1] text-white text-xs font-semibold rounded shadow-sm transition-colors"
           >
             Apply
           </button>

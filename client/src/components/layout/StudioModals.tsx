@@ -15,6 +15,13 @@ const ServerBotAccessModal = React.lazy(() =>
   import("./ServerBotAccessModal").then((module) => ({ default: module.ServerBotAccessModal })),
 );
 
+const ModalChunkFallback = () => (
+  <div role="status" className="fixed bottom-4 right-4 z-[10000] flex items-center gap-2 rounded-[8px] border border-[#272D3A] bg-[#161A23] px-3 py-2 text-xs text-[#A1A8B8] shadow-xl">
+    <Loader2 size={15} className="animate-spin text-[#818CF8]" />
+    Loading panel…
+  </div>
+);
+
 export const ToastAndConfirmHost: React.FC = () => {
   const { toasts, confirmDialog, closeConfirm } = useGlobalStore();
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -25,7 +32,7 @@ export const ToastAndConfirmHost: React.FC = () => {
         position="bottom-right"
         theme="dark"
         options={{
-          fill: "#18191c",
+          fill: "#161A23",
           roundness: 14,
         }}
       />
@@ -69,7 +76,7 @@ export const ToastAndConfirmHost: React.FC = () => {
             </>
           }
         >
-          <p className="text-xs text-[#dbdee1] leading-relaxed">{confirmDialog.message}</p>
+          <p className="text-xs text-[#F1F3F9] leading-relaxed">{confirmDialog.message}</p>
         </Modal>
       )}
     </>
@@ -89,16 +96,16 @@ export const StudioModals: React.FC = () => {
 
   return (
     <>
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={<ModalChunkFallback />}>
         <JsonModal open={jsonModalOpen} onClose={() => setJsonModalOpen(false)} />
       </React.Suspense>
       <BackupsModal open={backupsModalOpen} onClose={() => setBackupsModalOpen(false)} />
       {configModalOpen && (
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<ModalChunkFallback />}>
           <ServerBotAccessModal open={configModalOpen} onClose={() => setConfigModalOpen(false)} />
         </React.Suspense>
       )}
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={<ModalChunkFallback />}>
         <BotDispatchModal open={botModalOpen} onClose={closeBotModal} initialMode={botModalMode} />
       </React.Suspense>
       <ToastAndConfirmHost />

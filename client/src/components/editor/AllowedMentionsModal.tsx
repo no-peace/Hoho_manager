@@ -85,16 +85,16 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
       title="Allowed Mentions"
       width="max-w-lg"
       footer={
-        <Button onClick={onClose} className="bg-[#5865f2] hover:bg-[#4752c4] text-white">
+        <Button onClick={onClose} className="bg-[#818CF8] hover:bg-[#6366F1] text-white">
           Done
         </Button>
       }
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 rounded bg-[#2b2d31] border border-[#1e1f22]">
+        <div className="flex items-center justify-between p-3 rounded bg-[#161A23] border border-[#1D2230]">
           <div>
             <span className="text-sm font-semibold text-white block">Custom Allowed Mentions</span>
-            <span className="text-xs text-[#949ba4] block mt-0.5">
+            <span className="text-xs text-[#A1A8B8] block mt-0.5">
               Restrict which users, roles, or broadcast pings can be mentioned.
             </span>
           </div>
@@ -103,8 +103,8 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
             onClick={toggleEnabled}
             className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
               isEnabled
-                ? "bg-[#23a55a] text-white hover:bg-[#1da24a]"
-                : "bg-[#1e1f22] text-[#949ba4] hover:text-white"
+                ? "bg-[#34D399] text-white hover:bg-[#1da24a]"
+                : "bg-[#1D2230] text-[#A1A8B8] hover:text-white"
             }`}
           >
             {isEnabled ? "Enabled" : "Disabled (Default)"}
@@ -115,21 +115,21 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
           <div className="space-y-4 animate-in fade-in duration-150">
             {/* Automatic parse flags */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Broadcast & Auto Mentions
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Checkbox checked={hasParse("everyone")} onChange={() => toggleParse("everyone")} label="@everyone / @here" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
+                <Checkbox checked={hasParse("everyone")} onChange={() => toggleParse("everyone")} label="@everyone / @here" className="rounded-lg bg-[#161A23] px-2 py-2 text-xs font-semibold text-white" />
 
-                <Checkbox checked={hasParse("users")} onChange={() => toggleParse("users")} label="All Users" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
+                <Checkbox checked={hasParse("users")} onChange={() => toggleParse("users")} label="All Users" className="rounded-lg bg-[#161A23] px-2 py-2 text-xs font-semibold text-white" />
 
-                <Checkbox checked={hasParse("roles")} onChange={() => toggleParse("roles")} label="All Roles" className="rounded-lg bg-[#2b2d31] px-2 py-2 text-xs font-semibold text-white" />
+                <Checkbox checked={hasParse("roles")} onChange={() => toggleParse("roles")} label="All Roles" className="rounded-lg bg-[#161A23] px-2 py-2 text-xs font-semibold text-white" />
               </div>
             </div>
 
             {/* Explicit User IDs */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Explicit Allowed Users (IDs)
               </span>
               <div className="flex gap-2">
@@ -138,7 +138,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
                   placeholder="Enter Discord User Snowflake ID..."
                   value={newUserId}
                   onChange={(e) => setNewUserId(e.target.value)}
-                  className="flex-1 bg-[#1e1f22] border border-[#2b2d31] rounded px-3 py-1.5 text-xs text-white placeholder-[#949ba4]"
+                  className="flex-1 bg-[#1D2230] border border-[#161A23] rounded px-3 py-1.5 text-xs text-white placeholder-[#A1A8B8]"
                 />
                 <Button size="sm" icon={Plus} onClick={addUserId}>
                   Add
@@ -150,13 +150,13 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
                   {am.users.map((uid) => (
                     <span
                       key={uid}
-                      className="inline-flex items-center gap-1.5 bg-[#2b2d31] border border-[#1e1f22] px-2 py-0.5 rounded text-xs font-mono text-[#dbdee1]"
+                      className="inline-flex items-center gap-1.5 bg-[#161A23] border border-[#1D2230] px-2 py-0.5 rounded text-xs font-mono text-[#F1F3F9]"
                     >
                       <span>{uid}</span>
                       <button
                         type="button"
                         onClick={() => removeUserId(uid)}
-                        className="text-[#f28b8b] hover:text-white"
+                        className="text-[#F87171] hover:text-white"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -168,7 +168,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
 
             {/* Explicit Role IDs */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#949ba4] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] block">
                 Explicit Allowed Roles (IDs)
               </span>
               <div className="flex gap-2">
@@ -177,7 +177,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
                   placeholder="Enter Discord Role Snowflake ID..."
                   value={newRoleId}
                   onChange={(e) => setNewRoleId(e.target.value)}
-                  className="flex-1 bg-[#1e1f22] border border-[#2b2d31] rounded px-3 py-1.5 text-xs text-white placeholder-[#949ba4]"
+                  className="flex-1 bg-[#1D2230] border border-[#161A23] rounded px-3 py-1.5 text-xs text-white placeholder-[#A1A8B8]"
                 />
                 <Button size="sm" icon={Plus} onClick={addRoleId}>
                   Add
@@ -189,13 +189,13 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
                   {am.roles.map((rid) => (
                     <span
                       key={rid}
-                      className="inline-flex items-center gap-1.5 bg-[#2b2d31] border border-[#1e1f22] px-2 py-0.5 rounded text-xs font-mono text-[#dbdee1]"
+                      className="inline-flex items-center gap-1.5 bg-[#161A23] border border-[#1D2230] px-2 py-0.5 rounded text-xs font-mono text-[#F1F3F9]"
                     >
                       <span>{rid}</span>
                       <button
                         type="button"
                         onClick={() => removeRoleId(rid)}
-                        className="text-[#f28b8b] hover:text-white"
+                        className="text-[#F87171] hover:text-white"
                       >
                         <Trash2 size={12} />
                       </button>
