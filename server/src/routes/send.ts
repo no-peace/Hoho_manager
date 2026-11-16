@@ -432,8 +432,8 @@ router.post(
       }
     }
 
-    if (!/^\d{17,20}$/.test(destinationChannelId)) {
-      throw ApiError.badRequest('A valid `channelId` or `threadId` is required when mode is "bot"');
+    if (!destinationChannelId) {
+      throw ApiError.badRequest('A `channelId` or `threadId` is required when mode is "bot"');
     }
 
     const sentList = [];
