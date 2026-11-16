@@ -4,12 +4,44 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest application source commit:** `6ac5d0632a23edb346024913c446709797fad4fa`  
+**Latest autocomplete-fix application commit:** `0e75bfbe43babf410b4cadbddb791848ded7a12f`  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
-**Status:** Source-level implementation of all 12 reported issues is committed on `main`; npm checks and browser validation are still pending.
+**Status:** Source-level implementation and follow-up autocomplete fixes are committed on `main`; npm checks and browser validation are still pending. The latest autocomplete changes have not yet been runtime-verified.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
+
+## Latest regression report — autocomplete (2026-11-16)
+
+The owner reported that typing partial tokens in the message editor produced no autocomplete menu:
+- Typing `{explo` did not show the WEAO/exploit suggestion.
+- Typing `{user.` did not show user-variable suggestions; the user-variable autocomplete was described as fully broken.
+- The expected interaction is that suggestions become available from the opening `{` while the token is still incomplete.
+
+### Source changes committed to main
+
+These are focused follow-up changes; they are not yet confirmed by Vitest or browser testing.
+
+1. `3004e714f2e0f5cfcf138f1f0882f1a8f33b0e09` — `client/src/components/ui/Field.tsx`
+   - Updated reusable variable filtering to normalize a partially typed opening brace.
+   - Added the WEAO `{exploit.` suggestion to the reusable Field/TextArea variable list, so this path does not depend on MentionInput's dedicated WEAO menu.
+2. `139f9e49749fb2c31f75cb28105e9fa3918bcc98` — `client/src/components/editor/MentionInput/index.tsx`
+   - Changed the WEAO prefix check to recognize the typed prefix (for example, `explo`) rather than testing whether the full query is a substring of the prefix.
+3. `ac2dfc8f1c11b536f7203e1c0d5aecba6a491b27` — `client/src/components/editor/MentionInput/VariableMenu.tsx`
+   - Added optional anchor and max-height props to the specialized variable menu interface.
+4. `0e75bfbe43babf410b4cadbddb791848ded7a12f` — `client/src/components/editor/MentionInput/index.tsx`
+   - Passed the textarea anchor and calculated dropdown max height into `VariableMenu`, so the shared popover receives positioning information.
+
+### Important unresolved verification
+
+- The owner explicitly reported both exploit and user-variable menus missing. The commits above address the WEAO prefix and the variable-menu anchor path, but **the user-variable symptom is not yet proven fixed**.
+- Reopen the current `MentionInput/index.tsx`, `VariableMenu.tsx`, and `AutocompletePopover.tsx` together. Trace the render condition for `acType === "variable"`, verify that `{user.` produces non-empty `acItems`, and verify that the popover receives a valid anchor and renders in the viewport.
+- Check whether the anchor/max-height props are actually consumed by `AutocompletePopover`; merely passing props is not sufficient if the popover does not use them.
+- Add regression tests for partial `{explo`, `{user`, `{user.`, and bare `{` tokens, including assertions that the menu is visible and populated—not only parser return values.
+- Do not change interpolation/resolver semantics, encryption, Discord permissions, or unrelated editor behavior while fixing this.
+- Do not claim this regression is resolved until Vitest and browser interaction checks pass.
+
+---
 
 ## Implementation progress — 2026-11-16
 
@@ -20,7 +52,7 @@ Implementation is being committed directly to `main` as requested. These changes
 - **Wide-screen workspace:** Replaced the Studio's mutually exclusive editor/preview rendering with the existing resizable `SplitPane`; aligned the split and inspector docking breakpoint to 1200px; kept both mobile panes mounted so switching tabs does not discard local component state.
 - **Header / preview cleanup:** Removed the Share action and callback plumbing while retaining JSON import/export. Removed the Cozy/Compact preview toggle and compact-only rendering branches.
 - **Public pages:** Made the shared public header more compact at phone widths. Rebuilt the Docs variable reference as mobile cards plus a desktop table; changed copy affordances to Lucide Copy/Check icons and only show success after clipboard writes succeed.
-- **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers and custom Select menus to choose the side with more available space, portal outside clipping containers, and scroll the selected option into view.
+- **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers and custom Select menus to choose the side with more available space, portal outside clipping containers, and scroll the selected option into view. Follow-up commits address partial WEAO prefixes and pass anchor/max-height data to the specialized variable menu; see the latest regression section above.
 - **WEAO catalogue:** Removed the route filter that hid live WEAO exploits without a backup template, so the variable autocomplete receives the complete permitted catalogue. Added a manual exploit-name fallback when the catalogue is unavailable and improved dotted/manual-name parsing.
 - **Thread destination:** Added an Existing Thread ID editor field, top-level `threadId` request metadata, server-side validation, and effective-destination routing for guild/channel permissions, interpolation context, send/edit dispatch, tracking, logs, and audit events. Kept forum `thread_name` separate. Updated the `send_message` flow field label.
 - **UI tokens:** Centralized the public header/nav, Studio header, Inspector surfaces, Docs variable-reference/copy controls, and custom Select listbox surface in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
@@ -52,7 +84,7 @@ The 12 reported issues have source-level implementations committed to `main`. Th
 
 ## 1. Current repository state
 
-- The latest application code changes are committed on `main` through `6ac5d0632a23edb346024913c446709797fad4fa`; use live GitHub history for the current `main` HEAD.
+- The latest autocomplete application changes recorded in this handoff are committed on `main` through `0e75bfbe43babf410b4cadbddb791848ded7a12f`; use live GitHub history for the current `main` HEAD.
 - The repository currently has one remote branch: `main`.
 - There are no open pull requests at the time of inspection.
 - The latest commit is the current Gemini handoff update; the implementation commits immediately precede it in `main`.
@@ -350,7 +382,7 @@ Root `package.json` declares:
 ## 8. Current validation status
 
 - GitHub source review only.
-- No source files changed in this planning task.
+- Source files changed in the autocomplete follow-up commits listed above; no runtime verification has been performed for those changes.
 - No npm command was run.
 - No Terminal command was run.
 - No Playwright/browser test was run.
