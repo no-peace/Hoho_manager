@@ -1,15 +1,59 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Updated:** 2026-11-16 (latest continuation: Lighthouse review, privacy landmark, and branded loading screen)  
+**Updated:** 2026-11-17 (V12 merged; owner-reported tests passed; mobile Lighthouse baseline 97)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest source implementation head before this handoff update:** `f0f464976acfa6e3e15dbde9939c985b93e6ed32`  
-**Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
-**Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
-**Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
-**Current status:** Latest November 16 Lighthouse follow-up and branded loading-screen changes are recorded at the top of this handoff. Navigation reports show mobile 97/100 Performance and desktop 100/100, with 100 Accessibility on both. Privacy page now has a semantic main landmark. Initial HTML and React Suspense/auth loading states now display the centered HoHo logo. Automated tests, typecheck, production build, and browser visual QA have not been run for these latest changes; see the latest continuation below.
+**Latest implementation head:** `97e3a6f8806687f17d252587dee1af38c99e3c43`  
+**Latest implementation PR:** [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44)  
+**Implementation branch:** `feat/v12-ultimate-ux-implementation` (merged into `main`)  
+**Current status:** V12 is merged. The owner subsequently reported that all tests passed and the mobile Lighthouse Performance score reached 97. The owner explicitly chose to keep 97 as the baseline and stop further performance tuning. Do not initiate additional Lighthouse-driven optimization or refactoring unless the owner asks. The test result is owner-reported; it was not independently executed in this GitHub editing session. No deployment is claimed.
 
+## Latest continuation — V12 finalization and verified owner feedback (2026-11-17)
+
+### Merge record
+
+- Pull request: [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44)
+- Source branch: `feat/v12-ultimate-ux-implementation`
+- Target branch: `main`
+- PR state: closed and merged.
+- Merge commit on `main`: `97e3a6f8806687f17d252587dee1af38c99e3c43`
+- PR head immediately before merge: `5711cb837c612d845b2d08feb3a39340709b4f26`
+- Merge strategy: squash merge.
+- The owner explicitly requested the merge and stated they would run the tests afterward.
+
+### Owner-reported verification
+
+- The owner reported: **“all test passed mobile lighthouse went to 97 but lets just keep it there”**.
+- Record this as owner-reported successful test execution; do not imply that the assistant independently ran the test suite.
+- Mobile Lighthouse Performance: **97** (owner-reported).
+- The owner decided to retain this result as the stable baseline. No further score chasing, speculative optimization, or performance refactoring is authorized by that instruction.
+- The earlier pre-merge environment limitation remains historically accurate: the assistant did not run Vitest, typecheck, production build, browser QA, or Lighthouse itself during the GitHub-only implementation session. The later owner report supersedes the pending-verification status for the owner's own test run, but it does not establish which individual commands or browser checks were run.
+- No deployment action or production verification is recorded here.
+
+### V12 scope merged
+
+- Login atmosphere: constellation/wave canvas, CSS aurora/grid backdrop, glass surfaces, and flush public header.
+- Preview interaction routing: bubble-phase component routing, Select Menu interaction handling, and removal of duplicate selection handlers.
+- Mobile quick edit: selected-message index synchronization, Components V2 TextDisplay editing/creation, and an Open Full Editor action.
+- FlowBuilder palette and Server Bot wording updates.
+- Surface cleanup across thread inputs, helper callouts, component add controls, Header/Sidebar, and HTML theme.
+- Responsive typography migration: shared theme and V12-touched typography converted from px arbitrary classes to rem; `DESIGN.md` documents the unit policy. This was not a repository-wide typography migration.
+- Mobile rendering safeguards: decorative canvas and automatic showcase rotation are skipped on narrow/reduced-motion sessions; mobile blur was reduced.
+- Auth bootstrap: removed the redundant `/api/health` request; initial session resolution uses `/api/auth/me`.
+- Vite chunking: removed the forced global Lucide icon chunk to allow route-specific icon splitting.
+- Regression tests were added for the login atmosphere/layout, Select Menu preview interaction, and selected-message V2 TextDisplay editing.
+
+### Operating decision / next-session instructions
+
+1. Treat `97e3a6f8806687f17d252587dee1af38c99e3c43` as the V12 merge checkpoint on `main`.
+2. Do not reopen V12 performance work merely to improve Lighthouse beyond 97. The owner explicitly said to keep it there.
+3. Do not claim assistant-run test/build/browser verification. The all-tests-passed statement is attributed to the owner.
+4. For any new task, inspect the current `main` head and relevant source before editing; do not assume the repository has remained unchanged since this checkpoint.
+5. Continue making requested code changes directly through the GitHub integration. The owner does not want instructions that require manually writing code.
+6. Do not merge or deploy future changes without explicit authorization.
+
+---
 
 ## Latest continuation — November 16 Lighthouse review and branded loading screen
 
@@ -98,7 +142,6 @@ This section is the newest authoritative update. It supplements the prior previe
 ### Blank/non-component message-card click behavior
 
 Owner clarified that clicking a specific message's blank/non-component area in Preview should navigate to that message's editor, but ordinary scrolling/swiping through Preview must never trigger navigation.
-
 Implemented:
 - `client/src/components/layout/StudioLayout.tsx` — `handlePreviewMessageSelect(index)` now:
   - clears any selected component inspector;
@@ -197,8 +240,7 @@ The owner clarified that on mobile/tablet, clicking a Classic/plain-text message
 - Preview click capture stops propagation so selecting a nested component does not also trigger the message-card click handler.
 - The clicked message is kept active when a component is selected.
 
-#### Mobile / narrow workspace
-- Clicking any identifiable component/content in the preview selects that component and opens the quick Component Inspector over the **Preview tab**. It must not force a switch to the Editor tab.
+#### Mobile / narrow workspace- Clicking any identifiable component/content in the preview selects that component and opens the quick Component Inspector over the **Preview tab**. It must not force a switch to the Editor tab.
 - The Editor tab remains available for adding/managing content; preview quick-edit is not intended to replace the full editor.
 - The inspector remains an overlay/bottom sheet, not a third persistent pane.
 
@@ -297,8 +339,7 @@ Repair committed:
    - desktop ordinary content click -> active message, smooth left-editor scroll, editable cursor focus, no inspector;
    - desktop button click -> floating right overlay, no column resize;
    - mobile any component click -> inspector overlay while remaining on Preview tab;
-   - editor tab remains accessible for adding/managing components;
-   - no duplicate message click firing or stale selection.
+   - editor tab remains accessible for adding/managing components;   - no duplicate message click firing or stale selection.
 6. Verify the logo against the owner's intended asset: current code removes the CSS badge frame but does not edit the internal SVG artwork.
 7. Inspect the toast visually. The message text was shortened, but toast layout itself has not been visually verified.
 8. Update this file after every implementation/verification batch with exact commit SHAs, commands actually run, output, screenshots/artifacts, and outstanding defects. Never copy historical test counts into current validation.
@@ -397,8 +438,7 @@ Important architectural boundaries:
 ### 3. Commands and CI contract
 
 Root package.json currently defines:
-- npm test — invokes each workspace test script; Vitest is the test runner.
-- npm run typecheck — builds shared first, then runs TypeScript tsc --noEmit checks in workspaces.
+- npm test — invokes each workspace test script; Vitest is the test runner.- npm run typecheck — builds shared first, then runs TypeScript tsc --noEmit checks in workspaces.
 - npm run build — builds shared, client, server, and bot.
 - npm run verify:acceptance — runs scripts/verify-acceptance.ts.
 - npm run benchmark / npm run benchmark:json — server benchmarks.
@@ -497,8 +537,7 @@ The same autocomplete helper accepts IDs of 1–20 digits (\d{1,20}), while the 
 **Implemented in current source, with tests.**
 - server/src/services/weaoService.ts has getExploitChangelogs(), 15-second cache, in-flight request deduplication, previous-snapshot comparison, and formatted output.
 - server/src/routes/weao.ts exposes /changelogs/:exploit.
-- interpolateWeaoPlaceholders() supports exploit-name and tracker-ID lookups, changelog selectors such as [n], [start:end], negative slices, and .changelogs.compare.
-- server/tests/weaoService.test.ts covers formatting, empty results, tracker-ID resolution, and incremental comparison.
+- interpolateWeaoPlaceholders() supports exploit-name and tracker-ID lookups, changelog selectors such as [n], [start:end], negative slices, and .changelogs.compare.- server/tests/weaoService.test.ts covers formatting, empty results, tracker-ID resolution, and incremental comparison.
 - This is source/test coverage only; it is not a current production/browser verification.
 - Preserve the explicit cancellation in the attachment: do not reintroduce exploit override behavior.
 
@@ -598,7 +637,6 @@ These are focused follow-up changes; they are not yet confirmed by Vitest or bro
 ## Implementation progress — 2026-11-16
 
 Implementation is being committed directly to `main` as requested. These changes are source edits only; no local validation has been run.
-
 ### Completed source changes (not yet runtime-verified)
 
 - **Wide-screen workspace:** Replaced the Studio's mutually exclusive editor/preview rendering with the existing resizable `SplitPane`; aligned the split and inspector docking breakpoint to 1200px; kept both mobile panes mounted so switching tabs does not discard local component state.
@@ -697,8 +735,7 @@ The following are confirmed by the current source on `main` at the inspected com
 
 **Repair:** Define and test the autocomplete state machine explicitly:
 - opening token: `{exploit.` -> exploit-name state;
-- partial name -> filtered catalogue;
-- selected name -> `{exploit.<canonical-name>.` and field state;
+- partial name -> filtered catalogue;- selected name -> `{exploit.<canonical-name>.` and field state;
 - field text -> filtered field list;
 - selected field -> complete token with the cursor in the correct position;
 - manual name entry when catalogue is unavailable;
@@ -797,8 +834,7 @@ These are risks discovered while tracing adjacent code; they need verification b
 - **Autocomplete variants:** The product has more than one variable-picker implementation: the message editor's `MentionInput` and the reusable variable autocomplete in `Field.tsx`. Fixing only one will leave inconsistent keyboard and placement behavior.
 - **Thread destination metadata:** `threadId` is already destructured but unused in the send route. This is a clear dead path that can make the UI/API contract appear supported when it is not.
 - **Responsive breakpoints:** Studio uses `xl` for pane switching, while `SplitPane` has its own 1280px JavaScript breakpoint. Consolidate the breakpoint so CSS and JS do not disagree.
-- **Docs truthfulness:** `DocsPage` and `Field.VARIABLES` are separate hardcoded variable inventories. They can drift from actual server interpolation. After the functional fixes, reconcile docs against the real resolver and tests; do not advertise unsupported aliases or fields.
-- **Public-page consistency:** Login, docs, and privacy share `PublicPageHeader`, so a header fix should be tested on all three pages.
+- **Docs truthfulness:** `DocsPage` and `Field.VARIABLES` are separate hardcoded variable inventories. They can drift from actual server interpolation. After the functional fixes, reconcile docs against the real resolver and tests; do not advertise unsupported aliases or fields.- **Public-page consistency:** Login, docs, and privacy share `PublicPageHeader`, so a header fix should be tested on all three pages.
 - **Preview component state:** Switching the current conditional desktop/mobile view unmounts the hidden pane. The new layout should avoid resetting editor/preview local state unnecessarily.
 - **Existing thread security:** A thread ID is an untrusted user-supplied destination. Staff channel/guild permissions must be checked against the actual destination and failure must be closed.
 - **Test coverage:** Several high-risk behaviors need direct tests (split-pane breakpoint/state, exploit parser state transitions, selected-row scrolling, dynamic placement math, clipboard state, thread destination authorization). Add tests at the pure-logic level where possible and component tests for user interactions.
@@ -897,7 +933,6 @@ When Terminal and Playwright are available again:
 - Test mobile portrait/landscape and virtual keyboard visible.
 - Test inside Component Inspector at the top and bottom of its scroll region.
 - Ensure no menu is cut off by viewport or parent overflow.
-
 ### Thread ID
 
 - Send a new message to a normal channel (unchanged behavior).
@@ -997,7 +1032,6 @@ Retained comments that document security/authorization boundaries, Discord/API c
 **Branch head before this handoff update:** `81111303c2a4991487058108e7afb5d12bd1ec71`
 
 ---
-
 **End of current handoff.**
 
 ## V10 Batch 14 continuation — sidebar reconciliation (2026-11-16)
@@ -1098,7 +1132,6 @@ Implemented the Batch 7 source changes directly on `main`.
 - Current main head before this handoff append: `450ef78c2e791dcf57d19d2440527f1933d66eb0`.
 - These are source-level corrections only. No tests, build, or typecheck were run.
 
-
 ---
 
 ## V11 — 2b1f77b8 layout restoration and P0 repair — 2026-11-16
@@ -1197,7 +1230,6 @@ Run the full test, typecheck, and build commands against the implementation head
 - `MessageEditor.test.tsx`: added regression coverage for a Select Menu opening in Live Preview while still notifying the inspector-selection callback, and for editing the selected message's V2 `TextDisplay` block when the selected index differs from the active index.
 - Source/repository mismatch recorded: the current `LoginScreen.tsx` does not contain a Guest Sandbox CTA; it contains a development-only `Continue as Local Developer` control. The implementation did not invent a new guest-authentication path without an existing handler/contract.
 - Test execution, typecheck, production build, browser QA, and Lighthouse remain unverified in the current GitHub-only editing session. Run the repository scripts before merging.
-
 
 ## V12 implementation checkpoint — pre-CI review (2026-11-16)
 
