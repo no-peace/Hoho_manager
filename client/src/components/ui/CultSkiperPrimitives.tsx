@@ -57,8 +57,7 @@ export const AnimatedMorphIcon: React.FC<AnimatedMorphIconProps> = ({
 
 /**
  * Cult UI — MorphSurface Expandable Action Bar / Inspector Card
- * Uses shared layoutId, mask/clip-path reveal, 165ms ease-out entrance,
- * and 20% shorter (130ms) exit back to the trigger origin.
+ * Uses a restrained fade-and-rise transition without shared-layout scaling.
  */
 export interface CultMorphSurfaceProps {
   layoutId: string;
@@ -100,11 +99,13 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
 
   return (
     <div ref={surfaceRef} className={`relative ${className}`}>
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence initial={false} mode="wait">
         {!open ? (
           <motion.button
             key="morph-trigger"
-            layoutId={layoutId}
+            initial={{ opacity: 0, y: 2 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.14, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, y: -3, transition: { duration: 0.1, ease: [0.4, 0, 1, 1] } }}
             type="button"
             onClick={() => setOpen(true)}
             disabled={disabled}
@@ -116,19 +117,16 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
         ) : (
           <motion.div
             key="morph-panel"
-            layoutId={layoutId}
-            initial={{ opacity: 0, scale: 0.95, clipPath: "inset(8% 4% 8% 4% round 12px)" }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{
               opacity: 1,
-              scale: 1,
-              clipPath: "inset(0% 0% 0% 0% round 12px)",
-              transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] },
+              y: 0,
+              transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] },
             }}
             exit={{
               opacity: 0,
-              scale: 0.95,
-              clipPath: "inset(8% 4% 8% 4% round 12px)",
-              transition: { duration: 0.13, ease: [0.4, 0, 1, 1] },
+              y: -4,
+              transition: { duration: 0.11, ease: [0.4, 0, 1, 1] },
             }}
             style={{ transformOrigin: "top center" }}
             className="rounded-[10px] bg-[#161A23] border border-[#272D3A] p-3 space-y-2 shadow-xl overflow-hidden"
