@@ -1,6 +1,8 @@
 import { parseCustomId } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { interpolateWeaoPlaceholders } from "./weaoService.js";
+import { replaceVariables } from "./variableInterpolation.js";
+export { replaceVariables } from "./variableInterpolation.js";
 import { getActionHandler } from "../actions/index.js";
 import { actionFailed } from "../actions/responses.js";
 import type { ActionContext, ActionResponse } from "../actions/types.js";
@@ -18,23 +20,6 @@ export interface ExecuteResult {
   type: string | null;
 }
 
-export const replaceVariables = (obj: any, vars: Record<string, any>): any => {
-  if (typeof obj === "string") {
-    return obj.replace(/\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g, (match, key) => {
-      const trimmedKey = key.trim();
-      return vars[trimmedKey] !== undefined ? String(vars[trimmedKey]) : match;
-    });
-  }
-  if (Array.isArray(obj)) return obj.map((v) => replaceVariables(v, vars));
-  if (obj !== null && typeof obj === "object") {
-    const newObj: any = {};
-    for (const [k, v] of Object.entries(obj)) {
-      newObj[k] = replaceVariables(v, vars);
-    }
-    return newObj;
-  }
-  return obj;
-};
 
 const snowflakeToUnix = (id: string) => {
   const epoch = 1420070400000;

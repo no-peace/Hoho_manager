@@ -1,18 +1,33 @@
-const VARIABLE_PATTERN = /\{\{\s*([\w.$]+)\s*\}\}|\{\s*([\w.$]+)\s*\}/g;
+const VARIABLE_PATTERN = /\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g;
+
+export function buildTimestampVariables(date: Date = new Date()): Record<string, string> {
+  const unixNow = Math.floor(date.getTime() / 1000);
+  const timestamp = String(unixNow);
+
+  return {
+    "now.iso": date.toISOString(),
+    "now.unix": timestamp,
+    "now.date": `<t:${timestamp}:D>`,
+    "now.time": `<t:${timestamp}:T>`,
+    "now.datetime": `<t:${timestamp}:F>`,
+    "now.relative": `<t:${timestamp}:R>`,
+    "now.short_date": `<t:${timestamp}:d>`,
+    "now.short_time": `<t:${timestamp}:t>`,
+    "now.short_datetime": `<t:${timestamp}:f>`,
+    timestamp: `<t:${timestamp}:F>`,
+  };
+}
 
 export const replaceVariables = <T>(
   value: T,
   variables: Record<string, unknown>,
 ): T => {
   if (typeof value === "string") {
-    return value.replace(
-      VARIABLE_PATTERN,
-      (match, doubleKey: string | undefined, singleKey: string | undefined) => {
-        const key = doubleKey ?? singleKey;
-        const replacement = key === undefined ? undefined : variables[key];
-        return replacement === undefined ? match : String(replacement);
-      },
-    ) as T;
+    return value.replace(VARIABLE_PATTERN, (match, rawKey: string) => {
+      const key = rawKey.trim();
+      const replacement = variables[key];
+      return replacement === undefined ? match : String(replacement);
+    }) as T;
   }
   if (Array.isArray(value)) return value.map((entry) => replaceVariables(entry, variables)) as T;
   if (value !== null && typeof value === "object") {
@@ -25,3 +40,8 @@ export const replaceVariables = <T>(
   }
   return value;
 };
+
+export const interpolateObject = <T>(
+  value: T,
+  variables: Record<string, unknown>,
+): T => replaceVariables(value, variables);

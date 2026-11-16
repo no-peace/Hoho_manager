@@ -9,6 +9,7 @@ import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
 import { parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
+import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 
 const router = Router();
 const log = logger.child("send");
@@ -180,7 +181,8 @@ router.post(
         // Fallback to uninterpolated message if WEAO is unreachable
       }
 
-      const unixNow = Math.floor(Date.now() / 1000);
+      const timestampVars = buildTimestampVariables();
+      const unixNow = timestampVars["now.unix"];
       const targetChannelId = destinationChannelId;
       // Use the destination guild's member nickname for {user.name}.
       const hasGuildScopedUserPlaceholder =
@@ -212,6 +214,7 @@ router.post(
           : resolvedSenderName;
 
       const sendVars: Record<string, string> = {
+        ...timestampVars,
         now: `<t:${unixNow}:f>`,
         "now.t": `<t:${unixNow}:t>`,
         "now.T": `<t:${unixNow}:T>`,
@@ -221,14 +224,10 @@ router.post(
         "now.F": `<t:${unixNow}:F>`,
         "now.R": `<t:${unixNow}:R>`,
         "now.relative": `<t:${unixNow}:R>`,
-        "now.time": `<t:${unixNow}:t>`,
         "now.longtime": `<t:${unixNow}:T>`,
-        "now.date": `<t:${unixNow}:d>`,
         "now.longdate": `<t:${unixNow}:D>`,
         "now.short": `<t:${unixNow}:f>`,
         "now.long": `<t:${unixNow}:F>`,
-        "now.unix": String(unixNow),
-        "now.iso": new Date().toISOString(),
         ...(targetChannelId
           ? {
             "channel.id": targetChannelId,
@@ -246,23 +245,7 @@ router.post(
           : {}),
       };
 
-      const replaceSendVars = (val: any): any => {
-        if (typeof val === "string") {
-          return val.replace(/\{{1,2}\s*([^{}]+?)\s*\}{1,2}/g, (m, k) => {
-            const key = k.trim();
-            return sendVars[key] !== undefined ? sendVars[key] : m;
-          });
-        }
-        if (Array.isArray(val)) return val.map(replaceSendVars);
-        if (val !== null && typeof val === "object") {
-          const out: any = {};
-          for (const [k, v] of Object.entries(val)) out[k] = replaceSendVars(v);
-          return out;
-        }
-        return val;
-      };
-
-      weaoInterpolated = replaceSendVars(weaoInterpolated);
+weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
 
       let authorResolved = weaoInterpolated;
       try {
