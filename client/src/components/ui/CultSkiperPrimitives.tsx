@@ -70,7 +70,6 @@ export interface CultMorphSurfaceProps {
 }
 
 export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
-  layoutId,
   triggerLabel,
   triggerIcon,
   title,
