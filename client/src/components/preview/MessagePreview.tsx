@@ -88,7 +88,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
             onClick={() => setSpoilerHidden(false)}
             className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+            <span className="text-[13px] font-semibold text-[#F1F3F9] bg-black/60 px-3 py-1 rounded-full border border-white/20">
               Spoiler
             </span>
             <span className="text-[11px] text-[#949ba4] mt-2">Click to view video</span>
@@ -185,7 +185,7 @@ export const MessagePreview = () => {
                   key={i}
                   type="button"
                   onClick={() => setActiveMessageIndex?.(i)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors ${
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
                     i === activeMessageIndex
                       ? "bg-[#818CF8]/15 text-[#F1F3F9]"
                       : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
@@ -210,7 +210,7 @@ export const MessagePreview = () => {
         <div className="w-full max-w-4xl mx-auto ">
 
           {isAllEmpty ? (
-            <div className="mx-auto flex min-h-40 max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#4e5058] bg-[#2b2d31]/70 px-5 py-8 text-center">
+            <div className="mx-auto flex min-h-40 max-w-md flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-[#4e5058] bg-[#2b2d31]/70 px-5 py-8 text-center">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1e1f22] text-[#6d717a]"><Bot size={20} /></div>
               <p className="text-xs font-medium text-[#b5bac1]">Nothing to preview yet — type content, add an embed, or insert a V2 component.</p>
             </div>
@@ -246,7 +246,7 @@ export const MessagePreview = () => {
                   <div
                     key={index}
                     onClick={() => setActiveMessageIndex?.(index)}
-                    className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
+                    className={`group relative flex gap-3 p-2.5 rounded-[10px] cursor-pointer ${
                       isActive
                         ? "ring-1 ring-[#818CF8]/60 bg-[#818CF8]/5 shadow-sm"
                         : "hover:bg-[#2b2d31]/40"

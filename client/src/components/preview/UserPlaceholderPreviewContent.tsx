@@ -129,7 +129,10 @@ export const UserPlaceholderPreviewProvider = ({
   }, [sourceSnapshot, currentUser?.id, showResolved]);
 
   useEffect(() => {
-    if (!showResolved) return;
+    if (!showResolved) {
+      setIsResolvingUsers(false);
+      return;
+    }
     const pendingIds = requestedIds.filter(
       (id) => !users[id] && !attemptedIdsRef.current.has(id),
     );
