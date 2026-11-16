@@ -99,6 +99,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
   return (
     <div
+      data-message-editor-index={index}
       onClick={() => ensureActive()}
       className={
         isActive
