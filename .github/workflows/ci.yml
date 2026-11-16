@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Build, typecheck, and test (Node ${{ matrix.node-version }})
+    name: build-and-typecheck (${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
