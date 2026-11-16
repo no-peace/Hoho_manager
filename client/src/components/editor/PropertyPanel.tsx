@@ -16,7 +16,8 @@ type PanelTab = "properties" | "flow";
 export const PropertyPanel = () => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
-  const messageData = useMessageStore((state) => state.data);\n  const components = messageData.components;\n  const flows = useActionStore((state) => state.flows);
+  const messageData = useMessageStore((state) => state.data);
+  const components = messageData.components;\n  const flows = useActionStore((state) => state.flows);
   const select = useMessageStore((state) => state.select);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);

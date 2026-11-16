@@ -123,7 +123,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
         <div className="flex items-start gap-2">
           <Wand2 size={16} className="mt-0.5 shrink-0 text-[#818CF8]" />
           <div className="min-w-0 flex-1">
-            <h3 className="text-xs font-semibold text-[#F1F3F9]">{asText(component.label) || triggerLabel}</h3>
+            <h3 className="text-xs font-semibold text-[#F1F3F9]">{triggerLabel}</h3>
             <p className="mt-0.5 text-[11px] leading-relaxed text-[#A1A8B8]">Runs when a user interacts with this {triggerLabel.toLowerCase()} in Discord.</p>
           </div>
         </div>
