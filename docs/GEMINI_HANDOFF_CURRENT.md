@@ -4,14 +4,15 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Current main head:** `1d4c8934c70a855f6ffaa456d6c2f809ea789314`  
+**Implementation head before handoff checkpoint:** `1d4c8934c70a855f6ffaa456d6c2f809ea789314`  
+**Handoff checkpoint commit:** `f2e833fee44041a16102d36900493f612d9d3308`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
 **Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 and full runtime/release verification remain open. Do not describe this branch as tested or release-ready.
 
 ## Latest implementation checkpoint — 2026-11-16
 
-The work continued from the live `main` head, not from the older audit snapshot. The current implementation contains 30 commits ahead of the V9 baseline.
+The work continued from the live `main` head, not from the older audit snapshot. The implementation contains 30 commits ahead of the V9 baseline; the handoff checkpoint is a separate documentation commit.
 
 ### Completed source-level work
 - Fixed the CI workflow's reference to the deleted Playwright audit script and removed the retired `tunnel` npm workspace entry.
@@ -41,7 +42,7 @@ The work continued from the live `main` head, not from the older audit snapshot.
 - `npm run build`: not run.
 - `npm run typecheck`: not run.
 - Playwright/browser checks and screenshots: not run.
-- GitHub Actions: no workflow run is associated with current head `1d4c8934`; the latest listed runs target older commits. Combined status checks for the implementation head were empty.
+- GitHub Actions: no workflow run is associated with the implementation head `1d4c8934` or the handoff checkpoint `f2e833fe`; the latest listed runs target older commits. Combined status checks for the implementation head were empty.
 
 ### Next exact step
 Continue V10 Batch 14 with a focused comments/test audit, then run `npm test`, `npm run build`, and `npm run typecheck` when the owner explicitly makes the local machine available. Fix every failure before recording actual test counts. Do not claim a visual pass without browser verification.
