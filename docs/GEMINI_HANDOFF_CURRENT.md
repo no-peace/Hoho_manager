@@ -4,9 +4,9 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Inspected application source baseline:** `e9bdc62131b28760e6810454f68922cf3adcab4b`  
-**Current branch:** `main` (read the live branch head before implementation; only handoff documents changed after the inspected application source baseline)  
-**Repository tree:** 301 tracked files; tree response was not truncated  
+**Latest application source commit:** `ae07d8c0c1f9df33debe22808b00b6c1d0ac85b9`  
+**Current `main` HEAD:** `85df98fe1f3f91b95772138df9973af186b14187` (handoff documentation update)  
+**Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
 **Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
@@ -52,10 +52,10 @@ The current implementation is therefore **in progress, not release-verified**. C
 
 ## 1. Current repository state
 
-- The application source baseline reviewed for this plan is `e9bdc62131b28760e6810454f68922cf3adcab4b`. Subsequent commits only updated the Gemini handoff documents; read the live `main` head before implementation.
+- The latest application code changes are committed on `main` through `ae07d8c0c1f9df33debe22808b00b6c1d0ac85b9`; the current `main` HEAD is `85df98fe1f3f91b95772138df9973af186b14187` after the latest handoff update.
 - The repository currently has one remote branch: `main`.
 - There are no open pull requests at the time of inspection.
-- The latest commit is the security-hardening merge. It follows V8 feature integration.
+- The latest commit is the current Gemini handoff update; the implementation commits immediately precede it in `main`.
 - The old PR #42 / feature-branch references in the historical handoff are stale. Do not treat them as current work.
 - The current `main` tree contains the React/Vite client, Express server, Discord bot, shared package, tests, docs, CI workflows, Lighthouse workflow, security workflow, and deployment configuration.
 
