@@ -727,3 +727,28 @@ Retained comments that document security/authorization boundaries, Discord/API c
 - Corrected the tracked-message list item markup after source inspection; tracked entries are display-only because the tracking-list response contains channel/message IDs but not the guild ID required for a valid Discord deep link.
 - Latest source implementation commit: `7c7a5a91619c6ecade7b20b75a9244e291500aa3`.
 - This is still source-reviewed only. Build, typecheck, automated tests, and browser visual QA remain unverified.
+
+## V10 Batch 14 — automated test authoring continuation (2026-11-16)
+
+The owner clarified that test files should be prepared for them to run later. Test authoring is now included; **no test command has been executed**.
+
+### Test coverage added/strengthened
+- Added `client/src/utils/__tests__/mentionParserAutocomplete.test.ts`:
+  - opening `{` activates the variable-token detection path;
+  - partial `{explo` remains eligible for variable autocomplete;
+  - the completed `{exploit.` prefix routes to exploit-name autocomplete;
+  - token replacement preserves surrounding text and calculates the replacement cursor.
+- Expanded `client/src/utils/__tests__/userPlaceholderAutocomplete.test.ts` to assert the complete 16-field client/server-supported placeholder contract and explicitly exclude `avatarurl`.
+- Existing `server/tests/variableInterpolation.test.ts` already verifies `{now.time}` -> `<t:...:T>` and `{now.short_time}` -> `<t:...:t>`.
+- Existing `server/tests/authorService.test.ts` already verifies that an enabled primary-guild clan tag resolves even when lookup for the selected guild member returns 404. No duplicate server tests were added.
+
+### Important plan correction
+The V10 plan's proposed nine-field list (`created_at`, `joined_at`) does not match the implemented resolver. The handoff's previously documented actual contract is retained: the client exposes 16 supported fields, and the server has additional special handling for roles/clantag/join timestamps. Tests now assert the live supported contract rather than codifying unsupported aliases.
+
+### Test execution status
+- Tests authored/updated: yes.
+- Tests executed: no, as requested for the owner to run after implementation.
+- Build/typecheck/browser QA: still not run.
+- These are utility-level regression tests, not a React DOM test proving the autocomplete popover is visibly rendered; component-level interaction coverage remains a possible further improvement.
+
+**Test-authoring commits:** `ab1162fe6fd0a2a9337a7943b296d0bd51664fbb`, `20dad46162c1cb45cc37d0c4ccfac66620918c97`, `c99443e1ccd24b8a71aa2dec5ebc19503dbe8acb`.
