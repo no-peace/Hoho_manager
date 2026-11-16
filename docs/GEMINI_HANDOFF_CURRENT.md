@@ -40,7 +40,7 @@ All implementation and handoff updates described above have been committed direc
 
 ### Still outstanding
 
-1. Verify all Inspector floating menus (variable, emoji, RichPicker, and emoji field autocomplete) against the mobile bottom sheet at narrow widths and with the virtual keyboard open; portal/floating-layer implementation is now in place.
+1. Verify all Inspector floating menus (variable, emoji, custom Select, RichPicker, and emoji field autocomplete) against the mobile bottom sheet at narrow widths and with the virtual keyboard open; portal/floating-layer implementation is now in place.
 2. Continue the shared UI token/primitive consistency sweep through remaining Studio, modal, login, Docs, Privacy, and action-flow components without changing the product's visual identity.
 3. Review and add any remaining regression tests for parser state transitions, popover positioning, Docs clipboard failure, and responsive layouts.
 4. Run the user's approved checks when they are available: `npm test` (Vitest), `npm run typecheck`, and `npm run build`. No checks have been run for these commits; do not report them as passing.
