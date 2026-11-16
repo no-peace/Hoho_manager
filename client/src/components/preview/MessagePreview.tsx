@@ -39,6 +39,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
         {spoilerHidden ? (
           <div
             onClick={() => setSpoilerHidden(false)}
+            data-preview-ignore-message-navigation="true"
             className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
           >
             <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
@@ -74,6 +75,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
         {spoilerHidden ? (
           <div
             onClick={() => setSpoilerHidden(false)}
+            data-preview-ignore-message-navigation="true"
             className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
           >
             <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
@@ -132,6 +134,19 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
     setActiveMessageIndex?.(index);
     if (onSelectMessage) onSelectMessage(index);
     else scrollToMessageEditor(index);
+  };
+
+  const handleMessageCardClick = (event: React.MouseEvent<HTMLDivElement>, index: number) => {
+    const target = event.target as HTMLElement;
+    // Preserve native preview interactions; only ordinary message content/card space navigates.
+    if (
+      target.closest(
+        'button, a, input, textarea, select, video, audio, [role="button"], [data-preview-component-id], [data-preview-ignore-message-navigation]',
+      )
+    ) {
+      return;
+    }
+    handleSelectMessage(index);
   };
 
   useEffect(() => {
@@ -240,7 +255,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                 return (
                   <div
                     key={index}
-                    onClick={() => handleSelectMessage(index)}
+                    onClick={(event) => handleMessageCardClick(event, index)}
                     onClickCapture={(event) => {
                       const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
