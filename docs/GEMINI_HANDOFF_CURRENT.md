@@ -721,3 +721,9 @@ Retained comments that document security/authorization boundaries, Discord/API c
 - Browser-based desktop/mobile visual QA and screenshots have not been performed. The live app was not launched or interacted with during this source-only pass.
 - The V10 Batch 7 MessageEditor currently renders Content, Embeds, and Components V2 as stacked sections rather than the plan's four-way Content / Embeds / Components V2 / Actions tab bar. This remains a documented UI-plan discrepancy; do not mark every V10 design detail complete.
 - Current main head after this continuation: `03a454cf3d3e102074b64767ed1730be212a5a44`.
+
+### Sidebar markup follow-up
+
+- Corrected the tracked-message list item markup after source inspection; tracked entries are display-only because the tracking-list response contains channel/message IDs but not the guild ID required for a valid Discord deep link.
+- Latest source implementation commit: `7c7a5a91619c6ecade7b20b75a9244e291500aa3`.
+- This is still source-reviewed only. Build, typecheck, automated tests, and browser visual QA remain unverified.
