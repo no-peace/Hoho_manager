@@ -61,7 +61,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [showRichPicker, setShowRichPicker] = useState(false);
-  const pickerContainerRef = useRef<HTMLDivElement>(null);
+  const richPickerButtonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
   const [dropdownMaxHeight, setDropdownMaxHeight] = useState(260);
 
@@ -105,20 +105,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       window.visualViewport?.removeEventListener("scroll", updatePlacement);
     };
   }, [acType, showRichPicker]);
-
-  useEffect(() => {
-    if (!showRichPicker) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        pickerContainerRef.current &&
-        !pickerContainerRef.current.contains(e.target as Node)
-      ) {
-        setShowRichPicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [showRichPicker]);
 
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const effectiveGuildId = propGuildId || selectedGuildId;
@@ -910,12 +896,13 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         />
 
         <div
-          ref={pickerContainerRef}
+          
           className="absolute right-6 bottom-2 z-10 flex items-center gap-1"
         >
           <button
+            ref={richPickerButtonRef}
             type="button"
-            onClick={() => setShowRichPicker(!showRichPicker)}
+            onClick={() => setShowRichPicker((current) => !current)}
             className={`p-1.5 rounded transition-colors ${
               showRichPicker
                 ? "bg-[#5865f2] text-white shadow-sm"
@@ -931,7 +918,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               onInsert={insertDirect}
               onClose={() => setShowRichPicker(false)}
               guildId={effectiveGuildId}
-              anchor={textareaRef.current}
+              anchor={richPickerButtonRef.current}
             />
           )}
         </div>
