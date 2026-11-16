@@ -40,7 +40,7 @@ const readAdaptive = (field: string, { interaction }: ActionContext): unknown =>
       return user?.id ?? null;
     case "user.name":
       return user?.global_name ?? user?.username ?? null;
-    case "user.tag":
+    case "user.username":
       return user?.username ?? null;
     case "channel.id":
       return interaction.channel_id ?? null;
