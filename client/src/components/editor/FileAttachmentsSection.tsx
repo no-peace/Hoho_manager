@@ -123,7 +123,7 @@ export const FileAttachmentsSection: React.FC = () => {
   };
 
   return (
-    <section className="rounded-[10px] border border-[#272D3A] bg-[#161A23] overflow-hidden text-xs">
+    <section className="overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#161A23] text-xs">
       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230]">
         <button
           type="button"
@@ -232,7 +232,7 @@ export const FileAttachmentsSection: React.FC = () => {
             className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
               isDragging
                 ? "border-[#818CF8] bg-[#818CF8]/10"
-                : "border-[#252B3A] bg-[#1D2230]/50 hover:border-[#4e5058] hover:bg-[#1D2230]"
+                : "border-[#272D3A] bg-[#10131A]/60 hover:border-[#818CF8]/60 hover:bg-[#1D2230]"
             }`}
           >
             <Paperclip size={20} className="mb-1 text-[#A1A8B8]" />
@@ -294,7 +294,7 @@ export const FileAttachmentsSection: React.FC = () => {
 
                   <div className="mt-1.5 min-w-0">
                     <p
-                      className="text-[11px] font-medium text-[#F1F3F9] truncate leading-tight"
+                      className="truncate font-mono text-[11px] font-medium leading-tight text-[#F1F3F9]"
                       title={file.url ?? file.name}
                     >
                       {file.spoiler ? `SPOILER_${file.name}` : file.name}
