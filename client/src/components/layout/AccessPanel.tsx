@@ -97,27 +97,27 @@ export const AccessPanel = () => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#161A23] overflow-hidden rounded-md border border-[#1D2230]">
-      <div className="flex items-center justify-between border-b border-[#1D2230] px-5 py-4 shrink-0 bg-[#1D2230]">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden rounded-md border border-[#1D2230] bg-[#161A23]">
+      <div className="flex flex-col gap-3 border-b border-[#1D2230] bg-[#1D2230] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4 shrink-0">
         <div>
-          <h2 className="text-lg font-bold text-[#F1F3F9] flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-base font-bold text-[#F1F3F9] sm:text-lg">
             <ShieldAlert size={20} className="text-[#FBBF24]" />
             Staff Access Management
           </h2>
-          <p className="text-sm text-[#A1A8B8]">Control who can use this tool and what they can do.</p>
+          <p className="text-xs text-[#A1A8B8] sm:text-sm">Control who can use this tool and what they can do.</p>
         </div>
         {!editingId && (
-          <Button icon={Plus} onClick={handleCreate} variant="primary">
+          <Button icon={Plus} onClick={handleCreate} variant="primary" className="w-full sm:w-auto">
             Grant Access
           </Button>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-[#F1F3F9]">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3 text-[#F1F3F9] custom-scrollbar sm:p-5">
         {error && <div className="mb-4 p-3 bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] rounded">{error}</div>}
 
         {currentUser && !editingId && (
-          <div className="mb-4 flex items-center justify-between p-3 rounded-lg bg-[#1D2230] border border-[#252B3A]/50">
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-[#252B3A]/50 bg-[#1D2230] p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {currentUser.avatar ? (
                 <img
@@ -154,12 +154,12 @@ export const AccessPanel = () => {
         )}
 
         {editingId ? (
-          <div className="max-w-3xl space-y-6 bg-[#1D2230] p-5 rounded-lg border border-[#10131A]">
+          <div className="w-full min-w-0 max-w-3xl space-y-6 rounded-lg border border-[#10131A] bg-[#1D2230] p-3 sm:p-5">
             <h3 className="text-md font-semibold text-[#F1F3F9] border-b border-[#252B3A] pb-2 mb-4">
               {isCreating ? "Grant New Access" : `Edit Access: ${formData.discord_username || formData.discord_user_id}`}
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {isCreating ? (
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -248,7 +248,7 @@ export const AccessPanel = () => {
 
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-[#F1F3F9]">Action Permissions</h4>
-              <div className="grid grid-cols-2 gap-3 bg-[#161A23] p-3 rounded border border-[#10131A]">
+              <div className="grid grid-cols-1 gap-3 rounded border border-[#10131A] bg-[#161A23] p-3 sm:grid-cols-2">
                 <Checkbox
                   label="Can Send Messages"
                   checked={formData.can_send_messages === 1}
@@ -289,7 +289,7 @@ export const AccessPanel = () => {
 
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-[#F1F3F9]">Mention Permissions</h4>
-              <div className="grid grid-cols-3 gap-3 bg-[#161A23] p-3 rounded border border-[#10131A]">
+              <div className="grid grid-cols-1 gap-3 rounded border border-[#10131A] bg-[#161A23] p-3 sm:grid-cols-3">
                 <Checkbox
                   label="Can @everyone"
                   checked={formData.can_mention_everyone === 1}
@@ -347,7 +347,7 @@ export const AccessPanel = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextField
                 label="Cooldown (Seconds)"
                 type="number"
@@ -390,8 +390,8 @@ export const AccessPanel = () => {
                 const avatarSrc = record.avatarUrl || (record.discord_avatar ? `https://cdn.discordapp.com/avatars/${record.discord_user_id}/${record.discord_avatar}.png` : defaultAvatar);
 
                 return (
-                  <div key={record.discord_user_id} className={`flex items-center justify-between gap-3 rounded-lg border border-[#272D3A] bg-[#161A23] p-3 transition-[border-color,background-color,opacity] duration-150 hover:border-[#252B3A] ${record.is_active ? 'bg-[#1D2230] border-[#252B3A]' : 'bg-[#161A23] border-[#1D2230] opacity-60'}`}>
-                    <div className="flex items-center gap-3 min-w-0">
+                  <div key={record.discord_user_id} className={`flex flex-col gap-3 rounded-lg border border-[#272D3A] bg-[#161A23] p-3 transition-[border-color,background-color,opacity] duration-150 hover:border-[#252B3A] sm:flex-row sm:items-center sm:justify-between ${record.is_active ? 'bg-[#1D2230] border-[#252B3A]' : 'bg-[#161A23] border-[#1D2230] opacity-60'}`}>
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <img
                         src={avatarSrc}
                         alt=""
@@ -420,7 +420,7 @@ export const AccessPanel = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-1 shrink-0 ml-2">
+                    <div className="flex shrink-0 gap-1 self-end sm:self-auto sm:ml-2">
                       <IconButton icon={Edit2} label="Edit" onClick={() => handleEdit(record)} className="text-[#A1A8B8] hover:text-white" />
                       <IconButton icon={Trash2} label="Revoke" onClick={() => handleDelete(record.discord_user_id)} className="text-[#F87171] hover:bg-[#F87171]/10" />
                     </div>
