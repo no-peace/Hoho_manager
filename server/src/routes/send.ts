@@ -182,6 +182,8 @@ router.post(
       const resolvedSenderName =
         senderName ||
         (typeof senderMember?.user?.username === "string" ? senderMember.user.username : "User");
+      const senderUsername =
+        typeof senderMember?.user?.username === "string" ? senderMember.user.username : resolvedSenderName;
       const senderGlobalName =
         typeof senderMember?.user?.global_name === "string" && senderMember.user.global_name
           ? senderMember.user.global_name
