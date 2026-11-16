@@ -118,7 +118,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
       case ButtonStyle.Secondary:
         return `bg-[#343C4E] text-[#F1F3F9] border-[#343C4E] ${ring}`;
       case ButtonStyle.Success:
-        return `bg-[#818CF8] text-white border-[#6366F1] ${ring}`;
+        return `bg-[#34D399] text-[#0B0D12] border-[#34D399] ${ring}`;
       case ButtonStyle.Danger:
         return `bg-[#F87171] text-[#0B0D12] border-[#F87171] ${ring}`;
       case ButtonStyle.Link:

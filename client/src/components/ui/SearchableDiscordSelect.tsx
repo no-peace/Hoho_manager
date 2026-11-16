@@ -255,7 +255,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                   maxHeight: calculatedMaxHeight,
                   zIndex: 10000,
                 }}
-                className={`bg-[#161A23] border border-[#272D3A] ${isMobile ? "rounded-2xl" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+                className={`bg-[#161A23] border border-[#272D3A] ${isMobile ? "rounded-[12px]" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
               >
               <div className="p-2 shrink-0 bg-[#10131A] border-b border-[#272D3A]">
                 <input
@@ -303,7 +303,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                       <div
                         key={opt.id}
                         className={`px-2 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between gap-2 min-w-0 ${
-                          isSelected ? "bg-[#818CF8] text-white" : "text-[#F1F3F9] hover:bg-[#252B3A]"
+                          isSelected ? "bg-[#818CF8]/15 text-[#F1F3F9] border border-[#818CF8]/25" : "text-[#F1F3F9] hover:bg-[#252B3A]"
                         }`}
                         onClick={() => toggleSelection(opt.id, opt)}
                         title={opt.name}
@@ -317,7 +317,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                                 className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#1D2230]"
                               />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#818CF8] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+                              <div className="w-5 h-5 rounded-full bg-[#818CF8] flex items-center justify-center text-[10px] text-[#0B0D12] font-semibold shrink-0">
                                 {opt.name.charAt(0).toUpperCase()}
                               </div>
                             )
