@@ -197,7 +197,6 @@ const useFloatingMenuStyle = (anchor: HTMLElement | null | undefined, menuWidth:
 const VariableAutocompletePopover = ({
   query,
   onSelect,
-  dropdownPos = "bottom",
   selectedIndex = 0,
   anchor,
 }: VariableAutocompleteProps) => {
@@ -258,7 +257,7 @@ const VariableAutocompletePopover = ({
           </button>
         ))}
       </div>
-    </div>
+    </div>,
     document.body,
   );
 };
@@ -275,7 +274,6 @@ interface EmojiAutocompleteProps {
 const EmojiAutocompletePopover = ({
   query,
   onSelect,
-  dropdownPos = "bottom",
   selectedIndex = 0,
   anchor,
 }: EmojiAutocompleteProps) => {
@@ -356,7 +354,7 @@ const EmojiAutocompletePopover = ({
           </button>
         ))}
       </div>
-    </div>
+    </div>,
     document.body,
   );
 };
