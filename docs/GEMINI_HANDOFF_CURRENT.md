@@ -39,7 +39,7 @@ Implementation is being committed directly to `main` as requested. These changes
 
 ### Still outstanding
 
-1. Finish the Component Inspector floating-menu clipping fix. Viewport-aware side selection is in place, but portal/floating-layer behavior must still be completed and verified against the mobile bottom sheet.
+1. Verify the Component Inspector portal menus against the mobile bottom sheet at narrow widths and with the virtual keyboard open; the portal/floating-layer implementation is now in place.
 2. Complete the shared UI token/primitive consistency sweep across Studio, inspector, modals, login, Docs, and Privacy without changing the product's visual identity.
 3. Review and add any remaining regression tests for parser state transitions, popover positioning, Docs clipboard failure, and responsive layouts.
 4. Run the user's approved checks when they are available: `npm test` (Vitest), `npm run typecheck`, and `npm run build`. No checks have been run for these commits; do not report them as passing.
