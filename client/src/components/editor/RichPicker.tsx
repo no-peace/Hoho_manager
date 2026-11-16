@@ -313,11 +313,11 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   return typeof document === "undefined" ? null : createPortal(
     <div
       ref={containerRef}
-      className="fixed rounded-[10px] bg-[#161A23] border border-[#272D3A] shadow-xl overflow-hidden flex flex-col text-[#F1F3F9] animate-in fade-in zoom-in-95 duration-150"
+      className="fixed flex flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#161A23] text-[#F1F3F9] shadow-2xl animate-in fade-in zoom-in-95 duration-150"
       style={floatingStyle}
     >
       {/* Top Header & Tabs */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#1D2230] border-b border-[#313338]">
+      <div className="flex items-center justify-between border-b border-[#272D3A] bg-[#10131A] px-3 py-2">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -376,7 +376,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
       </div>
 
       {/* Tab Body */}
-      <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto bg-[#161A23] p-3 custom-scrollbar">
         {/* TAB 1: MENTIONS */}
         {activeTab === "mentions" && (
           <div className="space-y-3">
@@ -847,7 +847,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     className="w-full text-left px-2 py-1.5 rounded hover:bg-[#818CF8] group transition-colors flex flex-col"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-mono text-xs font-bold text-[#818CF8] group-hover:text-white">
+                      <span className="font-mono text-xs font-bold text-[#A5B4FC] group-hover:text-white">
                         {v.tag}
                       </span>
                       <span className="text-[10px] text-[#A1A8B8] group-hover:text-white/80">
