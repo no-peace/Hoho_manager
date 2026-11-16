@@ -98,7 +98,6 @@ export const StudioLayout: React.FC = () => {
               <div className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar sm:p-4">
                 {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
                 <CultMorphSurface
-                  layoutId="cult-add-message-surface"
                   triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
                   triggerIcon={<Plus size={15} />}
                   title="Choose Message Mode"
