@@ -60,7 +60,6 @@ export const AnimatedMorphIcon: React.FC<AnimatedMorphIconProps> = ({
  * Uses a restrained fade-and-rise transition without shared-layout scaling.
  */
 export interface CultMorphSurfaceProps {
-  layoutId: string;
   triggerLabel: React.ReactNode;
   triggerIcon?: React.ReactNode;
   title?: string;
