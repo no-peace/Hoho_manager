@@ -61,7 +61,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
   const [showRichPicker, setShowRichPicker] = useState(false);
   const richPickerButtonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
   const [dropdownMaxHeight, setDropdownMaxHeight] = useState(260);
 
   // Autocomplete state
@@ -88,7 +87,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         },
         { menuWidth: rect.width, maxMenuHeight: 320 },
       );
-      setDropdownPosition(position.side);
       setDropdownMaxHeight(position.maxHeight);
     };
 
