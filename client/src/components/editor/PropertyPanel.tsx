@@ -34,13 +34,13 @@ export const PropertyPanel = () => {
       );
       if (!field) return;
       field.focus({ preventScroll: true });
-      if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+      if (field instanceof HTMLTextAreaElement || (field instanceof HTMLInputElement && ["text", "search", "url", "tel", "password"].includes(field.type))) {
         const end = field.value.length;
         field.setSelectionRange(end, end);
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [selection?.id]);
+  }, [selection, activeMessageIndex]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
