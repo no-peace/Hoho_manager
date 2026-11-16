@@ -31,7 +31,7 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.id}", desc: "Discord numeric Snowflake ID", example: "708504312862474282", category: "user" },
   { tag: "{user.avatar}", desc: "Direct CDN URL to the user's avatar image", example: "https://cdn.discordapp.com/...", category: "user" },
   { tag: "{user.roles}", desc: "Space-separated list of all role mentions the user has", example: "@Member @VIP", category: "user" },
-  { tag: "{user.clantag}", desc: "Official Discord clan tag, or bracketed tag from name [TAG], (TAG), TAG |", example: "HOHO", category: "user" },
+  { tag: "{user.clantag}", desc: "Official Discord primary-guild tag when the user's identity is enabled; does not require membership in the selected server", example: "HOHO", category: "user" },
   { tag: "{user.created}", desc: "Account creation date formatted in user's local timezone", example: "<t:1571875200:d>", category: "user" },
   { tag: "{user.created.relative}", desc: "Account age as a relative timestamp (e.g. 5 years ago)", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },

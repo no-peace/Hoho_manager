@@ -22,7 +22,7 @@ const USER_PROFILE_FIELDS = [
   { key: "avatar", label: "Avatar URL", desc: "Direct profile picture URL" },
   { key: "mention", label: "Mention", desc: "Discord mention for this user" },
   { key: "roles", label: "Server roles", desc: "Space-separated mentions for this user's server roles" },
-  { key: "clantag", label: "Clan tag", desc: "Official primary-guild tag when enabled" },
+  { key: "clantag", label: "Clan tag", desc: "Official Discord primary-guild tag when the user's identity is enabled; independent of selected-server membership" },
   { key: "created", label: "Account created", desc: "Discord account creation date" },
   { key: "created.relative", label: "Account age", desc: "Relative Discord account creation timestamp" },
   { key: "joined", label: "Server joined", desc: "Relative timestamp for when the user joined this server" },
