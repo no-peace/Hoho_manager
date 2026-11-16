@@ -1164,3 +1164,10 @@ Run the full test, typecheck, and build commands against the implementation head
 - `messageStore.ts`: changing the active index preserves the matching message quick-edit selection, preventing the sheet from closing during the first edit when the selected message differs from the active message.
 - Files: `PropertyPanel.tsx`, `StudioLayout.tsx`, `messageStore.ts`.
 - Validation: source-level guards passed. Runtime state behavior, tests, typecheck, and build remain pending.
+
+
+## Gemini V12 implementation — Batch 4 (2026-11-16)
+
+- `FlowBuilder.tsx`: replaced legacy semantic utility names with explicit SaaS Studio hex tokens for the heading, custom ID, server-mode note, and unsaved warning. Updated the mode label to `Server Bot mode`.
+- `StepList.tsx` was inspected and left unchanged: the V12 plan specifies no concrete StepList code change, and its existing nested-flow/editor behavior is outside the identified token defect.
+- Validation: source-level legacy-token and wording guards passed. Tests, typecheck, and production build remain pending.
