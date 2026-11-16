@@ -136,7 +136,6 @@ interface VariableAutocompleteProps {
   query: string;
   onSelect: (tag: string) => void;
   onClose: () => void;
-  dropdownPos?: "top" | "bottom";
   selectedIndex?: number;
   anchor?: HTMLElement | null;
 }
@@ -253,7 +252,6 @@ interface EmojiAutocompleteProps {
   query: string;
   onSelect: (emoji: string) => void;
   onClose: () => void;
-  dropdownPos?: "top" | "bottom";
   selectedIndex?: number;
   anchor?: HTMLElement | null;
 }
@@ -352,17 +350,6 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
   const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
   const [emojiAcState, setEmojiAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const getDropdownPos = (): "top" | "bottom" => {
-    if (!inputRef.current) return "bottom";
-    const rect = inputRef.current.getBoundingClientRect();
-    const viewport = window.visualViewport;
-    const top = viewport?.offsetTop ?? 0;
-    const height = viewport?.height ?? window.innerHeight;
-    const above = Math.max(0, rect.top - top - 12);
-    const below = Math.max(0, top + height - rect.bottom - 12);
-    return above > below ? "top" : "bottom";
-  };
 
   const checkInlineVariable = (val: string, cursor: number) => {
     const textBefore = val.slice(0, cursor);
@@ -521,7 +508,6 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
         {showVars && acState?.open && (
           <VariableAutocompletePopover
             query={acState.query}
-            dropdownPos={getDropdownPos()}
             selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
@@ -531,7 +517,6 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
         {emojiAcState?.open && (
           <EmojiAutocompletePopover
             query={emojiAcState.query}
-            dropdownPos={getDropdownPos()}
             selectedIndex={selectedIndex}
             onSelect={handleInsertEmoji}
             onClose={() => setEmojiAcState(null)}
@@ -551,17 +536,6 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
   const [acState, setAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
   const [emojiAcState, setEmojiAcState] = useState<{ open: boolean; query: string; start: number; end: number } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const getDropdownPos = (): "top" | "bottom" => {
-    if (!textAreaRef.current) return "bottom";
-    const rect = textAreaRef.current.getBoundingClientRect();
-    const viewport = window.visualViewport;
-    const top = viewport?.offsetTop ?? 0;
-    const height = viewport?.height ?? window.innerHeight;
-    const above = Math.max(0, rect.top - top - 12);
-    const below = Math.max(0, top + height - rect.bottom - 12);
-    return above > below ? "top" : "bottom";
-  };
 
   const checkInlineVariable = (val: string, cursor: number) => {
     const textBefore = val.slice(0, cursor);
@@ -721,7 +695,6 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
         {showVars && acState?.open && (
           <VariableAutocompletePopover
             query={acState.query}
-            dropdownPos={getDropdownPos()}
             selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
@@ -731,7 +704,6 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
         {emojiAcState?.open && (
           <EmojiAutocompletePopover
             query={emojiAcState.query}
-            dropdownPos={getDropdownPos()}
             selectedIndex={selectedIndex}
             onSelect={handleInsertEmoji}
             onClose={() => setEmojiAcState(null)}
