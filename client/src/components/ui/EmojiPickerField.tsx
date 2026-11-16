@@ -59,10 +59,8 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   className = "",
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [textValue, setTextValue] = useState(() => formatEmojiInput(value));
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerPos, setPickerPos] = useState<"top" | "bottom">("top");
   const [acOpen, setAcOpen] = useState(false);
   const [acQuery, setAcQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -81,21 +79,6 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   useEffect(() => {
     setTextValue(formatEmojiInput(value));
   }, [value]);
-
-  useEffect(() => {
-    if (!pickerOpen) return;
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setPickerPos(rect.top < 430 ? "bottom" : "top");
-    }
-    const handleOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [pickerOpen]);
 
   const filteredEmojis = useMemo(() => {
     if (!acQuery) {
@@ -182,7 +165,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`block relative ${className}`}>
+    <div className={`block relative ${className}`}>
       {label && (
         <span className="mb-1 flex items-baseline justify-between gap-2">
           <span className="field-label !mb-0">{label}</span>
@@ -250,7 +233,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
               handleSelectEmoji(val);
             }}
             onClose={() => setPickerOpen(false)}
-            position={pickerPos}
+            anchor={inputRef.current}
           />
         )}
 
