@@ -434,6 +434,8 @@ export interface SendRequestBody {
   payload?: DiscordMessagePayload;
   messages?: DiscordMessagePayload[];
   channelId?: string;
+  /** Existing Discord thread ID; takes precedence over channelId. */
+  threadId?: string;
   editMessageId?: string;
   authorUserId?: string;
   track?: boolean;
