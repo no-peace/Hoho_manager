@@ -4,8 +4,8 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest implementation head before this handoff update:** `23d046fd21ffc63240d013264d2f574cc94ff517`  
-**Previous handoff checkpoint commit:** `c913de7dd4b1af7581be9650d59b8116b6cbac77`  
+**Latest implementation head before this handoff update:** `a4bdcb50349ad675033e953619024228fd728df0`  
+**Previous handoff checkpoint commit:** `8f410eec9698f3e2c73f53ca2b93fcc492e3a30d`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
 **Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 is in progress; full runtime/release verification remains open. Do not describe this branch as tested or release-ready.
@@ -19,6 +19,7 @@
 - Preserved the live server resolver contract for `clantag` and the existing broader author fields. V10's proposed nine-field list and selected-server-membership behavior conflict with the live resolver and existing tests; those incompatible changes were not introduced.
 - UI plan nuance: the current sidebar is an `Elements | Templates` drawer with the component palette inline in the editor, rather than the plan's literal `Templates | Tracked | Actions` three-way switcher. This is an architectural deviation to reconcile explicitly, not a claim that the literal three-tab requirement was completed.
 - The UI changes are source-reviewed only. No browser screenshot or responsive visual pass has been performed.
+- Aligned the CI matrix job display name to the protected branch's required check contexts (`build-and-typecheck (22)` and `build-and-typecheck (26)`). No workflow run or combined status has appeared for the new head yet, so the check-name correction is committed but not verified by Actions.
 
 ## Latest implementation checkpoint — 2026-11-16
 
