@@ -43,7 +43,7 @@ export const UI_THEME_CONFIG = {
    * - Snappy Timing (75ms press scale to 0.97, never tween while held)
    */
   button: {
-    base: "relative inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out shrink-0 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0D12]",
+    base: "relative inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-[transform,background-color,color,opacity] duration-150 ease-out shrink-0 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0D12]",
     variants: {
       primary: "bg-[#818CF8] hover:bg-[#6366F1] active:bg-[#4F46E5] text-[#0B0D12] font-semibold border border-[#818CF8]/70 shadow-sm",
       secondary: "bg-[#1D2230] hover:bg-[#252B3A] active:bg-[#2C3344] text-[#F1F3F9] border border-[#272D3A]",
