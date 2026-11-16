@@ -89,7 +89,7 @@ export const toDiscordPayload = (
     exploit_name?: string;
   } = {};
 
-  if (extData.thread_name) payload.thread_name = extData.thread_name;
+  if (extData.thread_name && !extData.thread_id) payload.thread_name = extData.thread_name;
   if (extData.exploit_name) payload.exploit_name = extData.exploit_name;
 
   if (mode === "v2") {
