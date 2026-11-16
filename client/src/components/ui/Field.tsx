@@ -726,16 +726,26 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(() => Math.max(0, options.findIndex((option) => option.value === (value ?? defaultValue))));
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const floatingStyle = useFloatingMenuStyle(open ? buttonRef.current : null, 280);
   const selectedValue = String(value ?? defaultValue ?? options[0]?.value ?? "");
   const selected = options.find((option) => option.value === selectedValue);
   useEffect(() => {
     if (!open) return;
     const close = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
+  useEffect(() => {
+    if (open) optionRefs.current[activeIndex]?.scrollIntoView?.({ block: "nearest" });
+  }, [open, activeIndex]);
+
   const choose = (nextValue: string) => {
     onChange?.({ target: { value: nextValue, name } } as ChangeEvent<HTMLSelectElement>);
     setOpen(false);
@@ -743,7 +753,7 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
   return (
     <FieldShell label={label} hint={hint} className={className}>
       <div ref={rootRef} className="relative">
-        <button type="button" role="combobox" aria-label={label} aria-expanded={open} aria-controls={`select-options-${name ?? "field"}`}
+        <button ref={buttonRef} type="button" role="combobox" aria-label={label} aria-expanded={open} aria-controls={`select-options-${name ?? "field"}`}
           disabled={disabled} onClick={() => setOpen((current) => !current)}
           onKeyDown={(event) => {
             if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); setActiveIndex((index) => Math.min(options.length - 1, index + 1)); }
@@ -755,22 +765,39 @@ export const Select = ({ label, hint, options, className, value, defaultValue, o
           <span>{selected?.label ?? "Select an option"}</span>
           <ChevronDown size={14} className={"text-[#949ba4] transition-transform duration-150 " + (open ? "rotate-180 text-white" : "")} />
         </button>
-        <AnimatePresence>
-          {open && <motion.div id={`select-options-${name ?? "field"}`} role="listbox"
-            initial={UI_THEME_CONFIG.motion.popoverPoses.initial}
-            animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
-            exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
-            style={{ transformOrigin: "top center" }}
-            className={UI_THEME_CONFIG.field.selectListbox}>
-            {options.map((option, index) => <motion.button key={option.value} type="button" role="option" aria-selected={option.value === selectedValue}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.15, delay: Math.min(index * UI_THEME_CONFIG.motion.durations.staggerStep, UI_THEME_CONFIG.motion.durations.maxStaggerDelay), ease: UI_THEME_CONFIG.motion.easeOut } }}
-              onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(option.value)}
-              className={"w-full rounded-md px-2.5 py-2 text-left text-xs active:scale-[0.97] transition-transform " + (option.value === selectedValue ? "bg-[#5865f2] text-white font-semibold" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]")}>
-              {option.label}
-            </motion.button>)}
-          </motion.div>}
-        </AnimatePresence>
+        {open && typeof document !== "undefined" && createPortal(
+          <AnimatePresence>
+            <motion.div
+              ref={menuRef}
+              id={`select-options-${name ?? "field"}`}
+              role="listbox"
+              initial={UI_THEME_CONFIG.motion.popoverPoses.initial}
+              animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
+              exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
+              style={{ ...floatingStyle, transformOrigin: "top center" }}
+              className={`fixed z-[60] ${UI_THEME_CONFIG.field.selectListbox}`}
+            >
+              {options.map((option, index) => (
+                <motion.button
+                  ref={(node) => { optionRefs.current[index] = node; }}
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === selectedValue}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.15, delay: Math.min(index * UI_THEME_CONFIG.motion.durations.staggerStep, UI_THEME_CONFIG.motion.durations.maxStaggerDelay), ease: UI_THEME_CONFIG.motion.easeOut } }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => choose(option.value)}
+                  className={"w-full rounded-md px-2.5 py-2 text-left text-xs active:scale-[0.97] transition-transform " + (option.value === selectedValue ? "bg-[#5865f2] text-white font-semibold" : index === activeIndex ? "bg-[#2b2d31] text-white" : "text-[#dbdee1] hover:bg-[#232428]")}
+                >
+                  {option.label}
+                </motion.button>
+              ))}
+            </motion.div>
+          </AnimatePresence>,
+          document.body,
+        )}
         {required && <input type="hidden" name={name} value={selectedValue} />}
       </div>
     </FieldShell>
