@@ -99,7 +99,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
   const handleModeConversion = () => {
     const components = message.components ?? [];
-    const classicInteractiveTypes = new Set([
+    const classicInteractiveTypes = new Set<number>([
       ComponentType.Button,
       ComponentType.StringSelect,
       ComponentType.UserSelect,
@@ -107,21 +107,36 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       ComponentType.MentionableSelect,
       ComponentType.ChannelSelect,
     ]);
-    const canConvertV2ToClassic = components.every(
-      (component) =>
-        component.type === ComponentType.TextDisplay ||
-        (component.type === ComponentType.ActionRow &&
+    const projectedClassicContent = [
+      message.content ?? "",
+      ...components
+        .filter((component) => component.type === ComponentType.TextDisplay)
+        .map((component) => component.content ?? ""),
+    ].filter((part) => part.length > 0).join("\\n\\n");
+    const canConvertV2ToClassic =
+      projectedClassicContent.length <= 2000 &&
+      components.every(
+        (component) =>
+          component.type === ComponentType.TextDisplay ||
+          (component.type === ComponentType.ActionRow &&
+            (component.components ?? []).every((child) =>
+              classicInteractiveTypes.has(child.type),
+            )),
+      );
+    const canConvertClassicToV2 =
+      components.every(
+        (component) =>
+          component.type === ComponentType.ActionRow &&
           (component.components ?? []).every((child) =>
             classicInteractiveTypes.has(child.type),
-          )),
-    );
-    const canConvertClassicToV2 =
-      components.every((component) => component.type === ComponentType.ActionRow) &&
-      (message.embeds?.length ?? 0) === 0;
+          ),
+      ) && (message.embeds?.length ?? 0) === 0;
 
     if (isV2 && !canConvertV2ToClassic) {
       useGlobalStore.getState().showToast(
-        "This V2 message contains components that Classic cannot represent. Nothing was changed.",
+        projectedClassicContent.length > 2000
+          ? "This message has more than 2,000 characters of text and cannot fit in a Classic message. Nothing was changed."
+          : "This V2 message contains components that Classic cannot represent. Nothing was changed.",
         "warning",
       );
       setOptionsMenuOpen(false);
