@@ -5,6 +5,7 @@ import type { ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, Select
 import { createPortal } from "react-dom";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
+import { calculateFloatingPosition } from "../../utils/floatingPosition";
 
 export const VARIABLES = [
   { group: "User / Clicker" },
@@ -168,16 +169,23 @@ const useFloatingMenuStyle = (anchor: HTMLElement | null | undefined, menuWidth:
     const update = () => {
       const rect = anchor.getBoundingClientRect();
       const viewport = window.visualViewport;
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const above = Math.max(0, rect.top - viewportTop - 8);
-      const below = Math.max(0, viewportTop + viewportHeight - rect.bottom - 8);
-      const side = above > below ? "top" : "bottom";
-      const maxHeight = Math.max(64, Math.min(260, Math.max(above, below) - 8));
-      const width = Math.min(menuWidth, window.innerWidth - 16);
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-      const top = side === "top" ? Math.max(viewportTop + 4, rect.top - maxHeight - 6) : rect.bottom + 6;
-      setStyle({ position: "fixed", top, left, width, maxHeight, zIndex: 60 });
+      const position = calculateFloatingPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        {
+          width: viewport?.width ?? window.innerWidth,
+          height: viewport?.height ?? window.innerHeight,
+          offsetTop: viewport?.offsetTop,
+        },
+        { menuWidth, maxMenuHeight: 260 },
+      );
+      setStyle({
+        position: "fixed",
+        top: position.top,
+        left: position.left,
+        width: position.width,
+        maxHeight: position.maxHeight,
+        zIndex: 60,
+      });
     };
     update();
     window.addEventListener("resize", update);
