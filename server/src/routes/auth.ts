@@ -398,37 +398,36 @@ router.post(
   }),
 );
 
-// POST /api/auth/dev-login (dev/test only)
+// POST /api/auth/dev-login (explicit local development opt-in only)
 router.post(
   "/dev-login",
-  asyncHandler(async (req, res) => {
-    if (env.isProd) {
+  asyncHandler(async (_req, res) => {
+    // This endpoint is disabled by default and can never be enabled in production.
+    if (!env.devAuthBypass) {
       throw ApiError.notFound();
     }
 
-    const { discordId, username, avatar } = req.body;
-    if (!discordId || typeof discordId !== "string") {
-      throw ApiError.badRequest("discordId is required");
-    }
-
-    const isHead = await settingsService.isHeadAdmin(discordId);
-    const isOwner = env.ownerDiscordIds.includes(discordId);
-    const role: UserRole = isHead || isOwner ? "admin" : "editor";
-    const uname = username || `User_${discordId.slice(-4)}`;
+    // A reserved synthetic identity keeps local test data separate from real Discord accounts.
+    const discordId = "999999999999999999";
+    const username = "Local Developer";
+    const avatar: string | null = null;
 
     await userRepository.upsert({
       discordId,
-      username: uname,
-      avatar: avatar ?? null,
-      role,
+      username,
+      avatar,
+      role: "admin",
     });
 
     const sessionUser: SessionUser = {
       id: discordId,
-      username: uname,
-      global_name: uname,
-      avatar: avatar ?? null,
-      role,
+      username,
+      global_name: username,
+      avatar,
+      role: "admin",
+      hasDefaultBotAccess: true,
+      isFirstLogin: false,
+      mutualGuilds: [],
     };
 
     const token = createSessionToken(sessionUser);
@@ -440,7 +439,8 @@ router.post(
       path: "/",
     });
 
-    res.json({ ok: true, user: sessionUser, token });
+    log.warn("A local developer session was created. This identity is not a real Discord account.");
+    res.json({ ok: true, user: sessionUser });
   }),
 );
 
