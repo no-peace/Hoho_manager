@@ -17,7 +17,8 @@ export const PropertyPanel = () => {
   const pendingFlowSelectionRef = useRef<string | null>(null);
   const selection = useMessageStore((state) => state.selection);
   const messageData = useMessageStore((state) => state.data);
-  const components = messageData.components;\n  const flows = useActionStore((state) => state.flows);
+  const components = messageData.components;
+  const flows = useActionStore((state) => state.flows);
   const select = useMessageStore((state) => state.select);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
