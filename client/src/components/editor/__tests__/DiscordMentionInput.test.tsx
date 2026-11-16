@@ -1,7 +1,13 @@
+import { useState } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { DiscordMentionInput } from "../DiscordMentionInput";
 import { useGlobalStore } from "../../../store/globalStore";
+
+const ControlledMentionInput = () => {
+  const [value, setValue] = useState("");
+  return <DiscordMentionInput value={value} onChange={setValue} showToolbar={false} />;
+};
 
 describe("DiscordMentionInput (UI-03 Markdown Ribbon & Shortcuts)", () => {
   beforeEach(() => {
@@ -78,6 +84,39 @@ describe("DiscordMentionInput (UI-03 Markdown Ribbon & Shortcuts)", () => {
     // Ctrl+E
     fireEvent.keyDown(textarea, { key: "e", ctrlKey: true });
     expect(handleChange).toHaveBeenCalledWith("`code`");
+  });
+
+  it("opens variable autocomplete on a bare brace and supports keyboard navigation", () => {
+    render(<ControlledMentionInput />);
+    const textarea = screen.getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "{", selectionStart: 1, selectionEnd: 1 } });
+
+    const listbox = screen.getByRole("listbox");
+    const options = within(listbox).getAllByRole("option");
+    expect(options.length).toBeGreaterThan(0);
+    expect(options[0].getAttribute("aria-selected")).toBe("true");
+
+    fireEvent.keyDown(textarea, { key: "ArrowDown" });
+    expect(options[1].getAttribute("aria-selected")).toBe("true");
+
+    fireEvent.keyDown(textarea, { key: "Escape" });
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("suggests the WEAO chain while typing the partial exploit prefix", () => {
+    render(<ControlledMentionInput />);
+    const textarea = screen.getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "{explo", selectionStart: 6, selectionEnd: 6 } });
+    expect(screen.getByText("{exploit.<Name>.<Field>}")).toBeDefined();
+  });
+
+  it("suggests only server-supported user placeholder fields for a valid Discord snowflake", () => {
+    render(<ControlledMentionInput />);
+    const textarea = screen.getByRole("textbox");
+    const value = "{user.123456789012345678.ava";
+    fireEvent.change(textarea, { target: { value, selectionStart: value.length, selectionEnd: value.length } });
+    expect(screen.getByText("{user.avatar}")).toBeDefined();
+    expect(screen.queryByText(/avatarurl/i)).toBeNull();
   });
 
   it("detects @ mention trigger and displays autocomplete options", () => {

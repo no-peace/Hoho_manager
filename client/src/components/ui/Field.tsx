@@ -232,8 +232,11 @@ const VariableAutocompletePopover = ({
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
             key={item.tag}
+            id={`field-variable-option-${idx}`}
+            role="option"
+            aria-selected={idx === selectedIndex}
             type="button"
-            className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
+            className={`w-full text-left px-2 py-1.5 rounded-md text-xs flex items-center justify-between transition-colors ${
               idx === selectedIndex
                 ? "bg-[#818CF8]/15 text-[#F1F3F9] border-l-2 border-[#818CF8]"
                 : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
@@ -244,7 +247,7 @@ const VariableAutocompletePopover = ({
             }}
           >
             <div className="min-w-0 flex-1">
-              <span className="font-mono font-semibold text-xs">{(item as any).displayTag ?? item.tag}</span>
+              <span className="font-mono font-medium text-xs">{(item as any).displayTag ?? item.tag}</span>
               <p
                 className={`text-[10px] truncate ${
                   idx === selectedIndex ? "text-[#E5E7F3]" : "text-[#6F788A]"
@@ -341,11 +344,14 @@ const EmojiAutocompletePopover = ({
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
             key={item.key}
+            id={`field-emoji-option-${idx}`}
+            role="option"
+            aria-selected={idx === selectedIndex}
             type="button"
-            className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors ${
+            className={`w-full text-left px-2 py-1.5 rounded-md text-xs flex items-center gap-2 transition-colors ${
               idx === selectedIndex
-                ? "bg-[#5865f2] text-white"
-                : "text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#818CF8]/15 text-[#F1F3F9] border-l-2 border-[#818CF8]"
+                : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
             }`}
             onMouseDown={(e) => {
               e.preventDefault();
@@ -415,7 +421,11 @@ const useFieldAutocomplete = <T extends HTMLInputElement | HTMLTextAreaElement>(
     onValueChange(nextValue);
     setTimeout(() => {
       input.focus();
-      input.setSelectionRange(start + text.length, start + text.length);
+      try {
+        input.setSelectionRange(start + text.length, start + text.length);
+      } catch {
+        // Some input types do not support text selection ranges.
+      }
     }, 0);
   };
 
