@@ -252,6 +252,7 @@ export const api = {
             username: string;
             globalName: string | null;
             nickname: string | null;
+            clanTag: string | null;
             avatarUrl: string;
             profileUrl: string;
           }
