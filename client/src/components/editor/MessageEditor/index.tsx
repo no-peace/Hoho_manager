@@ -51,7 +51,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const addEmbed = useMessageStore((state) => state.addEmbed);
   const addComponent = useMessageStore((state) => state.addComponent);
   const select = useMessageStore((state) => state.select);
-  const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const clearFiles = useMessageStore((state) => state.clearFiles);
   const flows = useActionStore((state) => state.flows);
   const removeFlow = useActionStore((state) => state.removeFlow);
