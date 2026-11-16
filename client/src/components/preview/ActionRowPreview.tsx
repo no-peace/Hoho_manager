@@ -105,6 +105,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
 
   return (
     <button
+      data-preview-component-id={button._id}
       type="button"
       disabled={button.disabled}
       onClick={(event) => {
