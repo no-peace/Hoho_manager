@@ -135,8 +135,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     if (isV2 && !canConvertV2ToClassic) {
       useGlobalStore.getState().showToast(
         projectedClassicContent.length > 2000
-          ? "This message has more than 2,000 characters of text and cannot fit in a Classic message. Nothing was changed."
-          : "This V2 message contains components that Classic cannot represent. Nothing was changed.",
+          ? "Cannot convert: Classic text limit is 2,000 characters."
+          : "Cannot convert: unsupported V2 components.",
         "warning",
       );
       setOptionsMenuOpen(false);
@@ -146,8 +146,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     if (!isV2 && !canConvertClassicToV2) {
       useGlobalStore.getState().showToast(
         (message.embeds?.length ?? 0) > 0
-          ? "Remove or recreate the embeds before converting to V2. Embeds cannot be preserved in Components V2."
-          : "This message contains components that cannot be safely converted to Components V2. Nothing was changed.",
+          ? "Cannot convert: remove embeds before switching to V2."
+          : "Cannot convert: unsupported Classic components.",
         "warning",
       );
       setOptionsMenuOpen(false);
