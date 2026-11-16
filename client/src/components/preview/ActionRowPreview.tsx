@@ -5,7 +5,6 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Preview of an action row's controls.
