@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { useActionStore } from "../store/actionStore";
 import { useMessageStore } from "../store/messageStore";
-import { useProfileStore } from "../store/profileStore";
 import { SEND_MODES } from "../utils/constants";
 import type { EditorMode, SendModeValue } from "../utils/constants";
 import { isPayloadEmpty } from "../utils/discord";
@@ -25,8 +24,6 @@ export interface UseSendReturn {
 export const useSend = (): UseSendReturn => {
   const mode = useMessageStore((state) => state.mode);
   const setSendState = useMessageStore((state) => state.setSendState);
-
-  const channelId = useProfileStore((state) => state.channelId);
 
   const sendMessage = useCallback(async (editMessageId?: string): Promise<SendResult> => {
     const store = useMessageStore.getState();
@@ -86,7 +83,6 @@ export const useSend = (): UseSendReturn => {
           mode: "bot",
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
-          channelId: channelId || undefined,
           ...(threadId ? { threadId } : {}),
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
@@ -103,7 +99,6 @@ export const useSend = (): UseSendReturn => {
           mode: "bot",
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
-          channelId: channelId || undefined,
           ...(threadId ? { threadId } : {}),
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
@@ -118,10 +113,10 @@ export const useSend = (): UseSendReturn => {
       setSendState({ status: "error", error: message, result: null });
       return { ok: false, error: message };
     }
-  }, [channelId, setSendState]);
+  }, [setSendState]);
 
   const activeMessage = useMessageStore((state) => state.data) as unknown as { thread_id?: string };
-  const isConfigured = Boolean((channelId && channelId.trim() !== "") || activeMessage.thread_id?.trim());
+  const isConfigured = Boolean(activeMessage.thread_id?.trim());
   return { sendMessage, isConfigured, mode, sendMode: SEND_MODES.BOT };
 };
 
