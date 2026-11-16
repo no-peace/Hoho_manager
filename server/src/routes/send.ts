@@ -217,7 +217,7 @@ router.post(
             "user.id": senderDiscordId,
             "user.mention": `<@${senderDiscordId}>`,
             "user.name": senderNickname,
-            "user.tag": resolvedSenderName,
+            "user.username": senderUsername,
             "user.displayname": senderGlobalName,
           }
           : {}),
