@@ -124,7 +124,6 @@ export const FileAttachmentsSection: React.FC = () => {
 
   return (
     <section className="rounded-[10px] border border-[#272D3A] bg-[#161A23] overflow-hidden text-xs">
-      {/* ── Section Trigger Header ── */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230]">
         <button
           type="button"
@@ -173,7 +172,6 @@ export const FileAttachmentsSection: React.FC = () => {
 
       {isOpen && (
         <div className="p-3 space-y-3">
-          {/* External URL attachment bar */}
           {urlOpen && (
             <div className="flex items-center gap-2 rounded bg-[#1D2230] p-2 border border-[#161A23]">
               <input
@@ -219,7 +217,6 @@ export const FileAttachmentsSection: React.FC = () => {
             </p>
           )}
 
-          {/* Drag & Drop Zone */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -247,7 +244,6 @@ export const FileAttachmentsSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Attachments List */}
           {attachedFiles.length > 0 && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {attachedFiles.map((file) => (
@@ -258,7 +254,6 @@ export const FileAttachmentsSection: React.FC = () => {
                   <div className="relative aspect-video w-full overflow-hidden rounded bg-[#10131A]">
                     {renderFileThumbnail(file)}
 
-                    {/* Action buttons overlay */}
                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
@@ -297,7 +292,6 @@ export const FileAttachmentsSection: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Metadata labels */}
                   <div className="mt-1.5 min-w-0">
                     <p
                       className="text-[11px] font-medium text-[#F1F3F9] truncate leading-tight"
