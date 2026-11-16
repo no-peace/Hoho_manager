@@ -931,7 +931,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               onInsert={insertDirect}
               onClose={() => setShowRichPicker(false)}
               guildId={effectiveGuildId}
-              position={dropdownPosition}
+              anchor={textareaRef.current}
             />
           )}
         </div>
