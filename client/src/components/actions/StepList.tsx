@@ -403,7 +403,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             onChange={(e) => patchConfig(index, { ...config, customId: e.target.value })}
           />
 
-          {/* Discord Modal Live Preview Mockup */}
           <div className="pt-1">
             <span className="text-[10px] font-medium text-[#A1A8B8] block mb-1">
               Live Modal Mockup
@@ -513,7 +512,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
                     />
 
-                    {/* Character Limits */}
                     <div className="grid grid-cols-2 gap-2">
                       <TextField
                         label="Min Length (0 - 4000)"
@@ -539,7 +537,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       />
                     </div>
 
-                    {/* Variable Syntax Helper Pills */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#161A23]">
                       <span className="text-[10px] text-[#A1A8B8]">Variable:</span>
                       <span
@@ -593,7 +590,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
       return (
         <div className="space-y-3">
-          {/* Check Type Toggle */}
           <div className="flex items-center gap-1 bg-[#1D2230] p-1 rounded border border-[#10131A]">
             <button
               type="button"
