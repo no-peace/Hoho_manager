@@ -19,6 +19,7 @@ export interface PreviewDiscordUser {
   username: string;
   globalName: string | null;
   nickname: string | null;
+  clanTag: string | null;
   avatarUrl: string;
   profileUrl: string;
 }
@@ -55,6 +56,15 @@ const collectUserIds = (value: unknown, ids: Set<string>): void => {
   }
 };
 
+const extractLegacyClanTag = (...values: (string | null | undefined)[]): string => {
+  for (const value of values) {
+    if (!value) continue;
+    const match = value.match(/(?:\[([^\[\]]{1,16})\]|\(([^()]{1,16})\)|\{([^{}]{1,16})\})/);
+    const tag = match?.slice(1).find(Boolean)?.trim();
+    if (tag) return tag;
+  }
+  return "";
+};
 const getFieldValue = (
   user: PreviewDiscordUser,
   field: string,
@@ -69,6 +79,9 @@ const getFieldValue = (
     case "username":
     case "tag":
       return user.username;
+
+    case "clantag":
+      return user.clanTag || null;
 
     case "id":
       return user.id;
@@ -122,7 +135,7 @@ export const UserPlaceholderPreviewProvider = ({
         // Invalid/transient editor state: leave placeholders unresolved.
       }
     }
-    if (currentUser?.id && /\{user\.(?:name|displayname)\}/i.test(sourceSnapshot)) {
+    if (currentUser?.id && /\{user\.(?:name|displayname|clantag)\}/i.test(sourceSnapshot)) {
       ids.add(currentUser.id);
     }
     return [...ids];
@@ -205,12 +218,13 @@ export const UserPlaceholderPreviewProvider = ({
           if (!user) return original;
           return getFieldValue(user, field) ?? original;
         })
-        .replace(/\{user\.(name|displayname)\}/gi, (original, field: string) => {
+        .replace(/\{user\.(name|displayname|clantag)\}/gi, (original, field: string) => {
           const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
-          return field.toLowerCase() === "name"
-            ? user.nickname || user.username
-            : user.globalName || user.username;
+          const normalized = field.toLowerCase();
+          if (normalized === "name") return user.nickname || user.username;
+          if (normalized === "clantag") return user.clanTag || extractLegacyClanTag(user.nickname, user.username);
+          return user.globalName || user.username;
         });
     },
     [users, currentUser?.id, showResolved],
