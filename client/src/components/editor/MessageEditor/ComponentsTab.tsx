@@ -124,7 +124,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
     };
 
     const cardHeader = (
-      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230] rounded-t-lg select-none">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#161A23] border-b border-[#272D3A] rounded-t-lg select-none">
         <span className="text-xs font-bold uppercase tracking-wider text-[#F1F3F9]">
           {getComponentTitle(comp, compIdx)}
         </span>
@@ -172,7 +172,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
               ensureActive();
               if (id) removeComponentById(id);
             }}
-            className="p-1 rounded text-[#A1A8B8] hover:text-[#F87171] hover:bg-[#F87171]/20"
+            className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20"
             title="Delete"
           >
             <Trash2 size={13} />
@@ -190,7 +190,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className="rounded-[10px] bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
+          className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
           <div className="p-3 space-y-2.5">
@@ -214,12 +214,12 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                   e.stopPropagation();
                   setOpenAccessoryMenuId(openAccessoryMenuId === id ? null : id);
                 }}
-                className="px-2.5 py-1 rounded bg-[#252B3A] hover:bg-[#343C4E] text-xs font-semibold text-[#F1F3F9] hover:text-white flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1 rounded bg-[#252B3A] hover:bg-[#4e5058] text-xs font-semibold text-[#F1F3F9] hover:text-white flex items-center gap-1.5 transition-colors"
               >
                 <Plus size={12} /> Add Accessory <ChevronDown size={12} />
               </button>
               {openAccessoryMenuId === id && (
-                <div className="absolute left-0 bottom-full mb-1 w-44 bg-[#1D2230] border border-[#10131A] rounded-lg shadow-2xl py-1 z-[10000] text-xs">
+                <div className="absolute left-0 bottom-full mb-1 w-44 bg-[#272D3A] border border-[#111214] rounded-lg shadow-2xl py-1 z-30 text-xs">
                   <button
                     type="button"
                     onClick={() => {
@@ -336,9 +336,9 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
 
             {/* Accessory Editor */}
             {accessory && (
-              <div className="rounded bg-[#10131A] border border-[#1D2230] p-2.5 space-y-2">
+              <div className="rounded bg-[#161A23] border border-[#272D3A] p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-[#A1A8B8]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">
                     Accessory {" "}
                     {accessory.type === ComponentType.Thumbnail ? "Thumbnail" : "Button"}
                   </span>
@@ -355,7 +355,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                         });
                       }
                     }}
-                    className="text-[11px] text-[#F87171] hover:underline flex items-center gap-1"
+                    className="text-[11px] text-[#f28b8b] hover:underline flex items-center gap-1"
                   >
                     <Trash2 size={12} /> Remove Accessory
                   </button>
@@ -363,7 +363,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
 
                 {accessory.type === ComponentType.Thumbnail ? (
                   <div>
-                    <label className="block text-[10px] font-medium text-[#A1A8B8] tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                       Thumbnail Image URL
                     </label>
                     <input
@@ -381,7 +381,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                           });
                         }
                       }}
-                      className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                      className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                     />
                   </div>
                 ) : (
@@ -405,7 +405,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                               });
                             }
                           }}
-                          className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                          className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                         >
                           <option value={ButtonStyle.Primary}>Primary (Blurple)</option>
                           <option value={ButtonStyle.Secondary}>Secondary (Grey)</option>
@@ -447,7 +447,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                                 });
                               }
                             }}
-                            className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                            className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                           />
                         ) : (
                           <button
@@ -502,7 +502,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             {items.map((item, itemIdx) => (
               <div
                 key={item._id || itemIdx}
-                className="rounded bg-[#10131A] border border-[#1D2230] p-2.5 space-y-2"
+                className="rounded bg-[#161A23] border border-[#272D3A] p-2.5 space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-[#F1F3F9]">
@@ -518,7 +518,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                         });
                       }
                     }}
-                    className="p-1 text-[#A1A8B8] hover:text-[#F87171]"
+                    className="p-1 text-[#A1A8B8] hover:text-[#f28b8b]"
                     title="Remove Media Item"
                   >
                     <Trash2 size={12} />
@@ -531,7 +531,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                   onChange={(e) =>
                     updateGalleryItem(itemIdx, { media: { url: e.target.value } })
                   }
-                  className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                 />
                 <div className="flex items-center gap-3">
                   <input
@@ -541,7 +541,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                     onChange={(e) =>
                       updateGalleryItem(itemIdx, { description: e.target.value })
                     }
-                    className="flex-1 bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                    className="flex-1 bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                   />
                   <label className="flex items-center gap-1.5 text-xs text-[#F1F3F9] cursor-pointer shrink-0">
                     <input
@@ -599,7 +599,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                 ensureActive();
                 if (id) updateComponentById(id, { file: { url: e.target.value } });
               }}
-              className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] focus:outline-none"
+              className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
             />
           </div>
         </div>
@@ -621,7 +621,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           <div className="p-3 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-[#F1F3F9]">Spacing Size:</span>
-              <div className="inline-flex rounded bg-[#1D2230] p-0.5 border border-[#10131A]">
+              <div className="inline-flex rounded bg-[#272D3A] p-0.5 border border-[#111214]">
                 <button
                   type="button"
                   onClick={() => {
@@ -703,17 +703,17 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             e.stopPropagation();
             ensureActive();
           }}
-          className={`rounded-lg bg-[#10131A] border transition-[background-color,border-color,box-shadow] duration-150 ease-out ${
-            isSelected ? "border-[#818CF8] ring-1 ring-[#818CF8]" : "border-[#1D2230]"
+          className={`rounded-lg bg-[#161A23] border transition-[background-color,border-color,box-shadow] duration-150 ease-out ${
+            isSelected ? "border-[#818CF8] ring-1 ring-[#818CF8]" : "border-[#272D3A]"
           }`}
           style={{
             borderLeftWidth: "4px",
-            borderLeftColor: comp.accent_color != null ? accentHex : "#343C4E",
+            borderLeftColor: comp.accent_color != null ? accentHex : "#383a40",
           }}
         >
           {cardHeader}
           <div className="p-3 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#161A23] p-2.5 rounded border border-[#1D2230]">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#161A23] p-2.5 rounded border border-[#272D3A]">
               <ColorPicker
                 label="Container Accent Color"
                 value={comp.accent_color ?? null}
@@ -725,7 +725,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             </div>
 
             {/* Nested Components inside Container */}
-            <div className="space-y-2.5 pl-2 border-l-2 border-[#1D2230]">
+            <div className="space-y-2.5 pl-2 border-l-2 border-[#272D3A]">
               {children.map((child, childIdx) =>
                 renderV2ComponentCard(child, childIdx, children.length, id),
               )}
@@ -744,7 +744,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
               </button>
 
               {openContainerAddId === id && (
-                <div className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#1D2230] border border-[#10131A] shadow-2xl rounded-lg py-1 z-30">
+                <div className="absolute left-0 bottom-full mb-1.5 w-48 bg-[#272D3A] border border-[#111214] shadow-2xl rounded-lg py-1 z-30">
                   {CONTAINER_CHILD_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     return (
@@ -778,7 +778,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between text-xs italic text-[#A1A8B8] px-0.5 tabular-nums">
         <span>
-          <span className={totalV2Chars >= Limits.components.textDisplay ? "text-[#F87171] font-bold" : totalV2Chars / Limits.components.textDisplay >= 0.9 ? "text-yellow-400" : "text-[#F1F3F9]"}>
+          <span className={totalV2Chars >= Limits.components.textDisplay ? "text-[#f28b8b] font-bold" : totalV2Chars / Limits.components.textDisplay >= 0.9 ? "text-yellow-400" : "text-[#F1F3F9]"}>
             {totalV2Chars}
           </span>
           /{Limits.components.textDisplay} characters
