@@ -214,7 +214,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
           }
         }}
       >
-        <span className="truncate min-w-0 flex-1 text-[#F1F3F9]">{displayValue}</span>
+        <span className="truncate min-w-0 flex-1 text-[#dbdee1]">{displayValue}</span>
         <span className="text-[10px] text-[#A1A8B8] shrink-0 ml-2">▼</span>
       </div>
 
@@ -251,7 +251,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
                   left: dropdownLeft,
                   width: dropdownWidth,
                   maxHeight: calculatedMaxHeight,
-                  zIndex: 10000,
+                  zIndex: 99999,
                 }}
                 className={`bg-[#161A23] border border-[#272D3A] ${isMobile ? "rounded-[12px]" : "rounded-lg"} shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
               >
