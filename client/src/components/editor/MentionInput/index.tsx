@@ -15,6 +15,7 @@ import { RichPicker } from "../RichPicker";
 import { VARIABLES } from "../../ui/Field";
 import { useGlobalStore } from "../../../store/globalStore";
 import { useDiscordCacheStore } from "../../../store/discordCacheStore";
+import { calculateFloatingPosition } from "../../../utils/floatingPosition";
 import api from "../../../api/client";
 import { getUserIdPlaceholderSuggestions } from "../../../utils/userPlaceholderAutocomplete";
 import {
@@ -79,14 +80,17 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       if (!anchor) return;
       const rect = anchor.getBoundingClientRect();
       const viewport = window.visualViewport;
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const margin = 12;
-      const spaceAbove = Math.max(0, rect.top - viewportTop - margin);
-      const spaceBelow = Math.max(0, viewportTop + viewportHeight - rect.bottom - margin);
-      const available = Math.max(spaceAbove, spaceBelow);
-      setDropdownPosition(spaceAbove > spaceBelow ? "top" : "bottom");
-      setDropdownMaxHeight(Math.max(48, Math.min(320, available - 8)));
+      const position = calculateFloatingPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        {
+          width: viewport?.width ?? window.innerWidth,
+          height: viewport?.height ?? window.innerHeight,
+          offsetTop: viewport?.offsetTop,
+        },
+        { menuWidth: rect.width, maxMenuHeight: 320 },
+      );
+      setDropdownPosition(position.side);
+      setDropdownMaxHeight(position.maxHeight);
     };
 
     updatePlacement();
