@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
-import { SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
+import { SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { UI_THEME_CONFIG } from "../config/uiThemeConfig";
 import { motion } from "motion/react";
@@ -321,8 +321,7 @@ export const DocsPage = () => {
       "footer": { "text": ".gg/hohohub" },
       "author": {
         "name": "{user.708504312862474282.name}",
-        "url": "{user.708504312862474282.url}",
-        "url": "https://discord.com/users/708504312862474282"
+        "url": "{user.708504312862474282.url}"
       }
     }
   ]
