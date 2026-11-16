@@ -1,7 +1,6 @@
-import { Copy, Trash2, X, Sliders, Workflow } from "lucide-react";
+import { Copy, Trash2, X, Sliders, Workflow, MousePointerClick, Layers, Hash } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
-import { MousePointerClick, Layers, Hash } from "lucide-react";
 import { useActionStore } from "../../store/actionStore";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";

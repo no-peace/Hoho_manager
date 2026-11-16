@@ -106,11 +106,11 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
 
   const hasBranches = steps.some((step) => {
     if (step.type !== "check") return false;
-    const branchLength = (key: "then" | "else"): number => {
+    const branchLength = (key: "then" | "else" | "pass" | "fail"): number => {
       const value = step.config?.[key];
       return Array.isArray(value) ? value.length : 0;
     };
-    return branchLength("then") > 0 || branchLength("else") > 0;
+    return branchLength("then") > 0 || branchLength("else") > 0 || branchLength("pass") > 0 || branchLength("fail") > 0;
   });
 
   return (
@@ -137,7 +137,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
       <StepList steps={steps} onChange={commit} depth={0} />
 
       {(steps.length > 1 || hasBranches) && (
-        <p className="rounded bg-[#10131A] px-2 py-1.5 text-[11px] text-[#6F788A]">
+        <p className="rounded-[8px] border border-[#272D3A] bg-[#10131A] px-2.5 py-2 text-[11px] text-[#A1A8B8]">
           Multi-step and branching flows run on the server. Save this as a template, or send it in{" "}
           <span className="text-[#F1F3F9]">bot token</span> mode so the steps are registered before the
           message goes out.
