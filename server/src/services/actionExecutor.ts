@@ -61,7 +61,7 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
     // User
     "user.mention": `<@${userId}>`,
     "user.name": nickname,
-    "user.tag": username,
+    "user.username": username,
     "user.displayname": displayname,
     "user.id": userId,
     "user.avatar": user?.avatar
