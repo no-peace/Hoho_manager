@@ -160,7 +160,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
             key={rowId}
             className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
           >
-            {/* ── Action Row Header ── */}
             <div className="flex items-center justify-between px-3 py-1.5 bg-[#10131A] border-b border-[#1D2230] rounded-t-lg select-none">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#F1F3F9]">
@@ -210,7 +209,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
               </div>
             </div>
 
-            {/* ── Action Row Body ── */}
             <div className="p-3 space-y-2.5">
               {children.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -253,7 +251,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
                           <Sliders size={11} className="opacity-60 group-hover:opacity-100" />
 
-                          {/* Compact floating controls on hover */}
                           <div
                             onClick={(e) => e.stopPropagation()}
                             className={`${isSelected ? "flex" : "hidden group-hover:flex"} items-center gap-0.5 absolute -top-7 right-0 bg-[#10131A] border border-[#161A23] rounded px-1 py-0.5 shadow-lg z-20`}
@@ -356,7 +353,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                 </div>
               )}
 
-              {/* ── Add Button / Add Select Menu Controls ── */}
               {(canAddButton || canAddSelect) && (
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">
                   {canAddButton && (
