@@ -24,7 +24,6 @@ export interface FloatingPositionOptions {
   maxMenuHeight?: number;
   margin?: number;
   gap?: number;
-  minMenuHeight?: number;
 }
 
 /**
@@ -39,7 +38,6 @@ export const calculateFloatingPosition = (
 ): FloatingPosition => {
   const margin = options.margin ?? 8;
   const gap = options.gap ?? 6;
-  const minMenuHeight = options.minMenuHeight ?? 48;
   const maxMenuHeight = options.maxMenuHeight ?? 320;
   const menuWidth = options.menuWidth ?? Math.min(288, anchor.width);
 
@@ -48,7 +46,7 @@ export const calculateFloatingPosition = (
   const spaceBelow = Math.max(0, viewportTop + viewport.height - anchor.bottom - margin);
   const side = spaceAbove > spaceBelow ? "top" : "bottom";
   const availableSpace = side === "top" ? spaceAbove : spaceBelow;
-  const maxHeight = Math.max(minMenuHeight, Math.min(maxMenuHeight, availableSpace - gap));
+  const maxHeight = Math.min(maxMenuHeight, Math.max(0, availableSpace - gap));
   const width = Math.max(0, Math.min(menuWidth, viewport.width - margin * 2));
   const left = Math.max(margin, Math.min(anchor.left, viewport.width - width - margin));
   const top = side === "top"
