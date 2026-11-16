@@ -1,9 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Geist Sans", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
-  --font-code: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --font-code: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
 
   --spacing-inherit: inherit;
   --spacing-4-5: 1.125rem;
@@ -115,17 +116,74 @@
 }
 
 /* ── Discord Color Variables & Root ───────────────────────────────────── */
-:root {
-  --color-chrome: #1E1F22;
-  --color-sidebar: #2B2D31;
-  --color-surface: #313338;
-  --color-raised: #2B2D31;
-  --color-hover: #35373C;
-  --color-input: #1E1F22;
-  --color-blurple: #5865F2;
-  scrollbar-color: #1A1B1E #2B2D31;
-}
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
 
+  /* Pillars 1 & 2: SaaS developer studio */
+  --bg-main: #0B0D12;
+  --bg-primary: #0B0D12;
+  --bg-secondary: #10131A;
+  --bg-tertiary: #161A23;
+  --bg-elevated: #161A23;
+  --bg-interactive: #1D2230;
+  --bg-floating: #161A23;
+  --bg-modifier-hover: #252B3A;
+  --bg-modifier-active: #2C3344;
+  --bg-modifier-selected: rgba(129, 140, 248, 0.12);
+  --bg-glass: rgba(16, 19, 26, 0.88);
+
+  --border-subtle: #272D3A;
+  --border-default: #272D3A;
+  --border-muted: #202531;
+  --border-strong: #343C4E;
+  --border-focus: #818CF8;
+
+  --brand-primary: #818CF8;
+  --brand-hover: #6366F1;
+  --brand-active: #4F46E5;
+  --accent-secondary: #A78BFA;
+  --accent-subtle-bg: rgba(129, 140, 248, 0.12);
+
+  --text-primary: #F1F3F9;
+  --text-secondary: #A1A8B8;
+  --text-muted: #6F788A;
+
+  --status-success: #34D399;
+  --status-warning: #FBBF24;
+  --status-danger: #F87171;
+  --status-error: #F87171;
+  --status-info: #60A5FA;
+
+  /* Pillar 3: authentic Discord preview; never theme these as studio surfaces */
+  --discord-bg-chat: #313338;
+  --discord-bg-card: #2b2d31;
+  --discord-bg-tertiary: #1e1f22;
+  --discord-blurple: #5865f2;
+  --discord-blurple-hover: #4752c4;
+  --discord-text-primary: #f2f3f5;
+  --discord-text-body: #dbdee1;
+  --discord-text-muted: #949ba4;
+
+  /* Backward-compatible Tailwind semantic colors for studio surfaces */
+  --color-chrome: #10131A;
+  --color-sidebar: #10131A;
+  --color-surface: #0B0D12;
+  --color-raised: #161A23;
+  --color-hover: #252B3A;
+  --color-input: #1D2230;
+  --color-line: #272D3A;
+  --color-line-soft: #202531;
+  --color-ink: #F1F3F9;
+  --color-ink-strong: #F1F3F9;
+  --color-ink-muted: #A1A8B8;
+  --color-ink-faint: #6F788A;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-success: #34D399;
+  --color-link: #818CF8;
+  scrollbar-color: #343C4E #10131A;
+}
 
 html, body, #root {
   min-height: 100%;
@@ -135,9 +193,9 @@ html, body, #root {
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  background-color: #313338;
-  color: #DBDEE1;
-  font-family: "Geist Sans", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .no-scrollbar {
@@ -150,7 +208,7 @@ html, body, #root {
 }
 
 ::selection {
-  background: rgba(88, 101, 242, 0.35);
+  background: rgba(129, 140, 248, 0.25);
   color: #ffffff;
 }
 
@@ -161,13 +219,13 @@ html, body, #root {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #1A1B1E;
+  background-color: #343C4E;
   border-radius: 9999px;
-  border: 2px solid #2B2D31;
+  border: 2px solid #10131A;
 }
 
 *::-webkit-scrollbar-track {
-  background-color: #2B2D31;
+  background-color: #10131A;
   border-radius: 9999px;
 }
 
@@ -190,32 +248,35 @@ details summary::-webkit-details-marker {
 .loading-dot:nth-child(3) { animation-delay: 320ms; }
 
 @layer components {
+  .studio-panel { background: var(--bg-secondary); border: 1px solid var(--border-default); border-radius: 10px; }
+  .studio-card { background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); }
+  .studio-subpanel { background: var(--bg-interactive); border: 1px solid var(--border-muted); border-radius: 8px; }
+  .studio-pill { background: var(--accent-subtle-bg); color: var(--brand-primary); border: 1px solid rgba(129, 140, 248, 0.22); border-radius: 6px; }
   .field {
     min-height: 36px;
     width: 100%;
-    border-radius: 0.375rem;
-    border: 1px solid #111214;
-    background-color: #1e1f22;
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+    background-color: var(--bg-interactive);
     padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    color: #dbdee1;
+    font-size: 13.5px;
+    color: var(--text-primary);
     outline: none;
-    transition: border-color 0.15s ease;
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
   }
   .field:focus {
-    border-color: #5865f2;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
   }
   .field::placeholder {
-    color: #949ba4;
+    color: var(--text-muted);
   }
   .field-label {
     margin-bottom: 0.375rem;
     display: block;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #949ba4;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
   }
   .text-link {
     color: #00a8fc;
