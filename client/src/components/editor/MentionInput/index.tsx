@@ -246,7 +246,13 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
                   exp.title.toLowerCase().startsWith(`${candidateName.toLowerCase()}.`) &&
                   exp.title.toLowerCase() !== candidateName.toLowerCase(),
               );
-              if (!isPartialDottedExploit) {
+              const isKnownExploit = sortedKnown.some(
+                (exp) => exp.title.toLowerCase() === candidateName.toLowerCase(),
+              );
+              const isKnownField = EXPLOIT_FIELD_OPTIONS.some(
+                (field) => field.key.toLowerCase() === fieldPart.toLowerCase(),
+              );
+              if (!isPartialDottedExploit && (isKnownExploit || fieldPart === "" || isKnownField)) {
                 setAcType("exploit_field");
                 setAcExploitTarget(candidateName);
                 setAcQuery(fieldPart);
@@ -359,13 +365,25 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     // WEAO Exploit Name Picker (`{exploit.<Name>.`)
     if (acType === "exploit_name") {
       if (weaoExploits.length === 0) {
+        if (q) {
+          return [
+            {
+              id: `weao_manual_${q}`,
+              title: `Use exploit name: ${acQuery.trim()}`,
+              subtitle: weaoError
+                ? "Catalogue unavailable — continue with this name manually"
+                : "Use this name and choose a field",
+              icon: <Code size={13} className="text-[#57f287] shrink-0" />,
+              replacement: `{exploit.${acQuery.trim()}.`,
+              keepOpen: true,
+            },
+          ];
+        }
         return [
           {
             id: "weao_loading_or_err",
-            title: weaoError
-              ? "⚠️ WEAO API unreachable  type exploit name manually"
-              : "Loading live exploits from WEAO…",
-            subtitle: weaoError || "Please wait",
+            title: weaoError ? "WEAO catalogue unavailable" : "Loading live exploits from WEAO…",
+            subtitle: weaoError || "Start typing an exploit name to enter it manually",
             icon: <AlertTriangle size={13} className="text-[#f0b232] shrink-0" />,
             replacement: "{exploit.",
             keepOpen: true,
