@@ -12,6 +12,7 @@
 ## Latest continuation — expanded Discord server placeholders (2026-11-17)
 
 **Branch:** `feat/server-guild-variables`  
+**Pull request:** [#45 — expose Discord Guild fields as server placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (draft; not merged)  
 **Base:** `main` at the V12 merge checkpoint plus the subsequent handoff documentation update.  
 **Status:** Implementation committed to the feature branch; not merged or deployed. Review and run CI before considering merge.
 
@@ -546,7 +547,8 @@ The V8 plan is based on an older source snapshot (0b5cec5...) and refers to a Pl
 
 Additional interpretation:
 - The current ThreeHeroCanvas has more than the original V8 suggestion: it also caps animation at 30fps, reduces particle count/pixel ratio for compact mobile, and pauses on document visibility/intersection changes.
-- The V8 root-cause measurements (LCP around 2.2s, desktop TBT 380ms, unused JS around 29.4KB) came from the old uploaded Lighthouse JSON. The raw JSON was deleted from current main; do not state that these exact measurements still reproduce.- The LoginScreen.test.tsx file is small; inspect its current content rather than assuming the old mocks remain.
+- The V8 root-cause measurements (LCP around 2.2s, desktop TBT 380ms, unused JS around 29.4KB) came from the old uploaded Lighthouse JSON. The raw JSON was deleted from current main; do not state that these exact measurements still reproduce.
+- The LoginScreen.test.tsx file is small; inspect its current content rather than assuming the old mocks remain.
 - The V8 analyzer fix cannot be considered implemented merely because the source plan contains a code sample.
 
 ### 5. Reconciliation with the additional “Read V8 Plan” attachment
@@ -645,7 +647,8 @@ The pure parser (client/src/utils/mentionParser.ts) still has its own brace-toke
 6. Preserve the distinction between ID-based primary-guild clan tags and interaction-user legacy nickname-tag parsing.
 7. Keep existing Thread ID authorization, WEAO security/permissions, OAuth/session behavior, encryption, backups, message payload compatibility, Components V2, and action flows intact.
 8. Do not implement the mobile selector redesign or other proposal-only scope without confirming that it remains desired. The attached “Read V8 Plan” ended with an explicit approval question; its proposed work should not be silently treated as blanket authorization.
-9. Use the correct checks: npm test, npm run typecheck, and npm run build are separate. Run Lighthouse CI separately. Run Playwright only when the owner enables it.10. Update this handoff after each implementation batch with actual commit SHAs, tests run, failures, screenshots/artifacts, and the exact source snapshot. Never turn source inspection into a claim of runtime success.
+9. Use the correct checks: npm test, npm run typecheck, and npm run build are separate. Run Lighthouse CI separately. Run Playwright only when the owner enables it.
+10. Update this handoff after each implementation batch with actual commit SHAs, tests run, failures, screenshots/artifacts, and the exact source snapshot. Never turn source inspection into a claim of runtime success.
 
 ---
 
@@ -744,7 +747,8 @@ Treat the following as acceptance requirements, not optional design suggestions:
 4. **Component Inspector mobile menus:** Menus must not extend past the viewport or be clipped by the phone screen. Placement must use actual available space, not a fixed top-coordinate threshold.
 5. **Mobile variable menu placement:** Prefer the space above the editor when it has more room; use below only when that is the better available placement. Clamp menu height to the actual available area.
 6. **Login header:** Fix the public/login top-bar layout at narrow widths without causing overflow, overlap, or inaccessible navigation.
-7. **Docs mobile layout:** Do not force a three-column desktop table into a narrow viewport where only one column is visible. Use a readable stacked/card layout on mobile and retain a table on wider screens. Remove the literal “Click to copy” label and show a Lucide Copy icon; after copying, temporarily show a Check icon.8. **Test tooling:** Vitest is the test runner. Do not use TypeScript compiler commands as a substitute for running tests. Preserve the existing npm scripts unless a real defect requires a script change.
+7. **Docs mobile layout:** Do not force a three-column desktop table into a narrow viewport where only one column is visible. Use a readable stacked/card layout on mobile and retain a table on wider screens. Remove the literal “Click to copy” label and show a Lucide Copy icon; after copying, temporarily show a Check icon.
+8. **Test tooling:** Vitest is the test runner. Do not use TypeScript compiler commands as a substitute for running tests. Preserve the existing npm scripts unless a real defect requires a script change.
 9. **Preview density control:** Remove the Cozy/Compact control from the live preview. Keep one consistent preview presentation.
 10. **Existing thread support:** Add an explicit Thread ID path so a message can be sent into an already-open Discord thread. Keep forum thread creation/name separate from posting into an existing thread.
 11. **Consistent UI:** The whole product must use a coherent design system: same spacing, typography, colors, borders, radii, controls, menu treatment, and responsive behavior across Studio, login, docs, modals, and inspector. Do not do a destructive all-at-once visual rewrite.
@@ -1041,7 +1045,8 @@ You are continuing a live codebase, not starting a new project.
 
 ## V10 Batch 14 continuation — comments-only scope — 2026-11-16
 
-The owner explicitly requested that Batch 14's **tests work be left out**. Accordingly:- No test files were edited, added, or removed as part of this continuation.
+The owner explicitly requested that Batch 14's **tests work be left out**. Accordingly:
+- No test files were edited, added, or removed as part of this continuation.
 - No test commands were run. This is not a test-pass or zero-regression claim.
 - The requested work was limited to the Batch 14 comments cleanup.
 
@@ -1140,7 +1145,8 @@ Implemented the Batch 7 source changes directly on `main`.
 - Updated MarkdownToolbar and RichPicker surfaces/controls to use the SaaS studio palette and compact toolbar styling.
 - Updated the MessageEditor Vitest file to cover the four tabs, tab state preservation, message-scoped action listing, direct FlowBuilder inspector handoff, Clear All confirmation, and existing message-header behavior.
 
-### Files changed- `client/src/components/editor/MessageEditor/index.tsx`
+### Files changed
+- `client/src/components/editor/MessageEditor/index.tsx`
 - `client/src/components/editor/MessageEditor/ContentTab.tsx`
 - `client/src/components/editor/FileAttachmentsSection.tsx`
 - `client/src/components/editor/PropertyPanel.tsx`
@@ -1338,7 +1344,8 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 
 ### Decisions / items intentionally not changed
 
-- The global stylesheet remains a normal render-blocking stylesheet. Converting it to asynchronous CSS delivery without a measured critical-CSS extraction could cause FOUC and CLS; the 13.9 KiB file should be reassessed after production build output is available.- The `localhost:3001` preconnect candidate was not added blindly. The current app uses a same-origin `/api` path behind the Vite preview proxy; preconnecting to a development-only origin would not be correct for production. Revisit only if the production architecture actually serves the API on a distinct origin.
+- The global stylesheet remains a normal render-blocking stylesheet. Converting it to asynchronous CSS delivery without a measured critical-CSS extraction could cause FOUC and CLS; the 13.9 KiB file should be reassessed after production build output is available.
+- The `localhost:3001` preconnect candidate was not added blindly. The current app uses a same-origin `/api` path behind the Vite preview proxy; preconnecting to a development-only origin would not be correct for production. Revisit only if the production architecture actually serves the API on a distinct origin.
 - No backend health or auth endpoint implementation was changed. The report alone does not establish whether the remaining `/api/auth/me` latency is server processing, cold start, or proxy overhead.
 - No claim of a 100 Performance score is made. Performance scores are lab measurements and must be re-run on the production preview build.
 
