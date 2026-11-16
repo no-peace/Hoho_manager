@@ -118,6 +118,7 @@ export const MessagePreview = ({ onSelectMessage }: MessagePreviewProps) => {
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
+  const selectComponent = useMessageStore((state) => state.select);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const botIdentity = useGlobalStore((state) => state.botIdentity);
   const displayMessages = useMemo(
@@ -239,6 +240,13 @@ export const MessagePreview = ({ onSelectMessage }: MessagePreviewProps) => {
                   <div
                     key={index}
                     onClick={() => handleSelectMessage(index)}
+                    onClickCapture={(event) => {
+                      const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
+                      const componentId = componentElement?.dataset.previewComponentId;
+                      if (!componentId) return;
+                      handleSelectMessage(index);
+                      selectComponent({ kind: "component", id: componentId });
+                    }}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
                         ? "ring-2 ring-[#5865f2]/80 bg-[#5865f2]/5 shadow-sm"
