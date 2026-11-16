@@ -171,7 +171,6 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
-      {/* Multi-select chips with remove buttons */}
       {multiple && valArr.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-1.5 min-w-0">
           {valArr.map((id) => {
@@ -200,7 +199,6 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Main Trigger Button */}
       <div
         className="w-full min-w-0 bg-[#1D2230] border border-[#272D3A] rounded px-3 py-1.5 text-xs text-[#F1F3F9] cursor-pointer flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
         onClick={() => setOpen(!open)}
