@@ -265,8 +265,6 @@ router.get(
       (mutualGuilds.length > 0 && hasActiveStaffRecord);
 
     const role: UserRole = isHead || isOwner ? "admin" : "editor";
-    const displayName = discordUser.global_name || discordUser.username;
-
     await userRepository.upsert({
       discordId: discordUser.id,
       username: discordUser.username,
