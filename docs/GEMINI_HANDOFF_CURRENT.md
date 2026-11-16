@@ -5,7 +5,7 @@
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
 **Latest application source commit:** `ae07d8c0c1f9df33debe22808b00b6c1d0ac85b9`  
-**Current `main` HEAD:** `85df98fe1f3f91b95772138df9973af186b14187` (handoff documentation update)  
+**Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
 **Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
 
