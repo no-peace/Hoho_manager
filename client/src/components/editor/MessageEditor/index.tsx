@@ -226,7 +226,16 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             setExtendedField={setExtendedField}
           />
 
-          {!isV2 && <EmbedsTab embeds={message.embeds || []} />}
+          {!isV2 && (
+            <EmbedsTab
+              embeds={message.embeds || []}
+              canAdd={(message.embeds?.length ?? 0) < 10}
+              onAddEmbed={() => {
+                ensureActive();
+                addEmbed();
+              }}
+            />
+          )}
 
           <ComponentsTab message={message} isV2={isV2} ensureActive={ensureActive} />
 
@@ -234,17 +243,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           <div className="pt-2 border-t border-[#1D2230] flex flex-wrap items-center gap-2">
             {!isV2 ? (
               <>
-                <button
-                  type="button"
-                  disabled={(message.embeds?.length ?? 0) >= 10}
-                  onClick={() => {
-                    ensureActive();
-                    addEmbed();
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:bg-[#4F46E5] text-[#0B0D12] text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
-                >
-                  <Plus size={13} /> Add Embed ({message.embeds?.length ?? 0}/10)
-                </button>
                 <button
                   type="button"
                   disabled={!canAddClassicActionRow}
