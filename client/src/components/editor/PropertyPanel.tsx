@@ -1,5 +1,5 @@
 import { Copy, Trash2, X, Sliders, Workflow, MousePointerClick, Layers, Hash } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useActionStore } from "../../store/actionStore";
 import { IconButton } from "../ui/Button";
@@ -14,6 +14,7 @@ type PanelTab = "properties" | "flow";
 
 export const PropertyPanel = () => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
+  const pendingFlowSelectionRef = useRef<string | null>(null);
   const selection = useMessageStore((state) => state.selection);
   const messageData = useMessageStore((state) => state.data);
   const components = messageData.components;\n  const flows = useActionStore((state) => state.flows);
@@ -23,6 +24,22 @@ export const PropertyPanel = () => {
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
 
   useEffect(() => {
+    const handleOpenFlow = (event: Event) => {
+      const detail = (event as CustomEvent<{ componentId?: string }>).detail;
+      if (!detail?.componentId) return;
+      pendingFlowSelectionRef.current = detail.componentId;
+      setActiveTab("flow");
+    };
+    window.addEventListener("hoho:open-component-flow", handleOpenFlow);
+    return () => window.removeEventListener("hoho:open-component-flow", handleOpenFlow);
+  }, []);
+
+  useEffect(() => {
+    if (pendingFlowSelectionRef.current === selection?.id) {
+      pendingFlowSelectionRef.current = null;
+      setActiveTab("flow");
+      return;
+    }
     setActiveTab("properties");
   }, [selection?.id]);
 
