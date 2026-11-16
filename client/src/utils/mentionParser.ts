@@ -183,13 +183,19 @@ export const detectAutocompleteToken = (
     /(\{{1,2})exploit\.([a-zA-Z0-9_.-]+)\.([a-zA-Z0-9_]*)$/i,
   );
   if (exploitFieldMatch) {
-    return {
-      type: "exploit_field",
-      exploitTarget: exploitFieldMatch[2],
-      query: exploitFieldMatch[3] || "",
-      start: cursorPos - exploitFieldMatch[0].length,
-      end: cursorPos,
-    };
+    const fieldQuery = exploitFieldMatch[3] || "";
+    const isFieldPrefix = fieldQuery.length > 0 && EXPLOIT_FIELD_OPTIONS.some(
+      (field) => field.key.toLowerCase().startsWith(fieldQuery.toLowerCase()),
+    );
+    if (isFieldPrefix) {
+      return {
+        type: "exploit_field",
+        exploitTarget: exploitFieldMatch[2],
+        query: fieldQuery,
+        start: cursorPos - exploitFieldMatch[0].length,
+        end: cursorPos,
+      };
+    }
   }
 
   const exploitNameMatch = beforeCursor.match(/(\{{1,2})exploit\.([a-zA-Z0-9_.-]*)$/i);
