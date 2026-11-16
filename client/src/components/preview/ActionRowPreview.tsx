@@ -93,7 +93,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
                 const userId = currentUser?.id || "123456789012345678";
           const guild = guilds?.find((g) => g.id === selectedGuildId) ?? guilds?.[0];
           const map: Record<string, string> = {
-            "user.tag": username,
+            "user.username": username,
             "user.id": userId,
             "server.name": guild?.name || "HoHo Server",
             "server.id": guild?.id || selectedGuildId || "987654321",
