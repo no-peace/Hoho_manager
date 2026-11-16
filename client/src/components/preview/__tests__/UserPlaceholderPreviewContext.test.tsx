@@ -94,7 +94,7 @@ describe("UserPlaceholderPreviewContext", () => {
     expect(resolveUsersMock).toHaveBeenCalledTimes(1);
 
     expect(screen.getByTestId("resolved").textContent).toBe(
-      `peace|https://discord.com/users/${USER_A}|${mockUser.avatarUrl}`,
+      `peace|https://discord.com/users/${USER_A}|{user.${USER_A}.avatarurl}`,
     );
   });
 
