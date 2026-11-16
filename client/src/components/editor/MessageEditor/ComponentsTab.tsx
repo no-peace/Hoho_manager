@@ -418,6 +418,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                         <TextField
                           label="Button Label"
                           limit={80}
+                          variables={false}
                           value={accessory.label || ""}
                           placeholder="Button Text"
                           onChange={(e) => {
