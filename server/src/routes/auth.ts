@@ -269,14 +269,14 @@ router.get(
 
     await userRepository.upsert({
       discordId: discordUser.id,
-      username: displayName,
+      username: discordUser.username,
       avatar: discordUser.avatar ?? null,
       role,
     });
 
     const sessionUser: SessionUser = {
       id: discordUser.id,
-      username: displayName,
+      username: discordUser.username,
       global_name: discordUser.global_name ?? null,
       avatar: discordUser.avatar ?? null,
       role,
