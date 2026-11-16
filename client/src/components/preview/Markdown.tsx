@@ -748,7 +748,6 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
         ? `https://cdn.discordapp.com/avatars/${previewUserId}/${currentUser.avatar}.png`
         : getDefaultAvatar(previewUserId)),
     "user.roles": "@Member",
-    "user.clantag": "HOHO",
     "user.created": `<t:${userCreatedUnix}:d>`,
     "user.created.relative": `<t:${userCreatedUnix}:R>`,
     "user.joined": `<t:${unixNow - 86400 * 30}:R>`,
