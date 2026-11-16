@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import type { AutocompleteItem } from "../../../utils/mentionParser";
 
 export interface AutocompletePopoverProps {
@@ -8,6 +8,7 @@ export interface AutocompletePopoverProps {
   onSelectIndex: (index: number) => void;
   onApply: (item: AutocompleteItem) => void;
   dropdownPosition: "top" | "bottom";
+  maxHeight?: number;
 }
 
 export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
@@ -17,7 +18,15 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
   onSelectIndex,
   onApply,
   dropdownPosition,
+  maxHeight = 260,
 }) => {
+  const listRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    optionRefs.current[selectedIndex]?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex, items]);
+
   if (items.length === 0) return null;
 
   return (
@@ -25,7 +34,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
       className={`absolute left-0 right-0 rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150 ${
         dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
       }`}
-      style={{ maxHeight: "260px" }}
+      style={{ maxHeight }}
     >
       <div className="px-3 py-1.5 bg-[#18191c] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#26282d] flex items-center justify-between">
         {headerLabel}
@@ -34,11 +43,15 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
         </span>
       </div>
 
-      <div className="overflow-y-auto max-h-52 p-1 space-y-0.5 custom-scrollbar">
+      <div ref={listRef} role="listbox" aria-activedescendant={items[selectedIndex] ? `autocomplete-option-${items[selectedIndex].id}` : undefined} className="overflow-y-auto p-1 space-y-0.5 custom-scrollbar" style={{ maxHeight: Math.max(40, maxHeight - 38) }}>
         {items.map((item, idx) => {
           const isSelected = idx === selectedIndex;
           return (
             <button
+              ref={(node) => { optionRefs.current[idx] = node; }}
+              id={`autocomplete-option-${item.id}`}
+              role="option"
+              aria-selected={isSelected}
               key={item.id}
               type="button"
               disabled={item.disabled}
