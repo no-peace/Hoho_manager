@@ -77,7 +77,6 @@ const getFieldValue = (
       return user.globalName || user.username;
 
     case "username":
-    case "tag":
       return user.username;
 
     case "clantag":
@@ -135,7 +134,7 @@ export const UserPlaceholderPreviewProvider = ({
         // Invalid/transient editor state: leave placeholders unresolved.
       }
     }
-    if (currentUser?.id && /\{user\.(?:name|displayname|clantag)\}/i.test(sourceSnapshot)) {
+    if (currentUser?.id && /\{user\.(?:name|username|displayname|clantag)\}/i.test(sourceSnapshot)) {
       ids.add(currentUser.id);
     }
     return [...ids];
@@ -218,11 +217,12 @@ export const UserPlaceholderPreviewProvider = ({
           if (!user) return original;
           return getFieldValue(user, field) ?? original;
         })
-        .replace(/\{user\.(name|displayname|clantag)\}/gi, (original, field: string) => {
+        .replace(/\{user\.(name|username|displayname|clantag)\}/gi, (original, field: string) => {
           const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
           const normalized = field.toLowerCase();
           if (normalized === "name") return user.nickname || user.username;
+          if (normalized === "username") return user.username;
           if (normalized === "clantag") return user.clanTag || extractLegacyClanTag(user.nickname, user.username);
           return user.globalName || user.username;
         });
