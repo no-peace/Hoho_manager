@@ -10,32 +10,10 @@ import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
 import { parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
+import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
 
 const router = Router();
 const log = logger.child("send");
-
-const parseProfileId = (value: unknown): number | null => {
-  if (value === undefined || value === null || value === "" || value === "null") return null;
-  if (typeof value !== "string" && typeof value !== "number") {
-    throw ApiError.badRequest("`profileId` must be a positive integer");
-  }
-  const profileId = Number(value);
-  if (!Number.isSafeInteger(profileId) || profileId <= 0) {
-    throw ApiError.badRequest("`profileId` must be a positive integer");
-  }
-  return profileId;
-};
-
-const parseAllowedIds = (value: string | null | undefined): string[] => {
-  try {
-    const parsed: unknown = JSON.parse(value || "[]");
-    return Array.isArray(parsed)
-      ? parsed.filter((id): id is string => typeof id === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
 
 const assertStaffChannelAllowed = (
   staffCtx: Express.Request["staffContext"],

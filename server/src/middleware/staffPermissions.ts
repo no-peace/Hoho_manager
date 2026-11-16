@@ -7,6 +7,7 @@ import { auditLog } from "../services/auditLog.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
+import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const log = logger.child("staffPermissions");
 
@@ -35,17 +36,6 @@ const isAdmin = (req: Request): boolean => {
 type StaffActionInput =
   | StaffAction
   | ((req: Request) => StaffAction);
-
-const parseStringList = (raw: string | null | undefined): string[] => {
-  try {
-    const parsed: unknown = JSON.parse(raw || "[]");
-    return Array.isArray(parsed)
-      ? parsed.filter((value): value is string => typeof value === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
 
 const parseNumberRecord = (
   raw: string | null | undefined,
@@ -215,7 +205,7 @@ export const requireStaffPermission = (
       const channelId: string | undefined =
         req.body?.channelId ?? req.params?.channelId ?? (req.query?.channelId as string);
       if (channelId) {
-        const allowed = parseStringList(record.allowed_channel_ids);
+        const allowed = parseAllowedIds(record.allowed_channel_ids);
         const allAllowed = allowed.includes("*");
         if (!allAllowed && (allowed.length === 0 || !allowed.includes(channelId))) {
           auditLog({

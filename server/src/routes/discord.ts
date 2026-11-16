@@ -11,6 +11,7 @@ import { getSessionUserFromRequest } from "../utils/session.js";
 import { settingsService } from "../services/settingsService.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
 
 const router = Router();
 
@@ -19,13 +20,6 @@ const safeEqual = (a: unknown, b: unknown): boolean => {
   const bufB = Buffer.from(String(b ?? ""));
   if (bufA.length !== bufB.length) return false;
   return crypto.timingSafeEqual(bufA, bufB);
-};
-
-const parseProfileId = (value: unknown): number | null => {
-  if (value === undefined || value === null || value === "" || value === "null") return null;
-  const num = Number(value);
-  if (!Number.isSafeInteger(num) || num <= 0) return null;
-  return num;
 };
 
 /**
@@ -80,17 +74,6 @@ const requireStaffOrAdmin: RequestHandler = asyncHandler(async (req, _res, next)
 
   return next(ApiError.unauthorized("Authentication required (admin key or active staff ID)"));
 });
-
-const parseAllowedIds = (raw: string | null | undefined): string[] => {
-  try {
-    const parsed: unknown = JSON.parse(raw || "[]");
-    return Array.isArray(parsed)
-      ? parsed.filter((value): value is string => typeof value === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
 
 const requireAllowedGuild: RequestHandler = (req, _res, next) => {
   const guildId = req.params.guildId;

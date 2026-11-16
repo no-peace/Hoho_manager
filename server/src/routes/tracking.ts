@@ -6,19 +6,9 @@ import { templateRepository } from "../repositories/templateRepository.js";
 import { syncTrackedMessages, trackMessage } from "../services/messageTrackerService.js";
 import * as discord from "../services/discordService.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
+import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const router = Router();
-
-const parseAllowedIds = (raw: string | null | undefined): string[] => {
-  try {
-    const parsed: unknown = JSON.parse(raw || "[]");
-    return Array.isArray(parsed)
-      ? parsed.filter((value): value is string => typeof value === "string")
-      : [];
-  } catch {
-    return [];
-  }
-};
 
 const assertStaffGuildAllowed = async (
   req: Express.Request,
