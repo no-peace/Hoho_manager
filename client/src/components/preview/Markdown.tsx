@@ -693,7 +693,7 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
   const guilds = useDiscordCacheStore((state) => state.guilds);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const [changelogValues, setChangelogValues] = useState<Record<string, string>>({});
-  const { resolveUserPlaceholders } = useUserPlaceholderPreview();
+  const { resolveUserPlaceholders, showResolved } = useUserPlaceholderPreview();
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
   useEffect(() => {
@@ -763,8 +763,12 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
     "now.t": `<t:${unixNow}:t>`,
     "now.T": `<t:${unixNow}:T>`,
     "now.time": `<t:${unixNow}:T>`,
+    "now.short_time": `<t:${unixNow}:t>`,
+    "now.datetime": `<t:${unixNow}:F>`,
+    "now.short_datetime": `<t:${unixNow}:f>`,
     "now.d": `<t:${unixNow}:d>`,
-    "now.date": `<t:${unixNow}:d>`,
+    "now.date": `<t:${unixNow}:D>`,
+    "now.short_date": `<t:${unixNow}:d>`,
     "now.D": `<t:${unixNow}:D>`,
     "now.longdate": `<t:${unixNow}:D>`,
     "now.f": `<t:${unixNow}:f>`,
@@ -774,13 +778,15 @@ const MarkdownComponent: React.FC<MarkdownProps> = ({ content, className = "" })
     "now.R": `<t:${unixNow}:R>`,
     "now.relative": `<t:${unixNow}:R>`,
     "now.unix": String(unixNow),
+    "now.iso": new Date().toISOString(),
+    timestamp: `<t:${unixNow}:F>`,
     selected: "option_1",
     "selected.0": "option_1",
   };
 
   // Interpolate `{exploit.<Name>.<Field>}` and `{user.*}` / `{now.*}` in live preview
-  const withResolvedDiscordUser = resolveUserPlaceholders(content);
-  const resolvedContent = withResolvedDiscordUser.includes("{")
+  const withResolvedDiscordUser = showResolved ? resolveUserPlaceholders(content) : content;
+  const resolvedContent = showResolved && withResolvedDiscordUser.includes("{")
     ? withResolvedDiscordUser
         .replace(/\{exploit([.:])([^{}\n]+)\}/gi, (full, sep: string, rest: string) => {
           let targetName = "";

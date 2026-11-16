@@ -12,12 +12,25 @@ import { useGlobalStore } from "../../store/globalStore";
 import { useMessageStore, type AttachedFile } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
 
-const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
-  component.type === ComponentType.Container ? (
-    <ContainerPreview component={component} />
-  ) : (
-    <AutoComponent component={component} />
+const TopLevelComponent = ({ component }: { component: ComponentNode }) => {
+  const select = useMessageStore((state) => state.select);
+  if (component.type !== ComponentType.Container) return <AutoComponent component={component} />;
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      aria-label="Select container"
+      onClick={(event) => {
+        if (!component._id) return;
+        event.stopPropagation();
+        select({ kind: "component", id: component._id });
+      }}
+      className="cursor-pointer rounded-sm outline-offset-2 hover:outline hover:outline-1 hover:outline-[#818CF8]/60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#818CF8]/60"
+    >
+      <ContainerPreview component={component} />
+    </div>
   );
+};
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -40,7 +53,7 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
             onClick={() => setSpoilerHidden(false)}
             className="cursor-pointer bg-black/80 backdrop-blur-md p-6 flex flex-col items-center justify-center min-w-[200px] min-h-[140px] select-none hover:bg-black/85 transition-colors"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-white bg-black/60 px-3 py-1 rounded-full border border-white/20">
+            <span className="text-xs font-semibold text-[#F1F3F9] bg-black/60 px-3 py-1 rounded-full border border-white/20">
               Spoiler
             </span>
             <span className="text-[11px] text-[#949ba4] mt-2">Click to view</span>
@@ -120,6 +133,7 @@ export const MessagePreview = () => {
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
+  const [showResolvedVariables, setShowResolvedVariables] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -149,15 +163,15 @@ export const MessagePreview = () => {
   );
 
   return (
-    <UserPlaceholderPreviewProvider source={displayMessages}>
+    <UserPlaceholderPreviewProvider source={displayMessages} showResolved={showResolvedVariables}>
       <div className="flex min-h-0 flex-1 flex-col select-text">
         {/* Enhanced Preview Toolbar */}
-        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-1.5 shrink-0">
+        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#272D3A] bg-[#10131A] px-4 py-2.5 shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
-            <Eye size={14} className="text-[#5865f2]" /> Live Preview
+            <Eye size={14} className="text-[#818CF8]" /> Live Preview
           </h2>
-          <span className="rounded-md bg-[#5865f2]/15 border border-[#5865f2]/30 px-2 py-0.5 text-[10px] font-semibold text-[#b9bcf8]">
+          <span className="rounded-md bg-[#818CF8]/15 border border-[#818CF8]/30 px-2 py-0.5 text-[10px] font-medium text-[#A5B4FC]">
             Message {activeMessageIndex + 1}: {activeIsV2 ? "Components V2" : "Classic"}
           </span>
         </div>
@@ -165,7 +179,7 @@ export const MessagePreview = () => {
         {/* Viewport Device & Density Controls */}
         <div className="flex items-center gap-1.5">
           {displayMessages.length > 1 && (
-            <div className="flex items-center gap-1 bg-[#18191c] p-0.5 rounded-lg border border-[#26282d] mr-1">
+            <div className="flex items-center gap-1 bg-[#0B0D12] p-1 rounded-[8px] border border-[#272D3A] mr-1">
               {displayMessages.map((_, i) => (
                 <button
                   key={i}
@@ -173,8 +187,8 @@ export const MessagePreview = () => {
                   onClick={() => setActiveMessageIndex?.(i)}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors ${
                     i === activeMessageIndex
-                      ? "bg-[#5865f2] text-white shadow-xs"
-                      : "text-[#949ba4] hover:text-white"
+                      ? "bg-[#818CF8]/15 text-[#F1F3F9]"
+                      : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
                   }`}
                   title={`View Message ${i + 1}`}
                 >
@@ -184,6 +198,10 @@ export const MessagePreview = () => {
             </div>
           )}
 
+          <div className="ml-1 inline-flex items-center gap-1 rounded-[8px] border border-[#272D3A] bg-[#0B0D12] p-1" aria-label="Variable preview mode">
+            <button type="button" onClick={() => setShowResolvedVariables(true)} aria-pressed={showResolvedVariables} className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${showResolvedVariables ? "bg-[#818CF8]/15 text-[#F1F3F9]" : "text-[#6F788A] hover:text-[#F1F3F9]"}`}>Resolved</button>
+            <button type="button" onClick={() => setShowResolvedVariables(false)} aria-pressed={!showResolvedVariables} className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${!showResolvedVariables ? "bg-[#818CF8]/15 text-[#F1F3F9]" : "text-[#6F788A] hover:text-[#F1F3F9]"}`}>Raw</button>
+          </div>
         </div>
       </div>
 
@@ -230,7 +248,7 @@ export const MessagePreview = () => {
                     onClick={() => setActiveMessageIndex?.(index)}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
-                        ? "ring-2 ring-[#5865f2]/80 bg-[#5865f2]/5 shadow-sm"
+                        ? "ring-1 ring-[#818CF8]/60 bg-[#818CF8]/5 shadow-sm"
                         : "hover:bg-[#2b2d31]/40"
                     } ${
                       isConsecutive ? "pl-14 -mt-1" : "mt-2 first:mt-0"

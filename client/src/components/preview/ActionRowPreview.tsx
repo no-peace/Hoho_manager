@@ -5,6 +5,7 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Preview of an action row's controls.
@@ -77,6 +78,7 @@ export const renderButtonEmoji = (emoji: any) => {
 
 export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
+  const selectComponent = useMessageStore((state) => state.select);
   const emojiNode = renderButtonEmoji((button as any).emoji);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
@@ -106,6 +108,11 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
     <button
       type="button"
       disabled={button.disabled}
+      onClick={(event) => {
+        if (!button._id) return;
+        event.stopPropagation();
+        selectComponent({ kind: "component", id: button._id });
+      }}
       className={[
         "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
         BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[ButtonStyle.Primary],

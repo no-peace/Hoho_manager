@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import type { ReactNode } from "react";
 import type { ComponentNode } from "@dmb/shared";
 import { ComponentType } from "@dmb/shared";
 import { Markdown } from "./Markdown";
@@ -113,31 +114,64 @@ export interface AutoComponentProps {
 
 /** Dispatch a non-container component to its preview. */
 export const AutoComponent = ({ component }: AutoComponentProps) => {
+  const select = useMessageStore((state) => state.select);
+  let preview: ReactNode = null;
+
   switch (component.type) {
     case ComponentType.TextDisplay:
-      return <TextDisplayPreview component={component} />;
+      preview = <TextDisplayPreview component={component} />;
+      break;
     case ComponentType.Separator:
-      return <SeparatorPreview component={component} />;
+      preview = <SeparatorPreview component={component} />;
+      break;
     case ComponentType.Section:
-      return <SectionPreview component={component} />;
+      preview = <SectionPreview component={component} />;
+      break;
     case ComponentType.MediaGallery:
-      return <MediaGalleryPreview component={component} />;
+      preview = <MediaGalleryPreview component={component} />;
+      break;
     case ComponentType.File:
-      return <FilePreview component={component} />;
+      preview = <FilePreview component={component} />;
+      break;
     case ComponentType.ActionRow:
-      return <ActionRowPreview component={component} />;
+      preview = <ActionRowPreview component={component} />;
+      break;
     case ComponentType.Button:
-      return <ButtonPreview button={component} />;
+      preview = <ButtonPreview button={component} />;
+      break;
     case ComponentType.StringSelect:
     case ComponentType.UserSelect:
     case ComponentType.RoleSelect:
     case ComponentType.MentionableSelect:
     case ComponentType.ChannelSelect:
-      return <SelectPreview select={component} />;
+      preview = <SelectPreview select={component} />;
+      break;
     default:
       return null;
   }
-};
 
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      aria-label="Select message component"
+      onClick={(event) => {
+        if (!component._id) return;
+        event.stopPropagation();
+        select({ kind: "component", id: component._id });
+      }}
+      onKeyDown={(event) => {
+        if ((event.key === "Enter" || event.key === " ") && component._id) {
+          event.preventDefault();
+          event.stopPropagation();
+          select({ kind: "component", id: component._id });
+        }
+      }}
+      className="min-w-0 cursor-pointer rounded-sm outline-offset-2 transition-[outline-color] hover:outline hover:outline-1 hover:outline-[#818CF8]/60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#818CF8]/60"
+    >
+      {preview}
+    </div>
+  );
+};
 export { TextDisplayPreview, SeparatorPreview, SectionPreview, MediaGalleryPreview, FilePreview };
 export default AutoComponent;

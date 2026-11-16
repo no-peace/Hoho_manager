@@ -26,6 +26,7 @@ export interface PreviewDiscordUser {
 interface UserPlaceholderPreviewContextValue {
   resolveUserPlaceholders: (value: string) => string;
   isResolvingUsers: boolean;
+  showResolved: boolean;
 }
 
 const UserPlaceholderPreviewContext =
@@ -77,7 +78,6 @@ const getFieldValue = (
       return user.profileUrl;
 
     case "avatar":
-    case "avatarurl":
       return user.avatarUrl;
 
     case "mention":
@@ -91,9 +91,11 @@ const getFieldValue = (
 export const UserPlaceholderPreviewProvider = ({
   source,
   children,
+  showResolved = true,
 }: {
   source: unknown;
   children: React.ReactNode;
+  showResolved?: boolean;
 }) => {
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const currentUser = useGlobalStore((state) => state.currentUser);
@@ -111,6 +113,7 @@ export const UserPlaceholderPreviewProvider = ({
   }, [source]);
 
   const requestedIds = useMemo(() => {
+    if (!showResolved) return [];
     const ids = new Set<string>();
     if (sourceSnapshot) {
       try {
@@ -123,9 +126,10 @@ export const UserPlaceholderPreviewProvider = ({
       ids.add(currentUser.id);
     }
     return [...ids];
-  }, [sourceSnapshot, currentUser?.id]);
+  }, [sourceSnapshot, currentUser?.id, showResolved]);
 
   useEffect(() => {
+    if (!showResolved) return;
     const pendingIds = requestedIds.filter(
       (id) => !users[id] && !attemptedIdsRef.current.has(id),
     );
@@ -187,32 +191,31 @@ export const UserPlaceholderPreviewProvider = ({
       // An aborted batch may be retried if its ID is still present next time.
       for (const id of pendingIds) attemptedIdsRef.current.delete(id);
     };
-  }, [requestedIds, users, selectedGuildId]);
+  }, [requestedIds, users, selectedGuildId, showResolved]);
 
   const resolveUserPlaceholders = useCallback(
-    (value: string): string =>
-      value
-        .replace(
-          USER_PLACEHOLDER_REGEX,
-          (original, id: string, field: string) => {
-            const user = users[id];
-            if (!user) return original;
-            return getFieldValue(user, field) ?? original;
-          },
-        )
+    (value: string): string => {
+      if (!showResolved) return value;
+      return value
+        .replace(USER_PLACEHOLDER_REGEX, (original, id: string, field: string) => {
+          const user = users[id];
+          if (!user) return original;
+          return getFieldValue(user, field) ?? original;
+        })
         .replace(/\{user\.(name|displayname)\}/gi, (original, field: string) => {
           const user = currentUser?.id ? users[currentUser.id] : undefined;
           if (!user) return original;
           return field.toLowerCase() === "name"
             ? user.nickname || user.username
             : user.globalName || user.username;
-        }),
-    [users, currentUser?.id],
+        });
+    },
+    [users, currentUser?.id, showResolved],
   );
 
   const contextValue = useMemo(
-    () => ({ resolveUserPlaceholders, isResolvingUsers }),
-    [resolveUserPlaceholders, isResolvingUsers],
+    () => ({ resolveUserPlaceholders, isResolvingUsers, showResolved }),
+    [resolveUserPlaceholders, isResolvingUsers, showResolved],
   );
 
   return (
@@ -230,6 +233,7 @@ export const useUserPlaceholderPreview = () => {
     context ?? {
       resolveUserPlaceholders: (value: string) => value,
       isResolvingUsers: false,
+      showResolved: true,
     }
   );
 };
