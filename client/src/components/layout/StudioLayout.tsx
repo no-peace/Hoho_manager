@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Send } from "lucide-react";
+import { Edit3, Eye, Plus, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { Header } from "./Header";
 import { MessageEditor } from "../editor/MessageEditor";
