@@ -39,6 +39,7 @@ export const VARIABLES = [
   { tag: "{server.discovery_splash_url}", label: "https://...", desc: "Discovery splash CDN URL" },
   { tag: "{server.afk_channel_id}", label: "123456789", desc: "ID of the AFK voice channel" },
   { tag: "{server.afk_timeout}", label: "300", desc: "AFK timeout in seconds" },
+  { tag: "{server.region}", label: "deprecated", desc: "Legacy server voice region field; deprecated by Discord" },
   { tag: "{server.widget_enabled}", label: "true", desc: "Whether the server widget is enabled" },
   { tag: "{server.widget_channel_id}", label: "123456789", desc: "Server widget invite channel ID" },
   { tag: "{server.verification_level}", label: "2", desc: "Server verification level (0–4)" },
