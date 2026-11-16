@@ -948,8 +948,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               selectedIndex={selectedIndex}
               onSelectIndex={setSelectedIndex}
               onApply={applyReplacement}
-              dropdownPosition={dropdownPosition}
               maxHeight={dropdownMaxHeight}
+              anchor={textareaRef.current}
             />
           )
         )}
