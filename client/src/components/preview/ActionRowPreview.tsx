@@ -95,7 +95,6 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
           const map: Record<string, string> = {
             "user.tag": username,
             "user.id": userId,
-            "user.clantag": "HOHO",
             "server.name": guild?.name || "HoHo Server",
             "server.id": guild?.id || selectedGuildId || "987654321",
           };
