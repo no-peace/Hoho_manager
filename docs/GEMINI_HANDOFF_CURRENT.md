@@ -41,18 +41,18 @@ All implementation and handoff updates described above have been committed direc
 ### Still outstanding
 
 1. Verify all Inspector floating menus (variable, emoji, custom Select, RichPicker, and emoji field autocomplete) against the mobile bottom sheet at narrow widths and with the virtual keyboard open; portal/floating-layer implementation is now in place.
-2. Continue the shared UI token/primitive consistency sweep through remaining Studio, modal, login, Docs, Privacy, and action-flow components without changing the product's visual identity.
+2. The shared tokens now cover the Studio/public headers, Inspector, Docs surfaces, buttons, fields, tabs, and modals. Review remaining feature-specific one-off surfaces only where they still visibly diverge; preserve the existing visual identity.
 3. Review and add any remaining regression tests for parser state transitions, popover positioning, Docs clipboard failure, and responsive layouts.
 4. Run the user's approved checks when they are available: `npm test` (Vitest), `npm run typecheck`, and `npm run build`. No checks have been run for these commits; do not report them as passing.
 5. Verify visual behavior at the planned viewport matrix once the user authorizes browser/Playwright use. No Terminal or Playwright has been used.
 
-The current implementation is therefore **in progress, not release-verified**. Continue editing through GitHub only until the user says their PC is available.
+The 12 reported issues have source-level implementations committed to `main`. The work is **not release-verified** until the user runs the npm checks and responsive visual verification is completed. Continue editing through GitHub only until the user says their PC is available.
 
 ---
 
 ## 1. Current repository state
 
-- The latest application code changes are committed on `main` through `ae07d8c0c1f9df33debe22808b00b6c1d0ac85b9`; the current `main` HEAD is `85df98fe1f3f91b95772138df9973af186b14187` after the latest handoff update.
+- The latest application code changes are committed on `main` through `6ac5d0632a23edb346024913c446709797fad4fa`; use live GitHub history for the current `main` HEAD.
 - The repository currently has one remote branch: `main`.
 - There are no open pull requests at the time of inspection.
 - The latest commit is the current Gemini handoff update; the implementation commits immediately precede it in `main`.
