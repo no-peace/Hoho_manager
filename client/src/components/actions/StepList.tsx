@@ -30,7 +30,7 @@ const CONFIG_FIELDS: Record<string, readonly ConfigField[]> = {
   send_ephemeral_reply: [{ key: "content", label: "Reply text", textarea: true }],
   send_dm: [{ key: "content", label: "DM text", textarea: true }],
   send_message: [
-    { key: "channelId", label: "Channel ID (defaults to current channel)", placeholder: "123456789012345678" },
+    { key: "channelId", label: "Channel or Thread ID (defaults to current channel)", placeholder: "123456789012345678" },
     { key: "content", label: "Message", textarea: true },
   ],
   send_webhook_message: [
