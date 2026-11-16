@@ -23,7 +23,6 @@ export interface RichPickerProps {
   onInsert: (text: string) => void;
   onClose: () => void;
   guildId?: string | null;
-  position?: "top" | "bottom";
   anchor?: HTMLElement | null;
   initialTab?: TabType;
 }
