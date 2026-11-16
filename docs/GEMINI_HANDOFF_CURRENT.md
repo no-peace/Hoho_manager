@@ -1155,3 +1155,12 @@ Run the full test, typecheck, and build commands against the implementation head
 - Preserved the current StudioLayout desktop/mobile routing contract: ordinary components remain routed to the editor on desktop; interactive controls open the inspector; mobile retains its quick inspector behavior. The card handler ignores component descendants for blank-card navigation.
 - Files: `MessagePreview.tsx`, `ActionRowPreview.tsx`, `ComponentPreview.tsx`.
 - Validation: source transformation guards passed. Automated interaction tests, typecheck, build, and browser QA remain pending.
+
+
+## Gemini V12 implementation — Batch 3 (2026-11-16)
+
+- `PropertyPanel.tsx`: message quick-edit resolves the selected message using `selection.index`; classic messages edit `content`, while Components V2 messages edit the first `TextDisplay` block. If a V2 message has no text block, the editor creates one, writes the initial text, then restores the message quick-edit selection. The UI identifies the field with a `Components V2 Text Block` badge.
+- Added an `Open Full Editor` action to the quick-edit header. `StudioLayout.tsx` switches to the Editor pane and clears the overlay selection.
+- `messageStore.ts`: changing the active index preserves the matching message quick-edit selection, preventing the sheet from closing during the first edit when the selected message differs from the active message.
+- Files: `PropertyPanel.tsx`, `StudioLayout.tsx`, `messageStore.ts`.
+- Validation: source-level guards passed. Runtime state behavior, tests, typecheck, and build remain pending.
