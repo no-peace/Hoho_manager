@@ -202,6 +202,20 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
     }
   };
 
+  // Adjust from the currently selected date/time so repeated clicks accumulate.
+  const adjustSelectedTime = (offsetSeconds: number) => {
+    const base = offsetSeconds === 0
+      ? getServerNow()
+      : new Date(new Date(`${selectedDate}T${selectedTime}:00`).getTime() + offsetSeconds * 1000);
+    const year = base.getFullYear();
+    const month = String(base.getMonth() + 1).padStart(2, "0");
+    const day = String(base.getDate()).padStart(2, "0");
+    const hours = String(base.getHours()).padStart(2, "0");
+    const minutes = String(base.getMinutes()).padStart(2, "0");
+    setSelectedDate(`${year}-${month}-${day}`);
+    setSelectedTime(`${hours}:${minutes}`);
+  };
+
   // Add custom emoji to local storage
   const handleSaveCustomEmoji = () => {
     if (!newEmojiName.trim() || !newEmojiId.trim()) return;
@@ -584,6 +598,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             <div className="flex flex-wrap items-center gap-1">
               {[
                 { label: "Now", offsetSec: 0 },
+                { label: "−7d", offsetSec: -86400 * 7 },
+                { label: "−24h", offsetSec: -86400 },
+                { label: "−1h", offsetSec: -3600 },
+                { label: "−15m", offsetSec: -900 },
+                { label: "−5m", offsetSec: -300 },
+                { label: "−1m", offsetSec: -60 },
+                { label: "+1m", offsetSec: 60 },
                 { label: "+5m", offsetSec: 300 },
                 { label: "+15m", offsetSec: 900 },
                 { label: "+1h", offsetSec: 3600 },
@@ -593,13 +614,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                 <button
                   key={preset.label}
                   type="button"
-                  onClick={() => {
-                    const target = new Date(Date.now() + preset.offsetSec * 1000);
-                    const tzOffset = target.getTimezoneOffset() * 60000;
-                    const localIso = new Date(target.getTime() - tzOffset).toISOString();
-                    setSelectedDate(localIso.slice(0, 10));
-                    setSelectedTime(localIso.slice(11, 16));
-                  }}
+                  onClick={() => adjustSelectedTime(preset.offsetSec)}
                   className="px-2 py-0.5 rounded bg-[#1D2230] hover:bg-[#818CF8] text-[10px] font-semibold text-[#F1F3F9] hover:text-white border border-[#10131A] transition-colors"
                 >
                   {preset.label}
