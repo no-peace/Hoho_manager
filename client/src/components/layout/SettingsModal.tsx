@@ -142,7 +142,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
   return (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
       <div className="flex flex-col sm:flex-row gap-4 h-[75vh] min-w-0">
-        {/* Sidebar */}
         <div className="w-full sm:w-44 bg-[#10131A] border border-[#272D3A] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
           <button
             onClick={() => tab}
@@ -152,7 +151,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#10131A] border border-[#272D3A] rounded-xl p-4">
           {tab === "general" && (
             <div className="space-y-5">
@@ -182,7 +180,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                     />
                   </div>
 
-                  {/* Configurable Discord Logging Events */}
                   <div className="space-y-3 pt-2 border-t border-[#161A23]">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
