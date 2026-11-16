@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               fetchPriority="high"
               className="h-8 w-8 object-contain group-hover:scale-105 transition-transform shrink-0"
             />
-            <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
+            <h1 className="text-[0.9375rem] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
               HoHo Manager
             </h1>
           </a>
@@ -241,11 +241,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                       <p className="font-bold text-white truncate text-sm">
                         {currentUser.global_name || currentUser.username}
                       </p>
-                      <p className="text-[11px] text-[#A1A8B8] truncate">
+                      <p className="text-[0.6875rem] text-[#A1A8B8] truncate">
                         @{currentUser.username}
                       </p>
                       <span
-                        className={`inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                        className={`inline-block mt-1 text-[0.625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
                           isAdmin
                             ? "bg-[#f0b232]/15 text-[#f0b232] border border-[#f0b232]/30"
                             : hasDefaultBotAccess
@@ -263,11 +263,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                   </div>
 
                   <div className="flex items-center justify-between bg-[#272D3A] px-2.5 py-1.5 rounded-lg border border-[#272D3A]">
-                    <span className="text-[11px] text-[#A1A8B8]">Discord ID:</span>
+                    <span className="text-[0.6875rem] text-[#A1A8B8]">Discord ID:</span>
                     <button
                       type="button"
                       onClick={() => handleCopyId(currentUser.id)}
-                      className="flex items-center gap-1 font-mono text-[11px] text-[#F1F3F9] hover:text-white"
+                      className="flex items-center gap-1 font-mono text-[0.6875rem] text-[#F1F3F9] hover:text-white"
                     >
                       <span>{currentUser.id}</span>
                       <AnimatedMorphIcon
