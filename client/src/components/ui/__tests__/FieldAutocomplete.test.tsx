@@ -20,6 +20,7 @@ describe("shared field autocomplete", () => {
     fireEvent.change(input, { target: { value: "{user.", selectionStart: 6, selectionEnd: 6 } });
     expect(screen.getByRole("listbox", { name: "Variable suggestions" })).toBeDefined();
     expect(screen.getByText("{user.mention}")).toBeDefined();
+    expect(screen.getByText("{user.username}")).toBeDefined();
   });
 
   it("shows WEAO suggestions in TextArea while the exploit prefix is being typed", () => {
