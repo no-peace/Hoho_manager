@@ -326,8 +326,9 @@ const formatChangelogEntry = (entry: unknown): string => {
 };
 
 export const formatExploitChangelogs = (entries: unknown[], selector = "", comparison?: { added: unknown[]; removed: unknown[] }): string => {
+  const normalizedSelector = selector.replace(/^changelog(?=\\[|\\.|$)/i, "changelogs");
   let selected = entries;
-  if (selector.toLowerCase() === "changelogs.compare") {
+  if (normalizedSelector.toLowerCase() === "changelogs.compare") {
     const added = comparison?.added ?? [];
     const removed = comparison?.removed ?? [];
     const sections = [
