@@ -176,7 +176,7 @@ const loadInitialBotIdentity = (): BotIdentity | null => {
   return null;
 };
 
-export const useGlobalStore = create<GlobalState>((set) => {
+export const useGlobalStore = create<GlobalState>((set, get) => {
   const initial = loadInitialState();
   return {
     selectedGuildId: initial.selectedGuildId,
@@ -221,20 +221,7 @@ export const useGlobalStore = create<GlobalState>((set) => {
         }
         return { isSidebarOpen: open };
       }),
-    setSidebarOpen: (open) =>
-      set((state) => {
-        try {
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify({ selectedGuildId: state.selectedGuildId, isSidebarOpen: open }),
-            );
-          }
-        } catch {
-          // Ignore storage write errors
-        }
-        return { isSidebarOpen: open };
-      }),
+    setSidebarOpen: (open) => get().setIsSidebarOpen(open),
     toggleSidebar: () =>
       set((state) => {
         const next = !state.isSidebarOpen;

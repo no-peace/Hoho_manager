@@ -18,23 +18,20 @@ export function buildTimestampVariables(date: Date = new Date()): Record<string,
   };
 }
 
-export const replaceVariables = <T>(
-  value: T,
-  variables: Record<string, unknown>,
-): T => {
+export interface VariableInterpolationOptions {\n  preserveUnknown?: boolean;\n}\n\nexport const replaceVariables = <T>(\n  value: T,\n  variables: Record<string, unknown>,\n  options: VariableInterpolationOptions = {},\n): T => {
   if (typeof value === "string") {
     return value.replace(VARIABLE_PATTERN, (match, rawKey: string) => {
       const key = rawKey.trim();
       const replacement = variables[key];
-      return replacement === undefined ? match : String(replacement);
+      return replacement === undefined\n        ? options.preserveUnknown === false ? "" : match\n        : String(replacement);
     }) as T;
   }
-  if (Array.isArray(value)) return value.map((entry) => replaceVariables(entry, variables)) as T;
+  if (Array.isArray(value)) return value.map((entry) => replaceVariables(entry, variables, options)) as T;
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, nested]) => [
         key,
-        replaceVariables(nested, variables),
+        replaceVariables(nested, variables, options),
       ]),
     ) as T;
   }
@@ -44,4 +41,5 @@ export const replaceVariables = <T>(
 export const interpolateObject = <T>(
   value: T,
   variables: Record<string, unknown>,
-): T => replaceVariables(value, variables);
+  options: VariableInterpolationOptions = {},
+): T => replaceVariables(value, variables, options);

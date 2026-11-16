@@ -6,7 +6,7 @@ export { replaceVariables } from "./variableInterpolation.js";
 import { getActionHandler } from "../actions/index.js";
 import { actionFailed } from "../actions/responses.js";
 import type { ActionContext, ActionResponse } from "../actions/types.js";
-import { actionRepository, webhookProfileRepository } from "../repositories/index.js";
+import { actionRepository } from "../repositories/index.js";
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
@@ -21,12 +21,8 @@ export interface ExecuteResult {
 }
 
 
-const snowflakeToUnix = (id: string) => {
-  const epoch = 1420070400000;
-  const binary = BigInt(id).toString(2).padStart(64, "0");
-  const timestamp = parseInt(binary.substring(0, 42), 2) + epoch;
-  return Math.floor(timestamp / 1000);
-};
+const snowflakeToUnix = (id: string): number =>
+  Math.floor(Number((BigInt(id) >> 22n) + 1420070400000n) / 1000);
 
 export const extractVariablesFromInteraction = (interaction: DiscordInteraction): Record<string, unknown> => {
   const user = interaction.member?.user ?? interaction.user;
