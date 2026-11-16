@@ -185,7 +185,15 @@ export const executeCustomId = async (
     // Fetch the full Guild resource so {server.*} can resolve every field
     // Discord returns for this server, not only id/name/icon summaries.
     const guild = await discord.getGuild(guildId, botToken).catch(() => null);
-    if (guild) Object.assign(variables, buildGuildVariables(guildId, guild));
+    if (guild) {
+      Object.assign(variables, buildGuildVariables(guildId, guild));
+    } else if (variables["server.name"] === "Server") {
+      // Retain the previous lightweight fallback if the full Guild endpoint
+      // is unavailable, so the established name/icon placeholders still work.
+      const guilds = await discord.getBotGuilds().catch(() => []);
+      const matchedGuild = guilds.find((entry) => entry.id === guildId);
+      if (matchedGuild) Object.assign(variables, buildGuildVariables(guildId, matchedGuild));
+    }
   }
 
   const context: Omit<ActionContext, "config"> = {
