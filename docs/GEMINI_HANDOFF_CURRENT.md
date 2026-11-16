@@ -38,7 +38,7 @@ Implementation is being committed directly to `main` as requested. These changes
 - `822f61b` / `7b88a06` / `8ebaa6e` / `6b1ae8c` / `482bdce` / `483ada5` / `718e543` / `a1e62da` — thread destination implementation and regression tests
 - `777c588` — align Inspector docking breakpoint
 - `feddd67` / `50fd631` / `8defba7` — portal Inspector variable/emoji menus and tune floating-layer stacking
-- `db3cb6e` / `b523088` / `8615b37` / `a180024` / `e0f2f6d` / `c4817bd` / `bcff999` / `ffd72b5` / `8cf1a4a` / `9c31403` / `b2d66d0` / `501dda6` / `f6226b0` — portal RichPicker and inline emoji menus; anchor dismissal and selected-row behavior
+- `db3cb6e` / `b523088` / `8615b37` / `a180024` / `e0f2f6d` / `c4817bd` / `bcff999` / `ffd72b5` / `8cf1a4a` / `9c31403` / `b2d66d0` / `501dda6` / `f6226b0` / `d974a77` / `c11840f` — portal RichPicker, inline emoji, and exploit autocomplete menus; anchor dismissal and selected-row behavior
 - `501ce3a` / `4d3ee94` / `d224ab7` / `1819429` — separate forum thread creation from existing thread destination and improve editor status
 - `b6d0bd2` / `a16a735` / `c89f4da` / `291ab6e` — centralize and apply shared header/Inspector UI tokens
 - `8305519` / `3a871d7` — update this implementation handoff
