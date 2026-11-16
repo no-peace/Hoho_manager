@@ -4,7 +4,7 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest application source commit:** `ae07d8c0c1f9df33debe22808b00b6c1d0ac85b9`  
+**Latest application source commit:** `dc02d11d7fd4161c8117081ebac6f1b2f8b468c2`  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
 **Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
@@ -20,10 +20,10 @@ Implementation is being committed directly to `main` as requested. These changes
 - **Wide-screen workspace:** Replaced the Studio's mutually exclusive editor/preview rendering with the existing resizable `SplitPane`; aligned the split and inspector docking breakpoint to 1200px; kept both mobile panes mounted so switching tabs does not discard local component state.
 - **Header / preview cleanup:** Removed the Share action and callback plumbing while retaining JSON import/export. Removed the Cozy/Compact preview toggle and compact-only rendering branches.
 - **Public pages:** Made the shared public header more compact at phone widths. Rebuilt the Docs variable reference as mobile cards plus a desktop table; changed copy affordances to Lucide Copy/Check icons and only show success after clipboard writes succeed.
-- **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers to choose the side with more available space and scroll the selected option into view.
+- **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers and custom Select menus to choose the side with more available space, portal outside clipping containers, and scroll the selected option into view.
 - **WEAO catalogue:** Removed the route filter that hid live WEAO exploits without a backup template, so the variable autocomplete receives the complete permitted catalogue. Added a manual exploit-name fallback when the catalogue is unavailable and improved dotted/manual-name parsing.
 - **Thread destination:** Added an Existing Thread ID editor field, top-level `threadId` request metadata, server-side validation, and effective-destination routing for guild/channel permissions, interpolation context, send/edit dispatch, tracking, logs, and audit events. Kept forum `thread_name` separate. Updated the `send_message` flow field label.
-- **UI tokens:** Centralized the public header/nav, Studio header, Inspector surfaces, and Docs variable-reference/copy controls in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
+- **UI tokens:** Centralized the public header/nav, Studio header, Inspector surfaces, Docs variable-reference/copy controls, and custom Select listbox surface in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
 - **Regression tests added:** Added route tests for direct thread dispatch, malformed thread IDs, and staff allowlist enforcement against the actual thread destination; payload tests proving existing thread IDs do not create forum threads; and parser tests for dotted exploit names/fields. Added floating-position utility tests for above/below selection, viewport clamping, and visual viewport offsets.
 
 ### Main commit sequence
