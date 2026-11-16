@@ -1,4 +1,14 @@
-## Lighthouse follow-up — contrast and font loading (2026-11-16)
+# HoHo Manager — Current Gemini Handoff & Repair Plan
+
+**Updated:** 2026-11-16 (latest continuation: Lighthouse contrast and font-loading fixes)  
+**Repository:** https://github.com/no-peace/Hoho_manager  
+**Production URL:** https://hoho-manager.onrender.com  
+**Authoritative branch:** `main`  
+**Latest source implementation head before this handoff update:** `aa67d87fac22a029fe4ef8f615bb995832a118f2`  
+**Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
+**Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
+**Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
+**Current status:** V9/V10 historical work and V11 layout restoration are recorded below. The latest preview/editor UX, button-label autocomplete restriction, safe Classic/V2 conversion, toast copy, and logo-frame changes are committed to `main`. The owner ran `npm run typecheck` and found two missing-import errors in `PropertyPanel.tsx`; the missing import has since been restored in commit `38a4fe8a`. The owner has not yet rerun typecheck. Tests, production build, and browser visual QA remain unverified. Do not describe the branch as fully tested or release-ready.
 
 ## Lighthouse follow-up — contrast and font loading (2026-11-16)
 
@@ -10,17 +20,6 @@ Implemented on `main`:
 
 Validation: source-level checks confirmed the old Google Fonts `@import` is absent, the HTML contains the preconnects/non-blocking font stylesheet/fallback, and the four reported lavender/white UI elements now use accessible foreground colors. WCAG ratios were calculated from the authored hex values: #10131A on #818CF8 = 6.23:1; white on #5B5FEA = 4.92:1; white on #4F46E5 = 6.29:1. No test suite, typecheck, production build, or new Lighthouse run has been executed in this environment. Re-run Lighthouse against a production `vite preview` build to measure the actual performance impact and confirm the accessibility score.
 
-# HoHo Manager — Current Gemini Handoff & Repair Plan
-
-**Updated:** 2026-11-16 (latest continuation: Lighthouse contrast and font-loading fixes)  
-**Repository:** https://github.com/no-peace/Hoho_manager  
-**Production URL:** https://hoho-manager.onrender.com  
-**Authoritative branch:** `main`  
-**Latest source implementation head before this handoff update:** `8749ad034b5216b979f3451f5036d78851b20d85`  
-**Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
-**Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
-**Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
-**Current status:** V9/V10 historical work and V11 layout restoration are recorded below. The latest preview/editor UX, button-label autocomplete restriction, safe Classic/V2 conversion, toast copy, and logo-frame changes are committed to `main`. The owner ran `npm run typecheck` and found two missing-import errors in `PropertyPanel.tsx`; the missing import has since been restored in commit `38a4fe8a`. The owner has not yet rerun typecheck. Tests, production build, and browser visual QA remain unverified. Do not describe the branch as fully tested or release-ready.
 
 
 
