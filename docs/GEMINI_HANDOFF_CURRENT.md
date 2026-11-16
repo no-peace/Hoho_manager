@@ -23,8 +23,8 @@ Implementation is being committed directly to `main` as requested. These changes
 - **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers to choose the side with more available space and scroll the selected option into view.
 - **WEAO catalogue:** Removed the route filter that hid live WEAO exploits without a backup template, so the variable autocomplete receives the complete permitted catalogue. Added a manual exploit-name fallback when the catalogue is unavailable and improved dotted/manual-name parsing.
 - **Thread destination:** Added an Existing Thread ID editor field, top-level `threadId` request metadata, server-side validation, and effective-destination routing for guild/channel permissions, interpolation context, send/edit dispatch, tracking, logs, and audit events. Kept forum `thread_name` separate. Updated the `send_message` flow field label.
-- **UI tokens:** Centralized the public header/nav, Studio header, and Inspector surfaces in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
-- **Regression tests added:** Added route tests for direct thread dispatch, malformed thread IDs, and staff allowlist enforcement against the actual thread destination, plus payload tests proving existing thread IDs do not create forum threads.
+- **UI tokens:** Centralized the public header/nav, Studio header, Inspector surfaces, and Docs variable-reference/copy controls in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
+- **Regression tests added:** Added route tests for direct thread dispatch, malformed thread IDs, and staff allowlist enforcement against the actual thread destination; payload tests proving existing thread IDs do not create forum threads; and parser tests for dotted exploit names/fields. Added floating-position utility tests for above/below selection, viewport clamping, and visual viewport offsets.
 
 ### Main commits
 
@@ -40,7 +40,12 @@ Implementation is being committed directly to `main` as requested. These changes
 - `feddd67` / `50fd631` / `8defba7` — portal Inspector menus and tune floating-layer stacking
 - `501ce3a` / `4d3ee94` / `d224ab7` / `1819429` — separate forum thread creation from existing thread destination and improve editor status
 - `b6d0bd2` / `a16a735` / `c89f4da` / `291ab6e` — centralize and apply shared header/Inspector UI tokens
-- `8305519` — update this implementation handoff
+- `8305519` / `3a871d7` — update this implementation handoff
+- `17b78c6` / `c418607` / `c701de8` / `d9239c2` / `2def116` / `8e19bfc` — shared viewport placement utility, tests, and picker integration
+- `c803f6a` / `b8d8961` / `a6d92be` — dotted exploit parser repair and tests
+- `1859f98` — manual exploit-name fallback when no catalogue match exists
+- `597267a` / `b8fb5c8` — typed thread request metadata and robust send-route test assertion
+- `8b100b5` / `5c4fbc3` — shared Docs surface/copy tokens
 
 ### Still outstanding
 
