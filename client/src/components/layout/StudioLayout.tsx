@@ -167,7 +167,7 @@ export const StudioLayout: React.FC = () => {
           onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
           className="min-h-0 min-w-0 flex-1"
         />
-        <React.Suspense fallback={null}><PropertyPanel /></React.Suspense>
+        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={() => { setMobileView("editor"); useMessageStore.getState().select(null); }} /></React.Suspense>
       </main>
 
       {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
