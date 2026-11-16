@@ -162,11 +162,11 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
           >
             <div className="flex items-center justify-between px-3 py-1.5 bg-[#10131A] border-b border-[#1D2230] rounded-t-lg select-none">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#F1F3F9]">
+                <span className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9]">
                   <Layers size={12} className="text-[#818CF8]" />
                   Action Row #{siblingIndex + 1}
                 </span>
-                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-[#10131A] text-[#A1A8B8] border border-[#272D3A]">
+                <span className="text-[0.625rem] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-[#10131A] text-[#A1A8B8] border border-[#272D3A]">
                   {capacityLabel}
                 </span>
               </div>
@@ -242,7 +242,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             <ExternalLink size={12} className="opacity-80 shrink-0" />
                           ) : stepCount > 0 ? (
                             <span
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[10px] font-mono"
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[0.625rem] font-mono"
                               title={`${stepCount} Flow Action(s)`}
                             >
                               ⚡ {stepCount} steps
@@ -316,7 +316,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             <div className="text-xs font-medium text-[#F1F3F9] truncate">
                               {child.placeholder || componentLabel(child)}
                             </div>
-                            <div className="text-[10px] text-[#A1A8B8] flex items-center gap-2">
+                            <div className="text-[0.625rem] text-[#A1A8B8] flex items-center gap-2">
                               <span>{selectMeta?.label || "Select Menu"}</span>
                               {child.type === ComponentType.StringSelect && (
                                 <span>• {(child.options || []).length} option(s)</span>
@@ -335,7 +335,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           <button
                             type="button"
                             onClick={() => select({ kind: "component", id: childId })}
-                            className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[11px] text-[#F1F3F9]"
+                            className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[0.6875rem] text-[#F1F3F9]"
                           >
                             Edit Options & Flow
                           </button>
@@ -362,7 +362,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                         e.stopPropagation();
                         addActionRowChild(rowId, ComponentType.Button);
                       }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[0.6875rem] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
                     >
                       <Plus size={12} /> Add Button
                     </button>
@@ -378,7 +378,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             selectMenuDropdownRow === rowId ? null : rowId,
                           );
                         }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[0.6875rem] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
                       >
                         <ListFilter size={12} /> Add Select Menu ▾
                       </button>
