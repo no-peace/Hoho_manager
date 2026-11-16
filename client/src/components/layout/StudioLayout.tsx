@@ -133,6 +133,7 @@ export const StudioLayout: React.FC = () => {
                     </button>
                   </div>
                 </CultMorphSurface>
+                </div>
               </div>
             </div>
           }
