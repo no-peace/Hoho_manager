@@ -100,6 +100,26 @@ export const UI_THEME_CONFIG = {
     appShell: "flex h-dvh flex-col bg-[#313338] text-[#dbdee1] font-sans overflow-hidden",
     headerBar:
       "sticky top-0 left-0 z-20 bg-[#1e1f22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-3 sm:px-4 h-12 flex items-center justify-between font-sans shrink-0",
+    publicHeader:
+      "sticky top-0 z-50 flex min-h-14 items-center justify-between gap-1.5 border-b border-[#26282d] bg-[#18191c]/90 px-2 py-2 backdrop-blur-md sm:gap-3 sm:px-6",
+    publicNav:
+      "flex shrink-0 items-center gap-0.5 sm:gap-1.5",
+    publicNavItem:
+      "rounded-lg border px-2 py-1.5 text-[10px] font-semibold transition-[background-color,border-color,color] duration-150 sm:px-3 sm:py-2 sm:text-xs",
+    publicNavActive:
+      "border-[#5865f2]/40 bg-[#5865f2]/15 text-white",
+    publicNavIdle:
+      "border-transparent text-[#b5bac1] hover:border-[#26282d] hover:bg-[#232428] hover:text-white",
+    studioHeaderBar:
+      "sticky top-0 left-0 z-20 bg-[#1E1F22]/95 backdrop-blur-md border-b border-[#111214] shadow-md w-full px-2.5 sm:px-4 h-12 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 font-sans shrink-0",
+    inspectorBackdrop:
+      "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm min-[1200px]:hidden",
+    inspectorPanel:
+      "fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-2xl border-t border-[#26282d] bg-[#2b2d31] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[440px] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#1e1f22] min-[1200px]:shadow-none",
+    inspectorHeader:
+      "flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] px-5 py-4 shrink-0",
+    inspectorBody:
+      "min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[env(safe-area-inset-bottom)] custom-scrollbar",
     editorCardActive:
       "rounded-xl bg-[#292b2f] border border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_8px_24px_rgba(0,0,0,0.32)] transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorCardInactive:
