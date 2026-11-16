@@ -435,6 +435,55 @@ export const getBotGuilds = async (
   return (await apiRequest<DiscordGuildSummary[]>("GET", "/users/@me/guilds", { token })) ?? [];
 };
 
+const guildResourceCache = new Map<string, { value: Record<string, unknown>; expiresAt: number }>();
+const guildResourceInflight = new Map<string, Promise<Record<string, unknown> | null>>();
+const GUILD_RESOURCE_CACHE_TTL_MS = 60_000;
+const GUILD_RESOURCE_CACHE_MAX_ENTRIES = 500;
+
+/**
+ * Fetch the full Discord Guild resource, including approximate member counts.
+ * Results are cached briefly because guild settings change infrequently and
+ * interaction handlers may request several placeholders in quick succession.
+ */
+export const getGuild = async (
+  guildId: string,
+  token?: string,
+): Promise<Record<string, unknown> | null> => {
+  const cached = guildResourceCache.get(guildId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  if (cached) guildResourceCache.delete(guildId);
+
+  const pending = guildResourceInflight.get(guildId);
+  if (pending) return pending;
+
+  const request = (async () => {
+    const authToken = token ?? await resolveBotToken();
+    const guild = await apiRequest<Record<string, unknown>>(
+      "GET",
+      `/guilds/${encodeURIComponent(guildId)}?with_counts=true`,
+      { token: authToken },
+    );
+    if (!guild) return null;
+
+    if (guildResourceCache.size >= GUILD_RESOURCE_CACHE_MAX_ENTRIES) {
+      const oldestKey = guildResourceCache.keys().next().value;
+      if (oldestKey) guildResourceCache.delete(oldestKey);
+    }
+    guildResourceCache.set(guildId, {
+      value: guild,
+      expiresAt: Date.now() + GUILD_RESOURCE_CACHE_TTL_MS,
+    });
+    return guild;
+  })();
+
+  guildResourceInflight.set(guildId, request);
+  try {
+    return await request;
+  } finally {
+    guildResourceInflight.delete(guildId);
+  }
+};
+
 export const getGuildChannels = async (
   guildId: string,
   profileId: number | string | null = null,
