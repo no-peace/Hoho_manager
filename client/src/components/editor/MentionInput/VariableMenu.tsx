@@ -8,6 +8,8 @@ export interface SpecializedMenuProps {
   onSelectIndex: (index: number) => void;
   onApply: (item: AutocompleteItem) => void;
   dropdownPosition: "top" | "bottom";
+  maxHeight?: number;
+  anchor?: HTMLElement | null;
 }
 
 export const VariableMenu: React.FC<SpecializedMenuProps> = (props) => (
