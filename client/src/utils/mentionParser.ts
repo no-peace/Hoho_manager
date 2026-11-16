@@ -180,7 +180,7 @@ export const detectAutocompleteToken = (
   const beforeCursor = text.slice(0, cursorPos);
 
   const exploitFieldMatch = beforeCursor.match(
-    /(\{{1,2})exploit\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_]*)$/i,
+    /(\{{1,2})exploit\.([a-zA-Z0-9_.-]+)\.([a-zA-Z0-9_]*)$/i,
   );
   if (exploitFieldMatch) {
     return {
@@ -192,7 +192,7 @@ export const detectAutocompleteToken = (
     };
   }
 
-  const exploitNameMatch = beforeCursor.match(/(\{{1,2})exploit\.([a-zA-Z0-9_-]*)$/i);
+  const exploitNameMatch = beforeCursor.match(/(\{{1,2})exploit\.([a-zA-Z0-9_.-]*)$/i);
   if (exploitNameMatch) {
     return {
       type: "exploit_name",
