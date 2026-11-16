@@ -167,6 +167,11 @@ export const EXPLOIT_FIELD_OPTIONS: readonly ExploitFieldOption[] = [
     label: "Official Purchase Link",
     getPreview: (e) => e?.purchaselink || "https://...",
   },
+  {
+    key: "changelogs",
+    label: "Recent Changelogs",
+    getPreview: () => "Formatted WEAO release notes",
+  },
 ];
 
 /**
