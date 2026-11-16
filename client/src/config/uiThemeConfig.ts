@@ -99,7 +99,7 @@ export const UI_THEME_CONFIG = {
     docsTableCard: "bg-[#161A23] border border-[#272D3A] rounded-[10px] overflow-hidden shadow-sm mb-12",
     docsTableHeader: "px-5 py-3 border-b border-[#202531] bg-[#10131A] flex items-center justify-between",
     docsVariableCard: "rounded-[8px] border border-[#272D3A] bg-[#1D2230] p-3",
-    docsCopyButton: "inline-flex items-center justify-center text-[#A5B4FC] hover:text-[#F1F3F9] bg-[#1D2230] h-8 w-8 rounded-md border border-[#272D3A] hover:border-[#818CF8]/60 transition-colors",
+    docsCopyButton: "inline-flex max-w-full min-h-8 items-center justify-start gap-2 rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1.5 text-left text-[#A5B4FC] hover:text-[#F1F3F9] hover:border-[#818CF8]/60 transition-colors",
     editorCardActive: "rounded-[10px] bg-[#161A23] border border-[#818CF8] shadow-[0_0_0_1px_rgba(129,140,248,0.18)] transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorCardInactive: "rounded-[10px] bg-[#161A23] border border-[#272D3A] hover:border-[#343C4E] transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorSubSection: "rounded-[8px] border border-[#202531] bg-[#1D2230] overflow-hidden",
