@@ -1,15 +1,97 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Updated:** 2026-11-16 (latest continuation: preview/editor interaction, conversion safety, and typecheck repair)  
+**Updated:** 2026-11-16 (latest continuation: message-card click navigation and Lighthouse performance diagnosis)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest source implementation head before this handoff update:** `38a4fe8a5ba9eceee3e0389cbfe69a6be42fd74d`  
+**Latest source implementation head before this handoff update:** `8749ad034b5216b979f3451f5036d78851b20d85`  
 **Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
 **Current status:** V9/V10 historical work and V11 layout restoration are recorded below. The latest preview/editor UX, button-label autocomplete restriction, safe Classic/V2 conversion, toast copy, and logo-frame changes are committed to `main`. The owner ran `npm run typecheck` and found two missing-import errors in `PropertyPanel.tsx`; the missing import has since been restored in commit `38a4fe8a`. The owner has not yet rerun typecheck. Tests, production build, and browser visual QA remain unverified. Do not describe the branch as fully tested or release-ready.
 
+
+
+## Latest continuation — blank message-card navigation and local Lighthouse investigation (2026-11-16)
+
+This section is the newest authoritative update. It supplements the prior preview/inspector interaction contract and records the performance evidence reviewed from Lighthouse workflow run **43547638587**.
+
+### Blank/non-component message-card click behavior
+
+Owner clarified that clicking a specific message's blank/non-component area in Preview should navigate to that message's editor, but ordinary scrolling/swiping through Preview must never trigger navigation.
+
+Implemented:
+- `client/src/components/layout/StudioLayout.tsx` — `handlePreviewMessageSelect(index)` now:
+  - clears any selected component inspector;
+  - on desktop, scrolls the left editor to the selected message and focuses the first editable field;
+  - on mobile/tablet, switches from Preview to Editor only after a deliberate message selection, then waits for the pane to become visible before scrolling/focusing.
+- `client/src/components/preview/MessagePreview.tsx` — message-card navigation is now an explicit `onClick` handler (not a scroll/wheel/touch-move handler). It ignores native interactive elements, component targets, and spoiler reveal controls. Component click capture continues to stop propagation and use the existing component-inspector behavior.
+- Message number controls (`#1`, `#2`, etc.) continue to use the same message-selection path.
+- A scroll/swipe alone does not dispatch the card click handler; do not add scroll-based navigation.
+- Preview component clicks remain separate: on mobile they open the quick inspector while leaving Preview active; on desktop ordinary components navigate to the left editor, while button targets open the floating inspector.
+
+Commits:
+- `1f6d6f878b41443210d5e695b72383fda011d123` — switch to selected message editor when a preview message is clicked.
+- `8749ad034b5216b979f3451f5036d78851b20d85` — guard message-card navigation from native/component/spoiler interactions.
+
+Validation so far: changed files were re-fetched and targeted source checks confirmed the handler, click binding, interactive guard, and two spoiler ignore markers. No typecheck, test suite, or browser gesture test has yet been run for these commits.
+
+### Lighthouse evidence reviewed
+
+Inspected artifacts from GitHub Actions Lighthouse run:
+- Run: `43547638587`
+- Workflow branch: `perf/mobile-lighthouse-optimizations`
+- Workflow head: `d0dfe37fd0b033ba4244db04ea2626cb335da751`
+- The run used a production build and Vite preview, not the Vite development server.
+- Three runs per form factor.
+
+Observed artifact results:
+- Desktop Performance: 80, 78, 81 (median 80).
+- Desktop LCP: approximately 2.18–2.21 seconds.
+- Desktop TBT: 20–136.5 ms; median approximately 22 ms.
+- Mobile Performance: 98, 97, 97 (median 97).
+- Mobile LCP: approximately 2.20–2.26 seconds.
+- Mobile TBT: 0 ms in all three runs.
+- CLS: 0 in all six reports.
+- Unused JavaScript audit estimated about 29 KiB potential transfer savings.
+
+Important evidence limits:
+- These artifacts came from the named performance PR branch, not the current main head; treat them as a prior controlled baseline, not proof of current-main scores.
+- Lighthouse's exported `largest-contentful-paint-element` audit had `details: null` in the inspected JSON, so the exact LCP DOM node cannot be identified from this artifact.
+- The reports do not contain an INP measurement. TBT is a lab diagnostic/proxy for main-thread blocking, not INP.
+- The desktop test configuration simulated a 4x CPU slowdown and throttled network. It is not a direct benchmark of the owner's i7 laptop.
+- The 20–30 local Lighthouse score has not yet been reproduced or diagnosed.
+
+### Current code observations relevant to performance
+
+Inspected current `client/src/App.tsx`:
+- `NotFoundPage`, `DocsPage`, `PrivacyPage`, `StudioLayout`, and `StudioModals` are dynamically imported with `React.lazy`.
+- The Studio-only route components are not eagerly imported by the main App module.
+- `authLoading` initially activates only when a stored session hint or OAuth callback is present. `fetchCurrentUser()` requests auth and health concurrently, then resolves loading state.
+- No bundle-splitting, Vite chunking, or proxy changes were made during this interaction update.
+
+The root `npm run dev` command starts shared build + server + Vite client + bot. The client Vite dev server is not a production-equivalent Lighthouse target. The CI workflow instead runs locked dependency installation, builds shared/client/server, starts the API, and runs Lighthouse against `vite preview` on port 4173.
+
+### Interpretation for the owner's local score
+
+- INP 280 ms is in the "needs improvement" range (good is <=200 ms; poor is >500 ms). Attribute the slow interaction before optimizing; inspect the DevTools Performance interaction track / INP attribution to identify the actual event and target.
+- LCP 2.60 s is just over the 2.5 s "good" threshold and in the "needs improvement" range, not a severe/poor LCP.
+- A local Lighthouse Performance score of 20–30 is not explained by the CI artifacts. First verify whether Lighthouse was run against the Vite development server (commonly port 5173) rather than a production build served by `vite preview` (the CI target is port 4173). Development transforms, HMR and module loading can distort the score substantially.
+- Laptop hardware, background CPU/memory pressure, thermal/power mode, browser extensions, and concurrent development processes can affect local lab runs. Integrated graphics is unlikely to be the primary cause of JavaScript/INP latency.
+- Do not make speculative bundle or Vite chunking/proxy edits based only on a local 20–30 score. The next performance step is to reproduce against production preview under controlled conditions and capture the full Lighthouse JSON/trace, especially the actual LCP element and the interaction attribution for the 280 ms INP.
+- The existing Lighthouse artifacts' LCP element detail is missing; a new report/trace with element attribution is needed before targeting a specific image or DOM node.
+
+### Exact next actions
+
+1. Owner reruns `npm run typecheck` after the earlier `UI_THEME_CONFIG` import repair and after the two new message-click commits; capture complete output.
+2. Run `npm test` and `npm run build` separately and record actual results.
+3. Browser-test desktop and mobile: click blank card area -> editor navigation; click/drag-scroll the preview -> no tab switch; click a V2 component -> expected inspector/editor behavior; click native links/spoiler controls -> their native action only.
+4. Re-run Lighthouse against the production preview, not `npm run dev`, using the existing CI workflow/config as reference. Compare same route, viewport, browser, storage/auth state, and run count.
+5. Capture the actual LCP element and INP interaction attribution before changing loading strategy or JavaScript bundles.
+6. Preserve the existing lazy-loaded NotFoundPage and current authLoading behavior unless new trace evidence shows either is contributing. Do not touch Vite chunking/proxy without a measured cause.
+7. Update this handoff with exact current-main commit, raw output, and visual/performance artifacts after each verification batch.
+
+---
 
 ## Latest authoritative continuation — preview editing, inspector overlay, conversion safety, and typecheck repair (2026-11-16)
 
