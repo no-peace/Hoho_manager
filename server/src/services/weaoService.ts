@@ -326,7 +326,6 @@ const formatChangelogEntry = (entry: unknown): string => {
 };
 
 export const formatExploitChangelogs = (entries: unknown[], selector = "", comparison?: { added: unknown[]; removed: unknown[] }): string => {
-  const normalizedSelector = selector.replace(/^changelog(?=\[|\.|$)/i, "changelogs");
   let selected = entries;
   if (selector.toLowerCase() === "changelogs.compare") {
     const added = comparison?.added ?? [];
@@ -513,7 +512,7 @@ export const interpolateWeaoPlaceholders = async (
     if (!scoped) continue;
 
     const keyLower = scoped.targetName.toLowerCase();
-    if (/^changelogs?(?:\[|\.|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
+    if (/^changelogs(?:\[|\.|$)/i.test(scoped.fieldName) && !changelogMap.has(keyLower)) {
       changelogMap.set(keyLower, await getExploitChangelogs(scoped.targetName));
     }
     if (suncMap.has(keyLower)) continue;
@@ -536,7 +535,7 @@ export const interpolateWeaoPlaceholders = async (
           allExploits.find((e) =>
             e.title.toLowerCase().includes(scoped.targetName.toLowerCase()),
           );
-        const isChangelogField = /^changelogs?(?:\[|\.|$)/i.test(scoped.fieldName);
+        const isChangelogField = /^changelogs(?:\[|\.|$)/i.test(scoped.fieldName);
         const isTrackerId = /^[A-Za-z0-9_-]{1,128}$/.test(scoped.targetName);
         if (isChangelogField && (target || isTrackerId)) {
           return formatExploitChangelogs(
