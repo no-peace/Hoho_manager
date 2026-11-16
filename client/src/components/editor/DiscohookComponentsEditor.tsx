@@ -362,7 +362,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                         e.stopPropagation();
                         addActionRowChild(rowId, ComponentType.Button);
                       }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
                     >
                       <Plus size={12} /> Add Button
                     </button>
@@ -378,7 +378,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             selectMenuDropdownRow === rowId ? null : rowId,
                           );
                         }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
                       >
                         <ListFilter size={12} /> Add Select Menu ▾
                       </button>
