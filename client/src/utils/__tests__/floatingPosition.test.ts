@@ -36,7 +36,7 @@ describe("calculateFloatingPosition", () => {
 
   it("accounts for the visual viewport offset when the mobile keyboard is open", () => {
     const result = calculateFloatingPosition(
-      { top: 360, bottom: 400, left: 16, width: 280 },
+      { top: 500, bottom: 540, left: 16, width: 280 },
       { width: 360, height: 300, offsetTop: 280 },
     );
 
