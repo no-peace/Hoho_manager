@@ -152,6 +152,7 @@ export const AutoComponent = ({ component }: AutoComponentProps) => {
 
   return (
     <div
+      data-preview-component-id={component._id}
       role="group"
       tabIndex={0}
       aria-label="Select message component"
