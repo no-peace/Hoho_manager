@@ -20,6 +20,7 @@ export const PropertyPanel = () => {
   const messageData = (messages && messages[activeMessageIndex]) || data;
   const components = messageData.components || [];
   const select = useMessageStore((state) => state.select);
+  const setContent = useMessageStore((state) => state.setContent);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
@@ -49,6 +50,44 @@ export const PropertyPanel = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [select]);
+
+  if (selection?.kind === "message") {
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-40 bg-[#0B0D12]/55 backdrop-blur-[1px] min-[1200px]:hidden"
+          onClick={() => select(null)}
+        />
+        <aside
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:hidden"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="h-1 w-10 rounded-full bg-[#252B3A]" />
+          </div>
+          <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Message Quick Edit</span>
+              <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
+            </div>
+            <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
+          </div>
+          <div className="min-h-0 overflow-y-auto p-3.5" data-message-quick-editor>
+            <label htmlFor="preview-message-content" className="mb-2 block text-xs font-semibold text-[#A1A8B8]">Message content</label>
+            <textarea
+              id="preview-message-content"
+              value={messageData.content ?? ""}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="Write your message..."
+              rows={6}
+              className="w-full min-h-32 resize-y rounded-lg border border-[#303746] bg-[#0F1219] p-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-[#687184] focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
+            />
+            <p className="mt-2 text-[11px] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
+          </div>
+        </aside>
+      </>
+    );
+  }
 
   if (!selection || selection.kind !== "component") return null;
 
