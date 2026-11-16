@@ -59,6 +59,21 @@ describe("mentionParser: detectAutocompleteToken", () => {
     });
   });
 
+  it("opens standard variable autocomplete for an empty brace and partial variable prefix", () => {
+    expect(detectAutocompleteToken("{", 1)).toMatchObject({
+      type: "variable",
+      query: "",
+      start: 0,
+      end: 1,
+    });
+    expect(detectAutocompleteToken("{explo", 6)).toMatchObject({
+      type: "variable",
+      query: "explo",
+      start: 0,
+      end: 6,
+    });
+  });
+
   it("detects standard variable tokens, @mentions, #channels, and :emojis", () => {
     expect(detectAutocompleteToken("Hello {user.na", 14)?.type).toBe("variable");
     expect(detectAutocompleteToken("Ping @nexus", 11)?.type).toBe("user");

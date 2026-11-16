@@ -15,6 +15,16 @@ describe("MessageEditor", () => {
     expect(screen.getByText("Classic")).toBeDefined();
   });
 
+  it("shows the embed empty state and creates the first embed from its call to action", () => {
+    render(<MessageEditor index={0} />);
+
+    expect(screen.getByText("No embeds yet")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /Create First Embed/i }));
+
+    expect(screen.getByText("Embed #1")).toBeDefined();
+    expect(screen.getByText("1 / 10")).toBeDefined();
+  });
+
   it("renders Rename, Duplicate and Delete buttons in toolbar", () => {
     render(<MessageEditor index={0} />);
 
