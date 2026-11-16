@@ -347,6 +347,7 @@ export const api = {
 
   auth: {
     me: () => request<{ user: CurrentUser | null }>("/api/auth/me"),
+    devLogin: () => request<{ ok: boolean; user: CurrentUser }>("/api/auth/dev-login", { method: "POST" }),
     logout: () => request<{ success: boolean; ok: boolean }>("/api/auth/logout", { method: "POST" }),
   },
 
