@@ -138,7 +138,7 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
       onClose={onClose}
       title={
         <span className="flex items-center gap-1.5">
-          <Link size={16} className="text-[#949cf7]" /> Set Discord Message Link
+          <Link size={16} className="text-[#A5B4FC]" /> Set Discord Message Link
         </span>
       }
       width="max-w-md"
@@ -179,14 +179,14 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
         }
         className="space-y-3.5"
       >
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1e1f22] rounded-lg border border-[#111214]">
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#1D2230] rounded-[8px] border border-[#272D3A]">
           <button
             type="button"
             onClick={() => setLinkModeInput("reply")}
             className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
               linkModeInput === "reply"
-                ? "bg-[#5865f2] text-white"
-                : "text-[#949ba4] hover:text-white"
+                ? "bg-[#818CF8]/15 text-[#F1F3F9] border border-[#818CF8]/25"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9]"
             }`}
           >
             ↩ Reply to Message
@@ -196,8 +196,8 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
             onClick={() => setLinkModeInput("edit")}
             className={`py-1.5 px-2.5 rounded text-xs font-bold transition-colors ${
               linkModeInput === "edit"
-                ? "bg-[#faa61a] text-[#111214]"
-                : "text-[#949ba4] hover:text-white"
+                ? "bg-[#FBBF24]/15 text-[#FBBF24] border border-[#FBBF24]/25"
+                : "text-[#A1A8B8] hover:text-white"
             }`}
           >
             ✎ Edit Existing Message
@@ -205,7 +205,7 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-[11px] font-semibold text-[#b5bac1]">
+          <label className="block text-[11px] font-semibold text-[#A1A8B8]">
             Discord Message URL or channelId/messageId
           </label>
           <input
@@ -216,15 +216,15 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
               setMessageLinkInput(e.target.value);
               setLinkError(null);
             }}
-            className="w-full bg-[#1e1f22] text-xs text-white px-2.5 py-2 rounded-lg border border-[#383a40] focus:border-[#5865f2] focus:outline-none font-mono"
+            className="w-full bg-[#1D2230] text-xs text-white px-2.5 py-2 rounded-lg border border-[#343C4E] focus:border-[#818CF8] focus:outline-none font-mono"
           />
-          <p className="text-[11px] text-[#949ba4]">
+          <p className="text-[11px] text-[#A1A8B8]">
             {linkModeInput === "reply"
               ? "When sent via Bot, this message will natively reply to the linked Discord message."
               : "Binds this message to the linked channel & message ID so Bot Dispatch updates it in-place."}
           </p>
           {linkError && (
-            <p className="text-[11px] text-[#f28b8b] bg-[#da373c]/10 border border-[#da373c]/30 rounded-lg px-2.5 py-1.5 break-words [overflow-wrap:anywhere]">
+            <p className="text-[11px] text-[#F87171] bg-[#F87171]/10 border border-[#F87171]/30 rounded-lg px-2.5 py-1.5 break-words [overflow-wrap:anywhere]">
               {linkError}
             </p>
           )}

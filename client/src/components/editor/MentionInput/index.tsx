@@ -222,7 +222,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           id: `var_${suggestion.tag}`,
           title: suggestion.displayTag,
           subtitle: `${suggestion.label} • ID …${suggestion.userId.slice(-4)}`,
-          icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
+          icon: <Code size={13} className="text-[#818CF8] shrink-0" />,
           replacement: suggestion.tag,
           keepOpen: false,
         }));
@@ -234,7 +234,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           id: "var_weao_chain",
           title: "{exploit.<Name>.<Field>}",
           subtitle: "Live WEAO Exploit Status, sUNC, Version…",
-          icon: <Cpu size={13} className="text-[#57f287] shrink-0" />,
+          icon: <Cpu size={13} className="text-[#34D399] shrink-0" />,
           replacement: "{exploit.",
           keepOpen: true,
         });
@@ -253,7 +253,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             id: `var_${v.tag}`,
             title: v.tag,
             subtitle: `${v.label}  ${v.desc}`,
-            icon: <Code size={13} className="text-[#5865f2] shrink-0" />,
+            icon: <Code size={13} className="text-[#818CF8] shrink-0" />,
             replacement: v.tag,
             keepOpen: false,
           });
@@ -274,7 +274,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               subtitle: weaoError
                 ? "Catalogue unavailable — continue with this name manually"
                 : "Use this name and choose a field",
-              icon: <Code size={13} className="text-[#57f287] shrink-0" />,
+              icon: <Code size={13} className="text-[#34D399] shrink-0" />,
               replacement: `{exploit.${acQuery.trim()}.`,
               keepOpen: true,
             },
@@ -318,7 +318,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           id: `weao_manual_${q}`,
           title: `Use exploit name: ${acQuery.trim()}`,
           subtitle: "No catalogue match — use this name manually",
-          icon: <Code size={13} className="text-[#57f287] shrink-0" />,
+          icon: <Code size={13} className="text-[#34D399] shrink-0" />,
           replacement: `{exploit.${acQuery.trim()}.`,
           keepOpen: true,
         }];
@@ -346,7 +346,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         id: `weao_field_${opt.key}`,
         title: `.${opt.key}`,
         subtitle: `${opt.getPreview(matchedExploit)}  ${opt.label}`,
-        icon: <Sliders size={12} className="text-[#5865f2] shrink-0" />,
+        icon: <Sliders size={12} className="text-[#818CF8] shrink-0" />,
         replacement: `{exploit.${canonicalTitle}.${opt.key}}`,
         keepOpen: false,
       }));
@@ -360,7 +360,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           id: "everyone",
           title: "@everyone",
           subtitle: "Notify all members",
-          icon: <span className="w-2.5 h-2.5 rounded-full bg-[#f28b8b]" />,
+          icon: <span className="w-2.5 h-2.5 rounded-full bg-[#F87171]" />,
           replacement: "@everyone",
         });
       }
@@ -369,7 +369,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           id: "here",
           title: "@here",
           subtitle: "Notify online members",
-          icon: <span className="w-2.5 h-2.5 rounded-full bg-[#f28b8b]" />,
+          icon: <span className="w-2.5 h-2.5 rounded-full bg-[#F87171]" />,
           replacement: "@here",
         });
       }
@@ -402,10 +402,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             <img
               src={`https://cdn.discordapp.com/avatars/${m.id}/${m.avatar}.webp?size=24`}
               alt=""
-              className="w-5 h-5 rounded-full bg-[#1e1f22] shrink-0"
+              className="w-5 h-5 rounded-full bg-[#1D2230] shrink-0"
             />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-[#5865f2] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+            <div className="w-5 h-5 rounded-full bg-[#818CF8] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
               {m.username.charAt(0).toUpperCase()}
             </div>
           ),
@@ -427,11 +427,11 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             c.type === 2 ? "Voice Channel" : c.type === 5 ? "Announcement" : "Text Channel",
           icon:
             c.type === 2 ? (
-              <Volume2 size={13} className="text-[#949ba4] shrink-0" />
+              <Volume2 size={13} className="text-[#A1A8B8] shrink-0" />
             ) : c.type === 5 ? (
-              <Megaphone size={13} className="text-[#949ba4] shrink-0" />
+              <Megaphone size={13} className="text-[#A1A8B8] shrink-0" />
             ) : (
-              <Hash size={13} className="text-[#949ba4] shrink-0" />
+              <Hash size={13} className="text-[#A1A8B8] shrink-0" />
             ),
           replacement: `<#${c.id}>`,
         }));
@@ -729,7 +729,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (acType === "variable") {
       return (
         <span className="flex items-center gap-1.5">
-          <Code size={11} className="text-[#5865f2]" />
+          <Code size={11} className="text-[#818CF8]" />
           <span>Variables</span>
         </span>
       );
@@ -737,7 +737,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (acType === "exploit_name") {
       return (
         <span className="flex items-center gap-1.5">
-          <Cpu size={11} className="text-[#5865f2]" />
+          <Cpu size={11} className="text-[#818CF8]" />
           <span>WEAO</span>
           {weaoMeta?.rateLimited && (
             <span className="text-[9px] px-1 py-0.2 rounded bg-[#f0b232]/20 text-[#f0b232]">
@@ -750,7 +750,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     if (acType === "exploit_field") {
       return (
         <span className="flex items-center gap-1.5">
-          <Sliders size={11} className="text-[#57f287]" />
+          <Sliders size={11} className="text-[#34D399]" />
           <span>{acExploitTarget} Properties</span>
         </span>
       );
@@ -764,16 +764,16 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     <div className={`space-y-1.5 ${className}`} ref={containerRef}>
       <div className="flex items-center justify-between">
         {label ? (
-          <label className="text-xs font-semibold text-[#dbdee1]">
+          <label className="text-xs font-semibold text-[#F1F3F9]">
             {label}
             {maxLength !== undefined && (
               <span
                 className={`ms-2 italic text-xs font-mono tabular-nums ${
                   isOverLimit
-                    ? "text-[#f28b8b] font-bold"
+                    ? "text-[#F87171] font-bold"
                     : charCount / maxLength >= 0.9
                       ? "text-yellow-400"
-                      : "text-[#949ba4]"
+                      : "text-[#A1A8B8]"
                 }`}
               >
                 {charCount}/{maxLength}
@@ -786,7 +786,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       </div>
 
       {/* Integrated Editor Box with Attached Toolbar Ribbon */}
-      <div className="relative w-full rounded-lg border border-[#26282d] hover:border-[#35373c] focus-within:border-[#5865f2] bg-[#1e1f22] transition-[border-color,box-shadow] duration-150">
+      <div className="relative w-full rounded-lg border border-[#272D3A] hover:border-[#252B3A] focus-within:border-[#818CF8] bg-[#1D2230] transition-[border-color,box-shadow] duration-150">
         {showToolbar && (
           <MarkdownToolbar onFormat={(prefix, suffix, defaultText, isLinePrefix) =>
             formatSelection(prefix, suffix, defaultText, isLinePrefix)
@@ -803,7 +803,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
           rows={rows}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full block bg-transparent text-[#dbdee1] placeholder-[#949ba4] text-sm p-3 pb-8 pr-12 focus:outline-none resize-y leading-relaxed font-sans border-0"
+          className="w-full block bg-transparent text-[#F1F3F9] placeholder-[#A1A8B8] text-sm p-3 pb-8 pr-12 focus:outline-none resize-y leading-relaxed font-sans border-0"
           style={{ minHeight: `${rows * 26}px` }}
         />
 
@@ -817,8 +817,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             onClick={() => setShowRichPicker((current) => !current)}
             className={`p-1.5 rounded transition-colors ${
               showRichPicker
-                ? "bg-[#5865f2] text-white shadow-sm"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#35373c] bg-[#2b2d31]/80 backdrop-blur-sm border border-[#1e1f22]"
+                ? "bg-[#818CF8]/15 text-[#F1F3F9] shadow-sm"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#252B3A] bg-[#161A23]/80 backdrop-blur-sm border border-[#1D2230]"
             }`}
             title="Quick Mentions, Timestamps & Emojis"
           >

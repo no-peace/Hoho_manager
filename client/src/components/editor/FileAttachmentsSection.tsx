@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -26,7 +26,7 @@ const formatBytes = (bytes: number): string => {
 };
 
 export const FileAttachmentsSection: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [urlOpen, setUrlOpen] = useState(false);
@@ -38,7 +38,7 @@ export const FileAttachmentsSection: React.FC = () => {
   const addFiles = useMessageStore((state) => state.addFiles);
   const addUrlAttachment = useMessageStore((state) => state.addUrlAttachment);
   const removeFile = useMessageStore((state) => state.removeFile);
-  const toggleFileSpoiler = useMessageStore((state) => state.toggleFileSpoiler);
+  const toggleFileSpoiler = useMessageStore((state) => state.toggleFileSpoiler);\n\n  useEffect(() => {\n    if (attachedFiles.length > 0) setIsOpen(true);\n  }, [attachedFiles.length]);
 
   const handleAddUrl = () => {
     setUrlErrorMessage(null);
@@ -92,45 +92,45 @@ export const FileAttachmentsSection: React.FC = () => {
     }
     if (isVideo) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+        <div className="flex h-full w-full items-center justify-center bg-[#1D2230] text-[#A1A8B8]">
           <Film size={24} />
         </div>
       );
     }
     if (isAudio) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+        <div className="flex h-full w-full items-center justify-center bg-[#1D2230] text-[#A1A8B8]">
           <Music size={24} />
         </div>
       );
     }
     if (isUrl) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+        <div className="flex h-full w-full items-center justify-center bg-[#1D2230] text-[#A1A8B8]">
           <Link2 size={24} />
         </div>
       );
     }
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#1e1f22] text-[#949ba4]">
+      <div className="flex h-full w-full items-center justify-center bg-[#1D2230] text-[#A1A8B8]">
         <FileText size={24} />
       </div>
     );
   };
 
   return (
-    <section className="rounded-lg border border-[#26282d] bg-[#1e1f22] overflow-hidden text-xs">
+    <section className="rounded-[10px] border border-[#272D3A] bg-[#161A23] overflow-hidden text-xs">
       {/* ── Section Trigger Header ── */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22]">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230]">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-[#dbdee1] hover:text-white"
+          className="flex items-center gap-1.5 text-xs font-medium text-[#F1F3F9] hover:text-white"
         >
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span>Files</span>
           {attachedFiles.length > 0 && (
-            <span className="rounded-md bg-[#18191c] border border-[#26282d] px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-bold text-white">
+            <span className="rounded-md bg-[#10131A] border border-[#272D3A] px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-bold text-white">
               {attachedFiles.length}
             </span>
           )}
@@ -140,7 +140,7 @@ export const FileAttachmentsSection: React.FC = () => {
           <button
             type="button"
             onClick={() => setUrlOpen(!urlOpen)}
-            className="flex items-center gap-1 rounded bg-[#35373c] px-2 py-1 text-[11px] font-medium text-[#dbdee1] hover:bg-[#404249] hover:text-white transition-colors"
+            className="flex items-center gap-1 rounded bg-[#252B3A] px-2 py-1 text-[11px] font-medium text-[#F1F3F9] hover:bg-[#404249] hover:text-white transition-colors"
           >
             <Link2 size={12} />
             <span>Add URL</span>
@@ -149,7 +149,7 @@ export const FileAttachmentsSection: React.FC = () => {
             type="button"
             disabled={attachedFiles.length >= MAX_FILES}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 rounded bg-[#5865f2] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#4752c4] disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1 rounded bg-[#818CF8] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#6366F1] disabled:opacity-40 transition-colors"
           >
             <Upload size={12} />
             <span>Upload</span>
@@ -171,7 +171,7 @@ export const FileAttachmentsSection: React.FC = () => {
         <div className="p-3 space-y-3">
           {/* External URL attachment bar */}
           {urlOpen && (
-            <div className="flex items-center gap-2 rounded bg-[#1e1f22] p-2 border border-[#2b2d31]">
+            <div className="flex items-center gap-2 rounded bg-[#1D2230] p-2 border border-[#161A23]">
               <input
                 type="url"
                 value={urlValue}
@@ -180,13 +180,13 @@ export const FileAttachmentsSection: React.FC = () => {
                   if (e.key === "Enter") handleAddUrl();
                 }}
                 placeholder="https://example.com/image.png"
-                className="flex-1 rounded bg-[#2b2d31] px-2 py-1 text-xs text-[#dbdee1] placeholder-[#949ba4]/50 outline-none ring-1 ring-transparent focus:ring-[#5865f2]"
+                className="flex-1 rounded bg-[#161A23] px-2 py-1 text-xs text-[#F1F3F9] placeholder-[#A1A8B8]/50 outline-none ring-1 ring-transparent focus:ring-[#818CF8]"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={handleAddUrl}
-                className="rounded bg-[#5865f2] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#4752c4]"
+                className="rounded bg-[#818CF8] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#6366F1]"
               >
                 Add
               </button>
@@ -196,7 +196,7 @@ export const FileAttachmentsSection: React.FC = () => {
                   setUrlOpen(false);
                   setUrlErrorMessage(null);
                 }}
-                className="p-1 text-[#949ba4] hover:text-white"
+                className="p-1 text-[#A1A8B8] hover:text-white"
               >
                 <X size={14} />
               </button>
@@ -204,13 +204,13 @@ export const FileAttachmentsSection: React.FC = () => {
           )}
 
           {urlErrorMessage && (
-            <p className="flex items-center gap-1 text-[11px] text-[#da373c]">
+            <p className="flex items-center gap-1 text-[11px] text-[#F87171]">
               <AlertCircle size={12} /> {urlErrorMessage}
             </p>
           )}
 
           {errorMessage && (
-            <p className="flex items-center gap-1 text-[11px] text-[#da373c]">
+            <p className="flex items-center gap-1 text-[11px] text-[#F87171]">
               <AlertCircle size={12} /> {errorMessage}
             </p>
           )}
@@ -230,15 +230,15 @@ export const FileAttachmentsSection: React.FC = () => {
             onClick={() => fileInputRef.current?.click()}
             className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
               isDragging
-                ? "border-[#5865f2] bg-[#5865f2]/10"
-                : "border-[#35373c] bg-[#1e1f22]/50 hover:border-[#4e5058] hover:bg-[#1e1f22]"
+                ? "border-[#818CF8] bg-[#818CF8]/10"
+                : "border-[#252B3A] bg-[#1D2230]/50 hover:border-[#4e5058] hover:bg-[#1D2230]"
             }`}
           >
-            <Paperclip size={20} className="mb-1 text-[#b5bac1]" />
-            <p className="text-xs font-medium text-[#f2f3f5]">
-              Drop files here or <span className="text-[#949cf7] underline underline-offset-2 font-semibold">browse</span>
+            <Paperclip size={20} className="mb-1 text-[#A1A8B8]" />
+            <p className="text-xs font-medium text-[#F1F3F9]">
+              Drop files here or <span className="text-[#A78BFA] underline underline-offset-2 font-semibold">browse</span>
             </p>
-            <p className="mt-0.5 text-[10px] text-[#b5bac1]">
+            <p className="mt-0.5 text-[10px] text-[#A1A8B8]">
               Up to 10 files, max 25 MB each. Supports images, audio, video, documents.
             </p>
           </div>
@@ -249,9 +249,9 @@ export const FileAttachmentsSection: React.FC = () => {
               {attachedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="group relative flex flex-col rounded border border-[#2b2d31] bg-[#1e1f22] p-2"
+                  className="group relative flex flex-col rounded border border-[#161A23] bg-[#1D2230] p-2"
                 >
-                  <div className="relative aspect-video w-full overflow-hidden rounded bg-[#111214]">
+                  <div className="relative aspect-video w-full overflow-hidden rounded bg-[#10131A]">
                     {renderFileThumbnail(file)}
 
                     {/* Action buttons overlay */}
@@ -265,7 +265,7 @@ export const FileAttachmentsSection: React.FC = () => {
                         title={file.spoiler ? "Remove spoiler" : "Mark as spoiler"}
                         className={`rounded p-1 text-white shadow backdrop-blur-sm transition-colors ${
                           file.spoiler
-                            ? "bg-[#5865f2] hover:bg-[#4752c4]"
+                            ? "bg-[#818CF8] hover:bg-[#6366F1]"
                             : "bg-black/60 hover:bg-black/80"
                         }`}
                       >
@@ -278,7 +278,7 @@ export const FileAttachmentsSection: React.FC = () => {
                           removeFile(file.id);
                         }}
                         title="Remove file"
-                        className="rounded bg-black/60 p-1 text-white shadow backdrop-blur-sm hover:bg-[#da373c] transition-colors"
+                        className="rounded bg-black/60 p-1 text-white shadow backdrop-blur-sm hover:bg-[#F87171] transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -296,12 +296,12 @@ export const FileAttachmentsSection: React.FC = () => {
                   {/* Metadata labels */}
                   <div className="mt-1.5 min-w-0">
                     <p
-                      className="text-[11px] font-medium text-[#dbdee1] truncate leading-tight"
+                      className="text-[11px] font-medium text-[#F1F3F9] truncate leading-tight"
                       title={file.url ?? file.name}
                     >
                       {file.spoiler ? `SPOILER_${file.name}` : file.name}
                     </p>
-                    <p className="text-[10px] text-[#949ba4] mt-0.5 flex items-center gap-1">
+                    <p className="text-[10px] text-[#A1A8B8] mt-0.5 flex items-center gap-1">
                       {file.url ? (
                         <>
                           <Link2 size={10} /> External URL

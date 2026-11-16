@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { ComponentType, MessageFlags } from "@dmb/shared";
-import { ShinyText } from "../../reactbits/ReactBitsPrimitives";
 import { useGlobalStore } from "../../../store/globalStore";
 import { useMessageStore } from "../../../store/messageStore";
 import { EDITOR_MODES } from "../../../utils/constants";
@@ -108,8 +107,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     >
       {/* ── Message Collapsible Trigger Header ── */}
       <div
-        className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${
-          isOpen ? "rounded-t-xl border-b border-[#1e1f22]" : "rounded-xl"
+        className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#272D3A] select-none ${
+          isOpen ? "rounded-t-xl border-b border-[#1D2230]" : "rounded-xl"
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -120,7 +119,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
           >
             {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
           </button>
@@ -137,10 +136,10 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") setIsEditingName(false);
               }}
-              className="bg-[#1e1f22] text-xs font-bold text-white px-2 py-0.5 rounded border border-[#5865f2] outline-none"
+              className="bg-[#1D2230] text-xs font-bold text-white px-2 py-0.5 rounded border border-[#818CF8] outline-none"
             />
           ) : (
-            <span className="text-xs font-bold text-[#dbdee1] truncate">
+            <span className="text-xs font-bold text-[#F1F3F9] truncate">
               {customName || `Message ${index + 1}`}
             </span>
           )}
@@ -152,7 +151,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 : UI_THEME_CONFIG.surfaces.badgeNeutral
             }
           >
-            {isV2 ? <ShinyText text="Components V2" /> : "Classic"}
+            {isV2 ? "Components V2" : "Classic"}
           </span>
         </div>
 
@@ -164,7 +163,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             <button
               type="button"
               onClick={() => moveMessage?.(index, -1)}
-              className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors"
+              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
               title="Move Message Up"
             >
               <ChevronUp size={14} />
@@ -175,7 +174,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             <button
               type="button"
               onClick={() => moveMessage?.(index, 1)}
-              className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors"
+              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
               title="Move Message Down"
             >
               <ChevronDown size={14} />
@@ -188,7 +187,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               setCustomName(customName || `Message ${index + 1}`);
               setIsEditingName(true);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
             title="Rename Message"
           >
             <Edit2 size={13} />
@@ -198,7 +197,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             type="button"
             onClick={() => duplicateMessage?.(index)}
             disabled={messages.length >= 10}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-30 transition-colors"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 transition-colors"
             title="Duplicate Message"
           >
             <Copy size={13} />
@@ -208,7 +207,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             type="button"
             onClick={() => removeMessage?.(index)}
             disabled={messages.length <= 1}
-            className="p-1 rounded text-[#949ba4] hover:text-[#f28b8b] hover:bg-[#da373c]/20 disabled:opacity-30 transition-colors"
+            className="p-1 rounded text-[#A1A8B8] hover:text-[#F87171] hover:bg-[#F87171]/20 disabled:opacity-30 transition-colors"
             title="Delete Message"
           >
             <Trash2 size={13} />
@@ -218,7 +217,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
       {/* ── Message Body Panel ── */}
       {isOpen && (
-        <div className="p-3 space-y-3 bg-[#2b2d31] rounded-b-xl">
+        <div className="p-3 space-y-3 bg-[#0B0D12] rounded-b-[10px]">
           <ContentTab
             message={message}
             isV2={isV2}
@@ -232,7 +231,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           <ComponentsTab message={message} isV2={isV2} ensureActive={ensureActive} />
 
           {/* ── Footer Action Bar (+ Add, Set Link, Options) ── */}
-          <div className="pt-2 border-t border-[#1e1f22] flex flex-wrap items-center gap-2">
+          <div className="pt-2 border-t border-[#1D2230] flex flex-wrap items-center gap-2">
             {!isV2 ? (
               <>
                 <button
@@ -242,7 +241,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addEmbed();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:bg-[#4F46E5] text-[#0B0D12] text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Embed ({message.embeds?.length ?? 0}/10)
                 </button>
@@ -253,7 +252,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addComponent(ComponentType.ActionRow, null);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                  className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Action Row
                 </button>
@@ -266,7 +265,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     e.stopPropagation();
                     setAddMenuOpen(!addMenuOpen);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add <ChevronDown size={13} />
                 </button>
@@ -278,7 +277,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
                       exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
                       style={{ transformOrigin: "bottom left" }}
-                      className="absolute left-0 bottom-full mb-1.5 w-48 max-w-[calc(100vw-2rem)] bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
+                      className="absolute left-0 bottom-full mb-1.5 w-48 max-w-[calc(100vw-2rem)] bg-[#10131A] border border-[#272D3A] shadow-2xl rounded-xl py-1 z-30 text-xs"
                     >
                       {V2_ADD_OPTIONS.map((opt) => {
                         const Icon = opt.icon;
@@ -291,7 +290,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                               addComponent(opt.type, null);
                               setAddMenuOpen(false);
                             }}
-                            className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2 transition-colors"
+                            className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2 transition-colors"
                           >
                             <Icon size={13} /> {opt.label}
                           </button>
@@ -311,8 +310,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out ${
                 message.message_link
-                  ? "bg-[#5865f2]/20 text-[#dee0fc] border border-[#5865f2]/50 hover:bg-[#5865f2]/30"
-                  : "bg-[#35373c] hover:bg-[#4e5058] text-[#dbdee1] hover:text-white"
+                  ? "bg-[#818CF8]/20 text-[#E0E7FF] border border-[#818CF8]/50 hover:bg-[#818CF8]/30"
+                  : "bg-[#252B3A] hover:bg-[#4e5058] text-[#F1F3F9] hover:text-white"
               }`}
             >
               <Link size={13} /> {message.message_link ? "Edit Link" : "Set Link"}
@@ -325,7 +324,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   e.stopPropagation();
                   setOptionsMenuOpen(!optionsMenuOpen);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[#35373c] hover:bg-[#4e5058] active:scale-[0.97] text-[#dbdee1] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
               >
                 <SlidersHorizontal size={13} /> Options <ChevronDown size={13} />
               </button>
@@ -337,7 +336,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     animate={UI_THEME_CONFIG.motion.popoverPoses.animate}
                     exit={UI_THEME_CONFIG.motion.popoverPoses.exit}
                     style={{ transformOrigin: "bottom left" }}
-                    className="absolute left-0 bottom-full mb-1.5 w-56 max-w-[calc(100vw-2rem)] bg-[#18191c] border border-[#26282d] shadow-2xl rounded-xl py-1 z-30 text-xs"
+                    className="absolute left-0 bottom-full mb-1.5 w-56 max-w-[calc(100vw-2rem)] bg-[#10131A] border border-[#272D3A] shadow-2xl rounded-xl py-1 z-30 text-xs"
                   >
                     <button
                       type="button"
@@ -347,7 +346,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                         useGlobalStore.getState().showToast("Message JSON copied to clipboard!", "success");
                         setOptionsMenuOpen(false);
                       }}
-                      className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2"
                     >
                       <Copy size={13} /> Copy Message JSON
                     </button>
@@ -360,7 +359,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                         );
                         setOptionsMenuOpen(false);
                       }}
-                      className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2"
                     >
                       <Layers size={13} /> Convert to {isV2 ? "Classic" : "Components V2"}
                     </button>

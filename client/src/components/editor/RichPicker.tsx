@@ -138,7 +138,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
         { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
         { menuWidth: 384, maxMenuHeight: 420, margin: 12, gap: 8 },
       );
-      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
+      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 10000 });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -313,19 +313,19 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   return typeof document === "undefined" ? null : createPortal(
     <div
       ref={containerRef}
-      className="fixed rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden flex flex-col text-[#dbdee1] animate-in fade-in zoom-in-95 duration-150"
+      className="fixed rounded-[10px] bg-[#161A23] border border-[#272D3A] shadow-xl overflow-hidden flex flex-col text-[#F1F3F9] animate-in fade-in zoom-in-95 duration-150"
       style={floatingStyle}
     >
       {/* Top Header & Tabs */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#1e1f22] border-b border-[#313338]">
+      <div className="flex items-center justify-between px-3 py-2 bg-[#1D2230] border-b border-[#313338]">
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("mentions")}
             className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
               activeTab === "mentions"
-                ? "bg-[#35373c] text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#818CF8]/15 text-[#F1F3F9]"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#252B3A]"
             }`}
           >
             Mentions
@@ -335,8 +335,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             onClick={() => setActiveTab("time")}
             className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
               activeTab === "time"
-                ? "bg-[#35373c] text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#252B3A] text-white"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#161A23]"
             }`}
           >
             Time
@@ -346,8 +346,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             onClick={() => setActiveTab("emojis")}
             className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
               activeTab === "emojis"
-                ? "bg-[#35373c] text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#252B3A] text-white"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#161A23]"
             }`}
           >
             Emojis
@@ -357,8 +357,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             onClick={() => setActiveTab("variables")}
             className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
               activeTab === "variables"
-                ? "bg-[#35373c] text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#252B3A] text-white"
+                : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#161A23]"
             }`}
           >
             Variables
@@ -368,7 +368,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="p-1 text-[#949ba4] hover:text-white rounded hover:bg-[#35373c] transition-colors"
+          className="p-1 text-[#A1A8B8] hover:text-white rounded hover:bg-[#252B3A] transition-colors"
           title="Close picker"
         >
           <X size={14} />
@@ -385,14 +385,14 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               <div className="relative">
                 <Search
                   size={14}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A1A8B8]"
                 />
                 <input
                   type="text"
                   placeholder="Search channels, roles, users…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] placeholder-[#949ba4] pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
+                  className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] placeholder-[#A1A8B8] pl-8 pr-3 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
 
@@ -404,8 +404,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     onClick={() => setMentionFilter(f)}
                     className={`capitalize px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                       mentionFilter === f
-                        ? "bg-[#5865f2] text-white"
-                        : "bg-[#1e1f22] text-[#949ba4] hover:text-white"
+                        ? "bg-[#818CF8] text-white"
+                        : "bg-[#1D2230] text-[#A1A8B8] hover:text-white"
                     }`}
                   >
                     {f}
@@ -414,18 +414,18 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               </div>
             </div>
 
-            <p className="text-[10px] text-[#949ba4] italic">
+            <p className="text-[10px] text-[#A1A8B8] italic">
               Tip: Hold Shift to insert multiple items without closing.
             </p>
 
             {/* Channels */}
             {(mentionFilter === "all" || mentionFilter === "channels") && (
               <div>
-                <div className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Hash size={11} /> Channels
                 </div>
                 {filteredChannels.length === 0 ? (
-                  <p className="text-[11px] text-[#949ba4] py-1 italic">
+                  <p className="text-[11px] text-[#A1A8B8] py-1 italic">
                     {effectiveGuildId ? "No channels match" : "Select a server to view channels"}
                   </p>
                 ) : (
@@ -435,19 +435,19 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                         key={c.id}
                         type="button"
                         onClick={(e) => handleInsert(`<#${c.id}>`, e)}
-                        className="w-full text-left px-2 py-1 rounded text-xs text-[#dbdee1] hover:bg-[#35373c] hover:text-white flex items-center justify-between group transition-colors"
+                        className="w-full text-left px-2 py-1 rounded text-xs text-[#F1F3F9] hover:bg-[#252B3A] hover:text-white flex items-center justify-between group transition-colors"
                       >
                         <span className="flex items-center gap-1.5 truncate">
                           {c.type === 2 ? (
-                            <Volume2 size={13} className="text-[#949ba4] shrink-0" />
+                            <Volume2 size={13} className="text-[#A1A8B8] shrink-0" />
                           ) : c.type === 5 ? (
-                            <Megaphone size={13} className="text-[#949ba4] shrink-0" />
+                            <Megaphone size={13} className="text-[#A1A8B8] shrink-0" />
                           ) : (
-                            <Hash size={13} className="text-[#949ba4] shrink-0" />
+                            <Hash size={13} className="text-[#A1A8B8] shrink-0" />
                           )}
                           <span className="truncate">{c.name}</span>
                         </span>
-                        <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 font-mono">
+                        <span className="text-[10px] text-[#A1A8B8] opacity-0 group-hover:opacity-100 font-mono">
                           &lt;#{c.id}&gt;
                         </span>
                       </button>
@@ -460,7 +460,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             {/* Roles */}
             {(mentionFilter === "all" || mentionFilter === "roles") && (
               <div>
-                <div className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Shield size={11} /> Roles
                 </div>
                 <div className="space-y-0.5 max-h-36 overflow-y-auto">
@@ -469,13 +469,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     <button
                       type="button"
                       onClick={(e) => handleInsert("@everyone", e)}
-                      className="w-full text-left px-2 py-1 rounded text-xs text-[#dbdee1] hover:bg-[#35373c] hover:text-white flex items-center justify-between group transition-colors"
+                      className="w-full text-left px-2 py-1 rounded text-xs text-[#F1F3F9] hover:bg-[#252B3A] hover:text-white flex items-center justify-between group transition-colors"
                     >
-                      <span className="flex items-center gap-1.5 font-semibold text-[#f28b8b]">
-                        <span className="w-2 h-2 rounded-full bg-[#f28b8b]" />
+                      <span className="flex items-center gap-1.5 font-semibold text-[#F87171]">
+                        <span className="w-2 h-2 rounded-full bg-[#F87171]" />
                         @everyone
                       </span>
-                      <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 font-mono">
+                      <span className="text-[10px] text-[#A1A8B8] opacity-0 group-hover:opacity-100 font-mono">
                         @everyone
                       </span>
                     </button>
@@ -484,13 +484,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     <button
                       type="button"
                       onClick={(e) => handleInsert("@here", e)}
-                      className="w-full text-left px-2 py-1 rounded text-xs text-[#dbdee1] hover:bg-[#35373c] hover:text-white flex items-center justify-between group transition-colors"
+                      className="w-full text-left px-2 py-1 rounded text-xs text-[#F1F3F9] hover:bg-[#252B3A] hover:text-white flex items-center justify-between group transition-colors"
                     >
-                      <span className="flex items-center gap-1.5 font-semibold text-[#f28b8b]">
-                        <span className="w-2 h-2 rounded-full bg-[#f28b8b]" />
+                      <span className="flex items-center gap-1.5 font-semibold text-[#F87171]">
+                        <span className="w-2 h-2 rounded-full bg-[#F87171]" />
                         @here
                       </span>
-                      <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 font-mono">
+                      <span className="text-[10px] text-[#A1A8B8] opacity-0 group-hover:opacity-100 font-mono">
                         @here
                       </span>
                     </button>
@@ -505,7 +505,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                         key={r.id}
                         type="button"
                         onClick={(e) => handleInsert(`<@&${r.id}>`, e)}
-                        className="w-full text-left px-2 py-1 rounded text-xs text-[#dbdee1] hover:bg-[#35373c] hover:text-white flex items-center justify-between group transition-colors"
+                        className="w-full text-left px-2 py-1 rounded text-xs text-[#F1F3F9] hover:bg-[#252B3A] hover:text-white flex items-center justify-between group transition-colors"
                       >
                         <span className="flex items-center gap-1.5 truncate">
                           <span
@@ -514,7 +514,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                           />
                           <span className="truncate">{r.name}</span>
                         </span>
-                        <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 font-mono">
+                        <span className="text-[10px] text-[#A1A8B8] opacity-0 group-hover:opacity-100 font-mono">
                           &lt;@&amp;{r.id}&gt;
                         </span>
                       </button>
@@ -527,13 +527,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             {/* Members (Live search) */}
             {(mentionFilter === "all" || mentionFilter === "members") && (
               <div>
-                <div className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <User size={11} /> Members
                 </div>
                 {isSearchingMembers ? (
-                  <p className="text-[11px] text-[#949ba4] py-1">Searching server members…</p>
+                  <p className="text-[11px] text-[#A1A8B8] py-1">Searching server members…</p>
                 ) : memberResults.length === 0 ? (
-                  <p className="text-[11px] text-[#949ba4] py-1 italic">
+                  <p className="text-[11px] text-[#A1A8B8] py-1 italic">
                     {searchQuery.trim()
                       ? "No members found"
                       : "Type a username in the search bar above"}
@@ -545,17 +545,17 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                         key={m.id}
                         type="button"
                         onClick={(e) => handleInsert(`<@${m.id}>`, e)}
-                        className="w-full text-left px-2 py-1 rounded text-xs text-[#dbdee1] hover:bg-[#35373c] hover:text-white flex items-center justify-between group transition-colors"
+                        className="w-full text-left px-2 py-1 rounded text-xs text-[#F1F3F9] hover:bg-[#252B3A] hover:text-white flex items-center justify-between group transition-colors"
                       >
                         <span className="flex items-center gap-2 truncate">
                           {m.avatar ? (
                             <img
                               src={`https://cdn.discordapp.com/avatars/${m.id}/${m.avatar}.webp?size=24`}
                               alt=""
-                              className="w-5 h-5 rounded-full bg-[#1e1f22] shrink-0"
+                              className="w-5 h-5 rounded-full bg-[#1D2230] shrink-0"
                             />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#5865f2] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-[#818CF8] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
                               {m.username.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -563,10 +563,10 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                             <span className="font-semibold text-white">
                               {m.nickname || m.global_name || m.username}
                             </span>
-                            <span className="text-[10px] text-[#949ba4] ml-1">@{m.username}</span>
+                            <span className="text-[10px] text-[#A1A8B8] ml-1">@{m.username}</span>
                           </span>
                         </span>
-                        <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 font-mono">
+                        <span className="text-[10px] text-[#A1A8B8] opacity-0 group-hover:opacity-100 font-mono">
                           &lt;@{m.id}&gt;
                         </span>
                       </button>
@@ -600,7 +600,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     setSelectedDate(localIso.slice(0, 10));
                     setSelectedTime(localIso.slice(11, 16));
                   }}
-                  className="px-2 py-0.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] text-[10px] font-semibold text-[#dbdee1] hover:text-white border border-[#232428] transition-colors"
+                  className="px-2 py-0.5 rounded bg-[#1D2230] hover:bg-[#818CF8] text-[10px] font-semibold text-[#F1F3F9] hover:text-white border border-[#10131A] transition-colors"
                 >
                   {preset.label}
                 </button>
@@ -608,7 +608,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             </div>
             
             <div className="space-y-1">
-              <label className="block text-[11px] font-semibold text-[#949ba4]">Date &amp; Time</label>
+              <label className="block text-[11px] font-semibold text-[#A1A8B8]">Date &amp; Time</label>
               <DateTimePickerPopover
                 allowPastDates={true}
                 value={new Date(`${selectedDate}T${selectedTime}:00`).toISOString()}
@@ -624,7 +624,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             </div>
 
             <div>
-              <div className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1.5">
+              <div className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1.5">
                 Style Preview (Click to insert)
               </div>
               <div className="space-y-1">
@@ -633,18 +633,18 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     key={tf.format}
                     type="button"
                     onClick={(e) => handleInsert(`<t:${computedUnix}:${tf.format}>`, e)}
-                    className="w-full text-left p-2 rounded bg-[#1e1f22] hover:bg-[#35373c] border border-transparent hover:border-[#4e5058] transition-colors flex items-center justify-between group"
+                    className="w-full text-left p-2 rounded bg-[#1D2230] hover:bg-[#252B3A] border border-transparent hover:border-[#4e5058] transition-colors flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Clock size={13} className="text-[#949ba4] shrink-0" />
+                      <Clock size={13} className="text-[#A1A8B8] shrink-0" />
                       <div className="min-w-0">
                         <div className="text-xs font-medium text-white truncate">
                           {tf.example}
                         </div>
-                        <div className="text-[10px] text-[#949ba4]">{tf.label}</div>
+                        <div className="text-[10px] text-[#A1A8B8]">{tf.label}</div>
                       </div>
                     </div>
-                    <span className="text-[10px] text-[#5865f2] font-mono opacity-0 group-hover:opacity-100 shrink-0 ml-2">
+                    <span className="text-[10px] text-[#818CF8] font-mono opacity-0 group-hover:opacity-100 shrink-0 ml-2">
                       &lt;t:{computedUnix}:{tf.format}&gt;
                     </span>
                   </button>
@@ -661,37 +661,37 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             <div className="relative">
               <Search
                 size={14}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A1A8B8]"
               />
               <input
                 type="text"
                 placeholder="Find the perfect emoji…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] placeholder-[#949ba4] pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
+                className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] placeholder-[#A1A8B8] pl-8 pr-3 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] focus:outline-none"
               />
             </div>
 
             {/* Custom Server & Saved Emojis */}
             <div>
-              <div className="flex items-center justify-between text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1.5">
+              <div className="flex items-center justify-between text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1.5">
                 <span>Custom Emojis</span>
                 <button
                   type="button"
                   onClick={() => setAddCustomModalOpen(true)}
-                  className="flex items-center gap-1 text-[#5865f2] hover:text-[#7983f5] font-semibold lowercase"
+                  className="flex items-center gap-1 text-[#818CF8] hover:text-[#7983f5] font-semibold lowercase"
                 >
                   <Plus size={11} /> add emoji
                 </button>
               </div>
 
               {/* Grid of custom emojis */}
-              <div className="grid grid-cols-8 gap-1.5 bg-[#1e1f22] p-2 rounded border border-[#232428] max-h-36 overflow-y-auto">
+              <div className="grid grid-cols-8 gap-1.5 bg-[#1D2230] p-2 rounded border border-[#10131A] max-h-36 overflow-y-auto">
                 {/* "+" tile */}
                 <button
                   type="button"
                   onClick={() => setAddCustomModalOpen(true)}
-                  className="w-8 h-8 rounded border border-dashed border-[#4e5058] hover:border-white text-[#949ba4] hover:text-white flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded border border-dashed border-[#4e5058] hover:border-white text-[#A1A8B8] hover:text-white flex items-center justify-center transition-colors"
                   title="Add custom external emoji"
                 >
                   <Plus size={14} />
@@ -717,7 +717,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                           })
                         }
                         onMouseLeave={() => setHoveredEmoji(null)}
-                        className="w-8 h-8 rounded hover:bg-[#35373c] flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded hover:bg-[#252B3A] flex items-center justify-center transition-colors"
                         title={`:${e.name}:`}
                       >
                         <img src={src} alt={e.name} className="w-6 h-6 object-contain" />
@@ -745,7 +745,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                           })
                         }
                         onMouseLeave={() => setHoveredEmoji(null)}
-                        className="w-8 h-8 rounded hover:bg-[#35373c] flex items-center justify-center transition-colors relative"
+                        className="w-8 h-8 rounded hover:bg-[#252B3A] flex items-center justify-center transition-colors relative"
                         title={`:${e.name}: (Saved)`}
                       >
                         <img src={src} alt={e.name} className="w-6 h-6 object-contain" />
@@ -763,10 +763,10 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               if (matched.length === 0) return null;
               return (
                 <div key={catName}>
-                  <div className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                  <div className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                     {catName}
                   </div>
-                  <div className="grid grid-cols-8 gap-1 bg-[#1e1f22] p-1.5 rounded border border-[#232428]">
+                  <div className="grid grid-cols-8 gap-1 bg-[#1D2230] p-1.5 rounded border border-[#10131A]">
                     {matched.map((e) => (
                       <button
                         key={e.name}
@@ -779,7 +779,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                           })
                         }
                         onMouseLeave={() => setHoveredEmoji(null)}
-                        className="w-8 h-8 rounded hover:bg-[#35373c] flex items-center justify-center text-lg transition-colors"
+                        className="w-8 h-8 rounded hover:bg-[#252B3A] flex items-center justify-center text-lg transition-colors"
                         title={`:${e.name}:`}
                       >
                         {e.char}
@@ -797,14 +797,14 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             <div className="relative">
               <Search
                 size={14}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#949ba4]"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A1A8B8]"
               />
               <input
                 type="text"
                 placeholder="Search {user.mention}, {now}, {selected}…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1e1f22] text-xs text-white pl-8 pr-3 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] focus:outline-none"
+                className="w-full bg-[#1D2230] text-xs text-white pl-8 pr-3 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] focus:outline-none"
               />
             </div>
 
@@ -812,12 +812,12 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               <button
                 type="button"
                 onClick={(ev) => handleInsert("{exploit.", ev)}
-                className="w-full text-left px-2.5 py-1.5 rounded bg-[#1e1f22] hover:bg-[#5865f2] group transition-colors border border-[#232428] flex items-center justify-between"
+                className="w-full text-left px-2.5 py-1.5 rounded bg-[#1D2230] hover:bg-[#818CF8] group transition-colors border border-[#10131A] flex items-center justify-between"
               >
-                <span className="font-mono text-xs font-bold text-[#57f287] group-hover:text-white">
+                <span className="font-mono text-xs font-bold text-[#34D399] group-hover:text-white">
                   {"{exploit.<Name>.<Field>}"}
                 </span>
-                <span className="text-[10px] text-[#949ba4] group-hover:text-white/90">
+                <span className="text-[10px] text-[#A1A8B8] group-hover:text-white/90">
                   Live WEAO Tag
                 </span>
               </button>
@@ -835,7 +835,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                 v.group ? (
                   <div
                     key={`grp-${i}`}
-                    className="pt-2 pb-0.5 px-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22]"
+                    className="pt-2 pb-0.5 px-1 text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8] border-b border-[#1D2230]"
                   >
                     {v.group}
                   </div>
@@ -844,17 +844,17 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                     key={v.tag}
                     type="button"
                     onClick={(ev) => handleInsert(v.tag!, ev)}
-                    className="w-full text-left px-2 py-1.5 rounded hover:bg-[#5865f2] group transition-colors flex flex-col"
+                    className="w-full text-left px-2 py-1.5 rounded hover:bg-[#818CF8] group transition-colors flex flex-col"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-mono text-xs font-bold text-[#5865f2] group-hover:text-white">
+                      <span className="font-mono text-xs font-bold text-[#818CF8] group-hover:text-white">
                         {v.tag}
                       </span>
-                      <span className="text-[10px] text-[#949ba4] group-hover:text-white/80">
+                      <span className="text-[10px] text-[#A1A8B8] group-hover:text-white/80">
                         {v.label}
                       </span>
                     </div>
-                    <span className="text-[10px] text-[#b5bac1] group-hover:text-white/90">
+                    <span className="text-[10px] text-[#A1A8B8] group-hover:text-white/90">
                       {v.desc}
                     </span>
                   </button>
@@ -867,15 +867,15 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
 
       {/* Bottom Hover Preview Bar for Emojis */}
       {activeTab === "emojis" && hoveredEmoji && (
-        <div className="px-3 py-1.5 bg-[#111214] border-t border-[#1e1f22] flex items-center gap-2 text-xs">
+        <div className="px-3 py-1.5 bg-[#10131A] border-t border-[#1D2230] flex items-center gap-2 text-xs">
           {hoveredEmoji.icon}
-          <span className="font-mono text-[#dbdee1] font-semibold">{hoveredEmoji.name}</span>
+          <span className="font-mono text-[#F1F3F9] font-semibold">{hoveredEmoji.name}</span>
         </div>
       )}
       
       {/* Add Custom Emoji Modal Overlay */}
       {addCustomModalOpen && (
-        <div className="absolute inset-0 bg-[#1e1f22]/95 z-50 p-4 flex flex-col justify-between">
+        <div className="absolute inset-0 bg-[#1D2230]/95 z-50 p-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">
@@ -884,18 +884,18 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               <button
                 type="button"
                 onClick={() => setAddCustomModalOpen(false)}
-                className="text-[#949ba4] hover:text-white"
+                className="text-[#A1A8B8] hover:text-white"
               >
                 <X size={14} />
               </button>
             </div>
-            <p className="text-[11px] text-[#949ba4]">
+            <p className="text-[11px] text-[#A1A8B8]">
               You can use emojis from any Discord server without joining it. Just provide the emoji
               name and numeric snowflake ID.
             </p>
             <div className="space-y-2">
               <div>
-                <label className="block text-[10px] font-bold text-[#949ba4] uppercase mb-1">
+                <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase mb-1">
                   Emoji Name
                 </label>
                 <input
@@ -903,11 +903,11 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                   placeholder="e.g. pepecool"
                   value={newEmojiName}
                   onChange={(e) => setNewEmojiName(e.target.value)}
-                  className="w-full bg-[#2b2d31] text-xs text-white px-2.5 py-1.5 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none"
+                  className="w-full bg-[#161A23] text-xs text-white px-2.5 py-1.5 rounded border border-[#343C4E] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-[#949ba4] uppercase mb-1">
+                <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase mb-1">
                   Emoji Snowflake ID
                 </label>
                 <input
@@ -915,15 +915,15 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
                   placeholder="e.g. 102938475610293847"
                   value={newEmojiId}
                   onChange={(e) => setNewEmojiId(e.target.value)}
-                  className="w-full bg-[#2b2d31] text-xs text-white px-2.5 py-1.5 rounded border border-[#383a40] focus:border-[#5865f2] focus:outline-none"
+                  className="w-full bg-[#161A23] text-xs text-white px-2.5 py-1.5 rounded border border-[#343C4E] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
-              <label className="flex items-center gap-2 text-xs text-[#dbdee1] cursor-pointer pt-1">
+              <label className="flex items-center gap-2 text-xs text-[#F1F3F9] cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   checked={newEmojiAnimated}
                   onChange={(e) => setNewEmojiAnimated(e.target.checked)}
-                  className="rounded bg-[#2b2d31] border-[#383a40] text-[#5865f2] focus:ring-0"
+                  className="rounded bg-[#161A23] border-[#343C4E] text-[#818CF8] focus:ring-0"
                 />
                 Animated emoji (.gif)
               </label>
@@ -934,7 +934,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
             <button
               type="button"
               onClick={() => setAddCustomModalOpen(false)}
-              className="px-3 py-1.5 text-xs text-[#949ba4] hover:text-white"
+              className="px-3 py-1.5 text-xs text-[#A1A8B8] hover:text-white"
             >
               Cancel
             </button>
@@ -942,7 +942,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
               type="button"
               onClick={handleSaveCustomEmoji}
               disabled={!newEmojiName.trim() || !newEmojiId.trim()}
-              className="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] disabled:opacity-40 text-xs font-semibold text-white transition-colors"
+              className="px-3 py-1.5 rounded bg-[#818CF8] hover:bg-[#6366F1] disabled:opacity-40 text-xs font-semibold text-white transition-colors"
             >
               Save Emoji
             </button>
