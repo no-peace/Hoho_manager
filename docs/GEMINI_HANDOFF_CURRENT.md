@@ -93,6 +93,18 @@ The root `npm run dev` command starts shared build + server + Vite client + bot.
 
 ---
 
+
+## Mobile plain-message quick editing update (2026-11-16)
+
+The owner clarified that on mobile/tablet, clicking a Classic/plain-text message must also open a quick editor over the Preview tab, rather than switching to the full Editor tab. This is now implemented as a distinct message selection state.
+
+- `client/src/store/messageStore.ts`: Selection now supports `{ kind: "message"; index: number }`.
+- `client/src/components/layout/StudioLayout.tsx`: `handlePreviewMessageSelect` now sets the active message and, on mobile/tablet, selects the message quick-edit state without changing `mobileView`. Desktop retains full-editor navigation, smooth scroll and cursor focus.
+- `client/src/components/editor/PropertyPanel.tsx`: renders a mobile bottom-sheet **Message Quick Edit** for message selections, with a controlled content textarea bound to `setContent`. Edits update the preview immediately. The full Editor tab remains the place for embeds, components and advanced settings.
+- Component clicks on mobile continue opening the component inspector; this message editor handles blank-space/plain-text/card clicks and message-number selection where the click is not captured as a component.
+- Commits: `d4e97a29dc5e5ec018ae887c7bd788144642853a` (message selection type), `3f2b08e1d4695a47e026151d8bba74f0b280b65e` (mobile routing), `23f90455cc70233e027f1929b2afa20ecc718428` (message quick-edit sheet).
+- Validation: source changes committed; TypeScript, tests, build and mobile browser QA have not yet been run. In particular, verify `setContent` updates the currently selected message index as intended and that clicking message text/blank space opens the sheet without switching tabs.
+
 ## Latest authoritative continuation — preview editing, inspector overlay, conversion safety, and typecheck repair (2026-11-16)
 
 **This section is the newest source-of-truth for the latest work.** It supersedes earlier statements below that describe the preview inspector as opening on desktop for every component, describe the inspector as a docked third pane, or describe the previous logo frame/toast state. The repository's current main source is authoritative.
