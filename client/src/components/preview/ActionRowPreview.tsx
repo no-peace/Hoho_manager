@@ -78,7 +78,6 @@ export const renderButtonEmoji = (emoji: any) => {
 
 export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   const isLink = button.style === ButtonStyle.Link;
-  const selectComponent = useMessageStore((state) => state.select);
   const emojiNode = renderButtonEmoji((button as any).emoji);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
@@ -109,11 +108,6 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
       data-preview-interactive="true"
       type="button"
       disabled={button.disabled}
-      onClick={(event) => {
-        if (!button._id) return;
-        event.stopPropagation();
-        selectComponent({ kind: "component", id: button._id });
-      }}
       className={[
         "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
         BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[ButtonStyle.Primary],
@@ -284,7 +278,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
   const placeholderText = select.placeholder || defaultPlaceholder;
 
   return (
-    <div className="relative w-full max-w-[400px]" ref={containerRef}>
+    <div className="relative w-full max-w-[400px]" ref={containerRef} data-preview-component-id={select._id} data-preview-interactive="true" data-preview-select="true">
       {/* Trigger Bar */}
       <button
         type="button"
