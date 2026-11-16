@@ -12,7 +12,7 @@ import { useTemplateStore } from "../../store/templateStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
-import { initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
+import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
@@ -28,13 +28,30 @@ export const StudioLayout: React.FC = () => {
     return initializeEditorLenis(wrapper);
   }, []);
 
+  const isMobileWorkspace = () => window.matchMedia("(max-width: 1199px)").matches;
+
   const handlePreviewMessageSelect = (index: number) => {
-    if (window.matchMedia("(max-width: 1199px)").matches) {
-      setMobileView("editor");
-      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index)));
+    if (isMobileWorkspace()) return;
+    scrollToMessageEditor(index);
+    requestAnimationFrame(() => requestAnimationFrame(() => focusMessageEditor(index)));
+  };
+
+  const handlePreviewComponentSelect = (index: number, componentId: string, isInteractive: boolean) => {
+    if (isMobileWorkspace()) {
+      // Keep the Preview tab visible; every component can be quick-edited in its overlay inspector.
+      useMessageStore.getState().select({ kind: "component", id: componentId });
       return;
     }
-    scrollToMessageEditor(index);
+
+    if (isInteractive) {
+      // Buttons are configured in the inspector, which floats above the preview without resizing it.
+      useMessageStore.getState().select({ kind: "component", id: componentId });
+      return;
+    }
+
+    // Ordinary content is edited in the left message editor, not a duplicate right-side inspector.
+    useMessageStore.getState().select(null);
+    handlePreviewMessageSelect(index);
   };
 
   const currentUser = useGlobalStore((state) => state.currentUser);
@@ -137,7 +154,7 @@ export const StudioLayout: React.FC = () => {
               </div>
             </div>
           }
-          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} /></div>}
+          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} /></div>}
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
           onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
           className="min-h-0 min-w-0 flex-1"
