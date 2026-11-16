@@ -808,14 +808,14 @@ Implemented the Batch 7 source changes directly on `main`.
 
 ## V11 — 2b1f77b8 layout restoration and P0 repair — 2026-11-16
 
-**Implementation head:** `5a6ba37699caad85efd3b9d84314e8eeb492685f`  
+**Implementation head before this handoff update:** `e2d5d8e5bb1560f8896b3d655c3e1619e99b3de4`  
 **Golden layout reference:** `2b1f77b81e23380202a991276eb71600e81250e6`  
 **Status:** Source changes committed to `main`; automated validation is pending. Do not describe this implementation as tested or release-ready.
 
 ### Completed source changes
 
 - Restored the stacked, single-scroll MessageEditor structure from the golden commit; restored the golden ContentTab, EmbedsTab, and ComponentsTab implementations with the requested SaaS color-token substitutions.
-- Restored the golden PropertyPanel behavior so it returns `null` unless a component is selected.
+- Restored the golden PropertyPanel behavior so it returns `null` unless a component is selected; its component list now reads from the active message (falling back to the base data) rather than always reading `data.components`.
 - Restored the golden FlowBuilder and StepList structures and the `Channel or Thread ID (defaults to current channel)` field label.
 - Restored the golden LoginScreen, Header, StudioLayout, Sidebar, and MessagePreview sources. The preview source was restored without replacing its authentic Discord dark-mode colors.
 - Restored the golden MessageEditor test file.
