@@ -25,8 +25,8 @@ interface DocItem {
 const DOC_ITEMS: DocItem[] = [
   // User & Member
   { tag: "{user.mention}", desc: "Pings/mentions the interacting user (<@id>)", example: "@Nexus42", category: "user" },
+  { tag: "{user.username}", desc: "Discord username of the interacting user", example: "nexus42", category: "user" },
   { tag: "{user.name}", desc: "Server nickname, falling back to the account username", example: "Nexus", category: "user" },
-  { tag: "{user.tag}", desc: "Discord username/handle (not the global display name)", example: "nexus42", category: "user" },
   { tag: "{user.displayname}", desc: "Discord global display name, falling back to username", example: "Nexus", category: "user" },
   { tag: "{user.id}", desc: "Discord numeric Snowflake ID", example: "708504312862474282", category: "user" },
   { tag: "{user.avatar}", desc: "Direct CDN URL to the user's avatar image", example: "https://cdn.discordapp.com/...", category: "user" },
@@ -37,7 +37,6 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
   { tag: "{user.<id>.username}", desc: "Discord username of the specified account", example: "nexus42", category: "user" },
-  { tag: "{user.<id>.tag}", desc: "Discord username/handle of the specified account (not its global display name)", example: "nexus42", category: "user" },
   { tag: "{user.<id>.displayname}", desc: "Global display name, falling back to username", example: "Nexus", category: "user" },
   { tag: "{user.<id>.globalname}", desc: "Alias for the global display name", example: "Nexus", category: "user" },
   { tag: "{user.<id>.profile}", desc: "Direct Discord profile URL", example: "https://discord.com/users/708504312862474282", category: "user" },
