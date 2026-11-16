@@ -97,6 +97,52 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     !isV2 &&
     (message.components || []).filter((c) => c.type === ComponentType.ActionRow).length < 5;
 
+  const handleModeConversion = () => {
+    const components = message.components ?? [];
+    const classicInteractiveTypes = new Set([
+      ComponentType.Button,
+      ComponentType.StringSelect,
+      ComponentType.UserSelect,
+      ComponentType.RoleSelect,
+      ComponentType.MentionableSelect,
+      ComponentType.ChannelSelect,
+    ]);
+    const canConvertV2ToClassic = components.every(
+      (component) =>
+        component.type === ComponentType.TextDisplay ||
+        (component.type === ComponentType.ActionRow &&
+          (component.components ?? []).every((child) =>
+            classicInteractiveTypes.has(child.type),
+          )),
+    );
+    const canConvertClassicToV2 =
+      components.every((component) => component.type === ComponentType.ActionRow) &&
+      (message.embeds?.length ?? 0) === 0;
+
+    if (isV2 && !canConvertV2ToClassic) {
+      useGlobalStore.getState().showToast(
+        "This V2 message contains components that Classic cannot represent. Nothing was changed.",
+        "warning",
+      );
+      setOptionsMenuOpen(false);
+      return;
+    }
+
+    if (!isV2 && !canConvertClassicToV2) {
+      useGlobalStore.getState().showToast(
+        (message.embeds?.length ?? 0) > 0
+          ? "Remove or recreate the embeds before converting to V2. Embeds cannot be preserved in Components V2."
+          : "This message contains components that cannot be safely converted to Components V2. Nothing was changed.",
+        "warning",
+      );
+      setOptionsMenuOpen(false);
+      return;
+    }
+
+    setMessageMode(index, isV2 ? EDITOR_MODES.CLASSIC : EDITOR_MODES.V2);
+    setOptionsMenuOpen(false);
+  };
+
   return (
     <div
       data-message-editor-index={index}
@@ -354,13 +400,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setMessageMode(
-                          index,
-                          isV2 ? EDITOR_MODES.CLASSIC : EDITOR_MODES.V2,
-                        );
-                        setOptionsMenuOpen(false);
-                      }}
+                      onClick={handleModeConversion}
                       className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2"
                     >
                       <Layers size={13} /> Convert to {isV2 ? "Classic" : "Components V2"}
