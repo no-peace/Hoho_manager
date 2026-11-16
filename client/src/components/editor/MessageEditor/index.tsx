@@ -112,7 +112,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       ...components
         .filter((component) => component.type === ComponentType.TextDisplay)
         .map((component) => component.content ?? ""),
-    ].filter((part) => part.length > 0).join("\\n\\n");
+    ].filter((part) => part.length > 0).join("\n\n");
     const canConvertV2ToClassic =
       projectedClassicContent.length <= 2000 &&
       components.every(
