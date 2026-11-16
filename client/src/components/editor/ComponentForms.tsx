@@ -216,6 +216,7 @@ const ButtonForm = ({ component, update }: ComponentFormProps) => {
       <TextField
         label="Label"
         limit={Limits.components.label}
+        variables={false}
         value={component.label ?? ""}
         placeholder="Button Text"
         onChange={(event) => update({ label: event.target.value })}
