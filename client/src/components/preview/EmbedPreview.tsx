@@ -76,7 +76,6 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       "user.tag": username,
       "user.id": userId,
       "user.avatar": avatarUrl,
-      "user.clantag": "HOHO",
       "server.name": previewGuild?.name || "HoHo Server",
       "server.id": previewGuild?.id || selectedGuildId || "987654321",
       "server.icon": guildIcon,
