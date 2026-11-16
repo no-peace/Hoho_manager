@@ -4,13 +4,13 @@ import { calculateFloatingPosition } from "../floatingPosition";
 describe("calculateFloatingPosition", () => {
   it("opens above the anchor when more space is available above", () => {
     const result = calculateFloatingPosition(
-      { top: 420, bottom: 460, left: 120, width: 300 },
+      { top: 420, bottom: 460, left: 80, width: 300 },
       { width: 390, height: 844 },
     );
 
     expect(result.side).toBe("top");
     expect(result.top).toBeLessThan(420);
-    expect(result.left).toBe(120);
+    expect(result.left).toBe(80);
   });
 
   it("opens below the anchor when more space is available below", () => {
