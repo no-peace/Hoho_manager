@@ -199,7 +199,7 @@ describe("shared/constants: Protocol Constants & Schema Limits Suite", () => {
       expect(AdaptiveFields).toEqual([
         "user.id",
         "user.name",
-        "user.tag",
+        "user.username",
         "channel.id",
         "guild.id",
         "message.id",
