@@ -54,8 +54,8 @@ export const UI_THEME_CONFIG = {
     },
     sizes: {
       xs: "h-7 px-2.5 text-xs rounded-md",
-      sm: "h-8 px-3 text-[13px] rounded-[7px]",
-      md: "h-9 px-4 text-[13.5px] rounded-[8px]",
+      sm: "h-8 px-3 text-[0.8125rem] rounded-[7px]",
+      md: "h-9 px-4 text-[0.84375rem] rounded-[8px]",
       lg: "h-10 px-5 text-sm rounded-[8px]",
     },
     iconButtonBase:
@@ -66,10 +66,10 @@ export const UI_THEME_CONFIG = {
    * 3. Form Fields & Inputs Configuration (Change here -> updates TextField, TextArea, Select, Checkbox)
    */
   field: {
-    label: "mb-1.5 block text-[12.5px] font-medium text-[#A1A8B8] select-none",
-    input: "w-full h-9 rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 text-[13.5px] text-[#F1F3F9] placeholder:text-[#6F788A] outline-none transition-colors duration-150 focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20 disabled:opacity-50",
-    textarea: "w-full rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 py-2 text-[13.5px] text-[#F1F3F9] placeholder:text-[#6F788A] outline-none transition-colors duration-150 focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20 custom-scrollbar",
-    selectTrigger: "flex w-full h-9 items-center justify-between rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 text-[13.5px] text-[#F1F3F9] transition-colors hover:border-[#343C4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] disabled:opacity-50",
+    label: "mb-1.5 block text-[0.78125rem] font-medium text-[#A1A8B8] select-none",
+    input: "w-full h-9 rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 text-[0.84375rem] text-[#F1F3F9] placeholder:text-[#6F788A] outline-none transition-colors duration-150 focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20 disabled:opacity-50",
+    textarea: "w-full rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 py-2 text-[0.84375rem] text-[#F1F3F9] placeholder:text-[#6F788A] outline-none transition-colors duration-150 focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20 custom-scrollbar",
+    selectTrigger: "flex w-full h-9 items-center justify-between rounded-[8px] border border-[#272D3A] bg-[#1D2230] px-3 text-[0.84375rem] text-[#F1F3F9] transition-colors hover:border-[#343C4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] disabled:opacity-50",
     selectListbox: "overflow-y-auto rounded-[10px] border border-[#272D3A] bg-[#161A23] p-1 shadow-xl custom-scrollbar",
     checkboxBoxChecked: "border-[#818CF8] bg-[#818CF8] text-[#0B0D12]",
     checkboxBoxUnchecked: "border-[#343C4E] bg-[#1D2230] text-transparent group-hover:border-[#818CF8]/60",
@@ -83,17 +83,17 @@ export const UI_THEME_CONFIG = {
     sectionCard: "rounded-[10px] bg-[#161A23] border border-[#272D3A] p-4 space-y-3",
     accordionHeader: "flex items-center justify-between h-10 px-3 bg-[#1D2230] select-none",
     emptyState: "rounded-[10px] border border-dashed border-[#272D3A] bg-[#161A23]/60 p-6 text-center text-xs text-[#A1A8B8]",
-    kbd: "inline-flex items-center justify-center rounded border border-[#343C4E] bg-[#10131A] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#A1A8B8]",
+    kbd: "inline-flex items-center justify-center rounded border border-[#343C4E] bg-[#10131A] px-1.5 py-0.5 font-mono text-[0.625rem] font-medium text-[#A1A8B8]",
     appShell: "flex h-dvh flex-col bg-[#0B0D12] text-[#F1F3F9] font-sans overflow-hidden",
     headerBar: "sticky top-0 left-0 z-20 bg-[#10131A]/95 backdrop-blur-md border-b border-[#272D3A] w-full px-3 sm:px-4 h-14 flex items-center justify-between font-sans shrink-0",
     publicHeader: "sticky top-0 z-50 flex min-h-14 items-center justify-between gap-2 border-b border-[#272D3A] bg-[#10131A]/90 px-3 py-2 backdrop-blur-md sm:gap-3 sm:px-6",
     publicNav: "flex shrink-0 items-center gap-1 sm:gap-1.5",
-    publicNavItem: "rounded-md border px-2 py-1.5 text-[11px] font-medium transition-colors duration-150 sm:px-3 sm:py-2 sm:text-xs",
+    publicNavItem: "rounded-md border px-2 py-1.5 text-[0.6875rem] font-medium transition-colors duration-150 sm:px-3 sm:py-2 sm:text-xs",
     publicNavActive: "border-[#818CF8]/40 bg-[#818CF8]/15 text-[#F1F3F9]",
     publicNavIdle: "border-transparent text-[#A1A8B8] hover:border-[#272D3A] hover:bg-[#252B3A] hover:text-[#F1F3F9]",
     studioHeaderBar: "sticky top-0 left-0 z-20 bg-[#10131A]/95 backdrop-blur-md border-b border-[#272D3A] w-full px-3 sm:px-4 h-14 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 font-sans shrink-0",
     inspectorBackdrop: "fixed inset-0 z-40 bg-[#0B0D12]/75 backdrop-blur-[2px] min-[1200px]:hidden",
-    inspectorPanel: "fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[440px] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#272D3A] min-[1200px]:shadow-none",
+    inspectorPanel: "fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[27.5rem] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#272D3A] min-[1200px]:shadow-none",
     inspectorHeader: "flex items-center justify-between border-b border-[#202531] bg-[#10131A] px-5 py-4 shrink-0",
     inspectorBody: "min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[env(safe-area-inset-bottom)] custom-scrollbar",
     docsTableCard: "bg-[#161A23] border border-[#272D3A] rounded-[10px] overflow-hidden shadow-sm mb-12",
@@ -107,8 +107,8 @@ export const UI_THEME_CONFIG = {
     modalPanel: "w-full rounded-t-[12px] sm:rounded-[12px] bg-[#161A23] border border-[#272D3A] shadow-2xl flex flex-col overflow-hidden max-h-[90dvh] sm:max-h-[85vh] mt-auto sm:my-auto outline-none",
     modalHeader: "flex items-center justify-between px-5 py-4 border-b border-[#202531] bg-[#161A23] shrink-0",
     modalFooter: "px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3 border-t border-[#202531] bg-[#10131A] flex justify-end gap-2.5 shrink-0",
-    badgeBlurple: "rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-[#818CF8]/15 text-[#A5B4FC] border border-[#818CF8]/30",
-    badgeNeutral: "rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-[#1D2230] text-[#A1A8B8] border border-[#272D3A]",
+    badgeBlurple: "rounded-md px-1.5 py-0.5 text-[0.625rem] font-medium bg-[#818CF8]/15 text-[#A5B4FC] border border-[#818CF8]/30",
+    badgeNeutral: "rounded-md px-1.5 py-0.5 text-[0.625rem] font-medium bg-[#1D2230] text-[#A1A8B8] border border-[#272D3A]",
   },
 
   /**
