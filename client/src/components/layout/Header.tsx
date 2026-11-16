@@ -290,11 +290,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
-                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <BookOpen size={14} className="text-[#949cf7]" />
                       <span>Documentation</span>
                     </a>
-                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <Shield size={14} className="text-[#A1A8B8]" />
                       <span>Privacy</span>
                     </a>
