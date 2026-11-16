@@ -246,6 +246,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                       const componentId = componentElement?.dataset.previewComponentId;
                       if (!componentId) return;
                       event.stopPropagation();
+                      setActiveMessageIndex?.(index);
                       const isInteractive = componentElement?.dataset.previewInteractive === "true";
                       onSelectPreviewComponent?.(index, componentId, isInteractive);
                       if (!onSelectPreviewComponent) {
