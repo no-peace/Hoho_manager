@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectAutocompleteToken } from "../mentionParser";
+import { detectAutocompleteToken, replaceDetectedToken } from "../mentionParser";
 
 describe("mentionParser: detectAutocompleteToken", () => {
   it("detects chained exploit field tokens like {exploit.Delta.st", () => {
@@ -32,6 +32,25 @@ describe("mentionParser: detectAutocompleteToken", () => {
   });
 
   it("detects fields after dotted exploit names", () => {
+    const text = "Use {exploit.AWP.GG.su";
+    expect(detectAutocompleteToken(text, text.length)).toMatchObject({
+      type: "exploit_field",
+      exploitTarget: "AWP.GG",
+      query: "su",
+    });
+  });
+
+  it("recognizes double-brace variables and replaces the complete token", () => {
+    const text = "Hi {{now.time";
+    const token = detectAutocompleteToken(text, text.length);
+    expect(token).toMatchObject({ type: "variable", query: "now.time", start: 3, end: 13 });
+    expect(replaceDetectedToken(text, token!, "{now.time}")).toEqual({
+      value: "Hi {now.time}",
+      cursor: 13,
+    });
+  });
+
+  it("uses partial field names to detect WEAO fields without a warm catalogue", () => {
     const text = "Use {exploit.AWP.GG.su";
     expect(detectAutocompleteToken(text, text.length)).toMatchObject({
       type: "exploit_field",

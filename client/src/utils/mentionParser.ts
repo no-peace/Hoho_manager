@@ -221,8 +221,11 @@ export const detectAutocompleteToken = (
           const isKnownField = EXPLOIT_FIELD_OPTIONS.some(
             (field) => field.key.toLowerCase() === fieldQuery.toLowerCase(),
           );
+          const isFieldPrefix = fieldQuery.length > 0 && EXPLOIT_FIELD_OPTIONS.some(
+            (field) => field.key.toLowerCase().startsWith(fieldQuery.toLowerCase()),
+          );
 
-          if (!isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField)) {
+          if (!isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField || isFieldPrefix)) {
             return {
               type: "exploit_field",
               exploitTarget: candidateName,

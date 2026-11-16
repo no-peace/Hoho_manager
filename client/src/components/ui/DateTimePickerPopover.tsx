@@ -3,6 +3,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getServerNow } from "../../store/globalStore";
+import { calculateFloatingPosition } from "../../utils/floatingPosition";
 
 export interface DateTimePickerPopoverProps {
   value?: string | Date | null;
@@ -26,7 +27,7 @@ export const DateTimePickerPopover = ({
   const parsedValue = value ? new Date(value) : null;
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState<{ top: number; left: number; above: boolean }>({ top: 0, left: 0, above: false });
+  const [position, setPosition] = useState<{ top: number; left: number; above: boolean; maxHeight: number }>({ top: 0, left: 0, above: false, maxHeight: 420 });
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const date = parsedValue && !Number.isNaN(parsedValue.getTime()) ? parsedValue : getServerNow();
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -47,30 +48,54 @@ export const DateTimePickerPopover = ({
     });
   }, [visibleMonth]);
 
+  const getFloatingPosition = () => {
+    const anchor = triggerRef.current;
+    if (!anchor) return null;
+    const rect = anchor.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const placement = calculateFloatingPosition(
+      { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+      {
+        width: viewport?.width ?? window.innerWidth,
+        height: viewport?.height ?? window.innerHeight,
+        offsetTop: viewport?.offsetTop,
+      },
+      { menuWidth: 292, maxMenuHeight: 440, margin: 12, gap: 8 },
+    );
+    return {
+      top: placement.top,
+      left: placement.left,
+      above: placement.side === "top",
+      maxHeight: Math.max(80, placement.maxHeight),
+    };
+  };
+
   useEffect(() => {
-    if (open) {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const above = window.innerHeight - rect.bottom < 360 && rect.top > 360;
-        setPosition({ top: above ? Math.max(12, rect.top - 8) : rect.bottom + 8, left: Math.max(12, Math.min(rect.left, window.innerWidth - 304)), above });
-      }
-      const next = parsedValue && !Number.isNaN(parsedValue.getTime()) ? parsedValue : getServerNow();
-      setSelected(next);
-      setVisibleMonth(new Date(next.getFullYear(), next.getMonth(), 1));
-    }
+    if (!open) return;
+    const nextPosition = getFloatingPosition();
+    if (nextPosition) setPosition(nextPosition);
+    const next = parsedValue && !Number.isNaN(parsedValue.getTime()) ? parsedValue : getServerNow();
+    setSelected(next);
+    setVisibleMonth(new Date(next.getFullYear(), next.getMonth(), 1));
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const reposition = () => {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const above = window.innerHeight - rect.bottom < 360 && rect.top > 360;
-      setPosition({ top: above ? Math.max(12, rect.top - 8) : rect.bottom + 8, left: Math.max(12, Math.min(rect.left, window.innerWidth - 304)), above });
+      const nextPosition = getFloatingPosition();
+      if (nextPosition) setPosition(nextPosition);
     };
+    reposition();
     window.addEventListener("resize", reposition);
     window.addEventListener("scroll", reposition, true);
-    return () => { window.removeEventListener("resize", reposition); window.removeEventListener("scroll", reposition, true); };
+    window.visualViewport?.addEventListener("resize", reposition);
+    window.visualViewport?.addEventListener("scroll", reposition);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+      window.visualViewport?.removeEventListener("resize", reposition);
+      window.visualViewport?.removeEventListener("scroll", reposition);
+    };
   }, [open]);
 
   const chooseDay = (day: Date) => {
@@ -114,8 +139,8 @@ export const DateTimePickerPopover = ({
               initial={{ opacity: 0, scale: 0.95, y: position.above ? 4 : -4 }}
               animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.165, ease: [0.16, 1, 0.3, 1] } }}
               exit={{ opacity: 0, scale: 0.95, y: position.above ? 4 : -4, transition: { duration: 0.13, ease: [0.4, 0, 1, 1] } }}
-              style={{ position: "fixed", top: position.top, left: position.left, transform: position.above ? "translateY(-100%)" : undefined, transformOrigin: position.above ? "bottom left" : "top left" }}
-              className="z-[10050] w-[292px] rounded-[10px] border border-[#272D3A] bg-[#161A23] p-3 shadow-xl">
+              style={{ position: "fixed", top: position.top, left: position.left, maxHeight: position.maxHeight, transformOrigin: position.above ? "bottom left" : "top left" }}
+              className="z-[10050] w-[292px] max-w-[calc(100vw-24px)] overflow-y-auto rounded-[10px] border border-[#272D3A] bg-[#161A23] p-3 shadow-xl">
               <div className="mb-3">
                 <div className="text-sm font-semibold text-[#F1F3F9]">{selected.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</div>
                 <div className="mt-2 flex items-center justify-between">
