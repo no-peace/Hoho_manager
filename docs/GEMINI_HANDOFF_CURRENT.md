@@ -30,7 +30,7 @@ The owner asked for a `{server.id}`-style autocomplete namespace that exposes as
   - Arrays are JSON-serialized when they contain objects; their entries are addressable by numeric index (for example `{server.roles.0.name}`). Primitive arrays such as `features` become comma-separated strings.
   - Null optional fields resolve to an empty string.
   - Existing `{server.icon}` behavior is preserved as a CDN URL. The raw hash is available as `{server.icon_hash}`; URL aliases are provided for icon, banner, splash, and discovery splash. Animated hashes use GIF URLs.
-- Updated `server/src/services/actionExecutor.ts` to enrich the action variable dictionary from the current Guild resource. If Discord lookup fails or no bot token is available, existing base placeholders such as `{server.id}` continue to work and the action is not failed solely because the enrichment request failed.
+- Updated `server/src/services/actionExecutor.ts` to enrich the action variable dictionary from the current Guild resource. If the full Guild lookup fails, the previous lightweight bot-guild lookup remains as a fallback for `{server.name}` and `{server.icon}`; `{server.id}` always comes from the interaction payload. The action is not failed solely because Guild enrichment fails.
 - Expanded the shared variable suggestions in `client/src/components/ui/Field.tsx` and the Studio `MentionInput` so typing `{server.` shows the new fields. Increased the result cap to 50 so the expanded server list is not silently truncated.
 - Expanded the `/docs` variable reference with the Guild fields and examples.
 - Added `server/tests/guildVariables.test.ts` for scalar fields, animated CDN URLs, JSON arrays, indexed nested fields, nested object fields, and null handling.
