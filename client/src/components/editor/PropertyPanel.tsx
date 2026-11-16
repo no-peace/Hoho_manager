@@ -7,6 +7,7 @@ import { COMPONENT_FORMS } from "./ComponentForms";
 import { componentLabel, isInteractiveComponent } from "../../utils/componentsV2";
 import { findComponent } from "../../utils/tree";
 import { useMessageStore } from "../../store/messageStore";
+import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 type PanelTab = "properties" | "flow";
 
@@ -49,13 +50,13 @@ export const PropertyPanel = () => {
     <>
       {/* Mobile / Tablet Backdrop (< 1280px) */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm min-[1200px]:hidden"
+        className={UI_THEME_CONFIG.surfaces.inspectorBackdrop}
         onClick={() => select(null)}
       />
 
       {/* Docked Right Inspector on Desktop (lg+) | Slide-Up Bottom Sheet on Mobile/Tablet (<lg) */}
       <aside
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-2xl border-t border-[#26282d] bg-[#2b2d31] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[440px] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#1e1f22] min-[1200px]:shadow-none"
+        className={UI_THEME_CONFIG.surfaces.inspectorPanel}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Pill */}
@@ -64,7 +65,7 @@ export const PropertyPanel = () => {
         </div>
 
         {/* Inspector Header */}
-        <div className="flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] px-5 py-4 shrink-0">
+        <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
           <div className="min-w-0 flex-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4] block">
               Component Inspector
@@ -125,7 +126,7 @@ export const PropertyPanel = () => {
         )}
 
         {/* Inspector Body */}
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[env(safe-area-inset-bottom)] custom-scrollbar">
+        <div className={UI_THEME_CONFIG.surfaces.inspectorBody}>
           {activeTab === "flow" && hasFlow ? (
             <FlowBuilder component={component} />
           ) : (
