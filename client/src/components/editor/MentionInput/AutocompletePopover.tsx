@@ -20,7 +20,6 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
   dropdownPosition,
   maxHeight = 260,
 }) => {
-  const listRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
@@ -43,7 +42,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
         </span>
       </div>
 
-      <div ref={listRef} role="listbox" aria-activedescendant={items[selectedIndex] ? `autocomplete-option-${items[selectedIndex].id}` : undefined} className="overflow-y-auto p-1 space-y-0.5 custom-scrollbar" style={{ maxHeight: Math.max(40, maxHeight - 38) }}>
+      <div role="listbox" aria-activedescendant={items[selectedIndex] ? `autocomplete-option-${items[selectedIndex].id}` : undefined} className="overflow-y-auto p-1 space-y-0.5 custom-scrollbar" style={{ maxHeight: Math.max(40, maxHeight - 38) }}>
         {items.map((item, idx) => {
           const isSelected = idx === selectedIndex;
           return (
