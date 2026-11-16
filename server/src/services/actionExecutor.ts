@@ -10,6 +10,7 @@ import { actionRepository, webhookProfileRepository } from "../repositories/inde
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
+import { buildGuildVariables } from "./guildVariables.js";
 
 const log = logger.child("actions");
 const MAX_BRANCH_DEPTH = 10;
@@ -180,15 +181,11 @@ export const executeCustomId = async (
       .catch(() => null)) || (await discord.resolveBotToken().catch(() => null));
 
   const guildId = interaction.guild_id;
-  if (guildId && botToken && variables["server.name"] === "Server") {
-    const guilds = await discord.getBotGuilds().catch(() => []);
-    const matchedGuild = guilds.find((g) => g.id === guildId);
-    if (matchedGuild) {
-      variables["server.name"] = matchedGuild.name;
-      if (matchedGuild.icon) {
-        variables["server.icon"] = `https://cdn.discordapp.com/icons/${guildId}/${matchedGuild.icon}.png`;
-      }
-    }
+  if (guildId && botToken) {
+    // Fetch the full Guild resource so {server.*} can resolve every field
+    // Discord returns for this server, not only id/name/icon summaries.
+    const guild = await discord.getGuild(guildId, botToken).catch(() => null);
+    if (guild) Object.assign(variables, buildGuildVariables(guildId, guild));
   }
 
   const context: Omit<ActionContext, "config"> = {
