@@ -81,7 +81,7 @@ export const UI_THEME_CONFIG = {
     selectTrigger:
       "flex w-full min-h-[36px] items-center justify-between rounded-lg border border-[#26282d] bg-[#18191c] px-3 py-2 text-xs text-[#f2f3f5] transition-colors hover:border-[#3f4147] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] disabled:opacity-50",
     selectListbox:
-      "max-h-56 overflow-y-auto rounded-xl border border-[#26282d] bg-[#18191c] p-1 shadow-2xl custom-scrollbar",
+      "overflow-y-auto rounded-xl border border-[#26282d] bg-[#18191c] p-1 shadow-2xl custom-scrollbar",
     checkboxBoxChecked:
       "border-[#5865f2] bg-[#5865f2] text-white shadow-[0_0_8px_rgba(88,101,242,0.35)]",
     checkboxBoxUnchecked:
