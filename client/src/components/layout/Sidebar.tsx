@@ -39,7 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
   return (
     <div className="h-full w-full max-w-[260px] border-r border-[#272D3A] bg-[#10131A] flex flex-col font-sans select-none z-10">
-      {/* Header with Title and Close Button */}
       <div className="px-4 py-3 border-b border-[#272D3A] bg-[#10131A] shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Blocks size={16} className="text-[#818CF8]" />
@@ -58,7 +57,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Tab Navigation */}
       <div className="flex p-2 gap-1 bg-[#10131A] border-b border-[#272D3A] shrink-0">
         <button
           type="button"
@@ -84,14 +82,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Tab Panels */}
       <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
         {activeTab === "elements" && (
           <div className="p-3 space-y-3">
             {/* The Component Palette lives inline in the editor pane now  the drawer
                 keeps the layer tree (and templates). */}
 
-            {/* Layers & Hierarchy Collapsible Accordion */}
             <div className="rounded border border-[#10131A] bg-[#161A23] overflow-hidden">
               <button
                 type="button"
