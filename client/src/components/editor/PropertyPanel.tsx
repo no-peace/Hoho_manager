@@ -86,23 +86,19 @@ export const PropertyPanel = () => {
 
   return (
     <>
-      {/* Mobile / Tablet Backdrop (< 1280px) */}
       <div
         className={UI_THEME_CONFIG.surfaces.inspectorBackdrop}
         onClick={() => select(null)}
       />
 
-      {/* Docked Right Inspector on Desktop (lg+) | Slide-Up Bottom Sheet on Mobile/Tablet (<lg) */}
       <aside
         className={UI_THEME_CONFIG.surfaces.inspectorPanel}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile Drag Pill */}
         <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
           <div className="h-1 w-10 rounded-full bg-[#343C4E]" />
         </div>
 
-        {/* Inspector Header */}
         <div className={`${UI_THEME_CONFIG.surfaces.inspectorHeader} sticky top-0 z-10`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] font-medium text-[#A1A8B8] block">
@@ -133,7 +129,6 @@ export const PropertyPanel = () => {
           </div>
         </div>
 
-        {/* Properties / Action Flow Tabs */}
         {hasFlow && (
           <div className="mx-3.5 mt-3 flex gap-1 rounded-[8px] border border-[#272D3A] bg-[#1D2230] p-1 shrink-0">
             <button
@@ -163,7 +158,6 @@ export const PropertyPanel = () => {
           </div>
         )}
 
-        {/* Inspector Body */}
         <div className={UI_THEME_CONFIG.surfaces.inspectorBody}>
           {activeTab === "flow" && hasFlow ? (
             <FlowBuilder component={component} />
