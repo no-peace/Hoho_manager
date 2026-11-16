@@ -4,7 +4,7 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest application source commit:** `dc02d11d7fd4161c8117081ebac6f1b2f8b468c2`  
+**Latest application source commit:** `3f6b433c275cf2588b2ad7f37e774b7e5a448afb`  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
 **Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
