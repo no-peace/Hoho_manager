@@ -5,15 +5,17 @@
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
 **Latest autocomplete-fix application commit:** `0e75bfbe43babf410b4cadbddb791848ded7a12f`  
+**Latest handoff update commit:** `783329cca58f8049310d1054f2dd3434686a267c`  
+**Audited source snapshot:** `c35d762b5862046ae95394f17ffafcdd1989917e` (the handoff-only update follows this source snapshot)  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
-**Repository tree:** 304 tracked files in the 2026-11-16 full-source audit (210 application source files; 47 Vitest test files)  
+**Repository tree:** 304 tracked files in the 2026-11-16 repository-wide source-tree audit (210 application source files; 47 Vitest test files)  
 **Status:** Source-level implementation and follow-up autocomplete fixes are committed on `main`; npm checks and browser validation are still pending. The latest autocomplete changes have not yet been runtime-verified.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
 
-## Authoritative full-source and plan reconciliation — 2026-11-16
+## Authoritative repository-wide source-tree and targeted source reconciliation — 2026-11-16
 
-**This section overrides older repository counts, plan-status statements, and file-existence assumptions elsewhere in this document.** It was prepared from the live GitHub main tree and source at snapshot commit c35d762b5862046ae95394f17ffafcdd1989917e.
+**This section overrides older repository counts, plan-status statements, and file-existence assumptions elsewhere in this document.** It was prepared from the complete tracked-path inventory and targeted source inspection at snapshot commit c35d762b5862046ae95394f17ffafcdd1989917e. Audit scope: all tracked paths were enumerated; high-risk UI, autocomplete, resolver, WEAO, auth/performance, tests, package manifests, and workflows were opened and traced. This was not a line-by-line review of every unrelated source file.
 
 ### 1. Exact repository snapshot
 
@@ -29,7 +31,7 @@
 
 ### 2. Architecture map — current source, not an inferred design
 
-The root package is a private npm-workspaces monorepo. Node engine range is >=22 <27; .nvmrc selects Node 26.
+The root package is a private npm-workspaces monorepo. Node engine range is >=22 <27; .nvmrc is 26.13.1. Note: root package.json lists tunnel as a workspace, but the current tree has no tunnel/package.json; verify how npm resolves this workspace entry before changing workspace configuration.
 
 | Area | Current responsibility | Main source locations |
 |---|---|---|
@@ -104,7 +106,7 @@ The V8 plan is based on an older source snapshot (0b5cec5...) and refers to a Pl
 |---|---|---|
 | 1. Parallel health and session checks | Implemented in source | client/src/store/globalStore.ts starts /api/health and api.auth.me() concurrently with Promise.all; health failure is non-fatal and server clock offset is retained when available. No dedicated globalStore regression test was found in the current test tree. |
 | 2. Avoid signed-out LCP reset | Implemented in source | HAS_SESSION_HINT_KEY, hasSessionHint(), hasOAuthCallback(), and setSessionHint() are present. Initial authLoading is based on the local session hint or OAuth callback parameters. A cold visitor without a hint renders the login page while the session check runs; a valid session can transition into Studio after verification. Add tests for stale/missing hints, OAuth callbacks, and successful/failed session checks. |
-| 3. Reduce initial entry bundle | Implemented in source | NotFoundPage is React.lazy; useActionStore is dynamically imported only after a user is authenticated. The old plan also mentioned removing unused test mocks; inspect the current LoginScreen.test.tsx before making any test-only cleanup. |
+| 3. Reduce initial entry bundle | Implemented in source | NotFoundPage is React.lazy; useActionStore is dynamically imported only after a user is authenticated. The old plan also mentioned removing unused gsap/ReactBits/CultSkiper test mocks. Current LoginScreen.test.tsx contains only a ThreeHeroCanvas mock; those named obsolete mocks are already absent. |
 | 4. Pause/defer hero canvas | Implemented in source | ThreeHeroCanvas.tsx skips animation for navigator.webdriver, reduced-motion users, compact mobile, and constrained devices; on eligible desktop it draws a static frame first and delays the animation loop by 1500ms. It also pauses when hidden/offscreen. No dedicated automated test for this behavior was found. |
 | 5. Surface Lighthouse gatherer error | Not present in current tree | docs/playwright/analyze-lighthouse.mjs was deleted in commit 00b0544.... The proposed extractLcpNode() errorMessage handling is therefore not part of current main. Recover the prior helper from parent e26da760... and apply/review the error handling if the analyzer is restored. |
 
@@ -188,6 +190,7 @@ The pure parser (client/src/utils/mentionParser.ts) still has its own brace-toke
 | P2 — clan-tag test gap | Non-membership test omits guild context | server/tests/authorService.test.ts | Add guild-context test where membership lookup fails but enabled primary-guild tag still resolves. |
 | P2 — mobile selector scope | No dedicated mobile selection panel | Header.tsx, SearchableDiscordSelect.tsx | Decide whether the existing 104px trigger is sufficient or implement the proposed mobile panel after current viewport verification. |
 | P2 — documentation drift risk | Docs and autocomplete inventories are hardcoded separately | DocsPage.tsx, Field.tsx, userPlaceholderAutocomplete.ts | Reconcile every documented/suggested token against resolver behavior and tests. |
+| P2 — workspace manifest drift | Root declares tunnel as a workspace but tunnel has no package.json in the current tree | root package.json + tunnel/config.yml.example | Verify npm workspace behavior; decide whether the entry is intentional or needs a manifest/removal. |
 
 ### 8. Validation and safety status at this snapshot
 
