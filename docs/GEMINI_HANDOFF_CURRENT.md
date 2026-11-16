@@ -1197,3 +1197,15 @@ Run the full test, typecheck, and build commands against the implementation head
 - `MessageEditor.test.tsx`: added regression coverage for a Select Menu opening in Live Preview while still notifying the inspector-selection callback, and for editing the selected message's V2 `TextDisplay` block when the selected index differs from the active index.
 - Source/repository mismatch recorded: the current `LoginScreen.tsx` does not contain a Guest Sandbox CTA; it contains a development-only `Continue as Local Developer` control. The implementation did not invent a new guest-authentication path without an existing handler/contract.
 - Test execution, typecheck, production build, browser QA, and Lighthouse remain unverified in the current GitHub-only editing session. Run the repository scripts before merging.
+
+
+## V12 implementation checkpoint — pre-CI review (2026-11-16)
+
+- Base branch snapshot: `main` at `bb7ab2cd97ad55736b02ef7fe095982a70313a4f` (the commit that added the Gemini V12 plan).
+- Working branch: `feat/v12-ultimate-ux-implementation`.
+- Completed implementation batches: 1–6 source changes, plus Batch 7 regression-test additions. The V12 changes are isolated to the working branch; `main` has not been modified.
+- Batch 1–6 changed files: login screen/canvas/global styles; live preview click routing; mobile V2 quick-edit and message-store selection synchronization; FlowBuilder token cleanup; thread inputs/helper callouts/header/sidebar/index theme; shared button transitions and desktop-only Lenis wheel smoothing.
+- Batch 7 test additions cover the login backdrop/layout, Select Menu interaction routing, and selected-message V2 TextDisplay editing.
+- The current LoginScreen has no Guest Sandbox control or guest-auth handler. It retains the existing Discord OAuth CTA and development-only local-login action; no speculative guest-login implementation was added.
+- `client/index.html` body now uses the explicit `#0B0D12` / `#F1F3F9` studio theme classes. The theme-color meta tag is `#0B0D12`.
+- Verification state: no local Node execution was available through the GitHub editing path. Tests, typecheck, production build, browser QA, and Lighthouse are NOT yet verified. CI should be triggered through a draft PR and its exact results recorded before merge.
