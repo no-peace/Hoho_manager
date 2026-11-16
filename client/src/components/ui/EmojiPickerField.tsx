@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Smile, X } from "lucide-react";
 import { UNICODE_EMOJI_LIST } from "../../utils/unicodeEmojis";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { RichPicker } from "../editor/RichPicker";
+import { calculateFloatingPosition } from "../../utils/floatingPosition";
 
 export interface EmojiData {
   id?: string | null;
@@ -65,6 +68,8 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   const [acOpen, setAcOpen] = useState(false);
   const [acQuery, setAcQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [autocompleteStyle, setAutocompleteStyle] = useState<CSSProperties>({});
+  const selectedOptionRef = useRef<HTMLButtonElement>(null);
 
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const emojisByGuild = useDiscordCacheStore((state) => state.emojis);
@@ -80,6 +85,43 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   useEffect(() => {
     setTextValue(formatEmojiInput(value));
   }, [value]);
+
+  useEffect(() => {
+    if (!acOpen || !inputRef.current) return;
+    const updatePosition = () => {
+      const rect = inputRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const viewport = window.visualViewport;
+      const placement = calculateFloatingPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
+        { menuWidth: 256, maxMenuHeight: 240, minMenuHeight: 72 },
+      );
+      setAutocompleteStyle({
+        position: "fixed",
+        top: placement.top,
+        left: placement.left,
+        width: placement.width,
+        maxHeight: placement.maxHeight,
+        zIndex: 60,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+    };
+  }, [acOpen, acQuery]);
+
+  useEffect(() => {
+    selectedOptionRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex, filteredEmojis]);
 
   const filteredEmojis = useMemo(() => {
     if (!acQuery) {
@@ -240,17 +282,23 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
         )}
 
         {/* Inline :emoji Autocomplete Popover */}
-        {acOpen && filteredEmojis.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 z-50 w-64 bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1">
+        {acOpen && filteredEmojis.length > 0 && typeof document !== "undefined" && createPortal(
+          <div
+            className="fixed bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1"
+            style={autocompleteStyle}
+          >
             <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
               <span>Emojis ({filteredEmojis.length})</span>
               <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
             </div>
-            <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+            <div className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(autocompleteStyle.maxHeight ?? 200) - 36) }}>
               {filteredEmojis.map((item, idx) => (
                 <button
+                  ref={idx === selectedIndex ? selectedOptionRef : undefined}
                   key={item.key}
                   type="button"
+                  role="option"
+                  aria-selected={idx === selectedIndex}
                   className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors ${
                     idx === selectedIndex
                       ? "bg-[#5865f2] text-white"
@@ -268,8 +316,9 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          </div>,
+          document.body,
+        )}}
       </div>
       {hint && <span className="mt-1 block text-[11px] text-[#949ba4]">{hint}</span>}
     </div>
