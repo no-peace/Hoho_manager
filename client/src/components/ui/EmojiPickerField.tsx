@@ -59,6 +59,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   className = "",
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pickerButtonRef = useRef<HTMLButtonElement>(null);
   const [textValue, setTextValue] = useState(() => formatEmojiInput(value));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [acOpen, setAcOpen] = useState(false);
@@ -212,8 +213,9 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
             </button>
           )}
           <button
+            ref={pickerButtonRef}
             type="button"
-            onClick={() => setPickerOpen(!pickerOpen)}
+            onClick={() => setPickerOpen((current) => !current)}
             className={`p-1 rounded transition-colors ${
               pickerOpen
                 ? "bg-[#5865f2] text-white shadow-sm"
@@ -233,7 +235,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
               handleSelectEmoji(val);
             }}
             onClose={() => setPickerOpen(false)}
-            anchor={inputRef.current}
+            anchor={pickerButtonRef.current}
           />
         )}
 
