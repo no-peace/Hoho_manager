@@ -29,7 +29,6 @@ export const ContentTab: React.FC<ContentTabProps> = ({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        {/* Thread Sub-Section */}
         <div className={UI_THEME_CONFIG.surfaces.editorSubSection}>
           <button
             type="button"
@@ -92,7 +91,6 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           )}
         </div>
 
-        {/* Linked Discord Message Status Bar */}
         {message.message_link && (
           <div className="rounded-lg border border-[#1D2230] bg-[#10131A] px-3 py-2 flex items-center justify-between gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">
@@ -124,11 +122,9 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           </div>
         )}
 
-        {/* Files Sub-Section */}
         <FileAttachmentsSection />
       </div>
 
-      {/* Classic Content Input */}
       {!isV2 && (
         <DiscordMentionInput
           label="Content"
