@@ -38,3 +38,21 @@ export function scrollToMessageEditor(index: number): void {
   if (editorLenis) editorLenis.scrollTo(target, { offset: -12, duration: 0.85 });
   else target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+
+/** Focus the first editable control in the selected message after scrolling it into view. */
+export function focusMessageEditor(index: number): void {
+  if (typeof document === "undefined") return;
+  const message = editorScrollWrapper?.querySelector<HTMLElement>(
+    `[data-message-editor-index="${index}"]`,
+  );
+  const field = message?.querySelector<HTMLElement>(
+    "textarea:not([disabled]), input:not([disabled]):not([type=checkbox]):not([type=radio]), [contenteditable=true]",
+  );
+  if (!field) return;
+  field.focus({ preventScroll: true });
+  if (field instanceof HTMLTextAreaElement || (field instanceof HTMLInputElement && ["text", "search", "url", "tel", "password"].includes(field.type))) {
+    const end = field.value.length;
+    field.setSelectionRange(end, end);
+  }
+}
