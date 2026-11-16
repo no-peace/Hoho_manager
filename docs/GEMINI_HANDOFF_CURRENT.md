@@ -4,8 +4,8 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest implementation head before this handoff update:** `a4bdcb50349ad675033e953619024228fd728df0`  
-**Previous handoff checkpoint commit:** `8f410eec9698f3e2c73f53ca2b93fcc492e3a30d`  
+**Latest implementation head before this handoff update:** `0cbaf34549c974439ddbf6ca09d22e3432720af6`  
+**Previous handoff checkpoint commit:** `d42e4eaa95f0085fd4ecff9d21184b1c5f58c348`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
 **Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 is in progress; full runtime/release verification remains open. Do not describe this branch as tested or release-ready.
@@ -16,6 +16,7 @@
 - Identified and completed a specific missed Batch 8 requirement: `EmbedsTab.tsx` previously returned `null` when no embeds existed. It now always shows an Embeds header with a count, an Add Embed action, and a first-embed empty state with a Create First Embed action. The duplicate Add Embed control was removed from the footer action bar.
 - Added a UI regression test for the first-embed empty-state flow and behavior tests that verify `{` / `{explo` trigger standard variable autocomplete.
 - Added a server interpolation behavior test proving `{now.time}` resolves to Discord `:T` and `{now.short_time}` resolves to `:t`.
+- Removed a test comment that only repeated the immediately following assertion. The broader Batch 14 comment sweep is still open; constraint and architecture comments remain in place.
 - Preserved the live server resolver contract for `clantag` and the existing broader author fields. V10's proposed nine-field list and selected-server-membership behavior conflict with the live resolver and existing tests; those incompatible changes were not introduced.
 - UI plan nuance: the current sidebar is an `Elements | Templates` drawer with the component palette inline in the editor, rather than the plan's literal `Templates | Tracked | Actions` three-way switcher. This is an architectural deviation to reconcile explicitly, not a claim that the literal three-tab requirement was completed.
 - The UI changes are source-reviewed only. No browser screenshot or responsive visual pass has been performed.
