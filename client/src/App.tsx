@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 const NotFoundPage = React.lazy(() =>
   import("./pages/NotFoundPage").then((module) => ({ default: module.NotFoundPage })),
 );
-import { HoHoLogoMark, LoginScreen } from "./components/layout/LoginScreen";
+import { LoginScreen } from "./components/layout/LoginScreen";
+import { HoHoLogoMark } from "./components/layout/HoHoLogoMark";
 import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import api from "./api/client";
@@ -21,16 +22,27 @@ const StudioModals = React.lazy(() =>
   import("./components/layout/StudioModals").then((module) => ({ default: module.StudioModals })),
 );
 
-const SessionAuthLoader: React.FC = () => (
-  <div className="h-dvh w-full bg-[#0B0D12] text-[#F1F3F9] flex flex-col items-center justify-center gap-3 select-none font-sans">
-    <HoHoLogoMark className="h-11 w-11 object-contain" />
-    <div className="flex items-center gap-2">
-      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#818CF8]" aria-hidden="true" />
-      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
-      <span className="loading-dot h-1.5 w-1.5 rounded-full bg-[#5865f2]" aria-hidden="true" />
-      <span className="ml-1 text-xs font-medium text-[#A1A8B8]">Verifying Discord session…</span>
+const AppLoadingScreen: React.FC<{ label?: string }> = ({ label = "Loading HoHo Manager…" }) => (
+  <div
+    className="app-loading-screen"
+    role="status"
+    aria-live="polite"
+    aria-label={label}
+  >
+    <div className="app-loading-mark">
+      <HoHoLogoMark className="h-14 w-14 object-contain" alt="" />
     </div>
+    <span className="app-loading-label">{label}</span>
+    <span className="app-loading-indicator" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </span>
   </div>
+);
+
+const SessionAuthLoader: React.FC = () => (
+  <AppLoadingScreen label="Verifying Discord session…" />
 );
 
 export const App: React.FC = () => {
@@ -73,7 +85,7 @@ export const App: React.FC = () => {
   if (route === "docs") {
     return (
       <>
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<AppLoadingScreen />}>
           <DocsPage />
         </React.Suspense>
       </>
@@ -83,7 +95,7 @@ export const App: React.FC = () => {
   if (route === "privacy") {
     return (
       <>
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<AppLoadingScreen />}>
           <PrivacyPage />
         </React.Suspense>
       </>
@@ -92,7 +104,7 @@ export const App: React.FC = () => {
 
   if (route === "not_found") {
     return (
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={<AppLoadingScreen />}>
         <NotFoundPage />
       </React.Suspense>
     );
@@ -115,7 +127,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <React.Suspense fallback={null}>
+    <React.Suspense fallback={<AppLoadingScreen />}>
       <StudioLayout />
       <StudioModals />
     </React.Suspense>
