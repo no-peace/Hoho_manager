@@ -318,7 +318,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         }));
       }
 
-      if (!q || "exploit.".includes(q) || "weao".includes(q)) {
+      // Match prefixes while the token is still being typed (for example "{explo").
+      if (!q || "exploit.".startsWith(q) || "weao".startsWith(q)) {
         items.push({
           id: "var_weao_chain",
           title: "{exploit.<Name>.<Field>}",
