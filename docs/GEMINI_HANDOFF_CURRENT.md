@@ -6,10 +6,214 @@
 **Authoritative branch:** `main`  
 **Latest autocomplete-fix application commit:** `0e75bfbe43babf410b4cadbddb791848ded7a12f`  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
-**Repository tree:** 303 tracked files after adding the shared floating-position utility and its Vitest suite  
+**Repository tree:** 304 tracked files in the 2026-11-16 full-source audit (210 application source files; 47 Vitest test files)  
 **Status:** Source-level implementation and follow-up autocomplete fixes are committed on `main`; npm checks and browser validation are still pending. The latest autocomplete changes have not yet been runtime-verified.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
+
+## Authoritative full-source and plan reconciliation — 2026-11-16
+
+**This section overrides older repository counts, plan-status statements, and file-existence assumptions elsewhere in this document.** It was prepared from the live GitHub main tree and source at snapshot commit c35d762b5862046ae95394f17ffafcdd1989917e.
+
+### 1. Exact repository snapshot
+
+- Repository: no-peace/Hoho_manager
+- Branches: only main exists at the time of this audit.
+- Main snapshot: c35d762b5862046ae95394f17ffafcdd1989917e
+- Open pull requests: none at the time of this audit.
+- Tracked files: 304.
+- Application source files: 210 total — client 114, server 79, bot 13, shared 4.
+- Vitest test files: 47.
+- Root README currently contains only “Coming soon”; use this handoff plus the source tree as the project orientation.
+- Production URL: https://hoho-manager.onrender.com/
+
+### 2. Architecture map — current source, not an inferred design
+
+The root package is a private npm-workspaces monorepo. Node engine range is >=22 <27; .nvmrc selects Node 26.
+
+| Area | Current responsibility | Main source locations |
+|---|---|---|
+| Client | React 19 + Vite + TypeScript + Tailwind + Zustand UI/editor | client/src/App.tsx, client/src/components/, client/src/pages/, client/src/store/, client/src/hooks/, client/src/utils/ |
+| Server | Express 5 API, Discord API integration, message dispatch, auth, persistence, permissions | server/src/app.ts, server/src/routes/, server/src/services/, server/src/actions/, server/src/repositories/, server/src/middleware/, server/src/config/ |
+| Bot | Sapphire/discord.js gateway worker; slash commands and interaction relay to the API | bot/src/index.ts, bot/src/commands/, bot/src/listeners/, bot/src/lib/ |
+| Shared | Shared TypeScript message types, custom IDs, and constants consumed by client/server/bot | shared/src/types.ts, shared/src/constants.ts, shared/src/customId.ts, shared/src/index.ts |
+| Tunnel | Only tunnel/config.yml.example is present in the current tree; no tunnel package manifest or source files were found | tunnel/config.yml.example |
+
+Important architectural boundaries:
+- The browser client calls the Express API through client/src/api/client.ts; do not move Discord bot credentials or privileged Discord REST calls into the browser.
+- The bot is a separate gateway process and uses the server API. Keep slash-command/interaction handling distinct from browser session authentication.
+- Shared message types are in shared; update the shared contract and all callers when changing cross-workspace payload shapes.
+- Server-side authorization is authoritative. Client-side visibility or autocomplete filtering is not an authorization boundary.
+- Persistence is implemented through server repositories and database configuration/migration modules. Inspect repository and migration code before changing data shape or retention.
+- Existing staff permission middleware and destination-level checks must remain enforced for all message, thread, webhook, and WEAO operations.
+
+### 3. Commands and CI contract
+
+Root package.json currently defines:
+- npm test — invokes each workspace test script; Vitest is the test runner.
+- npm run typecheck — builds shared first, then runs TypeScript tsc --noEmit checks in workspaces.
+- npm run build — builds shared, client, server, and bot.
+- npm run verify:acceptance — runs scripts/verify-acceptance.ts.
+- npm run benchmark / npm run benchmark:json — server benchmarks.
+- npm run dev — builds shared and starts server, client, and bot dev processes.
+
+Do not conflate Vitest, typecheck, production build, acceptance checks, benchmarks, Lighthouse, and Playwright. They are separate checks.
+
+#### Confirmed CI blocker: stale Playwright path
+
+Current .github/workflows/ci.yml contains this step before the build:
+
+    node --check docs/playwright/audit.mjs
+
+But the current main tree has no docs/playwright/ directory and no docs/playwright/audit.mjs. The path is therefore missing at the exact point CI tries to validate it. This is a source-confirmed workflow defect, not a speculative runtime issue.
+
+**Why the path is missing:** commit 00b0544ff7a88f7a9afc3c841101568cf2190379 (“testing something”, 2026-11-15) removed the complete docs/playwright/ folder, including:
+- README.md
+- TEST-CHECKLIST.md
+- audit.mjs
+- analyze-lighthouse.mjs
+- the standalone Playwright package manifest and lockfile
+- saved responsive audit reports/screenshots
+- saved desktop/mobile Lighthouse HTML and JSON reports
+
+The parent of that deletion commit is e26da760d96e3f7f491019b93d5e3d78565312d7. The files can be inspected/recovered from that exact parent if the owner wants the tooling restored. Do not blindly restore generated screenshots, browser traces, Lighthouse JSON, or private browser data. Restore only the necessary maintained tooling/documentation, and first determine whether the deletion was intentional.
+
+**Required decision for the next engineer:** either restore the maintained Playwright audit source at the expected path (and any required package setup/docs), or deliberately remove/update the stale CI syntax-check step if the standalone audit has been retired. Do not leave a CI command pointing to a nonexistent file. Do not claim CI passes until the workflow runs successfully on the current main.
+
+The latest combined-status lookup for snapshot commit c35d762... returned no statuses. No green CI result is established for this snapshot. Recent failed CI/Lighthouse runs visible in Actions were from the old feat/hoho-manager-weao-workspace-v8 branch; do not attribute those results to current main, but do not treat them as evidence that current main passes either.
+
+#### Lighthouse workflow is not the deleted Playwright audit
+
+Current .github/workflows/lighthouse.yml:
+- Runs on push to main, pull requests, and manual dispatch.
+- Uses Node 26.
+- Builds shared, client, and server.
+- Starts the built API and Vite production preview.
+- Runs Lighthouse CI (@lhci/cli@0.14.0) for mobile and desktop.
+- Uploads Lighthouse artifacts for 14 days.
+
+Current .lighthouserc.desktop.json and .lighthouserc.mobile.json each collect three runs. Their configured category minimums are warnings: desktop Performance 0.80 and mobile Performance 0.75; accessibility, best practices, and SEO minimums are 0.90. LCP/CLS/TBT limits are also warnings. These are not hard 99+ score gates. The V8 title “Lighthouse 99+” is an aspiration, not a currently enforced threshold.
+
+The deleted standalone Playwright audit and the current Lighthouse CI workflow are separate systems. Lighthouse CI does not replace the responsive functional audit.
+
+### 4. Reconciliation with docs/hoho_v8_lighthouse_99_and_playwright_devtools_plan.md
+
+The V8 plan is based on an older source snapshot (0b5cec5...) and refers to a Playwright audit commit (e534596...). It records a historical result of 38 PASS / 0 FAIL / 1 intentional SKIP across 320, 360, 390, 430, 768, and 1280px. The audit report and raw Lighthouse files described by that plan were subsequently removed by commit 00b0544.... Treat those numbers as historical evidence from the older audit, not as current-main verification. Do not copy the 38/0/1 result into a current validation summary.
+
+| V8 batch | Current source status | Evidence / remaining work |
+|---|---|---|
+| 1. Parallel health and session checks | Implemented in source | client/src/store/globalStore.ts starts /api/health and api.auth.me() concurrently with Promise.all; health failure is non-fatal and server clock offset is retained when available. No dedicated globalStore regression test was found in the current test tree. |
+| 2. Avoid signed-out LCP reset | Implemented in source | HAS_SESSION_HINT_KEY, hasSessionHint(), hasOAuthCallback(), and setSessionHint() are present. Initial authLoading is based on the local session hint or OAuth callback parameters. A cold visitor without a hint renders the login page while the session check runs; a valid session can transition into Studio after verification. Add tests for stale/missing hints, OAuth callbacks, and successful/failed session checks. |
+| 3. Reduce initial entry bundle | Implemented in source | NotFoundPage is React.lazy; useActionStore is dynamically imported only after a user is authenticated. The old plan also mentioned removing unused test mocks; inspect the current LoginScreen.test.tsx before making any test-only cleanup. |
+| 4. Pause/defer hero canvas | Implemented in source | ThreeHeroCanvas.tsx skips animation for navigator.webdriver, reduced-motion users, compact mobile, and constrained devices; on eligible desktop it draws a static frame first and delays the animation loop by 1500ms. It also pauses when hidden/offscreen. No dedicated automated test for this behavior was found. |
+| 5. Surface Lighthouse gatherer error | Not present in current tree | docs/playwright/analyze-lighthouse.mjs was deleted in commit 00b0544.... The proposed extractLcpNode() errorMessage handling is therefore not part of current main. Recover the prior helper from parent e26da760... and apply/review the error handling if the analyzer is restored. |
+
+Additional interpretation:
+- The current ThreeHeroCanvas has more than the original V8 suggestion: it also caps animation at 30fps, reduces particle count/pixel ratio for compact mobile, and pauses on document visibility/intersection changes.
+- The V8 root-cause measurements (LCP around 2.2s, desktop TBT 380ms, unused JS around 29.4KB) came from the old uploaded Lighthouse JSON. The raw JSON was deleted from current main; do not state that these exact measurements still reproduce.
+- The LoginScreen.test.tsx file is small; inspect its current content rather than assuming the old mocks remain.
+- The V8 analyzer fix cannot be considered implemented merely because the source plan contains a code sample.
+
+### 5. Reconciliation with the additional “Read V8 Plan” attachment
+
+That attachment was a proposal and ended by asking the owner for approval of the changelog display default. Do not treat every proposed future change as independently approved. The following is the status found in current source:
+
+#### 5.1 ID-based user avatar aliases
+
+**Implemented in resolver, but autocomplete has a source inconsistency.**
+- server/src/services/authorService.ts now resolves only the canonical ID-based field avatar.
+- server/tests/authorService.test.ts expects avatarurl, icon, and pfp to remain literal/unresolved.
+- However, client/src/utils/userPlaceholderAutocomplete.ts still includes avatarurl in USER_PROFILE_FIELDS.
+- client/src/utils/__tests__/userPlaceholderAutocomplate.test.ts explicitly expects {user.<id>.avatarurl} to be suggested. This conflicts with the server resolver and the alias-removal plan.
+- **Required follow-up:** remove the unsupported avatarurl suggestion and update the test; verify the UI suggests {user.<id>.avatar} and that unsupported aliases remain unresolved. Do not remove normal {user.avatar}.
+
+The same autocomplete helper accepts IDs of 1–20 digits (\d{1,20}), while the server's USER_PLACEHOLDER_REGEX and DISCORD_USER_ID_REGEX require 17–20 digits. Existing tests deliberately use a short fake ID such as user.133342345. Decide whether the helper should enforce the server's real 17–20 digit contract, and update fixtures/tests consistently. Do not silently assume the current client and server validators match.
+
+#### 5.2 Clan-tag semantics
+
+- discordService.ts preserves Discord primary_guild fields (identity_guild_id, identity_enabled, tag, badge) in the user summary.
+- ID-based {user.<id>.clantag} in authorService.ts returns the official primary-guild tag only when identity_enabled === true. It does not use the member nickname fallback.
+- The current ID-based test for “without selected-server membership” calls the resolver without a guildId; add a stronger test with a guild context where getGuildMember returns 404/null, proving the primary-guild tag still resolves even when the account is not in the selected server.
+- Interaction-user {user.clantag} is a separate path in server/src/services/actionExecutor.ts: it prefers the official primary-guild tag and otherwise parses bracketed/parenthesized/braced tags from nickname or username. Do not accidentally merge these two contracts.
+- userPlaceholderAutocomplete.ts currently describes the ID-based clantag as “official Discord clan tag or a tag parsed from the member name”; that description is inaccurate for the ID-based resolver and should be corrected to “official primary-guild tag when enabled”.
+
+#### 5.3 Mobile server selector
+
+- Current Header.tsx uses a 104px-wide wrapper at the narrowest breakpoint (w-[104px] sm:w-32 lg:w-48), not the older 36px w-9 trigger described in the attachment.
+- SearchableDiscordSelect.tsx renders its menu through a portal, recalculates its anchor rect on scroll/resize, and has viewport-constrained dropdown geometry with tests for 180px-tall viewports.
+- This is a partial repair of the narrow-width issue. The proposed dedicated mobile bottom-sheet/selection panel is not implemented in the current source.
+- The earlier 320px/360px zero-overflow evidence belongs to the deleted historical Playwright report. Re-run it before claiming the current selector is visually verified.
+- Preserve desktop selector behavior if a mobile-specific surface is introduced.
+
+#### 5.4 WEAO exploit changelogs
+
+**Implemented in current source, with tests.**
+- server/src/services/weaoService.ts has getExploitChangelogs(), 15-second cache, in-flight request deduplication, previous-snapshot comparison, and formatted output.
+- server/src/routes/weao.ts exposes /changelogs/:exploit.
+- interpolateWeaoPlaceholders() supports exploit-name and tracker-ID lookups, changelog selectors such as [n], [start:end], negative slices, and .changelogs.compare.
+- server/tests/weaoService.test.ts covers formatting, empty results, tracker-ID resolution, and incremental comparison.
+- This is source/test coverage only; it is not a current production/browser verification.
+- Preserve the explicit cancellation in the attachment: do not reintroduce exploit override behavior.
+
+#### 5.5 Documentation page
+
+- client/src/pages/DocsPage.tsx has a hardcoded DOC_ITEMS inventory, search/category filtering, responsive mobile cards and desktop table, and Copy/Check controls that await clipboard success.
+- It documents the distinction between interaction-user and ID-based placeholders, including primary-guild tag behavior.
+- The list remains manually maintained rather than generated from resolver metadata. Keep it synchronized with authorService.ts, actionExecutor.ts, weaoService.ts, and tests. The unsupported avatarurl suggestion described above is a concrete example of why cross-checking is needed.
+- The original proposal's goal was documentation that reflects actual runtime support; do not advertise aliases or fields solely because autocomplete currently suggests them.
+
+### 6. Current autocomplete regression — precise source trace
+
+The owner reported that {explo did not show WEAO suggestions and {user. did not show user-variable suggestions. The current source has the following expected path:
+
+1. client/src/components/editor/MentionInput/index.tsx has a component-level brace-token state machine in checkAutocomplete(). It finds the last {, requires no closing brace/newline before the cursor, and handles partial brace tokens before calling the pure parser.
+2. {explo enters acType === "variable" with query explo. The WEAO chain item is added because "exploit.".startsWith("explo") is true.
+3. {user. also enters acType === "variable" with query user.. getUserIdPlaceholderSuggestions("user.") correctly returns null because no numeric ID has been typed; the ordinary VARIABLES array should then provide {user.*} items because their tags contain user..
+4. {user.<digits> enters the ID-specific suggestion path in getUserIdPlaceholderSuggestions().
+5. The menu is rendered only when acType is set and acItems.length > 0.
+6. VariableMenu.tsx forwards its props to AutocompletePopover.tsx. The popover consumes anchor and maxHeight, portals to document.body, uses calculateFloatingPosition(), listens to window and visualViewport resize/scroll, and scrolls the active option into view.
+
+**Important:** this source trace explains what should happen, but it does not prove the user's reported interaction is fixed. There is no dedicated MentionInput component test in the current tree that asserts the visible menu for partial {explo, {user, {user., and bare {. Existing tests cover the pure parser and ID-placeholder helper, not the full component state/render path.
+
+The pure parser (client/src/utils/mentionParser.ts) still has its own brace-token regex logic, but the current MentionInput.checkAutocomplete() handles brace tokens before delegating to that pure parser. Keep the component state machine and pure parser behavior aligned, or clearly document why they intentionally differ. Also test the separate reusable Field/TextArea autocomplete in client/src/components/ui/Field.tsx; fixing MentionInput alone does not prove that path works.
+
+### 7. Source-audit findings Gemini should prioritize
+
+| Priority | Finding | Evidence | Required action |
+|---|---|---|---|
+| P0 — CI blocker | CI references deleted docs/playwright/audit.mjs | .github/workflows/ci.yml + deletion commit 00b0544... | Restore maintained audit tooling or remove/update the stale CI step intentionally; run CI on current main. |
+| P1 — placeholder contract drift | Client suggests ID-based avatarurl, but server intentionally removed that alias | userPlaceholderAutocomplete.ts, its test, authorService.ts, authorService.test.ts | Align suggestions/tests with server support. |
+| P1 — ID validation drift | Client autocomplete accepts 1–20 digit IDs; server accepts 17–20 | userPlaceholderAutocomplete.ts vs authorService.ts | Align client validator and fixtures with the real Discord ID contract. |
+| P1 — reported autocomplete regression | No component-level regression test for visible partial-token menus | MentionInput/index.tsx, tests tree | Add component tests for {, {user, {user., {user.<valid-id>, {explo, plus keyboard selection and cursor replacement. |
+| P2 — clan-tag test gap | Non-membership test omits guild context | server/tests/authorService.test.ts | Add guild-context test where membership lookup fails but enabled primary-guild tag still resolves. |
+| P2 — mobile selector scope | No dedicated mobile selection panel | Header.tsx, SearchableDiscordSelect.tsx | Decide whether the existing 104px trigger is sufficient or implement the proposed mobile panel after current viewport verification. |
+| P2 — documentation drift risk | Docs and autocomplete inventories are hardcoded separately | DocsPage.tsx, Field.tsx, userPlaceholderAutocomplete.ts | Reconcile every documented/suggested token against resolver behavior and tests. |
+
+### 8. Validation and safety status at this snapshot
+
+- This audit used GitHub source and commit history only.
+- No local npm command was run.
+- No Terminal or Playwright session was started.
+- No browser screenshot, console trace, or live interaction was captured.
+- No current-main Vitest, typecheck, build, Lighthouse, or Playwright pass is claimed.
+- The historical 38 PASS / 0 FAIL / 1 SKIP result is not current-main evidence because the report was deleted.
+- The user previously said their PC was off. Do not use Terminal or Playwright until the owner explicitly says they are available again.
+- The owner expects source edits to be made through GitHub integration, not by asking them to hand-edit code. Keep edits focused and preserve unrelated behavior.
+
+### 9. Instructions to Gemini as the senior engineer
+
+1. Read this entire handoff and the V8 plan before proposing or applying changes.
+2. Treat the live main source as authoritative. Re-fetch the current file and SHA before every edit; this handoff is a map, not a substitute for opening the implementation.
+3. Start with the confirmed CI path mismatch. Inspect deletion commit 00b0544... and parent e26da760...; determine whether the owner intended to retire the standalone audit. Restore maintained tooling only if appropriate; never restore private/generated browser artifacts blindly.
+4. Fix the client/server user-placeholder contract drift (avatarurl, ID length, clantag description) with tests before claiming ID-based autocomplete is accurate.
+5. Fix the user's autocomplete report with component-level tests that assert visible, populated suggestions—not only pure parser output. Test both MentionInput and Field/TextArea paths.
+6. Preserve the distinction between ID-based primary-guild clan tags and interaction-user legacy nickname-tag parsing.
+7. Keep existing Thread ID authorization, WEAO security/permissions, OAuth/session behavior, encryption, backups, message payload compatibility, Components V2, and action flows intact.
+8. Do not implement the mobile selector redesign or other proposal-only scope without confirming that it remains desired. The attached “Read V8 Plan” ended with an explicit approval question; its proposed work should not be silently treated as blanket authorization.
+9. Use the correct checks: npm test, npm run typecheck, and npm run build are separate. Run Lighthouse CI separately. Run Playwright only when the owner enables it.
+10. Update this handoff after each implementation batch with actual commit SHAs, tests run, failures, screenshots/artifacts, and the exact source snapshot. Never turn source inspection into a claim of runtime success.
+
+---
 
 ## Latest regression report — autocomplete (2026-11-16)
 
@@ -36,7 +240,7 @@ These are focused follow-up changes; they are not yet confirmed by Vitest or bro
 
 - The owner explicitly reported both exploit and user-variable menus missing. The commits above address the WEAO prefix and the variable-menu anchor path, but **the user-variable symptom is not yet proven fixed**.
 - Reopen the current `MentionInput/index.tsx`, `VariableMenu.tsx`, and `AutocompletePopover.tsx` together. Trace the render condition for `acType === "variable"`, verify that `{user.` produces non-empty `acItems`, and verify that the popover receives a valid anchor and renders in the viewport.
-- Check whether the anchor/max-height props are actually consumed by `AutocompletePopover`; merely passing props is not sufficient if the popover does not use them.
+- **Current source check completed:** `AutocompletePopover.tsx` does consume both `anchor` and `maxHeight`; it uses `calculateFloatingPosition`, portals to `document.body`, listens to window and `visualViewport` resize/scroll, and scrolls the selected row into view. This resolves the source-inspection question only; it is not proof that the menu renders correctly at runtime.
 - Add regression tests for partial `{explo`, `{user`, `{user.`, and bare `{` tokens, including assertions that the menu is visible and populated—not only parser return values.
 - Do not change interpolation/resolver semantics, encryption, Discord permissions, or unrelated editor behavior while fixing this.
 - Do not claim this regression is resolved until Vitest and browser interaction checks pass.
