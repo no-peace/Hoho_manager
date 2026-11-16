@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2, Edit2, ShieldAlert, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, Save, Trash2, Edit2, ShieldAlert, Loader2 } from "lucide-react";
 import { Button, IconButton } from "../ui/Button";
 import { Checkbox, TextField } from "../ui/Field";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
