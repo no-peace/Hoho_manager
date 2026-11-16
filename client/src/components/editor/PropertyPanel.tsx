@@ -68,13 +68,13 @@ export const PropertyPanel = () => {
     <>
       {/* Mobile / Tablet Backdrop (< 1280px) */}
       <div
-        className={UI_THEME_CONFIG.surfaces.inspectorBackdrop}
+        className="fixed inset-0 z-40 bg-[#0B0D12]/55 backdrop-blur-[1px] min-[1200px]:hidden"
         onClick={() => select(null)}
       />
 
-      {/* Docked Right Inspector on Desktop (lg+) | Slide-Up Bottom Sheet on Mobile/Tablet (<lg) */}
+      {/* Floating desktop inspector; mobile bottom sheet overlay */}
       <aside
-        className={UI_THEME_CONFIG.surfaces.inspectorPanel}
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Pill */}
