@@ -1171,3 +1171,13 @@ Run the full test, typecheck, and build commands against the implementation head
 - `FlowBuilder.tsx`: replaced legacy semantic utility names with explicit SaaS Studio hex tokens for the heading, custom ID, server-mode note, and unsaved warning. Updated the mode label to `Server Bot mode`.
 - `StepList.tsx` was inspected and left unchanged: the V12 plan specifies no concrete StepList code change, and its existing nested-flow/editor behavior is outside the identified token defect.
 - Validation: source-level legacy-token and wording guards passed. Tests, typecheck, and production build remain pending.
+
+
+## Gemini V12 implementation — Batch 5 (2026-11-16)
+
+- Corrected the two inverted thread input surface tokens in `ContentTab.tsx`.
+- Recessed the targeted helper callout surfaces in `ComponentForms.tsx` using `#10131A` with `#272D3A` borders and secondary text.
+- Updated add-button/add-select dashed borders in `DiscohookComponentsEditor.tsx` to the studio border and hover palette.
+- Replaced legacy Discord-gray surfaces in `Header.tsx` and `Sidebar.tsx` with the studio surface hierarchy.
+- Updated `client/index.html` theme color to `#0B0D12` and body foreground/background utility classes.
+- Validation: all six files matched expected legacy patterns and source-level checks passed. Full test/typecheck/build verification remains pending.
