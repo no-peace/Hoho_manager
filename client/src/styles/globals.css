@@ -258,7 +258,7 @@ details summary::-webkit-details-marker {
     border: 1px solid var(--border-default);
     background-color: var(--bg-interactive);
     padding: 0.5rem 0.75rem;
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     color: var(--text-primary);
     outline: none;
     transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
@@ -273,7 +273,7 @@ details summary::-webkit-details-marker {
   .field-label {
     margin-bottom: 0.375rem;
     display: block;
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     font-weight: 500;
     color: var(--text-secondary);
   }
