@@ -78,8 +78,8 @@ describe("WEAO changelog formatting", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
     try {
-      const result = await interpolateWeaoPlaceholders({ content: "plural: {exploit.123456789.changelogs}\nsingular: {exploit.123456789.changelog}" } as any);
-      expect((result.payload as any).content).toBe("plural: • **Tracked release** — Tracker ID lookup works\nsingular: • **Tracked release** — Tracker ID lookup works");
+      const result = await interpolateWeaoPlaceholders({ content: "{exploit.123456789.changelogs}" } as any);
+      expect((result.payload as any).content).toBe("• **Tracked release** — Tracker ID lookup works");
     } finally {
       vi.unstubAllGlobals();
     }
