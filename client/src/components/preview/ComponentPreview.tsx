@@ -114,7 +114,6 @@ export interface AutoComponentProps {
 
 /** Dispatch a non-container component to its preview. */
 export const AutoComponent = ({ component }: AutoComponentProps) => {
-  const select = useMessageStore((state) => state.select);
   let preview: ReactNode = null;
 
   switch (component.type) {
@@ -153,21 +152,6 @@ export const AutoComponent = ({ component }: AutoComponentProps) => {
   return (
     <div
       data-preview-component-id={component._id}
-      role="group"
-      tabIndex={0}
-      aria-label="Select message component"
-      onClick={(event) => {
-        if (!component._id) return;
-        event.stopPropagation();
-        select({ kind: "component", id: component._id });
-      }}
-      onKeyDown={(event) => {
-        if ((event.key === "Enter" || event.key === " ") && component._id) {
-          event.preventDefault();
-          event.stopPropagation();
-          select({ kind: "component", id: component._id });
-        }
-      }}
       className="min-w-0 cursor-pointer rounded-sm outline-offset-2 transition-[outline-color] hover:outline hover:outline-1 hover:outline-[#818CF8]/60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#818CF8]/60"
     >
       {preview}
