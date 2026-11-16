@@ -122,7 +122,7 @@ router.get(
         backupTemplateId: e.backupTemplateId ?? matchedTemplate?.id ?? null,
         backupTemplateName: e.backupTemplateName ?? matchedTemplate?.name ?? null,
       };
-    }).filter((exploit) => exploit.hasBackupTemplate);
+    });
 
     res.json({
       exploits: results,
