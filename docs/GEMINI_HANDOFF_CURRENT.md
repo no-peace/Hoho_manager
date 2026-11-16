@@ -7,9 +7,47 @@
 **Inspected application source baseline:** `e9bdc62131b28760e6810454f68922cf3adcab4b`  
 **Current branch:** `main` (read the live branch head before implementation; only handoff documents changed after the inspected application source baseline)  
 **Repository tree:** 301 tracked files; tree response was not truncated  
-**Status:** Planning and source inspection only. No application files have been changed. No Terminal or Playwright tools were used.
+**Status:** Implementation in progress on `main`; source changes and regression tests have been committed. No npm checks or browser validation have been run.
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
+
+## Implementation progress — 2026-11-16
+
+Implementation is being committed directly to `main` as requested. These changes are source edits only; no local validation has been run.
+
+### Completed source changes (not yet runtime-verified)
+
+- **Wide-screen workspace:** Replaced the Studio's mutually exclusive editor/preview rendering with the existing resizable `SplitPane`; aligned the split and inspector docking breakpoint to 1200px; kept both mobile panes mounted so switching tabs does not discard local component state.
+- **Header / preview cleanup:** Removed the Share action and callback plumbing while retaining JSON import/export. Removed the Cozy/Compact preview toggle and compact-only rendering branches.
+- **Public pages:** Made the shared public header more compact at phone widths. Rebuilt the Docs variable reference as mobile cards plus a desktop table; changed copy affordances to Lucide Copy/Check icons and only show success after clipboard writes succeed.
+- **Autocomplete:** Replaced the fixed 430px placement heuristic with available-space calculation that observes resize, scroll, and the mobile visual viewport. Added max-height control and keyboard-selected row scrolling/accessibility semantics. Updated reusable Field/emoji pickers to choose the side with more available space and scroll the selected option into view.
+- **WEAO catalogue:** Removed the route filter that hid live WEAO exploits without a backup template, so the variable autocomplete receives the complete permitted catalogue. Added a manual exploit-name fallback when the catalogue is unavailable and improved dotted/manual-name parsing.
+- **Thread destination:** Added an Existing Thread ID editor field, top-level `threadId` request metadata, server-side validation, and effective-destination routing for guild/channel permissions, interpolation context, send/edit dispatch, tracking, logs, and audit events. Kept forum `thread_name` separate. Updated the `send_message` flow field label.
+- **Regression tests added:** Added route tests for direct thread dispatch, malformed thread IDs, and staff allowlist enforcement against the actual thread destination.
+
+### Main commits
+
+- `5a1bd68` — restore split editor/preview workspace
+- `4c9a909` — align split breakpoint and preserve mobile pane state
+- `6b4d4eb` — remove Share action
+- `1237d06` — remove preview density control
+- `c170081` / `88475a4` / `ab58758` — public header and responsive Docs/copy controls
+- `590e790` / `9341a2b` / `e9a91a4` / `376d174` — autocomplete placement, active-row scrolling, and Field picker placement
+- `9ca8a7c` / `a1d3e0b` — WEAO catalogue and manual-name autocomplete repair
+- `822f61b` / `7b88a06` / `8ebaa6e` / `6b1ae8c` / `482bdce` / `483ada5` / `718e543` / `a1e62da` — thread destination implementation and regression tests
+- `777c588` — align Inspector docking breakpoint
+
+### Still outstanding
+
+1. Finish the Component Inspector floating-menu clipping fix. Viewport-aware side selection is in place, but portal/floating-layer behavior must still be completed and verified against the mobile bottom sheet.
+2. Complete the shared UI token/primitive consistency sweep across Studio, inspector, modals, login, Docs, and Privacy without changing the product's visual identity.
+3. Review and add any remaining regression tests for parser state transitions, popover positioning, Docs clipboard failure, and responsive layouts.
+4. Run the user's approved checks when they are available: `npm test` (Vitest), `npm run typecheck`, and `npm run build`. No checks have been run for these commits; do not report them as passing.
+5. Verify visual behavior at the planned viewport matrix once the user authorizes browser/Playwright use. No Terminal or Playwright has been used.
+
+The current implementation is therefore **in progress, not release-verified**. Continue editing through GitHub only until the user says their PC is available.
+
+---
 
 ## 1. Current repository state
 
