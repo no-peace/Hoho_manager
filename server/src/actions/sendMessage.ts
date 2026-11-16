@@ -11,7 +11,7 @@ export const type: ActionType = "send_message";
 export const description = "Send a message as the bot";
 
 /**
- * Sends a stored message payload to a channel.
+ * Sends a stored message payload to a channel or an existing thread.
  *
  * `config.message` is a raw Discord message object (content/embeds/components).
  * This runs as a follow-up rather than an interaction reply so the click can be
@@ -25,21 +25,21 @@ export const run = async ({
   discord,
   logger,
 }: ActionContext): Promise<ActionResponse | undefined> => {
-  const channelId = configString(config, "channelId") ?? interaction.channel_id;
+  const destinationId = configString(config, "channelId") ?? interaction.channel_id;
   const payload =
     toMessagePayload(config.message) ??
     (configString(config, "content") ? { content: configString(config, "content") } : null);
 
-  if (!channelId) return actionFailed("No target channel configured.");
+  if (!destinationId) return actionFailed("No target channel or thread configured.");
   if (!payload) return actionFailed("No message content configured.");
   if (!botToken) return actionFailed("The bot for this message isn't configured on the server.");
 
   try {
-    await discord.sendChannelMessageWithToken(channelId, payload, botToken);
+    await discord.sendChannelMessageWithToken(destinationId, payload, botToken);
     return undefined;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    logger.warn(`send_message failed in ${channelId}: ${reason}`);
+    logger.warn(`send_message failed for ${destinationId}: ${reason}`);
     return actionFailed("I couldn't send that message  check my permissions there.");
   }
 };
