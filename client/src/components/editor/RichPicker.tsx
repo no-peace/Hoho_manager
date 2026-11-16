@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Hash,
   Shield,
@@ -16,12 +17,14 @@ import { DateTimePickerPopover } from "../ui/DateTimePickerPopover";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
 import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
+import { calculateFloatingPosition } from "../../utils/floatingPosition";
 
 export interface RichPickerProps {
   onInsert: (text: string) => void;
   onClose: () => void;
   guildId?: string | null;
   position?: "top" | "bottom";
+  anchor?: HTMLElement | null;
   initialTab?: TabType;
 }
 
@@ -42,7 +45,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   onInsert,
   onClose,
   guildId: propGuildId,
-  position = "top",
+  anchor,
   initialTab = "mentions",
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
@@ -124,6 +127,32 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [floatingStyle, setFloatingStyle] = useState<React.CSSProperties>({});
+
+  useEffect(() => {
+    if (!anchor) return;
+    const updatePosition = () => {
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const placement = calculateFloatingPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
+        { menuWidth: 384, maxMenuHeight: 420, minMenuHeight: 120, margin: 12, gap: 8 },
+      );
+      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+    };
+  }, [anchor]);
 
   // Load guild data
   useEffect(() => {
