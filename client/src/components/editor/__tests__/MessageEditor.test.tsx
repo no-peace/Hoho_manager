@@ -88,7 +88,7 @@ describe("MessageEditor four-tab workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: /Open workflow/i }));
 
     expect(useMessageStore.getState().selection).toEqual({ kind: "component", id: "component-2" });
-    expect(eventHandler).toHaveBeenCalledOnce();
+    expect(eventHandler).toHaveBeenCalledTimes(1);
     expect((eventHandler.mock.calls[0][0] as CustomEvent).detail).toEqual({ componentId: "component-2" });
     window.removeEventListener("hoho:open-component-flow", eventHandler);
   });
