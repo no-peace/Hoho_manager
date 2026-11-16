@@ -4,11 +4,21 @@
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Implementation head before handoff checkpoint:** `1d4c8934c70a855f6ffaa456d6c2f809ea789314`  
-**Handoff checkpoint commit:** `f2e833fee44041a16102d36900493f612d9d3308`  
+**Latest implementation head before this handoff update:** `23d046fd21ffc63240d013264d2f574cc94ff517`  
+**Previous handoff checkpoint commit:** `c913de7dd4b1af7581be9650d59b8116b6cbac77`  
 **Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
 **Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
-**Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 and full runtime/release verification remain open. Do not describe this branch as tested or release-ready.
+**Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 is in progress; full runtime/release verification remains open. Do not describe this branch as tested or release-ready.
+
+## Follow-up implementation after the previous checkpoint — 2026-11-16
+
+- Confirmed the V10 UI work is present in the source, not just in the plan: the SaaS Studio palette and Inter/JetBrains Mono typography are defined in `globals.css`; the login/public surfaces, studio shell, editor, embed/component builders, inspector, action-flow builder, and Discord preview have corresponding redesigns.
+- Identified and completed a specific missed Batch 8 requirement: `EmbedsTab.tsx` previously returned `null` when no embeds existed. It now always shows an Embeds header with a count, an Add Embed action, and a first-embed empty state with a Create First Embed action. The duplicate Add Embed control was removed from the footer action bar.
+- Added a UI regression test for the first-embed empty-state flow and behavior tests that verify `{` / `{explo` trigger standard variable autocomplete.
+- Added a server interpolation behavior test proving `{now.time}` resolves to Discord `:T` and `{now.short_time}` resolves to `:t`.
+- Preserved the live server resolver contract for `clantag` and the existing broader author fields. V10's proposed nine-field list and selected-server-membership behavior conflict with the live resolver and existing tests; those incompatible changes were not introduced.
+- UI plan nuance: the current sidebar is an `Elements | Templates` drawer with the component palette inline in the editor, rather than the plan's literal `Templates | Tracked | Actions` three-way switcher. This is an architectural deviation to reconcile explicitly, not a claim that the literal three-tab requirement was completed.
+- The UI changes are source-reviewed only. No browser screenshot or responsive visual pass has been performed.
 
 ## Latest implementation checkpoint — 2026-11-16
 
@@ -45,7 +55,7 @@ The work continued from the live `main` head, not from the older audit snapshot.
 - GitHub Actions: no workflow run is associated with the implementation head `1d4c8934` or the handoff checkpoint `f2e833fe`; the latest listed runs target older commits. Combined status checks for the implementation head were empty.
 
 ### Next exact step
-Continue V10 Batch 14 with a focused comments/test audit, then run `npm test`, `npm run build`, and `npm run typecheck` when the owner explicitly makes the local machine available. Fix every failure before recording actual test counts. Do not claim a visual pass without browser verification.
+Continue V10 Batch 14 with a focused comments/test audit and reconcile the sidebar navigation deviation with the intended product structure. Then run `npm test`, `npm run build`, and `npm run typecheck` when the owner explicitly makes the local machine available. Fix every failure before recording actual test counts. Do not claim a visual pass without browser verification.
 
 ---
 
