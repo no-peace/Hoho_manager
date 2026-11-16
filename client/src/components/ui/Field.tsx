@@ -1,7 +1,8 @@
 import { Check, Keyboard, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState, useEffect, useMemo } from "react";
-import type { ChangeEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { createPortal } from "react-dom";
 import { getUserIdPlaceholderSuggestions } from "../../utils/userPlaceholderAutocomplete";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
@@ -157,14 +158,50 @@ interface VariableAutocompleteProps {
   onClose: () => void;
   dropdownPos?: "top" | "bottom";
   selectedIndex?: number;
+  anchor?: HTMLElement | null;
 }
+
+const useFloatingMenuStyle = (anchor: HTMLElement | null | undefined, menuWidth: number): CSSProperties => {
+  const [style, setStyle] = useState<CSSProperties>({});
+  useEffect(() => {
+    if (!anchor) return;
+    const update = () => {
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const above = Math.max(0, rect.top - viewportTop - 8);
+      const below = Math.max(0, viewportTop + viewportHeight - rect.bottom - 8);
+      const side = above > below ? "top" : "bottom";
+      const maxHeight = Math.max(64, Math.min(260, Math.max(above, below) - 8));
+      const width = Math.min(menuWidth, window.innerWidth - 16);
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      const top = side === "top" ? Math.max(viewportTop + 4, rect.top - maxHeight - 6) : rect.bottom + 6;
+      setStyle({ position: "fixed", top, left, width, maxHeight, zIndex: 1000 });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
+    };
+  }, [anchor, menuWidth]);
+  return style;
+};
 
 const VariableAutocompletePopover = ({
   query,
   onSelect,
   dropdownPos = "bottom",
   selectedIndex = 0,
+  anchor,
 }: VariableAutocompleteProps) => {
+  const floatingStyle = useFloatingMenuStyle(anchor, 288);
   const filtered = useMemo(
     () => getAutocompleteVariables(query),
     [query],
@@ -176,17 +213,16 @@ const VariableAutocompletePopover = ({
 
   if (filtered.length === 0) return null;
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
     <div
-      className={`absolute left-0 z-50 w-72 bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1 ${
-        dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"
-      }`}
+      className="fixed bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1"
+      style={floatingStyle}
     >
       <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
         <span>Variables ({filtered.length})</span>
         <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
       </div>
-      <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+      <div className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
         {filtered.map((item, idx) => (
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
@@ -223,6 +259,7 @@ const VariableAutocompletePopover = ({
         ))}
       </div>
     </div>
+    document.body,
   );
 };
 
@@ -232,6 +269,7 @@ interface EmojiAutocompleteProps {
   onClose: () => void;
   dropdownPos?: "top" | "bottom";
   selectedIndex?: number;
+  anchor?: HTMLElement | null;
 }
 
 const EmojiAutocompletePopover = ({
@@ -239,7 +277,9 @@ const EmojiAutocompletePopover = ({
   onSelect,
   dropdownPos = "bottom",
   selectedIndex = 0,
+  anchor,
 }: EmojiAutocompleteProps) => {
+  const floatingStyle = useFloatingMenuStyle(anchor, 256);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const emojisByGuild = useDiscordCacheStore((state) => state.emojis);
   const guildEmojis = (selectedGuildId && emojisByGuild[selectedGuildId]) || [];
@@ -284,17 +324,16 @@ const EmojiAutocompletePopover = ({
 
   if (filtered.length === 0) return null;
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
     <div
-      className={`absolute left-0 z-50 w-64 bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1 ${
-        dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"
-      }`}
+      className="fixed bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1"
+      style={floatingStyle}
     >
       <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
         <span>Emojis ({filtered.length})</span>
         <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
       </div>
-      <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+      <div className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
         {filtered.map((item, idx) => (
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
@@ -318,6 +357,7 @@ const EmojiAutocompletePopover = ({
         ))}
       </div>
     </div>
+    document.body,
   );
 };
 
@@ -500,6 +540,7 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
             selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
+            anchor={inputRef.current}
           />
         )}
         {emojiAcState?.open && (
@@ -509,6 +550,7 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
             selectedIndex={selectedIndex}
             onSelect={handleInsertEmoji}
             onClose={() => setEmojiAcState(null)}
+            anchor={inputRef.current}
           />
         )}
       </div>
@@ -698,6 +740,7 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
             selectedIndex={selectedIndex}
             onSelect={handleInsertVariable}
             onClose={() => setAcState(null)}
+            anchor={textAreaRef.current}
           />
         )}
         {emojiAcState?.open && (
@@ -707,6 +750,7 @@ export const TextArea = ({ label, hint, limit, rows = 4, variables = true, class
             selectedIndex={selectedIndex}
             onSelect={handleInsertEmoji}
             onClose={() => setEmojiAcState(null)}
+            anchor={textAreaRef.current}
           />
         )}
       </div>
