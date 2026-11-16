@@ -61,7 +61,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     ensureActive();
                     setExtendedField("thread_id", event.target.value);
                   }}
-                  className="w-full rounded border border-[#161A23] bg-[#272D3A] px-2.5 py-1.5 text-xs text-[#F1F3F9] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full rounded border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-xs text-[#F1F3F9] focus:border-[#818CF8] focus:outline-none"
                 />
                 <p className="mt-1 text-[10px] leading-relaxed text-[#A1A8B8]">
                   When set, this existing thread takes priority over the selected channel and forum thread name.
@@ -85,7 +85,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     ensureActive();
                     setField("thread_name", e.target.value);
                   }}
-                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#272D3A] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
             </div>
