@@ -165,7 +165,6 @@ export const MessagePreview = () => {
   return (
     <UserPlaceholderPreviewProvider source={displayMessages} showResolved={showResolvedVariables}>
       <div className="flex min-h-0 flex-1 flex-col select-text">
-        {/* Enhanced Preview Toolbar */}
         <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#272D3A] bg-[#10131A] px-4 py-2.5 shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
@@ -176,7 +175,6 @@ export const MessagePreview = () => {
           </span>
         </div>
 
-        {/* Viewport Device & Density Controls */}
         <div className="flex items-center gap-1.5">
           {displayMessages.length > 1 && (
             <div className="flex items-center gap-1 bg-[#0B0D12] p-1 rounded-[8px] border border-[#272D3A] mr-1">
@@ -206,7 +204,6 @@ export const MessagePreview = () => {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 sm:p-4 custom-scrollbar">
-        {/* Responsive Discord Preview Container */}
         <div className="w-full max-w-4xl mx-auto ">
 
           {isAllEmpty ? (
@@ -255,7 +252,6 @@ export const MessagePreview = () => {
                     }`}
                     title={`Message ${index + 1}${isActive ? " (Active)" : " - Click to edit"}`}
                   >
-                    {/* Discord-style avatar */}
                     {!isConsecutive && (
                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865f2] border border-[#111214]/40">
                         {effectiveAvatar ? (
@@ -286,7 +282,6 @@ export const MessagePreview = () => {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      {/* Discord-style message header */}
                       {!isConsecutive && (
                         <p className="flex items-center gap-2">
                           <span className="text-[15px] font-medium text-[#f2f3f5]">
