@@ -120,7 +120,6 @@ export const MessagePreview = () => {
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
-  const [density, setDensity] = useState<"cozy" | "compact">("cozy");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -185,15 +184,6 @@ export const MessagePreview = () => {
             </div>
           )}
 
-          {/* Cozy vs Compact Density */}
-          <button
-            type="button"
-            onClick={() => setDensity((d) => (d === "cozy" ? "compact" : "cozy"))}
-            className="px-2 py-1 rounded-md text-[11px] font-semibold bg-[#18191c] hover:bg-[#35373c] text-[#949ba4] hover:text-[#dbdee1] border border-[#26282d] transition-colors"
-            title={`Switch to ${density === "cozy" ? "Compact" : "Cozy"} density`}
-          >
-            {density === "cozy" ? "Cozy" : "Compact"}
-          </button>
         </div>
       </div>
 
@@ -222,7 +212,6 @@ export const MessagePreview = () => {
 
                 const isConsecutive =
                   index > 0 &&
-                  density === "cozy" &&
                   effectiveUsername === prevUsername &&
                   effectiveAvatar === prevAvatar;
 
@@ -248,8 +237,8 @@ export const MessagePreview = () => {
                     }`}
                     title={`Message ${index + 1}${isActive ? " (Active)" : " - Click to edit"}`}
                   >
-                    {/* Cozy mode avatar */}
-                    {density === "cozy" && !isConsecutive && (
+                    {/* Discord-style avatar */}
+                    {!isConsecutive && (
                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865f2] border border-[#111214]/40">
                         {effectiveAvatar ? (
                           <img
@@ -279,8 +268,8 @@ export const MessagePreview = () => {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      {/* Cozy mode header */}
-                      {density === "cozy" && !isConsecutive && (
+                      {/* Discord-style message header */}
+                      {!isConsecutive && (
                         <p className="flex items-center gap-2">
                           <span className="text-[15px] font-medium text-[#f2f3f5]">
                             {effectiveUsername}
@@ -294,20 +283,6 @@ export const MessagePreview = () => {
                         </p>
                       )}
 
-                      {/* Compact mode inline header */}
-                      {density === "compact" && (
-                        <div className="flex items-baseline gap-1.5 text-xs text-[#949ba4] mb-0.5">
-                          <span className="font-mono text-[10px] text-[#80848e] shrink-0">
-                            {timeString}
-                          </span>
-                          <span className="font-semibold text-white truncate max-w-[150px]">
-                            {effectiveUsername}
-                          </span>
-                          <span className="rounded bg-[#5865f2] px-1 text-[9px] font-bold text-white uppercase">
-                            APP
-                          </span>
-                        </div>
-                      )}
 
                       <div className="mt-0.5 space-y-2">
                         {isMsgV2 ? (
