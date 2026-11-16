@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-[#2b2d31] w-full flex flex-col font-sans select-none z-10 shadow-lg">
+    <div className="h-full bg-[#161A23] w-full flex flex-col font-sans select-none z-10 shadow-lg">
       {/* Header with Title and Close Button */}
       <div className="p-3 border-b border-[#272D3A] bg-[#272D3A] shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
