@@ -34,6 +34,17 @@ describe("calculateFloatingPosition", () => {
     expect(result.left).toBe(24);
   });
 
+  it("never exceeds the actual space available in a very short viewport", () => {
+    const result = calculateFloatingPosition(
+      { top: 20, bottom: 40, left: 8, width: 200 },
+      { width: 320, height: 40 },
+      { menuWidth: 200, maxMenuHeight: 260, margin: 8, gap: 6 },
+    );
+
+    expect(result.maxHeight).toBeLessThanOrEqual(6);
+    expect(result.maxHeight).toBeGreaterThanOrEqual(0);
+  });
+
   it("accounts for the visual viewport offset when the mobile keyboard is open", () => {
     const result = calculateFloatingPosition(
       { top: 500, bottom: 540, left: 16, width: 280 },
