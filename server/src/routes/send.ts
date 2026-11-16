@@ -355,7 +355,7 @@ router.post(
         auditLog({
           event: "MENTION_BLOCKED",
           actorDiscordId: staffCtx.staffId ?? undefined,
-          channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+          channelId: destinationChannelId || undefined,
           reason: `Stripped disallowed mentions in flows: ${strippedFlows.join(", ")}`,
           ip: req.ip,
         });
