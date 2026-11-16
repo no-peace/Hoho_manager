@@ -86,7 +86,7 @@ export const env: Env = Object.freeze({
   isProd,
   isDev: !isProd,
   // Never enable this in production, even if the environment variable is set.
-  devAuthBypass: !isProd && str("DEV_AUTH_BYPASS", "false") === "true",
+  devAuthBypass: nodeEnv === "development" && str("DEV_AUTH_BYPASS", "false") === "true",
   port: int("PORT", 3001),
   clientOrigins: Object.freeze(
     (str("CLIENT_ORIGIN", "http://localhost:5173") ?? "")
