@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectAutocompleteToken, replaceDetectedToken } from "../mentionParser";
+import { detectAutocompleteToken, EXPLOIT_FIELD_OPTIONS, replaceDetectedToken } from "../mentionParser";
 
 describe("variable autocomplete token detection", () => {
   it("opens variable autocomplete immediately after typing an opening brace", () => {
@@ -27,6 +27,10 @@ describe("variable autocomplete token detection", () => {
       start: 0,
       end: 9,
     });
+  });
+
+  it("includes changelogs in the WEAO exploit field suggestions", () => {
+    expect(EXPLOIT_FIELD_OPTIONS.some((option) => option.key === "changelogs")).toBe(true);
   });
 
   it("replaces only the active token and returns the new cursor position", () => {
