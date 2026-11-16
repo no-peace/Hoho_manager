@@ -49,7 +49,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
-          if (id.includes("lucide-react")) return "vendor-icons";
+          // Do not force every Lucide icon used by the lazy Studio route into
+          // one eagerly shared vendor chunk. Let Rollup split icon modules by
+          // their actual route usage so the public login page downloads less JS.
           if (id.includes("emoji-mart") || id.includes("@emoji-mart") || id.includes("chrono-node")) {
             return "vendor-pickers";
           }
