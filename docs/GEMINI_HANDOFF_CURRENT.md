@@ -46,6 +46,8 @@ Implementation is being committed directly to `main` as requested. These changes
 - `1859f98` — manual exploit-name fallback when no catalogue match exists
 - `597267a` / `b8fb5c8` — typed thread request metadata and robust send-route test assertion
 - `8b100b5` / `5c4fbc3` — shared Docs surface/copy tokens
+- `795edaa` — retain mobile Docs cards through 767px widths
+- `62f670d` — document shared UI token migration rules in `DESIGN.md`
 
 ### Still outstanding
 
