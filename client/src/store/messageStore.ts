@@ -24,6 +24,7 @@ import {
 export type Selection =
   | { kind: "embed"; id: string }
   | { kind: "component"; id: string }
+  | { kind: "message"; index: number }
   | null;
 
 export interface SendState {
