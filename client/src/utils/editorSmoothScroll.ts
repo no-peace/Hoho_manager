@@ -9,6 +9,16 @@ export function initializeEditorLenis(wrapper: HTMLElement): () => void {
 
   editorLenis?.destroy();
   editorScrollWrapper = wrapper;
+
+  // Touch devices already provide native momentum scrolling; avoid Lenis wheel work.
+  if (window.matchMedia("(pointer: coarse)").matches) {
+    editorLenis = null;
+    return () => {
+      if (editorScrollWrapper !== wrapper) return;
+      editorScrollWrapper = null;
+    };
+  }
+
   const content = wrapper.querySelector<HTMLElement>("[data-editor-scroll-content]");
 
   editorLenis = new Lenis({
