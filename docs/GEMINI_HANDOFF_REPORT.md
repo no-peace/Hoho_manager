@@ -1,3 +1,11 @@
+> # CURRENT HANDOFF NOTICE — 2026-11-16
+>
+> **Read [docs/GEMINI_HANDOFF_CURRENT.md](./GEMINI_HANDOFF_CURRENT.md) first.** It is the authoritative current repository state and repair plan for the user's latest reported UI, autocomplete, thread, and documentation issues. It supersedes stale branch/PR status and old follow-up sections below. The remainder of this file is retained as historical context; verify all source claims against current `main`.
+>
+> Current baseline: `main` at `e9bdc62131b28760e6810454f68922cf3adcab4b`. No local Terminal or Playwright checks were run during the 2026-11-16 planning review because the owner explicitly disabled those tools.
+>
+> ---
+>
 # Current implementation status — V8 follow-up (2026-11-16)
 
 **Working branch:** `feat/v8-performance-and-variable-fixes`  
