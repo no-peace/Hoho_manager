@@ -2,7 +2,7 @@
 >
 > **Read [docs/GEMINI_HANDOFF_CURRENT.md](./GEMINI_HANDOFF_CURRENT.md) first.** It is the authoritative current repository state and repair plan for the user's latest reported UI, autocomplete, thread, and documentation issues. It supersedes stale branch/PR status and old follow-up sections below. The remainder of this file is retained as historical context; verify all source claims against current `main`.
 >
-> Current baseline: `main` at `70b5ed1b81d8818f0722a7b0cddcb895236833ac` (handoff-document-only updates after the inspected application source baseline `e9bdc62131b28760e6810454f68922cf3adcab4b`). No local Terminal or Playwright checks were run during the 2026-11-16 planning review because the owner explicitly disabled those tools.
+> Current application source baseline reviewed for this repair plan: `e9bdc62131b28760e6810454f68922cf3adcab4b`. Subsequent commits updated only the Gemini handoff documents; always read the live `main` head for the exact current commit. No local Terminal or Playwright checks were run during the 2026-11-16 planning review because the owner explicitly disabled those tools.
 >
 > ---
 >
