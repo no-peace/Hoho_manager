@@ -97,7 +97,7 @@ const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void
         onClick={() => setOpen((current) => !current)}
         className={`p-1 rounded transition-colors ${
           open
-            ? "bg-[#5865f2] text-white shadow-sm"
+            ? "bg-[#818CF8]/15 text-[#F1F3F9] border border-[#818CF8]/25"
             : "text-[#A1A8B8] hover:text-[#F1F3F9] hover:bg-[#252B3A] bg-[#1D2230] border border-[#272D3A]"
         }`}
         title="Quick Mentions, Timestamps & Emojis"
@@ -227,7 +227,7 @@ const VariableAutocompletePopover = ({
         <span>Variables ({filtered.length})</span>
         <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
       </div>
-      <div className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
+      <div role="listbox" aria-label="Variable suggestions" className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
         {filtered.map((item, idx) => (
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
@@ -235,8 +235,8 @@ const VariableAutocompletePopover = ({
             type="button"
             className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
               idx === selectedIndex
-                ? "bg-[#5865f2] text-white"
-                : "text-[#dbdee1] hover:bg-[#2b2d31]"
+                ? "bg-[#818CF8]/15 text-[#F1F3F9] border-l-2 border-[#818CF8]"
+                : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
             }`}
             onMouseDown={(e) => {
               e.preventDefault();
@@ -329,14 +329,14 @@ const EmojiAutocompletePopover = ({
 
   return typeof document === "undefined" ? null : createPortal(
     <div
-      className="fixed bg-[#1e1f22] border border-[#35373c] rounded-md shadow-2xl overflow-hidden py-1"
+      className="fixed z-[10000] bg-[#161A23] border border-[#272D3A] rounded-[10px] shadow-xl overflow-hidden py-1"
       style={floatingStyle}
     >
-      <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#2b2d31] flex items-center justify-between">
+      <div className="px-2.5 py-1.5 text-[10px] font-medium text-[#A1A8B8] border-b border-[#202531] flex items-center justify-between">
         <span>Emojis ({filtered.length})</span>
         <span className="text-[9px] font-normal lowercase">Press Enter or Tab</span>
       </div>
-      <div className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
+      <div role="listbox" aria-label="Emoji suggestions" className="overflow-y-auto custom-scrollbar p-1" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? 220) - 36) }}>
         {filtered.map((item, idx) => (
           <button
             ref={idx === selectedIndex ? selectedOptionRef : undefined}
