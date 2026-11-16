@@ -933,6 +933,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               onSelectIndex={setSelectedIndex}
               onApply={applyReplacement}
               dropdownPosition={dropdownPosition}
+              maxHeight={dropdownMaxHeight}
+              anchor={textareaRef.current}
             />
           ) : acType === "emoji" ? (
             <EmojiMenu
