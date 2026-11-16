@@ -61,16 +61,16 @@ export const PropertyPanel = () => {
       >
         {/* Mobile Drag Pill */}
         <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
-          <div className="h-1 w-10 rounded-full bg-[#4e5058]" />
+          <div className="h-1 w-10 rounded-full bg-[#343C4E]" />
         </div>
 
         {/* Inspector Header */}
         <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4] block">
+            <span className="text-[11px] font-medium text-[#A1A8B8] block">
               Component Inspector
             </span>
-            <h2 className="truncate text-base font-bold text-white">
+            <h2 className="truncate text-[15px] font-semibold text-[#F1F3F9]">
               {componentLabel(component)}
             </h2>
           </div>
@@ -97,14 +97,14 @@ export const PropertyPanel = () => {
 
         {/* Properties / Action Flow Tabs */}
         {hasFlow && (
-          <div className="mx-3.5 mt-3 flex gap-1 rounded-lg border border-[#111214] bg-[#1e1f22] p-1 shrink-0">
+          <div className="mx-3.5 mt-3 flex gap-1 rounded-[8px] border border-[#272D3A] bg-[#1D2230] p-1 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab("properties")}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                 activeTab === "properties"
-                  ? "bg-[#5865f2] text-white shadow-sm"
-                  : "text-[#949ba4] hover:bg-[#2b2d31] hover:text-[#dbdee1]"
+                  ? "bg-[#818CF8]/15 text-[#F1F3F9] border border-[#818CF8]/25"
+                  : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]"
               }`}
             >
               <Sliders size={12} />
@@ -115,8 +115,8 @@ export const PropertyPanel = () => {
               onClick={() => setActiveTab("flow")}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                 activeTab === "flow"
-                  ? "bg-[#5865f2] text-white shadow-sm"
-                  : "text-[#949ba4] hover:bg-[#2b2d31] hover:text-[#dbdee1]"
+                  ? "bg-[#818CF8] text-white shadow-sm"
+                  : "text-[#A1A8B8] hover:bg-[#161A23] hover:text-[#F1F3F9]"
               }`}
             >
               <Workflow size={12} />

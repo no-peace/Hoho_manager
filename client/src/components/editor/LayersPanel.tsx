@@ -29,7 +29,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
         onClick={() => component._id && select({ kind: "component", id: component._id })}
         className={[
           "group flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-xs transition-colors",
-          active ? "bg-blurple/20 text-ink-strong" : "text-ink-muted hover:bg-hover hover:text-ink",
+          active ? "bg-[#818CF8]/15 text-[#F1F3F9]" : "text-[#A1A8B8] hover:bg-[#252B3A] hover:text-[#F1F3F9]",
         ].join(" ")}
         style={{ marginLeft: depth * 12 }}
       >
@@ -93,7 +93,7 @@ export const LayersPanel = () => {
 
   if (components.length === 0) {
     return (
-      <p className="rounded border border-dashed border-line px-2.5 py-3 text-[11px] text-ink-faint">
+      <p className="rounded border border-dashed border-[#272D3A] px-2.5 py-3 text-[11px] text-[#6F788A]">
         No components yet. Add one from the Component Palette in the editor.
       </p>
     );

@@ -58,8 +58,8 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   return (
     <div
-      className={`rounded-xl overflow-hidden bg-[#2b2d31] border transition-[border-color,box-shadow] duration-150 ${
-        active ? "border-[#5865f2] shadow-[0_0_0_1px_#5865f2]" : "border-[#1e1f22]"
+      className={`rounded-[10px] overflow-hidden bg-[#161A23] border transition-[border-color,box-shadow] duration-150 ${
+        active ? "border-[#818CF8] shadow-[0_0_0_1px_#818CF8]" : "border-[#1D2230]"
       }`}
       style={{
         borderLeftWidth: "4px",
@@ -68,7 +68,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       onClick={() => id && select({ kind: "embed", id })}
     >
       {/* ── Embed Card Header (Title & Global Actions) ── */}
-      <div className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] border-b border-[#1e1f22] select-none ${isOpen ? "border-b border-[#1e1f22]" : ""}`}>
+      <div className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#1D2230] select-none ${isOpen ? "border-b border-[#1D2230]" : ""}`}>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -76,20 +76,20 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] transition-colors"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
           >
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </button>
-          <span className="text-xs font-bold text-white uppercase tracking-wider truncate">
+          <span className="text-xs font-semibold text-[#F1F3F9] truncate">
             {embed.title ? `Embed: ${embed.title}` : `Embed #${index + 1}`}
           </span>
           <span
-            className={`text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded bg-[#18191c] border border-[#26282d] ${
+            className={`text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded bg-[#10131A] border border-[#272D3A] ${
               used > Limits.embed.total
-                ? "bg-[#da373c]/20 text-[#f28b8b]"
+                ? "bg-[#F87171]/20 text-[#F87171]"
                 : used > Limits.embed.total * 0.9
                   ? "bg-[#f0b232]/20 text-[#f0b232]"
-                  : "bg-[#1e1f22] text-[#949ba4]"
+                  : "bg-[#1D2230] text-[#A1A8B8]"
             }`}
           >
             {used}/{Limits.embed.total}
@@ -105,7 +105,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
               e.stopPropagation();
               if (id) moveEmbed(id, -1);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c] disabled:opacity-30 disabled:hover:bg-transparent"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ChevronUp size={14} />
           </button>
@@ -116,7 +116,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
               e.stopPropagation();
               if (id) moveEmbed(id, 1);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c]"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
           >
             <ChevronDown size={14} />
           </button>
@@ -127,7 +127,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
               e.stopPropagation();
               if (id) duplicateEmbed(id);
             }}
-            className="p-1 rounded text-[#949ba4] hover:text-white hover:bg-[#35373c]"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
           >
             <Copy size={13} />
           </button>
@@ -138,7 +138,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
               e.stopPropagation();
               if (id) removeEmbed(id);
             }}
-            className="p-1 rounded text-[#f28b8b] hover:text-white hover:bg-[#da373c]/30"
+            className="p-1 rounded text-[#F87171] hover:text-white hover:bg-[#F87171]/30"
           >
             <Trash2 size={13} />
           </button>
@@ -148,29 +148,29 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       {isOpen && (
         <div className="p-3 space-y-3 font-sans text-xs">
           {/* ── 1. Accent Color Strip ── */}
-          <div className="flex items-center justify-between p-2 rounded bg-[#1e1f22] border border-[#111214]">
+          <div className="flex items-center justify-between p-2 rounded bg-[#1D2230] border border-[#10131A]">
             <div className="flex items-center gap-2">
               <div
-                className="w-5 h-5 rounded cursor-pointer border border-[#383a40]"
+                className="w-5 h-5 rounded cursor-pointer border border-[#343C4E]"
                 style={{ backgroundColor: accentColorHex }}
                 onClick={() => setColorPickerOpen(!colorPickerOpen)}
               />
-              <span className="text-[11px] font-semibold text-[#dbdee1]">Accent Color:</span>
-              <span className="text-[11px] font-mono text-[#949ba4]">{accentColorHex}</span>
+              <span className="text-[11px] font-semibold text-[#F1F3F9]">Accent Color:</span>
+              <span className="text-[11px] font-mono text-[#A1A8B8]">{accentColorHex}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => updateEmbed(id, { color: null })}
-                className="text-[10px] text-[#949ba4] hover:text-white hover:underline"
+                className="text-[10px] text-[#A1A8B8] hover:text-white hover:underline"
               >
                 Clear
               </button>
               <button
                 type="button"
                 onClick={() => setColorPickerOpen(!colorPickerOpen)}
-                className="px-2 py-0.5 rounded bg-[#35373c] hover:bg-[#4e5058] text-[10px] font-medium text-white transition-colors"
+                className="px-2 py-0.5 rounded bg-[#252B3A] hover:bg-[#343C4E] text-[10px] font-medium text-white transition-colors"
               >
                 {colorPickerOpen ? "Close Picker" : "Change Color"}
               </button>
@@ -178,7 +178,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {colorPickerOpen && (
-            <div className="p-3 rounded-lg bg-[#1e1f22] border border-[#111214] animate-in fade-in duration-100">
+            <div className="p-3 rounded-lg bg-[#1D2230] border border-[#10131A] animate-in fade-in duration-100">
               <ColorPicker
                 value={embed.color ?? null}
                 onChange={(color) => updateEmbed(id, { color })}
@@ -187,30 +187,30 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           )}
 
           {/* ── 2. Author Sub-Section ── */}
-          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
+          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setAuthorOpen(!authorOpen)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] text-left text-xs font-semibold text-[#F1F3F9] hover:bg-[#161A23] transition-colors"
             >
-              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#A1A8B8]">
                 {authorOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Author
               </span>
               {embed.author?.name && (
-                <span className="text-[10px] text-[#949ba4] truncate max-w-[150px]">
+                <span className="text-[10px] text-[#A1A8B8] truncate max-w-[150px]">
                   {embed.author.name}
                 </span>
               )}
             </button>
 
             {authorOpen && (
-              <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
+              <div className="p-3 pt-1 border-t border-[#1D2230] space-y-2.5">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
+                    <label className="text-[10px] font-medium text-[#A1A8B8]">
                       Author Name
                     </label>
-                    <span className="text-[10px] text-[#949ba4] font-mono">
+                    <span className="text-[10px] text-[#A1A8B8] font-mono">
                       {(embed.author?.name?.length || 0)}/256
                     </span>
                   </div>
@@ -228,7 +228,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                         },
                       })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
 
@@ -236,13 +236,13 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                   <button
                     type="button"
                     onClick={() => setShowAuthorUrl(true)}
-                    className="text-[11px] text-[#5865f2] hover:underline flex items-center gap-1"
+                    className="text-[11px] text-[#818CF8] hover:underline flex items-center gap-1"
                   >
                     <Plus size={11} /> Add Author URL
                   </button>
                 ) : (
                   <div>
-                    <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-medium text-[#A1A8B8] tracking-wider mb-1">
                       Author URL
                     </label>
                     <input
@@ -258,17 +258,17 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                           },
                         })
                       }
-                      className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                      className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                     />
-                    <p className="mt-1 text-[10px] leading-relaxed text-[#949ba4]">
+                    <p className="mt-1 text-[10px] leading-relaxed text-[#A1A8B8]">
                       For automatic author details, use a Discord profile URL (https://discord.com/users/USER_ID). Leave Author Name and Author Icon URL empty to let the server fill them when sending.
-                      The editor preview resolves user-ID placeholders such as {"{user.ID.name}"} and {"{user.ID.avatarurl}"} using the server bot. Use avatarurl when you need the profile picture URL..
+                      The editor preview resolves user-ID placeholders such as {"{user.ID.name}"} and {"{user.ID.avatar}"} using the server bot. Use avatar when you need the profile picture URL..
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                     Author Icon URL
                   </label>
                   <input
@@ -284,7 +284,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                         },
                       })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
               </div>
@@ -292,30 +292,30 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 3. Body Sub-Section (Title & Description) ── */}
-          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
+          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setBodyOpen(!bodyOpen)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] text-left text-xs font-semibold text-[#F1F3F9] hover:bg-[#161A23] transition-colors"
             >
-              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#A1A8B8]">
                 {bodyOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Body
               </span>
               {embed.title && (
-                <span className="text-[10px] text-[#949ba4] truncate max-w-[150px]">
+                <span className="text-[10px] text-[#A1A8B8] truncate max-w-[150px]">
                   {embed.title}
                 </span>
               )}
             </button>
 
             {bodyOpen && (
-              <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
+              <div className="p-3 pt-1 border-t border-[#1D2230] space-y-2.5">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
+                    <label className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider">
                       Title
                     </label>
-                    <span className="text-[10px] text-[#949ba4] font-mono">
+                    <span className="text-[10px] text-[#A1A8B8] font-mono">
                       {(embed.title?.length || 0)}/256
                     </span>
                   </div>
@@ -325,7 +325,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     value={embed.title || ""}
                     placeholder="Embed Title"
                     onChange={(e) => updateEmbed(id, { title: e.target.value })}
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
 
@@ -333,13 +333,13 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                   <button
                     type="button"
                     onClick={() => setShowTitleUrl(true)}
-                    className="text-[11px] text-[#5865f2] hover:underline flex items-center gap-1"
+                    className="text-[11px] text-[#818CF8] hover:underline flex items-center gap-1"
                   >
                     <Plus size={11} /> Add Title URL
                   </button>
                 ) : (
                   <div>
-                    <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                       Title URL
                     </label>
                     <input
@@ -347,7 +347,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                       value={embed.url || ""}
                       placeholder="https://..."
                       onChange={(e) => updateEmbed(id, { url: e.target.value || undefined })}
-                      className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                      className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                     />
                   </div>
                 )}
@@ -367,12 +367,12 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 4. Fields Sub-Section (Draggable 25 Fields Grid) ── */}
-          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e1f22]">
+          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[#1D2230]">
               <button
                 type="button"
                 onClick={() => setFieldsOpen(!fieldsOpen)}
-                className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] font-semibold text-[#949ba4] hover:text-white"
+                className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] font-semibold text-[#A1A8B8] hover:text-white"
               >
                 {fieldsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Fields (
                 {(embed.fields || []).length}/25)
@@ -382,7 +382,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                 type="button"
                 disabled={(embed.fields || []).length >= 25}
                 onClick={() => addEmbedField(id)}
-                className="px-2 py-0.5 rounded bg-[#35373c] hover:bg-[#4e5058] text-[10px] font-semibold text-white flex items-center gap-1 disabled:opacity-40"
+                className="px-2 py-0.5 rounded bg-[#252B3A] hover:bg-[#343C4E] text-[10px] font-semibold text-white flex items-center gap-1 disabled:opacity-40"
               >
                 <Plus size={11} /> Add Field
               </button>
@@ -391,7 +391,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             {fieldsOpen && (
               <div className="p-3 space-y-3">
                 {(embed.fields || []).length === 0 ? (
-                  <p className="text-[11px] text-[#949ba4] text-center py-2">
+                  <p className="text-[11px] text-[#A1A8B8] text-center py-2">
                     No fields added yet. Embeds can hold up to 25 fields.
                   </p>
                 ) : (
@@ -400,21 +400,21 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     return (
                       <div
                         key={fieldId || fieldIdx}
-                        className="p-2.5 rounded-lg bg-[#1e1f22] border border-[#111214] space-y-2 relative group"
+                        className="p-2.5 rounded-lg bg-[#1D2230] border border-[#10131A] space-y-2 relative group"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#949ba4]">
+                          <span className="text-[10px] font-medium text-[#A1A8B8]">
                             Field #{fieldIdx + 1}
                           </span>
                           <div className="flex items-center gap-2">
-                            <label className="flex items-center gap-1.5 text-[11px] text-[#dbdee1] cursor-pointer">
+                            <label className="flex items-center gap-1.5 text-[11px] text-[#F1F3F9] cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={Boolean(field.inline)}
                                 onChange={(e) =>
                                   updateEmbedField(id, fieldId, { inline: e.target.checked })
                                 }
-                                className="rounded bg-[#2b2d31] border-[#383a40] text-[#5865f2] focus:ring-0"
+                                className="rounded bg-[#161A23] border-[#343C4E] text-[#818CF8] focus:ring-0"
                               />
                               Inline
                             </label>
@@ -422,7 +422,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                               <button
                                 type="button"
                                 onClick={() => moveEmbedField(id, fieldId, -1)}
-                                className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                                className="text-[#A1A8B8] hover:text-white p-0.5 rounded hover:bg-[#252B3A] transition-colors"
                                 title="Move Field Up"
                               >
                                 <ChevronUp size={12} />
@@ -432,7 +432,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                               <button
                                 type="button"
                                 onClick={() => moveEmbedField(id, fieldId, 1)}
-                                className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                                className="text-[#A1A8B8] hover:text-white p-0.5 rounded hover:bg-[#252B3A] transition-colors"
                                 title="Move Field Down"
                               >
                                 <ChevronDown size={12} />
@@ -441,7 +441,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                             <button
                               type="button"
                               onClick={() => duplicateEmbedField(id, fieldId)}
-                              className="text-[#949ba4] hover:text-white p-0.5 rounded hover:bg-[#35373c] transition-colors"
+                              className="text-[#A1A8B8] hover:text-white p-0.5 rounded hover:bg-[#252B3A] transition-colors"
                               title="Duplicate Field"
                             >
                               <Copy size={12} />
@@ -449,7 +449,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                             <button
                               type="button"
                               onClick={() => removeEmbedField(id, fieldId)}
-                              className="text-[#949ba4] hover:text-[#f28b8b] p-0.5 rounded hover:bg-[#da373c]/20 transition-colors"
+                              className="text-[#A1A8B8] hover:text-[#F87171] p-0.5 rounded hover:bg-[#F87171]/20 transition-colors"
                               title="Delete Field"
                             >
                               <Trash2 size={12} />
@@ -466,7 +466,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                             onChange={(e) =>
                               updateEmbedField(id, fieldId, { name: e.target.value })
                             }
-                            className="w-full bg-[#2b2d31] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#1e1f22] focus:border-[#5865f2] outline-none"
+                            className="w-full bg-[#161A23] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#1D2230] focus:border-[#818CF8] outline-none"
                           />
                         </div>
 
@@ -488,26 +488,26 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 5. Images Sub-Section (Image & Thumbnail URLs) ── */}
-          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
+          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setImagesOpen(!imagesOpen)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] text-left text-xs font-semibold text-[#F1F3F9] hover:bg-[#161A23] transition-colors"
             >
-              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#A1A8B8]">
                 {imagesOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Images
               </span>
               {(embed.image?.url || embed.thumbnail?.url) && (
-                <span className="text-[10px] text-[#949ba4] truncate max-w-[150px]">
+                <span className="text-[10px] text-[#A1A8B8] truncate max-w-[150px]">
                   Configured
                 </span>
               )}
             </button>
 
             {imagesOpen && (
-              <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
+              <div className="p-3 pt-1 border-t border-[#1D2230] space-y-2.5">
                 <div>
-                  <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                     Image URL (Large Display)
                   </label>
                   <input
@@ -517,12 +517,12 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     onChange={(e) =>
                       updateEmbed(id, { image: e.target.value ? { url: e.target.value } : undefined })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                     Thumbnail URL (Top-Right Icon)
                   </label>
                   <input
@@ -534,7 +534,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                         thumbnail: e.target.value ? { url: e.target.value } : undefined,
                       })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
               </div>
@@ -542,30 +542,30 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           </div>
 
           {/* ── 6. Footer Sub-Section (Text, Icon & Timestamp) ── */}
-          <div className="rounded-lg border border-[#1e1f22] bg-[#232428]/70 overflow-hidden">
+          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setFooterOpen(!footerOpen)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#232428] text-left text-xs font-semibold text-[#dbdee1] hover:bg-[#2b2d31] transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] text-left text-xs font-semibold text-[#F1F3F9] hover:bg-[#161A23] transition-colors"
             >
-              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#949ba4]">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-[#A1A8B8]">
                 {footerOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Footer & Timestamp
               </span>
               {embed.footer?.text && (
-                <span className="text-[10px] text-[#949ba4] truncate max-w-[150px]">
+                <span className="text-[10px] text-[#A1A8B8] truncate max-w-[150px]">
                   {embed.footer.text}
                 </span>
               )}
             </button>
 
             {footerOpen && (
-              <div className="p-3 pt-1 border-t border-[#1e1f22] space-y-2.5">
+              <div className="p-3 pt-1 border-t border-[#1D2230] space-y-2.5">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-bold text-[#949ba4] uppercase tracking-wider">
+                    <label className="text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider">
                       Footer Text
                     </label>
-                    <span className="text-[10px] text-[#949ba4] font-mono">
+                    <span className="text-[10px] text-[#A1A8B8] font-mono">
                       {(embed.footer?.text?.length || 0)}/2048
                     </span>
                   </div>
@@ -579,12 +579,12 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                         footer: { text: e.target.value, icon_url: embed.footer?.icon_url },
                       })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-[#949ba4] uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider mb-1">
                     Footer Icon URL
                   </label>
                   <input
@@ -599,11 +599,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                         },
                       })
                     }
-                    className="w-full bg-[#1e1f22] text-xs text-[#dbdee1] px-2.5 py-1.5 rounded border border-[#232428] focus:border-[#5865f2] outline-none"
+                    className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#10131A] focus:border-[#818CF8] outline-none"
                   />
                 </div>
 
-                <div className="pt-1 border-t border-[#1e1f22] space-y-2">
+                <div className="pt-1 border-t border-[#1D2230] space-y-2">
                   <div className="flex items-center justify-between">
                     <Checkbox
                       label="Include Timestamp"
@@ -623,7 +623,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                       <button
                         type="button"
                         onClick={() => updateEmbed(id, { timestamp: getServerNow().toISOString() })}
-                        className="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[11px] text-[#dbdee1] border border-[#111214] shrink-0"
+                        className="px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[11px] text-[#F1F3F9] border border-[#10131A] shrink-0"
                         title="Reset to Server Time"
                       >
                         Now

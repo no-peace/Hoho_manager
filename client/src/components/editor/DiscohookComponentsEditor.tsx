@@ -111,20 +111,20 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
   }
 
   const getDiscordButtonClasses = (style?: number, isSelected?: boolean) => {
-    const ring = isSelected ? "ring-2 ring-white shadow-lg" : "hover:brightness-110";
+    const ring = isSelected ? "ring-2 ring-[#818CF8] shadow-sm" : "hover:brightness-105";
     switch (style) {
       case ButtonStyle.Primary:
-        return `bg-[#5865f2] text-white border-[#4752c4] ${ring}`;
+        return `bg-[#818CF8] text-[#0B0D12] border-[#6366F1] ${ring}`;
       case ButtonStyle.Secondary:
-        return `bg-[#4e5058] text-white border-[#3f4147] ${ring}`;
+        return `bg-[#343C4E] text-[#F1F3F9] border-[#343C4E] ${ring}`;
       case ButtonStyle.Success:
-        return `bg-[#248046] text-white border-[#1a6334] ${ring}`;
+        return `bg-[#818CF8] text-white border-[#6366F1] ${ring}`;
       case ButtonStyle.Danger:
-        return `bg-[#da373c] text-white border-[#a1282c] ${ring}`;
+        return `bg-[#F87171] text-[#0B0D12] border-[#F87171] ${ring}`;
       case ButtonStyle.Link:
-        return `bg-[#4e5058] text-[#dbdee1] border-[#3f4147] ${ring}`;
+        return `bg-[#1D2230] text-[#F1F3F9] border-[#272D3A] ${ring}`;
       default:
-        return `bg-[#5865f2] text-white border-[#4752c4] ${ring}`;
+        return `bg-[#818CF8] text-white border-[#6366F1] ${ring}`;
     }
   };
 
@@ -158,16 +158,16 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         return (
           <div
             key={rowId}
-            className="rounded-lg bg-[#232428] border border-[#26282d] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#35373c]"
+            className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
           >
             {/* ── Action Row Header ── */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-[#232428] border-b border-[#1e1f22] rounded-t-lg select-none">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-[#10131A] border-b border-[#1D2230] rounded-t-lg select-none">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#dbdee1] uppercase tracking-wider">
-                  <Layers size={12} className="text-[#5865f2]" />
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#F1F3F9]">
+                  <Layers size={12} className="text-[#818CF8]" />
                   Action Row #{siblingIndex + 1}
                 </span>
-                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-[#18191c] text-[#b5bac1] border border-[#26282d]">
+                <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-md bg-[#10131A] text-[#A1A8B8] border border-[#272D3A]">
                   {capacityLabel}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   title="Move Row Up"
                   disabled={siblingIndex === 0}
                   onClick={() => moveComponentById(rowId, -1, containerId)}
-                  className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 rounded hover:bg-[#35373c]"
+                  className="p-1 text-[#A1A8B8] hover:text-white disabled:opacity-30 rounded hover:bg-[#252B3A]"
                 >
                   <ChevronUp size={13} />
                 </button>
@@ -187,7 +187,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   title="Move Row Down"
                   disabled={siblingIndex === siblingCount - 1}
                   onClick={() => moveComponentById(rowId, 1, containerId)}
-                  className="p-1 text-[#949ba4] hover:text-white disabled:opacity-30 rounded hover:bg-[#35373c]"
+                  className="p-1 text-[#A1A8B8] hover:text-white disabled:opacity-30 rounded hover:bg-[#252B3A]"
                 >
                   <ChevronDown size={13} />
                 </button>
@@ -195,7 +195,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   type="button"
                   title="Duplicate Row"
                   onClick={() => duplicateComponentById(rowId)}
-                  className="p-1 text-[#949ba4] hover:text-white rounded hover:bg-[#35373c]"
+                  className="p-1 text-[#A1A8B8] hover:text-white rounded hover:bg-[#252B3A]"
                 >
                   <Copy size={12} />
                 </button>
@@ -203,7 +203,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   type="button"
                   title="Delete Row"
                   onClick={() => removeComponentById(rowId)}
-                  className="p-1 text-[#f28b8b] hover:text-white hover:bg-[#da373c] rounded ml-0.5 transition-colors"
+                  className="p-1 text-[#F87171] hover:text-white hover:bg-[#F87171] rounded ml-0.5 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -256,13 +256,13 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           {/* Compact floating controls on hover */}
                           <div
                             onClick={(e) => e.stopPropagation()}
-                            className={`${isSelected ? "flex" : "hidden group-hover:flex"} items-center gap-0.5 absolute -top-7 right-0 bg-[#111214] border border-[#2b2d31] rounded px-1 py-0.5 shadow-lg z-20`}
+                            className={`${isSelected ? "flex" : "hidden group-hover:flex"} items-center gap-0.5 absolute -top-7 right-0 bg-[#10131A] border border-[#161A23] rounded px-1 py-0.5 shadow-lg z-20`}
                           >
                             <button
                               type="button"
                               disabled={childIdx === 0}
                               onClick={() => moveComponentById(childId, -1, rowId)}
-                              className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-30"
+                              className="p-0.5 text-[#A1A8B8] hover:text-white disabled:opacity-30"
                               title="Move Left"
                             >
                               <ChevronLeft size={11} />
@@ -271,7 +271,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               type="button"
                               disabled={childIdx === children.length - 1}
                               onClick={() => moveComponentById(childId, 1, rowId)}
-                              className="p-0.5 text-[#949ba4] hover:text-white disabled:opacity-30"
+                              className="p-0.5 text-[#A1A8B8] hover:text-white disabled:opacity-30"
                               title="Move Right"
                             >
                               <ChevronRight size={11} />
@@ -279,7 +279,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             <button
                               type="button"
                               onClick={() => duplicateComponentById(childId)}
-                              className="p-0.5 text-[#949ba4] hover:text-white"
+                              className="p-0.5 text-[#A1A8B8] hover:text-white"
                               title="Duplicate"
                             >
                               <Copy size={10} />
@@ -287,7 +287,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             <button
                               type="button"
                               onClick={() => removeComponentById(childId)}
-                              className="p-0.5 text-[#f28b8b] hover:text-white"
+                              className="p-0.5 text-[#F87171] hover:text-white"
                               title="Remove"
                             >
                               <Trash2 size={10} />
@@ -305,21 +305,21 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           e.stopPropagation();
                           select({ kind: "component", id: childId });
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-[#1e1f22] border cursor-pointer transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-[#1D2230] border cursor-pointer transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out ${
                           isSelected
-                            ? "border-[#5865f2] ring-1 ring-[#5865f2]"
-                            : "border-[#111214] hover:border-[#3f4147]"
+                            ? "border-[#818CF8] ring-1 ring-[#818CF8]"
+                            : "border-[#10131A] hover:border-[#3f4147]"
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {selectMeta?.icon && (
-                            <selectMeta.icon size={14} className="text-[#5865f2] shrink-0" />
+                            <selectMeta.icon size={14} className="text-[#818CF8] shrink-0" />
                           )}
                           <div className="min-w-0">
-                            <div className="text-xs font-medium text-[#dbdee1] truncate">
+                            <div className="text-xs font-medium text-[#F1F3F9] truncate">
                               {child.placeholder || componentLabel(child)}
                             </div>
-                            <div className="text-[10px] text-[#949ba4] flex items-center gap-2">
+                            <div className="text-[10px] text-[#A1A8B8] flex items-center gap-2">
                               <span>{selectMeta?.label || "Select Menu"}</span>
                               {child.type === ComponentType.StringSelect && (
                                 <span>• {(child.options || []).length} option(s)</span>
@@ -338,14 +338,14 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           <button
                             type="button"
                             onClick={() => select({ kind: "component", id: childId })}
-                            className="px-2 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[11px] text-[#dbdee1]"
+                            className="px-2 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[11px] text-[#F1F3F9]"
                           >
                             Edit Options & Flow
                           </button>
                           <button
                             type="button"
                             onClick={() => removeComponentById(childId)}
-                            className="p-1 text-[#f28b8b] hover:text-white hover:bg-[#da373c] rounded"
+                            className="p-1 text-[#F87171] hover:text-white hover:bg-[#F87171] rounded"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -366,7 +366,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                         e.stopPropagation();
                         addActionRowChild(rowId, ComponentType.Button);
                       }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
                     >
                       <Plus size={12} /> Add Button
                     </button>
@@ -382,13 +382,13 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             selectMenuDropdownRow === rowId ? null : rowId,
                           );
                         }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[11px] font-semibold border border-[#313338] transition-colors"
                       >
                         <ListFilter size={12} /> Add Select Menu ▾
                       </button>
 
                       {selectMenuDropdownRow === rowId && (
-                        <div className="absolute left-0 bottom-full mb-1 w-48 rounded-md bg-[#111214] border border-[#2b2d31] shadow-xl py-1 z-40 text-xs">
+                        <div className="absolute left-0 bottom-full mb-1 w-48 rounded-md bg-[#10131A] border border-[#161A23] shadow-xl py-1 z-[10000] text-xs">
                           {Object.entries(SELECT_TYPE_MAP).map(([typeNum, meta]) => {
                             const IconComponent = meta.icon;
                             return (
@@ -400,7 +400,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                                   addActionRowChild(rowId, Number(typeNum));
                                   setSelectMenuDropdownRow(null);
                                 }}
-                                className="w-full text-left px-3 py-1.5 text-[#dbdee1] hover:bg-[#5865f2] hover:text-white flex items-center gap-2"
+                                className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2"
                               >
                                 <IconComponent size={13} />
                                 {meta.label}
