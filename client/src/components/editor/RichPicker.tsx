@@ -310,13 +310,11 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
     },
   ];
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
     <div
       ref={containerRef}
-      className={`absolute bottom-9 right-0 z-50 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden flex flex-col text-[#dbdee1] animate-in fade-in zoom-in-95 duration-150 ${
-        position === "bottom" ? "top-9" : "bottom-9"
-      }`}
-      style={{ maxHeight: "420px" }}
+      className="fixed rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden flex flex-col text-[#dbdee1] animate-in fade-in zoom-in-95 duration-150"
+      style={floatingStyle}
     >
       {/* Top Header & Tabs */}
       <div className="flex items-center justify-between px-3 py-2 bg-[#1e1f22] border-b border-[#313338]">
@@ -951,7 +949,8 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 };
 
