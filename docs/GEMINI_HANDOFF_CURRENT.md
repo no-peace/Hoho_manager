@@ -26,29 +26,17 @@ Implementation is being committed directly to `main` as requested. These changes
 - **UI tokens:** Centralized the public header/nav, Studio header, Inspector surfaces, and Docs variable-reference/copy controls in `UI_THEME_CONFIG`; migrated those shared surfaces to the tokens. The broader component/page consistency sweep remains in progress.
 - **Regression tests added:** Added route tests for direct thread dispatch, malformed thread IDs, and staff allowlist enforcement against the actual thread destination; payload tests proving existing thread IDs do not create forum threads; and parser tests for dotted exploit names/fields. Added floating-position utility tests for above/below selection, viewport clamping, and visual viewport offsets.
 
-### Main commits
+### Main commit sequence
 
-- `5a1bd68` — restore split editor/preview workspace
-- `4c9a909` — align split breakpoint and preserve mobile pane state
-- `6b4d4eb` — remove Share action
-- `1237d06` — remove preview density control
-- `c170081` / `88475a4` / `ab58758` — public header and responsive Docs/copy controls
-- `590e790` / `9341a2b` / `e9a91a4` / `376d174` — autocomplete placement, active-row scrolling, and Field picker placement
-- `9ca8a7c` / `a1d3e0b` — WEAO catalogue and manual-name autocomplete repair
-- `822f61b` / `7b88a06` / `8ebaa6e` / `6b1ae8c` / `482bdce` / `483ada5` / `718e543` / `a1e62da` — thread destination implementation and regression tests
-- `777c588` — align Inspector docking breakpoint
-- `feddd67` / `50fd631` / `8defba7` — portal Inspector variable/emoji menus and tune floating-layer stacking
-- `db3cb6e` / `b523088` / `8615b37` / `a180024` / `e0f2f6d` / `c4817bd` / `bcff999` / `ffd72b5` / `8cf1a4a` / `9c31403` / `b2d66d0` / `501dda6` / `f6226b0` / `d974a77` / `c11840f` — portal RichPicker, inline emoji, and exploit autocomplete menus; anchor dismissal and selected-row behavior
-- `501ce3a` / `4d3ee94` / `d224ab7` / `1819429` — separate forum thread creation from existing thread destination and improve editor status
-- `b6d0bd2` / `a16a735` / `c89f4da` / `291ab6e` — centralize and apply shared header/Inspector UI tokens
-- `8305519` / `3a871d7` — update this implementation handoff
-- `17b78c6` / `c418607` / `c701de8` / `d9239c2` / `2def116` / `8e19bfc` — shared viewport placement utility, tests, and picker integration
-- `c803f6a` / `b8d8961` / `a6d92be` — dotted exploit parser repair and tests
-- `1859f98` — manual exploit-name fallback when no catalogue match exists
-- `597267a` / `b8fb5c8` — typed thread request metadata and robust send-route test assertion
-- `8b100b5` / `5c4fbc3` — shared Docs surface/copy tokens
-- `795edaa` — retain mobile Docs cards through 767px widths
-- `62f670d` — document shared UI token migration rules in `DESIGN.md`
+All implementation and handoff updates described above have been committed directly to `main` in small, focused GitHub commits. Use the live GitHub commit history for exact SHAs; this handoff intentionally records the change groups rather than duplicating commit identifiers.
+
+1. Restore the desktop split editor/preview workspace, align the 1200px breakpoint, preserve mobile pane state, and remove the Share and Cozy/Compact controls.
+2. Repair the public header and responsive Docs variable reference, including icon-only copy feedback.
+3. Centralize viewport-aware menu positioning; portal Field, RichPicker, emoji, and exploit autocomplete menus outside clipping scroll containers; preserve keyboard selection and outside-click behavior.
+4. Repair WEAO catalogue visibility, dotted exploit parsing, and manual-name fallback.
+5. Add existing Thread ID support from editor through typed client request and validated server dispatch, permissions, tracking, logs, and audit.
+6. Centralize shared public-header, Studio-header, Inspector, and Docs surfaces in `UI_THEME_CONFIG`; document migration rules in `DESIGN.md`.
+7. Add Vitest regression coverage for floating placement, dotted exploit parsing, thread dispatch/permissions, and forum-thread payload separation.
 
 ### Still outstanding
 
