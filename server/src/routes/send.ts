@@ -94,6 +94,17 @@ router.post(
       editMessageId,
       ...body
     } = req.body;
+    const normalizedThreadId = typeof threadId === "string" ? threadId.trim() : "";
+    if (
+      threadId !== undefined &&
+      threadId !== null &&
+      threadId !== "" &&
+      (typeof threadId !== "string" || !/^\d{17,20}$/.test(normalizedThreadId))
+    ) {
+      throw ApiError.badRequest("`threadId` must be a valid Discord thread ID");
+    }
+    const destinationChannelId =
+      normalizedThreadId || (typeof channelId === "string" ? channelId.trim() : "");
     if (mode !== "bot") {
       throw ApiError.badRequest('Only mode "bot" is supported.');
     }
@@ -123,9 +134,9 @@ router.post(
       if (!staffCtx?.isAdmin && !staffCtx?.record) {
         throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
       }
-      if (typeof channelId === "string") {
-        assertStaffChannelAllowed(staffCtx, channelId);
-        await assertStaffGuildAllowed(staffCtx, channelId);
+      if (destinationChannelId) {
+        assertStaffChannelAllowed(staffCtx, destinationChannelId);
+        await assertStaffGuildAllowed(staffCtx, destinationChannelId);
       }
     }
 
@@ -170,7 +181,7 @@ router.post(
       }
 
       const unixNow = Math.floor(Date.now() / 1000);
-      const targetChannelId = typeof channelId === "string" ? channelId : "";
+      const targetChannelId = destinationChannelId;
       // Use the destination guild's member nickname for {user.name}.
       const hasGuildScopedUserPlaceholder =
         /\{user\.\d{17,20}\.(?:name|roles|joined(?:\.date)?)\}/i.test(
@@ -281,7 +292,7 @@ router.post(
             event: "ROLE_MENTION_BLOCKED",
             actorDiscordId: staffCtx.staffId ?? undefined,
             actorUsername: staffCtx.record.discord_username,
-            channelId: typeof req.body.channelId === "string" ? req.body.channelId : undefined,
+            channelId: destinationChannelId || undefined,
             reason: `Attempted unauthorized ping: ${mentionLabels}`,
             ip: req.ip,
           });
@@ -386,7 +397,7 @@ router.post(
       try {
         const { trackMessage } = await import("../services/messageTrackerService.js");
         await trackMessage({
-          channelId: String(channelId ?? ""),
+          channelId: destinationChannelId,
           messageId: sentId,
           templateId: req.body?.templateId ? Number(req.body.templateId) : null,
           exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
@@ -421,8 +432,8 @@ router.post(
       }
     }
 
-    if (typeof channelId !== "string") {
-      throw ApiError.badRequest('`channelId` is required when mode is "bot"');
+    if (!/^\d{17,20}$/.test(destinationChannelId)) {
+      throw ApiError.badRequest('A valid `channelId` or `threadId` is required when mode is "bot"');
     }
 
     const sentList = [];
@@ -430,7 +441,7 @@ router.post(
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record && !staffCtx.record.can_edit_messages) {
         throw ApiError.forbidden("You do not have permission to perform: edit");
       }
-      const sent = await discord.editChannelMessage(channelId, editMessageId, firstMessage, {
+      const sent = await discord.editChannelMessage(destinationChannelId, editMessageId, firstMessage, {
         profileId,
         files,
       });
@@ -438,12 +449,12 @@ router.post(
       await registerTracking(sent, 0);
       sentList.push(sent);
       log.info(
-        `Bot edited message ${editMessageId} in ${channelId} by user ${req.user?.id ?? "?"}`,
+        `Bot edited message ${editMessageId} in ${destinationChannelId} by user ${req.user?.id ?? "?"}`,
       );
     } else {
       for (let i = 0; i < finalMessages.length; i++) {
         const msg = finalMessages[i];
-        const sent = await discord.sendChannelMessage(channelId, msg, {
+        const sent = await discord.sendChannelMessage(destinationChannelId, msg, {
           profileId,
           files: i === 0 ? files : [],
         });
@@ -452,7 +463,7 @@ router.post(
 
         await registerTracking(sent, i);
       }
-      log.info(`Bot send to ${channelId} by user ${req.user?.id ?? "?"}`);
+      log.info(`Bot send to ${destinationChannelId} by user ${req.user?.id ?? "?"}`);
     }
 
     if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
@@ -468,7 +479,7 @@ router.post(
             : "SEND_MESSAGE",
         actorDiscordId: staffCtx.staffId,
         actorUsername: staffCtx.record?.discord_username,
-        channelId: typeof channelId === "string" ? channelId : undefined,
+        channelId: destinationChannelId,
         messageId: typeof editMessageId === "string" ? editMessageId : undefined,
         ip: req.ip,
       });
