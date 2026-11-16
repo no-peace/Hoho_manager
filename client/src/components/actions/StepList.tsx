@@ -117,17 +117,17 @@ export const DiscordModalPreview = ({
   inputs: ModalInputField[];
 }) => {
   return (
-    <div className="rounded-lg bg-[#313338] border border-[#1e1f22] overflow-hidden shadow-xl font-sans w-full my-2">
-      <div className="bg-[#2b2d31] px-4 py-3 border-b border-[#1e1f22] flex items-center justify-between">
+    <div className="rounded-lg bg-[#313338] border border-[#272D3A] overflow-hidden shadow-xl font-sans w-full my-2">
+      <div className="bg-[#161A23] px-4 py-3 border-b border-[#272D3A] flex items-center justify-between">
         <h4 className="text-sm font-bold text-white truncate">
           {title || "Modal Preview"}
         </h4>
-        <span className="text-xs text-[#949ba4] font-semibold cursor-default">✕</span>
+        <span className="text-xs text-[#A1A8B8] font-semibold cursor-default">✕</span>
       </div>
 
       <div className="p-4 space-y-3 bg-[#313338]">
         {inputs.length === 0 ? (
-          <p className="text-xs text-[#949ba4] text-center py-3">No input fields added yet</p>
+          <p className="text-xs text-[#A1A8B8] text-center py-3">No input fields added yet</p>
         ) : (
           inputs.map((inp, idx) => (
             <div key={idx} className="space-y-1">
@@ -136,11 +136,11 @@ export const DiscordModalPreview = ({
                 {inp.required !== false && <span className="text-[#da373c] ml-1">*</span>}
               </label>
               {inp.style === 2 ? (
-                <div className="min-h-[60px] rounded bg-[#1e1f22] border border-[#111214] p-2 text-xs text-[#949ba4] select-none">
+                <div className="min-h-[60px] rounded bg-[#272D3A] border border-[#111214] p-2 text-xs text-[#A1A8B8] select-none">
                   {inp.placeholder || "Paragraph response..."}
                 </div>
               ) : (
-                <div className="h-8 rounded bg-[#1e1f22] border border-[#111214] px-2.5 flex items-center text-xs text-[#949ba4] select-none">
+                <div className="h-8 rounded bg-[#272D3A] border border-[#111214] px-2.5 flex items-center text-xs text-[#A1A8B8] select-none">
                   {inp.placeholder || "Short answer..."}
                 </div>
               )}
@@ -149,11 +149,11 @@ export const DiscordModalPreview = ({
         )}
       </div>
 
-      <div className="bg-[#2b2d31] px-4 py-2.5 flex items-center justify-end gap-2 border-t border-[#1e1f22]">
-        <span className="text-xs text-[#dbdee1] px-2.5 py-1">Cancel</span>
+      <div className="bg-[#161A23] px-4 py-2.5 flex items-center justify-end gap-2 border-t border-[#272D3A]">
+        <span className="text-xs text-[#F1F3F9] px-2.5 py-1">Cancel</span>
         <button
           type="button"
-          className="bg-[#5865f2] text-white text-xs font-semibold px-3.5 py-1 rounded shadow-sm"
+          className="bg-[#818CF8] text-white text-xs font-semibold px-3.5 py-1 rounded shadow-sm"
         >
           Submit
         </button>
@@ -221,7 +221,6 @@ export interface StepListProps {
 
 export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const [addingType, setAddingType] = useState<string>("add_role");
-  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
   const nested = depth > 0;
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
@@ -230,16 +229,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
     () =>
       actionTypes
         .filter((action) => action.type !== "dud")
-        .map((action) => {
-          const category = action.type.startsWith("send_")
-            ? "Responses & Messages"
-            : action.type === OPEN_MODAL_KEY
-              ? "User Input"
-              : action.type === CHECK_KEY || action.type === "wait"
-                ? "Logic & Conditions"
-                : "Roles & Server State";
-          return { value: action.type, label: `${category} · ${action.type.replace(/_/g, " ")}` };
-        }),
+        .map((action) => ({ value: action.type, label: action.type.replace(/_/g, " ") })),
     [actionTypes],
   );
 
@@ -251,44 +241,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
     const step = steps[index];
     if (!step) return;
     patch(index, { ...step, config });
-  };
-
-  const moveStep = (index: number, delta: number): void => {
-    const target = index + delta;
-    if (target < 0 || target >= steps.length) return;
-    const next = [...steps];
-    const [moved] = next.splice(index, 1);
-    next.splice(target, 0, moved);
-    onChange(next);
-  };
-
-  const stepSummary = (step: FlowStep): string => {
-    const config = step.config ?? {};
-    const content = asText(config.content).trim();
-    const shortContent = content.length > 48 ? `${content.slice(0, 45)}…` : content;
-    switch (step.type) {
-      case "send_ephemeral_reply": return `Ephemeral reply: "${shortContent || "No message text"}"`;
-      case "send_dm": return `Send DM: "${shortContent || "No message text"}"`;
-      case "send_message": return `Send message: "${shortContent || asText(config.channelId) || "Current channel"}"`;
-      case "send_webhook_message": return `Send webhook message: "${shortContent || "No message text"}"`;
-      case "add_role": return `Add role ${asText(config.roleId) || "—"}`;
-      case "remove_role": return `Remove role ${asText(config.roleId) || "—"}`;
-      case "toggle_role": return `Toggle role ${asText(config.roleId) || "—"}`;
-      case "check": return "Evaluate a condition and branch into pass / fail steps";
-      case "open_modal": return `Open modal: ${asText(config.title) || "Untitled form"}`;
-      case "set_variable": return `Set ${asText(config.name) || "variable"}`;
-      case "wait": return `Wait ${asText(config.seconds) || "0"} seconds`;
-      case "delete_message": return "Delete the original message";
-      case "stop": return "Stop the flow";
-      default: return step.type.replace(/_/g, " ");
-    }
-  };
-
-  const stepCategory = (step: FlowStep): { label: string; className: string } => {
-    if (step.type === CHECK_KEY) return { label: "CONDITION", className: "bg-[#FBBF24]/10 text-[#FBBF24] border-[#FBBF24]/25" };
-    if (step.type === OPEN_MODAL_KEY) return { label: "INPUT MODAL", className: "bg-[#A78BFA]/10 text-[#A78BFA] border-[#A78BFA]/25" };
-    if (step.type === SET_VARIABLE_KEY) return { label: "VARIABLE", className: "bg-[#34D399]/10 text-[#34D399] border-[#34D399]/25" };
-    return { label: "ACTION", className: "bg-[#60A5FA]/10 text-[#60A5FA] border-[#60A5FA]/25" };
   };
 
   const remove = (index: number): void => {
@@ -403,8 +355,9 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             onChange={(e) => patchConfig(index, { ...config, customId: e.target.value })}
           />
 
+          {/* Discord Modal Live Preview Mockup */}
           <div className="pt-1">
-            <span className="text-[10px] font-medium text-[#A1A8B8] block mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8] block mb-1">
               Live Modal Mockup
             </span>
             <DiscordModalPreview
@@ -422,9 +375,9 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             />
           </div>
 
-          <div className="space-y-2 pt-1 border-t border-[#1D2230]">
+          <div className="space-y-2 pt-1 border-t border-[#272D3A]">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#b5bac1]">
                 Form Inputs ({inputFields.length}/5)
               </span>
               {inputFields.length < 5 && (
@@ -443,7 +396,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                 {inputFields.map((input, fieldIdx) => (
                   <div
                     key={fieldIdx}
-                    className="p-2.5 rounded bg-[#1D2230]/70 border border-[#161A23] space-y-2"
+                    className="p-2.5 rounded bg-[#272D3A]/70 border border-[#161A23] space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1">
@@ -465,7 +418,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                         >
                           <ChevronDown size={13} />
                         </button>
-                        <span className="text-[11px] font-bold text-[#A1A8B8] ml-1">
+                        <span className="text-[11px] font-bold text-[#b5bac1] ml-1">
                           #{fieldIdx + 1}
                         </span>
                       </div>
@@ -482,7 +435,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                         icon={Trash2}
                         label="Delete input"
                         onClick={() => removeInput(fieldIdx)}
-                        className="text-[#F87171] hover:bg-[#F87171]/10 mt-4"
+                        className="text-[#f28b8b] hover:bg-[#da373c]/10 mt-4"
                       />
                     </div>
 
@@ -512,6 +465,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
                     />
 
+                    {/* Character Limits */}
                     <div className="grid grid-cols-2 gap-2">
                       <TextField
                         label="Min Length (0 - 4000)"
@@ -537,16 +491,17 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       />
                     </div>
 
+                    {/* Variable Syntax Helper Pills */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#161A23]">
                       <span className="text-[10px] text-[#A1A8B8]">Variable:</span>
                       <span
-                        className="text-[10px] font-mono bg-[#10131A] text-[#818CF8] px-1.5 py-0.5 rounded border border-[#818CF8]/40"
+                        className="text-[10px] font-mono bg-[#111214] text-[#818CF8] px-1.5 py-0.5 rounded border border-[#818CF8]/40"
                         title="Direct variable"
                       >
                         {"{{"}{input.customId}{"}}"}
                       </span>
                       <span
-                        className="text-[10px] font-mono bg-[#10131A] text-[#A1A8B8] px-1.5 py-0.5 rounded border border-[#252B3A]"
+                        className="text-[10px] font-mono bg-[#111214] text-[#A1A8B8] px-1.5 py-0.5 rounded border border-[#252B3A]"
                         title="Scoped variable"
                       >
                         {"{{"}input.{input.customId}{"}}"}
@@ -590,7 +545,8 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
       return (
         <div className="space-y-3">
-          <div className="flex items-center gap-1 bg-[#1D2230] p-1 rounded border border-[#10131A]">
+          {/* Check Type Toggle */}
+          <div className="flex items-center gap-1 bg-[#272D3A] p-1 rounded border border-[#111214]">
             <button
               type="button"
               onClick={() => patchConfig(index, { ...config, checkType: "member_has_role", function: "member_has_role" })}
@@ -617,7 +573,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
           </div>
 
           {isMemberHasRole ? (
-            <div className="space-y-3 bg-[#1D2230] p-3 rounded-lg border border-[#161A23]">
+            <div className="space-y-3 bg-[#272D3A] p-3 rounded-lg border border-[#161A23]">
               <div className="grid grid-cols-2 gap-2">
                 <Select
                   label="Target Member"
@@ -712,7 +668,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             />
           </div>
 
-          <div className="border-l-[3px] border-l-[#F87171] pl-3">
+          <div className="border-l-[3px] border-l-[#da373c] pl-3">
             <BranchEditor
               label={isMemberHasRole ? "Does Not Have Role (Else)" : "Condition Failed (Else)"}
               steps={failSteps}
@@ -758,85 +714,37 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   };
 
   return (
-    <div className="space-y-3">
-      {steps.length > 0 ? (
-        <div className="relative space-y-2.5 pl-5">
-          {steps.map((step, index) => {
-            const key = step._id || String(index);
-            const expanded = expandedSteps[key] ?? false;
-            const category = stepCategory(step);
-            const config = step.config ?? {};
-            const hasNestedSteps = step.type === CHECK_KEY && ["pass", "then", "fail", "else"].some(
-              (branchKey) => Array.isArray(config[branchKey]) && (config[branchKey] as unknown[]).length > 0,
-            );
+    <div className="space-y-2">
+      {steps.map((step, index) => (
+        <div
+          key={step._id || index}
+          className="rounded-lg border border-[#272D3A] bg-[#161A23] p-3 space-y-2.5 shadow-sm"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-[#272D3A] pb-2">
+            <span className="shrink-0 rounded border border-[#272D3A] bg-[#10131A] px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-[#b5bac1]">#{index + 1}</span>
+            <Select
+              className="flex-1 max-w-[220px]"
+              value={step.type}
+              onChange={(event) => changeType(index, event.target.value)}
+              options={typeOptions}
+            />
+            <div className="flex items-center gap-1">
+              <IconButton
+                icon={Trash2}
+                label="Delete step"
+                onClick={() => remove(index)}
+                className="text-[#f28b8b] hover:bg-[#da373c]/10"
+              />
+            </div>
+          </div>
 
-            return (
-              <div key={key} className="relative">
-                {index < steps.length - 1 && (
-                  <span className="absolute -left-[13px] top-7 bottom-[-14px] w-px bg-[#272D3A]" aria-hidden="true" />
-                )}
-                <span className="absolute -left-[21px] top-3 flex h-4 w-4 items-center justify-center rounded-full border border-[#343C4E] bg-[#10131A] font-mono text-[9px] text-[#A1A8B8]">
-                  {index + 1}
-                </span>
-                <div className="overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#161A23] shadow-sm">
-                  <div className="flex items-center gap-2 px-3 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedSteps((current) => ({ ...current, [key]: !expanded }))}
-                      aria-expanded={expanded}
-                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                    >
-                      <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wide ${category.className}`}>
-                        {category.label}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#F1F3F9]">
-                        {stepSummary(step)}
-                      </span>
-                      <ChevronDown size={14} className={`shrink-0 text-[#6F788A] transition-transform ${expanded ? "rotate-180" : ""}`} />
-                    </button>
-                    <div className="flex shrink-0 items-center gap-0.5">
-                      <IconButton icon={ChevronUp} label="Move step up" disabled={index === 0} onClick={() => moveStep(index, -1)} />
-                      <IconButton icon={ChevronDown} label="Move step down" disabled={index === steps.length - 1} onClick={() => moveStep(index, 1)} />
-                      <IconButton
-                        icon={Trash2}
-                        label="Delete step"
-                        onClick={() => {
-                          if (hasNestedSteps && !window.confirm("This condition contains nested pass/fail steps. Delete the condition and all nested steps?")) return;
-                          remove(index);
-                        }}
-                        className="text-[#F87171] hover:bg-[#F87171]/10"
-                      />
-                    </div>
-                  </div>
-                  {expanded && (
-                    <div className="space-y-3 border-t border-[#202531] bg-[#10131A]/55 p-3">
-                      <div className="flex items-center gap-2">
-                        <label className="text-[11px] font-medium text-[#A1A8B8]">Step type</label>
-                        <Select
-                          className="min-w-0 flex-1"
-                          value={step.type}
-                          onChange={(event) => changeType(index, event.target.value)}
-                          options={typeOptions}
-                        />
-                      </div>
-                      {renderFields(index, step)}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          <div className="space-y-2 pt-1">{renderFields(index, step)}</div>
         </div>
-      ) : (
-        <div className="rounded-[10px] border border-dashed border-[#272D3A] bg-[#161A23]/50 px-4 py-5 text-center">
-          <p className="text-xs font-medium text-[#F1F3F9]">No steps in this flow</p>
-          <p className="mt-1 text-[11px] text-[#6F788A]">Add a step below to define what happens after the interaction.</p>
-        </div>
-      )}
+      ))}
 
-      <div className="flex items-end gap-2 border-t border-[#202531] pt-3">
+      <div className="flex items-end gap-2 pt-1">
         <Select
-          className="min-w-0 flex-1"
+          className="flex-1"
           label={nested ? "Add to this branch" : "Add a step"}
           value={addingType}
           onChange={(event) => setAddingType(event.target.value)}
@@ -845,13 +753,9 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
         <Button
           size="sm"
           icon={Plus}
-          onClick={() => {
-            const nextStep = createStep(addingType as FlowStep["type"]);
-            onChange([...steps, nextStep]);
-            setExpandedSteps((current) => ({ ...current, [nextStep._id || String(steps.length)]: true }));
-          }}
+          onClick={() => onChange([...steps, createStep(addingType as FlowStep["type"])])}
         >
-          Add step
+          Add
         </Button>
       </div>
     </div>
@@ -874,11 +778,11 @@ const BranchEditor = ({
   const isFailBranch = /Else|Failed/.test(label);
 
   return (
-    <div className={`rounded-md border border-[#1D2230] border-l-[3px] ${isPassBranch ? "border-l-[#23a55a]" : isFailBranch ? "border-l-[#F87171]" : "border-l-[#252B3A]"} bg-[#1D2230]/40 overflow-hidden`}>
+    <div className={`rounded-md border border-[#272D3A] border-l-[3px] ${isPassBranch ? "border-l-[#23a55a]" : isFailBranch ? "border-l-[#da373c]" : "border-l-[#252B3A]"} bg-[#272D3A]/40 overflow-hidden`}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-1 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8] transition-colors hover:text-white"
+        className="flex w-full items-center gap-1 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-[#b5bac1] transition-colors hover:text-white"
       >
         {open ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
         {label}
@@ -888,7 +792,7 @@ const BranchEditor = ({
       </button>
 
       {open && (
-        <div className="border-t border-[#1D2230] p-2.5">
+        <div className="border-t border-[#272D3A] p-2.5">
           <StepList steps={steps} onChange={onChange} depth={depth} />
         </div>
       )}
