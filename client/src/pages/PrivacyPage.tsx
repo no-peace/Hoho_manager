@@ -17,7 +17,7 @@ export const PrivacyPage: React.FC = () => {
   return (
     <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#0B0D12] text-[#F1F3F9] font-sans">
       <PublicPageHeader activePage="privacy" />
-      <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 pb-16 sm:px-8 sm:py-10">
+      <main id="main-content" className="mx-auto max-w-4xl space-y-8 px-4 py-6 pb-16 sm:px-8 sm:py-10">
 
         <section className="space-y-3">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#23a55a]/30 bg-[#23a55a]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#34D399]">
@@ -77,7 +77,7 @@ export const PrivacyPage: React.FC = () => {
             <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</a>
           </nav>
         </footer>
-      </div>
+      </main>
     </div>
   );
 };
