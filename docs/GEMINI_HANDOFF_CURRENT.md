@@ -1276,3 +1276,16 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - GitHub Actions currently reports zero workflow runs for the latest branch head despite `.github/workflows/ci.yml` and `.github/workflows/lighthouse.yml` declaring pull-request triggers. Therefore typecheck, tests, production build, and Lighthouse have not yet been executed for these changes.
 - The local Desktop Commander connection was unavailable during this continuation (MCP endpoint returned 404), so local Node/Vite/Lighthouse execution could not be started from the connected desktop.
 - Required verification: run the PR CI and both mobile/desktop Lighthouse workflows; inspect the production bundle's chunk graph; compare mobile LCP, render delay, unused JS, and performance score against the supplied baseline. Do not merge until CI is green and the mobile Lighthouse regression check is reviewed.
+
+
+### Post-change source guards (2026-11-17)
+
+- Re-fetched the updated branch files from GitHub and checked the auth bootstrap no longer references `/api/health`, while still calling `/api/auth/me`.
+- Confirmed the login canvas is conditionally mounted only for fine-pointer screens at 768px+ with reduced motion disabled; narrow/reduced-motion sessions also skip automatic showcase rotation.
+- Confirmed the forced `vendor-icons` manual chunk is absent.
+- Confirmed shared theme typography has no remaining `text-[Npx]` arbitrary pixel font utilities and global CSS has no pixel `font-size` declarations.
+- Confirmed the V12-touched files `ContentTab.tsx`, `ComponentForms.tsx`, `DiscohookComponentsEditor.tsx`, `Header.tsx`, `Sidebar.tsx`, `StudioLayout.tsx`, `PropertyPanel.tsx`, `FlowBuilder.tsx`, `MessagePreview.tsx`, `ActionRowPreview.tsx`, and `SplitPane.tsx` contain no remaining `text-[Npx]` utilities.
+- Confirmed the first-paint HTML splash typography uses rem and the unit policy is present in `DESIGN.md`.
+- These are source-content guards only. They are not substitutes for Vitest, TypeScript, production build, browser QA, or Lighthouse execution.
+- Latest implementation head before this handoff append: `b8dd14ac20c8bd58ba01e02db4962f1a133c633b`.
+- Latest GitHub Actions query still returned zero runs and zero commit statuses for the branch. Desktop Commander and Playwright MCP endpoints both returned HTTP 404 during this session; local test/Lighthouse execution remains blocked by tool availability.
