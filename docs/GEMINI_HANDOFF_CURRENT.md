@@ -1146,3 +1146,12 @@ Run the full test, typecheck, and build commands against the implementation head
 - Implemented source changes: atmospheric radial-gradient/grid backdrop utilities; full-viewport constellation nodes/filaments plus lower perspective wave field; immediate static canvas paint with reduced-motion/mobile-safe behavior and idle-started desktop animation capped at approximately 29 FPS; login header flush to viewport edges with page padding moved to content wrapper; upgraded auth/showcase cards to the current studio surface palette while preserving the existing 5/7-column layout and controls.
 - Files changed in this batch: `client/src/styles/globals.css`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/layout/LoginScreen.tsx`.
 - Source-level guard checks passed in the update script: login backdrop class present and both existing grid column spans retained. Automated tests, typecheck, build, visual QA, and Lighthouse have not yet been run.
+
+
+## Gemini V12 implementation — Batch 2 (2026-11-16)
+
+- Updated the live-preview click path to use a single bubble-phase message-card handler. Component clicks are routed to `onSelectPreviewComponent` without capture-phase propagation cancellation, so child controls can receive their own click handlers first.
+- Select preview roots now advertise `data-preview-component-id`, `data-preview-interactive="true"`, and `data-preview-select="true"`; button preview's duplicate selection handler was removed. `AutoComponent` no longer performs its own competing selection routing.
+- Preserved the current StudioLayout desktop/mobile routing contract: ordinary components remain routed to the editor on desktop; interactive controls open the inspector; mobile retains its quick inspector behavior. The card handler ignores component descendants for blank-card navigation.
+- Files: `MessagePreview.tsx`, `ActionRowPreview.tsx`, `ComponentPreview.tsx`.
+- Validation: source transformation guards passed. Automated interaction tests, typecheck, build, and browser QA remain pending.
