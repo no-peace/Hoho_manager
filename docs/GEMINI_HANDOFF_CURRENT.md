@@ -802,3 +802,44 @@ Implemented the Batch 7 source changes directly on `main`.
 - Updated the action-flow test assertion to use an explicit call count.
 - Current main head before this handoff append: `450ef78c2e791dcf57d19d2440527f1933d66eb0`.
 - These are source-level corrections only. No tests, build, or typecheck were run.
+
+
+---
+
+## V11 — 2b1f77b8 layout restoration and P0 repair — 2026-11-16
+
+**Implementation head:** `5a6ba37699caad85efd3b9d84314e8eeb492685f`  
+**Golden layout reference:** `2b1f77b81e23380202a991276eb71600e81250e6`  
+**Status:** Source changes committed to `main`; automated validation is pending. Do not describe this implementation as tested or release-ready.
+
+### Completed source changes
+
+- Restored the stacked, single-scroll MessageEditor structure from the golden commit; restored the golden ContentTab, EmbedsTab, and ComponentsTab implementations with the requested SaaS color-token substitutions.
+- Restored the golden PropertyPanel behavior so it returns `null` unless a component is selected.
+- Restored the golden FlowBuilder and StepList structures and the `Channel or Thread ID (defaults to current channel)` field label.
+- Restored the golden LoginScreen, Header, StudioLayout, Sidebar, and MessagePreview sources. The preview source was restored without replacing its authentic Discord dark-mode colors.
+- Restored the golden MessageEditor test file.
+- Fixed the missing `Loader2` import in StudioModals.
+- Added the missing `SpotlightCard` imports in DocsPage and PrivacyPage; corrected PrivacyPage's outer background to `#0B0D12`.
+- Removed the duplicate `url` key in the DocsPage author JSON example.
+- Restored SearchableDiscordSelect's expected `zIndex: 99999` and `text-[#dbdee1]` source assertions.
+
+### Golden-reference discrepancies in the Gemini plan
+
+The implementation follows the actual golden commit source where the plan's prose differs from it:
+
+1. Golden `LoginScreen.tsx` includes a lazy `ThreeHeroCanvas`, but does not contain the plan's named `SpotlightCard`, `MagneticButton`, `ShinyText`, or `SplitTextReveal` composition. The golden source was treated as authoritative.
+2. Golden `MessageEditor/index.tsx` footer uses the existing Set Link and Options controls (including mode conversion and Copy Message JSON). It does not have the separately described Message Link / Clear All button arrangement. The exact golden footer was retained rather than adding controls that are not in that reference.
+3. The thread-ID input belongs in `ContentTab.tsx`, not in the MessageEditor root component. The restored ContentTab retains the `thread_id` input.
+
+### Preservation and verification
+
+- Backend, send-route, timestamp-interpolation, and autocomplete source files were not modified by this V11 restoration.
+- CI workflow source was not changed; the existing removal of the deleted Playwright audit path remains in place.
+- Source-level checks after the edits confirmed the expected SpotlightCard/Loader2 imports, corrected Docs JSON example, SearchableDiscordSelect invariants, no MessageEditor tab-bar identifier, retained ContentTab thread-ID field, null-on-empty EmbedsTab behavior, and null-on-no-selection PropertyPanel behavior.
+- GitHub Actions has no run/status associated with implementation head `5a6ba37699caad85efd3b9d84314e8eeb492685f` at the time of this update. Older successful CI runs belong to earlier commits and are not evidence for this head.
+- `npm test`, `npm run build`, `npm run typecheck`, browser interaction checks, and responsive visual checks have not been executed in this environment. Executed test count: 0.
+
+### Required next step
+
+Run the full test, typecheck, and build commands against the implementation head; inspect and fix every failure before calling this complete. Then perform desktop and mobile visual checks against the golden layout and record actual CI/test results here.
