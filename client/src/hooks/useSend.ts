@@ -33,6 +33,10 @@ export const useSend = (): UseSendReturn => {
     const rawPayload = store.getPayload();
     const problems = store.getValidationErrors();
     const attachedFiles = store.attachedFiles;
+    const activeMessage = store.messages?.[store.activeMessageIndex] ?? store.data;
+    const threadId = typeof (activeMessage as unknown as { thread_id?: unknown }).thread_id === "string"
+      ? (activeMessage as unknown as { thread_id: string }).thread_id.trim()
+      : "";
 
     if (problems.length > 0) {
       setSendState({ status: "error", error: problems[0], result: null });
@@ -83,6 +87,7 @@ export const useSend = (): UseSendReturn => {
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
           channelId: channelId || undefined,
+          ...(threadId ? { threadId } : {}),
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
           ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
@@ -98,7 +103,8 @@ export const useSend = (): UseSendReturn => {
           mode: "bot",
           payload: isMulti ? undefined : payload,
           messages: isMulti ? allPayloads : undefined,
-          channelId,
+          channelId: channelId || undefined,
+          ...(threadId ? { threadId } : {}),
           flows: useActionStore.getState().toRegistrations(),
           editMessageId,
           ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
@@ -114,7 +120,8 @@ export const useSend = (): UseSendReturn => {
     }
   }, [channelId, setSendState]);
 
-  const isConfigured = Boolean(channelId && channelId.trim() !== "");
+  const activeMessage = useMessageStore((state) => state.data) as unknown as { thread_id?: string };
+  const isConfigured = Boolean((channelId && channelId.trim() !== "") || activeMessage.thread_id?.trim());
   return { sendMessage, isConfigured, mode, sendMode: SEND_MODES.BOT };
 };
 
