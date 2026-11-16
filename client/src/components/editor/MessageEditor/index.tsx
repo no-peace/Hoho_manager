@@ -105,7 +105,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           : UI_THEME_CONFIG.surfaces.editorCardInactive
       }
     >
-      {/* ── Message Collapsible Trigger Header ── */}
       <div
         className={`flex items-center justify-between gap-2 px-3 py-2 bg-[#10131A] border-b border-[#272D3A] select-none ${
           isOpen ? "rounded-t-xl border-b border-[#1D2230]" : "rounded-xl"
@@ -239,7 +238,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
           <ComponentsTab message={message} isV2={isV2} ensureActive={ensureActive} />
 
-          {/* ── Footer Action Bar (+ Add, Set Link, Options) ── */}
           <div className="pt-2 border-t border-[#1D2230] flex flex-wrap items-center gap-2">
             {!isV2 ? (
               <>
