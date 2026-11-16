@@ -37,7 +37,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
       const placement = calculateFloatingPosition(
         { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
         { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
-        { menuWidth: rect.width, maxMenuHeight: maxHeight, minMenuHeight: 64, margin: 12, gap: 6 },
+        { menuWidth: rect.width, maxMenuHeight: maxHeight, margin: 12, gap: 6 },
       );
       setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
     };
