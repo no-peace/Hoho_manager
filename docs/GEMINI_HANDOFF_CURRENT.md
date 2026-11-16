@@ -1,15 +1,52 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Prepared:** 2026-11-16  
+**Updated:** 2026-11-16  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest autocomplete-fix application commit:** `0e75bfbe43babf410b4cadbddb791848ded7a12f`  
-**Handoff reconciliation commits:** `783329cca58f8049310d1054f2dd3434686a267c` (source/plan audit), `6a7ad8a178c07daf89738ad420ebf18858235b33` (audit-scope clarification)  
-**Audited source snapshot:** `c35d762b5862046ae95394f17ffafcdd1989917e` (the handoff-only update follows this source snapshot)  
-**Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
-**Repository tree:** 304 tracked files in the 2026-11-16 repository-wide source-tree audit (210 application source files; 47 Vitest test files)  
-**Status:** Source-level implementation and follow-up autocomplete fixes are committed on `main`; npm checks and browser validation are still pending. The latest autocomplete changes have not yet been runtime-verified.
+**Current main head:** `1d4c8934c70a855f6ffaa456d6c2f809ea789314`  
+**Implementation baseline:** `7f35b433ecff73c20fdfa323263b6eccf40bfb88`  
+**Plan sources:** `docs/hoho_v9_untangle_and_bug_fix_master_plan.md` and `docs/hoho_v10_master_ui_redesign_and_untangle_plan.md`  
+**Status:** V9 batches 1–6 and V10 batches 1–13 have source-level changes committed to `main`. V10 batch 14 and full runtime/release verification remain open. Do not describe this branch as tested or release-ready.
+
+## Latest implementation checkpoint — 2026-11-16
+
+The work continued from the live `main` head, not from the older audit snapshot. The current implementation contains 30 commits ahead of the V9 baseline.
+
+### Completed source-level work
+- Fixed the CI workflow's reference to the deleted Playwright audit script and removed the retired `tunnel` npm workspace entry.
+- Consolidated server variable interpolation and timestamp variables; unified duplicated request parsers.
+- Fixed the shared field autocomplete regex and extracted shared field autocomplete behavior.
+- Unified MentionInput popover rendering, repaired portal layering/positioning, and aligned autocomplete Snowflake validation with the server's 17–20 digit rule.
+- Removed the unsupported `avatarurl` suggestion while retaining the server's supported `avatar` field.
+- Applied the V10 SaaS Studio design tokens and typography, core UI primitives, public pages, application shell, editor, embed/component builders, inspector, action-flow builder, Discord preview frame, and admin/modal styling.
+- Removed the obsolete bot-profile UI/store because its legacy profile endpoints are no longer supported. This is a deliberate deviation from the V10 Batch 13 file list, which still names `ProfilesPanel.tsx`.
+- Added parser, autocomplete, interpolation, request parsing, and author-resolution regression coverage.
+
+### Recovery fixes made after the first implementation pass
+- Corrected malformed JSON in `package-lock.json` (a trailing comma in the root workspace array). The repaired lockfile was parsed successfully as JSON during source review.
+- Removed an extra closing `});` from `client/src/utils/__tests__/userPlaceholderAutocomplete.test.ts`, which otherwise left the test file syntactically invalid.
+- Corrected the clan-tag documentation to match the actual resolver semantics.
+
+### Plan/source discrepancies — preserve current behavior unless the contract is deliberately changed
+1. The V9/V10 text says the ID-based user placeholder contract is exactly nine fields and names `created_at` / `joined_at`. The current `authorService.ts` does not implement those aliases. It resolves `name`, `displayname`, `globalname`, `username`, `tag`, `id`, `avatar`, `url`, `profile`, `mention`, `created`, `created.relative`, plus the special `roles`, `clantag`, `joined`, and `joined.date` fields. The client autocomplete currently reflects this broader existing contract. Do not silently replace it with the nine-field list; that would remove supported placeholders and advertise unsupported aliases.
+2. V10 says `clantag` should resolve to an empty string when the user is not a member of the selected server. The live resolver instead reads Discord's `primary_guild.tag` when `identity_enabled === true`, independently of selected-server membership; when no enabled tag exists, it preserves the unresolved placeholder. Existing server tests assert these semantics. Documentation now describes the actual behavior. Do not change this contract without an explicit product decision.
+3. V10 Batch 13 lists `ProfilesPanel.tsx` for restyling, but the panel depended on retired bot-profile endpoints. It was removed together with its unused store rather than presenting a non-functional profile manager.
+
+### Validation status
+- Source review only; no local Terminal, npm, or Playwright command was run.
+- `package-lock.json` JSON parsing: passed in the source-review runtime.
+- Test-file structural correction: source-reviewed; not executed by Vitest.
+- `npm test`: not run; executed test count is 0.
+- `npm run build`: not run.
+- `npm run typecheck`: not run.
+- Playwright/browser checks and screenshots: not run.
+- GitHub Actions: no workflow run is associated with current head `1d4c8934`; the latest listed runs target older commits. Combined status checks for the implementation head were empty.
+
+### Next exact step
+Continue V10 Batch 14 with a focused comments/test audit, then run `npm test`, `npm run build`, and `npm run typecheck` when the owner explicitly makes the local machine available. Fix every failure before recording actual test counts. Do not claim a visual pass without browser verification.
+
+---
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
 
@@ -31,7 +68,7 @@
 
 ### 2. Architecture map — current source, not an inferred design
 
-The root package is a private npm-workspaces monorepo. Node engine range is >=22 <27; .nvmrc is 26.13.1. Note: root package.json lists tunnel as a workspace, but the current tree has no tunnel/package.json; verify how npm resolves this workspace entry before changing workspace configuration.
+The root package is a private npm-workspaces monorepo. Node engine range is >=22 <27; .nvmrc is 26.13.1. The retired `tunnel` workspace entry was removed from the root manifest and lockfile in the current implementation; the active workspaces are `shared`, `server`, `client`, and `bot`.
 
 | Area | Current responsibility | Main source locations |
 |---|---|---|
