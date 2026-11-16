@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { ShieldCheck, Lock, Clock, Database } from "lucide-react";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { updatePageSeo } from "../utils/seo";
-import { SplitTextReveal } from "../components/reactbits/ReactBitsPrimitives";
+import { SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 
 export const PrivacyPage: React.FC = () => {
   useEffect(() => {
@@ -15,7 +15,7 @@ export const PrivacyPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#10131A] text-[#F1F3F9] font-sans">
+    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#0B0D12] text-[#F1F3F9] font-sans">
       <PublicPageHeader activePage="privacy" />
       <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 pb-16 sm:px-8 sm:py-10">
 
