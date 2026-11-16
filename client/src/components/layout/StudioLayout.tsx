@@ -127,7 +127,7 @@ export const StudioLayout: React.FC = () => {
         <React.Suspense fallback={null}><PropertyPanel /></React.Suspense>
       </main>
 
-      {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1280px) */}
+      {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
       <nav
         aria-label="Mobile workspace navigation"
         className="min-[1200px]:hidden flex items-center bg-[#18191c]/95 backdrop-blur-md border-t border-[#26282d] shrink-0 px-3 py-2 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
