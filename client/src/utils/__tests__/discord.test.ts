@@ -69,6 +69,35 @@ describe("client discord utils", () => {
     });
 
 
+    it("keeps forum thread creation separate from an existing thread destination", () => {
+      const existingThreadMessage = {
+        content: "Send into an existing thread",
+        username: "",
+        avatar_url: "",
+        thread_name: "Do not create another thread",
+        thread_id: "123456789012345678",
+        embeds: [],
+        components: [],
+      } as MessageData & { thread_id: string };
+
+      const payload = toDiscordPayload(existingThreadMessage, "classic");
+      expect(payload.thread_name).toBeUndefined();
+      expect(payload).not.toHaveProperty("thread_id");
+    });
+
+    it("preserves forum thread names when no existing thread ID is set", () => {
+      const forumMessage: MessageData = {
+        content: "Create a forum post",
+        username: "",
+        avatar_url: "",
+        thread_name: "New forum post",
+        embeds: [],
+        components: [],
+      };
+
+      expect(toDiscordPayload(forumMessage, "classic").thread_name).toBe("New forum post");
+    });
+
     it("sanitizes empty embeds and components", () => {
       const msgData: MessageData = {
         content: "Simple text",
