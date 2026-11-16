@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           {isSubRoute && (
             <a
               href="/"
-              className="flex items-center gap-1 text-xs font-semibold text-[#A1A8B8] hover:text-white bg-[#2b2d31] hover:bg-[#252B3A] border border-[#252B3A] px-2 py-1 rounded transition-colors mr-1"
+              className="flex items-center gap-1 text-xs font-semibold text-[#A1A8B8] hover:text-white bg-[#161A23] hover:bg-[#252B3A] border border-[#252B3A] px-2 py-1 rounded transition-colors mr-1"
               title="Return to Dashboard"
             >
               <ArrowLeft size={13} />
@@ -169,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#2b2d31] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Head Admin Settings"
             >
               <Settings size={14} className="text-[#A1A8B8]" />
@@ -179,7 +179,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#2b2d31] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Bot Access status"
             >
               <KeyRound size={14} className="text-[#f0b232]" />
@@ -207,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 bg-[#2b2d31] hover:bg-[#252B3A] active:scale-[0.98] border border-[#252B3A] rounded-full pl-1 pr-2.5 py-1 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+                className="flex items-center gap-2 bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] border border-[#252B3A] rounded-full pl-1 pr-2.5 py-1 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
                 title="Account & Session Info"
               >
                 <img
@@ -230,8 +230,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#111214] border border-[#2b2d31] shadow-2xl p-3 z-50 text-xs space-y-2.5">
-                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#2b2d31]">
+                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#111214] border border-[#272D3A] shadow-2xl p-3 z-50 text-xs space-y-2.5">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#272D3A]">
                     <img
                       src={currentUser.avatarUrl || getDiscordAvatarUrl(currentUser, 64)}
                       alt={currentUser.username}
@@ -262,7 +262,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-[#272D3A] px-2.5 py-1.5 rounded-lg border border-[#2b2d31]">
+                  <div className="flex items-center justify-between bg-[#272D3A] px-2.5 py-1.5 rounded-lg border border-[#272D3A]">
                     <span className="text-[11px] text-[#A1A8B8]">Discord ID:</span>
                     <button
                       type="button"
@@ -285,16 +285,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                         setUserMenuOpen(false);
                         setConfigModalOpen(true);
                       }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                     >
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
-                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <BookOpen size={14} className="text-[#949cf7]" />
                       <span>Documentation</span>
                     </a>
-                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <Shield size={14} className="text-[#A1A8B8]" />
                       <span>Privacy</span>
                     </a>
@@ -307,7 +307,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                             setUserMenuOpen(false);
                             setAccessOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                         >
                           <Shield size={14} className="text-[#A1A8B8]" />
                           <span>Staff Access</span>
@@ -318,7 +318,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                             setUserMenuOpen(false);
                             setSettingsOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#F1F3F9] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                         >
                           <Settings size={14} className="text-[#A1A8B8]" />
                           <span>Head Admin Settings</span>
@@ -327,7 +327,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                     )}
                   </div>
 
-                  <div className="border-t border-[#2b2d31] pt-2">
+                  <div className="border-t border-[#272D3A] pt-2">
                     <button
                       type="button"
                       onClick={async () => {
@@ -347,7 +347,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
           <a
             href="/docs"
-            className="text-xs font-semibold text-[#A1A8B8] hover:text-white border border-[#252B3A] bg-[#2b2d31] hover:bg-[#252B3A] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
+            className="text-xs font-semibold text-[#A1A8B8] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
             title="Documentation"
           >
             <BookOpen size={13} />
