@@ -35,6 +35,7 @@ const mockUser = {
   username: "peace",
   globalName: "Peace",
   nickname: null,
+  clanTag: "HOHO",
   avatarUrl: "https://cdn.discordapp.com/avatars/test.png",
   profileUrl: `https://discord.com/users/${USER_A}`,
 };
@@ -68,7 +69,7 @@ describe("UserPlaceholderPreviewContext", () => {
     render(
       <UserPlaceholderPreviewProvider
         source={{
-          content: `{user.${USER_A}.username}`,
+          content: `{user.${USER_A}.username}|{user.${USER_A}.clantag}`,
           embeds: [
             {
               url: `{user.${USER_A}.url}`,
@@ -80,6 +81,7 @@ describe("UserPlaceholderPreviewContext", () => {
         <Preview
           value={[
             `{user.${USER_A}.username}`,
+            `{user.${USER_A}.clantag}`,
             `{user.${USER_A}.url}`,
             `{user.${USER_A}.avatarurl}`,
           ].join("|")}
@@ -94,7 +96,7 @@ describe("UserPlaceholderPreviewContext", () => {
     expect(resolveUsersMock).toHaveBeenCalledTimes(1);
 
     expect(screen.getByTestId("resolved").textContent).toBe(
-      `peace|https://discord.com/users/${USER_A}|{user.${USER_A}.avatarurl}`,
+      `peace|HOHO|https://discord.com/users/${USER_A}|{user.${USER_A}.avatarurl}`,
     );
   });
 
