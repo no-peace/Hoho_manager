@@ -794,3 +794,11 @@ Implemented the Batch 7 source changes directly on `main`.
 - `2a8b3ccd303eccd4fcef9a88cd7faeb046c56398` — MessageEditor regression tests
 
 **Current main head:** `2a8b3ccd303eccd4fcef9a88cd7faeb046c56398`.
+
+
+### Batch 7 source-review follow-up
+- Removed an unused attachment-store selector from MessageEditor.
+- During the post-edit source review, found a literal backslash-n sequence between two declarations in PropertyPanel (not a real line break). Replaced it with a normal newline so the declarations are valid TypeScript source. This defect was present in the fetched file before the Batch 7 handoff change; it was corrected while wiring the new Actions-to-FlowBuilder event.
+- Updated the action-flow test assertion to use an explicit call count.
+- Current main head before this handoff append: `450ef78c2e791dcf57d19d2440527f1933d66eb0`.
+- These are source-level corrections only. No tests, build, or typecheck were run.
