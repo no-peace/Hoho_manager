@@ -80,34 +80,14 @@ import { useGlobalStore } from "../../store/globalStore";
 
 const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void }) => {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<"top" | "bottom">("top");
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    if (wrapRef.current) {
-      const rect = wrapRef.current.getBoundingClientRect();
-      const viewport = window.visualViewport;
-      const top = viewport?.offsetTop ?? 0;
-      const height = viewport?.height ?? window.innerHeight;
-      const above = Math.max(0, rect.top - top - 12);
-      const below = Math.max(0, top + height - rect.bottom - 12);
-      setPos(above > below ? "top" : "bottom");
-    }
-    const handleOutside = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [open]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div ref={wrapRef} className="absolute right-2 top-1.5 z-20">
+    <div className="absolute right-2 top-1.5 z-20">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((current) => !current)}
         className={`p-1 rounded transition-colors ${
           open
             ? "bg-[#5865f2] text-white shadow-sm"
@@ -119,18 +99,17 @@ const InlineRichPickerTrigger = ({ onInsert }: { onInsert: (tag: string) => void
       </button>
       {open && (
         <RichPicker
+          anchor={buttonRef.current}
           onInsert={(val) => {
             onInsert(val);
             setOpen(false);
           }}
           onClose={() => setOpen(false)}
-          position={pos}
         />
       )}
     </div>
   );
 };
-
 const ACTUAL_VARIABLES = VARIABLES.filter(
   (v): v is { tag: string; label: string; desc: string } => typeof (v as any).tag === "string",
 );
