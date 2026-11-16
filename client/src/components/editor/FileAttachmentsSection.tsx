@@ -38,7 +38,11 @@ export const FileAttachmentsSection: React.FC = () => {
   const addFiles = useMessageStore((state) => state.addFiles);
   const addUrlAttachment = useMessageStore((state) => state.addUrlAttachment);
   const removeFile = useMessageStore((state) => state.removeFile);
-  const toggleFileSpoiler = useMessageStore((state) => state.toggleFileSpoiler);\n\n  useEffect(() => {\n    if (attachedFiles.length > 0) setIsOpen(true);\n  }, [attachedFiles.length]);
+  const toggleFileSpoiler = useMessageStore((state) => state.toggleFileSpoiler);
+
+  useEffect(() => {
+    if (attachedFiles.length > 0) setIsOpen(true);
+  }, [attachedFiles.length]);
 
   const handleAddUrl = () => {
     setUrlErrorMessage(null);
