@@ -23,6 +23,23 @@ describe("mentionParser: detectAutocompleteToken", () => {
     });
   });
 
+  it("detects dotted exploit names before a field is selected", () => {
+    const text = "Use {exploit.AWP.GG";
+    expect(detectAutocompleteToken(text, text.length)).toMatchObject({
+      type: "exploit_name",
+      query: "AWP.GG",
+    });
+  });
+
+  it("detects fields after dotted exploit names", () => {
+    const text = "Use {exploit.AWP.GG.su";
+    expect(detectAutocompleteToken(text, text.length)).toMatchObject({
+      type: "exploit_field",
+      exploitTarget: "AWP.GG",
+      query: "su",
+    });
+  });
+
   it("detects standard variable tokens, @mentions, #channels, and :emojis", () => {
     expect(detectAutocompleteToken("Hello {user.na", 14)?.type).toBe("variable");
     expect(detectAutocompleteToken("Ping @nexus", 11)?.type).toBe("user");
