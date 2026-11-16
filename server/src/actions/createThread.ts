@@ -8,7 +8,7 @@ export const description = "Start a thread from the message";
 /**
  * Opens a thread on the message that carried the clicked component.
  *
- * The thread name comes from `config.name`; `{{user}}` and `{{user.tag}}` are
+ * The thread name comes from `config.name`; `{{user}}` and `{{user.username}}` are
  * substituted with the clicker's name, which is the common use ("ticket – alice").
  * Requires the bot to have **Create Public Threads** in the channel.
  */
@@ -30,7 +30,7 @@ export const run = async ({
   if (!botToken) return actionFailed("The bot isn't configured on the server.");
 
   const name = rawName
-    .replace(/\{\{\s*user\.tag\s*\}\}/g, user?.username ?? "user")
+    .replace(/\{\{\s*user\.username\s*\}\}/g, user?.username ?? "user")
     .replace(/\{\{\s*user(?:\.name)?\s*\}\}/g, user?.global_name ?? user?.username ?? "user")
     .slice(0, 100);
 
