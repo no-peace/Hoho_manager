@@ -78,14 +78,14 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => v
               <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={onOpenFullEditor} className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[11px] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A]">Open Full Editor</button>
+              <button type="button" onClick={onOpenFullEditor} className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A]">Open Full Editor</button>
               <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
             </div>
           </div>
           <div className="min-h-0 overflow-y-auto p-3.5" data-message-quick-editor>
             <label htmlFor="preview-message-content" className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#A1A8B8]">
               {isV2Message ? "Text Display content" : "Message content"}
-              {isV2Message && <span className="rounded border border-[#818CF8]/30 bg-[#818CF8]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#A5B4FC]">Components V2 Text Block</span>}
+              {isV2Message && <span className="rounded border border-[#818CF8]/30 bg-[#818CF8]/10 px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#A5B4FC]">Components V2 Text Block</span>}
             </label>
             <textarea
               id="preview-message-content"
@@ -111,7 +111,7 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => v
               rows={6}
               className="w-full min-h-32 resize-y rounded-lg border border-[#303746] bg-[#0F1219] p-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-[#687184] focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
             />
-            <p className="mt-2 text-[11px] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
+            <p className="mt-2 text-[0.6875rem] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
           </div>
         </aside>
       </>
