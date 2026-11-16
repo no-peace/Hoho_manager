@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
 import { ShinyText, SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
+import { UI_THEME_CONFIG } from "../config/uiThemeConfig";
 import { motion } from "motion/react";
 import {
   Search,
@@ -239,8 +240,8 @@ export const DocsPage = () => {
         </div>
 
         {/* Variables Table */}
-        <SpotlightCard className="bg-[#2b2d31] border border-[#1e1f22] rounded-xl overflow-hidden shadow-sm mb-12">
-          <div className="px-5 py-3 border-b border-[#1e1f22] bg-[#1e1f22]/70 flex items-center justify-between">
+        <SpotlightCard className={UI_THEME_CONFIG.surfaces.docsTableCard}>
+          <div className={UI_THEME_CONFIG.surfaces.docsTableHeader}>
             <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
               Available Variables ({filteredItems.length})
             </span>
@@ -260,7 +261,7 @@ export const DocsPage = () => {
                 {filteredItems.map((item) => (
                   <tr key={item.tag} className="hover:bg-[#1e1f22]/40 transition-colors">
                     <td className="px-5 py-3 font-mono">
-                      <button type="button" onClick={() => void copyToClipboard(item.tag)} className="inline-flex items-center gap-2 text-left text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-1 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] transition-colors" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
+                      <button type="button" onClick={() => void copyToClipboard(item.tag)} className={UI_THEME_CONFIG.surfaces.docsCopyButton} title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
                         <span>{item.tag}</span>{copiedTag === item.tag ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                       </button>
                     </td>
@@ -275,7 +276,7 @@ export const DocsPage = () => {
 
           <div className="space-y-2 p-3 sm:hidden">
             {filteredItems.map((item) => (
-              <article key={item.tag} className="rounded-lg border border-[#35373c] bg-[#232428] p-3">
+              <article key={item.tag} className={UI_THEME_CONFIG.surfaces.docsVariableCard}>
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <code className="min-w-0 break-all text-xs font-semibold text-[#b9bcf8]">{item.tag}</code>
                   <button type="button" onClick={() => void copyToClipboard(item.tag)} className="shrink-0 rounded-md border border-[#5865f2]/40 bg-[#1e1f22] p-2 text-[#b9bcf8] hover:bg-[#35373c]" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
