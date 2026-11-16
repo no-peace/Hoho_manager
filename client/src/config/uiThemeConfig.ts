@@ -120,6 +120,14 @@ export const UI_THEME_CONFIG = {
       "flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] px-5 py-4 shrink-0",
     inspectorBody:
       "min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[env(safe-area-inset-bottom)] custom-scrollbar",
+    docsTableCard:
+      "bg-[#2b2d31] border border-[#1e1f22] rounded-xl overflow-hidden shadow-sm mb-12",
+    docsTableHeader:
+      "px-5 py-3 border-b border-[#1e1f22] bg-[#1e1f22]/70 flex items-center justify-between",
+    docsVariableCard:
+      "rounded-lg border border-[#35373c] bg-[#232428] p-3",
+    docsCopyButton:
+      "inline-flex items-center gap-2 text-left text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-1 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] transition-colors",
     editorCardActive:
       "rounded-xl bg-[#292b2f] border border-[#5865f2] shadow-[0_0_0_1px_#5865f2,0_8px_24px_rgba(0,0,0,0.32)] transition-[border-color,box-shadow,opacity] duration-150 ease-out",
     editorCardInactive:
