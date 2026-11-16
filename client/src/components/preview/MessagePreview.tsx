@@ -11,6 +11,7 @@ import { ActionRowPreview } from "./ActionRowPreview";
 import { useGlobalStore } from "../../store/globalStore";
 import { useMessageStore, type AttachedFile } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
+import { scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 
 const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
   component.type === ComponentType.Container ? (
@@ -108,7 +109,11 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
   );
 };
 
-export const MessagePreview = () => {
+interface MessagePreviewProps {
+  onSelectMessage?: (index: number) => void;
+}
+
+export const MessagePreview = ({ onSelectMessage }: MessagePreviewProps) => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
@@ -120,6 +125,12 @@ export const MessagePreview = () => {
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
+
+  const handleSelectMessage = (index: number) => {
+    setActiveMessageIndex?.(index);
+    if (onSelectMessage) onSelectMessage(index);
+    else scrollToMessageEditor(index);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -170,7 +181,7 @@ export const MessagePreview = () => {
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setActiveMessageIndex?.(i)}
+                  onClick={() => handleSelectMessage(i)}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors ${
                     i === activeMessageIndex
                       ? "bg-[#5865f2] text-white shadow-xs"
@@ -227,7 +238,7 @@ export const MessagePreview = () => {
                 return (
                   <div
                     key={index}
-                    onClick={() => setActiveMessageIndex?.(index)}
+                    onClick={() => handleSelectMessage(index)}
                     className={`group relative flex gap-3 p-2.5 rounded-xl  cursor-pointer ${
                       isActive
                         ? "ring-2 ring-[#5865f2]/80 bg-[#5865f2]/5 shadow-sm"
