@@ -157,6 +157,26 @@ describe("authorService", () => {
         expect(getGuildMember).not.toHaveBeenCalled();
     });
 
+    it("resolves the primary-guild tag when the user is absent from the selected server", async () => {
+        vi.mocked(getGuildMember).mockRejectedValueOnce(
+            Object.assign(new Error("Not a member of this server"), { status: 404 }),
+        );
+
+        const result = await resolveAuthorPlaceholders(
+            { content: `{user.${USER_A}.clantag}` } as any,
+            null,
+            null,
+            "888888888888888888",
+        );
+
+        expect((result.payload as any).content).toBe("HOHO");
+        expect(getGuildMember).toHaveBeenCalledWith(
+            "888888888888888888",
+            USER_A,
+            "test-bot-token",
+        );
+    });
+
     it("resolves plain user name variables for tracked messages using the saved author ID", async () => {
         vi.mocked(getGuildMember).mockResolvedValue({
             user: { id: USER_A, username: "peace", global_name: "Peace", avatar: "avatar_hash" } as any,

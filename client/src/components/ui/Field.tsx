@@ -121,7 +121,7 @@ const getAutocompleteVariables = (query: string) => {
   // An empty array means it is an ID query with no matching field.
   if (idSuggestions !== null) return idSuggestions;
 
-  const q = query.trim().toLowerCase().replace(/^\\{+/, "");
+  const q = query.trim().toLowerCase().replace(/^\{+/, "");
 
   // This picker is also used by standalone TextField/TextArea controls,
   // so expose WEAO while its prefix is still being typed.
@@ -175,7 +175,7 @@ const useFloatingMenuStyle = (anchor: HTMLElement | null | undefined, menuWidth:
         left: position.left,
         width: position.width,
         maxHeight: position.maxHeight,
-        zIndex: 60,
+        zIndex: 10000,
       });
     };
     update();

@@ -1,7 +1,7 @@
 import { parseCustomId } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { interpolateWeaoPlaceholders } from "./weaoService.js";
-import { replaceVariables } from "./variableInterpolation.js";
+import { buildTimestampVariables, replaceVariables } from "./variableInterpolation.js";
 export { replaceVariables } from "./variableInterpolation.js";
 import { getActionHandler } from "../actions/index.js";
 import { actionFailed } from "../actions/responses.js";
@@ -48,7 +48,8 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   ).map((match) => match?.slice(1).find(Boolean)?.trim() || "").find(Boolean) || "";
   const clantag = officialClanTag || parsedClanTag;
 
-  const unixNow = Math.floor(Date.now() / 1000);
+  const timestampVariables = buildTimestampVariables();
+  const unixNow = Number(timestampVariables["now.unix"]);
   const userCreated = user?.id ? snowflakeToUnix(user.id) : unixNow;
   const joinedAt = member?.joined_at ? Math.floor(new Date(member.joined_at).getTime() / 1000) : unixNow;
 
@@ -121,6 +122,7 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
     "now.R": `<t:${unixNow}:R>`,
     "now.relative": `<t:${unixNow}:R>`,
     "now.unix": unixNow,
+    ...timestampVariables,
   };
 
   // ── Modal Input Extraction ────────────────────────────────────────────────
