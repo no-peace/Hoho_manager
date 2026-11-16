@@ -8,8 +8,6 @@ export const NotFoundPage: React.FC = () => {
 
   return (
     <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#1D2230] text-[#F1F3F9] flex flex-col items-center justify-center p-4 sm:p-6 select-none">
-      {/* Ambient background glow */
-      /*<div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#818CF8]/10 blur-3xl" />*/}
       <div className="relative isolate overflow-hidden w-full max-w-md space-y-5 rounded-[12px] border border-[#272D3A] bg-[#161A23] p-6 text-center shadow-xl sm:p-8">
         <img
           src={HOHO_LOGO_URL}
