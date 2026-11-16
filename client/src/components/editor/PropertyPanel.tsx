@@ -26,6 +26,20 @@ export const PropertyPanel = () => {
 
   useEffect(() => {
     setActiveTab("properties");
+    if (!selection || selection.kind !== "component") return;
+    const frame = window.requestAnimationFrame(() => {
+      const panel = document.querySelector<HTMLElement>("[data-component-inspector-body]");
+      const field = panel?.querySelector<HTMLElement>(
+        "textarea:not([disabled]), input:not([disabled]):not([type=checkbox]):not([type=radio]), [contenteditable=true]",
+      );
+      if (!field) return;
+      field.focus({ preventScroll: true });
+      if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+        const end = field.value.length;
+        field.setSelectionRange(end, end);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [selection?.id]);
 
   useEffect(() => {
@@ -130,7 +144,7 @@ export const PropertyPanel = () => {
         )}
 
         {/* Inspector Body */}
-        <div className={UI_THEME_CONFIG.surfaces.inspectorBody}>
+        <div data-component-inspector-body className={UI_THEME_CONFIG.surfaces.inspectorBody}>
           {activeTab === "flow" && hasFlow ? (
             <FlowBuilder component={component} />
           ) : (
