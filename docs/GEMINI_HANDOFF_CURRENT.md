@@ -1219,3 +1219,60 @@ Run the full test, typecheck, and build commands against the implementation head
 - Post-implementation source guards were re-run against the branch and passed for preview event routing, Select Menu metadata, V2 quick-edit wiring, message-index selection preservation, FlowBuilder tokens, button transition tokens, coarse-pointer scroll gating, and login theme utilities.
 - GitHub Actions currently reports zero workflow runs/check-runs for the PR head; therefore CI has not executed or reported a result yet. Do not treat the authored regression tests as passing until the CI workflow runs.
 - Required pre-merge verification remains: `npm run build`, `npm run typecheck`, `npm test`, browser QA for desktop/mobile preview interactions and login layout, then Lighthouse Navigation/Snapshot/Timespan measurements.
+
+
+## V12 continuation — mobile Lighthouse and unit-system optimisation (2026-11-17)
+
+**Branch:** `feat/v12-ultimate-ux-implementation`  
+**PR:** [#44](https://github.com/no-peace/Hoho_manager/pull/44)  
+**Starting head for this continuation:** `0d186123d0dbec379198e0fa6d1f06d3cdc27973`
+
+### Lighthouse evidence supplied by the owner
+
+The latest local mobile Lighthouse Navigation report shows Performance 96 while Accessibility, Best Practices, and SEO are 100. Diagnostics supplied:
+- Critical request tree includes `/api/health` and `/api/auth/me`, each taking approximately 428–429 ms.
+- App stylesheet transfer is approximately 13.9 KiB and is reported as render-blocking.
+- The initial JS asset is approximately 75.6 KiB, with an estimated 29.9 KiB unused.
+- LCP element is a login description paragraph; element render delay is approximately 310 ms.
+- A preconnect candidate to `http://localhost:3001` is estimated to save approximately 150 ms.
+
+These are the owner's local Lighthouse measurements, not measurements reproduced by this continuation.
+
+### Changes implemented in this continuation
+
+1. **Auth bootstrap request reduction — `client/src/store/globalStore.ts`**
+   - Removed the redundant `/api/health` request from `fetchCurrentUser()`.
+   - Session resolution now awaits only `/api/auth/me`; it no longer waits for health/clock data in either success or failure paths.
+   - Kept the explicit `syncServerTime()` method separate for callers that genuinely need server-clock synchronization.
+   - Expected effect: removes one initial-navigation API request and its 428–429 ms dependency-tree entry. The auth request itself remains; no claim is made that its server latency has been reduced.
+
+2. **Mobile login render work — `client/src/components/layout/LoginScreen.tsx`**
+   - The decorative `ThreeHeroCanvas` is now mounted only on fine-pointer screens at 768px and wider, and only when reduced motion is not requested. The lazy module is therefore not requested by the mobile login route.
+   - Automatic showcase rotation is disabled on narrow screens and for reduced-motion users; the tabs remain manually interactive.
+   - Reduced the large blurred background effects on small screens and lowered card backdrop blur on mobile.
+   - Migrated the login screen's custom 10px/11px typography utilities to equivalent rem values.
+
+3. **Initial JavaScript chunking — `client/vite.config.ts`**
+   - Removed the forced `vendor-icons` manual chunk. The previous rule merged every Lucide icon imported by the lazy Studio route into one shared chunk that could be pulled into the public login route.
+   - Rollup is now allowed to split icon modules according to actual route usage. This is intended to reduce login-route unused JS; only the production bundle and Lighthouse artifact can confirm the result.
+
+4. **Measurement units**
+   - `client/src/config/uiThemeConfig.ts`: shared typography utilities now use equivalent rem sizes; the desktop inspector width was converted from 440px to 27.5rem.
+   - `client/src/styles/globals.css`: global field font sizes use rem.
+   - `client/index.html`: first-paint splash typography uses rem.
+   - V12-touched files migrated custom pixel typography utilities to equivalent rem values: `ContentTab.tsx`, `ComponentForms.tsx`, `DiscohookComponentsEditor.tsx`, `Header.tsx`, `Sidebar.tsx`, `StudioLayout.tsx`, `PropertyPanel.tsx`, `FlowBuilder.tsx`, `MessagePreview.tsx`, `ActionRowPreview.tsx`, and `SplitPane.tsx`.
+   - `DESIGN.md` now documents the unit policy: rem typography; percentage-based parent-relative sizing; vw only for true viewport-edge width; 100dvh for dynamic full-screen height; px for border thickness; and justified exceptions for breakpoints, canvas/protocol fidelity, and other CSS primitives.
+
+### Decisions / items intentionally not changed
+
+- The global stylesheet remains a normal render-blocking stylesheet. Converting it to asynchronous CSS delivery without a measured critical-CSS extraction could cause FOUC and CLS; the 13.9 KiB file should be reassessed after production build output is available.
+- The `localhost:3001` preconnect candidate was not added blindly. The current app uses a same-origin `/api` path behind the Vite preview proxy; preconnecting to a development-only origin would not be correct for production. Revisit only if the production architecture actually serves the API on a distinct origin.
+- No backend health or auth endpoint implementation was changed. The report alone does not establish whether the remaining `/api/auth/me` latency is server processing, cold start, or proxy overhead.
+- No claim of a 100 Performance score is made. Performance scores are lab measurements and must be re-run on the production preview build.
+
+### Verification status
+
+- GitHub accepted the source updates on the existing V12 branch.
+- GitHub Actions currently reports zero workflow runs for the latest branch head despite `.github/workflows/ci.yml` and `.github/workflows/lighthouse.yml` declaring pull-request triggers. Therefore typecheck, tests, production build, and Lighthouse have not yet been executed for these changes.
+- The local Desktop Commander connection was unavailable during this continuation (MCP endpoint returned 404), so local Node/Vite/Lighthouse execution could not be started from the connected desktop.
+- Required verification: run the PR CI and both mobile/desktop Lighthouse workflows; inspect the production bundle's chunk graph; compare mobile LCP, render delay, unused JS, and performance score against the supplied baseline. Do not merge until CI is green and the mobile Lighthouse regression check is reviewed.
