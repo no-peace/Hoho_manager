@@ -62,6 +62,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const [showRichPicker, setShowRichPicker] = useState(false);
   const pickerContainerRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">("top");
+  const [dropdownMaxHeight, setDropdownMaxHeight] = useState(260);
 
   // Autocomplete state
   const {
@@ -71,10 +72,34 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   } = useAutocompleteMenu();
 
   useEffect(() => {
-    if ((acType || showRichPicker) && textareaRef.current) {
-      const rect = textareaRef.current.getBoundingClientRect();
-      setDropdownPosition(rect.top < 430 ? "bottom" : "top");
-    }
+    if (!acType && !showRichPicker) return;
+
+    const updatePlacement = () => {
+      const anchor = textareaRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const margin = 12;
+      const spaceAbove = Math.max(0, rect.top - viewportTop - margin);
+      const spaceBelow = Math.max(0, viewportTop + viewportHeight - rect.bottom - margin);
+      const available = Math.max(spaceAbove, spaceBelow);
+      setDropdownPosition(spaceAbove > spaceBelow ? "top" : "bottom");
+      setDropdownMaxHeight(Math.max(48, Math.min(320, available - 8)));
+    };
+
+    updatePlacement();
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
+    window.visualViewport?.addEventListener("resize", updatePlacement);
+    window.visualViewport?.addEventListener("scroll", updatePlacement);
+    return () => {
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+      window.visualViewport?.removeEventListener("resize", updatePlacement);
+      window.visualViewport?.removeEventListener("scroll", updatePlacement);
+    };
   }, [acType, showRichPicker]);
 
   useEffect(() => {
@@ -903,6 +928,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
               onSelectIndex={setSelectedIndex}
               onApply={applyReplacement}
               dropdownPosition={dropdownPosition}
+              maxHeight={dropdownMaxHeight}
             />
           )
         )}
