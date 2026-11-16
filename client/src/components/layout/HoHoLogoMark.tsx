@@ -10,7 +10,7 @@ export const HoHoLogoMark: React.FC<{ className?: string; alt?: string }> = ({ c
     height={36}
     decoding="async"
     fetchPriority="high"
-    className={`${className} rounded-xl object-cover bg-[#1e1f22] border border-[#35373c] shadow-md shrink-0`}
+    className={`${className} object-contain shrink-0`}
   />
 );
 
