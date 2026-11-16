@@ -208,10 +208,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                 <p className="mt-2 text-xs text-[#A1A8B8]">{search ? "No matching tracked messages." : "No messages are being tracked."}</p>
               </div>
             ) : filteredTracked.map((item) => (
-              <a
+              <div
                 key={item.id}
                 className="flex min-h-[48px] items-start gap-2 rounded-[8px] border border-[#202531] bg-[#161A23] p-2.5 transition-colors hover:border-[#818CF8]/50 hover:bg-[#1D2230]"
-                title="Open tracked message in Discord"
               >
                 <Radio size={13} className="mt-0.5 shrink-0 text-[#34D399]" />
                 <span className="min-w-0 flex-1">
