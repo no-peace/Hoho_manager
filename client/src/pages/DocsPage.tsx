@@ -26,18 +26,18 @@ const DOC_ITEMS: DocItem[] = [
   // User & Member
   { tag: "{user.mention}", desc: "Pings/mentions the interacting user (<@id>)", example: "@Nexus42", category: "user" },
   { tag: "{user.name}", desc: "Server nickname, falling back to the account username", example: "Nexus", category: "user" },
-  { tag: "{user.tag}", desc: "Alias for the user's username", example: "nexus42", category: "user" },
+  { tag: "{user.tag}", desc: "Discord username/handle (not the global display name)", example: "nexus42", category: "user" },
   { tag: "{user.displayname}", desc: "Discord global display name, falling back to username", example: "Nexus", category: "user" },
   { tag: "{user.id}", desc: "Discord numeric Snowflake ID", example: "708504312862474282", category: "user" },
   { tag: "{user.avatar}", desc: "Direct CDN URL to the user's avatar image", example: "https://cdn.discordapp.com/...", category: "user" },
   { tag: "{user.roles}", desc: "Space-separated list of all role mentions the user has", example: "@Member @VIP", category: "user" },
-  { tag: "{user.clantag}", desc: "Official Discord primary-guild tag when the user's identity is enabled; does not require membership in the selected server", example: "HOHO", category: "user" },
+  { tag: "{user.clantag}", desc: "Official primary-guild tag when enabled; otherwise uses a bracketed tag from the interacting user's nickname or username", example: "HOHO", category: "user" },
   { tag: "{user.created}", desc: "Account creation date formatted in user's local timezone", example: "<t:1571875200:d>", category: "user" },
   { tag: "{user.created.relative}", desc: "Account age as a relative timestamp (e.g. 5 years ago)", example: "<t:1571875200:R>", category: "user" },
   { tag: "{user.joined}", desc: "Server join time as a relative timestamp", example: "<t:1655251200:R>", category: "user" },
   { tag: "{user.joined.date}", desc: "Server join date formatted in user's timezone", example: "<t:1655251200:d>", category: "user" },
   { tag: "{user.<id>.username}", desc: "Discord username of the specified account", example: "nexus42", category: "user" },
-  { tag: "{user.<id>.tag}", desc: "Alias for the specified account username", example: "nexus42", category: "user" },
+  { tag: "{user.<id>.tag}", desc: "Discord username/handle of the specified account (not its global display name)", example: "nexus42", category: "user" },
   { tag: "{user.<id>.displayname}", desc: "Global display name, falling back to username", example: "Nexus", category: "user" },
   { tag: "{user.<id>.globalname}", desc: "Alias for the global display name", example: "Nexus", category: "user" },
   { tag: "{user.<id>.profile}", desc: "Direct Discord profile URL", example: "https://discord.com/users/708504312862474282", category: "user" },
@@ -272,7 +272,7 @@ export const DocsPage = () => {
                   <tr key={item.tag} className="hover:bg-[#1D2230]/40 transition-colors">
                     <td className="px-5 py-3 font-mono">
                       <button type="button" onClick={() => void copyToClipboard(item.tag)} className={UI_THEME_CONFIG.surfaces.docsCopyButton} title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
-                        <span>{item.tag}</span>{copiedTag === item.tag ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+                        <span className="min-w-0 overflow-x-auto whitespace-nowrap">{item.tag}</span>{copiedTag === item.tag ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                       </button>
                     </td>
                     <td className="px-5 py-3 text-[#F1F3F9] leading-relaxed">{item.desc}</td>
