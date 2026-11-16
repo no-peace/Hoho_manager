@@ -585,7 +585,13 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(Array.isArray(json.exploits)).toBe(true);
-      expect(json.exploits.some((exploit: { title: string }) => exploit.title === "Delta")).toBe(false);
+      // Delta is part of the mocked public WEAO catalogue. Its matching private
+      // template must not be attached to the catalogue entry or exposed as a backup.
+      const delta = json.exploits.find((exploit: { title: string }) => exploit.title === "Delta");
+      expect(delta).toBeDefined();
+      expect(delta.hasBackupTemplate).toBe(false);
+      expect(delta.backupTemplateId).toBeNull();
+      expect(delta.backupTemplateName).toBeNull();
       expect(JSON.stringify(json)).not.toContain("PRIVATE TEMPLATE CONTENT");
     });
   });
