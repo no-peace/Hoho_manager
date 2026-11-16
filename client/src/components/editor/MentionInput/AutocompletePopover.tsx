@@ -10,6 +10,7 @@ export interface AutocompletePopoverProps {
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onApply: (item: AutocompleteItem) => void;
+  onClose?: () => void;
   maxHeight?: number;
   anchor?: HTMLElement | null;
 }
@@ -20,9 +21,11 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
   selectedIndex,
   onSelectIndex,
   onApply,
+  onClose,
   maxHeight = 260,
   anchor,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [floatingStyle, setFloatingStyle] = useState<CSSProperties>({});
 
@@ -55,10 +58,24 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
     optionRefs.current[selectedIndex]?.scrollIntoView?.({ block: "nearest" });
   }, [selectedIndex, items]);
 
+  useEffect(() => {
+    if (!onClose) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target) || anchor?.contains(target)) return;
+      onClose();
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [anchor, onClose]);
+
+
+
   if (items.length === 0) return null;
 
   return typeof document === "undefined" ? null : createPortal(
     <div
+      ref={containerRef}
       className="fixed rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150"
       style={floatingStyle}
     >
@@ -81,6 +98,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
               key={item.id}
               type="button"
               disabled={item.disabled}
+              onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => onSelectIndex(idx)}
               onClick={() => onApply(item)}
               className={`w-full text-left px-2 py-1.5 rounded-md text-xs flex items-center justify-between gap-2 transition-colors ${
