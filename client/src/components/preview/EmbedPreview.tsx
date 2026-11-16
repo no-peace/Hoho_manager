@@ -73,7 +73,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
         ? `https://cdn.discordapp.com/icons/${previewGuild.id}/${previewGuild.icon}.png`
         : "https://cdn.discordapp.com/embed/avatars/1.png";
     const map: Record<string, string> = {
-      "user.tag": username,
+      "user.username": username,
       "user.id": userId,
       "user.avatar": avatarUrl,
       "server.name": previewGuild?.name || "HoHo Server",
