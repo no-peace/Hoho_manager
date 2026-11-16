@@ -49,17 +49,17 @@ export const PropertyPanel = () => {
     <>
       {/* Mobile / Tablet Backdrop (< 1280px) */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm xl:hidden"
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm min-[1200px]:hidden"
         onClick={() => select(null)}
       />
 
       {/* Docked Right Inspector on Desktop (lg+) | Slide-Up Bottom Sheet on Mobile/Tablet (<lg) */}
       <aside
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82vh] flex-col rounded-t-2xl border-t border-[#26282d] bg-[#2b2d31] shadow-2xl xl:static xl:z-10 xl:max-h-none xl:w-[440px] xl:shrink-0 xl:rounded-none xl:border-t-0 xl:border-l xl:border-[#1e1f22] xl:shadow-none"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-2xl border-t border-[#26282d] bg-[#2b2d31] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[440px] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#1e1f22] min-[1200px]:shadow-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Pill */}
-        <div className="flex justify-center pt-2 pb-1 xl:hidden">
+        <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
           <div className="h-1 w-10 rounded-full bg-[#4e5058]" />
         </div>
 
