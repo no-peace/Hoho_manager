@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               height={32}
               decoding="async"
               fetchPriority="high"
-              className="h-8 w-8 rounded-lg object-cover bg-[#272D3A] border border-[#252B3A] shadow-sm group-hover:scale-105 transition-transform shrink-0"
+              className="h-8 w-8 object-contain group-hover:scale-105 transition-transform shrink-0"
             />
             <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
               HoHo Manager
