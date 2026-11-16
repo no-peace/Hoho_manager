@@ -1181,3 +1181,11 @@ Run the full test, typecheck, and build commands against the implementation head
 - Replaced legacy Discord-gray surfaces in `Header.tsx` and `Sidebar.tsx` with the studio surface hierarchy.
 - Updated `client/index.html` theme color to `#0B0D12` and body foreground/background utility classes.
 - Validation: all six files matched expected legacy patterns and source-level checks passed. Full test/typecheck/build verification remains pending.
+
+
+## Gemini V12 implementation — Batch 6 (2026-11-16)
+
+- `uiThemeConfig.ts`: removed `border-color` and `box-shadow` from the shared button base transition list, retaining transform, background, text color, and opacity transitions.
+- `editorSmoothScroll.ts`: skips Lenis initialization on coarse-pointer devices and leaves native momentum scrolling in place; desktop wheel smoothing remains enabled.
+- Removed the now-unused `useMessageStore` import from `ActionRowPreview.tsx` after centralizing preview component selection in `MessagePreview`.
+- Validation: source-level transition and pointer-gating guards passed. Lighthouse and runtime verification remain pending.
