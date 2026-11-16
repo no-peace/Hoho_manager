@@ -66,7 +66,6 @@ export const App: React.FC = () => {
           });
         }
       } catch {
-        // Custom Bot mode fallback
       }
     })();
   }, [fetchCurrentUser, setConfigModalOpen]);
