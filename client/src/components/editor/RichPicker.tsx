@@ -136,7 +136,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
       const placement = calculateFloatingPosition(
         { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
         { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
-        { menuWidth: 384, maxMenuHeight: 420, minMenuHeight: 120, margin: 12, gap: 8 },
+        { menuWidth: 384, maxMenuHeight: 420, margin: 12, gap: 8 },
       );
       setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
     };
