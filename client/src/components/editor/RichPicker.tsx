@@ -186,9 +186,9 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   // Click outside listener
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target) || anchor?.contains(target)) return;
+      onClose();
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
