@@ -98,7 +98,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
   return (
     <>
       <header className={UI_THEME_CONFIG.surfaces.studioHeaderBar}>
-        {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
             <a
@@ -129,7 +128,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           </a>
         </div>
 
-        {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
           <div className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-[#272D3A] bg-[#161A23] px-2 py-1.5 text-[10px] font-medium text-[#A1A8B8]">
             <span className={`h-1.5 w-1.5 rounded-full ${hasDefaultBotAccess ? "bg-[#34D399]" : "bg-[#FBBF24]"}`} aria-hidden="true" />
@@ -193,7 +191,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           )}
         </div>
 
-        {/* Right: Staff Access + Authenticated User Profile + Docs */}
         <div className="flex items-center justify-self-end gap-2 min-w-0">
           {isAdmin && (
             <button
