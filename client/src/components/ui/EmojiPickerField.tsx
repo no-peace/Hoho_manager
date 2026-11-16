@@ -119,10 +119,6 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
     };
   }, [acOpen, acQuery]);
 
-  useEffect(() => {
-    selectedOptionRef.current?.scrollIntoView?.({ block: "nearest" });
-  }, [selectedIndex, filteredEmojis]);
-
   const filteredEmojis = useMemo(() => {
     if (!acQuery) {
       return UNICODE_EMOJI_LIST.slice(0, 10).map((u) => ({
@@ -170,6 +166,10 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
 
     return results;
   }, [acQuery, guildEmojis]);
+
+  useEffect(() => {
+    selectedOptionRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex, filteredEmojis]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
