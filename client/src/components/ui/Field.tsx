@@ -11,7 +11,8 @@ import { calculateFloatingPosition } from "../../utils/floatingPosition";
 export const VARIABLES = [
   { group: "User / Clicker" },
   { tag: "{user.mention}", label: "@ada", desc: "Mentions the user who clicked" },
-  { tag: "{user.name}", label: "ada", desc: "The user's exact username" },
+  { tag: "{user.name}", label: "ada", desc: "The user's server nickname, falling back to username" },
+  { tag: "{user.username}", label: "ada_123", desc: "The user's Discord username (unique handle)" },
   { tag: "{user.displayname}", label: "Ada L.", desc: "Server nickname or global name" },
   { tag: "{user.id}", label: "123456789", desc: "The user's numeric ID" },
   { tag: "{user.avatar}", label: "https://...", desc: "Link to user's profile picture" },
