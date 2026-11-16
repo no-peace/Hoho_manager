@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import type { AutocompleteItem } from "../../../utils/mentionParser";
+import { calculateFloatingPosition } from "../../../utils/floatingPosition";
 
 export interface AutocompletePopoverProps {
   headerLabel: React.ReactNode;
@@ -7,8 +10,8 @@ export interface AutocompletePopoverProps {
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onApply: (item: AutocompleteItem) => void;
-  dropdownPosition: "top" | "bottom";
   maxHeight?: number;
+  anchor?: HTMLElement | null;
 }
 
 export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
@@ -17,10 +20,36 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
   selectedIndex,
   onSelectIndex,
   onApply,
-  dropdownPosition,
   maxHeight = 260,
+  anchor,
 }) => {
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [floatingStyle, setFloatingStyle] = useState<CSSProperties>({});
+
+  useEffect(() => {
+    if (!anchor) return;
+    const updatePosition = () => {
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const placement = calculateFloatingPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
+        { menuWidth: rect.width, maxMenuHeight: maxHeight, minMenuHeight: 64, margin: 12, gap: 6 },
+      );
+      setFloatingStyle({ position: "fixed", top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight, zIndex: 60 });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+    };
+  }, [anchor, maxHeight]);
 
   useEffect(() => {
     optionRefs.current[selectedIndex]?.scrollIntoView?.({ block: "nearest" });
@@ -28,12 +57,10 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
 
   if (items.length === 0) return null;
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
     <div
-      className={`absolute left-0 right-0 rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150 ${
-        dropdownPosition === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
-      }`}
-      style={{ maxHeight }}
+      className="fixed rounded-lg bg-[#2b2d31] border border-[#26282d] shadow-2xl overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150"
+      style={floatingStyle}
     >
       <div className="px-3 py-1.5 bg-[#18191c] text-[10px] font-bold uppercase tracking-wider text-[#949ba4] border-b border-[#26282d] flex items-center justify-between">
         {headerLabel}
@@ -42,7 +69,7 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
         </span>
       </div>
 
-      <div role="listbox" aria-activedescendant={items[selectedIndex] ? `autocomplete-option-${items[selectedIndex].id}` : undefined} className="overflow-y-auto p-1 space-y-0.5 custom-scrollbar" style={{ maxHeight: Math.max(40, maxHeight - 38) }}>
+      <div role="listbox" aria-activedescendant={items[selectedIndex] ? `autocomplete-option-${items[selectedIndex].id}` : undefined} className="overflow-y-auto p-1 space-y-0.5 custom-scrollbar" style={{ maxHeight: Math.max(40, Number(floatingStyle.maxHeight ?? maxHeight) - 38) }}>
         {items.map((item, idx) => {
           const isSelected = idx === selectedIndex;
           return (
@@ -81,7 +108,8 @@ export const AutocompletePopover: React.FC<AutocompletePopoverProps> = ({
           );
         })}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
