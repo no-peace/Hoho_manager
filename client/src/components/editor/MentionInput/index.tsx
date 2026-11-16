@@ -396,7 +396,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         ];
       }
 
-      return weaoExploits
+      const matches = weaoExploits
         .filter((exp) => !q || exp.title.toLowerCase().includes(q))
         .slice(0, 25)
         .map((exp) => {
@@ -415,6 +415,18 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             keepOpen: true,
           };
         });
+
+      if (q && matches.length === 0) {
+        return [{
+          id: `weao_manual_${q}`,
+          title: `Use exploit name: ${acQuery.trim()}`,
+          subtitle: "No catalogue match — use this name manually",
+          icon: <Code size={13} className="text-[#57f287] shrink-0" />,
+          replacement: `{exploit.${acQuery.trim()}.`,
+          keepOpen: true,
+        }];
+      }
+      return matches;
     }
 
     // STAGE 2: WEAO Exploit Property/Field Picker (`{exploit.<Name>.<Field>}`)
