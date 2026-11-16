@@ -750,7 +750,7 @@ describe("Cross-Modal Integration & Responsive Layout Verification", () => {
     const filePath = path.resolve(__dirname, "../components/layout/SplitPane.tsx");
     const source = fs.readFileSync(filePath, "utf-8");
     expect(source).toContain("window.innerWidth >= 1200");
-    expect(source).toContain("window.innerWidth >= 1200");
+    expect(source).toContain("const onResize = () => setIsDesktop(window.innerWidth >= 1200)");
   });
 });
 
