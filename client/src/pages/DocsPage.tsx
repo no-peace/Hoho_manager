@@ -244,7 +244,7 @@ export const DocsPage = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-[#949ba4]">
               Available Variables ({filteredItems.length})
             </span>
-            <span className="text-[11px] text-[#949ba4]">Click a variable tag to copy it</span>
+            <span className="text-[11px] text-[#949ba4]">Copy a variable tag with the copy icon</span>
           </div>
 
           <div className="hidden overflow-x-auto sm:block">
@@ -287,7 +287,8 @@ export const DocsPage = () => {
               </article>
             ))}
             {filteredItems.length === 0 && <p className="py-8 text-center text-xs text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</p>}
-          </div>/div>
+          </div>
+          </div>
         </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
