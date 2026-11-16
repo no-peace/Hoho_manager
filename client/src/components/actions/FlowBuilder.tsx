@@ -112,27 +112,27 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
 
   return (
     <div className="space-y-3">
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-muted">
-        <Wand2 size={12} className="text-blurple" />
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#A1A8B8]">
+        <Wand2 size={12} className="text-[#818CF8]" />
         Flow steps run top to bottom when this is clicked
       </p>
 
       <StepList steps={steps} onChange={commit} depth={0} />
 
-      <p className="break-all font-mono text-[10px] text-ink-faint">
+      <p className="break-all font-mono text-[10px] text-[#6F788A]">
         custom_id: {customId || ""} ({customId.length}/100)
       </p>
 
       {(steps.length > 1 || hasBranches) && (
-        <p className="rounded bg-chrome px-2 py-1.5 text-[11px] text-ink-faint">
+        <p className="rounded bg-[#10131A] px-2 py-1.5 text-[11px] text-[#6F788A]">
           Multi-step and branching flows run on the server. Save this as a template, or send it in{" "}
-          <span className="text-ink">bot token</span> mode so the steps are registered before the
+          <span className="text-[#F1F3F9]">bot token</span> mode so the steps are registered before the
           message goes out.
         </p>
       )}
 
       {warning && (
-        <p className="flex items-start gap-1.5 rounded bg-warning/10 px-2 py-1.5 text-[11px] text-warning">
+        <p className="flex items-start gap-1.5 rounded bg-[#FBBF24]/10 px-2 py-1.5 text-[11px] text-[#FBBF24]">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />
           {warning}
         </p>
