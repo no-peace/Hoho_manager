@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Code2,
   Terminal,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface DocItem {
@@ -115,10 +117,14 @@ export const DocsPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
 
-  const copyToClipboard = (tag: string) => {
-    void navigator.clipboard.writeText(tag);
-    setCopiedTag(tag);
-    setTimeout(() => setCopiedTag(null), 1500);
+  const copyToClipboard = async (tag: string) => {
+    try {
+      await navigator.clipboard.writeText(tag);
+      setCopiedTag(tag);
+      window.setTimeout(() => setCopiedTag((current) => current === tag ? null : current), 1500);
+    } catch {
+      setCopiedTag(null);
+    }
   };
 
   const filteredItems = useMemo(() => {
@@ -241,45 +247,47 @@ export const DocsPage = () => {
             <span className="text-[11px] text-[#949ba4]">Click a variable tag to copy it</span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-[#949ba4] border-b border-[#1e1f22] bg-[#232428]">
                   <th className="px-5 py-3 font-semibold w-[28%]">Variable Tag</th>
                   <th className="px-5 py-3 font-semibold">Description</th>
                   <th className="px-5 py-3 font-semibold w-[24%]">Output Example</th>
-                                  </tr>
+                </tr>
               </thead>
               <tbody className="text-xs divide-y divide-[#1e1f22]">
                 {filteredItems.map((item) => (
                   <tr key={item.tag} className="hover:bg-[#1e1f22]/40 transition-colors">
                     <td className="px-5 py-3 font-mono">
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(item.tag)}
-                        className="text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-0.5 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out text-left"
-                        title="Click to copy"
-                      >
-                        <span>{item.tag}</span>
-                        <kbd className="ml-2 hidden rounded border border-[#35373c] bg-[#111214] px-1 py-0.5 font-mono text-[9px] font-medium text-[#949ba4] xl:inline">{copiedTag === item.tag ? "Copied" : "Click to copy"}</kbd>
+                      <button type="button" onClick={() => void copyToClipboard(item.tag)} className="inline-flex items-center gap-2 text-left text-[#949cf7] hover:text-white bg-[#1e1f22] px-2 py-1 rounded font-bold border border-[#5865f2]/30 hover:border-[#5865f2] transition-colors" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
+                        <span>{item.tag}</span>{copiedTag === item.tag ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                       </button>
                     </td>
                     <td className="px-5 py-3 text-[#dbdee1] leading-relaxed">{item.desc}</td>
-                    <td className="px-5 py-3 font-mono text-[#949ba4] truncate max-w-[200px]">
-                      {item.example}
-                    </td>
+                    <td className="px-5 py-3 font-mono text-[#949ba4] break-all max-w-[200px]">{item.example}</td>
                   </tr>
                 ))}
-                {filteredItems.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-5 py-8 text-center text-[#949ba4]">
-                      No variables matching &ldquo;{search}&rdquo; in this category.
-                    </td>
-                  </tr>
-                )}
+                {filteredItems.length === 0 && <tr><td colSpan={3} className="px-5 py-8 text-center text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</td></tr>}
               </tbody>
             </table>
           </div>
+
+          <div className="space-y-2 p-3 sm:hidden">
+            {filteredItems.map((item) => (
+              <article key={item.tag} className="rounded-lg border border-[#35373c] bg-[#232428] p-3">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <code className="min-w-0 break-all text-xs font-semibold text-[#b9bcf8]">{item.tag}</code>
+                  <button type="button" onClick={() => void copyToClipboard(item.tag)} className="shrink-0 rounded-md border border-[#5865f2]/40 bg-[#1e1f22] p-2 text-[#b9bcf8] hover:bg-[#35373c]" title={copiedTag === item.tag ? "Copied" : "Copy variable"} aria-label={copiedTag === item.tag ? `Copied ${item.tag}` : `Copy ${item.tag}`}>
+                    {copiedTag === item.tag ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-[#dbdee1]">{item.desc}</p>
+                <p className="mt-2 break-all rounded bg-[#18191c] p-2 font-mono text-[11px] text-[#949ba4]">{item.example}</p>
+              </article>
+            ))}
+            {filteredItems.length === 0 && <p className="py-8 text-center text-xs text-[#949ba4]">No variables matching &ldquo;{search}&rdquo; in this category.</p>}
+          </div>/div>
         </SpotlightCard>
 
         {/* Custom Executor Configuration Guide */}
