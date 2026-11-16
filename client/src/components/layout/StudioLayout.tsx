@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Edit3, Eye, Plus, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { Header } from "./Header";
@@ -12,6 +12,7 @@ import { useTemplateStore } from "../../store/templateStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
+import { initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
@@ -19,6 +20,22 @@ const PropertyPanel = React.lazy(() =>
 
 export const StudioLayout: React.FC = () => {
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
+  const editorScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wrapper = editorScrollRef.current;
+    if (!wrapper) return;
+    return initializeEditorLenis(wrapper);
+  }, []);
+
+  const handlePreviewMessageSelect = (index: number) => {
+    if (window.matchMedia("(max-width: 1199px)").matches) {
+      setMobileView("editor");
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index)));
+      return;
+    }
+    scrollToMessageEditor(index);
+  };
 
   const currentUser = useGlobalStore((state) => state.currentUser);
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
@@ -95,7 +112,8 @@ export const StudioLayout: React.FC = () => {
         <SplitPane
           left={
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[#2b2d31]">
-              <div className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar sm:p-4">
+              <div ref={editorScrollRef} data-editor-scroll-container className="flex-1 overflow-y-auto p-3 custom-scrollbar sm:p-4">
+              <div data-editor-scroll-content className="space-y-3">
                 {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
                 <CultMorphSurface
                   triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
@@ -118,7 +136,7 @@ export const StudioLayout: React.FC = () => {
               </div>
             </div>
           }
-          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview /></div>}
+          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} /></div>}
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
           onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
           className="min-h-0 min-w-0 flex-1"
