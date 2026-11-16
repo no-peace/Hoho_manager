@@ -5,7 +5,7 @@
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
 **Latest autocomplete-fix application commit:** `0e75bfbe43babf410b4cadbddb791848ded7a12f`  
-**Latest handoff update commit:** `783329cca58f8049310d1054f2dd3434686a267c`  
+**Handoff reconciliation commits:** `783329cca58f8049310d1054f2dd3434686a267c` (source/plan audit), `6a7ad8a178c07daf89738ad420ebf18858235b33` (audit-scope clarification)  
 **Audited source snapshot:** `c35d762b5862046ae95394f17ffafcdd1989917e` (the handoff-only update follows this source snapshot)  
 **Current branch:** `main` (use the live GitHub commit history as the authoritative head)  
 **Repository tree:** 304 tracked files in the 2026-11-16 repository-wide source-tree audit (210 application source files; 47 Vitest test files)  
