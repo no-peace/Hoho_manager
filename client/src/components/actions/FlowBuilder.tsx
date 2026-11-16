@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Wand2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Wand2 } from "lucide-react";
+import { ComponentType } from "@dmb/shared";
 import type { ComponentNode, FlowStep } from "@dmb/shared";
 import { buildCustomId, parseCustomId } from "@dmb/shared";
 import { useActionStore } from "../../store/actionStore";
@@ -101,6 +102,8 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
 
   // Branch steps are the only thing that forces server-side execution for this
   // component, so the note below keys off them rather than step count.
+  const triggerLabel = component.type === ComponentType.Button ? "Button interaction" : "Select menu interaction";
+
   const hasBranches = steps.some((step) => {
     if (step.type !== "check") return false;
     const branchLength = (key: "then" | "else"): number => {
@@ -112,27 +115,37 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
 
   return (
     <div className="space-y-3">
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#A1A8B8]">
-        <Wand2 size={12} className="text-[#818CF8]" />
-        Attach this flow to a Button or Select Menu to run automated steps when a user interacts in Discord.
-      </p>
+      <div className="rounded-[10px] border border-[#818CF8]/35 bg-[#161A23] p-3.5">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="rounded-md border border-[#A78BFA]/25 bg-[#A78BFA]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wide text-[#A78BFA]">TRIGGER</span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#34D399]"><CheckCircle2 size={11} /> Auto-saved</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Wand2 size={16} className="mt-0.5 shrink-0 text-[#818CF8]" />
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xs font-semibold text-[#F1F3F9]">{asText(component.label) || triggerLabel}</h3>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-[#A1A8B8]">Runs when a user interacts with this {triggerLabel.toLowerCase()} in Discord.</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#202531] pt-2">
+          <span className="text-[10px] text-[#6F788A]">Trigger custom ID</span>
+          <code className="min-w-0 truncate font-mono text-[10px] text-[#A5B4FC]" title={customId}>{customId || "Generated when the first step is added"}</code>
+        </div>
+        <p className="mt-1 text-right font-mono text-[9px] text-[#6F788A]">{customId.length}/100 characters</p>
+      </div>
 
       <StepList steps={steps} onChange={commit} depth={0} />
 
-      <p className="break-all font-mono text-[10px] text-[#6F788A]">
-        custom_id: {customId || ""} ({customId.length}/100)
-      </p>
-
       {(steps.length > 1 || hasBranches) && (
-        <p className="rounded bg-[#10131A] px-2 py-1.5 text-[11px] text-[#F1F3F9]-faint">
+        <p className="rounded bg-[#10131A] px-2 py-1.5 text-[11px] text-[#6F788A]">
           Multi-step and branching flows run on the server. Save this as a template, or send it in{" "}
-          <span className="text-ink">bot token</span> mode so the steps are registered before the
+          <span className="text-[#F1F3F9]">bot token</span> mode so the steps are registered before the
           message goes out.
         </p>
       )}
 
       {warning && (
-        <p className="flex items-start gap-1.5 rounded bg-warning/10 px-2 py-1.5 text-[11px] text-warning">
+        <p className="flex items-start gap-1.5 rounded bg-[#FBBF24]/10 px-2 py-1.5 text-[11px] text-[#FBBF24]">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />
           {warning}
         </p>

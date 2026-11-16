@@ -1,6 +1,8 @@
 import { Copy, Trash2, X, Sliders, Workflow } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
+import { MousePointerClick, Layers, Hash } from "lucide-react";
+import { useActionStore } from "../../store/actionStore";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";
 import { COMPONENT_FORMS } from "./ComponentForms";
@@ -14,7 +16,7 @@ type PanelTab = "properties" | "flow";
 export const PropertyPanel = () => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
-  const components = useMessageStore((state) => state.data.components);
+  const messageData = useMessageStore((state) => state.data);\n  const components = messageData.components;\n  const flows = useActionStore((state) => state.flows);
   const select = useMessageStore((state) => state.select);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
@@ -32,13 +34,49 @@ export const PropertyPanel = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [select]);
 
-  if (!selection || selection.kind !== "component") return null;
+  const attachedActions = components.filter((item) => Boolean(item.custom_id && flows[item.custom_id])).length;
+  const stats = [
+    { label: "Characters", value: messageData.content?.length ?? 0, icon: Hash },
+    { label: "Embeds", value: messageData.embeds?.length ?? 0, icon: Layers },
+    { label: "V2 Blocks", value: components.length, icon: Layers },
+    { label: "Attached Actions", value: attachedActions, icon: Workflow },
+  ];
+
+  const emptyInspector = (
+    <aside className="hidden min-[1200px]:flex min-w-0 w-[440px] shrink-0 flex-col border-l border-[#272D3A] bg-[#161A23]">
+      <div className="border-b border-[#202531] bg-[#10131A] px-4 py-3">
+        <span className="text-[11px] font-medium text-[#A1A8B8]">INSPECTOR</span>
+        <h2 className="mt-0.5 text-[15px] font-semibold text-[#F1F3F9]">No selection</h2>
+      </div>
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="w-full max-w-sm rounded-[10px] border border-dashed border-[#272D3A] bg-[#161A23]/50 p-5 text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#818CF8]/10 text-[#A5B4FC]">
+            <MousePointerClick size={18} />
+          </div>
+          <h3 className="mt-3 text-sm font-semibold text-[#F1F3F9]">Select a component</h3>
+          <p className="mt-1 text-xs leading-relaxed text-[#A1A8B8]">
+            Click a block in the editor or live Discord preview to inspect and edit its properties here.
+          </p>
+          <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+            {stats.map(({ label, value, icon: Icon }) => (
+              <div key={label} className="rounded-[8px] border border-[#272D3A] bg-[#1D2230] p-2.5">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#6F788A]"><Icon size={11} />{label}</div>
+                <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-[#F1F3F9]">{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+
+  if (!selection || selection.kind !== "component") return emptyInspector;
 
   const component = findComponent(components, selection.id);
-  if (!component) return null;
+  if (!component) return emptyInspector;
 
   const Form = COMPONENT_FORMS[component.type];
-  if (!Form) return null;
+  if (!Form) return emptyInspector;
 
   const componentId = (component._id || selection.id) as string;
   const isLinkButton =
@@ -65,7 +103,7 @@ export const PropertyPanel = () => {
         </div>
 
         {/* Inspector Header */}
-        <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
+        <div className={`${UI_THEME_CONFIG.surfaces.inspectorHeader} sticky top-0 z-10`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] font-medium text-[#A1A8B8] block">
               Component Inspector
