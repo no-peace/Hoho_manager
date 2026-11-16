@@ -95,7 +95,7 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
       const placement = calculateFloatingPosition(
         { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
         { width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight, offsetTop: viewport?.offsetTop },
-        { menuWidth: 256, maxMenuHeight: 240, minMenuHeight: 72 },
+        { menuWidth: 256, maxMenuHeight: 240 },
       );
       setAutocompleteStyle({
         position: "fixed",
