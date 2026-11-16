@@ -114,7 +114,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
     <div className="space-y-3">
       <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-muted">
         <Wand2 size={12} className="text-blurple" />
-        Flow steps run top to bottom when this is clicked
+        Attach this flow to a Button or Select Menu to run automated steps when a user interacts in Discord.
       </p>
 
       <StepList steps={steps} onChange={commit} depth={0} />

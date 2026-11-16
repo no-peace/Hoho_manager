@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           {isSubRoute && (
             <a
               href="/"
-              className="flex items-center gap-1 text-xs font-semibold text-[#949ba4] hover:text-white bg-[#2b2d31] hover:bg-[#35373c] border border-[#35373c] px-2 py-1 rounded transition-colors mr-1"
+              className="flex items-center gap-1 text-xs font-semibold text-[#A1A8B8] hover:text-white bg-[#161A23] hover:bg-[#252B3A] border border-[#252B3A] px-2 py-1 rounded transition-colors mr-1"
               title="Return to Dashboard"
             >
               <ArrowLeft size={13} />
@@ -121,9 +121,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               height={32}
               decoding="async"
               fetchPriority="high"
-              className="h-8 w-8 rounded-lg object-cover bg-[#1e1f22] border border-[#35373c] shadow-sm group-hover:scale-105 transition-transform shrink-0"
+              className="h-8 w-8 rounded-lg object-cover bg-[#1D2230] border border-[#252B3A] shadow-sm group-hover:scale-105 transition-transform shrink-0"
             />
-            <h1 className="text-[15px] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
+            <h1 className="text-[14px] font-semibold text-[#F1F3F9] tracking-tight mr-1 hidden md:inline m-0">
               HoHo Manager
             </h1>
           </a>
@@ -131,6 +131,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
+          <div className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-[#272D3A] bg-[#161A23] px-2 py-1.5 text-[10px] font-medium text-[#A1A8B8]">
+            <span className={`h-1.5 w-1.5 rounded-full ${hasDefaultBotAccess ? "bg-[#34D399]" : "bg-[#FBBF24]"}`} aria-hidden="true" />
+            {hasDefaultBotAccess ? "Bot access granted" : "Bot access required"}
+          </div>
+
           {hasDefaultBotAccess && (
             <div className="w-[104px] sm:w-32 lg:w-48 min-w-0 relative shrink-0">
               <SearchableDiscordSelect
@@ -142,25 +147,25 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             </div>
           )}
 
-          <div className="inline-flex items-center gap-0 sm:gap-1 rounded-lg bg-[#111214] p-0.5 sm:p-1 border border-[#26282d] shrink-0">
+          <div className="inline-flex items-center gap-0.5 rounded-[8px] border border-[#272D3A] bg-[#10131A] p-1 shrink-0">
             {onOpenBackups && (
-              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1 sm:px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1 sm:px-2 py-1 text-xs font-semibold text-[#F1F3F9] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#252B3A] active:scale-[0.97]">
                 <Archive size={14} /><span className="hidden xl:inline">Backups</span>
               </button>
             )}
             {onOpenJson && (
-              <button type="button" onClick={onOpenJson} title="Import or export JSON" aria-label="Import or export JSON" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#dbdee1] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#35373c] active:scale-[0.97]">
+              <button type="button" onClick={onOpenJson} title="Import or export JSON" aria-label="Import or export JSON" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-[#F1F3F9] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#252B3A] active:scale-[0.97]">
                 <FileJson size={14} /><span className="hidden xl:inline">JSON</span>
               </button>
             )}
             {onClearAll && (
-              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-md border border-transparent bg-transparent p-1 sm:p-1.5 text-[#f28b8b] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#da373c]/15 active:scale-[0.97]">
+              <button type="button" onClick={onClearAll} title="Clear all messages" aria-label="Clear all messages" className="rounded-md border border-transparent bg-transparent p-1 sm:p-1.5 text-[#F87171] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#F87171]/15 active:scale-[0.97]">
                 <Trash2 size={14} />
               </button>
             )}
             {onOpenSend && (
-              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-md border border-[#248046] bg-[#248046] px-1 sm:px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
-                <Send size={14} />
+              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="inline-flex h-8 items-center gap-1.5 rounded-[7px] border border-[#818CF8]/70 bg-[#818CF8] px-2.5 text-[#0B0D12] text-xs font-semibold transition-colors hover:bg-[#6366F1] active:bg-[#4F46E5]">
+                <Send size={14} /><span className="hidden xl:inline">Send</span>
               </button>
             )}
           </div>
@@ -169,20 +174,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Head Admin Settings"
             >
-              <Settings size={14} className="text-[#949ba4]" />
+              <Settings size={14} className="text-[#A1A8B8]" />
               <span className="hidden md:inline">Settings</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              className="text-xs flex items-center gap-1.5 font-semibold text-[#dbdee1] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="text-xs flex items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Bot Access status"
             >
-              <KeyRound size={14} className="text-[#f0b232]" />
+              <KeyRound size={14} className="text-[#FBBF24]" />
               <span className="hidden md:inline">Bot Access</span>
             </button>
           )}
@@ -194,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             <button
               type="button"
               onClick={() => setAccessOpen(true)}
-              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#f0b232] hover:text-[#f0b232]/80 border border-[#f0b232]/30 bg-[#f0b232]/10 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+              className="hidden sm:flex text-xs items-center gap-1.5 font-semibold text-[#FBBF24] hover:text-[#FBBF24]/80 border border-[#FBBF24]/30 bg-[#FBBF24]/10 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
               title="Staff Access Controls"
             >
               <Shield size={14} />
@@ -207,7 +212,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 bg-[#2b2d31] hover:bg-[#35373c] active:scale-[0.98] border border-[#35373c] rounded-full pl-1 pr-2.5 py-1 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
+                className="flex items-center gap-2 bg-[#161A23] hover:bg-[#252B3A] active:scale-[0.98] border border-[#252B3A] rounded-full pl-1 pr-2.5 py-1 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none"
                 title="Account & Session Info"
               >
                 <img
@@ -216,41 +221,41 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                   width={24}
                   height={24}
                   decoding="async"
-                  className="h-6 w-6 rounded-full object-cover bg-[#5865f2]"
+                  className="h-6 w-6 rounded-full object-cover bg-[#818CF8]"
                 />
-                <span className="text-xs font-semibold text-[#f2f3f5] max-w-[110px] truncate hidden sm:inline">
+                <span className="text-xs font-semibold text-[#F1F3F9] max-w-[110px] truncate hidden sm:inline">
                   {currentUser.global_name || currentUser.username}
                 </span>
                 <span
                   className={`h-2 w-2 rounded-full ${
-                    hasDefaultBotAccess ? "bg-[#23a55a]" : "bg-[#f0b232]"
+                    hasDefaultBotAccess ? "bg-[#34D399]" : "bg-[#FBBF24]"
                   }`}
                 />
-                <ChevronDown size={12} className="text-[#949ba4]" />
+                <ChevronDown size={12} className="text-[#A1A8B8]" />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#111214] border border-[#2b2d31] shadow-2xl p-3 z-50 text-xs space-y-2.5">
-                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#2b2d31]">
+                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#10131A] border border-[#161A23] shadow-2xl p-3 z-50 text-xs space-y-2.5">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#161A23]">
                     <img
                       src={currentUser.avatarUrl || getDiscordAvatarUrl(currentUser, 64)}
                       alt={currentUser.username}
-                      className="h-10 w-10 rounded-full object-cover bg-[#5865f2] shrink-0"
+                      className="h-10 w-10 rounded-full object-cover bg-[#818CF8] shrink-0"
                     />
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-white truncate text-sm">
                         {currentUser.global_name || currentUser.username}
                       </p>
-                      <p className="text-[11px] text-[#949ba4] truncate">
+                      <p className="text-[11px] text-[#A1A8B8] truncate">
                         @{currentUser.username}
                       </p>
                       <span
                         className={`inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
                           isAdmin
-                            ? "bg-[#f0b232]/15 text-[#f0b232] border border-[#f0b232]/30"
+                            ? "bg-[#FBBF24]/15 text-[#FBBF24] border border-[#FBBF24]/30"
                             : hasDefaultBotAccess
-                              ? "bg-[#23a55a]/15 text-[#57f287] border border-[#23a55a]/30"
-                              : "bg-[#5865f2]/15 text-[#dee0fc] border border-[#5865f2]/30"
+                              ? "bg-[#34D399]/15 text-[#34D399] border border-[#34D399]/30"
+                              : "bg-[#818CF8]/15 text-[#E0E7FF] border border-[#818CF8]/30"
                         }`}
                       >
                         {isAdmin
@@ -262,18 +267,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-[#1e1f22] px-2.5 py-1.5 rounded-lg border border-[#2b2d31]">
-                    <span className="text-[11px] text-[#949ba4]">Discord ID:</span>
+                  <div className="flex items-center justify-between bg-[#1D2230] px-2.5 py-1.5 rounded-lg border border-[#161A23]">
+                    <span className="text-[11px] text-[#A1A8B8]">Discord ID:</span>
                     <button
                       type="button"
                       onClick={() => handleCopyId(currentUser.id)}
-                      className="flex items-center gap-1 font-mono text-[11px] text-[#dbdee1] hover:text-white"
+                      className="flex items-center gap-1 font-mono text-[11px] text-[#F1F3F9] hover:text-white"
                     >
                       <span>{currentUser.id}</span>
                       <AnimatedMorphIcon
                         active={copiedId}
-                        activeIcon={<Check size={12} className="text-[#57f287]" />}
-                        inactiveIcon={<Copy size={12} className="text-[#949ba4]" />}
+                        activeIcon={<Check size={12} className="text-[#34D399]" />}
+                        inactiveIcon={<Copy size={12} className="text-[#A1A8B8]" />}
                       />
                     </button>
                   </div>
@@ -285,17 +290,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                         setUserMenuOpen(false);
                         setConfigModalOpen(true);
                       }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                     >
-                      <KeyRound size={14} className="text-[#f0b232]" />
+                      <KeyRound size={14} className="text-[#FBBF24]" />
                       <span>Bot Access</span>
                     </button>
-                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors">
-                      <BookOpen size={14} className="text-[#949cf7]" />
+                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                      <BookOpen size={14} className="text-[#A78BFA]" />
                       <span>Documentation</span>
                     </a>
-                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors">
-                      <Shield size={14} className="text-[#949ba4]" />
+                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="sm:hidden w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                      <Shield size={14} className="text-[#A1A8B8]" />
                       <span>Privacy</span>
                     </a>
 
@@ -307,9 +312,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                             setUserMenuOpen(false);
                             setAccessOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                         >
-                          <Shield size={14} className="text-[#949ba4]" />
+                          <Shield size={14} className="text-[#A1A8B8]" />
                           <span>Staff Access</span>
                         </button>
                         <button
@@ -318,23 +323,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                             setUserMenuOpen(false);
                             setSettingsOpen(true);
                           }}
-                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#2b2d31] flex items-center gap-2 text-[#dbdee1] transition-colors"
+                          className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors"
                         >
-                          <Settings size={14} className="text-[#949ba4]" />
+                          <Settings size={14} className="text-[#A1A8B8]" />
                           <span>Head Admin Settings</span>
                         </button>
                       </>
                     )}
                   </div>
 
-                  <div className="border-t border-[#2b2d31] pt-2">
+                  <div className="border-t border-[#161A23] pt-2">
                     <button
                       type="button"
                       onClick={async () => {
                         setUserMenuOpen(false);
                         await logout();
                       }}
-                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded text-[#f28b8b] hover:bg-[#da373c]/15 flex items-center gap-2 transition-colors"
+                      className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded text-[#F87171] hover:bg-[#F87171]/15 flex items-center gap-2 transition-colors"
                     >
                       <LogOut size={14} />
                       <span>Log Out</span>
@@ -347,7 +352,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
           <a
             href="/docs"
-            className="text-xs font-semibold text-[#949ba4] hover:text-white border border-[#35373c] bg-[#2b2d31] hover:bg-[#35373c] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
+            className="text-xs font-semibold text-[#A1A8B8] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
             title="Documentation"
           >
             <BookOpen size={13} />
