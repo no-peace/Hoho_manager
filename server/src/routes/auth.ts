@@ -213,7 +213,7 @@ router.get(
     let botGuilds: discord.DiscordGuildSummary[] = [];
     if (env.discord.botToken) {
       try {
-        botGuilds = await discord.getBotGuilds(null);
+        botGuilds = await discord.getBotGuilds();
       } catch (err) {
         log.warn(`Could not fetch default bot guilds during login: ${err}`);
       }
