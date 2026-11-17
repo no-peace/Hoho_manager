@@ -314,7 +314,7 @@ const validateComponentProps = (type: string, props: Record<string, any>) => {
 const validateDocument = (value: unknown, mode: AppLayoutMode): AppLayoutDocument => {
   if (!isRecord(value) || !hasExactKeys(value, ["root", "content"]) ||
       !isRecord(value.root) || !hasExactKeys(value.root, ["props"]) ||
-      !isRecord(value.root.props) || Object.keys(value.root.props).length !== 0 ||
+      (value.root.props !== undefined && (!isRecord(value.root.props) || Object.keys(value.root.props).length !== 0)) ||
       !Array.isArray(value.content)) {
     throw new Error("The " + mode + " layout is not a valid version-1 Puck document.");
   }
