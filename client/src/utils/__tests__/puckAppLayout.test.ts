@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultDesktopLayoutData, defaultMobileLayoutData } from "../../config/puck/defaultAppLayouts";
 import {
+  getAppLayoutCssVariables,
   getAppLayoutDraftKey,
   loadAppLayoutDraft,
   parseAppLayoutFile,
@@ -199,6 +200,20 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.inspectorLabel).toBe("Mobile properties");
     expect(layout.mobile.showToolbar).toBe(true);
     expect(layout.mobile.navMotion).toEqual({ animation: "pulse", duration: "1200ms", delay: "350ms" });
+  });
+
+  it("exposes independent mobile editor and preview padding CSS variables in pixels", () => {
+    const mobile = clone(defaultMobileLayoutData);
+    mobile.content[1].props.content[0].props.padding = 17;
+    mobile.content[1].props.content[1].props.padding = 19;
+    mobile.content[1].props.content[2].props.padding = 21;
+
+    const layout = resolveAppLayoutData(defaultDesktopLayoutData, mobile);
+    const variables = getAppLayoutCssVariables(layout);
+
+    expect(variables["--hoho-layout-mobile-editor-padding"]).toBe("17px");
+    expect(variables["--hoho-layout-mobile-preview-padding"]).toBe("19px");
+    expect(variables["--hoho-layout-mobile-inspector-padding"]).toBe("21px");
   });
 
   it("normalizes Puck root data when the optional props object is omitted", () => {
