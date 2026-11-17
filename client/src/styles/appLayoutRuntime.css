@@ -1,0 +1,228 @@
+.hoho-studio-shell {
+  --hoho-motion-duration: 300ms;
+  --hoho-motion-delay: 0ms;
+}
+
+.hoho-studio-shell .hoho-runtime-header {
+  box-sizing: border-box;
+  height: var(--hoho-layout-mobile-header-height, 56px);
+  min-height: var(--hoho-layout-mobile-header-height, 56px);
+  padding-inline: var(--hoho-layout-mobile-header-padding, 12px);
+  background: var(--hoho-layout-mobile-header-background, #10131a);
+  border-bottom: 1px solid var(--hoho-layout-mobile-header-border, #272d3a);
+}
+
+.hoho-studio-shell .hoho-runtime-logo {
+  width: var(--hoho-layout-mobile-logo-size, 28px);
+  height: var(--hoho-layout-mobile-logo-size, 28px);
+}
+
+.hoho-runtime-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--hoho-layout-mobile-border, #272d3a);
+}
+
+.hoho-runtime-panel--editor {
+  background: var(--hoho-layout-mobile-editor-background, #2b2d31);
+  border-radius: var(--hoho-layout-mobile-editor-radius, 10px);
+}
+
+.hoho-runtime-panel--preview {
+  background: var(--hoho-layout-mobile-preview-background, #313338);
+  border-radius: var(--hoho-layout-mobile-preview-radius, 10px);
+}
+
+.hoho-runtime-panel__heading {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hoho-layout-mobile-border, #272d3a);
+}
+
+.hoho-runtime-panel__heading h2 {
+  margin: 0;
+  color: #f1f3f9;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+}
+
+.hoho-runtime-editor-scroll {
+  padding: var(--hoho-layout-mobile-editor-padding, 12px);
+  background: var(--hoho-layout-mobile-editor-background, #2b2d31);
+}
+
+.hoho-runtime-preview-scroll {
+  padding: var(--hoho-layout-mobile-preview-padding, 12px);
+  background: var(--hoho-layout-mobile-preview-background, #313338);
+}
+
+.hoho-runtime-panel--editor[data-hoho-show-toolbar="hide"] [data-message-editor-index] > div:nth-child(2) > div:last-child {
+  display: none;
+}
+
+.hoho-runtime-inspector {
+  box-sizing: border-box;
+  background: var(--hoho-runtime-inspector-background, #161a23) !important;
+  border-radius: var(--hoho-runtime-inspector-radius, 10px) !important;
+}
+
+.hoho-runtime-inspector-label {
+  display: block;
+  margin-bottom: 2px;
+  color: #a1a8b8;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1rem;
+  text-transform: uppercase;
+}
+
+.hoho-runtime-inspector [data-component-inspector-body],
+.hoho-runtime-inspector [data-embed-inspector-body],
+.hoho-runtime-inspector [data-message-quick-editor] {
+  padding: var(--hoho-runtime-inspector-padding, 14px);
+}
+
+.hoho-runtime-workspace--mobile {
+  padding: var(--hoho-layout-mobile-panel-padding, 12px);
+  gap: var(--hoho-layout-mobile-workspace-gap, 8px);
+}
+
+.hoho-runtime-mobile-pane {
+  box-sizing: border-box;
+  padding: var(--hoho-layout-mobile-panel-padding, 12px);
+}
+
+.hoho-runtime-nav {
+  box-sizing: border-box;
+  height: var(--hoho-layout-mobile-nav-height, 60px);
+  min-height: var(--hoho-layout-mobile-nav-height, 60px);
+  padding-inline: var(--hoho-layout-mobile-nav-padding, 12px);
+  padding-top: 8px;
+  background: var(--hoho-layout-mobile-nav-background, #10131a);
+  border-color: var(--hoho-layout-mobile-border, #272d3a);
+}
+
+.hoho-runtime-nav-active {
+  background: var(--hoho-layout-mobile-nav-accent, #818cf8);
+}
+
+.hoho-runtime-nav[data-hoho-show-labels="hide"] .hoho-runtime-nav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.hoho-runtime-nav[data-hoho-tab-order="preview-first"] [data-hoho-nav-item="preview"] { order: 0; }
+.hoho-runtime-nav[data-hoho-tab-order="preview-first"] [data-hoho-nav-item="editor"] { order: 1; }
+.hoho-runtime-nav [data-hoho-nav-item="dispatch"] { order: 2; }
+.hoho-runtime-nav [data-hoho-nav-item="editor"],
+.hoho-runtime-nav [data-hoho-nav-item="preview"] { min-width: 0; }
+
+.hoho-studio-shell [data-hoho-motion="fade"] {
+  animation: hoho-layout-fade var(--hoho-motion-duration, 300ms) ease both;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="fade-up"] {
+  animation: hoho-layout-fade-up var(--hoho-motion-duration, 300ms) ease both;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="slide-left"] {
+  animation: hoho-layout-slide-left var(--hoho-motion-duration, 300ms) ease both;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="slide-right"] {
+  animation: hoho-layout-slide-right var(--hoho-motion-duration, 300ms) ease both;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="zoom-in"] {
+  animation: hoho-layout-zoom var(--hoho-motion-duration, 300ms) ease both;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="float"] {
+  animation: hoho-layout-float var(--hoho-motion-duration, 300ms) ease-in-out infinite;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+.hoho-studio-shell [data-hoho-motion="pulse"] {
+  animation: hoho-layout-pulse var(--hoho-motion-duration, 300ms) ease-in-out infinite;
+  animation-delay: var(--hoho-motion-delay, 0ms);
+}
+
+@keyframes hoho-layout-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hoho-layout-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hoho-layout-slide-left { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes hoho-layout-slide-right { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes hoho-layout-zoom { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+@keyframes hoho-layout-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes hoho-layout-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.82; } }
+
+@media (min-width: 1200px) {
+  .hoho-studio-shell .hoho-runtime-header {
+    height: var(--hoho-layout-desktop-header-height, 56px);
+    min-height: var(--hoho-layout-desktop-header-height, 56px);
+    padding-inline: var(--hoho-layout-desktop-header-padding, 16px);
+    background: var(--hoho-layout-desktop-header-background, #10131a);
+    border-bottom-color: var(--hoho-layout-desktop-header-border, #272d3a);
+  }
+  .hoho-studio-shell .hoho-runtime-logo {
+    width: var(--hoho-layout-desktop-logo-size, 32px);
+    height: var(--hoho-layout-desktop-logo-size, 32px);
+  }
+  .hoho-runtime-panel--editor {
+    background: var(--hoho-layout-desktop-editor-background, #2b2d31);
+    border-color: var(--hoho-layout-desktop-border, #272d3a);
+    border-radius: var(--hoho-layout-desktop-editor-radius, 10px);
+  }
+  .hoho-runtime-panel--preview {
+    background: var(--hoho-layout-desktop-preview-background, #313338);
+    border-color: var(--hoho-layout-desktop-border, #272d3a);
+    border-radius: var(--hoho-layout-desktop-preview-radius, 10px);
+  }
+  .hoho-runtime-panel__heading { border-color: var(--hoho-layout-desktop-border, #272d3a); }
+  .hoho-runtime-editor-scroll {
+    padding: var(--hoho-layout-desktop-editor-padding, 16px);
+    background: var(--hoho-layout-desktop-editor-background, #2b2d31);
+  }
+  .hoho-runtime-preview-scroll {
+    padding: var(--hoho-layout-desktop-preview-padding, 16px);
+    background: var(--hoho-layout-desktop-preview-background, #313338);
+  }
+  .hoho-runtime-workspace--desktop { gap: 0; }
+  .hoho-runtime-splitter {
+    width: max(6px, var(--hoho-layout-desktop-workspace-gap, 6px));
+    background: var(--hoho-layout-desktop-border, #272d3a);
+  }
+  .hoho-runtime-workspace--desktop[data-hoho-panel-order="preview-first"] .hoho-runtime-preview-pane { order: 0; }
+  .hoho-runtime-workspace--desktop[data-hoho-panel-order="preview-first"] .hoho-runtime-splitter { order: 1; }
+  .hoho-runtime-workspace--desktop[data-hoho-panel-order="preview-first"] .hoho-runtime-editor-pane { order: 2; }
+  .hoho-runtime-inspector {
+    width: min(var(--hoho-runtime-inspector-width, var(--hoho-layout-desktop-inspector-width, 440px)), 42vw) !important;
+    left: var(--hoho-layout-desktop-inspector-left, auto) !important;
+    right: var(--hoho-layout-desktop-inspector-right, 0) !important;
+    background: var(--hoho-layout-desktop-inspector-background, #161a23) !important;
+    border-radius: var(--hoho-layout-desktop-inspector-radius, 10px) !important;
+    border-color: var(--hoho-layout-desktop-border, #272d3a) !important;
+  }
+  .hoho-runtime-inspector [data-component-inspector-body],
+  .hoho-runtime-inspector [data-embed-inspector-body],
+  .hoho-runtime-inspector [data-message-quick-editor] {
+    padding: var(--hoho-layout-desktop-inspector-padding, 14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoho-studio-shell [data-hoho-motion] {
+    animation: none !important;
+    animation-delay: 0ms !important;
+    transition: none !important;
+  }
+}
