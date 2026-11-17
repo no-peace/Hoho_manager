@@ -126,7 +126,6 @@ const getClanTag = (user: DiscordMemberSummary): string => {
 export const resolveAuthorPlaceholders = async (
   payload: DiscordMessagePayload,
   fallbackAuthorId?: string | null,
-  profileId?: number | null,
   guildId?: string | null,
 ): Promise<AuthorResolutionResult> => {
   const authorObjects = collectAuthorObjects(payload);
@@ -175,7 +174,7 @@ export const resolveAuthorPlaceholders = async (
   // Sequential lookup keeps a single payload's outbound API traffic bounded.
   for (const id of allowedIds) {
     try {
-      const user = await getDiscordUser(id, profileId ?? null);
+      const user = await getDiscordUser(id);
       if (user && user.id === id && typeof user.username === "string") {
         userMap.set(id, user);
       }
@@ -193,7 +192,7 @@ export const resolveAuthorPlaceholders = async (
   if (guildId && allowedIds.length > 0) {
     let token: string | null = null;
     try {
-      token = await resolveBotToken(profileId ?? null);
+      token = await resolveBotToken();
     } catch (error) {
       log.warn(`Could not resolve bot token for guild user placeholders: ${error instanceof Error ? error.name : "unknown error"}`);
     }
