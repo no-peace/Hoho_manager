@@ -152,7 +152,9 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 **Implementation:** Added a recursive depth-first component-type lookup; quick-edit now uses it, recognizes both the V2 flag and internal V2 mode, and restores the selected-message inspector if it must synchronize the active message index. Added focused utility regression tests.  
 **Verification status:** Source diff reviewed. Typecheck, tests, build and browser interaction checks remain unverified because the connected local Terminal endpoint is unavailable and no GitHub Actions checks ran.  
 **Risks/blockers:** Runtime verification is still required before this batch can be considered complete.  
-**Next action:** Obtain a working test runner, run the focused test plus client typecheck/test/build, then continue the remaining Part A audit.
+**Additional A2 finding:** `MessagePreview` correctly marks buttons/select menus as interactive and passes that flag to `StudioLayout`, but `StudioLayout.handlePreviewComponentSelect` ignores the flag and always opens the inspector/scrolls the editor. This can interfere with the select-menu preview interaction. `StudioLayout.tsx` is explicitly conflict-prone/shared; no edit has been made.  
+**Head Agent decision needed:** Approve or reject a focused `StudioLayout.tsx` change that preserves interactive preview controls while keeping non-interactive preview selection navigation.  
+**Next action:** Continue non-conflicting Part A audit; wait for approval before touching `StudioLayout.tsx`.
 
 Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coordinate before touching shared Studio shell files.
 
