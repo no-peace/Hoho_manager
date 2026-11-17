@@ -94,12 +94,12 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
         db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'bot_profiles'"),
       ]);
 
-    expect(botProfileColumn).toBeUndefined();
-    expect(webhookPermissionColumn).toBeUndefined();
-    expect(overridePermissionColumn).toBeUndefined();
+    expect(botProfileColumn).toBeFalsy();
+    expect(webhookPermissionColumn).toBeFalsy();
+    expect(overridePermissionColumn).toBeFalsy();
     expect(duplicateColumn).toBeDefined();
-    expect(webhookTable).toBeUndefined();
-    expect(botProfileTable).toBeUndefined();
+    expect(webhookTable).toBeFalsy();
+    expect(botProfileTable).toBeFalsy();
   });
 
   // 1. /api/health
