@@ -4,9 +4,16 @@ import { fireEvent, render } from "@testing-library/react";
 import { ThreeHeroCanvas } from "../ThreeHeroCanvas";
 
 describe("ThreeHeroCanvas", () => {
+  const originalHardwareConcurrency = Object.getOwnPropertyDescriptor(navigator, "hardwareConcurrency");
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    if (originalHardwareConcurrency) {
+      Object.defineProperty(navigator, "hardwareConcurrency", originalHardwareConcurrency);
+    } else {
+      delete (navigator as Navigator & { hardwareConcurrency?: number }).hardwareConcurrency;
+    }
   });
 
   it("redraws its static frame after resize when animation is disabled", () => {
@@ -32,7 +39,6 @@ describe("ThreeHeroCanvas", () => {
         removeEventListener: vi.fn(),
       })),
     );
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1280 });
     Object.defineProperty(navigator, "hardwareConcurrency", { configurable: true, value: 2 });
 
     render(<ThreeHeroCanvas />);
