@@ -264,13 +264,13 @@ describe("MessageEditor", () => {
     render(<MessageEditor index={0} />);
 
     fireEvent.click(screen.getByTitle("Collapse Message"));
-    expect(screen.queryByPlaceholderText(/Write markdown/)).toBeNull();
+    expect(screen.queryByText("Text #1")).toBeNull();
 
     act(() => {
       useMessageStore.getState().select({ kind: "component", id: "reveal-text-target" });
     });
 
-    expect(screen.getByPlaceholderText(/Write markdown/)).toBeTruthy();
+    expect(screen.getByText("Text #1")).toBeTruthy();
   });
 
 });
