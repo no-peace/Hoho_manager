@@ -16,7 +16,6 @@ export interface PendingDeferredEntry {
 }
 
 const pendingLateResponses = new Map<string, PendingDeferredEntry>();
-const inFlightInteractions = new Map<string, { duplicateDelivery: boolean }>();
 
 export const cleanupDeferredInteraction = (interactionId: string): void => {
   const entry = pendingLateResponses.get(interactionId);
@@ -24,7 +23,6 @@ export const cleanupDeferredInteraction = (interactionId: string): void => {
     clearTimeout(entry.timer);
     pendingLateResponses.delete(interactionId);
   }
-  inFlightInteractions.delete(interactionId);
 };
 
 export const getPendingLateResponsesCount = (): number => pendingLateResponses.size;
@@ -154,12 +152,15 @@ export const handleInteraction = async (
     try {
       const cachedResponse = await interactionReceiptRepository.getResponse(interaction.id);
       if (cachedResponse) return cachedResponse;
+      await interactionReceiptRepository.markDuplicate(interaction.id);
+      // Re-read after marking. If the first worker completed just before the
+      // mark, its response is now cached and both deliveries must return it.
+      const responseAfterMark = await interactionReceiptRepository.getResponse(interaction.id);
+      if (responseAfterMark) return responseAfterMark;
     } catch (error) {
-      log.error(`Could not load cached response for interaction ${interaction.id}: ${String(error)}`);
+      log.error(`Could not coordinate duplicate interaction ${interaction.id}: ${String(error)}`);
     }
 
-    const inFlight = inFlightInteractions.get(interaction.id);
-    if (inFlight) inFlight.duplicateDelivery = true;
     log.warn(`Duplicate interaction ${interaction.id} arrived while its first delivery is running`);
     return {
       type:
@@ -169,8 +170,6 @@ export const handleInteraction = async (
     };
   }
 
-  const inFlightState = { duplicateDelivery: false };
-  inFlightInteractions.set(interaction.id, inFlightState);
   const execution = executeInteraction(interaction);
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const outcome = await Promise.race([
@@ -182,28 +181,32 @@ export const handleInteraction = async (
   if (timeout) clearTimeout(timeout);
 
   if (outcome.kind === "complete") {
+    const deferred = deferredResponse(interaction);
+    let duplicateDelivery = false;
     try {
-      await interactionReceiptRepository.complete(interaction.id, outcome.response);
+      duplicateDelivery = await interactionReceiptRepository.complete(
+        interaction.id,
+        outcome.response,
+        deferred,
+      );
     } catch (error) {
       log.error(`Could not cache response for interaction ${interaction.id}: ${String(error)}`);
     }
-    if (inFlightState.duplicateDelivery) {
+    if (duplicateDelivery) {
       const ttlTimer = setTimeout(() => cleanupDeferredInteraction(interaction.id), DEFERRED_SAFEGUARD_TTL_MS);
       ttlTimer.unref?.();
       pendingLateResponses.set(interaction.id, {
         promise: Promise.resolve(outcome.response),
         timer: ttlTimer,
       });
-      inFlightInteractions.delete(interaction.id);
-      return deferredResponse(interaction);
+      return deferred;
     }
-    inFlightInteractions.delete(interaction.id);
     return outcome.response;
   }
 
   const deferred = deferredResponse(interaction);
   try {
-    await interactionReceiptRepository.complete(interaction.id, deferred);
+    await interactionReceiptRepository.complete(interaction.id, deferred, deferred);
   } catch (error) {
     log.error(`Could not cache deferred response for interaction ${interaction.id}: ${String(error)}`);
   }
@@ -217,7 +220,6 @@ export const handleInteraction = async (
     promise: execution,
     timer: ttlTimer,
   });
-  inFlightInteractions.delete(interaction.id);
 
   // When execution settles, clean up after a 5s grace period if completeDeferredInteraction was never called
   execution
