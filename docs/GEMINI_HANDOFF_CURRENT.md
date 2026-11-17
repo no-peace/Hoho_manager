@@ -55,8 +55,6 @@
 
 ### 5. Discord interaction acknowledgement and duplicate delivery
 
-- Migration 019 persists duplicate-delivery state on interaction receipts so concurrent deliveries across separate server instances can coordinate.
-
 - The action execution acknowledgement budget is now 900 ms.
 - Initial Discord callback delivery uses one bounded attempt (1,500 ms) with no retry. Retrying an initial callback after a timeout can race an already accepted acknowledgement.
 - Gateway relay waits up to 2,700 ms before using its fallback callback, leaving time for the API's defer response and bounded Discord callback.
