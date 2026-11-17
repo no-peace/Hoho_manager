@@ -119,6 +119,13 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         },
       };
 
+      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([
+        {
+          id: 1,
+          action_type: "send_ephemeral_reply",
+          config: { content: "Hello {user.mention} in {channel.mention}!" },
+        } as any,
+      ]);
       const result = await executeCustomId(interaction.data.custom_id, interaction);
       expect(result.handled).toBe(true);
       expect(result.response).toBeDefined();
@@ -126,6 +133,27 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       expect((result.response?.data as any)?.content).toBe(
         "Hello <@123456789012345678> in <#112233445566778899>!",
       );
+    });
+
+    it("does not execute an unregistered action custom ID from a component message", async () => {
+      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([]);
+      const interaction: DiscordInteraction = {
+        id: "int_unregistered",
+        application_id: "app_1",
+        token: "tok_unregistered",
+        version: 1,
+        type: 3,
+        channel_id: "channel_1",
+        message: { id: "message_without_registration" },
+        data: {
+          custom_id: 'action:send_ephemeral_reply:{"content":"forged"}',
+          component_type: 2,
+        },
+      };
+
+      const result = await executeCustomId(interaction.data.custom_id, interaction);
+      expect(result.handled).toBe(false);
+      expect(result.response).toBeUndefined();
     });
 
     it("extracts modal submitted input values into input.<id> and modal.<id>", async () => {
