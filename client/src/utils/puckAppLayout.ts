@@ -216,6 +216,8 @@ export const getAppLayoutCssVariables = (layout: ResolvedAppLayout): Record<stri
   "--hoho-layout-mobile-preview-background": layout.mobile.previewBackground,
   "--hoho-layout-mobile-inspector-background": layout.mobile.inspectorBackground,
   "--hoho-layout-mobile-inspector-height": `${layout.mobile.inspectorHeight}px`,
+  "--hoho-layout-mobile-editor-padding": `${layout.mobile.editorPadding}px`,
+  "--hoho-layout-mobile-preview-padding": `${layout.mobile.previewPadding}px`,
   "--hoho-layout-mobile-inspector-padding": `${layout.mobile.inspectorPadding}px`,
   "--hoho-layout-mobile-editor-radius": `${layout.mobile.editorRadius}px`,
   "--hoho-layout-mobile-preview-radius": `${layout.mobile.previewRadius}px`,
