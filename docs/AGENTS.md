@@ -157,13 +157,25 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 **Status:** IN PROGRESS — authorized  
 **Branch:** `agent/responsive-design-lab`  
 **Scope:** Part B only. Audit the existing Puck Responsive Design Lab, close verified gaps, and produce a precise Desktop/Mobile schema and runtime contract for Agent 3.  
-**Current batch:** Baseline and schema reconciliation  
-**Files claimed / in progress:** None reported yet  
-**Files changed:** None  
-**Tests executed:** None reported  
-**Commit SHA:** None  
-**Schema handoff:** Not submitted  
-**Next action:** Fetch latest main, create/use assigned branch only if Head Agent confirms it exists, inspect Puck source/docs/tests, then report file claims before edits.
+**Current batch:** B1 — strict document validation, navigation preview fidelity and schema handoff  
+**Files claimed / in progress:**
+- `client/src/utils/puckAppLayout.ts`
+- `client/src/utils/__tests__/puckAppLayout.test.ts`
+- `client/src/config/puck/appLayoutConfig.tsx`
+- `client/src/config/puck/defaultAppLayouts.ts`
+- `client/src/pages/app-layout-preview.css`
+- `docs/PUCK_DESIGN_LAB.md`
+- `docs/AGENTS.md` (this Agent 2 status section only)
+
+**Files changed:** None yet  
+**Findings verified:** Existing Puck editor, independent Desktop/Mobile documents, per-user local drafts, versioned import/export and preview are present and will be preserved. The current validator accepts unknown component props, does not enforce component-specific nesting/property types/ranges, permits empty IDs, and has no document byte limit. Motion strings are not validated. Mobile nav preview never applies the existing active-tab CSS class.  
+**Implementation decisions:** Keep Puck 0.24 and the existing two-document architecture. Add strict schema validation for the current version-1 documents, bounded serialized size, component/property allowlists, exact required section/panel structure, and validation of numeric/color/label/choice/motion values. Add explicit mobile tab labels and render the active state from the configured default pane. Document a versioned, server-consumable schema and resolved runtime contract; do not add publishing/API/database code.  
+**Tests executed:** None yet  
+**Commit SHA:** Pending  
+**Schema handoff:** In progress; not submitted for Agent 3 use until Head Agent review  
+**Remaining work:** Implement B1, add focused validator/navigation tests, update schema documentation, run available checks, review diff, then update this section and commit on this branch.  
+**Risks / blockers:** Puck documents must remain compatible with existing version-1 exports. Agent 1's claimed files are not listed in the control file; no overlapping Part A files are claimed here.  
+**Next action:** Implement only the claimed Part B files and verify against existing defaults/import-export behavior.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 
