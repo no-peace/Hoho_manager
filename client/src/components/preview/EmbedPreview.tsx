@@ -107,11 +107,12 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
 
   return (
     <div
+      data-preview-embed-id={embed._id}
       className="max-w-[520px] w-full min-w-0 rounded border-l-4 bg-[#2b2d31] px-3 py-2 pr-4 text-[#dbdee1] overflow-hidden [overflow-wrap:anywhere]"
       style={{ borderLeftColor: accent }}
     >
       {embed.author?.name && (
-        <div className="mb-1 flex items-center gap-2 min-w-0">
+        <div data-preview-embed-part="author" className="mb-1 flex items-center gap-2 min-w-0">
           {embed.author.icon_url && (
             <img
               src={resolveAttachmentUrl(embed.author.icon_url)}
@@ -139,7 +140,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       <div className="flex gap-4 min-w-0">
         <div className="min-w-0 flex-1">
           {embed.title && (
-            <div className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
+            <div data-preview-embed-part="title" className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
               {embed.url ? (
                 <a
                   href={resolvePlainVars(embed.url)}
@@ -156,12 +157,13 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
           )}
 
           {embed.description && (
-            <Markdown content={embed.description} className="text-sm break-words [overflow-wrap:anywhere]" />
+            <div data-preview-embed-part="description"><Markdown content={embed.description} className="text-sm break-words [overflow-wrap:anywhere]" /></div>
           )}
         </div>
 
         {embed.thumbnail?.url && (
           <img
+            data-preview-embed-part="thumbnail"
             src={resolveAttachmentUrl(embed.thumbnail.url)}
             alt=""
             className="h-20 max-w-[80px] shrink-0 self-start rounded object-cover"
@@ -177,7 +179,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               className={row.length > 1 ? `grid gap-2 ${INLINE_COLS[row.length] ?? ""} min-w-0` : "min-w-0"}
             >
               {row.map((field) => (
-                <div key={field._id ?? field.name} className="min-w-0 break-words [overflow-wrap:anywhere]">
+                <div key={field._id ?? field.name} data-preview-embed-part="field" data-preview-embed-field-id={field._id} className="min-w-0 break-words [overflow-wrap:anywhere]">
                   <p className="text-sm font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
                     {resolvePlainVars(field.name) || "\u00a0"}
                   </p>
@@ -192,13 +194,13 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
       )}
 
       {embed.image?.url && (
-        <img src={resolveAttachmentUrl(embed.image.url)} alt="" className="mt-2 max-h-72 w-full rounded object-cover" />
+        <img data-preview-embed-part="image" src={resolveAttachmentUrl(embed.image.url)} alt="" className="mt-2 max-h-72 w-full rounded object-cover" />
       )}
 
       {(() => {
         const formattedTimestamp = formatTimestamp(embed.timestamp);
         return (embed.footer?.text || formattedTimestamp) ? (
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#949ba4] min-w-0">
+          <div data-preview-embed-part="footer" className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#949ba4] min-w-0">
             {embed.footer?.icon_url && (
               <img
                 src={resolveAttachmentUrl(embed.footer.icon_url)}
@@ -212,7 +214,7 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               </span>
             )}
             {embed.footer?.text && formattedTimestamp && <span className="shrink-0">•</span>}
-            {formattedTimestamp && <span className="shrink-0">{formattedTimestamp}</span>}
+            {formattedTimestamp && <span data-preview-embed-part="timestamp" className="shrink-0">{formattedTimestamp}</span>}
           </div>
         ) : null;
       })()}
