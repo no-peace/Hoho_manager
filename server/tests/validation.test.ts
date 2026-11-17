@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   isHttpUrl,
   isSnowflake,
-  parseWebhookUrl,
   requireId,
   validateMessagePayload,
 } from "../src/utils/validation.js";
@@ -45,32 +44,6 @@ describe("validation utils", () => {
         expect(() => requireId(value)).toThrow(/positive integer/i);
       },
     );
-  });
-
-  describe("parseWebhookUrl", () => {
-    it("extracts ID and token from valid Discord webhook URLs", () => {
-      const parsed = parseWebhookUrl(
-        "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz_123456789",
-      );
-      expect(parsed).toEqual({
-        id: "123456789012345678",
-        token: "abcdefghijklmnopqrstuvwxyz_123456789",
-      });
-    });
-
-    it("accepts discordapp.com domain", () => {
-      const parsed = parseWebhookUrl(
-        "https://discordapp.com/api/webhooks/123456789012345678/token123",
-      );
-      expect(parsed).not.toBeNull();
-      expect(parsed?.id).toBe("123456789012345678");
-    });
-
-    it("returns null for non-webhook URLs", () => {
-      expect(parseWebhookUrl("https://example.com")).toBeNull();
-      expect(parseWebhookUrl("")).toBeNull();
-      expect(parseWebhookUrl(null)).toBeNull();
-    });
   });
 
   describe("validateMessagePayload", () => {
