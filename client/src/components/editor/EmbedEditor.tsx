@@ -196,7 +196,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             </div>
           )}
 
-          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+          <div data-editor-target-id={id} data-editor-target-part="author" className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setAuthorOpen(!authorOpen)}
@@ -300,7 +300,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+          <div data-editor-target-id={id} data-editor-target-part="title" className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setBodyOpen(!bodyOpen)}
@@ -360,7 +360,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                   </div>
                 )}
 
-                <div>
+                <div data-editor-target-id={id} data-editor-target-part="description">
                   <DiscordMentionInput
                     label="Description"
                     maxLength={Limits.embed.description}
@@ -374,7 +374,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+          <div data-editor-target-id={id} data-editor-target-part="field" className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[#1D2230]">
               <button
                 type="button"
@@ -407,6 +407,9 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     return (
                       <div
                         key={fieldId || fieldIdx}
+                        data-editor-target-id={id}
+                        data-editor-target-part="field"
+                        data-editor-target-field-id={fieldId}
                         className="p-2.5 rounded-lg bg-[#1D2230] border border-[#10131A] space-y-2 relative group"
                       >
                         <div className="flex items-center justify-between">
@@ -494,7 +497,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+          <div data-editor-target-id={id} data-editor-target-part="image" className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setImagesOpen(!imagesOpen)}
@@ -547,7 +550,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
             )}
           </div>
 
-          <div className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
+          <div data-editor-target-id={id} data-editor-target-part="footer" className="rounded-lg border border-[#1D2230] bg-[#10131A]/70 overflow-hidden">
             <button
               type="button"
               onClick={() => setFooterOpen(!footerOpen)}
