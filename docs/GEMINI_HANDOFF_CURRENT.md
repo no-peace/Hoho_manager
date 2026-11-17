@@ -4,7 +4,6 @@
 
 This section supersedes older branch/PR status statements in the historical notes below.
 
-- **Current main HEAD (including this handoff update):** `825f6e82e698e0f69e2fb09d70deed2e216c41b1`.
 - **Latest code source commit:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`.
 - **Direct-to-main follow-up commits:** FlowBuilder polish (`89e70bec0b385a40bec244310b740ad2d3ac7c6b`, followed by unused-import cleanup `07d0cb4bb4b01dda7cff4082e3c4af0044a2aec9`); icon-button transition cleanup (`c3c024203ad2d3dd66e1797852a363c79a405178`); LoginScreen active-public-navigation regression assertion (`e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`).
 - **FlowBuilder:** Added the Interaction Flow / Trigger Event header, derives Button Click versus Select Option from the component type, restores the Server Bot mode wording, and uses the current studio palette. The existing implementation persists changes immediately; it has no separate unsaved-draft/save lifecycle, so no misleading unsaved-changes banner or nonfunctional Save button was introduced.
@@ -15,12 +14,12 @@ This section supersedes older branch/PR status statements in the historical note
 - **Verification:** GitHub returned no commit statuses and no workflow runs for source head `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`. The connected desktop terminal endpoint returned HTTP 404, so `npm test`, `npm run typecheck`, and `npm run build` could not be executed here. Browser QA and Lighthouse were not run. Do not mark these checks as passing.
 - **Next verification:** Run `npm test`, `npm run typecheck`, and `npm run build` from the repository root, then perform desktop/mobile browser QA. Preserve the owner-reported mobile Lighthouse 97 baseline; do not initiate further performance tuning unless requested.
 
-**Updated:** 2026-11-17 (V12 baseline retained at mobile Lighthouse 97; expanded server placeholders in feature branch)  
+**Updated:** 2026-11-17 (V12 baseline retained at mobile Lighthouse 97; server placeholders merged into main)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
 **Latest implementation head:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`  
-**Latest implementation PR:** [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44)  
+**Latest related PRs:** [#45 — server guild placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (merged); V12 UX baseline: [#44](https://github.com/no-peace/Hoho_manager/pull/44)  
 **Implementation branch:** `feat/v12-ultimate-ux-implementation` (merged into `main`)  
 **Current status:** V12 is merged. The owner subsequently reported that all tests passed and the mobile Lighthouse Performance score reached 97. The owner explicitly chose to keep 97 as the baseline and stop further performance tuning. Do not initiate additional Lighthouse-driven optimization or refactoring unless the owner asks. The test result is owner-reported; it was not independently executed in this GitHub editing session. No deployment is claimed.
 
