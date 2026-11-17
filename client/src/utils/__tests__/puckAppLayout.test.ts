@@ -64,7 +64,7 @@ describe("HoHo responsive Studio layout documents", () => {
   it("rejects missing shell regions and duplicate component IDs", () => {
     const missing = clone(defaultDesktopLayoutData);
     missing.content.pop();
-    expect(() => validateAppLayoutDocuments({ desktop: missing, mobile: defaultMobileLayoutData })).toThrow(/required application section/i);
+    expect(() => validateAppLayoutDocuments({ desktop: missing, mobile: defaultMobileLayoutData })).toThrow(/required shell sections/i);
 
     const duplicate = clone(defaultMobileLayoutData);
     duplicate.content[1].props.content[0].props.id = duplicate.content[0].props.id;
