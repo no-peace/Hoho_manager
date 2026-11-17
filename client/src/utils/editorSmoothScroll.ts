@@ -52,24 +52,44 @@ export function initializeEditorLenis(wrapper: HTMLElement): () => void {
   };
 }
 
-const findEditorTarget = (wrapper: HTMLElement, index: number, targetId?: string): HTMLElement | null => {
+const findEditorTarget = (
+  wrapper: HTMLElement,
+  index: number,
+  targetId?: string,
+  targetPart?: string,
+  fieldId?: string,
+): HTMLElement | null => {
   const message = wrapper.querySelector<HTMLElement>(
     `[data-message-editor-index="${index}"]`,
   );
   if (!message || !targetId) return message;
 
-  return (
-    Array.from(message.querySelectorAll<HTMLElement>("[data-editor-target-id]")).find(
-      (element) => element.dataset.editorTargetId === targetId,
-    ) ?? null
-  );
+  const targets = Array.from(
+    message.querySelectorAll<HTMLElement>("[data-editor-target-id]"),
+  ).filter((element) => element.dataset.editorTargetId === targetId);
+
+  if (fieldId) {
+    const field = targets.find((element) => element.dataset.editorTargetFieldId === fieldId);
+    if (field) return field;
+  }
+
+  if (targetPart) {
+    const normalizedPart =
+      targetPart === "timestamp" ? "footer" :
+      targetPart === "thumbnail" ? "image" :
+      targetPart;
+    const part = targets.find((element) => element.dataset.editorTargetPart === normalizedPart);
+    if (part) return part;
+  }
+
+  return targets.find((element) => !element.dataset.editorTargetPart) ?? targets[0] ?? null;
 };
 
 /**
  * Smoothly navigate inside the editor's own scroll container.
  * A target ID drills into a component/embed; without one, the message card is used.
  */
-export function scrollToMessageEditor(index: number, targetId?: string): void {
+export function scrollToMessageEditor(index: number, targetId?: string, targetPart?: string, fieldId?: string): void {
   if (typeof document === "undefined") return;
   const wrapper =
     editorScrollWrapper ??
@@ -82,7 +102,7 @@ export function scrollToMessageEditor(index: number, targetId?: string): void {
 
     // Mobile SplitPane keeps the editor mounted but marks the inactive pane hidden/inert.
     const hiddenPane = wrapper.closest('[aria-hidden="true"], [inert], .invisible');
-    const target = findEditorTarget(wrapper, index, targetId);
+    const target = findEditorTarget(wrapper, index, targetId, targetPart, fieldId);
     if (hiddenPane || !target) {
       if (attempts < 8) {
         attempts += 1;
