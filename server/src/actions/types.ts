@@ -23,6 +23,8 @@ export interface ActionResponse {
   type: number;
   data?: Record<string, unknown>;
 }
+  /** Internal executor metadata; stripped before the response is sent to Discord. */
+  outcome?: "failure";
 
 /**
  * The slice of the Discord API that handlers may use.
