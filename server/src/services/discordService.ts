@@ -484,6 +484,53 @@ export const getGuild = async (
   }
 };
 
+
+const guildPreviewCache = new Map<string, { value: Record<string, unknown>; expiresAt: number }>();
+const guildPreviewInflight = new Map<string, Promise<Record<string, unknown> | null>>();
+
+/**
+ * Fetch Discord's public Guild Preview resource. Discord only exposes previews
+ * for discoverable guilds to bots that are not members.
+ */
+export const getGuildPreview = async (
+  guildId: string,
+  token?: string,
+): Promise<Record<string, unknown> | null> => {
+  const cached = guildPreviewCache.get(guildId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  if (cached) guildPreviewCache.delete(guildId);
+
+  const pending = guildPreviewInflight.get(guildId);
+  if (pending) return pending;
+
+  const request = (async () => {
+    const authToken = token ?? await resolveBotToken();
+    const preview = await apiRequest<Record<string, unknown>>(
+      "GET",
+      `/guilds/${encodeURIComponent(guildId)}/preview`,
+      { token: authToken },
+    );
+    if (!preview) return null;
+
+    if (guildPreviewCache.size >= GUILD_RESOURCE_CACHE_MAX_ENTRIES) {
+      const oldestKey = guildPreviewCache.keys().next().value;
+      if (oldestKey) guildPreviewCache.delete(oldestKey);
+    }
+    guildPreviewCache.set(guildId, {
+      value: preview,
+      expiresAt: Date.now() + GUILD_RESOURCE_CACHE_TTL_MS,
+    });
+    return preview;
+  })();
+
+  guildPreviewInflight.set(guildId, request);
+  try {
+    return await request;
+  } finally {
+    guildPreviewInflight.delete(guildId);
+  }
+};
+
 export const getGuildChannels = async (
   guildId: string,
   profileId: number | string | null = null,
