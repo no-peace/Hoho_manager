@@ -12,6 +12,10 @@ Caddyfile
 MCP/
 # Build output
 lhci-results/
+gitleaks-report.json
+npm-audit-report.json
+server-performance-output.json
+server-performance-report.json
 dist/
 build/
 .vite/
