@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultDesktopLayoutData, defaultMobileLayoutData } from "../../config/puck/defaultAppLayouts";
 import {
+  getAppLayoutCssVariables,
   getAppLayoutDraftKey,
   loadAppLayoutDraft,
+  parseAppLayoutFile,
   resolveAppLayoutData,
   saveAppLayoutDraft,
   validateAppLayoutDocuments,
@@ -25,6 +27,10 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.tabOrder).toBe("editor-first");
     expect(layout.mobile.showInspector).toBe(false);
     expect(layout.mobile.inspectorHeight).toBe(300);
+    expect(layout.mobile.activeTab).toBe("editor");
+    expect(layout.mobile.editorTabLabel).toBe("Editor");
+    expect(layout.mobile.previewTabLabel).toBe("Preview");
+    expect(layout.mobile.dispatchTabLabel).toBe("Dispatch");
   });
 
   it("keeps desktop and mobile settings independent", () => {
@@ -42,25 +48,172 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.tabOrder).toBe("preview-first");
   });
 
-  it("clamps numeric values and rejects unsafe colors at the runtime boundary", () => {
+  it("rejects out-of-range dimensions and unsafe colors before runtime resolution", () => {
     const desktop = clone(defaultDesktopLayoutData);
     desktop.content[1].props.editorRatio = 99;
+    expect(() => resolveAppLayoutData(desktop, defaultMobileLayoutData)).toThrow(/editorRatio/i);
+
+    desktop.content[1].props.editorRatio = 50;
     desktop.content[1].props.inspectorWidth = 9999;
+    expect(() => validateAppLayoutDocuments({ desktop, mobile: defaultMobileLayoutData })).toThrow(/inspectorWidth/i);
+
+    desktop.content[1].props.inspectorWidth = 440;
     desktop.content[1].props.borderColor = "url(javascript:alert(1))";
-    const layout = resolveAppLayoutData(desktop, defaultMobileLayoutData);
-    expect(layout.desktop.editorRatio).toBeCloseTo(0.72);
-    expect(layout.desktop.inspectorWidth).toBe(520);
-    expect(layout.desktop.borderColor).toBe("#272D3A");
+    expect(() => validateAppLayoutDocuments({ desktop, mobile: defaultMobileLayoutData })).toThrow(/HEX color/i);
   });
 
   it("rejects missing shell regions and duplicate component IDs", () => {
     const missing = clone(defaultDesktopLayoutData);
     missing.content.pop();
-    expect(() => validateAppLayoutDocuments({ desktop: missing, mobile: defaultMobileLayoutData })).toThrow(/required application section/i);
+    expect(() => validateAppLayoutDocuments({ desktop: missing, mobile: defaultMobileLayoutData })).toThrow(/required shell sections/i);
 
     const duplicate = clone(defaultMobileLayoutData);
     duplicate.content[1].props.content[0].props.id = duplicate.content[0].props.id;
     expect(() => validateAppLayoutDocuments({ desktop: defaultDesktopLayoutData, mobile: duplicate })).toThrow(/unique/i);
+  });
+
+  it("rejects unknown component properties, empty IDs, invalid motion and malformed nesting", () => {
+    const unknown = clone(defaultDesktopLayoutData);
+    unknown.content[0].props.onClick = "alert(1)";
+    expect(() => validateAppLayoutDocuments({ desktop: unknown, mobile: defaultMobileLayoutData })).toThrow(/unsupported or missing properties/i);
+
+    const emptyId = clone(defaultDesktopLayoutData);
+    emptyId.content[0].props.id = "";
+    expect(() => validateAppLayoutDocuments({ desktop: emptyId, mobile: defaultMobileLayoutData })).toThrow(/IDs must be non-empty/i);
+
+    const unsafeMotion = clone(defaultMobileLayoutData);
+    unsafeMotion.content[0].props.animationDuration = "999999ms";
+    expect(() => validateAppLayoutDocuments({ desktop: defaultDesktopLayoutData, mobile: unsafeMotion })).toThrow(/animationDuration/i);
+
+    const misplacedPanel = clone(defaultDesktopLayoutData);
+    misplacedPanel.content[0].props.content = [];
+    expect(() => validateAppLayoutDocuments({ desktop: misplacedPanel, mobile: defaultMobileLayoutData })).toThrow(/unsupported or missing properties/i);
+  });
+
+  it("rejects oversized documents and preserves valid version-1 imports", () => {
+    const oversized = clone(defaultDesktopLayoutData);
+    oversized.content[0].props.background = "#" + "a".repeat(70_000);
+    expect(() => validateAppLayoutDocuments({ desktop: oversized, mobile: defaultMobileLayoutData })).toThrow(/64 KiB/i);
+
+    const imported = parseAppLayoutFile({
+      format: "hoho-app-layout",
+      version: 1,
+      exportedAt: "2026-11-17T00:00:00.000Z",
+      desktop: clone(defaultDesktopLayoutData),
+      mobile: clone(defaultMobileLayoutData),
+    });
+    expect(imported.desktop.content[0].type).toBe("DesktopHeader");
+    expect(imported.mobile.content[2].type).toBe("MobileBottomNavigation");
+  });
+
+  it("normalizes early version-1 exports without breaking their existing fields", () => {
+    const desktop = clone(defaultDesktopLayoutData);
+    const mobile = clone(defaultMobileLayoutData);
+    delete mobile.content[2].props.activeTab;
+    delete mobile.content[2].props.editorLabel;
+    delete mobile.content[2].props.previewLabel;
+    delete mobile.content[2].props.dispatchLabel;
+    desktop.content[1].props.content[0].props.showToolbar = true;
+
+    const imported = parseAppLayoutFile({
+      format: "hoho-app-layout",
+      version: 1,
+      exportedAt: "2026-11-17T00:00:00.000Z",
+      desktop,
+      mobile,
+    });
+    expect(imported.desktop.content[1].props.content[0].props.showToolbar).toBe("show");
+    expect(imported.mobile.content[2].props.activeTab).toBe("editor");
+    expect(imported.mobile.content[2].props.editorLabel).toBe("Editor");
+    expect(imported.mobile.content[2].props.previewLabel).toBe("Preview");
+    expect(imported.mobile.content[2].props.dispatchLabel).toBe("Dispatch");
+  });
+
+  it("validates and resolves editable mobile navigation labels and active state", () => {
+    const mobile = clone(defaultMobileLayoutData);
+    mobile.content[2].props.editorLabel = "Write";
+    mobile.content[2].props.previewLabel = "Inspect";
+    mobile.content[2].props.dispatchLabel = "Send";
+    mobile.content[2].props.activeTab = "preview";
+    const layout = resolveAppLayoutData(defaultDesktopLayoutData, mobile);
+    expect(layout.mobile.editorTabLabel).toBe("Write");
+    expect(layout.mobile.previewTabLabel).toBe("Inspect");
+    expect(layout.mobile.dispatchTabLabel).toBe("Send");
+    expect(layout.mobile.activeTab).toBe("preview");
+  });
+
+  it("resolves production panel labels, toolbar visibility and motion for both breakpoints", () => {
+    const desktop = clone(defaultDesktopLayoutData);
+    const mobile = clone(defaultMobileLayoutData);
+
+    desktop.content[0].props.animation = "fade-up";
+    desktop.content[0].props.animationDuration = "500ms";
+    desktop.content[0].props.animationDelay = "100ms";
+    desktop.content[1].props.animation = "slide-left";
+    desktop.content[1].props.animationDuration = "700ms";
+    desktop.content[1].props.animationDelay = "200ms";
+    desktop.content[1].props.content[0].props.label = "Compose";
+    desktop.content[1].props.content[0].props.showToolbar = "hide";
+    desktop.content[1].props.content[0].props.animation = "zoom-in";
+    desktop.content[1].props.content[1].props.label = "Rendered message";
+    desktop.content[1].props.content[1].props.animation = "fade";
+    desktop.content[1].props.content[2].props.label = "Settings";
+    desktop.content[1].props.content[2].props.animation = "float";
+
+    mobile.content[0].props.animation = "fade";
+    mobile.content[1].props.animation = "slide-right";
+    mobile.content[1].props.content[0].props.label = "Write";
+    mobile.content[1].props.content[0].props.showToolbar = "show";
+    mobile.content[1].props.content[0].props.animation = "zoom-in";
+    mobile.content[1].props.content[0].props.padding = 17;
+    mobile.content[1].props.content[1].props.label = "Mobile preview";
+    mobile.content[1].props.content[1].props.animation = "fade-up";
+    mobile.content[1].props.content[1].props.padding = 19;
+    mobile.content[1].props.content[2].props.label = "Mobile properties";
+    mobile.content[1].props.content[2].props.padding = 21;
+    mobile.content[1].props.content[2].props.animation = "slide-left";
+    mobile.content[2].props.animation = "pulse";
+    mobile.content[2].props.animationDuration = "1200ms";
+    mobile.content[2].props.animationDelay = "350ms";
+
+    const layout = resolveAppLayoutData(desktop, mobile);
+    expect(layout.desktop.headerMotion).toEqual({ animation: "fade-up", duration: "500ms", delay: "100ms" });
+    expect(layout.desktop.workspaceMotion).toEqual({ animation: "slide-left", duration: "700ms", delay: "200ms" });
+    expect(layout.desktop.editorLabel).toBe("Compose");
+    expect(layout.desktop.previewLabel).toBe("Rendered message");
+    expect(layout.desktop.inspectorLabel).toBe("Settings");
+    expect(layout.desktop.showToolbar).toBe(false);
+    expect(layout.desktop.editorMotion.animation).toBe("zoom-in");
+    expect(layout.desktop.previewMotion.animation).toBe("fade");
+    expect(layout.desktop.inspectorMotion.animation).toBe("float");
+
+    expect(layout.mobile.headerMotion.animation).toBe("fade");
+    expect(layout.mobile.workspaceMotion.animation).toBe("slide-right");
+    expect(layout.mobile.editorPadding).toBe(17);
+    expect(layout.mobile.previewPadding).toBe(19);
+    expect(layout.mobile.inspectorPadding).toBe(21);
+    expect(layout.mobile.editorMotion.animation).toBe("zoom-in");
+    expect(layout.mobile.previewMotion.animation).toBe("fade-up");
+    expect(layout.mobile.inspectorMotion.animation).toBe("slide-left");
+    expect(layout.mobile.editorLabel).toBe("Write");
+    expect(layout.mobile.previewLabel).toBe("Mobile preview");
+    expect(layout.mobile.inspectorLabel).toBe("Mobile properties");
+    expect(layout.mobile.showToolbar).toBe(true);
+    expect(layout.mobile.navMotion).toEqual({ animation: "pulse", duration: "1200ms", delay: "350ms" });
+  });
+
+  it("exposes independent mobile editor and preview padding CSS variables in pixels", () => {
+    const mobile = clone(defaultMobileLayoutData);
+    mobile.content[1].props.content[0].props.padding = 17;
+    mobile.content[1].props.content[1].props.padding = 19;
+    mobile.content[1].props.content[2].props.padding = 21;
+
+    const layout = resolveAppLayoutData(defaultDesktopLayoutData, mobile);
+    const variables = getAppLayoutCssVariables(layout);
+
+    expect(variables["--hoho-layout-mobile-editor-padding"]).toBe("17px");
+    expect(variables["--hoho-layout-mobile-preview-padding"]).toBe("19px");
+    expect(variables["--hoho-layout-mobile-inspector-padding"]).toBe("21px");
   });
 
   it("normalizes Puck root data when the optional props object is omitted", () => {
