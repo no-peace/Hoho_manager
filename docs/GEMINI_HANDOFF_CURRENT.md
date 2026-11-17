@@ -1,10 +1,24 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
+## Current main status — V12 audit follow-up (2026-11-17)
+
+This section supersedes older branch/PR status statements in the historical notes below.
+
+- **Current source head:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`.
+- **Direct-to-main follow-up commits:** FlowBuilder polish (`89e70bec0b385a40bec244310b740ad2d3ac7c6b`, followed by unused-import cleanup `07d0cb4bb4b01dda7cff4082e3c4af0044a2aec9)); icon-button transition cleanup (`c3c024203ad2d3dd66e1797852a363c79a405178)); LoginScreen active-public-navigation regression assertion (`e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8)).
+- **FlowBuilder:** Added the Interaction Flow / Trigger Event header, derives Button Click versus Select Option from the component type, restores the Server Bot mode wording, and uses the current studio palette. The existing implementation persists changes immediately; it has no separate unsaved-draft/save lifecycle, so no misleading unsaved-changes banner or nonfunctional Save button was introduced.
+- **StepList:** No structural rewrite was made. Its `#313338` surfaces are confined to the Discord modal mock preview and intentionally preserve Discord's native preview appearance rather than representing a studio shell surface.
+- **Motion:** `UI_THEME_CONFIG.button.iconButtonBase` no longer transitions `border-color`; the shared base and icon-button transition lists are now aligned.
+- **Login regression test:** Added checks that the public navigation renders and that Studio is marked as the current page, alongside the existing backdrop, grid, 5/7 layout, and Discord OAuth assertions.
+- **Guest Sandbox discrepancy:** The V12 plan asks for a Guest Sandbox CTA, but the current LoginScreen has no guest-authentication handler or Guest Sandbox control. It exposes a development-only `Continue as Local Developer` button instead. No speculative guest login path was added.
+- **Verification:** GitHub returned no commit statuses and no workflow runs for source head `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`. The connected desktop terminal endpoint returned HTTP 404, so `npm test`, `npm run typecheck`, and `npm run build` could not be executed here. Browser QA and Lighthouse were not run. Do not mark these checks as passing.
+- **Next verification:** Run `npm test`, `npm run typecheck`, and `npm run build` from the repository root, then perform desktop/mobile browser QA. Preserve the owner-reported mobile Lighthouse 97 baseline; do not initiate further performance tuning unless requested.
+
 **Updated:** 2026-11-17 (V12 baseline retained at mobile Lighthouse 97; expanded server placeholders in feature branch)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest implementation head:** `97e3a6f8806687f17d252587dee1af38c99e3c43`  
+**Latest implementation head:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`  
 **Latest implementation PR:** [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44)  
 **Implementation branch:** `feat/v12-ultimate-ux-implementation` (merged into `main`)  
 **Current status:** V12 is merged. The owner subsequently reported that all tests passed and the mobile Lighthouse Performance score reached 97. The owner explicitly chose to keep 97 as the baseline and stop further performance tuning. Do not initiate additional Lighthouse-driven optimization or refactoring unless the owner asks. The test result is owner-reported; it was not independently executed in this GitHub editing session. No deployment is claimed.
@@ -12,9 +26,9 @@
 ## Latest continuation — expanded Discord server placeholders (2026-11-17)
 
 **Branch:** `feat/server-guild-variables`  
-**Pull request:** [#45 — expose Discord Guild fields as server placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (draft; not merged)  
+**Pull request:** [#45 — expose Discord Guild fields as server placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (merged into `main`)  
 **Base:** `main` at the V12 merge checkpoint plus the subsequent handoff documentation update.  
-**Status:** Implementation committed to the feature branch; not merged or deployed. Review and run CI before considering merge.
+**Status:** Merged into `main` as commit `2608ab8f93bde889b9abf4ba0c91b8e409337e9c`. The follow-up TypeScript compatibility fix was committed directly to `main` as `f52f712343cd42aeddee4be820f842c5751ee689`. Deployment is not confirmed.
 
 ### Owner request and scope
 
@@ -1380,4 +1394,4 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Full Guild and Preview responses are cached independently for 60 seconds with in-flight request deduplication and a 500-entry bound.
 - Preview-only fields are limited to the data Discord includes in the Guild Preview object; fields absent from that object resolve to empty values. Icon/banner hashes can still be converted into CDN URLs.
 - Added autocomplete examples in `Field.tsx`, documentation entries in `DocsPage.tsx`, and unit tests for scoped variables and guild-ID extraction.
-- Verification status: tests, typecheck, production build, browser QA, and live Discord API behavior have not been executed in this GitHub editing session. PR #45 is not yet merged or deployed.
+- Verification status: tests, typecheck, production build, browser QA, and live Discord API behavior have not been executed in this GitHub editing session. PR #45 was subsequently merged into `main` as `2608ab8f93bde889b9abf4ba0c91b8e409337e9c`; deployment is not confirmed.
