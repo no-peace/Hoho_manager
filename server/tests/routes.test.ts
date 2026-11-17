@@ -39,7 +39,7 @@ vi.mock("../src/services/weaoService.js", async (importOriginal) => {
   return {
     ...actual,
     interpolateWeaoPlaceholders: vi.fn().mockImplementation((payload) => {
-      const serialized = JSON.stringify(payload).replace(/\\{exploit(?:\\.|:)[^}]+\\}/gi, "Updated");
+      const serialized = JSON.stringify(payload).replace(/\{exploit(?:\.|:)[^}]+\}/gi, "Updated");
       return Promise.resolve({ payload: JSON.parse(serialized), modified: true });
     }),
     getAllExploits: vi.fn().mockResolvedValue([
