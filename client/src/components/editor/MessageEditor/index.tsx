@@ -32,6 +32,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
+  const selection = useMessageStore((state) => state.selection);
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
   const duplicateMessage = useMessageStore((state) => state.duplicateMessage);
   const removeMessage = useMessageStore((state) => state.removeMessage);
@@ -64,6 +65,18 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     (message as any).mode === EDITOR_MODES.V2;
 
   const [isOpen, setIsOpen] = useState(true);
+
+  // Preview navigation must reveal a selected target even when its message card
+  // was previously collapsed by the user.
+  useEffect(() => {
+    if (
+      activeMessageIndex === index &&
+      (selection?.kind === "embed" || selection?.kind === "component")
+    ) {
+      setIsOpen(true);
+    }
+  }, [activeMessageIndex, index, selection?.kind, selection?.id]);
+
   const [customName, setCustomName] = useState<string>("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
