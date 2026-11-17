@@ -63,7 +63,9 @@ const SectionPreview = ({ component }: { component: ComponentNode }) => {
         ))}
       </div>
       {thumbnail && (
-        <img src={thumbnail} alt="" className="h-20 w-20 shrink-0 rounded object-cover" />
+        <div data-preview-component-id={component._id} className="shrink-0">
+          <img src={thumbnail} alt="" className="h-20 w-20 rounded object-cover" />
+        </div>
       )}
       {isButton && component.accessory && (
         <div className="shrink-0">
