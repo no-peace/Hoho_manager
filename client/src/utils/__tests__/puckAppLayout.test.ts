@@ -25,6 +25,15 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.tabOrder).toBe("editor-first");
     expect(layout.mobile.showInspector).toBe(false);
     expect(layout.mobile.inspectorHeight).toBe(300);
+    expect(layout.desktop.editorLabel).toBe("Message Editor");
+    expect(layout.desktop.previewLabel).toBe("Live Preview");
+    expect(layout.desktop.inspectorLabel).toBe("Properties");
+    expect(layout.desktop.showToolbar).toBe(true);
+    expect(layout.desktop.headerMotion).toEqual({ animation: "none", duration: "300ms", delay: "0ms" });
+    expect(layout.mobile.editorTabLabel).toBe("Editor");
+    expect(layout.mobile.previewTabLabel).toBe("Preview");
+    expect(layout.mobile.dispatchTabLabel).toBe("Dispatch");
+    expect(layout.mobile.navMotion).toEqual({ animation: "none", duration: "300ms", delay: "0ms" });
   });
 
   it("keeps desktop and mobile settings independent", () => {
