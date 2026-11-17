@@ -24,7 +24,7 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("sets 2.5s fast timeout and retries interaction callbacks once", async () => {
+  it("sets a 1s attempt timeout and retries interaction callbacks once", async () => {
     let callCount = 0;
     let capturedInit: RequestInit | undefined;
 
