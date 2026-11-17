@@ -55,8 +55,10 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect((thrownError as ApiError).status).toBe(504);
     expect((thrownError as ApiError).code).toBe("gateway_timeout");
     expect((thrownError as Error).message).toContain(
-      "Discord request timed out after 2500ms",
+      "Discord request timed out after 1000ms",
     );
+    expect((thrownError as Error).message).not.toContain("token_abc");
+    expect(JSON.stringify((thrownError as ApiError).details)).not.toContain("token_abc");
     expect(capturedInit?.signal).toBeInstanceOf(AbortSignal);
     expect(callCount).toBe(2);
   });
