@@ -100,6 +100,32 @@ describe("buildGuildScopedVariables", () => {
   });
 });
 
+describe("Guild Preview compatibility", () => {
+  it("exposes discoverable guild preview name, icon, banner, and preview metadata", () => {
+    const variables = buildGuildScopedVariables("123456789012345678", {
+      id: "123456789012345678",
+      name: "Discoverable Community",
+      description: "A public community",
+      features: ["DISCOVERABLE", "COMMUNITY"],
+      approximate_member_count: 2500,
+      approximate_presence_count: 120,
+      icon: "a_previewIcon",
+      banner: "previewBanner",
+    });
+
+    expect(variables["server.123456789012345678.name"]).toBe("Discoverable Community");
+    expect(variables["server.123456789012345678.description"]).toBe("A public community");
+    expect(variables["server.123456789012345678.features"]).toBe("DISCOVERABLE, COMMUNITY");
+    expect(variables["server.123456789012345678.approximate_member_count"]).toBe("2500");
+    expect(variables["server.123456789012345678.icon"]).toBe(
+      "https://cdn.discordapp.com/icons/123456789012345678/a_previewIcon.gif",
+    );
+    expect(variables["server.123456789012345678.banner"]).toBe(
+      "https://cdn.discordapp.com/banners/123456789012345678/previewBanner.png",
+    );
+  });
+});
+
 describe("extractReferencedGuildIds", () => {
   it("finds unique explicit server IDs in nested action configuration", () => {
     expect(
