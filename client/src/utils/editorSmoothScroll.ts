@@ -61,7 +61,7 @@ const findEditorTarget = (wrapper: HTMLElement, index: number, targetId?: string
   return (
     Array.from(message.querySelectorAll<HTMLElement>("[data-editor-target-id]")).find(
       (element) => element.dataset.editorTargetId === targetId,
-    ) ?? message
+    ) ?? null
   );
 };
 
