@@ -143,12 +143,12 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
     <Modal open={open} onClose={onClose} title="Head Admin Settings" width="max-w-2xl">
       <div className="flex flex-col sm:flex-row gap-4 h-[75vh] min-w-0">
         <div className="w-full sm:w-44 bg-[#10131A] border border-[#272D3A] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
-          <button
-            onClick={() => undefined}
-            className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#818CF8] text-white" : "text-[#A1A8B8] hover:bg-[#252B3A]"}`}
+          <span
+            aria-current="page"
+            className="text-left px-3 py-2 rounded text-xs font-bold uppercase bg-[#818CF8] text-white"
           >
             General
-          </button>
+          </span>
         </div>
 
         <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#10131A] border border-[#272D3A] rounded-xl p-4">
@@ -273,7 +273,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                                       aria-hidden="true"
                                       className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-[background-color,border-color,color,box-shadow] ${
                                         checked
-                                          ? "border-[#818CF8] bg-[#818CF8] text-[#0B0D12]"
+                                          ? "border-[#818CF8] bg-[#818CF8] text-[#0B0D12] peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
                                           : "border-[#465066] bg-[#10131A] text-transparent peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
                                       }`}
                                     >
