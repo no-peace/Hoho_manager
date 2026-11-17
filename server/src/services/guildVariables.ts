@@ -70,3 +70,54 @@ export const buildGuildVariables = (
 
   return variables;
 };
+
+/**
+ * Re-map a Guild resource under an explicit server ID namespace:
+ * {server.<guildId>.name}, {server.<guildId>.icon}, etc.
+ *
+ * For target-server assets, both .icon and .banner resolve to CDN URLs.
+ * Raw hashes remain available through .icon_hash and .banner_hash.
+ */
+export const buildGuildScopedVariables = (
+  guildId: string,
+  guild: Record<string, unknown>,
+): Record<string, string> => {
+  const base = buildGuildVariables(guildId, guild);
+  const scoped = Object.fromEntries(
+    Object.entries(base).map(([key, value]) => [
+      `server.${guildId}.${key.slice("server.".length)}`,
+      value,
+    ]),
+  );
+
+  const bannerHash = guild.banner;
+  const bannerUrl = base["server.banner_url"] ?? "";
+  scoped[`server.${guildId}.banner_hash`] =
+    typeof bannerHash === "string" ? bannerHash : "";
+  scoped[`server.${guildId}.banner`] = bannerUrl;
+  scoped[`server.${guildId}.banner_url`] = bannerUrl;
+
+  return scoped;
+};
+
+/**
+ * Find explicitly-addressed Guild placeholders in action configuration.
+ * A small cap prevents one action from fanning out into unbounded REST calls.
+ */
+export const extractReferencedGuildIds = (value: unknown): string[] => {
+  let serialized: string;
+  try {
+    serialized = typeof value === "string" ? value : JSON.stringify(value);
+  } catch {
+    return [];
+  }
+  if (!serialized) return [];
+
+  const ids = new Set<string>();
+  const pattern = /server\.(\d{17,20})\.[A-Za-z0-9_.]+/g;
+  for (const match of serialized.matchAll(pattern)) {
+    ids.add(match[1]);
+    if (ids.size >= 10) break;
+  }
+  return [...ids];
+};
