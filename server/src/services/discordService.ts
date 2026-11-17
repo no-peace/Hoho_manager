@@ -106,8 +106,7 @@ const readErrorMessage = (data: unknown, status: number): string => {
 
 /**
  * Resolve the only bot token this instance is allowed to use.
- * The optional argument is retained temporarily for legacy internal callers,
- * but is deliberately ignored so stored custom tokens can never be selected.
+ * Every Discord operation uses the single server-configured bot token.
  */
 export const resolveBotToken = async (): Promise<string> => {
   if (!env.discord.botToken) {
@@ -137,8 +136,6 @@ interface ApiRequestOptions {
   token?: string;
   auth?: string;
   retries?: number;
-  /** Skip the base-URL join (used for webhook endpoints). */
-  absoluteUrl?: string;
   timeoutMs?: number;
   signal?: AbortSignal;
 }
@@ -160,12 +157,11 @@ const apiRequest = async <T>(
     token,
     auth = "Bot",
     retries = 3,
-    absoluteUrl,
     timeoutMs,
     signal: callerSignal,
   }: ApiRequestOptions = {},
 ): Promise<T | null> => {
-  const url = absoluteUrl ?? `${DISCORD_API_BASE}${path ?? ""}`;
+  const url = `${DISCORD_API_BASE}${path ?? ""}`;
   let attempt = 0;
 
   for (;;) {
