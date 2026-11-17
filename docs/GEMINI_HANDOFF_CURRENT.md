@@ -6,8 +6,8 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Latest audit-ledger synchronization commit before this handoff update: `3ee84455f1613303e725b30ee0a8582021880d03`. This handoff update itself creates another documentation-only commit; use the branch ref for the exact latest HEAD.
-- Latest code/test change before documentation synchronization: `b2d0490af16a52f2be7ab343373de2f4ec555117`.
+- Branch HEAD at the start of this documentation sync: `99cc7e7c6356df61ae2db6273b2a0e417edd82b0`.
+- Latest code change at the start of this documentation sync: `e97c9624b4` (server production session-secret enforcement). This handoff update creates a documentation-only commit; use the branch ref for the exact latest HEAD.
 - Recursive Git tree: **355 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - `main` has not been changed by this implementation batch. Do not assume the changes are deployed or merged.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a defect.
@@ -78,6 +78,11 @@
 - The 13 server routes have begun a focused review. Access, authentication, configuration, design publishing, executors, health and templates were inspected; complete validation and caller tracing remains open.
 - The public health endpoint no longer queries or exposes the total user count.
 - Puck production CSS variable mapping was compared against the runtime stylesheet: every emitted layout variable is consumed by the live runtime; Desktop split ratio is passed directly to `SplitPane`.
+- Root/infrastructure review covered package scripts, workspace manifests, Dockerfiles, environment examples, ignore rules, Lighthouse thresholds and workflow source. Docker builds were not run.
+- Docker images now use lockfile-exact `npm ci` workspace installs and copy all workspace manifests needed for npm workspace resolution.
+- CI test jobs use synthetic Discord credentials instead of repository secrets. The owner has disabled GitHub Actions; no workflows were run.
+- Mobile Lighthouse configuration now warns below the owner-reported 97 Performance baseline. Generated Lighthouse/security/benchmark reports and all local `.env.*` variants are ignored.
+- Production server startup now requires a dedicated `SESSION_SECRET` of at least 32 characters, distinct from `ADMIN_API_KEY`. Set this in the Render environment before deploying this branch.
 - Critical action execution, interaction handling, send/Discord routes, settings, Puck resolver and selected client/server test paths have been reviewed.
 - The audit is **not complete**. Client, server, shared, root/infrastructure, database migration, tests and docs still need systematic file-by-file and caller/dependency review. The ledger is authoritative for per-file status.
 - Do not mark a file reviewed from a search result or excerpt alone. Review its full contents and relevant callers/dependencies.
