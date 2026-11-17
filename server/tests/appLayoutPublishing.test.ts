@@ -113,14 +113,14 @@ describe("responsive application layout publishing", () => {
     delete (missing.desktop.content[0]!.props as Record<string, unknown>).height;
     expect(() => validateAppLayoutPair(missing)).toThrow("missing required property: height");
     const missingPanel = makePair();
-    delete (missingPanel.mobile.content[1]!.props.content[1]!.props as Record<string, unknown>).label;
+    delete (((missingPanel.mobile.content[1]!.props as Record<string, any>).content[1].props) as Record<string, unknown>).label;
     expect(() => validateAppLayoutPair(missingPanel)).toThrow("missing required property: label");
   });
 
   it("normalizes omitted optional version-1 navigation fields and omitted root props", () => {
     const legacy = makePair();
-    delete (legacy.desktop.root as Record<string, unknown>).props;
-    delete (legacy.mobile.root as Record<string, unknown>).props;
+    delete (legacy.desktop.root as unknown as Record<string, unknown>).props;
+    delete (legacy.mobile.root as unknown as Record<string, unknown>).props;
     const nav = legacy.mobile.content[2]!.props as Record<string, unknown>;
     delete nav.activeTab;
     delete nav.editorLabel;
@@ -136,11 +136,11 @@ describe("responsive application layout publishing", () => {
 
   it("normalizes legacy boolean EditorPanel.showToolbar values", () => {
     const legacy = makePair();
-    (legacy.desktop.content[1]!.props.content[0]!.props as Record<string, unknown>).showToolbar = false;
-    (legacy.mobile.content[1]!.props.content[0]!.props as Record<string, unknown>).showToolbar = true;
+    (((legacy.desktop.content[1]!.props as Record<string, any>).content[0].props) as Record<string, unknown>).showToolbar = false;
+    (((legacy.mobile.content[1]!.props as Record<string, any>).content[0].props) as Record<string, unknown>).showToolbar = true;
     const checked = validateAppLayoutPair(legacy);
-    expect(checked.desktop.content[1]!.props.content![0]!.props.showToolbar).toBe("hide");
-    expect(checked.mobile.content[1]!.props.content![0]!.props.showToolbar).toBe("show");
+    expect(((checked.desktop.content[1]!.props as Record<string, any>).content[0].props).showToolbar).toBe("hide");
+    expect(((checked.mobile.content[1]!.props as Record<string, any>).content[0].props).showToolbar).toBe("show");
   });
 
   it("enforces the exact component ID format and 64-character maximum", () => {
