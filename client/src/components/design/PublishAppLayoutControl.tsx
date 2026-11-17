@@ -13,6 +13,7 @@ export const PublishAppLayoutControl: React.FC<{
 }> = ({ isOwner, documents }) => {
   const [state, setState] = useState<PublishState>("idle");
   const [published, setPublished] = useState<PublishedAppLayout | null>(null);
+  const [publishedSignature, setPublishedSignature] = useState<string | null>(null);
   const [loadingPublished, setLoadingPublished] = useState(true);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -22,7 +23,18 @@ export const PublishAppLayoutControl: React.FC<{
     if (!isOwner) return;
     let active = true;
     void appLayoutApi.getPublished().then((response) => {
-      if (active) setPublished(response.layout);
+      if (active) {
+        setPublished(response.layout);
+        if (response.layout) {
+          const checked = validateAppLayoutDocuments({
+            desktop: response.layout.desktop,
+            mobile: response.layout.mobile,
+          });
+          setPublishedSignature(JSON.stringify({ desktop: checked.desktop, mobile: checked.mobile }));
+        } else {
+          setPublishedSignature(null);
+        }
+      }
     }).catch((reason) => {
       if (active) setLoadError(reason instanceof Error ? reason.message : "Could not load published layout status.");
     }).finally(() => {
@@ -51,6 +63,7 @@ export const PublishAppLayoutControl: React.FC<{
     try {
       const result = await appLayoutApi.publish(checked);
       setPublished(result.layout);
+      setPublishedSignature(JSON.stringify({ desktop: checked.desktop, mobile: checked.mobile }));
       setLoadError("");
       setState("success");
       setStatus("Both Desktop and Mobile layouts were published successfully.");
@@ -63,6 +76,16 @@ export const PublishAppLayoutControl: React.FC<{
   const updatedAt = published?.updatedAt
     ? new Date(published.updatedAt).toLocaleString()
     : null;
+  let currentDraftSignature: string | null = null;
+  try {
+    const checkedDraft = validateAppLayoutDocuments(documents);
+    currentDraftSignature = JSON.stringify({ desktop: checkedDraft.desktop, mobile: checkedDraft.mobile });
+  } catch {
+    currentDraftSignature = null;
+  }
+  const hasUnpublishedChanges = Boolean(
+    publishedSignature && currentDraftSignature !== publishedSignature,
+  );
 
   return (
     <section className="flex min-w-[220px] flex-col gap-1 rounded-lg border border-[#3b4260] bg-[#171b29] px-3 py-2" aria-label="Published application layout">
@@ -76,7 +99,7 @@ export const PublishAppLayoutControl: React.FC<{
           : loadError
             ? "Published status unavailable."
             : published
-              ? `Published ${updatedAt ? `· ${updatedAt}` : ""}${published.publisher?.discordId ? ` · by ${published.publisher.discordId}` : ""}`
+              ? `Published ${updatedAt ? `· ${updatedAt}` : ""}${published.publisher?.discordId ? ` · by ${published.publisher.discordId}` : ""}${hasUnpublishedChanges ? " · Local draft has unpublished changes" : " · Draft matches published"}`
               : "No server layout published; the live Studio uses built-in defaults."}
       </p>
       <button
