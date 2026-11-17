@@ -107,6 +107,15 @@ router.post(
         : "";
     const senderDiscordId = staffCtx?.staffId ?? (staffCtx?.isAdmin ? "" : dbUser?.discord_id ?? requestedAuthorId);
     const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
+    const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
+    if (
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_attach_files === 0 &&
+      (uploadedFiles.length > 0 || (Array.isArray(body.attachments) && body.attachments.length > 0))
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to attach files.");
+    }
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
     if (mode === "bot" && profileId === null) {
@@ -149,6 +158,25 @@ router.post(
       // Both modern dot syntax and legacy colon syntax grant access to WEAO data.
       const usesWeaoVariables =
         Boolean(exploitHint) || /\{\s*exploit(?:\.|:)/i.test(JSON.stringify(sanitizedMessage));
+      if (
+        staffCtx &&
+        !staffCtx.isAdmin &&
+        staffCtx.record &&
+        staffCtx.record.can_use_weao_exploits === 0 &&
+        usesWeaoVariables
+      ) {
+        throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
+      }
+      if (
+        staffCtx &&
+        !staffCtx.isAdmin &&
+        staffCtx.record &&
+        staffCtx.record.can_use_components_v2 === 0 &&
+        Array.isArray(message.components) &&
+        message.components.length > 0
+      ) {
+        throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
+      }
       // Legacy editor fields are not Discord message-sender overrides. Keep them
       // in old backups/imports, but never forward them to Discord.
       delete sanitizedMessage.username;
@@ -248,6 +276,10 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         );
       }
 
+      // Revalidate after WEAO, timestamp and author placeholders have expanded.
+      // Upstream values must not bypass Discord's payload size/shape limits.
+      authorResolved = validateMessagePayload(authorResolved);
+
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
         // 1. Strict Role & Mention Permission Check (alert/block if unauthorized)
         const { findUnauthorizedMentions } = await import("../utils/mentionScrubber.js");
@@ -266,23 +298,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
           throw ApiError.forbidden(
             `You do not have permission to ping: ${mentionLabels}. Please remove these mentions before sending.`,
           );
-        }
-
-        // 2. Components V2 permission check
-        if (
-          staffCtx.record.can_use_components_v2 === 0 &&
-          Array.isArray(authorResolved.components) &&
-          authorResolved.components.length > 0
-        ) {
-          throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
-        }
-
-        // 4. WEAO Exploits permission check
-        if (
-          staffCtx.record.can_use_weao_exploits === 0 &&
-          usesWeaoVariables
-        ) {
-          throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
         }
 
         const { scrubMentions, sanitizeAllowedMentions } = await import(
@@ -379,15 +394,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       }
     };
     
-    const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
-    if (
-      staffCtx &&
-      !staffCtx.isAdmin &&
-      staffCtx.record?.can_attach_files === 0 &&
-      (uploadedFiles.length > 0 || (Array.isArray(body.attachments) && body.attachments.length > 0))
-    ) {
-      throw ApiError.forbidden("Your staff account is not permitted to attach files.");
-    }
     const urlFiles = await fetchUrlAttachments(body.attachments);
     if (uploadedFiles.length + urlFiles.length > 10) {
       throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
