@@ -1,18 +1,22 @@
 # CURRENT CONTROL STATE — 2026-11-18
 
-> This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
+> This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active assignments.
 
-- Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current implementation HEAD before this documentation update: `65878192c036ae8a35d1e1c03d37b5ce92173d85`.
-- Current tree has only `main`; no open PRs. The owner manually deleted the old agent branches.
-- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Do not treat the old Agent 1/2/3/4 statuses below as live assignments.
-- There are no currently assigned subagents and no implementation branch ownership claims. The Head Agent is conducting a repository-wide audit and maintaining `docs/GEMINI_HANDOFF_CURRENT.md`.
+- Repository: `no-peace/Hoho_manager`.
+- Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
+- Code snapshot before documentation reconciliation: `b2d0490af16a52f2be7ab343373de2f4ec555117`.
+- The working branch is not merged; `main` remains unchanged. No PR has been created for this branch.
+- Current tracked tree: 355 files. The file-by-file ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
+- The 23-file Bot package has been read. Critical action, interaction, send/Discord, settings, Puck and selected test paths have also been reviewed. The complete repository audit is still in progress.
+- Webhook URL sending and custom bot-profile dispatch have been removed from active application paths. The old webhook action remains only as a failure-only compatibility tombstone for saved flows.
+- Structured action failures, Puck preview/runtime separation, Discord ACK/defer/duplicate handling, and bot slash-command actor authorization have been implemented in this branch. Source tests have been added/updated but not executed.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
-- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; the owner intends to run them locally. Tests may be inspected/updated, but must be reported as not executed.
-- Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
+- Do not run `npm run typecheck`, `npm test` or `npm run build`; the owner intends to run these locally after implementation is ready. Tests may be inspected/updated, but must be reported as not executed.
+- Do not claim browser QA, Lighthouse, security certification, live Discord behavior, migration execution or deployment without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
-- Current priorities: (1) complete the 356-file repository audit ledger, (2) reconcile historical plan/handoff claims with current source, (3) resolve explicitly documented product gaps (disabled webhook URL sender, disabled custom bot-profile dispatch, unsupported sender identity overrides, preview-only Puck activeTab, string-prefix action failure classification), and (4) perform verification only when authorized.
-- Read `docs/GEMINI_HANDOFF_CURRENT.md` for the latest source-backed implementation snapshot and remaining work. Current source on `main` always outranks historical agent reports.
+- Current priorities: (1) finish the 355-file audit ledger, (2) inspect every action handler and Discord service caller, (3) verify interaction behavior across webhook/gateway paths and process boundaries, (4) reconcile remaining docs, and (5) prepare a complete diff report. Do not merge until the audit and owner-run checks are complete.
+- Read `docs/GEMINI_HANDOFF_CURRENT.md` for the latest source-backed implementation snapshot and remaining work. Current source on the active branch outranks historical agent reports.
+
 
 ---
 
