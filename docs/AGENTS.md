@@ -169,40 +169,24 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Database and publishing
 
-**Status:** REVIEW REQUIRED — backend/API/migration batch submitted; runtime integration not authorized  
+**Status:** IN PROGRESS — mandatory Head Agent review corrections authorized  
 **Branch:** `agent/layout-publishing`  
-**Scope:** Part C backend only. No production Studio runtime or shared UI/theme/CSS files changed.  
-**Dependency:** Satisfied — Head Agent approved Agent 2's Desktop/Mobile schema and runtime contract on 2026-11-17.  
-**Current batch:** Backend publishing persistence, validation, authorization and API  
-**Files claimed / in progress:** None remaining in implementation. Runtime files remain unclaimed and unauthorized.  
-**Files changed:**
-- `server/src/config/migrations.ts`
-- `server/src/repositories/appLayoutRepository.ts`
-- `server/src/routes/design.ts`
-- `server/src/utils/appLayoutValidation.ts`
-- `server/tests/appLayoutPublishing.test.ts`
-- `docs/AGENTS.md` (Agent 3 section only)
-
-**Migration behavior:** Appended forward-only migration `015_published_responsive_app_layout`. It creates a singleton `published_app_layouts` row containing schema version, both JSON documents, publisher Discord ID, and created/updated timestamps. It also creates `app_layout_publishers`, an explicit, owner-managed Discord-ID allowlist separate from Design Lab access. DDL uses `IF NOT EXISTS`; existing theme and private-preset tables are untouched.
-
-**API contract:**
-- `GET /api/design/app-layout` — public read. Returns `{ layout, fallback }`; missing or invalid stored data returns `layout: null` so the client can use built-in defaults. Valid responses include schema version, Desktop, Mobile, publisher Discord ID, and created/updated timestamps.
-- `PUT /api/design/app-layout` — authenticated publish. Request body is exactly `{ schemaVersion: 1, desktop, mobile }`. Returns `{ ok: true, layout }` after persistence.
-- `GET /api/design/app-layout/publishers`, `POST /api/design/app-layout/publishers`, and `DELETE /api/design/app-layout/publishers/:discordId` — owner-only management of the explicit publisher allowlist.
-
-**Validation and persistence:** Server validator enforces schema version 1; exact Desktop/Mobile shell sections; component and property allowlists; fixed panel composition; unique IDs across the pair; six-digit HEX colors; integer dimension bounds; enumerated motion names/durations/delays; bounded printable labels; and 256 KiB per document / 512 KiB per pair limits. It rejects arbitrary HTML/JS/CSS and unknown properties. Both documents are fully validated and normalized before repository access. The repository stores both documents in one singleton row inside the existing `db.transaction()` abstraction, so a publish cannot persist only one responsive document.
-
-**Authorization:** Publisher identity comes only from the verified Discord session. The configured owner IDs (plus the existing local-development admin behavior outside production) may publish and manage the allowlist. Other users must have an active row in `app_layout_publishers`; Design Lab access alone is not sufficient. The request body cannot supply or override publisher identity. Every publish and allowlist mutation checks authorization server-side.
-
-**Tests added:** Six focused Vitest cases cover accepted schema/normalization, unsupported component/property/motion/ID/version values, dimensions/colors/size limits, unauthorized publishing and spoofed publisher fields, successful publish/read metadata, invalid-pair preservation of the previous published pair, and owner-only publisher grant/revoke. Tests were authored but **not run**, as instructed. No npm checks were run.
-
-**Branch baseline:** `agent/layout-publishing` was fast-forwarded to `main` at `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation. The branch diff against `main` contains only the six files listed above. `main` was not modified or merged.
-**Implementation/test head:** `ecde6c02852bfc5b485175dea857d9c954986b84`.
-**Review-status commit:** `ba86e8cc081608ac1dd76859169c69de2cbdea8e`.
-**Remaining work:** Head Agent source review and deferred final verification. Runtime integration requires a separate explicit file-list approval and start signal.
-**Tests executed:** None.
-**Commit SHA:** See implementation/test head above; the current control-file update is a separate commit.
-**Next action:** Wait for Head Agent review. Do not begin runtime integration.
+**Scope:** Part C backend only. Runtime integration remains unauthorized.  
+**Dependency:** Part B schema/runtime handoff approved; Head Agent has issued mandatory corrections to the submitted backend batch.  
+**Current batch:** Correct owner-only publishing and server/client schema parity.  
+**Files claimed / in progress (exclusive Agent 3 ownership for this batch):**
+- `server/src/config/migrations.ts` — remove the application-layout publisher allowlist table from migration 015; retain the singleton published pair table.
+- `server/src/repositories/appLayoutRepository.ts` — remove publisher grant/revoke/list and allowlist lookup methods; retain pair read/write.
+- `server/src/routes/design.ts` — enforce owner-only PUT using authenticated session identity; remove publisher management routes and allowlist authorization; keep public GET.
+- `server/src/utils/appLayoutValidation.ts` — match the approved Part B version-1 schema, required properties, optional legacy normalization, exact IDs and combined 64 KiB limit.
+- `server/tests/appLayoutPublishing.test.ts` — replace allowlist tests and cover every mandatory regression case.
+- `docs/AGENTS.md` — update only this Agent 3 section.
+**Files changed in this correction batch:** None yet.
+**Source contracts refreshed from latest main:** `docs/AGENTS.md` SHA `c73b11966756192dd6e22ef53af977acc4e9a916`; `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md` SHA `5729a04c5d700c9e686ab52537939d96fda5a60a`; `docs/PUCK_DESIGN_LAB.md` SHA `1880295d796adb2c244c551d35912eb80821405d`; `client/src/utils/puckAppLayout.ts` SHA `47901bc48c1d711ffb98c0fbacceeba4bf2254e4`. Also reviewed Agent 2's approved schema handoff in `agent/responsive-design-lab`, including optional Mobile navigation fields and version-1 compatibility rules.
+**Mandatory corrections:** Owner-only app-layout publishing; remove `app_layout_publishers`; exact schema required fields; 65,536-byte combined Desktop/Mobile JSON limit; ID regex `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; optional empty root props normalization; optional legacy Mobile navigation defaults; legacy boolean toolbar normalization; uniqueness within each document only.
+**Tests:** Add focused coverage for missing required properties, all legacy normalization, root props omission, ID validation, exact size boundary, non-owner denial despite client-supplied identity, owner publish, and invalid Mobile pair preserving previous data. Tests must not be run.
+**Commit SHA:** Pending.
+**Next action:** Implement only the five backend/test files claimed above, refresh latest main control document before commit, then mark REVIEW REQUIRED and wait. No runtime integration.
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
