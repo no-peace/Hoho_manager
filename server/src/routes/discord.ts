@@ -161,8 +161,6 @@ router.get("/guilds/:guildId/members/search", requireStaffPermission("send"), re
     : typeof req.query.q === "string"
     ? req.query.q
     : "";
-
-  const profileId = parseProfileId(req.query.profileId);
   const members = await discord.searchGuildMembers(guildId, query);
   return res.json({ members });
 }));
@@ -172,8 +170,6 @@ router.get("/guilds/:guildId/emojis", requireStaffPermission("send"), requireAll
   if (!guildId || typeof guildId !== "string") {
     throw ApiError.badRequest("`guildId` is required");
   }
-
-  const profileId = parseProfileId(req.query.profileId);
   const emojis = await discord.getGuildEmojis(guildId);
   return res.json({ emojis });
 }));
@@ -275,7 +271,6 @@ router.get(
 );
 
 router.get("/identity", requireStaffOrAdmin, asyncHandler(async (req, res) => {
-  const profileId = parseProfileId(req.query.profileId);
   const token = await discord.resolveBotToken();
   const data = await discord.getBotIdentity(token);
   if (!data || !data.id) return res.json(null);
