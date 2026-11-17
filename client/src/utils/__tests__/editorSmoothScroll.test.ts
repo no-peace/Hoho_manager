@@ -35,17 +35,22 @@ describe("editorSmoothScroll", () => {
     message.setAttribute("data-message-editor-index", "1");
     const embed = document.createElement("div");
     embed.setAttribute("data-editor-target-id", "embed-target");
+    const footer = document.createElement("div");
+    footer.setAttribute("data-editor-target-id", "embed-target");
+    footer.setAttribute("data-editor-target-part", "footer");
+    embed.append(footer);
     message.append(embed);
     content.append(message);
     wrapper.append(content);
     document.body.append(wrapper);
 
     wrapper.getBoundingClientRect = () => new DOMRect(0, 0, 420, 600);
-    embed.getBoundingClientRect = () => new DOMRect(0, 180, 300, 80);
+    embed.getBoundingClientRect = () => new DOMRect(0, 120, 300, 80);
+    footer.getBoundingClientRect = () => new DOMRect(0, 180, 300, 40);
     Object.defineProperty(wrapper, "scrollTo", { configurable: true, value: vi.fn() });
 
     cleanup = initializeEditorLenis(wrapper);
-    scrollToMessageEditor(1, "embed-target");
+    scrollToMessageEditor(1, "embed-target", "footer");
 
     expect(wrapper.scrollTo).toHaveBeenCalledWith({ top: 164, behavior: "smooth" });
   });
