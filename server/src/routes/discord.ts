@@ -11,7 +11,7 @@ import { getSessionUserFromRequest } from "../utils/session.js";
 import { settingsService } from "../services/settingsService.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
-import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
+import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const router = Router();
 
@@ -99,8 +99,7 @@ const requireAllowedGuild: RequestHandler = (req, _res, next) => {
 };
 
 router.get("/guilds", requireStaffPermission("send"), asyncHandler(async (req, res) => {
-  const profileId = parseProfileId(req.query.profileId);
-  let guilds = await discord.getBotGuilds(profileId);
+  let guilds = await discord.getBotGuilds();
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
     const allowedGuilds = parseAllowedIds(
@@ -124,7 +123,7 @@ router.get("/guilds/:guildId/channels", requireStaffPermission("send"), requireA
   }
 
   const profileId = parseProfileId(req.query.profileId);
-  let channels = await discord.getGuildChannels(guildId, profileId);
+  let channels = await discord.getGuildChannels(guildId);
 
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
@@ -149,7 +148,7 @@ router.get("/guilds/:guildId/roles", requireStaffPermission("send"),requireAllow
   }
 
   const profileId = parseProfileId(req.query.profileId);
-  const roles = await discord.getGuildRoles(guildId, profileId);
+  const roles = await discord.getGuildRoles(guildId);
   return res.json({ roles });
 }));
 
@@ -166,7 +165,7 @@ router.get("/guilds/:guildId/members/search", requireStaffPermission("send"), re
     : "";
 
   const profileId = parseProfileId(req.query.profileId);
-  const members = await discord.searchGuildMembers(guildId, query, profileId);
+  const members = await discord.searchGuildMembers(guildId, query);
   return res.json({ members });
 }));
 
@@ -177,7 +176,7 @@ router.get("/guilds/:guildId/emojis", requireStaffPermission("send"), requireAll
   }
 
   const profileId = parseProfileId(req.query.profileId);
-  const emojis = await discord.getGuildEmojis(guildId, profileId);
+  const emojis = await discord.getGuildEmojis(guildId);
   return res.json({ emojis });
 }));
 
@@ -279,7 +278,7 @@ router.get(
 
 router.get("/identity", requireStaffOrAdmin, asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
-  const token = await discord.resolveBotToken(profileId);
+  const token = await discord.resolveBotToken();
   const data = await discord.getBotIdentity(token);
   if (!data || !data.id) return res.json(null);
 
