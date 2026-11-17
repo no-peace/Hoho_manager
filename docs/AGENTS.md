@@ -143,12 +143,13 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 **Status:** IN PROGRESS — authorized  
 **Branch:** `agent/ui-regressions`  
 **Scope:** Part A only. Audit the existing V12/login/preview/mobile quick-edit/FlowBuilder work, identify residual gaps and fix only verified issues.  
-**Current batch:** Baseline reconciliation  
-**Files claimed / in progress:** None reported yet  
-**Files changed:** None  
-**Tests executed:** None reported  
-**Commit SHA:** None  
-**Next action:** Fetch latest main, create/use assigned branch only if Head Agent confirms it exists, inspect source and handoff, then report file claims before edits.
+**Current batch:** A1 — targeted Components V2 quick-edit regression  
+**Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts` (new)  
+**Files changed:** None yet  
+**Tests executed:** None  
+**Commit SHA:** None (implementation)  
+**Findings:** The quick-edit panel locates TextDisplay only in the message's top-level component array, while the existing component tree and editor support nested TextDisplay nodes. This can cause nested content to be ignored and a new top-level TextDisplay to be created instead. The panel's V2 detection also checks only the flags bit, unlike MessageEditor and MessagePreview which additionally recognize the internal V2 mode.  
+**Next action:** Implement a recursive first-TextDisplay lookup and align quick-edit V2 detection with the existing mode/flag checks; add focused utility regression tests.
 
 Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coordinate before touching shared Studio shell files.
 
