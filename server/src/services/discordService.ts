@@ -192,11 +192,14 @@ const apiRequest = async <T>(
       const isTimeout =
         error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       const reason = error instanceof Error ? error.message : String(error);
+      if (callerSignal?.aborted) throw error;
       if (attempt >= retries) {
         if (isTimeout) {
+          // Discord interaction/webhook tokens can appear in request paths. Never
+          // include the URL in a client-visible error or structured error details.
           throw ApiError.gatewayTimeout(
-            `Discord request timed out after ${effectiveTimeout}ms: ${method} ${url}`,
-            { method, url, timeoutMs: effectiveTimeout },
+            `Discord request timed out after ${effectiveTimeout}ms (${method})`,
+            { method, timeoutMs: effectiveTimeout },
           );
         }
         throw ApiError.upstream(`Could not reach Discord: ${reason}`);
@@ -967,7 +970,8 @@ export const createInteractionResponse = async (
     auth: "",
     body: response,
     retries: 1,
-    timeoutMs: options?.timeoutMs ?? 2_500,
+    // Keep the first attempt + retry + backoff below Discord's 3-second initial-response deadline.
+    timeoutMs: options?.timeoutMs ?? 1_000,
   });
 
 export const createFollowupMessage = async (
