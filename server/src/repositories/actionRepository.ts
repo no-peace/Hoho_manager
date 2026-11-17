@@ -144,11 +144,21 @@ export class ActionRepository extends BaseRepository {
       return parseJsonList(registered as unknown as ActionDefinitionRecord[], ["config"]);
     }
 
+    // A template action is only eligible for the message that was actually
+    // tracked as using that template. Never fall back to another user's
+    // template merely because its custom ID happens to collide.
+    if (!messageId) return [];
+    const tracked = await this.db.get<{ template_id: number | null }>(
+      "SELECT template_id FROM tracked_messages WHERE message_id = @messageId LIMIT 1",
+      { messageId },
+    );
+    if (!tracked?.template_id) return [];
+
     const rows = await this.db.query<ActionRow>(
       `SELECT * FROM action_definitions
-       WHERE custom_id = @customId AND template_id IS NOT NULL
+       WHERE custom_id = @customId AND template_id = @templateId
        ORDER BY execution_order ASC`,
-      { customId },
+      { customId, templateId: tracked.template_id },
     );
     return parseJsonList(rows as unknown as ActionDefinitionRecord[], ["config"]);
   }
