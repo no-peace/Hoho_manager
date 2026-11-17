@@ -164,9 +164,12 @@ describe("HoHo responsive Studio layout documents", () => {
     mobile.content[1].props.content[0].props.label = "Write";
     mobile.content[1].props.content[0].props.showToolbar = "show";
     mobile.content[1].props.content[0].props.animation = "zoom-in";
+    mobile.content[1].props.content[0].props.padding = 17;
     mobile.content[1].props.content[1].props.label = "Mobile preview";
     mobile.content[1].props.content[1].props.animation = "fade-up";
+    mobile.content[1].props.content[1].props.padding = 19;
     mobile.content[1].props.content[2].props.label = "Mobile properties";
+    mobile.content[1].props.content[2].props.padding = 21;
     mobile.content[1].props.content[2].props.animation = "slide-left";
     mobile.content[2].props.animation = "pulse";
     mobile.content[2].props.animationDuration = "1200ms";
@@ -185,6 +188,9 @@ describe("HoHo responsive Studio layout documents", () => {
 
     expect(layout.mobile.headerMotion.animation).toBe("fade");
     expect(layout.mobile.workspaceMotion.animation).toBe("slide-right");
+    expect(layout.mobile.editorPadding).toBe(17);
+    expect(layout.mobile.previewPadding).toBe(19);
+    expect(layout.mobile.inspectorPadding).toBe(21);
     expect(layout.mobile.editorMotion.animation).toBe("zoom-in");
     expect(layout.mobile.previewMotion.animation).toBe("fade-up");
     expect(layout.mobile.inspectorMotion.animation).toBe("slide-left");
