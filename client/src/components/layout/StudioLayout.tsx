@@ -189,7 +189,7 @@ export const StudioLayout: React.FC = () => {
 
       <main className="relative flex min-h-0 flex-1 overflow-hidden">
         <SplitPane
-          initialRatio={layout.desktop.editorRatio / 100}
+          initialRatio={layout.desktop.editorRatio}
           panelOrder={layout.desktop.panelOrder}
           workspaceMotion={activeLayout.workspaceMotion}
           left={
