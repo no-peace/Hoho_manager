@@ -236,9 +236,8 @@ export const executeCustomId = async (
     logger: log,
   };
 
-  const isErrorResponse = (res: ActionResponse | undefined): boolean =>
-    typeof (res?.data as any)?.content === "string" &&
-    ((res?.data as any).content as string).startsWith("\u26a0\ufe0f");
+  const isFailureResponse = (res: ActionResponse | undefined): boolean =>
+    res?.outcome === "failure";
 
   const logStep = async (
     step: ExecutableStep,
@@ -252,7 +251,7 @@ export const executeCustomId = async (
       userId,
       guildId: interaction.guild_id ?? null,
       channelId: interaction.channel_id ?? null,
-      status: failed || isErrorResponse(response) ? "failed" : "success",
+      status: failed || isFailureResponse(response) ? "failed" : "success",
       response: { type: step.type, ms: Date.now() - startedAt },
     });
   };
@@ -291,7 +290,7 @@ export const executeCustomId = async (
           variables,
         );
         const nested = await runSteps(branch, depth + 1);
-        await logStep(step, nested, started, isErrorResponse(nested));
+        await logStep(step, nested, started, isFailureResponse(nested));
         if (nested) lastResponse = nested;
         if (halted) return lastResponse;
         continue;
@@ -314,7 +313,7 @@ export const executeCustomId = async (
         response = actionFailed("Something went wrong running that action.");
       }
 
-      const failed = threw || isErrorResponse(response);
+      const failed = threw || isFailureResponse(response);
       await logStep(step, response, started, failed);
 
       if (step.type === "stop") {
@@ -336,7 +335,11 @@ export const executeCustomId = async (
   };
 
   const response = await runSteps(steps, 0);
-  return { response, handled: true, type: actionType };
+  if (!response) return { response, handled: true, type: actionType };
+
+  // Executor metadata must never be included in Discord interaction callbacks.
+  const { outcome: _outcome, ...discordResponse } = response;
+  return { response: discordResponse, handled: true, type: actionType };
 };
 
 export default { executeCustomId };
