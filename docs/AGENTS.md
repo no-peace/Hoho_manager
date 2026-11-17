@@ -169,34 +169,30 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Database and publishing
 
-**Status:** IN PROGRESS — review corrections implemented; final source review and commit preparation  
+**Status:** REVIEW REQUIRED — mandatory backend corrections committed; awaiting Head Agent review  
 **Branch:** `agent/layout-publishing`  
 **Scope:** Part C backend only. Runtime integration remains unauthorized.  
-**Dependency:** Part B schema/runtime handoff approved; Head Agent's mandatory corrections are being applied.  
-**Current batch:** Owner-only authorization and approved schema parity corrections.  
-**Files claimed / in progress:**
+**Dependency:** Part B schema/runtime handoff approved. All mandatory Part C review corrections have been implemented in this branch.  
+**Files claimed / in progress:** None. Runtime files remain unclaimed and unauthorized.
+**Files changed:**
 - `server/src/config/migrations.ts`
 - `server/src/repositories/appLayoutRepository.ts`
 - `server/src/routes/design.ts`
 - `server/src/utils/appLayoutValidation.ts`
 - `server/tests/appLayoutPublishing.test.ts`
-- `docs/AGENTS.md` (this section only)
+- `docs/AGENTS.md` (Agent 3 section only; refreshed from latest main before this status commit)
 
-**Files changed in this correction batch:**
-- `server/src/config/migrations.ts` — removed allowlist table creation from migration 015 and added idempotent migration 016 to drop the temporary table if it exists.
-- `server/src/repositories/appLayoutRepository.ts` — removed all publisher allowlist types and methods; retained only atomic pair read/write.
-- `server/src/routes/design.ts` — removed publisher management routes and allowlist checks; retained public GET; PUT now requires a verified session and owner ID. Existing admin simulation is explicitly gated by `!env.isProd`.
-- `server/src/utils/appLayoutValidation.ts` — implemented required-property checks, exact Part B component/property allowlists, 65,536-byte combined JSON limit, 64-character ID rule, per-document uniqueness, omitted root-props normalization, optional legacy navigation defaults, legacy boolean toolbar normalization, and optional `updatedAt` metadata validation.
-- `server/tests/appLayoutPublishing.test.ts` — added 12 focused regression tests covering the requested validation, compatibility, authorization, persistence and public-read cases.
+**Migration behavior:** Migration 015 creates only the singleton `published_app_layouts` row storing schema version, Desktop JSON, Mobile JSON, publisher Discord ID and timestamps. Migration 016 uses `DROP TABLE IF EXISTS app_layout_publishers` to remove the temporary allowlist table if it was created by an earlier unapproved draft. Existing theme and private-preset tables are untouched.
+**API contract:** `GET /api/design/app-layout` remains public and returns `{ layout, fallback }`. `PUT /api/design/app-layout` requires an authenticated owner session and accepts `{ schemaVersion: 1, desktop, mobile, updatedAt? }`; it returns `{ ok: true, layout }`. All `/app-layout/publishers` management endpoints have been removed.
+**Authorization:** PUT resolves the signed Discord session server-side and requires its Discord ID to be in `env.ownerDiscordIds`. The existing admin simulation is permitted only when `!env.isProd`; it is unavailable in production. No client-supplied Discord ID is used for authorization or publisher metadata.
+**Validation parity:** Enforces the approved Part B allowlists and required component properties; 65,536-byte combined UTF-8 Desktop/Mobile JSON limit; ID regex `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; unique IDs within each document only; omitted empty `root.props` normalization; optional version-1 Mobile navigation defaults (`activeTab: editor`, labels `Editor`, `Preview`, `Dispatch`); legacy boolean `EditorPanel.showToolbar` normalization; optional `updatedAt` metadata validation (max 64 characters); existing numeric bounds, HEX colors and motion enums. Both documents are validated and normalized before repository access, then stored together in one transaction.
+**Regression tests:** 12 focused Vitest cases cover required properties, legacy optional-field defaults, omitted root props, legacy toolbar booleans, invalid/overlong/prefixed IDs, 64 KiB boundary, existing allowlists/bounds/colors/motion/version checks, per-document uniqueness without cross-document collision rejection, non-owner denial despite a client-supplied ID, authenticated development-owner publishing, invalid Mobile preservation of the prior pair, and public GET fallback.
+**Verification:** Tests were authored but not run. No npm checks, typecheck, build, browser QA or deployment verification were run, as instructed.
+**Latest main control document refreshed immediately before this status commit:** `docs/AGENTS.md` SHA `900d6479de0f0c7715faf121f1d90e8a53509edf`; latest directives 18–19 preserved in this branch copy. Main has advanced by two documentation-only commits since the shared base; this branch was not merged or rebased. The branch diff contains only the five backend/test files and this Agent 3 control-file section.
+**Implementation/control commit before final status:** `7b5508d3e991acc2cba0d35eafede12f32ce6190`.
+**Remaining work:** Head Agent review and deferred final verification. Runtime integration requires a separate explicit authorization.
+**Next action:** Wait for Head Agent review. Do not begin runtime integration.
 
-**Latest main control refresh before this batch:** `docs/AGENTS.md` SHA `900d6479de0f0c7715faf121f1d90e8a53509edf`. Latest directives 18–19 were read in full. The other latest-main source contract hashes remain: master plan `5729a04c5d700c9e686ab52537939d96fda5a60a`; Puck Design Lab `1880295d796adb2c244c551d35912eb80821405d`; client validator `47901bc48c1d711ffb98c0fbacceeba4bf2254e`. The approved Part B branch handoff was also reviewed for optional Mobile navigation properties/defaults.
-**Validation details:** Desktop and Mobile are validated independently before repository access. The 64 KiB calculation uses the UTF-8 JSON serialization of the Desktop/Mobile pair. IDs follow `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; collisions are rejected within each document, while equal IDs across Desktop and Mobile are accepted. Every non-optional component property is required.
-**Authorization:** App-layout PUT derives identity only from `getSessionUserFromRequest()`; it requires `env.ownerDiscordIds.includes(session.id)`, with the existing `session.role === "admin"` development simulation allowed only when `!env.isProd`. No client-supplied ID is consulted. Public GET remains unauthenticated.
-**Tests:** 12 focused tests authored. **Not run**, as instructed. No npm checks, typecheck or build run.
-**Runtime integration:** Not started. No Studio runtime, Part A, Part B, shared UI/theme/CSS files edited.
-**Commit SHA:** Pending final status/commit.
-**Remaining work:** Final static source review, refresh latest main control file immediately before final status/commit, update this section to REVIEW REQUIRED and report exact branch head.
-**Next action:** Finish static review and commit only to `agent/layout-publishing`; then wait for Head Agent review.
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
 **Status:** INSPECTION ONLY  
