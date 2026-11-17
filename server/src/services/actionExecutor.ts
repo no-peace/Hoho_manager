@@ -10,7 +10,11 @@ import { actionRepository, webhookProfileRepository } from "../repositories/inde
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
-import { buildGuildVariables } from "./guildVariables.js";
+import {
+  buildGuildScopedVariables,
+  buildGuildVariables,
+  extractReferencedGuildIds,
+} from "./guildVariables.js";
 
 const log = logger.child("actions");
 const MAX_BRANCH_DEPTH = 10;
@@ -182,8 +186,8 @@ export const executeCustomId = async (
 
   const guildId = interaction.guild_id;
   if (guildId && botToken) {
-    // Fetch the full Guild resource so {server.*} can resolve every field
-    // Discord returns for this server, not only id/name/icon summaries.
+    // Fetch the full Guild resource so the unqualified {server.*} placeholders
+    // continue to describe the server where this interaction happened.
     const guild = await discord.getGuild(guildId, botToken).catch(() => null);
     if (guild) {
       Object.assign(variables, buildGuildVariables(guildId, guild));
@@ -194,6 +198,25 @@ export const executeCustomId = async (
       const matchedGuild = guilds.find((entry) => entry.id === guildId);
       if (matchedGuild) Object.assign(variables, buildGuildVariables(guildId, matchedGuild));
     }
+
+    // Explicitly-addressed placeholders can read a different server:
+    // {server.<guildId>.name}, {server.<guildId>.icon}, {server.<guildId>.banner}.
+    // Discord only returns this resource when the configured bot can access
+    // that guild (normally, the bot must be a member of it).
+    const referencedGuildIds = extractReferencedGuildIds(steps);
+    await Promise.all(
+      referencedGuildIds.map(async (referencedGuildId) => {
+        const referencedGuild = await discord
+          .getGuild(referencedGuildId, botToken)
+          .catch(() => null);
+        if (referencedGuild) {
+          Object.assign(
+            variables,
+            buildGuildScopedVariables(referencedGuildId, referencedGuild),
+          );
+        }
+      }),
+    );
   }
 
   const context: Omit<ActionContext, "config"> = {
