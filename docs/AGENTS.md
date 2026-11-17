@@ -154,19 +154,40 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** IN PROGRESS — completing final property-level contract audit  
+**Status:** REVIEW REQUIRED — full editable-property/runtime contract reconciliation committed; awaiting Head Agent review  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. A final audit found that Mobile Editor and Preview each expose their own Puck `padding` property; these values also need independent resolved fields rather than relying only on MobileWorkspace.panelPadding.  
-**Current batch:** B4 — Mobile per-panel padding contract completion  
-**Files claimed / in progress:**
+**Scope:** Part B only. Completed the requested reconciliation between editable Puck properties, `ResolvedAppLayout`, and the Part C runtime contract. No Part C implementation.  
+**Current batch:** B3/B4 — production motion, labels, toolbar visibility and complete Mobile panel-property resolution  
+**Files changed:**
 - `client/src/utils/puckAppLayout.ts`
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
 - `docs/PUCK_DESIGN_LAB.md`
 - `docs/AGENTS.md` (this Agent 2 status section only)
 
-**Files changed in B3:** Resolved production motion, labels and toolbar visibility; documented production/preview-only boundaries; added regression assertions. B3 commits: `c6e3ab251f755f4f134e928e79068e1223dbbd2b`, `9d647bf8d1ab5388821d7e2f656981f8e8e01c04`, `8c608557a3a659fa1fcc65b56787c338eb47ae7c`.  
-**Tests executed:** None. The user explicitly deferred npm checks to final verification.  
-**Next action:** Resolve and document Mobile Editor/Preview padding, add focused assertions, then submit the complete property audit as REVIEW REQUIRED. No Part C, Agent 1 files, shared Studio runtime edits or merge.
+**Architecture decisions / property classification:**
+- **Production-facing motion:** Animation preset, duration and delay are resolved separately for Desktop and Mobile headers, workspaces, panels and Mobile navigation. Each region exposes typed `{ animation, duration, delay }`. Part C must use a fixed code-owned preset mapping, bounded timing values, and a `prefers-reduced-motion: reduce` override that suppresses animation and delay.
+- **Production-facing panel labels:** Editor, Preview and Inspector labels are resolved independently for Desktop and Mobile and must render as text in the real panel headings.
+- **Production-facing toolbar:** `EditorPanel.showToolbar` resolves to independent Desktop and Mobile booleans and controls only the real editor toolbar at that breakpoint.
+- **Production-facing Mobile panel geometry:** `editorPadding`, `previewPadding` and `inspectorPadding` now resolve independently from their corresponding panel nodes. They are not conflated with the workspace-level `panelPadding`.
+- **Other production-facing Mobile controls:** `defaultPane`, navigation sizing/order/colors, visual label visibility and Editor/Preview/Dispatch tab labels. Tab labels must be text; accessible names must remain when visual labels are hidden.
+- **Preview-only:** Mobile `showInspector` (preview bottom-sheet visibility) and `activeTab` (preview selected-tab highlight). Component IDs are document identity/validation keys only, not production DOM IDs.
+- `getAppLayoutCssVariables` remains scoped to CSS dimensions/colors/geometry. Part C applies motion through allowlisted code-owned classes/timing and labels through text content, never document-provided CSS/HTML.
+
+**Validation/resolution:** Existing strict validation checks every motion preset, duration and delay against fixed enums; validates panel labels (1–48 trimmed characters, no control characters); validates `showToolbar` as `show | hide` with legacy boolean normalization; and validates each panel padding value in the 0–32 range. The resolver now exposes all these validated values for both breakpoints.  
+**Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, Mobile navigation motion, and independent Mobile Editor/Preview/Inspector padding.  
+**Tests executed:** None. Per the user/Head Agent instruction, npm checks are deferred to final verification; no test/typecheck/build result is claimed.  
+**Implementation commits:**
+- `c6e3ab251f755f4f134e928e79068e1223dbbd2b` — resolved production motion, labels and toolbar values.
+- `9d647bf8d1ab5388821d7e2f656981f8e8e01c04` — regression assertions for resolved production controls.
+- `8c608557a3a659fa1fcc65b56787c338eb47ae7c` — documented production vs preview-only behavior and Part C requirements.
+- `6c4dd5e53ffce9e670fb7a05cddf4f61f2f2bc4a` — resolved Mobile Editor/Preview panel padding independently.
+- `2c02994bf3f9320bc5c566d9738ff563eeff78ac` — regression assertions for independent Mobile panel padding.
+- `ff0cd41437711900c513e06f681132a2c290223e` — documented independent Mobile panel padding and Part C application.
+**Remaining work:** Head Agent review/approval. Part C must implement the documented runtime application; Agent 2 has not edited production Studio runtime files.  
+**Risks / blockers:** npm checks are intentionally deferred to final verification. Production animation and toolbar application remain Part C work.  
+**Next action:** Wait for Head Agent review. Do not implement Part C, edit Agent 1 files/shared Studio runtime, or merge to `main`.
+
+Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 ## 11. Agent 3 — Part C: Database and publishing
 
 **Status:** BLOCKED — inspection only  
