@@ -143,6 +143,32 @@ describe("Phase 2 staff security regressions", () => {
     }
   });
 
+  it("blocks tracking a message in a disallowed channel even when its guild is allowed", async () => {
+    const staffId = "123456789012345689";
+    await createStaff(staffId);
+    try {
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue("guild_allowed");
+
+      const response = await fetch(`${baseUrl}/api/tracking/track`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffId,
+        },
+        body: JSON.stringify({
+          channelId: "channel_456",
+          messageId: "message_123",
+          rawPayload: { content: "must not track" },
+        }),
+      });
+
+      expect(response.status).toBe(403);
+      expect(discordService.getChannelMessage).not.toHaveBeenCalled();
+    } finally {
+      await staffRepository.delete(staffId);
+    }
+  });
+
   it("does not reveal tracked records from a disallowed guild to staff", async () => {
     const staffId = "123456789012345679";
     await createStaff(staffId);
