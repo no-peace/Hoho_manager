@@ -465,7 +465,6 @@ export interface SettingsRecord {
   guild_id: string;
   log_channel_id: string | null;
   head_admin_ids: string[];
-  bot_profile_id: string | null;
   extra_settings: Record<string, unknown>;
   created_at: number;
   updated_at: number;
@@ -475,7 +474,6 @@ export interface UpdateSettingsInput {
   guildId?: string;
   log_channel_id?: string | null;
   head_admin_ids?: string[];
-  bot_profile_id?: string | null;
   extra_settings?: Record<string, unknown>;
 }
 
