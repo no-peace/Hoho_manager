@@ -140,23 +140,29 @@ router.post(
       return;
     }
 
+    let deliveryError: unknown;
     try {
       await discord.createInteractionResponse(
         interaction.id,
         interaction.token,
         response,
       );
-      if (
-        response.type === InteractionResponseType.DeferredUpdateMessage ||
-        response.type === InteractionResponseType.DeferredChannelMessageWithSource
-      ) {
-        void completeDeferredInteraction(interaction);
-      }
     } catch (error) {
-      cleanupDeferredInteraction(interaction.id);
-      const reason = error instanceof Error ? error.message : String(error);
-      log.error(`Relay could not deliver a reply for ${interaction.id}: ${reason}`);
-      // `delivered: false` is what lets the worker decide to answer in-process.
+      deliveryError = error;
+    }
+
+    if (
+      response.type === InteractionResponseType.DeferredUpdateMessage ||
+      response.type === InteractionResponseType.DeferredChannelMessageWithSource
+    ) {
+      // Keep the late result alive even if Discord says a duplicate request
+      // already acknowledged this interaction.
+      void completeDeferredInteraction(interaction);
+    }
+
+    if (deliveryError) {
+      const reason = deliveryError instanceof Error ? deliveryError.message : String(deliveryError);
+      log.error(`Relay could not deliver the initial reply for ${interaction.id}: ${reason}`);
       res.status(502).json({ ok: false, delivered: false, error: reason });
       return;
     }
