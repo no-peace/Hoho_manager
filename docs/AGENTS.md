@@ -434,3 +434,19 @@ The report's branch counts were stale and must not be used as current status. Pr
 - Agent 3 / Part C: **IN PROGRESS — runtime implementation authorized under Directive 024**. Backend/API/migration batch already integrated.
 - Agent 4 / Part D: **BLOCKED — not authorized**. Part E: **COMPLETED — source reviewed and integrated**. Do not start Part D until Agent 3 runtime is integrated and Head Agent provides a separate exact file authorization.
 - Head Agent owns Parts F, G and H. Do not run npm verification until the complete implementation program is ready for final verification.
+
+
+## 26. Head Agent review — Agent 3 Part C Studio runtime (2026-11-17)
+
+- **Branch reviewed:** `agent/layout-publishing`, submitted HEAD `12181bedb6ae82f3a48afbed6d3f942107fe17ad`.
+- The branch comparison against main is diverged (39 commits ahead / 83 behind at review time). The comparison includes the previously integrated Part C backend batch and the submitted runtime batch. Do not merge the branch wholesale. Head Agent will selectively integrate only explicitly accepted files onto current main and preserve this control document.
+- **Runtime source review:** The nine authorized runtime files were inspected. No source-level blocker was found in the API request shape, use of the public GET /api/design/app-layout and owner-only PUT endpoint, Desktop/Mobile resolution, fallback behavior, controlled refresh, owner-gated Design Lab UI, draft separation, or the production Studio wiring. The footer-toolbar selector was checked against the existing MessageEditor DOM and targets its footer action bar, not message content or preview controls.
+- The implementation consumes `resolveAppLayoutData()` and `getAppLayoutCssVariables()` from the current Part B utility on main. During selective integration, do not copy the stale branch copy of any shared utility; use the current main version, which includes the Mobile Editor/Preview padding variables.
+- **Decision:** Runtime implementation is **SOURCE REVIEW ACCEPTED — REGRESSION TESTS REQUIRED**. This is not merge approval or Part C completion. No npm checks, browser QA, or deployment verification were run.
+- The agent did not add client regression tests because test paths were not in Directive 024. The Head Agent now grants exclusive test-file ownership on `agent/layout-publishing` for this follow-up batch:
+  1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` (new)
+  2. `client/src/utils/__tests__/appLayoutApi.test.ts` (new)
+  3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx` (new)
+- Add focused Vitest tests using existing repository conventions for: built-in fallback on missing/failed/invalid API data; responsive Desktop/Mobile selection and listener cleanup; preserving last valid published state across failed refresh; credentialed GET/PUT request contract and validation; owner-only publish UI; both-document validation; and server-confirmed success/error behavior. Mock network and browser confirmation; do not make live requests.
+- Do not modify any existing source file, any path outside the three authorized test paths, or `docs/AGENTS.md` in this follow-up. Re-fetch the latest main control document before editing and before committing. Work only on `agent/layout-publishing`; no merge/rebase/force-push and no npm test/typecheck/build. Mark the test batch REVIEW REQUIRED and report exact changed paths and commit SHA.
+- Agent 3 Part C remains **REVIEW REQUIRED** until the tests are source-reviewed and the nine runtime files plus accepted tests are selectively integrated. Agent 4 Part D remains blocked until Part C integration is complete and separate exact authorization is issued.
