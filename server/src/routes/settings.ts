@@ -55,7 +55,6 @@ router.get("/", requireHeadAdmin, asyncHandler(async (req, res) => {
     guild_id: settings.guild_id,
     log_channel_id: settings.log_channel_id,
     head_admin_ids: settings.head_admin_ids,
-    bot_profile_id: settings.bot_profile_id,
     extra_settings: settings.extra_settings,
     is_head_admin: true,
     created_at: settings.created_at,
@@ -69,7 +68,7 @@ router.get("/", requireHeadAdmin, asyncHandler(async (req, res) => {
  * Guarded by requireHeadAdmin.
  */
 const handleUpdate = asyncHandler(async (req, res) => {
-  const { guildId, log_channel_id, head_admin_ids, bot_profile_id, extra_settings } = req.body ?? {};
+  const { guildId, log_channel_id, head_admin_ids, extra_settings } = req.body ?? {};
 
   const targetGuildId = typeof guildId === "string" && guildId.trim()
     ? guildId.trim()
@@ -93,10 +92,6 @@ const handleUpdate = asyncHandler(async (req, res) => {
     }
   }
 
-  if (bot_profile_id !== undefined && bot_profile_id !== null && typeof bot_profile_id !== "string") {
-    throw ApiError.badRequest("`bot_profile_id` must be a string or null");
-  }
-
   if (extra_settings !== undefined && (typeof extra_settings !== "object" || extra_settings === null || Array.isArray(extra_settings))) {
     throw ApiError.badRequest("`extra_settings` must be a JSON object");
   }
@@ -105,7 +100,6 @@ const handleUpdate = asyncHandler(async (req, res) => {
     guildId: targetGuildId,
     log_channel_id: log_channel_id ?? (log_channel_id === null ? null : undefined),
     head_admin_ids,
-    bot_profile_id: bot_profile_id ?? (bot_profile_id === null ? null : undefined),
     extra_settings,
   });
 
@@ -123,7 +117,6 @@ const handleUpdate = asyncHandler(async (req, res) => {
     guild_id: updated.guild_id,
     log_channel_id: updated.log_channel_id,
     head_admin_ids: updated.head_admin_ids,
-    bot_profile_id: updated.bot_profile_id,
     extra_settings: updated.extra_settings,
     is_head_admin: true,
     created_at: updated.created_at,
