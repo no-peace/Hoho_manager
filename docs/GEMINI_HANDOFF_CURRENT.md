@@ -1,5 +1,20 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
+## Latest main status — Preview/editor navigation repair (2026-11-17)
+
+This section supersedes older preview-routing and editor-scroll descriptions below.
+
+- **Latest code commit:** `97d38f0e7da375c656b29b7fcf4a99bebbcc9cfe`.
+- **Implementation plan and acceptance criteria:** [`docs/PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md`](PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md), documented in commit `618e8f95703229a76d6a478777bea325cd419452`.
+- **Preview selection:** Embed author/title/description/fields/images/footer/timestamp regions now identify their owning embed. Nested Components V2 items resolve to their nearest component. Classic/V2 action rows, Section thumbnails, and disabled preview controls are selectable.
+- **Desktop:** Component and embed selections open the inspector and navigate the left editor to the matching editor target. Embed sub-parts can navigate to the matching author/body/field/image/footer editor section.
+- **Mobile/tablet:** Component and embed clicks keep Preview active and open the relevant inspector sheet. **Open Full Editor** and manual Editor-pane navigation wait for the pane to become active, then scroll to the selected target.
+- **Scroll behavior:** Lenis is limited to fine-pointer, motion-enabled contexts. Touch and reduced-motion paths use the editor wrapper's native scroll position. Hidden/inert panes are not scrolled; collapsed message cards are expanded by preview selection.
+- **Mobile gesture fix:** Swipes starting on buttons, links, inputs, or other interactive controls no longer switch panes; touch cancellation clears gesture state.
+- **Regression coverage added:** Embed author/footer click routing, nested V2 selection, embed inspector rendering, collapsed message expansion, touch/reduced-motion scrolling, hidden-pane deferral, and exact footer-section navigation.
+- **Verification:** These tests, client typecheck, and production build have **not** been run. The desktop terminal MCP endpoint returned HTTP 404, and GitHub returned no commit statuses or workflow runs. Browser QA and Lighthouse are also pending. Do not mark these checks as passing.
+- **Run when a terminal is available:** `npm test --workspace client`, `npm run typecheck --workspace client`, and `npm run build --workspace client`, followed by desktop/mobile browser QA.
+
 ## Current main status — V12 audit follow-up (2026-11-17)
 
 This section supersedes older branch/PR status statements in the historical notes below.
@@ -18,7 +33,7 @@ This section supersedes older branch/PR status statements in the historical note
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
-**Latest implementation head:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`  
+**Latest implementation head:** `97d38f0e7da375c656b29b7fcf4a99bebbcc9cfe`  
 **Latest related PRs:** [#45 — server guild placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (merged); V12 UX baseline: [#44](https://github.com/no-peace/Hoho_manager/pull/44)  
 **Implementation branch:** `feat/v12-ultimate-ux-implementation` (merged into `main`)  
 **Current status:** V12 is merged. The owner subsequently reported that all tests passed and the mobile Lighthouse Performance score reached 97. The owner explicitly chose to keep 97 as the baseline and stop further performance tuning. Do not initiate additional Lighthouse-driven optimization or refactoring unless the owner asks. The test result is owner-reported; it was not independently executed in this GitHub editing session. No deployment is claimed.
