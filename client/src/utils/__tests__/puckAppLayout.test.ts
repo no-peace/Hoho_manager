@@ -139,7 +139,7 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.editorTabLabel).toBe("Write");
     expect(layout.mobile.previewTabLabel).toBe("Inspect");
     expect(layout.mobile.dispatchTabLabel).toBe("Send");
-    expect(layout.mobile.previewActiveTab).toBe("preview");
+    expect(layout.mobile).not.toHaveProperty("previewActiveTab");
   });
 
   it("resolves production panel labels, toolbar visibility and motion for both breakpoints", () => {
