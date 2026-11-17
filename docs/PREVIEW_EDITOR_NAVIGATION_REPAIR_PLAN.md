@@ -65,7 +65,7 @@ On desktop, non-interactive component clicks are reduced to message selection an
 - Extended the store's embed selection with optional preview-part and field identity.
 - Added embed root identity and semantic hit regions for author, title, description, fields, thumbnail, image, footer, and timestamp.
 - Unified preview click routing so nested V2 children resolve to the nearest editable component; action-row whitespace, Section thumbnails, disabled buttons, and disabled select triggers also remain selectable.
-- Added matching editor target IDs to embed editors, V2 component cards/nested section controls, and classic action-row controls.
+- Added matching editor target IDs to embed editors, V2 component cards/nested section controls, and classic action-row controls. Embed author/body/field/image/footer sections also expose part-level targets, so footer/author clicks can land on the corresponding editor section (and field clicks can target the matching field).
 - Preview selection now expands collapsed message cards. Desktop navigates to the exact editor target while retaining the inspector; mobile keeps Preview visible and opens either the component inspector or the embed editor bottom sheet.
 - Added **Open Full Editor** navigation for component/embed inspectors and made manual mobile pane changes scroll to the selected editor target after the Editor pane is visible.
 - Reworked the editor scroll helper: Lenis is limited to fine-pointer/non-reduced-motion contexts; touch and reduced-motion use native scrolling on the editor wrapper; hidden/inert panes are not scrolled; target lookup retries while collapsed content mounts.
