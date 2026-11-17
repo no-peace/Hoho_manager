@@ -155,12 +155,19 @@ describe("HoHo responsive Studio layout documents", () => {
     desktop.content[1].props.content[0].props.showToolbar = "hide";
     desktop.content[1].props.content[0].props.animation = "zoom-in";
     desktop.content[1].props.content[1].props.label = "Rendered message";
+    desktop.content[1].props.content[1].props.animation = "fade";
     desktop.content[1].props.content[2].props.label = "Settings";
+    desktop.content[1].props.content[2].props.animation = "float";
 
+    mobile.content[0].props.animation = "fade";
+    mobile.content[1].props.animation = "slide-right";
     mobile.content[1].props.content[0].props.label = "Write";
     mobile.content[1].props.content[0].props.showToolbar = "show";
+    mobile.content[1].props.content[0].props.animation = "zoom-in";
     mobile.content[1].props.content[1].props.label = "Mobile preview";
+    mobile.content[1].props.content[1].props.animation = "fade-up";
     mobile.content[1].props.content[2].props.label = "Mobile properties";
+    mobile.content[1].props.content[2].props.animation = "slide-left";
     mobile.content[2].props.animation = "pulse";
     mobile.content[2].props.animationDuration = "1200ms";
     mobile.content[2].props.animationDelay = "350ms";
@@ -173,7 +180,14 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.desktop.inspectorLabel).toBe("Settings");
     expect(layout.desktop.showToolbar).toBe(false);
     expect(layout.desktop.editorMotion.animation).toBe("zoom-in");
+    expect(layout.desktop.previewMotion.animation).toBe("fade");
+    expect(layout.desktop.inspectorMotion.animation).toBe("float");
 
+    expect(layout.mobile.headerMotion.animation).toBe("fade");
+    expect(layout.mobile.workspaceMotion.animation).toBe("slide-right");
+    expect(layout.mobile.editorMotion.animation).toBe("zoom-in");
+    expect(layout.mobile.previewMotion.animation).toBe("fade-up");
+    expect(layout.mobile.inspectorMotion.animation).toBe("slide-left");
     expect(layout.mobile.editorLabel).toBe("Write");
     expect(layout.mobile.previewLabel).toBe("Mobile preview");
     expect(layout.mobile.inspectorLabel).toBe("Mobile properties");
