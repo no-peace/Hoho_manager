@@ -299,6 +299,56 @@ describe("Phase 2 staff security regressions", () => {
     }
   });
 
+  it("does not let the bot admin key bypass staff checks when a slash-command actor is supplied", async () => {
+    const staffId = "123456789012345690";
+    await createStaff(staffId, {
+      allowed_channel_ids: JSON.stringify(["channel_123"]),
+      allowed_guild_ids: JSON.stringify(["guild_allowed"]),
+    });
+
+    try {
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue("guild_allowed");
+      const response = await fetch(`${baseUrl}/api/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+          "x-staff-id": staffId,
+          "x-staff-username": "gateway-staff",
+        },
+        body: JSON.stringify({
+          mode: "bot",
+          channelId: "channel_123",
+          payload: { content: "Authorized gateway staff dispatch" },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(discordService.sendChannelMessage).toHaveBeenCalled();
+    } finally {
+      await staffRepository.delete(staffId);
+    }
+  });
+
+  it("rejects an unregistered slash-command actor even when the gateway admin key is valid", async () => {
+    const response = await fetch(`${baseUrl}/api/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": env.adminApiKey,
+        "x-staff-id": "123456789012345691",
+      },
+      body: JSON.stringify({
+        mode: "bot",
+        channelId: "channel_123",
+        payload: { content: "Must be denied" },
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+  });
+
   it("allows an admin-key request to bypass staff allowlists", async () => {
     const response = await fetch(`${baseUrl}/api/send`, {
       method: "POST",
