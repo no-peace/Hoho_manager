@@ -158,6 +158,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         return (
           <div
             key={rowId}
+            data-editor-target-id={rowId}
             className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
           >
             <div className="flex items-center justify-between px-3 py-1.5 bg-[#10131A] border-b border-[#1D2230] rounded-t-lg select-none">
@@ -224,6 +225,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                       return (
                         <div
                           key={childId}
+                          data-editor-target-id={childId}
                           onClick={(e) => {
                             e.stopPropagation();
                             select({ kind: "component", id: childId });
@@ -298,6 +300,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                     return (
                       <div
                         key={childId}
+                        data-editor-target-id={childId}
                         onClick={(e) => {
                           e.stopPropagation();
                           select({ kind: "component", id: childId });
