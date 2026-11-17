@@ -87,34 +87,33 @@ export const requireStaffPermission = (
       return next(ApiError.forbidden("Provided x-staff-id does not match authenticated user session"));
     }
 
-    // 2. Machine-to-machine Admin Key fast-path
-    if (isAdmin(req)) {
+    // 2. Machine-to-machine admin-key requests may bypass staff records only
+    // when no acting Discord user is supplied. Bot slash commands include the
+    // invoking user ID and must pass the same live staff checks as web sessions.
+    const machineStaffId = isAdmin(req) ? req.get("x-staff-id") : undefined;
+    if (isAdmin(req) && !machineStaffId) {
       req.staffContext = { isAdmin: true, staffId: null };
       return next();
     }
 
-    // 3. In production, never trust a raw x-staff-id header without a verified OAuth session
-    if (env.isProd && !sessionUser) {
+    // 3. Production requests need either an OAuth session or a trusted bot
+    // request carrying both the shared API key and a Discord actor ID.
+    if (env.isProd && !sessionUser && !machineStaffId) {
       return next(ApiError.unauthorized("Please log in with Discord (24h session required)"));
     }
 
-    const staffId = sessionUser ? sessionUser.id : headerStaffId;
+    const staffId = sessionUser ? sessionUser.id : machineStaffId ?? headerStaffId;
 
-    // 4. Head Admin / Instance Owner fast-path (always checked live against DB/env in production)
-    if (sessionUser) {
+    // 4. Head Admin / Instance Owner fast-path, checked live for either transport.
+    if (staffId && /^\d{17,20}$/.test(staffId)) {
       const isLiveHeadAdmin =
-        env.ownerDiscordIds.includes(sessionUser.id) ||
-        (await settingsService.isHeadAdmin(sessionUser.id)) ||
-        (!env.isProd && sessionUser.role === "admin");
+        env.ownerDiscordIds.includes(staffId) ||
+        (await settingsService.isHeadAdmin(staffId)) ||
+        (!env.isProd && sessionUser?.role === "admin");
       if (isLiveHeadAdmin) {
-        req.staffContext = { isAdmin: true, staffId: sessionUser.id };
+        req.staffContext = { isAdmin: true, staffId };
         return next();
       }
-    }
-
-    if (!env.isProd && staffId && /^\d{17,20}$/.test(staffId) && (await settingsService.isHeadAdmin(staffId))) {
-      req.staffContext = { isAdmin: true, staffId };
-      return next();
     }
 
     // 5. Standard Staff Access table check for the Server Default Bot (NEVER fail open!)
