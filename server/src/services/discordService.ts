@@ -932,8 +932,6 @@ export const deferResponse = async (
 export default {
   resolveBotToken,
   resolveBotTokenForApplication,
-  sendWebhook,
-  getWebhookInfo,
   sendChannelMessage,
   sendChannelMessageWithToken,
   editChannelMessage,
