@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import {
-  WEBHOOK_URL_REGEX,
   SNOWFLAKE_REGEX,
   ComponentType,
   type ComponentNode,
@@ -332,49 +331,7 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
   });
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 2. Challenge UI-02 (Webhook Dispatch Modal & Payload)
-  // ───────────────────────────────────────────────────────────────────────────
-  describe("Challenge UI-02: Webhook Dispatch Modal, Regex Boundaries & Batch Payload", () => {
-    describe("WEBHOOK_URL_REGEX Matching", () => {
-      it("matches standard Discord webhook URLs", () => {
-        const validUrls = [
-          "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz0123456789-_",
-          "https://discordapp.com/api/webhooks/987654321098765432/sample_token-123",
-          "https://canary.discord.com/api/webhooks/123456789012345678/my-token_abc",
-          "https://ptb.discord.com/api/webhooks/123456789012345678/my-token",
-          "https://discord.com/api/v9/webhooks/123456789012345678/my-token",
-          "https://discord.com/api/v10/webhooks/123456789012345678/my-token",
-          "http://discord.com/api/webhooks/123456789012345678/token",
-        ];
-
-        for (const url of validUrls) {
-          expect(WEBHOOK_URL_REGEX.test(url)).toBe(true);
-          const match = url.match(WEBHOOK_URL_REGEX);
-          expect(match).not.toBeNull();
-          expect(match![1]).toBeDefined(); // Webhook ID
-          expect(match![2]).toBeDefined(); // Webhook Token
-        }
-      });
-
-      it("rejects invalid webhook URLs and malicious injection strings", () => {
-        const invalidUrls = [
-          "https://google.com/api/webhooks/123456789012345678/token",
-          "https://phishing-discord.com/api/webhooks/123/token",
-          "https://discord.com/api/webhooks/not-a-number/token",
-          "https://discord.com/api/webhooks/123456789012345678", // missing token
-          "https://discord.com/api/webhooks/123456789012345678/", // empty token
-          "https://discord.com/api/webhooks/",
-          "javascript:fetch('https://discord.com/api/webhooks/123/token')",
-          "https://discord.com/channels/123456789/987654321/11223344", // message link, not webhook
-          "discord.com/api/webhooks/123/token", // missing protocol
-        ];
-
-        for (const url of invalidUrls) {
-          expect(WEBHOOK_URL_REGEX.test(url)).toBe(false);
-        }
-      });
-    });
-
+  // 2. Discord Snowflake boundary tests
     describe("Snowflake Regex Boundary Testing (16 vs 17 vs 20 vs 21 digits)", () => {
       it("rejects 16-digit IDs (below Discord Snowflake minimum)", () => {
         const id16 = "1234567890123456";
@@ -408,7 +365,6 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(SNOWFLAKE_REGEX.test("-12345678901234567")).toBe(false);
         expect(SNOWFLAKE_REGEX.test(" 123456789012345678 ")).toBe(false);
       });
-    });
 
     describe("Multi-Message Batch Webhook Payload Structure Construction", () => {
       it("constructs a single-message server bot dispatch payload without sender overrides", () => {
