@@ -95,7 +95,19 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     const result = validateUiTheme(tokens);
     if (!result.valid) { setErrors(result.errors); return; }
     const saved = saveUserThemeToLibrary(user.id, name, description, result.theme);
-    if (!saved) { showToast("Could not save your private theme in this browser.", "error"); return; }
+    if (!saved) {
+      // Even if browser storage is full or unavailable, preserve the user's
+      // design as a portable file rather than losing the work.
+      downloadUserThemeFile({
+        id: "file-" + Date.now().toString(36),
+        name: name.trim().slice(0, 60) || "My theme",
+        description: description.trim().slice(0, 180),
+        theme: result.theme,
+        createdAt: Date.now(),
+      });
+      showToast("Browser storage is unavailable. Your private preset was downloaded as a file; keep it safe and import it later.", "error");
+      return;
+    }
     setPrivateThemes(loadUserThemeLibrary(user.id));
     downloadUserThemeFile(saved);
     applyPersonal(result.theme, saved.id);
