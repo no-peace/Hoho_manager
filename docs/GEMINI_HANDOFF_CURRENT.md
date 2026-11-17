@@ -55,12 +55,14 @@
 
 ### 5. Discord interaction acknowledgement and duplicate delivery
 
+- Migration 019 persists duplicate-delivery state on interaction receipts so concurrent deliveries across separate server instances can coordinate.
+
 - The action execution acknowledgement budget is now 900 ms.
 - Initial Discord callback delivery uses one bounded attempt (1,500 ms) with no retry. Retrying an initial callback after a timeout can race an already accepted acknowledgement.
 - Gateway relay waits up to 2,700 ms before using its fallback callback, leaving time for the API's defer response and bounded Discord callback.
-- Added in-process duplicate-delivery coordination so a duplicate arriving before the first response is cached causes the original delivery to defer and deliver its result as a follow-up instead of losing a fast result.
-- Added a regression test for the duplicate-acknowledgement race and updated relay deadline coverage.
-- Remaining verification: execute webhook and gateway relay tests against the real route/Discord callback boundaries; verify process restart and multi-instance duplicate behavior. In-process coordination does not by itself prove cross-instance race safety.
+- Migration 019 adds a shared receipt duplicate flag. Duplicate deliveries mark the database receipt before returning a defer; the original worker atomically chooses the deferred callback and later delivers the actual result as a follow-up. This coordination is database-backed rather than process-local.
+- Added a regression test for duplicate acknowledgement coordination and updated relay deadline coverage.
+- Remaining verification: execute webhook and gateway relay tests against real route/Discord callback boundaries, test process restart behavior, and verify the migration on the deployed libSQL/Turso version.
 
 ### 6. Gateway command authorization and startup safety
 
