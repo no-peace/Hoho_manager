@@ -13,6 +13,7 @@ import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
 import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
+import { applyPreviewComponentSelection } from "../../utils/previewSelection";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
@@ -45,16 +46,17 @@ export const StudioLayout: React.FC = () => {
     }));
   };
 
-  const handlePreviewComponentSelect = (index: number, componentId: string) => {
-    const store = useMessageStore.getState();
-    store.setActiveMessageIndex(index);
-    store.select({ kind: "component", id: componentId });
-
-    // Desktop keeps the inspector available while navigating the left editor to
-    // the exact component card. Mobile stays on Preview and opens the bottom sheet.
-    if (!isMobileWorkspace()) {
-      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, componentId)));
-    }
+  const handlePreviewComponentSelect = (index: number, componentId: string, isInteractive: boolean) => {
+    applyPreviewComponentSelection({
+      index,
+      componentId,
+      isInteractive,
+      isMobileWorkspace: isMobileWorkspace(),
+      store: useMessageStore.getState(),
+      navigateToEditor: () => {
+        requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, componentId)));
+      },
+    });
   };
 
   const handlePreviewEmbedSelect = (
