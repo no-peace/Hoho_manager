@@ -193,7 +193,7 @@ describe("bot/commands: Slash Command Suite", () => {
       } as any);
 
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "test-user-123", username: "tester" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Hello from bot!"),
@@ -208,6 +208,8 @@ describe("bot/commands: Slash Command Suite", () => {
       expect(api.sendMessage).toHaveBeenCalledWith({
         content: "Hello from bot!",
         channelId: "chan_99",
+        authorUserId: "test-user-123",
+        authorUsername: "tester",
       });
       expect(interaction.editReply).toHaveBeenCalledWith("✅ Sent to <#chan_99>.");
     });
@@ -217,7 +219,7 @@ describe("bot/commands: Slash Command Suite", () => {
       vi.mocked(api.sendMessage).mockRejectedValueOnce(new Error("Rate limited"));
 
       const interaction: any = {
-        user: { id: "test-user-send-error" },
+        user: { id: "test-user-send-error", username: "sender" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Test"),
@@ -255,7 +257,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       const command = new ExploitCommand(mockContext, {});
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "test-user-123", username: "tester" },
         options: {
           getFocused: vi.fn().mockReturnValue({ name: "exploit", value: "del" }),
         },
@@ -264,7 +266,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       await command.autocompleteRun(interaction);
 
-      expect(listWeaoExploits).toHaveBeenCalledWith("del");
+      expect(listWeaoExploits).toHaveBeenCalledWith("del", { id: "test-user-123", username: "tester" });
       expect(interaction.respond).toHaveBeenCalledWith([
         { name: "🟢 Delta (v2.5 • 99% sUNC) ★ Backup", value: "Delta" },
         { name: "🔴 Vega (v1.0)", value: "Vega" },
@@ -288,7 +290,7 @@ describe("bot/commands: Slash Command Suite", () => {
       expect(interaction.editReply).toHaveBeenCalledWith({
         content: "❌ Cannot dispatch exploit message in this channel.",
       });
-      expect(resolveWeaoExploit).toHaveBeenCalledWith("Delta");
+      expect(resolveWeaoExploit).toHaveBeenCalledWith("Delta", { id: "test-user-123", username: "tester" });
     });
   });
 
