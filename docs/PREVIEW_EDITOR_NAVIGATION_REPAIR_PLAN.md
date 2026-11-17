@@ -1,6 +1,6 @@
 # Preview-to-Editor Navigation and Mobile Inspector Repair Plan
 
-**Status:** Implementation in progress  
+**Status:** Implementation committed to `main`; automated verification pending  
 **Target branch:** `main`  
 **Scope:** Client preview interactions, editor target navigation, mobile inspector, regression coverage.
 
@@ -59,6 +59,28 @@ On desktop, non-interactive component clicks are reduced to message selection an
    - Exact editor-target scrolling with native touch fallback and reduced-motion behavior.
    - Mobile pane navigation waits for visibility; no scroll is attempted against a hidden pane.
    - Preserve select-menu opening and existing button/flow inspector behavior.
+
+## Implemented on main — 2026-11-17
+
+- Extended the store's embed selection with optional preview-part and field identity.
+- Added embed root identity and semantic hit regions for author, title, description, fields, thumbnail, image, footer, and timestamp.
+- Unified preview click routing so nested V2 children resolve to the nearest editable component; action-row whitespace, Section thumbnails, disabled buttons, and disabled select triggers also remain selectable.
+- Added matching editor target IDs to embed editors, V2 component cards/nested section controls, and classic action-row controls.
+- Preview selection now expands collapsed message cards. Desktop navigates to the exact editor target while retaining the inspector; mobile keeps Preview visible and opens either the component inspector or the embed editor bottom sheet.
+- Added **Open Full Editor** navigation for component/embed inspectors and made manual mobile pane changes scroll to the selected editor target after the Editor pane is visible.
+- Reworked the editor scroll helper: Lenis is limited to fine-pointer/non-reduced-motion contexts; touch and reduced-motion use native scrolling on the editor wrapper; hidden/inert panes are not scrolled; target lookup retries while collapsed content mounts.
+- Hardened SplitPane swipe detection so gestures beginning on interactive controls do not switch panes, and touch cancellation resets swipe state.
+- Added regression tests for embed author/footer click routing, nested V2 selection, embed inspector rendering, collapsed message expansion, touch scrolling, reduced-motion scrolling, and hidden-pane deferral.
+
+### Verification limitations
+
+The desktop terminal connector was unavailable (MCP endpoint returned HTTP 404). The added Vitest tests, client typecheck, and production build have therefore **not** been executed. Browser interaction QA and Lighthouse have also not been run. Treat all checks as pending until run from the repository root:
+
+```bash
+npm test --workspace client
+npm run typecheck --workspace client
+npm run build --workspace client
+```
 
 ## External implementation references reviewed
 
