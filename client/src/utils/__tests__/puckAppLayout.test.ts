@@ -141,6 +141,46 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.activeTab).toBe("preview");
   });
 
+  it("resolves production panel labels, toolbar visibility and motion for both breakpoints", () => {
+    const desktop = clone(defaultDesktopLayoutData);
+    const mobile = clone(defaultMobileLayoutData);
+
+    desktop.content[0].props.animation = "fade-up";
+    desktop.content[0].props.animationDuration = "500ms";
+    desktop.content[0].props.animationDelay = "100ms";
+    desktop.content[1].props.animation = "slide-left";
+    desktop.content[1].props.animationDuration = "700ms";
+    desktop.content[1].props.animationDelay = "200ms";
+    desktop.content[1].props.content[0].props.label = "Compose";
+    desktop.content[1].props.content[0].props.showToolbar = "hide";
+    desktop.content[1].props.content[0].props.animation = "zoom-in";
+    desktop.content[1].props.content[1].props.label = "Rendered message";
+    desktop.content[1].props.content[2].props.label = "Settings";
+
+    mobile.content[1].props.content[0].props.label = "Write";
+    mobile.content[1].props.content[0].props.showToolbar = "show";
+    mobile.content[1].props.content[1].props.label = "Mobile preview";
+    mobile.content[1].props.content[2].props.label = "Mobile properties";
+    mobile.content[2].props.animation = "pulse";
+    mobile.content[2].props.animationDuration = "1200ms";
+    mobile.content[2].props.animationDelay = "350ms";
+
+    const layout = resolveAppLayoutData(desktop, mobile);
+    expect(layout.desktop.headerMotion).toEqual({ animation: "fade-up", duration: "500ms", delay: "100ms" });
+    expect(layout.desktop.workspaceMotion).toEqual({ animation: "slide-left", duration: "700ms", delay: "200ms" });
+    expect(layout.desktop.editorLabel).toBe("Compose");
+    expect(layout.desktop.previewLabel).toBe("Rendered message");
+    expect(layout.desktop.inspectorLabel).toBe("Settings");
+    expect(layout.desktop.showToolbar).toBe(false);
+    expect(layout.desktop.editorMotion.animation).toBe("zoom-in");
+
+    expect(layout.mobile.editorLabel).toBe("Write");
+    expect(layout.mobile.previewLabel).toBe("Mobile preview");
+    expect(layout.mobile.inspectorLabel).toBe("Mobile properties");
+    expect(layout.mobile.showToolbar).toBe(true);
+    expect(layout.mobile.navMotion).toEqual({ animation: "pulse", duration: "1200ms", delay: "350ms" });
+  });
+
   it("normalizes Puck root data when the optional props object is omitted", () => {
     const desktop = clone(defaultDesktopLayoutData);
     delete (desktop.root as any).props;
