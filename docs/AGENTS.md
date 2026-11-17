@@ -154,10 +154,10 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** REVIEW REQUIRED — full editable-property/runtime contract reconciliation committed; awaiting Head Agent review  
+**Status:** REVIEW REQUIRED — Part B handoff and final CSS-variable consistency correction committed; awaiting Head Agent approval  
 **Branch:** `agent/responsive-design-lab`  
 **Scope:** Part B only. Completed the requested reconciliation between editable Puck properties, `ResolvedAppLayout`, and the Part C runtime contract. No Part C implementation.  
-**Current batch:** B3/B4 — production motion, labels, toolbar visibility and complete Mobile panel-property resolution  
+**Current batch:** B5 — expose independent Mobile Editor/Preview padding CSS variables  
 **Files changed:**
 - `client/src/utils/puckAppLayout.ts`
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
@@ -173,9 +173,15 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 - **Preview-only:** Mobile `showInspector` (preview bottom-sheet visibility) and `activeTab` (preview selected-tab highlight). Component IDs are document identity/validation keys only, not production DOM IDs.
 - `getAppLayoutCssVariables` remains scoped to CSS dimensions/colors/geometry. Part C applies motion through allowlisted code-owned classes/timing and labels through text content, never document-provided CSS/HTML.
 
+**Final CSS-variable correction:** `getAppLayoutCssVariables()` now exposes `--hoho-layout-mobile-editor-padding` and `--hoho-layout-mobile-preview-padding`, mapped directly to `layout.mobile.editorPadding` and `layout.mobile.previewPadding` with `px` units. Focused assertions verify both values (`17px` and `19px`) and preserve the existing Inspector padding assertion (`21px`). `docs/PUCK_DESIGN_LAB.md` explicitly lists all three independent Mobile panel padding variables and distinguishes them from workspace `panelPadding`.
 **Validation/resolution:** Existing strict validation checks every motion preset, duration and delay against fixed enums; validates panel labels (1–48 trimmed characters, no control characters); validates `showToolbar` as `show | hide` with legacy boolean normalization; and validates each panel padding value in the 0–32 range. The resolver now exposes all these validated values for both breakpoints.  
-**Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, Mobile navigation motion, and independent Mobile Editor/Preview/Inspector padding.  
+**Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, Mobile navigation motion, independent Mobile Editor/Preview/Inspector padding, and the Mobile Editor/Preview CSS variables with pixel units.  
 **Tests executed:** None. Per the user/Head Agent instruction, npm checks are deferred to final verification; no test/typecheck/build result is claimed.  
+**Final correction commits:**
+- `dbe62ca4f2c0643ca0cb8b620a0da399212f1ff5` — expose Mobile Editor/Preview padding CSS variables.
+- `51c44b3579f5238d0fd8e73427516b7c3a2dc4e5` — assert both CSS variables use the independently resolved pixel values.
+- `98ff698d5fc88d52f840a63e74630d9bb666bdaf` — document the complete Mobile panel padding CSS-variable contract.
+
 **Implementation commits:**
 - `c6e3ab251f755f4f134e928e79068e1223dbbd2b` — resolved production motion, labels and toolbar values.
 - `9d647bf8d1ab5388821d7e2f656981f8e8e01c04` — regression assertions for resolved production controls.
@@ -185,7 +191,7 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 - `ff0cd41437711900c513e06f681132a2c290223e` — documented independent Mobile panel padding and Part C application.
 **Remaining work:** Head Agent review/approval. Part C must implement the documented runtime application; Agent 2 has not edited production Studio runtime files.  
 **Risks / blockers:** npm checks are intentionally deferred to final verification. Production animation and toolbar application remain Part C work.  
-**Next action:** Wait for Head Agent review. Do not implement Part C, edit Agent 1 files/shared Studio runtime, or merge to `main`.
+**Next action:** Wait for Head Agent approval. Do not implement Part C, edit Agent 1 files/shared Studio runtime, or merge to `main`.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 ## 11. Agent 3 — Part C: Database and publishing
