@@ -14,7 +14,7 @@ COPY shared/package.json shared/tsconfig.json ./shared/
 COPY client/package.json client/tsconfig.json ./client/
 COPY server/package.json ./server/
 COPY bot/package.json ./bot/
-RUN npm install --workspace client --include-workspace-root
+RUN npm ci --workspace client --include-workspace-root
 
 COPY shared ./shared
 COPY client ./client
