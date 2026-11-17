@@ -4,6 +4,8 @@ import { db } from "../config/database.js";
 import { env } from "../config/env.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { appLayoutRepository } from "../repositories/appLayoutRepository.js";
+import { validateAppLayoutPair } from "../utils/appLayoutValidation.js";
 
 const router = Router();
 interface Identity { discordId: string; isOwner: boolean; }
@@ -217,6 +219,114 @@ router.post("/themes/:id/publish", asyncHandler(async (req, res) => {
   const theme = validateTheme(parseTheme(row).theme);
   await publishServerTheme(identity, theme);
   res.json({ theme: { theme, sourceThemeId: row.id, updatedAt: new Date().toISOString() } });
+}));
+
+
+interface LayoutIdentity {
+  discordId: string;
+  isOwner: boolean;
+}
+
+const resolveLayoutIdentity = async (
+  req: Parameters<typeof getSessionUserFromRequest>[0],
+): Promise<LayoutIdentity> => {
+  const session = await getSessionUserFromRequest(req);
+  if (!session) throw ApiError.unauthorized();
+  return {
+    discordId: session.id,
+    isOwner: env.ownerDiscordIds.includes(session.id) || (!env.isProd && session.role === "admin"),
+  };
+};
+
+const requireLayoutOwner = (identity: LayoutIdentity): void => {
+  if (!identity.isOwner) throw ApiError.forbidden("Only the HoHo Manager owner can manage layout publishers.");
+};
+
+const requireLayoutPublisher = async (identity: LayoutIdentity): Promise<void> => {
+  if (identity.isOwner) return;
+  if (!(await appLayoutRepository.isPublisher(identity.discordId))) {
+    throw ApiError.forbidden("This Discord account is not authorized to publish the Studio layout.");
+  }
+};
+
+const parsePublishedLayout = (row: Awaited<ReturnType<typeof appLayoutRepository.getPublished>>) => {
+  if (!row) return null;
+  try {
+    const checked = validateAppLayoutPair({
+      schemaVersion: row.schema_version,
+      desktop: JSON.parse(row.desktop_document),
+      mobile: JSON.parse(row.mobile_document),
+    });
+    return {
+      schemaVersion: checked.schemaVersion,
+      desktop: checked.desktop,
+      mobile: checked.mobile,
+      publisher: { discordId: row.published_by_discord_id },
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  } catch {
+    // Never serve a corrupt or obsolete stored document to the live application.
+    return null;
+  }
+};
+
+/** Public read endpoint; published data contains only allowlisted layout settings. */
+router.get("/app-layout", asyncHandler(async (_req, res) => {
+  const row = await appLayoutRepository.getPublished();
+  const layout = parsePublishedLayout(row);
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ layout, fallback: !layout });
+}));
+
+/** Validate the complete responsive pair before entering the atomic persistence transaction. */
+router.put("/app-layout", asyncHandler(async (req, res) => {
+  const identity = await resolveLayoutIdentity(req);
+  await requireLayoutPublisher(identity);
+  const pair = validateAppLayoutPair(req.body);
+  const row = await appLayoutRepository.publish({
+    schemaVersion: pair.schemaVersion,
+    desktop: pair.desktop,
+    mobile: pair.mobile,
+    publisherDiscordId: identity.discordId,
+  });
+  const layout = parsePublishedLayout(row);
+  if (!layout) throw new Error("The published layout could not be validated after persistence.");
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true, layout });
+}));
+
+/** Owner-managed allowlist; Design Lab access is intentionally independent. */
+router.get("/app-layout/publishers", asyncHandler(async (req, res) => {
+  const identity = await resolveLayoutIdentity(req);
+  requireLayoutOwner(identity);
+  res.setHeader("Cache-Control", "private, no-store");
+  res.json({ publishers: await appLayoutRepository.listPublishers() });
+}));
+
+router.post("/app-layout/publishers", asyncHandler(async (req, res) => {
+  const identity = await resolveLayoutIdentity(req);
+  requireLayoutOwner(identity);
+  const discordId = isRecord(req.body) && typeof req.body.discordId === "string"
+    ? req.body.discordId.trim()
+    : "";
+  if (!/^\d{17,20}$/.test(discordId)) {
+    throw ApiError.badRequest("Enter a valid 17–20 digit Discord user ID.");
+  }
+  if (env.ownerDiscordIds.includes(discordId)) {
+    throw ApiError.badRequest("That Discord ID is already an owner.");
+  }
+  await appLayoutRepository.grantPublisher(discordId, identity.discordId);
+  res.status(201).json({ ok: true, publishers: await appLayoutRepository.listPublishers() });
+}));
+
+router.delete("/app-layout/publishers/:discordId", asyncHandler(async (req, res) => {
+  const identity = await resolveLayoutIdentity(req);
+  requireLayoutOwner(identity);
+  const discordId = String(req.params.discordId ?? "");
+  if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord user ID.");
+  await appLayoutRepository.revokePublisher(discordId);
+  res.status(204).end();
 }));
 
 export default router;
