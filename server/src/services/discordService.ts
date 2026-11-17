@@ -295,6 +295,37 @@ export const getGuildEmojis = async (guildId: string): Promise<DiscordEmojiSumma
   }));
 };
 
+export interface DiscordAttachmentFile {
+  file: File | Blob;
+  filename: string;
+  key?: string;
+}
+
+const buildMultipartPayload = (
+  payload: DiscordMessagePayload,
+  files: DiscordAttachmentFile[],
+): FormData => {
+  const fd = new FormData();
+  const finalPayload: DiscordMessagePayload = {
+    ...payload,
+    allowed_mentions: payload.allowed_mentions ?? { parse: [] },
+  };
+
+  if (!finalPayload.attachments || finalPayload.attachments.length === 0) {
+    finalPayload.attachments = files.map((file, index) => ({
+      id: index,
+      filename: file.filename,
+    }));
+  }
+
+  fd.append("payload_json", JSON.stringify(finalPayload));
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+    fd.append(file.key || `files[${index}]`, file.file, file.filename);
+  }
+  return fd;
+};
+
 export interface BotSendOptions {
   files?: DiscordAttachmentFile[];
 }
