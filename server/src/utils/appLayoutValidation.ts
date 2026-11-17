@@ -210,8 +210,13 @@ export const validateAppLayoutPair = (value: unknown): ValidatedAppLayoutPair =>
   let desktopBytes: number;
   let mobileBytes: number;
   try {
-    desktopBytes = Buffer.byteLength(JSON.stringify(value.desktop), "utf8");
-    mobileBytes = Buffer.byteLength(JSON.stringify(value.mobile), "utf8");
+    const desktopJson = JSON.stringify(value.desktop);
+    const mobileJson = JSON.stringify(value.mobile);
+    if (typeof desktopJson !== "string" || typeof mobileJson !== "string") {
+      fail("The responsive layout documents must be valid JSON values.");
+    }
+    desktopBytes = Buffer.byteLength(desktopJson, "utf8");
+    mobileBytes = Buffer.byteLength(mobileJson, "utf8");
   } catch {
     fail("The responsive layout documents must be valid JSON values.");
   }
