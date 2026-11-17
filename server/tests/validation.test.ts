@@ -3,6 +3,7 @@ import {
   isHttpUrl,
   isSnowflake,
   parseWebhookUrl,
+  requireId,
   validateMessagePayload,
 } from "../src/utils/validation.js";
 
@@ -30,6 +31,20 @@ describe("validation utils", () => {
       expect(isHttpUrl("javascript:alert(1)")).toBe(false);
       expect(isHttpUrl("not a url")).toBe(false);
     });
+  });
+
+  describe("requireId", () => {
+    it("accepts positive safe integer IDs", () => {
+      expect(requireId("42")).toBe(42);
+      expect(requireId(42)).toBe(42);
+    });
+
+    it.each(["42junk", "1.5", "-1", "0", "9007199254740992", "", " 42 "])(
+      "rejects malformed or unsafe IDs: %s",
+      (value) => {
+        expect(() => requireId(value)).toThrow(/positive integer/i);
+      },
+    );
   });
 
   describe("parseWebhookUrl", () => {

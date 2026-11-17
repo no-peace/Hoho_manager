@@ -31,7 +31,10 @@ const int = (key: string, fallback: number): number => {
 };
 
 const nodeEnv = str("NODE_ENV", "development") ?? "development";
-const isProd = nodeEnv === "production";
+/** Treat every deployed environment other than local development and tests as production-secure. */
+export const isProductionLikeEnvironment = (value: string): boolean =>
+  value !== "development" && value !== "test";
+const isProd = isProductionLikeEnvironment(nodeEnv);
 
 /** Resolve `DATABASE_URL` to an absolute path (Postgres URLs are passed through). */
 const resolveDatabase = (): string => {
@@ -84,7 +87,7 @@ export const env: Env = Object.freeze({
   ),
   nodeEnv,
   isProd,
-  isDev: !isProd,
+  isDev: nodeEnv === "development",
   // Never enable this in production, even if the environment variable is set.
   devAuthBypass: nodeEnv === "development" && str("DEV_AUTH_BYPASS", "false") === "true",
   port: int("PORT", 3001),

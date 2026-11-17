@@ -92,6 +92,18 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
     return resolveUserPlaceholders(withLocalVars);
   };
 
+  const resolveExternalLink = (url?: string): string | undefined => {
+    if (!url) return undefined;
+    try {
+      const parsed = new URL(resolvePlainVars(url));
+      return parsed.protocol === "http:" || parsed.protocol === "https:"
+        ? parsed.toString()
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   const resolveAttachmentUrl = (url?: string): string | undefined => {
     if (!url) return undefined;
     const interpolated = resolvePlainVars(url);
@@ -104,6 +116,9 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
     }
     return interpolated;
   };
+
+  const authorUrl = resolveExternalLink(embed.author?.url);
+  const embedUrl = resolveExternalLink(embed.url);
 
   return (
     <div
@@ -120,9 +135,9 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
               className="h-6 w-6 shrink-0 rounded-full object-cover"
             />
           )}
-          {embed.author.url ? (
+          {authorUrl ? (
             <a
-              href={resolvePlainVars(embed.author.url)}
+              href={authorUrl}
               target="_blank"
               rel="noreferrer"
               className="text-sm font-semibold hover:underline min-w-0 break-words [overflow-wrap:anywhere]"
@@ -141,9 +156,9 @@ export const EmbedPreview = ({ embed }: EmbedPreviewProps) => {
         <div className="min-w-0 flex-1">
           {embed.title && (
             <div data-preview-embed-part="title" className="mb-1 text-base leading-tight font-semibold text-[#f2f3f5] break-words [overflow-wrap:anywhere]">
-              {embed.url ? (
+              {embedUrl ? (
                 <a
-                  href={resolvePlainVars(embed.url)}
+                  href={embedUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="text-link hover:underline break-words [overflow-wrap:anywhere]"

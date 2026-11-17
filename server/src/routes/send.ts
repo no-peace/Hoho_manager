@@ -8,7 +8,7 @@ import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
-import { parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
+import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
 
@@ -107,6 +107,15 @@ router.post(
         : "";
     const senderDiscordId = staffCtx?.staffId ?? (staffCtx?.isAdmin ? "" : dbUser?.discord_id ?? requestedAuthorId);
     const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
+    const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
+    if (
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_attach_files === 0 &&
+      (uploadedFiles.length > 0 || (Array.isArray(body.attachments) && body.attachments.length > 0))
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to attach files.");
+    }
 
     // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
     if (mode === "bot" && profileId === null) {
@@ -145,6 +154,29 @@ router.post(
       if (message.flags === 0) delete message.flags;
 
       const sanitizedMessage = cleanseIds(message);
+      // Inspect the original payload before interpolation consumes the tokens.
+      // Both modern dot syntax and legacy colon syntax grant access to WEAO data.
+      const usesWeaoVariables =
+        Boolean(exploitHint) || containsWeaoPlaceholder(sanitizedMessage);
+      if (
+        staffCtx &&
+        !staffCtx.isAdmin &&
+        staffCtx.record &&
+        staffCtx.record.can_use_weao_exploits === 0 &&
+        usesWeaoVariables
+      ) {
+        throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
+      }
+      if (
+        staffCtx &&
+        !staffCtx.isAdmin &&
+        staffCtx.record &&
+        staffCtx.record.can_use_components_v2 === 0 &&
+        Array.isArray(message.components) &&
+        message.components.length > 0
+      ) {
+        throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
+      }
       // Legacy editor fields are not Discord message-sender overrides. Keep them
       // in old backups/imports, but never forward them to Discord.
       delete sanitizedMessage.username;
@@ -244,6 +276,10 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         );
       }
 
+      // Revalidate after WEAO, timestamp and author placeholders have expanded.
+      // Upstream values must not bypass Discord's payload size/shape limits.
+      authorResolved = validateMessagePayload(authorResolved);
+
       if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
         // 1. Strict Role & Mention Permission Check (alert/block if unauthorized)
         const { findUnauthorizedMentions } = await import("../utils/mentionScrubber.js");
@@ -262,23 +298,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
           throw ApiError.forbidden(
             `You do not have permission to ping: ${mentionLabels}. Please remove these mentions before sending.`,
           );
-        }
-
-        // 2. Components V2 permission check
-        if (
-          staffCtx.record.can_use_components_v2 === 0 &&
-          Array.isArray(authorResolved.components) &&
-          authorResolved.components.length > 0
-        ) {
-          throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
-        }
-
-        // 4. WEAO Exploits permission check
-        if (
-          staffCtx.record.can_use_weao_exploits === 0 &&
-          (exploitHint || JSON.stringify(authorResolved).includes("{exploit."))
-        ) {
-          throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
         }
 
         const { scrubMentions, sanitizeAllowedMentions } = await import(
@@ -305,6 +324,31 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     const firstMessage = finalMessages[0];
 
     const rawFlows = parseFlowRegistrations(body.flows);
+    if (
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_use_weao_exploits === 0 &&
+      containsWeaoPlaceholder(rawFlows)
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in action flows.");
+    }
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      for (const flow of rawFlows) {
+        for (const step of flow.steps) {
+          if (step.type !== "send_message") continue;
+          const configuredChannel = step.config.channelId;
+          const targetChannelId =
+            typeof configuredChannel === "string" && configuredChannel.trim()
+              ? configuredChannel.trim()
+              : destinationChannelId;
+          if (!/^\d{17,20}$/.test(targetChannelId)) {
+            throw ApiError.badRequest("Action message target must be a valid Discord channel ID.");
+          }
+          assertStaffChannelAllowed(staffCtx, targetChannelId);
+          await assertStaffGuildAllowed(staffCtx, targetChannelId);
+        }
+      }
+    }
     let flows = rawFlows;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       const { scrubFlows } = await import("../utils/mentionScrubber.js");
@@ -355,7 +399,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       }
       const rawStr = JSON.stringify(uninterpolatedCleanMsg);
       const hasDynamic = /\{user\.\d{17,20}\./i.test(rawStr) ||
-        rawStr.includes("{exploit.") || rawStr.includes("discord.com/users/");
+        containsWeaoPlaceholder(uninterpolatedCleanMsg) || rawStr.includes("discord.com/users/");
       if (!(hasDynamic || req.body?.track === true || Boolean(req.body?.templateId) || Boolean(req.body?.exploitName))) return;
       try {
         const { trackMessage } = await import("../services/messageTrackerService.js");
@@ -375,7 +419,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       }
     };
     
-    const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
     const urlFiles = await fetchUrlAttachments(body.attachments);
     if (uploadedFiles.length + urlFiles.length > 10) {
       throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
@@ -388,12 +431,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     }
     const files = [...uploadedFiles, ...urlFiles];
 
-
-    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-      if (staffCtx.record.can_attach_files === 0 && files.length > 0) {
-        throw ApiError.forbidden("Your staff account is not permitted to attach files.");
-      }
-    }
 
     if (!destinationChannelId) {
       throw ApiError.badRequest('A `channelId` or `threadId` is required when mode is "bot"');

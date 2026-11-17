@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "node:crypto";
 import { requireHeadAdmin } from "../middleware/auth.js";
 import { env } from "../config/env.js";
 import { staffRepository } from "../repositories/staffRepository.js";
@@ -8,6 +9,12 @@ import { getSessionUserFromRequest, revokeUserSessions } from "../utils/session.
 import { ApiError, asyncHandler } from "../utils/errors.js";
 
 const router = Router();
+
+const safeEqual = (left: unknown, right: unknown): boolean => {
+  const a = Buffer.from(String(left ?? ""));
+  const b = Buffer.from(String(right ?? ""));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
 
 const parseGranular = (raw?: string | null): Record<string, number> => {
   if (!raw) return {};
@@ -67,12 +74,14 @@ router.post(
   "/",
   requireHeadAdmin,
   asyncHandler(async (req, res) => {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+      throw ApiError.badRequest("Request body must be a JSON object.");
+    }
     const {
       discord_user_id,
       discord_username,
       discord_global_name,
       discord_avatar,
-      granted_by_discord_id,
       is_active,
       expires_at,
       cooldown_seconds,
@@ -100,6 +109,7 @@ router.post(
     if (!discord_user_id || !/^\d{17,20}$/.test(discord_user_id)) {
       throw ApiError.badRequest("discord_user_id must be a valid Discord snowflake");
     }
+    const trustedActorDiscordId = req.staffContext?.staffId ?? "admin";
     const existing = await staffRepository.findByDiscordId(discord_user_id as string);
     if (existing) {
       throw ApiError.badRequest("Staff record already exists for this user. Use PATCH to update.");
@@ -131,7 +141,7 @@ router.post(
       discord_username: discord_username ?? discord_user_id,
       discord_global_name: resolvedGlobalName,
       discord_avatar: resolvedAvatar,
-      granted_by_discord_id: granted_by_discord_id ?? "admin",
+      granted_by_discord_id: trustedActorDiscordId,
       is_active: is_active ?? 1,
       expires_at: expires_at ?? null,
       cooldown_seconds: cooldown_seconds ?? 30,
@@ -164,7 +174,7 @@ router.post(
 
     auditLog({
       event: "STAFF_GRANTED",
-      actorDiscordId: granted_by_discord_id ?? "admin",
+      actorDiscordId: trustedActorDiscordId,
       targetDiscordId: discord_user_id,
       reason: notes ?? "Access granted via admin panel",
       ip: req.ip as string,
@@ -186,7 +196,11 @@ router.patch(
   "/:discordUserId",
   requireHeadAdmin,
   asyncHandler(async (req, res) => {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+      throw ApiError.badRequest("Request body must be a JSON object.");
+    }
     const targetDiscordId = req.params.discordUserId as string;
+    if (!/^\d{17,20}$/.test(targetDiscordId)) throw ApiError.badRequest("Invalid Discord user ID.");
     const existing = await staffRepository.findByDiscordId(targetDiscordId);
     if (!existing) throw ApiError.notFound("Staff record not found");
 
@@ -247,6 +261,7 @@ router.patch(
 
     auditLog({
       event: "STAFF_UPDATED",
+      actorDiscordId: req.staffContext?.staffId ?? undefined,
       targetDiscordId,
       reason: "Permissions updated by admin",
       ip: req.ip as string,
@@ -274,6 +289,7 @@ router.delete(
 
     auditLog({
       event: "STAFF_REVOKED",
+      actorDiscordId: req.staffContext?.staffId ?? undefined,
       targetDiscordId,
       reason: "Access fully revoked by admin (session invalidated)",
       ip: req.ip as string,
@@ -289,12 +305,13 @@ router.get(
   "/:discordUserId/check",
   asyncHandler(async (req, res) => {
     const staffId = req.params.discordUserId as string;
+    if (!/^\d{17,20}$/.test(staffId)) throw ApiError.badRequest("Invalid Discord user ID.");
 
     if (env.isProd) {
       const sessionUser = await getSessionUserFromRequest(req);
       const adminKey = req.get("x-admin-key");
       const isAuthorizedCaller =
-        (adminKey && adminKey === env.adminApiKey) ||
+        (adminKey && safeEqual(adminKey, env.adminApiKey)) ||
         (sessionUser &&
           (sessionUser.id === staffId ||
             env.ownerDiscordIds.includes(sessionUser.id) ||
@@ -309,7 +326,8 @@ router.get(
 
     if (record.expires_at) {
       const expiry = new Date(record.expires_at);
-      if (expiry < new Date()) return res.json({ hasAccess: false, reason: "expired" });
+      if (!Number.isFinite(expiry.getTime())) return res.json({ hasAccess: false, reason: "invalid_expiry" });
+      if (expiry.getTime() <= Date.now()) return res.json({ hasAccess: false, reason: "expired" });
     }
 
     return res.json({

@@ -62,7 +62,20 @@ const resolveIdentity = async (req: Parameters<typeof getSessionUserFromRequest>
   };
 };
 const requireOwner = (identity: Identity) => {
-  if (!identity.isOwner) throw ApiError.forbidden("Only the HoHo Manager owner can change the server theme.");
+  if (!identity.isOwner) throw ApiError.forbidden("Only the HoHo Manager owner can manage Design Lab access.");
+};
+const hasServerThemePublishPermission = async (identity: Identity): Promise<boolean> => {
+  if (identity.isOwner) return true;
+  const grant = await db.get<{ can_publish_server_theme: number }>(
+    "SELECT can_publish_server_theme FROM design_access_users WHERE discord_user_id = @discordId AND is_active = 1",
+    { discordId: identity.discordId },
+  );
+  return grant?.can_publish_server_theme === 1;
+};
+const requireServerThemePublisher = async (identity: Identity): Promise<void> => {
+  if (!(await hasServerThemePublishPermission(identity))) {
+    throw ApiError.forbidden("You do not have permission to publish the server theme.");
+  }
 };
 const parseTheme = (row: ThemeRow) => {
   let data: any = {};
@@ -116,8 +129,9 @@ router.get("/themes", asyncHandler(async (req, res) => {
       return [{ ...parsed, theme: validateTheme(parsed.theme) }];
     } catch { return []; }
   });
+  const canPublishServerTheme = await hasServerThemePublishPermission(identity);
   res.setHeader("Cache-Control", "private, no-store");
-  res.json({ themes, isOwner: identity.isOwner });
+  res.json({ themes, isOwner: identity.isOwner, canPublishServerTheme });
 }));
 
 router.post("/themes", asyncHandler(async (req, res) => {
@@ -155,7 +169,7 @@ router.delete("/themes/:id", asyncHandler(async (req, res) => {
 }));
 
 const publishServerTheme = async (identity: Identity, theme: unknown) => {
-  requireOwner(identity);
+  await requireServerThemePublisher(identity);
   const safeTheme = validateTheme(theme);
   await db.run(
     "INSERT INTO server_theme_settings (id, theme_data, updated_by, updated_at) VALUES (1, @data, @owner, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET theme_data = excluded.theme_data, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP",
@@ -166,9 +180,9 @@ const publishServerTheme = async (identity: Identity, theme: unknown) => {
 
 router.post("/themes/:id/default", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
-  requireOwner(identity);
   const row = await db.get<ThemeRow>("SELECT * FROM design_themes WHERE id = @id", { id: req.params.id });
   if (!row) throw ApiError.notFound();
+  if (!identity.isOwner && row.is_public !== 1 && row.owner_discord_id !== identity.discordId) throw ApiError.notFound();
   const theme = await publishServerTheme(identity, parseTheme(row).theme);
   res.json({ theme: { ...parseTheme(row), theme, isDefault: true } });
 }));
@@ -176,8 +190,12 @@ router.post("/themes/:id/default", asyncHandler(async (req, res) => {
 router.get("/access", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
   requireOwner(identity);
-  const allowedUsers = await db.query<{ discord_user_id: string; created_at: string }>(
-    "SELECT discord_user_id, created_at FROM design_access_users WHERE is_active = 1 ORDER BY created_at DESC",
+  const allowedUsers = await db.query<{
+    discord_user_id: string;
+    created_at: string;
+    can_publish_server_theme: number;
+  }>(
+    "SELECT discord_user_id, created_at, can_publish_server_theme FROM design_access_users WHERE is_active = 1 ORDER BY created_at DESC",
   );
   res.json({ allowed: true, isOwner: true, allowedUsers });
 }));
@@ -189,10 +207,31 @@ router.post("/access", asyncHandler(async (req, res) => {
   if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Enter a valid 17–20 digit Discord user ID.");
   if (env.ownerDiscordIds.includes(discordId)) throw ApiError.badRequest("That Discord ID is already an owner.");
   await db.run(
-    "INSERT INTO design_access_users (discord_user_id, granted_by_discord_id, is_active) VALUES (@discordId, @grantedBy, 1) ON CONFLICT(discord_user_id) DO UPDATE SET is_active = 1, granted_by_discord_id = @grantedBy",
+    "INSERT INTO design_access_users (discord_user_id, granted_by_discord_id, is_active, can_publish_server_theme) VALUES (@discordId, @grantedBy, 1, 0) ON CONFLICT(discord_user_id) DO UPDATE SET is_active = 1, granted_by_discord_id = @grantedBy, can_publish_server_theme = 0",
     { discordId, grantedBy: identity.discordId },
   );
   res.status(201).json({ ok: true, discordId });
+}));
+
+router.patch("/access/:discordId", asyncHandler(async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireOwner(identity);
+  const discordId = String(req.params.discordId ?? "");
+  if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord ID.");
+  if (env.ownerDiscordIds.includes(discordId)) throw ApiError.badRequest("Owners already have server-theme publishing permission.");
+  if (!isRecord(req.body) || typeof req.body.canPublishServerTheme !== "boolean") {
+    throw ApiError.badRequest("canPublishServerTheme must be a boolean.");
+  }
+  const activeGrant = await db.get<{ discord_user_id: string }>(
+    "SELECT discord_user_id FROM design_access_users WHERE discord_user_id = @discordId AND is_active = 1",
+    { discordId },
+  );
+  if (!activeGrant) throw ApiError.notFound();
+  await db.run(
+    "UPDATE design_access_users SET can_publish_server_theme = @enabled WHERE discord_user_id = @discordId AND is_active = 1",
+    { enabled: req.body.canPublishServerTheme ? 1 : 0, discordId },
+  );
+  res.json({ ok: true, discordId, canPublishServerTheme: req.body.canPublishServerTheme });
 }));
 
 router.delete("/access/:discordId", asyncHandler(async (req, res) => {
@@ -200,22 +239,24 @@ router.delete("/access/:discordId", asyncHandler(async (req, res) => {
   requireOwner(identity);
   const discordId = String(req.params.discordId ?? "");
   if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord ID.");
-  await db.run("UPDATE design_access_users SET is_active = 0 WHERE discord_user_id = @discordId", { discordId });
+  await db.run(
+    "UPDATE design_access_users SET is_active = 0, can_publish_server_theme = 0 WHERE discord_user_id = @discordId",
+    { discordId },
+  );
   res.status(204).end();
 }));
 
 router.put("/server-theme", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
-  requireOwner(identity);
   const theme = await publishServerTheme(identity, req.body?.theme);
   res.json({ theme: { theme, updatedAt: new Date().toISOString() } });
 }));
 
 router.post("/themes/:id/publish", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
-  requireOwner(identity);
   const row = await db.get<ThemeRow>("SELECT * FROM design_themes WHERE id = @id", { id: req.params.id });
   if (!row) throw ApiError.notFound();
+  if (!identity.isOwner && row.is_public !== 1 && row.owner_discord_id !== identity.discordId) throw ApiError.notFound();
   const theme = validateTheme(parseTheme(row).theme);
   await publishServerTheme(identity, theme);
   res.json({ theme: { theme, sourceThemeId: row.id, updatedAt: new Date().toISOString() } });

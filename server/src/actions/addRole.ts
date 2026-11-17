@@ -1,6 +1,7 @@
 import type { ActionType } from "@dmb/shared";
 import { actionFailed, ephemeral } from "./responses.js";
 import { configString, type ActionContext, type ActionResponse } from "./types.js";
+import { getSelfAssignableRoleError } from "./roleSafety.js";
 
 export const type: ActionType = "add_role";
 export const description = "Give the member who clicked a role";
@@ -20,6 +21,9 @@ export const run = async ({
   if (!guildId) return actionFailed("This action only works inside a server.");
   if (!userId) return actionFailed("I couldn't work out who clicked.");
   if (!botToken) return actionFailed("The bot isn't configured on the server.");
+
+  const roleError = await getSelfAssignableRoleError({ discord, botToken }, guildId, roleId);
+  if (roleError) return actionFailed(roleError);
 
   try {
     await discord.addGuildMemberRole(guildId, userId, roleId, botToken);

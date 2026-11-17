@@ -172,6 +172,13 @@ router.post(
       throw ApiError.badRequest("`channelId` and `messageId` are required");
     }
 
+    const staffCtx = req.staffContext;
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const allowedChannels = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+      if (!allowedChannels.includes("*") && !allowedChannels.includes(channelId)) {
+        throw ApiError.forbidden(`You are not allowed to access channel ${channelId}`);
+      }
+    }
     await assertStaffGuildAllowed(req, channelId);
 
     let templateId: number | null = null;

@@ -43,6 +43,10 @@ export interface DiscordApi {
     roleId: string,
     token: string,
   ): Promise<boolean>;
+  getGuildRolesWithToken(
+    guildId: string,
+    token: string,
+  ): Promise<Array<{ id: string; permissions?: string; managed?: boolean }>>;
   hasRole(
     guildId: string,
     userId: string,

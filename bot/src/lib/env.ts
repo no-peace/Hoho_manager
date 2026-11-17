@@ -23,21 +23,46 @@ export interface BotEnv {
 
 export const env: BotEnv = Object.freeze({
   nodeEnv,
-  isProd: nodeEnv === "production",
+  isProd: nodeEnv !== "development" && nodeEnv !== "test",
   token: str("DISCORD_BOT_TOKEN"),
   apiBaseUrl: str("API_BASE_URL", `http://127.0.0.1:${activePort}`).replace(/\/$/, ""),
   adminApiKey: str("ADMIN_API_KEY", "dev-admin-key"),
   devGuildId: str("DEV_GUILD_ID") || undefined,
 });
 
+export const validateApiBaseUrl = (value: string, production: boolean): string | null => {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return "API_BASE_URL must be a valid absolute URL.";
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return "API_BASE_URL must use HTTP or HTTPS.";
+  }
+  if (parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== "/") {
+    return "API_BASE_URL must be an origin without credentials, path, query or fragment.";
+  }
+  if (production && parsed.protocol !== "https:") {
+    return "API_BASE_URL must use HTTPS outside local development and tests because the bot sends ADMIN_API_KEY.";
+  }
+  return null;
+};
+
 export const validateEnv = (): string[] => {
   const errors: string[] = [];
+
+  const apiUrlError = validateApiBaseUrl(env.apiBaseUrl, env.isProd);
+  if (apiUrlError) errors.push(apiUrlError);
 
   if (!env.token) {
     errors.push("DISCORD_BOT_TOKEN is not set  the gateway worker cannot log in.");
   }
   if (env.isProd && env.adminApiKey === "dev-admin-key") {
     errors.push("ADMIN_API_KEY is still the development default. Change it before deploying.");
+  }
+  if (env.isProd && env.adminApiKey.length < 32) {
+    errors.push("ADMIN_API_KEY must contain at least 32 characters outside local development and tests.");
   }
 
   return errors;

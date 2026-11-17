@@ -4,7 +4,7 @@ import { attachUser, requireUser } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { templateService } from "../services/templateService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
-import { optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
+import { containsWeaoPlaceholder, optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
 
 const router = Router();
 
@@ -60,11 +60,20 @@ router.post(
     requireStrings(body, ["name"]);
     if (body.data === undefined) throw ApiError.badRequest("`data` is required");
 
+    const actions = Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : [];
+    if (
+      req.staffContext &&
+      !req.staffContext.isAdmin &&
+      req.staffContext.record?.can_use_weao_exploits === 0 &&
+      containsWeaoPlaceholder(actions)
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in template actions.");
+    }
     const template = await templateService.create(requireUser(req).id, {
       name: String(body.name),
       description: optionalString(body.description) ?? null,
       data: body.data as QueryData,
-      actions: Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : [],
+      actions,
       isPublic: optionalFlag(body.isPublic) ?? 0,
       expiresAt: parseExpiresAt(body.expiresAt),
     });
@@ -78,6 +87,16 @@ router.put(
   requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
+    const actions = Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : undefined;
+    if (
+      actions &&
+      req.staffContext &&
+      !req.staffContext.isAdmin &&
+      req.staffContext.record?.can_use_weao_exploits === 0 &&
+      containsWeaoPlaceholder(actions)
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in template actions.");
+    }
     const template = await templateService.update(
       requireId(req.params.id),
       requireUser(req).id,
@@ -85,9 +104,7 @@ router.put(
         name: optionalString(body.name),
         description: optionalString(body.description) ?? null,
         data: body.data as QueryData | undefined,
-        actions: Array.isArray(body.actions)
-          ? (body.actions as StoredActionDefinition[])
-          : undefined,
+        actions,
         isPublic: optionalFlag(body.isPublic),
         expiresAt: parseExpiresAt(body.expiresAt),
       },

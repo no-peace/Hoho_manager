@@ -24,7 +24,7 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("sets 2.5s fast timeout and retries interaction callbacks once", async () => {
+  it("sets a 1s attempt timeout and retries interaction callbacks once", async () => {
     let callCount = 0;
     let capturedInit: RequestInit | undefined;
 
@@ -55,8 +55,10 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect((thrownError as ApiError).status).toBe(504);
     expect((thrownError as ApiError).code).toBe("gateway_timeout");
     expect((thrownError as Error).message).toContain(
-      "Discord request timed out after 2500ms",
+      "Discord request timed out after 1000ms",
     );
+    expect((thrownError as Error).message).not.toContain("token_abc");
+    expect(JSON.stringify((thrownError as ApiError).details)).not.toContain("token_abc");
     expect(capturedInit?.signal).toBeInstanceOf(AbortSignal);
     expect(callCount).toBe(2);
   });

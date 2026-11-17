@@ -12,10 +12,8 @@ export const run = async ({
   discord,
   logger,
 }: ActionContext): Promise<ActionResponse | undefined> => {
-  const userId =
-    configString(config, "userId") ??
-    interaction.member?.user?.id ??
-    interaction.user?.id;
+  // DMs are always sent to the person who clicked; action config cannot redirect them.
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const content = configString(config, "content") ?? "Thanks for clicking!";
   const embeds = Array.isArray(config.embeds) ? config.embeds : [];
 

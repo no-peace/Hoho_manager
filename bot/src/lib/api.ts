@@ -51,6 +51,10 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
 
   let response: Response;
   try {
+    const timeoutSignal = AbortSignal.timeout(15_000);
+    const requestSignal = signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal;
     response = await fetch(`${env.apiBaseUrl}${path}`, {
       method,
       headers: {
@@ -61,7 +65,7 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
         body === undefined
           ? undefined
           : JSON.stringify(body, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
-      signal,
+      signal: requestSignal,
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

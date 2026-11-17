@@ -433,7 +433,7 @@ The report's branch counts were stale and must not be used as current status. Pr
 
 - Agent 1 / Part A: **COMPLETED — source reviewed and integrated**. Final automated/browser verification remains part H.
 - Agent 2 / Part B: **COMPLETED — schema/runtime handoff approved and integrated**. Final automated/browser verification remains part H.
-- Agent 3 / Part C: **IN PROGRESS — runtime implementation authorized under Directive 024**. Backend/API/migration batch already integrated.
+- Agent 3 / Part C: **SOURCE REVIEW ACCEPTED — runtime and client regression-test batch selectively integrated on integration/part-c-studio-runtime-2026-11-17; PR review pending**. Backend/API/migration batch already integrated.
 - Agent 4 / Part D: **BLOCKED — not authorized**. Part E: **COMPLETED — source reviewed and integrated**. Do not start Part D until Agent 3 runtime is integrated and Head Agent provides a separate exact file authorization.
 - Head Agent owns Parts F, G and H. Do not run npm verification until the complete implementation program is ready for final verification.
 
@@ -452,3 +452,74 @@ The report's branch counts were stale and must not be used as current status. Pr
 - Add focused Vitest tests using existing repository conventions for: built-in fallback on missing/failed/invalid API data; responsive Desktop/Mobile selection and listener cleanup; preserving last valid published state across failed refresh; credentialed GET/PUT request contract and validation; owner-only publish UI; both-document validation; and server-confirmed success/error behavior. Mock network and browser confirmation; do not make live requests.
 - Do not modify any existing source file or any path outside the three authorized test paths, except for updating only Agent 3's own status section in `docs/AGENTS.md` to record the exact test-file claim and final report. Re-fetch the latest main control document before editing and before committing. The Head Agent will exclude the branch copy of `docs/AGENTS.md` during selective integration. Work only on `agent/layout-publishing`; no merge/rebase/force-push and no npm test/typecheck/build. Mark the test batch REVIEW REQUIRED and report exact changed paths and commit SHA.
 - Agent 3 Part C remains **REVIEW REQUIRED** until the tests are source-reviewed and the nine runtime files plus accepted tests are selectively integrated. Agent 4 Part D remains blocked until Part C integration is complete and separate exact authorization is issued.
+
+
+## 27. Head Agent selective integration — Agent 3 Part C Studio runtime and tests (2026-11-17)
+
+- **Source review decision:** The nine authorized runtime files and all three authorized client regression-test files are source-review accepted. The test corrections were verified:
+  - matchMedia().matches is a getter reading the mutable test state.
+  - API validation mutates MobileWorkspace.defaultPane at mobile.content[0].
+  - Publish-control validation mutates MobileWorkspace.panelPadding at mobile.content[0].
+- **Selective integration branch:** integration/part-c-studio-runtime-2026-11-17, created from current main at aee8032a2373467290dbb3202109803586788108.
+- Exactly these 12 source/test files are included:
+  1. client/src/components/layout/StudioLayout.tsx
+  2. client/src/components/layout/Header.tsx
+  3. client/src/components/layout/SplitPane.tsx
+  4. client/src/components/editor/PropertyPanel.tsx
+  5. client/src/pages/DesignLabPage.tsx
+  6. client/src/hooks/usePublishedAppLayout.ts
+  7. client/src/utils/appLayoutApi.ts
+  8. client/src/components/design/PublishAppLayoutControl.tsx
+  9. client/src/styles/appLayoutRuntime.css
+  10. client/src/hooks/__tests__/usePublishedAppLayout.test.tsx
+  11. client/src/utils/__tests__/appLayoutApi.test.ts
+  12. client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx
+- Each integrated file was re-fetched and compared against agent/layout-publishing; all 12 contents match exactly. The current main Part B utility/configuration files were deliberately retained and were not overwritten.
+- The current main docs/AGENTS.md was used as the basis for this update. No stale Agent 3 control-document copy was imported.
+- **PR review is pending.** This integration is selective; it does not merge the diverged Agent 3 branch or re-integrate its already merged backend files.
+- **Verification:** No npm tests, typecheck, build, browser QA, Lighthouse or deployment checks were run. Source review only; automated verification remains deferred to Part H.
+- Agent 3 Part C runtime/test source is accepted and staged for integration. Do not mark Part C fully verified until the integration is merged and final Part H verification is complete.
+- Agent 4 Part D remains blocked until this Part C integration is merged and the Head Agent issues a separate exact file authorization.
+
+## 28. Head Agent consolidated ownership — remaining implementation (2026-11-17)
+
+The repository owner explicitly instructed the Head Agent to complete all remaining work directly through the connected GitHub integration, including work previously assigned to other agents. This directive authorizes the Head Agent to take direct ownership of the remaining Parts D, F, G and H. No subagents are required. This supersedes prior agent-assignment restrictions for the Head Agent only; it does not authorize direct commits to `main`, bypassing required CI, or weakening repository protections.
+
+### Working branch and integration
+- **Working branch:** `integration/part-c-studio-runtime-2026-11-17`.
+- The branch contains the selectively integrated Part C Studio runtime and its three reviewed regression-test files, plus the Part D work in progress.
+- PR #52 remains the integration vehicle to `main`. Its required GitHub Actions checks have not yet run; do not bypass the required `build-and-typecheck (22)` and `build-and-typecheck (26)` contexts.
+- The current main branch remains unchanged by this work. All changes stay on the integration branch until final verification and normal protected integration.
+
+### Part D — delegated server-theme publishing (IN PROGRESS)
+**Architecture constraints**
+- Preserve the existing separation between server theme, personal active-theme cache, community themes and private presets.
+- The 14-day expiry applies only to the active-theme cache. Private preset libraries and portable `.hoho-theme.json` exports remain durable and independent.
+- Design Lab access does not imply server-theme publishing permission.
+- Owners retain publishing permission. An explicitly granted Design Lab user may publish the server theme only when the server-side `can_publish_server_theme` capability is active.
+- The authenticated session identity is authoritative. Never trust a client-supplied Discord ID, local storage, UI visibility or unverified role.
+- Check permission on every server-theme mutation. Revocation must block the next mutation request.
+- Only owners manage Design Lab access and delegated publishing grants.
+- Delegated publishers may promote community-visible themes and their own themes, but may not promote another user's private theme.
+- Part C application-layout publishing remains strictly owner-only and is not affected by this capability.
+
+**Files claimed by Head Agent**
+1. `server/src/config/migrations.ts` — append forward-only migration 017 adding `design_access_users.can_publish_server_theme`, defaulting to 0.
+2. `server/src/routes/design.ts` — server-side permission lookup/enforcement, owner-only grant management, immediate revocation, and theme visibility restrictions.
+3. `client/src/api/design.ts` — typed permission response and owner-only permission update API.
+4. `client/src/components/layout/ThemeSettingsModal.tsx` — show server-theme publishing controls only when the API reports the capability.
+5. `client/src/pages/DesignLabPage.tsx` — owner-only UI to grant/revoke the separate publishing capability for Design Lab users.
+6. `client/src/App.tsx` — enforce the server-derived `isDesignAllowed` flag when directly navigating to `/design`; this is a confirmed Part F access-control audit finding.
+7. `server/tests/serverThemePublishing.test.ts` — regression coverage for deny-by-default, owner grants, non-owner publishing, revocation, re-grant reset, private-theme protection and owner fallback.
+
+**Current implementation record**
+- Migration 017 and the route/API/UI changes have been committed on the integration branch.
+- Server regression tests have been added but not executed.
+- Source review, typecheck, build, full test suite, browser QA and Lighthouse remain pending.
+- Do not mark Part D complete until the final diff is reviewed and Part H verification is complete.
+
+### Parts F, G and H — Head Agent ownership
+- Head Agent directly owns the systematic repository audit, audit ledger, confirmed defect fixes, performance/accessibility/security review, final automated verification, browser verification and delivery handoff.
+- Preserve working behavior; do not perform cosmetic rewrites without a verified defect or measurable benefit.
+- Do not run npm checks before implementation is complete. At Part H, execute the repository's required CI commands and record the exact outcomes.
+- Do not claim browser, Lighthouse, deployment or production behavior as verified unless evidence is obtained.

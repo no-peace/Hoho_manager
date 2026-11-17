@@ -471,10 +471,22 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
  * message because one step was unexpected would be a worse outcome than sending
  * it with just the inline action in the `custom_id`.
  */
+export const containsWeaoPlaceholder = (value: unknown): boolean => {
+  if (typeof value === "string") return /\{\s*exploit(?:\.|:)/i.test(value);
+  if (value === null || typeof value !== "object") return false;
+  try {
+    return /\{\s*exploit(?:\.|:)/i.test(JSON.stringify(value) ?? "");
+  } catch {
+    return false;
+  }
+};
+
 export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {
   if (!Array.isArray(value)) return [];
+  if (value.length > 25) throw ApiError.badRequest("A message can contain at most 25 action flows.");
 
   const flows: FlowRegistration[] = [];
+  let totalConfigBytes = 0;
 
   for (const entry of value) {
     if (!isRecord(entry)) continue;
@@ -490,6 +502,9 @@ export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {
 
     if (!Array.isArray(entry.steps)) continue;
 
+    if (entry.steps.length > 20) {
+      throw ApiError.badRequest("Each action flow can contain at most 20 steps.");
+    }
     const steps = entry.steps
       .filter(isRecord)
       .map((step) => ({
@@ -498,6 +513,12 @@ export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {
       }));
 
     if (steps.length === 0) continue;
+    for (const step of steps) {
+      totalConfigBytes += JSON.stringify(step.config).length;
+      if (totalConfigBytes > 128 * 1024) {
+        throw ApiError.badRequest("Action flow configuration exceeds the 128 KiB limit.");
+      }
+    }
     flows.push({ customId, steps });
   }
 
@@ -506,8 +527,12 @@ export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {
 
 /** Parse a positive integer id, or throw a 400. */
 export const requireId = (value: unknown, label = "id"): number => {
-  const parsed = Number.parseInt(String(value), 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  const raw = typeof value === "string" || typeof value === "number" ? String(value) : "";
+  if (!/^\d+$/.test(raw)) {
+    throw ApiError.badRequest(`\`${label}\` must be a positive integer`);
+  }
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
     throw ApiError.badRequest(`\`${label}\` must be a positive integer`);
   }
   return parsed;

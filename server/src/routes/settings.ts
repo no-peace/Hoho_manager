@@ -21,10 +21,15 @@ router.get("/auth", asyncHandler(async (req, res) => {
   const isAdminKey = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 
   const sessionUser = await getSessionUserFromRequest(req);
-  const staffId = sessionUser ? sessionUser.id : req.get("x-staff-id");
+  // A caller-supplied staff ID is only a local-development convenience, never
+  // an identity proof in a deployed environment.
+  const staffId = sessionUser ? sessionUser.id : (!env.isProd ? req.get("x-staff-id") : undefined);
 
   let isHeadAdminUser = false;
-  if (sessionUser && (env.ownerDiscordIds.includes(sessionUser.id) || sessionUser.role === "admin")) {
+  if (
+    sessionUser &&
+    (env.ownerDiscordIds.includes(sessionUser.id) || (!env.isProd && sessionUser.role === "admin"))
+  ) {
     isHeadAdminUser = true;
   } else if (staffId && /^\d{17,20}$/.test(staffId)) {
     isHeadAdminUser =

@@ -50,6 +50,8 @@ export interface DiscordRoleSummary {
   color: number;
   position: number;
   hoist?: boolean;
+  permissions?: string;
+  managed?: boolean;
 }
 
 export type DiscordRole = DiscordRoleSummary;
@@ -192,11 +194,14 @@ const apiRequest = async <T>(
       const isTimeout =
         error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       const reason = error instanceof Error ? error.message : String(error);
+      if (callerSignal?.aborted) throw error;
       if (attempt >= retries) {
         if (isTimeout) {
+          // Discord interaction/webhook tokens can appear in request paths. Never
+          // include the URL in a client-visible error or structured error details.
           throw ApiError.gatewayTimeout(
-            `Discord request timed out after ${effectiveTimeout}ms: ${method} ${url}`,
-            { method, url, timeoutMs: effectiveTimeout },
+            `Discord request timed out after ${effectiveTimeout}ms (${method})`,
+            { method, timeoutMs: effectiveTimeout },
           );
         }
         throw ApiError.upstream(`Could not reach Discord: ${reason}`);
@@ -378,7 +383,7 @@ export const sendChannelMessage = async (
     ? buildMultipartPayload(payload, files)
     : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
 
-  const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
+  const message = await apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channelId)}/messages`, {
     token,
     body,
   });
@@ -398,7 +403,7 @@ export const sendChannelMessageWithToken = async (
     ? buildMultipartPayload(payload, files)
     : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
 
-  const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
+  const message = await apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channelId)}/messages`, {
     token,
     body,
   });
@@ -546,12 +551,10 @@ export const getGuildChannels = async (
   );
 };
 
-export const getGuildRoles = async (
+export const getGuildRolesWithToken = async (
   guildId: string,
-  profileId: number | string | null = null,
+  token: string,
 ): Promise<DiscordRoleSummary[]> => {
-  const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
   const roles = await apiRequest<DiscordRoleSummary[]>(
     "GET",
     `/guilds/${encodeURIComponent(guildId)}/roles`,
@@ -559,14 +562,25 @@ export const getGuildRoles = async (
   );
   if (!roles) return [];
   return roles
-    .map((r) => ({
-      id: r.id,
-      name: r.name,
-      color: r.color ?? 0,
-      position: r.position ?? 0,
-      hoist: r.hoist ?? false,
+    .map((role) => ({
+      id: role.id,
+      name: role.name,
+      color: role.color ?? 0,
+      position: role.position ?? 0,
+      hoist: role.hoist ?? false,
+      permissions: role.permissions,
+      managed: role.managed ?? false,
     }))
     .sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
+};
+
+export const getGuildRoles = async (
+  guildId: string,
+  profileId: number | string | null = null,
+): Promise<DiscordRoleSummary[]> => {
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
+  return getGuildRolesWithToken(guildId, token);
 };
 
 // ============================================================================
@@ -874,7 +888,7 @@ export const addGuildMemberRole = async (
   roleId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("PUT", `/guilds/${guildId}/members/${userId}/roles/${roleId}`, { token });
+  await apiRequest("PUT", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`, { token });
   return true;
 };
 
@@ -884,7 +898,7 @@ export const removeGuildMemberRole = async (
   roleId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("DELETE", `/guilds/${guildId}/members/${userId}/roles/${roleId}`, { token });
+  await apiRequest("DELETE", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`, { token });
   return true;
 };
 
@@ -893,7 +907,7 @@ export const getGuildMember = async (
   userId: string,
   token: string,
 ): Promise<GuildMember | null> =>
-  apiRequest<GuildMember>("GET", `/guilds/${guildId}/members/${userId}`, { token });
+  apiRequest<GuildMember>("GET", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}`, { token });
 
 export const hasRole = async (
   guildId: string,
@@ -917,7 +931,7 @@ export const sendDirectMessage = async (
   });
   if (!channel) throw ApiError.upstream("Discord did not return a DM channel");
 
-  return apiRequest<DiscordMessage>("POST", `/channels/${channel.id}/messages`, {
+  return apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channel.id)}/messages`, {
     token,
     body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
   });
@@ -928,7 +942,7 @@ export const deleteChannelMessage = async (
   messageId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("DELETE", `/channels/${channelId}/messages/${messageId}`, { token });
+  await apiRequest("DELETE", `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, { token });
   return true;
 };
 
@@ -944,7 +958,7 @@ export const createThreadFromMessage = async (
   name: string,
   token: string,
 ): Promise<{ id: string } | null> =>
-  apiRequest<{ id: string }>("POST", `/channels/${channelId}/messages/${messageId}/threads`, {
+  apiRequest<{ id: string }>("POST", `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}/threads`, {
     token,
     body: { name },
   });
@@ -963,11 +977,12 @@ export const createInteractionResponse = async (
   response: InteractionResponse,
   options?: { timeoutMs?: number },
 ): Promise<unknown> =>
-  apiRequest("POST", `/interactions/${interactionId}/${interactionToken}/callback`, {
+  apiRequest("POST", `/interactions/${encodeURIComponent(interactionId)}/${encodeURIComponent(interactionToken)}/callback`, {
     auth: "",
     body: response,
     retries: 1,
-    timeoutMs: options?.timeoutMs ?? 2_500,
+    // Keep the first attempt + retry + backoff below Discord's 3-second initial-response deadline.
+    timeoutMs: options?.timeoutMs ?? 1_000,
   });
 
 export const createFollowupMessage = async (
@@ -980,7 +995,7 @@ export const createFollowupMessage = async (
     params.set("with_components", "true");
   }
   const query = params.toString();
-  return apiRequest("POST", `/webhooks/${applicationId}/${interactionToken}${query ? `?${query}` : ""}`, { body: payload });
+  return apiRequest("POST", `/webhooks/${encodeURIComponent(applicationId)}/${encodeURIComponent(interactionToken)}${query ? `?${query}` : ""}`, { body: payload });
 };
 
 export const editOriginalResponse = async (
@@ -993,7 +1008,7 @@ export const editOriginalResponse = async (
     params.set("with_components", "true");
   }
   const query = params.toString();
-  return apiRequest("PATCH", `/webhooks/${applicationId}/${interactionToken}/messages/@original${query ? `?${query}` : ""}`, {
+  return apiRequest("PATCH", `/webhooks/${encodeURIComponent(applicationId)}/${encodeURIComponent(interactionToken)}/messages/@original${query ? `?${query}` : ""}`, {
     body: payload,
   });
 };
