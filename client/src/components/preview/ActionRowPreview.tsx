@@ -289,7 +289,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         onClick={() => !select.disabled && setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`flex h-10 w-full items-center justify-between gap-2 rounded border bg-[#1e1f22] px-3 text-sm transition-colors text-left ${
+        className={`flex h-10 w-full items-center justify-between gap-2 rounded border bg-[#1e1f22] px-3 text-sm transition-colors text-left ${select.disabled ? "pointer-events-none" : ""} ${
           select.disabled
             ? "border-[#3f4147] opacity-50 cursor-not-allowed text-[#949ba4]"
             : "border-[#3f4147] hover:border-[#4e5058] cursor-pointer"
@@ -410,7 +410,7 @@ export interface ActionRowPreviewProps {
 }
 
 export const ActionRowPreview = React.memo(({ component }: ActionRowPreviewProps) => (
-  <div className="flex flex-wrap items-center gap-2">
+  <div data-preview-component-id={component._id} className="flex flex-wrap items-center gap-2">
     {(component.components ?? []).map((child) =>
       SELECT_TYPES.includes(child.type) ? (
         <SelectPreview key={child._id} select={child} />
