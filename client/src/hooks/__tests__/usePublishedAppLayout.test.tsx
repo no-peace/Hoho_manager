@@ -38,7 +38,9 @@ describe("usePublishedAppLayout", () => {
     mediaChange = undefined;
     removeMediaListener = vi.fn();
     vi.stubGlobal("matchMedia", vi.fn(() => ({
-      matches: mediaMatches,
+      get matches() {
+        return mediaMatches;
+      },
       media: "(min-width: 1200px)",
       onchange: null,
       addEventListener: (_type: string, listener: () => void) => { mediaChange = listener; },
