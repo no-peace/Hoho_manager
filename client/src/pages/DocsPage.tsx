@@ -52,7 +52,12 @@ const DOC_ITEMS: DocItem[] = [
   { tag: "{server.name}", desc: "Name of the Discord server", example: "HoHo Hub", category: "server" },
   { tag: "{server.icon}", desc: "Direct CDN URL to the server's icon", example: "https://cdn.discordapp.com/icons/...", category: "server" },
   { tag: "{server.icon_hash}", desc: "Raw icon hash returned by Discord", example: "a_abc123", category: "server" },
-  { tag: "{server.icon_url}", desc: "Alias for the server icon CDN URL", example: "https://cdn.discordapp.com/icons/...", category: "server" },
+  { tag: "{server.icon_url}", desc: "Alias for the current server icon CDN URL", example: "https://cdn.discordapp.com/icons/...", category: "server" },
+  { tag: "{server.<guild_id>.name}", desc: "Name of another server the bot can access; replace <guild_id> with its numeric Discord server ID", example: "HoHo Hub", category: "server" },
+  { tag: "{server.<guild_id>.icon}", desc: "Direct CDN URL to another accessible server's icon; animated icons use GIF", example: "https://cdn.discordapp.com/icons/...", category: "server" },
+  { tag: "{server.<guild_id>.banner}", desc: "Direct CDN URL to another accessible server's banner; empty when no banner is set", example: "https://cdn.discordapp.com/banners/...", category: "server" },
+  { tag: "{server.<guild_id>.banner_url}", desc: "Alias for another server's banner CDN URL", example: "https://cdn.discordapp.com/banners/...", category: "server" },
+  { tag: "{server.<guild_id>.banner_hash}", desc: "Raw banner hash for another accessible server", example: "abc123", category: "server" },
   { tag: "{server.owner_id}", desc: "Snowflake ID of the server owner", example: "123456789012345678", category: "server" },
   { tag: "{server.description}", desc: "Server description, when configured", example: "A community for...", category: "server" },
   { tag: "{server.banner}", desc: "Raw server banner hash", example: "abc123", category: "server" },
@@ -212,7 +217,7 @@ export const DocsPage = () => {
           <p className="text-[#A1A8B8] text-sm leading-relaxed max-w-3xl">
             HoHo Manager supports live dynamic variables, executor status interpolation, and automatic author profile resolution.
             Use <code className="text-[#A78BFA] font-mono bg-[#1D2230] px-1.5 py-0.5 rounded font-bold">{"{variable}"}</code> anywhere in message content, embeds, buttons, or action flows.
-            Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Roles and join dates require selected-server membership; primary-guild clan tags do not. Interaction-user clan tags also retain legacy nickname parsing.
+            Interaction variables such as <code>{"{user.avatar}"}</code> refer to the user who triggered the interaction; ID-based variables such as <code>{"{user.<id>.avatar}"}</code> fetch another Discord account. Use <code>{"{server.<guild_id>.icon}"}</code> or <code>{"{server.<guild_id>.banner}"}</code> to fetch another server's image by its numeric ID. The bot must be a member of that server; missing banners resolve to an empty string. Roles and join dates require selected-server membership; primary-guild clan tags do not. Interaction-user clan tags also retain legacy nickname parsing.
           </p>
         </div>
 
