@@ -12,16 +12,8 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     vi.restoreAllMocks();
   });
 
-  it("blocks arbitrary webhook URL message sends before making a network request", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-
-    await expect(
-      discord.sendWebhook("https://discord.com/api/webhooks/123/token", {
-        content: "legacy webhook send",
-      }),
-    ).rejects.toMatchObject({ status: 403 });
-
-    expect(fetchSpy).not.toHaveBeenCalled();
+  it("does not expose a webhook URL sender", () => {
+    expect("sendWebhook" in discord).toBe(false);
   });
 
   it("sets a 1s attempt timeout and retries interaction callbacks once", async () => {
