@@ -53,7 +53,7 @@ export interface ResolvedAppLayout {
     editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion; inspectorMotion: ResolvedAppLayoutMotion;
     navHeight: number; navPadding: number; navBackground: string; navAccent: string;
     tabOrder: "editor-first" | "preview-first"; showLabels: boolean;
-    activeTab: "editor" | "preview" | "dispatch";
+    previewActiveTab: "editor" | "preview" | "dispatch";
     editorTabLabel: string; previewTabLabel: string; dispatchTabLabel: string;
     navMotion: ResolvedAppLayoutMotion;
   };
@@ -175,7 +175,7 @@ export const resolveAppLayoutData = (
       navAccent: safeHex(mobileNav.accent, "#818CF8"),
       tabOrder: safeChoice(mobileNav.tabOrder, ["editor-first", "preview-first"] as const, "editor-first"),
       showLabels: mobileNav.showLabels !== "hide",
-      activeTab: safeChoice(mobileNav.activeTab, ["editor", "preview", "dispatch"] as const, "editor"),
+      previewActiveTab: safeChoice(mobileNav.activeTab, ["editor", "preview", "dispatch"] as const, "editor"),
       editorTabLabel: safeLabel(mobileNav.editorLabel, "Editor"),
       previewTabLabel: safeLabel(mobileNav.previewLabel, "Preview"),
       dispatchTabLabel: safeLabel(mobileNav.dispatchLabel, "Dispatch"),
