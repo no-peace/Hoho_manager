@@ -295,6 +295,25 @@ describe("bot/commands: Slash Command Suite", () => {
   });
 
   describe("SyncCommand", () => {
+    it("registers the maintenance command for Discord administrators only", () => {
+      const command = new SyncCommand(mockContext, {});
+      const registry: any = { registerChatInputCommand: vi.fn() };
+
+      command.registerApplicationCommands(registry);
+
+      const builderFn = registry.registerChatInputCommand.mock.calls[0][0];
+      const mockBuilder: any = {
+        setName: vi.fn().mockReturnThis(),
+        setDescription: vi.fn().mockReturnThis(),
+        setDefaultMemberPermissions: vi.fn().mockReturnThis(),
+      };
+      builderFn(mockBuilder);
+
+      expect(mockBuilder.setDefaultMemberPermissions).toHaveBeenCalledWith(
+        expect.any(BigInt),
+      );
+    });
+
     it("reports checked, updated, and pruned message counts", async () => {
       const { api: apiClient } = await import("../src/lib/api.js");
       vi.mocked(apiClient.syncTrackedMessages).mockResolvedValueOnce({
