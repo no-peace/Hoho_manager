@@ -431,7 +431,7 @@ The report's branch counts were stale and must not be used as current status. Pr
 
 - Agent 1 / Part A: **COMPLETED — source reviewed and integrated**. Final automated/browser verification remains part H.
 - Agent 2 / Part B: **COMPLETED — schema/runtime handoff approved and integrated**. Final automated/browser verification remains part H.
-- Agent 3 / Part C: **IN PROGRESS — runtime implementation authorized under Directive 024**. Backend/API/migration batch already integrated.
+- Agent 3 / Part C: **SOURCE REVIEW ACCEPTED — runtime and client regression-test batch selectively integrated on integration/part-c-studio-runtime-2026-11-17; PR review pending**. Backend/API/migration batch already integrated.
 - Agent 4 / Part D: **BLOCKED — not authorized**. Part E: **COMPLETED — source reviewed and integrated**. Do not start Part D until Agent 3 runtime is integrated and Head Agent provides a separate exact file authorization.
 - Head Agent owns Parts F, G and H. Do not run npm verification until the complete implementation program is ready for final verification.
 
@@ -450,3 +450,31 @@ The report's branch counts were stale and must not be used as current status. Pr
 - Add focused Vitest tests using existing repository conventions for: built-in fallback on missing/failed/invalid API data; responsive Desktop/Mobile selection and listener cleanup; preserving last valid published state across failed refresh; credentialed GET/PUT request contract and validation; owner-only publish UI; both-document validation; and server-confirmed success/error behavior. Mock network and browser confirmation; do not make live requests.
 - Do not modify any existing source file or any path outside the three authorized test paths, except for updating only Agent 3's own status section in `docs/AGENTS.md` to record the exact test-file claim and final report. Re-fetch the latest main control document before editing and before committing. The Head Agent will exclude the branch copy of `docs/AGENTS.md` during selective integration. Work only on `agent/layout-publishing`; no merge/rebase/force-push and no npm test/typecheck/build. Mark the test batch REVIEW REQUIRED and report exact changed paths and commit SHA.
 - Agent 3 Part C remains **REVIEW REQUIRED** until the tests are source-reviewed and the nine runtime files plus accepted tests are selectively integrated. Agent 4 Part D remains blocked until Part C integration is complete and separate exact authorization is issued.
+
+
+## 27. Head Agent selective integration — Agent 3 Part C Studio runtime and tests (2026-11-17)
+
+- **Source review decision:** The nine authorized runtime files and all three authorized client regression-test files are source-review accepted. The test corrections were verified:
+  - matchMedia().matches is a getter reading the mutable test state.
+  - API validation mutates MobileWorkspace.defaultPane at mobile.content[0].
+  - Publish-control validation mutates MobileWorkspace.panelPadding at mobile.content[0].
+- **Selective integration branch:** integration/part-c-studio-runtime-2026-11-17, created from current main at aee8032a2373467290dbb3202109803586788108.
+- Exactly these 12 source/test files are included:
+  1. client/src/components/layout/StudioLayout.tsx
+  2. client/src/components/layout/Header.tsx
+  3. client/src/components/layout/SplitPane.tsx
+  4. client/src/components/editor/PropertyPanel.tsx
+  5. client/src/pages/DesignLabPage.tsx
+  6. client/src/hooks/usePublishedAppLayout.ts
+  7. client/src/utils/appLayoutApi.ts
+  8. client/src/components/design/PublishAppLayoutControl.tsx
+  9. client/src/styles/appLayoutRuntime.css
+  10. client/src/hooks/__tests__/usePublishedAppLayout.test.tsx
+  11. client/src/utils/__tests__/appLayoutApi.test.ts
+  12. client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx
+- Each integrated file was re-fetched and compared against agent/layout-publishing; all 12 contents match exactly. The current main Part B utility/configuration files were deliberately retained and were not overwritten.
+- The current main docs/AGENTS.md was used as the basis for this update. No stale Agent 3 control-document copy was imported.
+- **PR review is pending.** This integration is selective; it does not merge the diverged Agent 3 branch or re-integrate its already merged backend files.
+- **Verification:** No npm tests, typecheck, build, browser QA, Lighthouse or deployment checks were run. Source review only; automated verification remains deferred to Part H.
+- Agent 3 Part C runtime/test source is accepted and staged for integration. Do not mark Part C fully verified until the integration is merged and final Part H verification is complete.
+- Agent 4 Part D remains blocked until this Part C integration is merged and the Head Agent issues a separate exact file authorization.
