@@ -5,6 +5,7 @@ import { createApp } from "../src/app.js";
 import { env } from "../src/config/env.js";
 import { db, initializeDatabase } from "../src/config/database.js";
 import * as discordService from "../src/services/discordService.js";
+import * as weaoService from "../src/services/weaoService.js";
 import { staffRepository } from "../src/repositories/staffRepository.js";
 import { userRepository } from "../src/repositories/userRepository.js";
 import { templateRepository } from "../src/repositories/templateRepository.js";
@@ -388,9 +389,33 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           expect((await res.json()).error).toContain("not permitted to use WEAO");
         }
         expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+        expect(weaoService.interpolateWeaoPlaceholders).not.toHaveBeenCalled();
       } finally {
         await staffRepository.delete(staffId);
       }
+    });
+
+    it("revalidates message limits after external placeholders are expanded", async () => {
+      vi.mocked(weaoService.interpolateWeaoPlaceholders).mockImplementationOnce(async (payload) => ({
+        payload: { ...payload, content: "x".repeat(2001) },
+        modified: true,
+      }));
+
+      const response = await fetch(`${baseUrl}/api/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+        },
+        body: JSON.stringify({
+          mode: "bot",
+          channelId: "channel_123",
+          payload: { content: "safe before interpolation" },
+        }),
+      });
+
+      expect(response.status).toBe(400);
+      expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
     });
   });
 
