@@ -102,21 +102,25 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   );
 
   return (
-    <button
+    <div
       data-preview-component-id={button._id}
       data-preview-interactive="true"
-      type="button"
-      disabled={button.disabled}
-      className={[
-        "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
-        BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[ButtonStyle.Primary],
-        button.disabled ? "cursor-not-allowed opacity-50" : "",
-      ].join(" ")}
+      className="inline-flex"
     >
-      {emojiNode}
-      {isLink && <ExternalLink size={14} className="shrink-0" />}
-      <span className="truncate max-w-[200px]">{resolvedLabel}</span>
-    </button>
+      <button
+        type="button"
+        disabled={button.disabled}
+        className={[
+          "inline-flex h-8 items-center gap-1.5 rounded-lg px-4 text-sm font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
+          BUTTON_CLASSES[button.style ?? ButtonStyle.Primary] ?? BUTTON_CLASSES[button.style ?? ButtonStyle.Primary],
+          button.disabled ? "cursor-not-allowed opacity-50 pointer-events-none" : "",
+        ].join(" ")}
+      >
+        {emojiNode}
+        {isLink && <ExternalLink size={14} className="shrink-0" />}
+        <span className="truncate max-w-[200px]">{resolvedLabel}</span>
+      </button>
+    </div>
   );
 };
 
