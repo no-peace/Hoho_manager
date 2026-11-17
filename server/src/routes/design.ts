@@ -254,8 +254,10 @@ router.get("/app-layout", asyncHandler(async (_req, res) => {
 
 /** Application layout publication is owner-only; the Discord ID comes from the verified session. */
 router.put("/app-layout", asyncHandler(async (req, res) => {
-  const identity = await resolveIdentity(req);
-  if (!identity.isOwner) {
+  const session = await getSessionUserFromRequest(req);
+  if (!session) throw ApiError.unauthorized();
+  const isOwner = env.ownerDiscordIds.includes(session.id) || (!env.isProd && session.role === "admin");
+  if (!isOwner) {
     throw ApiError.forbidden("Only the HoHo Manager owner can publish the application layout.");
   }
   const pair = validateAppLayoutPair(req.body);
@@ -263,7 +265,7 @@ router.put("/app-layout", asyncHandler(async (req, res) => {
     schemaVersion: pair.schemaVersion,
     desktop: pair.desktop,
     mobile: pair.mobile,
-    publisherDiscordId: identity.discordId,
+    publisherDiscordId: session.id,
   });
   const layout = parsePublishedLayout(row);
   if (!layout) throw new Error("The published layout could not be validated after persistence.");
