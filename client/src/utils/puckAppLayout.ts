@@ -33,6 +33,8 @@ export interface ResolvedAppLayout {
     editorBackground: string; previewBackground: string; inspectorBackground: string; editorRadius: number; previewRadius: number; inspectorRadius: number; inspectorPadding: number;
     navHeight: number; navPadding: number; navBackground: string; navAccent: string;
     tabOrder: "editor-first" | "preview-first"; showLabels: boolean;
+    activeTab: "editor" | "preview" | "dispatch";
+    editorTabLabel: string; previewTabLabel: string; dispatchTabLabel: string;
   };
 }
 
@@ -126,6 +128,10 @@ export const resolveAppLayoutData = (
       navAccent: safeHex(mobileNav.accent, "#818CF8"),
       tabOrder: safeChoice(mobileNav.tabOrder, ["editor-first", "preview-first"] as const, "editor-first"),
       showLabels: mobileNav.showLabels !== "hide",
+      activeTab: safeChoice(mobileNav.activeTab, ["editor", "preview", "dispatch"] as const, "editor"),
+      editorTabLabel: safeLabel(mobileNav.editorLabel, "Editor"),
+      previewTabLabel: safeLabel(mobileNav.previewLabel, "Preview"),
+      dispatchTabLabel: safeLabel(mobileNav.dispatchLabel, "Dispatch"),
     },
   };
 };
@@ -176,58 +182,205 @@ export const getAppLayoutCssVariables = (layout: ResolvedAppLayout): Record<stri
 export const getAppLayoutDraftKey = (userId?: string | null): string =>
   DRAFT_PREFIX + (userId || "local");
 
+const MAX_APP_LAYOUT_BYTES = 64 * 1024;
+const MAX_COMPONENT_ID_LENGTH = 64;
+const MAX_LABEL_LENGTH = 48;
+
 const isRecord = (value: unknown): value is Record<string, any> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-const validateDocument = (value: unknown, mode: AppLayoutMode): AppLayoutDocument => {
-  if (!isRecord(value) || !isRecord(value.root) || !Array.isArray(value.content)) {
-    throw new Error(`The ${mode} layout is not a valid Puck document.`);
+const hasExactKeys = (value: Record<string, any>, allowed: readonly string[]): boolean =>
+  Object.keys(value).every((key) => allowed.includes(key));
+
+const safeLabel = (value: unknown, fallback: string): string =>
+  typeof value === "string" && value.trim().length > 0 &&
+    value.trim().length <= MAX_LABEL_LENGTH && !/[\u0000-\u001f\u007f]/.test(value)
+    ? value.trim()
+    : fallback;
+
+const COMPONENT_PROPS: Record<string, readonly string[]> = {
+  DesktopHeader: ["id", "height", "horizontalPadding", "logoSize", "background", "borderColor", "animation", "animationDuration", "animationDelay"],
+  DesktopWorkspace: ["id", "editorRatio", "inspectorWidth", "workspaceGap", "panelOrder", "inspectorPosition", "borderColor", "animation", "animationDuration", "animationDelay", "content"],
+  MobileHeader: ["id", "height", "horizontalPadding", "logoSize", "background", "borderColor", "animation", "animationDuration", "animationDelay"],
+  MobileWorkspace: ["id", "defaultPane", "showInspector", "inspectorHeight", "workspaceGap", "panelPadding", "borderColor", "animation", "animationDuration", "animationDelay", "content"],
+  MobileBottomNavigation: ["id", "height", "horizontalPadding", "background", "accent", "tabOrder", "showLabels", "activeTab", "editorLabel", "previewLabel", "dispatchLabel", "animation", "animationDuration", "animationDelay"],
+  EditorPanel: ["id", "label", "surface", "padding", "radius", "showToolbar", "animation", "animationDuration", "animationDelay"],
+  PreviewPanel: ["id", "label", "surface", "padding", "radius", "animation", "animationDuration", "animationDelay"],
+  InspectorPanel: ["id", "label", "surface", "padding", "radius", "animation", "animationDuration", "animationDelay"],
+};
+
+const MOTION_PRESETS = ["none", "fade", "fade-up", "slide-left", "slide-right", "zoom-in", "float", "pulse"];
+const MOTION_DURATIONS = ["180ms", "300ms", "500ms", "700ms", "1200ms", "2000ms", "3000ms"];
+const MOTION_DELAYS = ["0ms", "100ms", "200ms", "350ms"];
+
+const assertNumber = (props: Record<string, any>, key: string, min: number, max: number) => {
+  const value = props[key];
+  if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
+    throw new Error("Layout property " + key + " must be an integer between " + min + " and " + max + ".");
   }
-  const rootProps = value.root.props === undefined ? {} : value.root.props;
-  if (!isRecord(rootProps)) throw new Error(`The ${mode} layout root props are invalid.`);
+};
+
+const assertHex = (props: Record<string, any>, key: string) => {
+  if (typeof props[key] !== "string" || !/^#[0-9a-fA-F]{6}$/.test(props[key])) {
+    throw new Error("Layout property " + key + " must be a six-digit HEX color.");
+  }
+};
+
+const assertChoice = (props: Record<string, any>, key: string, choices: readonly string[]) => {
+  if (typeof props[key] !== "string" || !choices.includes(props[key])) {
+    throw new Error("Layout property " + key + " has an unsupported value.");
+  }
+};
+
+const assertLabel = (props: Record<string, any>, key: string) => {
+  const value = props[key];
+  if (typeof value !== "string" || value.trim().length === 0 ||
+      value.trim().length > MAX_LABEL_LENGTH || /[\u0000-\u001f\u007f]/.test(value)) {
+    throw new Error("Layout property " + key + " must be a non-empty label of at most " + MAX_LABEL_LENGTH + " characters.");
+  }
+};
+
+const assertMotion = (props: Record<string, any>) => {
+  assertChoice(props, "animation", MOTION_PRESETS);
+  assertChoice(props, "animationDuration", MOTION_DURATIONS);
+  assertChoice(props, "animationDelay", MOTION_DELAYS);
+};
+
+const validateComponentProps = (type: string, props: Record<string, any>) => {
+  const allowed = COMPONENT_PROPS[type];
+  if (!allowed || !hasExactKeys(props, allowed)) {
+    throw new Error("The " + type + " component contains unsupported or missing properties.");
+  }
+  if (typeof props.id !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(props.id) ||
+      props.id.length > MAX_COMPONENT_ID_LENGTH) {
+    throw new Error("Layout component IDs must be non-empty, safe identifiers of at most " + MAX_COMPONENT_ID_LENGTH + " characters.");
+  }
+
+  if (type === "DesktopHeader" || type === "MobileHeader") {
+    assertNumber(props, "height", 44, type === "DesktopHeader" ? 80 : 72);
+    assertNumber(props, "horizontalPadding", 8, type === "DesktopHeader" ? 36 : 28);
+    assertNumber(props, "logoSize", 20, type === "DesktopHeader" ? 48 : 40);
+    assertHex(props, "background");
+    assertHex(props, "borderColor");
+    assertMotion(props);
+    return;
+  }
+
+  if (type === "DesktopWorkspace") {
+    assertNumber(props, "editorRatio", 28, 72);
+    assertNumber(props, "inspectorWidth", 300, 520);
+    assertNumber(props, "workspaceGap", 0, 24);
+    assertChoice(props, "panelOrder", ["editor-first", "preview-first"]);
+    assertChoice(props, "inspectorPosition", ["left", "right"]);
+    assertHex(props, "borderColor");
+    assertMotion(props);
+    return;
+  }
+
+  if (type === "MobileWorkspace") {
+    assertChoice(props, "defaultPane", ["editor", "preview"]);
+    assertChoice(props, "showInspector", ["show", "hide"]);
+    assertNumber(props, "inspectorHeight", 180, 520);
+    assertNumber(props, "workspaceGap", 0, 20);
+    assertNumber(props, "panelPadding", 8, 28);
+    assertHex(props, "borderColor");
+    assertMotion(props);
+    return;
+  }
+
+  if (type === "MobileBottomNavigation") {
+    assertNumber(props, "height", 48, 84);
+    assertNumber(props, "horizontalPadding", 8, 28);
+    assertHex(props, "background");
+    assertHex(props, "accent");
+    assertChoice(props, "tabOrder", ["editor-first", "preview-first"]);
+    assertChoice(props, "showLabels", ["show", "hide"]);
+    assertChoice(props, "activeTab", ["editor", "preview", "dispatch"]);
+    assertLabel(props, "editorLabel");
+    assertLabel(props, "previewLabel");
+    assertLabel(props, "dispatchLabel");
+    assertMotion(props);
+    return;
+  }
+
+  assertLabel(props, "label");
+  assertHex(props, "surface");
+  assertNumber(props, "padding", 0, 32);
+  assertNumber(props, "radius", 0, 24);
+  if (type === "EditorPanel") assertChoice(props, "showToolbar", ["show", "hide"]);
+  assertMotion(props);
+};
+
+const validateDocument = (value: unknown, mode: AppLayoutMode): AppLayoutDocument => {
+  if (!isRecord(value) || !hasExactKeys(value, ["root", "content"]) ||
+      !isRecord(value.root) || !hasExactKeys(value.root, ["props"]) ||
+      !isRecord(value.root.props) || Object.keys(value.root.props).length !== 0 ||
+      !Array.isArray(value.content)) {
+    throw new Error("The " + mode + " layout is not a valid version-1 Puck document.");
+  }
+
   const expected = mode === "desktop"
     ? ["DesktopHeader", "DesktopWorkspace"]
     : ["MobileHeader", "MobileWorkspace", "MobileBottomNavigation"];
   if (value.content.length !== expected.length) {
-    throw new Error(`The ${mode} layout is missing a required application section.`);
+    throw new Error("The " + mode + " layout must contain exactly " + expected.length + " required shell sections.");
   }
+
   const ids = new Set<string>();
-  const allowedTypes = new Set(mode === "desktop"
+  const allowedTypes = mode === "desktop"
     ? ["DesktopHeader", "DesktopWorkspace", "EditorPanel", "PreviewPanel", "InspectorPanel"]
-    : ["MobileHeader", "MobileWorkspace", "MobileBottomNavigation", "EditorPanel", "PreviewPanel", "InspectorPanel"]);
-  const visit = (nodes: unknown[]) => {
-    for (const node of nodes) {
-      if (!isRecord(node) || typeof node.type !== "string" || !allowedTypes.has(node.type) || !isRecord(node.props) || typeof node.props.id !== "string") {
-        throw new Error(`The ${mode} layout contains an invalid component.`);
-      }
-      if (ids.has(node.props.id)) throw new Error("Layout component IDs must be unique.");
-      ids.add(node.props.id);
-      if (node.props.content !== undefined) {
-        if (!Array.isArray(node.props.content)) throw new Error("Nested panel content must be an array.");
-        visit(node.props.content);
-      }
+    : ["MobileHeader", "MobileWorkspace", "MobileBottomNavigation", "EditorPanel", "PreviewPanel", "InspectorPanel"];
+
+  const validateNode = (node: unknown, expectedType?: string): AppLayoutNode => {
+    if (!isRecord(node) || !hasExactKeys(node, ["type", "props"]) ||
+        typeof node.type !== "string" || !allowedTypes.includes(node.type) ||
+        (expectedType && node.type !== expectedType) || !isRecord(node.props)) {
+      throw new Error("The " + mode + " layout contains an invalid component or nesting structure.");
     }
+    validateComponentProps(node.type, node.props);
+    const id = node.props.id as string;
+    if (ids.has(id)) throw new Error("Layout component IDs must be unique.");
+    ids.add(id);
+
+    const isWorkspace = node.type === "DesktopWorkspace" || node.type === "MobileWorkspace";
+    if (isWorkspace) {
+      if (!Array.isArray(node.props.content) || node.props.content.length !== 3) {
+        throw new Error("Each workspace must contain exactly one Editor, Preview and Inspector panel.");
+      }
+      const panelTypes = ["EditorPanel", "PreviewPanel", "InspectorPanel"];
+      const panels = node.props.content.map((child: unknown) => validateNode(child));
+      if (panelTypes.some((type) => panels.filter((panel) => panel.type === type).length !== 1)) {
+        throw new Error("Each workspace must contain exactly one Editor, Preview and Inspector panel.");
+      }
+      return { ...node, props: { ...node.props, content: panels } } as AppLayoutNode;
+    }
+    if (Object.prototype.hasOwnProperty.call(node.props, "content")) {
+      throw new Error("Only workspace components may contain panel slots.");
+    }
+    return node as AppLayoutNode;
   };
-  visit(value.content);
-  for (let index = 0; index < expected.length; index += 1) {
-    if (value.content[index]?.type !== expected[index]) {
-      throw new Error(`The ${mode} layout sections are out of order or incomplete.`);
-    }
-  }
-  const workspace = value.content[1];
-  const expectedPanels = mode === "desktop"
-    ? ["EditorPanel", "PreviewPanel", "InspectorPanel"]
-    : ["EditorPanel", "PreviewPanel", "InspectorPanel"];
-  const panels = workspace?.props?.content;
-  if (!Array.isArray(panels) || panels.length !== expectedPanels.length ||
-      expectedPanels.some((type) => panels.filter((panel: any) => panel?.type === type).length !== 1)) {
-    throw new Error(`The ${mode} workspace must contain every required panel exactly once.`);
-  }
-  return { ...value, root: { ...value.root, props: rootProps } } as AppLayoutDocument;
+
+  const content = value.content.map((node: unknown, index: number) =>
+    validateNode(node, expected[index]));
+  return { root: { props: {} }, content };
 };
 
 export const validateAppLayoutDocuments = (value: unknown): AppLayoutDocuments => {
-  if (!isRecord(value)) throw new Error("The selected file does not contain a HoHo application layout.");
+  if (!isRecord(value) || !hasExactKeys(value, ["desktop", "mobile", "updatedAt"]) ||
+      !Object.prototype.hasOwnProperty.call(value, "desktop") ||
+      !Object.prototype.hasOwnProperty.call(value, "mobile") ||
+      (value.updatedAt !== undefined && (typeof value.updatedAt !== "string" || value.updatedAt.length > 64))) {
+    throw new Error("The selected file does not contain a supported HoHo application layout.");
+  }
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(value);
+  } catch {
+    throw new Error("The layout document must contain JSON-compatible values.");
+  }
+  if (typeof serialized !== "string" || new TextEncoder().encode(serialized).byteLength > MAX_APP_LAYOUT_BYTES) {
+    throw new Error("The combined Desktop and Mobile layout documents exceed the 64 KiB limit.");
+  }
   return {
     desktop: validateDocument(value.desktop, "desktop"),
     mobile: validateDocument(value.mobile, "mobile"),
@@ -277,8 +430,10 @@ export const downloadAppLayout = (value: AppLayoutDocuments, filename = "hoho-ap
 };
 
 export const parseAppLayoutFile = (value: unknown): AppLayoutDocuments => {
-  if (!isRecord(value) || value.format !== "hoho-app-layout" || value.version !== 1) {
+  if (!isRecord(value) || !hasExactKeys(value, ["format", "version", "exportedAt", "desktop", "mobile"]) ||
+      value.format !== "hoho-app-layout" || value.version !== 1 ||
+      typeof value.exportedAt !== "string" || value.exportedAt.length > 64) {
     throw new Error("Unsupported HoHo application layout file.");
   }
-  return validateAppLayoutDocuments(value);
+  return validateAppLayoutDocuments({ desktop: value.desktop, mobile: value.mobile });
 };
