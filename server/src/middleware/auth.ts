@@ -57,7 +57,7 @@ export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) =
   // The gateway worker may act on behalf of the Discord user who invoked a
   // slash command. The shared admin key authenticates the worker; the staff
   // middleware still verifies this actor against the live staff-access table.
-  if (hasValidAdminKey && machineStaffId && /^\\d{17,20}$/.test(machineStaffId)) {
+  if (hasValidAdminKey && machineStaffId && /^\d{17,20}$/.test(machineStaffId)) {
     req.user = await userRepository.upsert({
       discordId: machineStaffId,
       username: req.get("x-staff-username")?.trim() || `Discord ${machineStaffId}`,
