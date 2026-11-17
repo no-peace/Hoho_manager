@@ -21,7 +21,7 @@ export class RawInteractionRelay extends Listener {
     if (rawInteraction?.type !== 3 && rawInteraction?.type !== 5) return;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2_200);
+    const timeout = setTimeout(() => controller.abort(), 2_700);
 
     try {
       const res = await fetch(`${env.apiBaseUrl}/api/interactions/relay`, {
