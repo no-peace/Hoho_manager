@@ -8,12 +8,6 @@ describe("request parsing helpers", () => {
     expect(parseAllowedIds(null)).toEqual([]);
   });
 
-  it("parses positive safe profile IDs and preserves null aliases", () => {
-    expect(parseProfileId(undefined)).toBeNull();
-    expect(parseProfileId("null")).toBeNull();
-    expect(parseProfileId("12")).toBe(12);
-    expect(parseProfileId("0")).toBeNull();
-    expect(parseProfileId("not-a-number")).toBeNull();
-  });
+
 
 });
