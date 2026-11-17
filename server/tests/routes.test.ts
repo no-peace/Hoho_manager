@@ -319,6 +319,43 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
         await staffRepository.delete(staffId);
       }
     });
+    it("rejects URL attachments before downloading when staff attachment permission is disabled", async () => {
+      const staffId = "523456789012345678";
+      await staffRepository.create({
+        discord_user_id: staffId,
+        discord_username: "no_attachment_permission",
+        granted_by_discord_id: "987654321098765432",
+        can_send_messages: 1,
+        can_attach_files: 0,
+        cooldown_seconds: 0,
+        max_messages_per_hour: 10,
+        allowed_channel_ids: JSON.stringify(["channel_123"]),
+        allowed_guild_ids: JSON.stringify(["*"]),
+      });
+
+      try {
+        const res = await fetch(`${baseUrl}/api/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-staff-id": staffId,
+          },
+          body: JSON.stringify({
+            mode: "bot",
+            channelId: "channel_123",
+            payload: { content: "No attachments allowed" },
+            attachments: [{ url: "http://127.0.0.1/private" }],
+          }),
+        });
+
+        expect(res.status).toBe(403);
+        expect((await res.json()).error).toContain("not permitted to attach files");
+        expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+      } finally {
+        await staffRepository.delete(staffId);
+      }
+    });
+
     it("blocks WEAO placeholders in both modern and legacy syntax when staff permission is disabled", async () => {
       const staffId = "423456789012345678";
       await staffRepository.create({
