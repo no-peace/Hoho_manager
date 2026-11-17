@@ -8,7 +8,7 @@ import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
-import { parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
+import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
 
@@ -157,7 +157,7 @@ router.post(
       // Inspect the original payload before interpolation consumes the tokens.
       // Both modern dot syntax and legacy colon syntax grant access to WEAO data.
       const usesWeaoVariables =
-        Boolean(exploitHint) || /\{\s*exploit(?:\.|:)/i.test(JSON.stringify(sanitizedMessage));
+        Boolean(exploitHint) || containsWeaoPlaceholder(sanitizedMessage);
       if (
         staffCtx &&
         !staffCtx.isAdmin &&
@@ -324,6 +324,31 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     const firstMessage = finalMessages[0];
 
     const rawFlows = parseFlowRegistrations(body.flows);
+    if (
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_use_weao_exploits === 0 &&
+      containsWeaoPlaceholder(rawFlows)
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in action flows.");
+    }
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      for (const flow of rawFlows) {
+        for (const step of flow.steps) {
+          if (step.type !== "send_message") continue;
+          const configuredChannel = step.config.channelId;
+          const targetChannelId =
+            typeof configuredChannel === "string" && configuredChannel.trim()
+              ? configuredChannel.trim()
+              : destinationChannelId;
+          if (!/^\d{17,20}$/.test(targetChannelId)) {
+            throw ApiError.badRequest("Action message target must be a valid Discord channel ID.");
+          }
+          assertStaffChannelAllowed(staffCtx, targetChannelId);
+          await assertStaffGuildAllowed(staffCtx, targetChannelId);
+        }
+      }
+    }
     let flows = rawFlows;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       const { scrubFlows } = await import("../utils/mentionScrubber.js");
@@ -374,7 +399,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       }
       const rawStr = JSON.stringify(uninterpolatedCleanMsg);
       const hasDynamic = /\{user\.\d{17,20}\./i.test(rawStr) ||
-        rawStr.includes("{exploit.") || rawStr.includes("discord.com/users/");
+        containsWeaoPlaceholder(uninterpolatedCleanMsg) || rawStr.includes("discord.com/users/");
       if (!(hasDynamic || req.body?.track === true || Boolean(req.body?.templateId) || Boolean(req.body?.exploitName))) return;
       try {
         const { trackMessage } = await import("../services/messageTrackerService.js");
