@@ -323,8 +323,8 @@ export const initializeDatabase = async (): Promise<DatabaseClient> => {
   if (!globalSettings) {
     const now = Date.now();
     await db.run(
-      `INSERT INTO settings (guild_id, log_channel_id, head_admin_ids, bot_profile_id, extra_settings, created_at, updated_at)
-       VALUES (@guildId, @logChannelId, @headAdminIds, NULL, '{}', @createdAt, @updatedAt)`,
+      `INSERT INTO settings (guild_id, log_channel_id, head_admin_ids, extra_settings, created_at, updated_at)
+       VALUES (@guildId, @logChannelId, @headAdminIds, '{}', @createdAt, @updatedAt)`,
       {
         guildId: "__global__",
         logChannelId: env.logChannelId ?? null,
