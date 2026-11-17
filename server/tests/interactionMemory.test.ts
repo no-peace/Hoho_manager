@@ -100,7 +100,7 @@ describe("PERF-03: Deferred Interaction Memory Retention & Prompt Cleanup", () =
     cleanupDeferredInteraction(interactionId);
     expect(getPendingLateResponsesCount()).toBe(0);
   });
-  it("does not lose a fast result when a duplicate delivery races the first acknowledgement", async () => {
+  it("coordinates duplicate acknowledgements through the shared receipt state", async () => {
     const interactionId = `int_duplicate_${Date.now()}`;
     const interaction = makeInteraction(interactionId);
     let resolveExecution: ((value: any) => void) | undefined;
