@@ -186,7 +186,6 @@ export const getAppLayoutCssVariables = (layout: ResolvedAppLayout): Record<stri
   "--hoho-layout-desktop-logo-size": `${layout.desktop.logoSize}px`,
   "--hoho-layout-desktop-header-background": layout.desktop.headerBackground,
   "--hoho-layout-desktop-header-border": layout.desktop.headerBorder,
-  "--hoho-layout-desktop-editor-ratio": String(layout.desktop.editorRatio),
   "--hoho-layout-desktop-inspector-width": `${layout.desktop.inspectorWidth}px`,
   "--hoho-layout-desktop-inspector-left": layout.desktop.inspectorPosition === "left" ? "0" : "auto",
   "--hoho-layout-desktop-inspector-right": layout.desktop.inspectorPosition === "right" ? "0" : "auto",
