@@ -13,7 +13,7 @@ This section supersedes older preview-routing and editor-scroll descriptions bel
 - **Mobile gesture fix:** Swipes starting on buttons, links, inputs, or other interactive controls no longer switch panes; touch cancellation clears gesture state.
 - **Regression coverage added:** Embed author/footer click routing, nested V2 selection, embed inspector rendering, collapsed message expansion, touch/reduced-motion scrolling, hidden-pane deferral, and exact footer-section navigation.
 - **Verification:** These tests, client typecheck, and production build have **not** been run. The desktop terminal MCP endpoint returned HTTP 404, and GitHub returned no commit statuses or workflow runs. Browser QA and Lighthouse are also pending. Do not mark these checks as passing.
-- **Run when a terminal is available:** `npm test --workspace client`, `npm run typecheck --workspace client`, and `npm run build --workspace client`, followed by desktop/mobile browser QA.
+- **Run when a terminal is available:** `npm test`, `npm run typecheck`, and `npm run build` from the repository root (optionally repeat the client-only commands with `--workspace client`) , followed by desktop/mobile browser QA.
 
 ## Current main status — V12 audit follow-up (2026-11-17)
 
