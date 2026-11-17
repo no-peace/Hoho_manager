@@ -83,6 +83,25 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
     vi.restoreAllMocks();
   });
 
+  it("applies retired dispatch cleanup and interaction receipt migrations", async () => {
+    const [botProfileColumn, webhookPermissionColumn, overridePermissionColumn, duplicateColumn, webhookTable, botProfileTable] =
+      await Promise.all([
+        db.get("SELECT name FROM pragma_table_info('settings') WHERE name = 'bot_profile_id'"),
+        db.get("SELECT name FROM pragma_table_info('staff_access') WHERE name = 'can_use_webhooks'"),
+        db.get("SELECT name FROM pragma_table_info('staff_access') WHERE name = 'can_override_profile'"),
+        db.get("SELECT name FROM pragma_table_info('interaction_receipts') WHERE name = 'duplicate_delivery'"),
+        db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'webhook_profiles'"),
+        db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'bot_profiles'"),
+      ]);
+
+    expect(botProfileColumn).toBeUndefined();
+    expect(webhookPermissionColumn).toBeUndefined();
+    expect(overridePermissionColumn).toBeUndefined();
+    expect(duplicateColumn).toBeDefined();
+    expect(webhookTable).toBeUndefined();
+    expect(botProfileTable).toBeUndefined();
+  });
+
   // 1. /api/health
   describe("GET /api/health", () => {
     it("returns HTTP 200 with status ok when database is healthy", async () => {
