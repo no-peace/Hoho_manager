@@ -365,8 +365,9 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(SNOWFLAKE_REGEX.test("-12345678901234567")).toBe(false);
         expect(SNOWFLAKE_REGEX.test(" 123456789012345678 ")).toBe(false);
       });
+    });
 
-    describe("Multi-Message Batch Webhook Payload Structure Construction", () => {
+    describe("Multi-Message Batch Server Bot Payload Structure Construction", () => {
       it("constructs a single-message server bot dispatch payload without sender overrides", () => {
         const store = useMessageStore.getState();
         store.setField("content", "Single dispatch");
