@@ -169,10 +169,10 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Studio runtime integration
 
-**Status:** REVIEW REQUIRED — runtime implementation submitted  
+**Status:** REVIEW REQUIRED — runtime source accepted; regression test batch in progress  
 **Branch:** `agent/layout-publishing`  
 **Scope:** Part C Studio runtime integration only. Backend/API/migration implementation remains the previously reviewed batch integrated through PR #47.  
-**Current batch:** Published-layout API/hook, production Studio application, and owner-only Design Lab publishing UI.
+**Current batch:** Three authorized focused regression test files for the accepted runtime implementation.
 
 **Files claimed / in progress (exclusive ownership under Directive 024):**
 1. `client/src/components/layout/StudioLayout.tsx`
@@ -222,6 +222,14 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 - Resolve branch integration through the Head Agent's controlled selective integration process; do not merge/rebase this branch.
 
 **Next action:** Wait for Head Agent review. Do not start Part D or any theme-related work.
+
+
+**Directive 026 test-file ownership claimed before editing (exclusive):**
+1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` (new)
+2. `client/src/utils/__tests__/appLayoutApi.test.ts` (new)
+3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx` (new)
+
+Only these three test paths may be added in this batch. Runtime source files remain SOURCE REVIEW ACCEPTED and must not be modified. No npm tests, typecheck or build will be run. Status will remain REVIEW REQUIRED pending Head Agent review.
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
