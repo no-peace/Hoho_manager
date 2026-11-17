@@ -4,8 +4,9 @@
 
 This section supersedes older branch/PR status statements in the historical notes below.
 
-- **Current source head:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`.
-- **Direct-to-main follow-up commits:** FlowBuilder polish (`89e70bec0b385a40bec244310b740ad2d3ac7c6b`, followed by unused-import cleanup `07d0cb4bb4b01dda7cff4082e3c4af0044a2aec9)); icon-button transition cleanup (`c3c024203ad2d3dd66e1797852a363c79a405178)); LoginScreen active-public-navigation regression assertion (`e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8)).
+- **Current main HEAD (including this handoff update):** `825f6e82e698e0f69e2fb09d70deed2e216c41b1`.
+- **Latest code source commit:** `e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`.
+- **Direct-to-main follow-up commits:** FlowBuilder polish (`89e70bec0b385a40bec244310b740ad2d3ac7c6b`, followed by unused-import cleanup `07d0cb4bb4b01dda7cff4082e3c4af0044a2aec9`); icon-button transition cleanup (`c3c024203ad2d3dd66e1797852a363c79a405178`); LoginScreen active-public-navigation regression assertion (`e1fe1b3bb177d9b34e3c5b4d1f36e06990e18eb8`).
 - **FlowBuilder:** Added the Interaction Flow / Trigger Event header, derives Button Click versus Select Option from the component type, restores the Server Bot mode wording, and uses the current studio palette. The existing implementation persists changes immediately; it has no separate unsaved-draft/save lifecycle, so no misleading unsaved-changes banner or nonfunctional Save button was introduced.
 - **StepList:** No structural rewrite was made. Its `#313338` surfaces are confined to the Discord modal mock preview and intentionally preserve Discord's native preview appearance rather than representing a studio shell surface.
 - **Motion:** `UI_THEME_CONFIG.button.iconButtonBase` no longer transitions `border-color`; the shared base and icon-button transition lists are now aligned.
