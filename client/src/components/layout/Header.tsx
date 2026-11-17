@@ -195,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Right: Staff Access + Authenticated User Profile + Docs */}
         <div className="flex items-center justify-self-end gap-2 min-w-0">
-          <button type="button" onClick={() => setThemeSettingsOpen(true)} className="flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#818CF8]/30 bg-[#818CF8]/10 hover:bg-[#818CF8]/20 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-colors" title="Appearance and themes">
+          <button type="button" onClick={() => setThemeSettingsOpen(true)} aria-haspopup="dialog" aria-expanded={themeSettingsOpen} aria-controls="theme-settings-title" className="flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#818CF8]/30 bg-[#818CF8]/10 hover:bg-[#818CF8]/20 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-colors" title="Appearance and themes">
             <Palette size={14} className="text-[#a5adff]" /><span className="hidden md:inline">Theme</span>
           </button>
 
@@ -371,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
         </div>
       </header>
       
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={themeSettingsOpen ? <div role="status" className="fixed inset-0 z-[100] grid place-items-center bg-black/70 text-sm text-white">Loading appearance settings…</div> : null}>
         <ThemeSettingsModal open={themeSettingsOpen} onClose={() => setThemeSettingsOpen(false)} />
       </React.Suspense>
 

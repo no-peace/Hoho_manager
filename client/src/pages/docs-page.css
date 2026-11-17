@@ -1,0 +1,7 @@
+.hoho-docs-page{isolation:isolate;min-width:0;overscroll-behavior-y:contain}
+.hoho-docs-page__table-scroll{max-width:100%;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#465066 #10131a}
+.hoho-docs-page__table-scroll table{table-layout:fixed}
+.hoho-docs-page__table-scroll th,.hoho-docs-page__table-scroll td{vertical-align:top}
+.hoho-docs-page pre{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;white-space:pre}
+.hoho-docs-page code{overflow-wrap:anywhere}
+@media(max-width:767px){.hoho-docs-page .max-w-6xl{padding-inline:12px}.hoho-docs-page .grid{min-width:0}.hoho-docs-page__table-scroll{display:none}}

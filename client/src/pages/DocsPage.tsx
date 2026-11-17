@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { updatePageSeo } from "../utils/seo";
 import { SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
+import "./docs-page.css";
 import { UI_THEME_CONFIG } from "../config/uiThemeConfig";
 import { motion } from "motion/react";
 import {
@@ -202,10 +203,10 @@ export const DocsPage = () => {
   }, [search, activeCategory]);
 
   return (
-    <div className="h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#0B0D12] text-[#F1F3F9] font-sans selection:bg-[#818CF8]/30 selection:text-white pb-24">
+    <div className="hoho-docs-page h-dvh w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar bg-[#0B0D12] text-[#F1F3F9] font-sans selection:bg-[#818CF8]/30 selection:text-white pb-24">
       <PublicPageHeader activePage="docs" />
 
-      <div className="max-w-6xl mx-auto mt-8 px-4 sm:px-6">
+      <div className="mx-auto mt-8 w-full min-w-0 max-w-6xl px-4 sm:px-6">
         {/* Hero Section */}
         <div className="mb-8 rounded-xl bg-[#161A23] border border-[#272D3A] p-5 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 text-[#818CF8] font-bold text-xs uppercase tracking-wider mb-2">
@@ -308,8 +309,8 @@ export const DocsPage = () => {
             <span className="text-[11px] text-[#A1A8B8]">Copy a variable tag with the copy icon</span>
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-left border-collapse">
+          <div className="hoho-docs-page__table-scroll hidden min-w-0 overflow-x-auto md:block">
+            <table className="w-full min-w-[760px] border-collapse text-left">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-[#A1A8B8] border-b border-[#1D2230] bg-[#1D2230]">
                   <th className="px-5 py-3 font-semibold w-[28%]">Variable Tag</th>

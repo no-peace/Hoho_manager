@@ -32,29 +32,42 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
   const [errors, setErrors] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const privateFileInputRef = React.useRef<HTMLInputElement>(null);
+  const themeUserId = user?.id || "guest";
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, server] = await Promise.all([designApi.themes(), designApi.defaultTheme()]);
-      setThemes(list.themes);
-      setIsOwner(list.isOwner);
-      setServerTheme(server.theme?.theme || DEFAULT_UI_THEME);
-      if (user?.id) {
-        setPrivateThemes(loadUserThemeLibrary(user.id));
-        const cached = loadUserThemeCache(user.id, false);
-        if (cached) {
-          setTokens(cached.theme);
-          setActiveThemeId(cached.themeId);
-        } else {
-          setTokens(server.theme?.theme || DEFAULT_UI_THEME);
-          setActiveThemeId(null);
-        }
+      const [listResult, serverResult] = await Promise.allSettled([
+        user?.id ? designApi.themes() : Promise.resolve({ themes: [], isOwner: false }),
+        designApi.defaultTheme(),
+      ]);
+      if (listResult.status === "fulfilled") {
+        setThemes(listResult.value.themes);
+        setIsOwner(listResult.value.isOwner);
+      } else {
+        setThemes([]);
+        setIsOwner(false);
       }
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "Could not load themes.", "error");
+      const nextServerTheme = serverResult.status === "fulfilled"
+        ? serverResult.value.theme?.theme || DEFAULT_UI_THEME
+        : DEFAULT_UI_THEME;
+      setServerTheme(nextServerTheme);
+      setPrivateThemes(loadUserThemeLibrary(themeUserId));
+      const cached = loadUserThemeCache(themeUserId, false);
+      if (cached) {
+        setTokens(cached.theme);
+        setActiveThemeId(cached.themeId);
+        applyUiTheme(cached.theme);
+      } else {
+        setTokens(nextServerTheme);
+        setActiveThemeId(null);
+        applyUiTheme(nextServerTheme);
+      }
+      if (listResult.status === "rejected" && serverResult.status === "rejected") {
+        showToast("Could not load theme settings. You can still preview a theme in this session.", "error");
+      }
     } finally { setLoading(false); }
-  }, [showToast, user?.id]);
+  }, [showToast, themeUserId, user?.id]);
 
   useEffect(() => { if (open) void refresh(); }, [open, refresh]);
 
@@ -71,16 +84,15 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     applyUiTheme(next);
   };
   const applyPersonal = (theme: UiThemeTokens, id: string | null) => {
-    if (!user?.id) return;
     const result = validateUiTheme(theme);
     if (!result.valid) { setErrors(result.errors); return; }
     applyUiTheme(result.theme);
-    if (!saveUserThemeCache(user.id, result.theme, id)) {
+    if (!saveUserThemeCache(themeUserId, result.theme, id)) {
       showToast("Could not cache this theme in your browser.", "error"); return;
     }
     setTokens(result.theme);
     setActiveThemeId(id);
-    showToast("Theme applied. Your preference is cached for 14 days after your last login.", "success");
+    showToast("Theme applied. This browser remembers your selection for up to 14 days of activity.", "success");
   };
   const editTheme = (theme: DesignTheme) => {
     setTokens(theme.theme);
@@ -91,10 +103,9 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     applyUiTheme(theme.theme);
   };
   const applyPrivate = () => {
-    if (!user?.id) return;
     const result = validateUiTheme(tokens);
     if (!result.valid) { setErrors(result.errors); return; }
-    const saved = saveUserThemeToLibrary(user.id, name, description, result.theme);
+    const saved = saveUserThemeToLibrary(themeUserId, name, description, result.theme);
     if (!saved) {
       // Even if browser storage is full or unavailable, preserve the user's
       // design as a portable file rather than losing the work.
@@ -108,7 +119,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
       showToast("Browser storage is unavailable. Your private preset was downloaded as a file; keep it safe and import it later.", "error");
       return;
     }
-    setPrivateThemes(loadUserThemeLibrary(user.id));
+    setPrivateThemes(loadUserThemeLibrary(themeUserId));
     downloadUserThemeFile(saved);
     applyPersonal(result.theme, saved.id);
     setEditingId(null);
@@ -121,13 +132,14 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     setDescription(theme.description);
   };
   const importPrivateTheme = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user?.id) return;
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
     try {
       const imported = parseUserThemeFile(JSON.parse(await file.text()));
-      const saved = saveUserThemeToLibrary(user.id, imported.name, imported.description, imported.theme);
+      const saved = saveUserThemeToLibrary(themeUserId, imported.name, imported.description, imported.theme);
       if (!saved) throw new Error("Could not save this preset in browser storage. Keep the original file as your backup.");
-      setPrivateThemes(loadUserThemeLibrary(user.id));
+      setPrivateThemes(loadUserThemeLibrary(themeUserId));
       setTokens(saved.theme);
       setName(saved.name);
       setDescription(saved.description);
@@ -137,13 +149,12 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Could not import this theme file.", "error");
     } finally {
-      event.target.value = "";
+      input.value = "";
     }
   };
   const removePrivate = (id: string) => {
-    if (!user?.id) return;
-    deleteUserThemeFromLibrary(user.id, id);
-    setPrivateThemes(loadUserThemeLibrary(user.id));
+    deleteUserThemeFromLibrary(themeUserId, id);
+    setPrivateThemes(loadUserThemeLibrary(themeUserId));
     if (activeThemeId === id) resetPersonal();
   };
   const save = async () => {
@@ -185,8 +196,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     finally { setBusy(false); }
   };
   const resetPersonal = () => {
-    if (!user?.id) return;
-    try { localStorage.removeItem("hoho:user-theme:v2:" + user.id); } catch { /* storage unavailable */ }
+    try { localStorage.removeItem("hoho:user-theme:v2:" + themeUserId); } catch { /* storage unavailable */ }
     applyUiTheme(serverTheme);
     setTokens(serverTheme);
     setActiveThemeId(null);

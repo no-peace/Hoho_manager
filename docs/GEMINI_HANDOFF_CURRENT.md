@@ -1,16 +1,17 @@
-## Current repair program — verified baseline and batch plan (2026-11-17)
+## Current repair program — batch ledger (2026-11-17)
 
-- Current `main` head inspected for this work: `c3cd6ad78ab7275bf786431b64db76ffe3c72903` (`fix theme scope and general settings selection`).
-- The earlier status below referenced `97d38f0...` and was stale when this repair program began. Treat the baseline above as authoritative until a later implementation commit supersedes it.
-- Repository tree at baseline: 321 tracked files. The audit is staged and has not yet completed a file-by-file review.
-- Confirmed architecture gap: `/design` uses Puck 0.24 to build a separate promotional page. Its draft is localStorage-backed. Existing design API/migrations persist theme records and a server theme, but do not persist the actual responsive Studio layout. The live app layout is implemented separately in StudioLayout/SplitPane/Header/MessageEditor/MessagePreview/PropertyPanel.
-- Theme button trace begins at Header state `themeSettingsOpen`; it lazy-loads ThemeSettingsModal. The control path from modal fields through CSS tokens to all actual Studio surfaces must be verified and repaired in Batch B.
-- General Settings has a single General tab and a no-op tab click handler; its event checkbox rows were restyled in the latest commit. Keyboard/label interaction still requires a regression check.
-- Docs has distinct desktop-table/mobile-card markup and SpotlightCard wrappers. The reported breakage needs a concrete reproduction before changing the page.
-- Puck 0.24 API references reviewed: component configuration, `renderFields`, `FieldGroup`, `FieldTab`, slot field `allow`, permissions, viewports, `dnd`, and CSS theming. Use the actual installed API.
-- User-reported npm checks passed at an earlier checkpoint. All checks must be rerun after the new implementation; this baseline inspection did not execute npm commands.
-- Full batch-by-batch execution plan: `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md`.
-- Work rule: direct commits to `main`; update this handoff in each implementation batch; never count uncommitted blobs or draft patches as completed code.
+- **Verified baseline:** `c3cd6ad78ab7275bf786431b64db76ffe3c72903`.
+- **Plan commit:** `0dbc926cccfde0d3b316deec9095d51766029a7a`; plan: `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md`.
+- **Batch A — complete:** pinned the main baseline, enumerated 321 tracked files, mapped the current theme/design architecture, reviewed Puck 0.24 API surfaces, and documented the full batch plan. The audit itself remains incomplete.
+- **Batch B — implementation prepared for commit:** theme application now has a guest-safe local cache path as well as the authenticated-user path; modal loading no longer treats a failed optional community-gallery request as failure of the whole theme editor; live theme tokens cover more actual Studio surface classes and preserve intentional accent opacity variants; the Theme button now exposes dialog semantics and a visible lazy-load fallback; Docs has scoped layout CSS and a constrained desktop table with the existing mobile-card view retained; General Settings no longer has a no-op single-tab button and checkbox focus styling applies to both checked and unchecked states; added focused theme token/cache tests.
+- **Batch B files:** `client/src/App.tsx`, `client/src/components/layout/Header.tsx`, `client/src/components/layout/ThemeSettingsModal.tsx`, `client/src/components/layout/SettingsModal.tsx`, `client/src/config/puck/publishedTheme.css`, `client/src/pages/DocsPage.tsx`, `client/src/pages/docs-page.css`, and `client/src/utils/__tests__/puckTheme.test.ts`.
+- **Theme behavior detail:** guest selection is stored under the separate `guest` cache key and restored at app startup; authenticated users retain per-user cache isolation. Server theme remains the fallback. Community gallery CRUD still requires authentication. Private theme preset files remain independent portable backups.
+- **Docs behavior detail:** the existing responsive split is preserved (desktop horizontally scrollable table, mobile cards). The new scoped CSS does not touch public route styles outside Docs. The previous published-theme CSS was scoped to `.hoho-studio-shell`; Docs is not supposed to inherit those selectors.
+- **Settings behavior detail:** General is the only current tab, so it is rendered as a selected tab rather than a button with a no-op handler. Event rows keep a stable surface; the custom checkbox indicator alone changes checked state and receives a visible keyboard focus ring.
+- **Verification:** focused source review and static diff inspection only. No npm commands or browser visual checks were run in this batch because the connected local Terminal service returned an unavailable/404 response. The user reported that the earlier `npm run typecheck`, `npm test`, and `npm run build` all passed before these new changes; those earlier results do not verify this batch. Rerun all checks after implementation.
+- **Still outstanding:** Batch C onward (real responsive Studio Puck editor, atomic DB publishing and runtime application, preset durability audit, performance/security work, full repository audit, and final verification). The Design Lab still uses the separate promotional page builder at this point.
+- **Important process rule:** blobs created during editing are not implementation until included in a commit on `main`. This ledger is updated again after the Batch B commit is created and its final SHA is confirmed.
+
 
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 

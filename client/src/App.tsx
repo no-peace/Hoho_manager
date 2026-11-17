@@ -68,16 +68,16 @@ export const App: React.FC = () => {
         if (!active) return;
         const serverTheme = response.theme?.theme || publishedThemeTokens;
         applyUiTheme(serverTheme);
-        if (currentUser?.id) {
-          const cached = loadUserThemeCache(currentUser.id, refreshUserCacheExpiry);
-          if (cached) applyUiTheme(cached.theme);
-          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(currentUser.id);
-        }
+        const themeCacheId = currentUser?.id || "guest";
+        const cached = loadUserThemeCache(themeCacheId, refreshUserCacheExpiry);
+        if (cached) applyUiTheme(cached.theme);
+        if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(themeCacheId);
       } catch {
-        if (active && currentUser?.id) {
-          const cached = loadUserThemeCache(currentUser.id, refreshUserCacheExpiry);
+        if (active) {
+          const themeCacheId = currentUser?.id || "guest";
+          const cached = loadUserThemeCache(themeCacheId, refreshUserCacheExpiry);
           if (cached) applyUiTheme(cached.theme);
-          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(currentUser.id);
+          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(themeCacheId);
         }
       }
     };
