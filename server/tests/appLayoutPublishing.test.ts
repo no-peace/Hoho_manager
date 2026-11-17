@@ -5,12 +5,12 @@ import { createApp } from "../src/app.js";
 import { db, initializeDatabase } from "../src/config/database.js";
 import { appLayoutRepository } from "../src/repositories/appLayoutRepository.js";
 import { createSessionToken } from "../src/utils/session.js";
-import { validateAppLayoutPair } from "../src/utils/appLayoutValidation.js";
+import { validateAppLayoutPair, MAX_APP_LAYOUT_PAIR_BYTES } from "../src/utils/appLayoutValidation.js";
 
 const makePair = (suffix = "one") => ({
   schemaVersion: 1,
   desktop: {
-    root: { props: {} },
+    root: { props: {} as Record<string, never> },
     content: [
       {
         type: "DesktopHeader",
@@ -37,7 +37,7 @@ const makePair = (suffix = "one") => ({
     ],
   },
   mobile: {
-    root: { props: {} },
+    root: { props: {} as Record<string, never> },
     content: [
       {
         type: "MobileHeader",
@@ -65,6 +65,7 @@ const makePair = (suffix = "one") => ({
         props: {
           id: `mobile-navigation-${suffix}`, height: 60, horizontalPadding: 12,
           background: "#10131A", accent: "#818CF8", tabOrder: "editor-first", showLabels: "show",
+          activeTab: "editor", editorLabel: "Editor", previewLabel: "Preview", dispatchLabel: "Dispatch",
           animation: "none", animationDuration: "300ms", animationDelay: "0ms",
         },
       },
@@ -98,104 +99,159 @@ describe("responsive application layout publishing", () => {
 
   beforeEach(async () => {
     await db.run("DELETE FROM published_app_layouts WHERE id = 1");
-    await db.run("DELETE FROM app_layout_publishers");
   });
 
-  it("accepts the approved Desktop and Mobile component trees and normalizes HEX colors", () => {
+  it("accepts the approved component trees and normalizes colors", () => {
     const checked = validateAppLayoutPair(makePair());
     expect(checked.schemaVersion).toBe(1);
     expect(checked.desktop.content[0]?.props.background).toBe("#10131A");
     expect(checked.mobile.content).toHaveLength(3);
   });
 
-  it("rejects unsupported components, properties, motion values, IDs and schema versions", () => {
-    const unknownComponent = structuredClone(makePair());
+  it("rejects missing required component properties", () => {
+    const missing = makePair();
+    delete (missing.desktop.content[0]!.props as Record<string, unknown>).height;
+    expect(() => validateAppLayoutPair(missing)).toThrow("missing required property: height");
+    const missingPanel = makePair();
+    delete (missingPanel.mobile.content[1]!.props.content[1]!.props as Record<string, unknown>).label;
+    expect(() => validateAppLayoutPair(missingPanel)).toThrow("missing required property: label");
+  });
+
+  it("normalizes omitted optional version-1 navigation fields and omitted root props", () => {
+    const legacy = makePair();
+    delete (legacy.desktop.root as Record<string, unknown>).props;
+    delete (legacy.mobile.root as Record<string, unknown>).props;
+    const nav = legacy.mobile.content[2]!.props as Record<string, unknown>;
+    delete nav.activeTab;
+    delete nav.editorLabel;
+    delete nav.previewLabel;
+    delete nav.dispatchLabel;
+    const checked = validateAppLayoutPair(legacy);
+    expect(checked.desktop.root.props).toEqual({});
+    expect(checked.mobile.root.props).toEqual({});
+    expect(checked.mobile.content[2]!.props).toMatchObject({
+      activeTab: "editor", editorLabel: "Editor", previewLabel: "Preview", dispatchLabel: "Dispatch",
+    });
+  });
+
+  it("normalizes legacy boolean EditorPanel.showToolbar values", () => {
+    const legacy = makePair();
+    (legacy.desktop.content[1]!.props.content[0]!.props as Record<string, unknown>).showToolbar = false;
+    (legacy.mobile.content[1]!.props.content[0]!.props as Record<string, unknown>).showToolbar = true;
+    const checked = validateAppLayoutPair(legacy);
+    expect(checked.desktop.content[1]!.props.content![0]!.props.showToolbar).toBe("hide");
+    expect(checked.mobile.content[1]!.props.content![0]!.props.showToolbar).toBe("show");
+  });
+
+  it("enforces the exact component ID format and 64-character maximum", () => {
+    for (const id of ["", "_starts-with-underscore", "-starts-with-hyphen", "x".repeat(65), "has space"]) {
+      const invalid = makePair();
+      invalid.desktop.content[0]!.props.id = id;
+      expect(() => validateAppLayoutPair(invalid)).toThrow("approved 1–64 character component ID format");
+    }
+    const valid = makePair();
+    valid.desktop.content[0]!.props.id = `A${"x".repeat(63)}`;
+    expect(() => validateAppLayoutPair(valid)).not.toThrow();
+  });
+
+  it("enforces the 65,536-byte combined Desktop and Mobile JSON boundary", () => {
+    const atLimit = makePair();
+    const emptyExtra = { desktop: { ...atLimit.desktop, padding: "" }, mobile: atLimit.mobile };
+    const baseBytes = Buffer.byteLength(JSON.stringify(emptyExtra), "utf8");
+    (atLimit.desktop as unknown as Record<string, unknown>).padding = "x".repeat(MAX_APP_LAYOUT_PAIR_BYTES - baseBytes);
+    const exactBytes = Buffer.byteLength(JSON.stringify({ desktop: atLimit.desktop, mobile: atLimit.mobile }), "utf8");
+    expect(exactBytes).toBe(MAX_APP_LAYOUT_PAIR_BYTES);
+    expect(() => validateAppLayoutPair(atLimit)).toThrow("unsupported field");
+
+    const overLimit = makePair();
+    const overEmpty = { desktop: { ...overLimit.desktop, padding: "" }, mobile: overLimit.mobile };
+    const overBase = Buffer.byteLength(JSON.stringify(overEmpty), "utf8");
+    (overLimit.desktop as unknown as Record<string, unknown>).padding = "x".repeat(MAX_APP_LAYOUT_PAIR_BYTES + 1 - overBase);
+    expect(() => validateAppLayoutPair(overLimit)).toThrow("65,536 bytes");
+  });
+
+  it("rejects unsupported components, properties, motion values, dimensions, colors and schema versions", () => {
+    const unknownComponent = makePair();
     unknownComponent.desktop.content[0]!.type = "ArbitraryHtml";
     expect(() => validateAppLayoutPair(unknownComponent)).toThrow();
 
-    const unknownProperty = structuredClone(makePair());
+    const unknownProperty = makePair();
     (unknownProperty.desktop.content[0]!.props as Record<string, unknown>).style = "background:url(javascript:alert(1))";
     expect(() => validateAppLayoutPair(unknownProperty)).toThrow();
 
-    const unsafeMotion = structuredClone(makePair());
+    const unsafeMotion = makePair();
     (unsafeMotion.desktop.content[0]!.props as Record<string, unknown>).animation = "spin";
     expect(() => validateAppLayoutPair(unsafeMotion)).toThrow();
 
-    const duplicateIds = structuredClone(makePair());
-    duplicateIds.mobile.content[0]!.props.id = duplicateIds.desktop.content[0]!.props.id;
-    expect(() => validateAppLayoutPair(duplicateIds)).toThrow();
-
-    const invalidDimension = structuredClone(makePair());
+    const invalidDimension = makePair();
     (invalidDimension.desktop.content[0]!.props as Record<string, unknown>).height = 1000;
     expect(() => validateAppLayoutPair(invalidDimension)).toThrow();
 
-    const invalidColor = structuredClone(makePair());
+    const invalidColor = makePair();
     (invalidColor.mobile.content[2]!.props as Record<string, unknown>).accent = "red";
     expect(() => validateAppLayoutPair(invalidColor)).toThrow();
-
-    const oversized = { ...makePair(), desktop: "x".repeat(256 * 1024 + 1) };
-    expect(() => validateAppLayoutPair(oversized)).toThrow();
 
     const wrongVersion = { ...makePair(), schemaVersion: 2 };
     expect(() => validateAppLayoutPair(wrongVersion)).toThrow();
   });
 
-  it("rejects an unauthorized session and ignores client-supplied publisher identity", async () => {
-    const denied = await fetch(`${baseUrl}/api/design/app-layout`, {
-      method: "PUT",
-      headers: sessionHeaders("222222222222222222"),
-      body: JSON.stringify(makePair()),
-    });
-    expect(denied.status).toBe(403);
+  it("keeps component IDs unique per document without requiring cross-document uniqueness", () => {
+    const sameAcrossDocuments = makePair();
+    sameAcrossDocuments.mobile.content[0]!.props.id = sameAcrossDocuments.desktop.content[0]!.props.id;
+    expect(() => validateAppLayoutPair(sameAcrossDocuments)).not.toThrow();
 
-    await appLayoutRepository.grantPublisher("222222222222222222", "111111111111111111");
-    const spoofed = { ...makePair(), publisherDiscordId: "333333333333333333" };
-    const published = await fetch(`${baseUrl}/api/design/app-layout`, {
+    const duplicateWithinDesktop = makePair();
+    duplicateWithinDesktop.desktop.content[1]!.props.content[0]!.props.id =
+      duplicateWithinDesktop.desktop.content[0]!.props.id;
+    expect(() => validateAppLayoutPair(duplicateWithinDesktop)).toThrow("unique within the desktop document");
+  });
+
+  it("denies a non-owner even when the request supplies a client-side publisher ID", async () => {
+    const spoofed = { ...makePair(), publisherDiscordId: "111111111111111111" };
+    const response = await fetch(`${baseUrl}/api/design/app-layout`, {
       method: "PUT",
       headers: sessionHeaders("222222222222222222"),
       body: JSON.stringify(spoofed),
     });
-    // The validator rejects unexpected identity fields rather than trusting them.
-    expect(published.status).toBe(400);
+    expect(response.status).toBe(403);
     expect(await appLayoutRepository.getPublished()).toBeUndefined();
   });
 
-  it("publishes and reads the responsive pair with the authenticated publisher metadata", async () => {
-    await appLayoutRepository.grantPublisher("222222222222222222", "111111111111111111");
+  it("allows an authenticated development owner session to publish the complete pair", async () => {
+    // This uses the existing non-production admin simulation; production owner checks use env.ownerDiscordIds only.
     const response = await fetch(`${baseUrl}/api/design/app-layout`, {
       method: "PUT",
-      headers: sessionHeaders("222222222222222222"),
+      headers: sessionHeaders("111111111111111111", "admin"),
       body: JSON.stringify(makePair()),
     });
     expect(response.status).toBe(200);
-    const published = await response.json();
-    expect(published.layout.publisher.discordId).toBe("222222222222222222");
-    expect(published.layout.desktop.content[0].type).toBe("DesktopHeader");
-    expect(published.layout.mobile.content[0].type).toBe("MobileHeader");
-    expect(published.layout.createdAt).toBeTruthy();
-    expect(published.layout.updatedAt).toBeTruthy();
+    const body = await response.json();
+    expect(body.layout.publisher.discordId).toBe("111111111111111111");
+    expect(body.layout.desktop.content[0].type).toBe("DesktopHeader");
+    expect(body.layout.mobile.content[0].type).toBe("MobileHeader");
+    expect(body.layout.createdAt).toBeTruthy();
+    expect(body.layout.updatedAt).toBeTruthy();
 
     const read = await fetch(`${baseUrl}/api/design/app-layout`);
     expect(read.status).toBe(200);
-    const body = await read.json();
-    expect(body.layout.publisher.discordId).toBe("222222222222222222");
+    expect((await read.json()).layout.publisher.discordId).toBe("111111111111111111");
   });
 
-  it("validates both documents before writing and preserves the previous published pair on failure", async () => {
-    await appLayoutRepository.grantPublisher("222222222222222222", "111111111111111111");
+  it("validates invalid Mobile data before writing and preserves the previously published pair", async () => {
     const first = await fetch(`${baseUrl}/api/design/app-layout`, {
       method: "PUT",
-      headers: sessionHeaders("222222222222222222"),
+      headers: sessionHeaders("111111111111111111", "admin"),
       body: JSON.stringify(makePair("before")),
     });
     expect(first.status).toBe(200);
     const before = await appLayoutRepository.getPublished();
 
-    const invalidPair = structuredClone(makePair("after"));
-    (invalidPair.mobile.content[0]!.props as Record<string, unknown>).background = "url(javascript:alert(1))";
+    const invalidPair = makePair("after");
+    delete (invalidPair.mobile.content[2]!.props as Record<string, unknown>).activeTab;
+    (invalidPair.mobile.content[1]!.props.content[0]!.props as Record<string, unknown>).surface = "not-a-color";
     const rejected = await fetch(`${baseUrl}/api/design/app-layout`, {
       method: "PUT",
-      headers: sessionHeaders("222222222222222222"),
+      headers: sessionHeaders("111111111111111111", "admin"),
       body: JSON.stringify(invalidPair),
     });
     expect(rejected.status).toBe(400);
@@ -203,30 +259,12 @@ describe("responsive application layout publishing", () => {
     const after = await appLayoutRepository.getPublished();
     expect(after?.desktop_document).toBe(before?.desktop_document);
     expect(after?.mobile_document).toBe(before?.mobile_document);
-    expect(after?.published_by_discord_id).toBe("222222222222222222");
+    expect(after?.published_by_discord_id).toBe("111111111111111111");
   });
 
-  it("allows only the owner session to grant and revoke explicit publishers", async () => {
-    const denied = await fetch(`${baseUrl}/api/design/app-layout/publishers`, {
-      method: "POST",
-      headers: sessionHeaders("222222222222222222"),
-      body: JSON.stringify({ discordId: "333333333333333333" }),
-    });
-    expect(denied.status).toBe(403);
-
-    const owner = await fetch(`${baseUrl}/api/design/app-layout/publishers`, {
-      method: "POST",
-      headers: sessionHeaders("111111111111111111", "admin"),
-      body: JSON.stringify({ discordId: "333333333333333333" }),
-    });
-    expect(owner.status).toBe(201);
-    expect(await appLayoutRepository.isPublisher("333333333333333333")).toBe(true);
-
-    const revoke = await fetch(`${baseUrl}/api/design/app-layout/publishers/333333333333333333`, {
-      method: "DELETE",
-      headers: sessionHeaders("111111111111111111", "admin"),
-    });
-    expect(revoke.status).toBe(204);
-    expect(await appLayoutRepository.isPublisher("333333333333333333")).toBe(false);
+  it("keeps the published layout read endpoint public when no layout exists", async () => {
+    const response = await fetch(`${baseUrl}/api/design/app-layout`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ layout: null, fallback: true });
   });
 });
