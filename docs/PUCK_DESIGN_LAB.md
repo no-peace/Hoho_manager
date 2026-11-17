@@ -65,6 +65,154 @@ Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and p
 - Error recovery must preserve `hoho:app-layout-draft:v1:*` and `hoho:user-theme-library:v1:*` local records.
 - A portable JSON export is the backup if browser storage is unavailable or cleared.
 
+## Version 1 document schema — Agent 3 handoff
+
+The current Puck document format is **HoHo App Layout schema version 1**. Desktop and Mobile are separate documents and must remain independent. The persisted/published unit is the pair; neither side is valid for publishing by itself.
+
+### Container and Puck document shape
+
+The editor, local draft, and runtime validator consume this object:
+
+```ts
+interface AppLayoutDocuments {
+  desktop: AppLayoutDocument;
+  mobile: AppLayoutDocument;
+  updatedAt?: string; // optional metadata, max 64 characters
+}
+
+interface AppLayoutDocument {
+  root: { props?: Record<string, never> }; // omitted props normalize to {}
+  content: AppLayoutNode[];
+}
+
+interface AppLayoutNode {
+  type: string;
+  props: Record<string, unknown>;
+}
+```
+
+No other keys are allowed at the document, root, node, or component-props level. The root props object must be empty. Every component node has exactly `type` and `props`. Every component props object includes an `id`; IDs match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`, are at most 64 characters, and are globally unique within that responsive document.
+
+The document is JSON-only. Arbitrary HTML, JavaScript, event handlers, CSS strings, selectors, URLs, custom components and unknown properties are rejected.
+
+### Desktop document
+
+Top-level `content` contains exactly these components in this order:
+
+1. `DesktopHeader`
+2. `DesktopWorkspace`
+
+`DesktopHeader.props` allowlist:
+
+- `id`: component ID.
+- `height`: integer 44–80.
+- `horizontalPadding`: integer 8–36.
+- `logoSize`: integer 20–48.
+- `background`, `borderColor`: `#RRGGBB` only.
+- `animation`: `none | fade | fade-up | slide-left | slide-right | zoom-in | float | pulse`.
+- `animationDuration`: `180ms | 300ms | 500ms | 700ms | 1200ms | 2000ms | 3000ms`.
+- `animationDelay`: `0ms | 100ms | 200ms | 350ms`.
+
+`DesktopWorkspace.props` allowlist:
+
+- `id`: component ID.
+- `editorRatio`: integer 28–72 (percentage).
+- `inspectorWidth`: integer 300–520 (pixels).
+- `workspaceGap`: integer 0–24 (pixels).
+- `panelOrder`: `editor-first | preview-first`.
+- `inspectorPosition`: `left | right`.
+- `borderColor`: `#RRGGBB`.
+- `animation`, `animationDuration`, `animationDelay`: same motion enums as DesktopHeader.
+- `content`: exactly one each of `EditorPanel`, `PreviewPanel`, and `InspectorPanel`. Their order in the array is not semantic; `panelOrder` controls Editor/Preview placement.
+
+### Mobile document
+
+Top-level `content` contains exactly these components in this order:
+
+1. `MobileHeader`
+2. `MobileWorkspace`
+3. `MobileBottomNavigation`
+
+`MobileHeader.props` uses the same properties as DesktopHeader, with these ranges: `height` 44–72, `horizontalPadding` 8–28, and `logoSize` 20–40.
+
+`MobileWorkspace.props` allowlist:
+
+- `id`: component ID.
+- `defaultPane`: `editor | preview`.
+- `showInspector`: `show | hide`.
+- `inspectorHeight`: integer 180–520 (pixels).
+- `workspaceGap`: integer 0–20 (pixels).
+- `panelPadding`: integer 8–28 (pixels).
+- `borderColor`: `#RRGGBB`.
+- `animation`, `animationDuration`, `animationDelay`: same motion enums.
+- `content`: exactly one each of `EditorPanel`, `PreviewPanel`, and `InspectorPanel`.
+
+`MobileBottomNavigation.props` allowlist:
+
+- `id`: component ID.
+- `height`: integer 48–84 (pixels).
+- `horizontalPadding`: integer 8–28 (pixels).
+- `background`, `accent`: `#RRGGBB`.
+- `tabOrder`: `editor-first | preview-first`.
+- `showLabels`: `show | hide`.
+- `activeTab`: `editor | preview | dispatch` (preview-only selected-state presentation).
+- `editorLabel`, `previewLabel`, `dispatchLabel`: trimmed text, 1–48 characters, no control characters.
+- `animation`, `animationDuration`, `animationDelay`: same motion enums.
+
+### Workspace panel schemas
+
+All panels require:
+
+- `id`: component ID.
+- `label`: trimmed text, 1–48 characters, no control characters.
+- `surface`: `#RRGGBB`.
+- `padding`: integer 0–32 (pixels).
+- `radius`: integer 0–24 (pixels).
+- `animation`, `animationDuration`, `animationDelay`: same motion enums.
+
+`EditorPanel` additionally requires `showToolbar: show | hide`. `PreviewPanel` and `InspectorPanel` do not accept `showToolbar`.
+
+### Validation and import rules
+
+- The combined UTF-8 JSON serialization of the Desktop/Mobile pair must not exceed **65,536 bytes (64 KiB)**.
+- Numeric values must be integers inside the component-specific ranges above; validation rejects out-of-range values rather than silently clamping imported documents.
+- Every color is a six-digit HEX string. No CSS color functions, CSS variables, gradients, URLs or style fragments are accepted.
+- All enum values are exact, case-sensitive allowlist values. Motion duration and delay are bounded presets, not arbitrary CSS timing strings.
+- Unknown or missing component properties, unknown component types, malformed nodes, invalid nesting, duplicate/empty IDs, missing shell regions and duplicate/missing workspace panels are rejected.
+- The optional `updatedAt` metadata value is a string of at most 64 characters.
+- Version-1 export envelope has exactly `format: "hoho-app-layout"`, `version: 1`, `exportedAt` (string, max 64 characters), `desktop`, and `mobile`. The import parser validates the entire pair before replacing the editor state.
+- Existing version-1 exports produced by the current defaults remain compatible. The optional empty `root.props` object may be omitted and is normalized to `{}`.
+
+### Local persistence expectations
+
+- Draft key: `hoho:app-layout-draft:v1:${userId || "local"}`.
+- Draft value: the `AppLayoutDocuments` object above, serialized as JSON. Desktop and Mobile are saved together in one localStorage value, but remain distinct nested documents.
+- `DesignLabPage` debounces writes by 450 ms after edits. There is no per-field server write and no production publishing side effect.
+- `saveAppLayoutDraft` validates before writing and returns `false` when storage or validation fails. `loadAppLayoutDraft` returns `null` for missing, inaccessible or invalid drafts; the editor then uses built-in defaults.
+- Export remains the portable backup. Import/export always carries both responsive documents so an older half-pair cannot silently overwrite one mode.
+- Do not clear this draft namespace as part of theme cache cleanup.
+
+## Runtime contract for Part C
+
+Part C must treat the Desktop/Mobile pair as one atomic published configuration, with a schema version of `1`. Server validation must independently implement the same allowlists and constraints above; client validation is not an authorization or security boundary.
+
+The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object:
+
+- `desktop`: `headerHeight`, `headerPadding`, `logoSize`, `headerBackground`, `headerBorder`, `editorRatio` (fraction 0.28–0.72), `inspectorWidth`, `workspaceGap`, `panelOrder`, `inspectorPosition`, `borderColor`, per-panel `editorBackground`/`previewBackground`/`inspectorBackground`, per-panel padding and radius.
+- `mobile`: `headerHeight`, `headerPadding`, `logoSize`, `headerBackground`, `headerBorder`, `defaultPane`, `showInspector` (boolean), `inspectorHeight`, `workspaceGap`, `panelPadding`, `borderColor`, per-panel backgrounds/radii, inspector padding, `navHeight`, `navPadding`, `navBackground`, `navAccent`, `tabOrder`, `showLabels` (boolean), `activeTab`, and the three resolved navigation labels.
+
+`getAppLayoutCssVariables(resolved)` maps the CSS-supported dimensions, colors, panel geometry and positioning to the existing `--hoho-layout-*` custom properties. Navigation text and selected-tab state are typed resolved values and must be applied as text/class state by the real shell, not interpolated into CSS.
+
+Part C must:
+1. Validate Desktop and Mobile fully before any write.
+2. Persist both documents in one versioned record, with publisher identity and timestamps as required by Part C.
+3. Commit both or neither; never publish a partial responsive pair.
+4. Resolve the pair using the same documented defaults/ranges and fall back to the built-in Desktop/Mobile defaults if the stored record is missing, malformed or unsupported.
+5. Apply only the resolved allowlisted values to the real Studio shell. Never render Puck documents as arbitrary production markup and never mount a second Studio instance for preview.
+6. Keep local drafts distinct from published server state. The local draft namespace is not a publish store.
+
+The Design Lab preview's `activeTab` is a presentation setting only. It does not dispatch messages, change the real editor pane, mutate message state, or trigger Discord operations.
+
 ## Publishing and runtime integration status
 
 The current editor batch provides the two responsive Puck documents, starter values, local draft recovery, import/export and preview. The next implementation batch connects these documents to the production layout API and the actual Studio runtime:
