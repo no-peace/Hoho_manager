@@ -1,6 +1,6 @@
 # HoHo Manager — Repository Audit Ledger
 
-**Inventory snapshot:** `95c3de2468b67199f0174f709aeac7bf0b64d364`  
+**Inventory snapshot:** `1af4b4310aed4de9300989ab5276a7d37e4da807`  
 **Branch:** `feat/remove-legacy-dispatch-and-hardening`  
 **Tracked files:** 355  
 **Status:** Audit in progress; not complete.
@@ -14,59 +14,61 @@
 
 A search result, excerpt or successful source edit is not enough to mark a file reviewed. Refresh this inventory whenever the tracked tree changes.
 
-## Audit findings
+## Confirmed findings and fixes in this branch
 
-### Confirmed changes in the active branch
+1. **Webhook URL sender removal:** Removed server webhook URL delivery/inspection APIs, direct client sender, parser/regex, Action Builder configuration and webhook profile API/repository wiring. Legacy `send_webhook_message` remains only as a failure-only compatibility tombstone; saved flows show a deprecation warning and cannot send. The send route rejects legacy `webhookUrl` input.
+2. **Custom bot-profile removal:** Removed `profileId` selection from client/server Discord APIs, routes, services and author enrichment; removed bot profile settings/API/types. Migration 011 drops profile tables; migration 018 drops `settings.bot_profile_id` and retired staff permission columns. Client profile CRUD APIs are removed.
+3. **Staff permissions:** Removed `can_use_webhooks` and `can_override_profile` from access responses, repository types and client/shared types. Bot `/send` and `/exploit` now forward the invoking Discord actor and require live staff permission checks; `/sync` is Discord-administrator-only.
+4. **Structured action failures:** Failure state is internal `ActionResponse.outcome` metadata from `actionFailed()`; the executor logs the metadata and strips it before Discord delivery. All 20 action handler files received an initial failure-path scan; complete dependency/caller review remains open.
+5. **Puck contract:** Preview-only Mobile `activeTab`, `showInspector` and `inspectorHeight` remain in Puck data but are excluded from the production resolved runtime model. Desktop `editorRatio` is passed directly to `SplitPane`. Every emitted CSS variable was compared against the live runtime stylesheet and is consumed.
+6. **Discord interaction reliability:** ACK budget is 900 ms, initial callback is one bounded 1,500 ms attempt with no retry, and gateway relay fallback is 2,700 ms. Migration 019 adds database-backed duplicate delivery state; the original worker atomically switches to deferred ACK and sends the late result as a follow-up. Gateway relay attempts late-result delivery even if the initial callback reports a duplicate ACK.
+7. **Startup and infrastructure hardening:** Bot startup fails closed on any environment validation error. Server production startup requires a dedicated 32+ character `SESSION_SECRET` distinct from `ADMIN_API_KEY`. Public health no longer exposes user count. Docker builds use lockfile-exact workspace installs and copy all workspace manifests. CI tests use synthetic Discord credentials, not repository secrets. Mobile Lighthouse threshold now warns below 0.97.
+8. **Repository hygiene:** `.gitignore` ignores all local `.env.*` variants, Lighthouse output, and generated security/benchmark reports.
 
-- Webhook URL delivery/inspection APIs, direct client sender, URL parser/regex, webhook profile repository wiring and shared profile record types have been removed. The deprecated `send_webhook_message` handler remains only to fail old saved flows. The send route rejects legacy `webhookUrl` input.
-- Custom bot-profile selection was removed from client APIs, server routes/services, author enrichment and settings application code. The old profile tables are already dropped by migration 011. The nullable legacy settings column is no longer read or written by application code.
-- Action failures now carry internal structured metadata from `actionFailed()`; the executor logs failure state from metadata and strips it before Discord callbacks.
-- Puck preview-only `activeTab`, `showInspector` and `inspectorHeight` remain in the editor document but are excluded from the production resolved runtime model. Desktop `editorRatio` is passed directly to `SplitPane`.
-- Interaction ACK budget, callback retry behavior, gateway relay timeout and in-process duplicate delivery coordination were updated. Tests were added but not executed.
-- Bot slash commands `/send` and `/exploit` forward the invoking Discord actor and now pass through live staff permission checks. `/sync` is Discord-administrator-only. Bot startup fails closed on environment validation errors.
-
-### Audit coverage
+## Audit coverage
 
 - All 23 files in `bot/` have been read, including commands, listeners, API client, environment, tests, package configuration and README.
-- Core staff middleware and user/settings repository paths have been read.
-- The Puck schema/runtime mapping, interaction handling and action failure paths have been partially inspected.
-- Remaining client, server, shared, root/infrastructure, migrations, cross-package call sites and tests are not fully audited.
+- Root project configuration, Dockerfiles, environment examples, workflow source and core documentation have been reviewed. Docker builds and workflows were not run.
+- Server access/config/executor/health/template routes and core staff middleware/repositories have been reviewed.
+- The 20 server action handlers received an initial failure-path pass.
+- Puck schema/runtime mapping, interaction receipt state, send/Discord routes and selected tests have been partially reviewed.
+- Remaining client, server, shared, migrations, cross-package callers, root lockfile and test coverage still need systematic review.
 
-### Verification limits
+## Verification limits
 
-- No npm typecheck, test suite or build was run.
-- No browser QA, Lighthouse, live Discord callback, multi-instance interaction test, database migration execution or deployment verification was performed.
+- No npm typecheck, test suite or build was run. The owner intends to run these locally after implementation is ready.
+- No browser QA, Lighthouse run, Docker build, live Discord callback test, multi-instance deployment test, database migration execution or deployment verification was performed.
 - GitHub Actions are intentionally disabled by the owner and are not an audit blocker.
 
 ## File inventory
 
 ### root
 
-- [PENDING] `.dockerignore`
-- [PENDING] `.gitignore`
-- [PENDING] `.gitleaksignore`
-- [PENDING] `.lighthouserc.desktop.json`
-- [PENDING] `.lighthouserc.mobile.json`
-- [PENDING] `.nvmrc`
-- [PENDING] `DESIGN.md`
-- [PENDING] `README.md`
-- [PENDING] `SECURITY.md`
-- [PENDING] `docker-compose.tunnel.yml`
-- [PENDING] `docker-compose.yml`
-- [PENDING] `ecosystem.config.cjs`
+- [REVIEWED] `.dockerignore`
+- [REVIEWED] `.gitignore`
+- [REVIEWED] `.gitleaksignore`
+- [REVIEWED] `.lighthouserc.desktop.json`
+- [REVIEWED] `.lighthouserc.mobile.json`
+- [REVIEWED] `.nvmrc`
+- [REVIEWED] `DESIGN.md`
+- [REVIEWED] `README.md`
+- [REVIEWED] `SECURITY.md`
+- [REVIEWED] `docker-compose.tunnel.yml`
+- [REVIEWED] `docker-compose.yml`
+- [REVIEWED] `ecosystem.config.cjs`
 - [PENDING] `package-lock.json`
-- [PENDING] `package.json`
-- [PENDING] `tsconfig.base.json`
+- [REVIEWED] `package.json`
+- [REVIEWED] `tsconfig.base.json`
 
 ### .github
 
 - [PENDING] `.github/WORKFLOWS.md`
-- [PENDING] `.github/dependabot.yml`
-- [PENDING] `.github/workflows/ci.yml`
-- [PENDING] `.github/workflows/lighthouse.yml`
-- [PENDING] `.github/workflows/release.yml`
-- [PENDING] `.github/workflows/security.yml`
-- [PENDING] `.github/workflows/workflow-validation.yml`
+- [REVIEWED] `.github/dependabot.yml`
+- [REVIEWED] `.github/workflows/ci.yml`
+- [REVIEWED] `.github/workflows/lighthouse.yml`
+- [REVIEWED] `.github/workflows/release.yml`
+- [REVIEWED] `.github/workflows/security.yml`
+- [REVIEWED] `.github/workflows/workflow-validation.yml`
 
 ### bot
 
@@ -96,8 +98,8 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 
 ### client
 
-- [PENDING] `client/.env.example`
-- [PENDING] `client/Dockerfile`
+- [REVIEWED] `client/.env.example`
+- [REVIEWED] `client/Dockerfile`
 - [PENDING] `client/index.html`
 - [PENDING] `client/package.json`
 - [PENDING] `client/public/hoho_logo.svg`
@@ -196,10 +198,10 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `client/src/hooks/useMessage.ts`
 - [PENDING] `client/src/hooks/usePublishedAppLayout.ts`
 - [PENDING] `client/src/hooks/useSend.ts`
-- [PENDING] `client/src/hooks/useStaffAccess.ts`
+- [IN PROGRESS] `client/src/hooks/useStaffAccess.ts`
 - [PENDING] `client/src/hooks/useTemplates.ts`
 - [PENDING] `client/src/main.tsx`
-- [PENDING] `client/src/pages/DesignLabPage.tsx`
+- [REVIEWED] `client/src/pages/DesignLabPage.tsx`
 - [PENDING] `client/src/pages/DocsPage.tsx`
 - [PENDING] `client/src/pages/NotFoundPage.tsx`
 - [PENDING] `client/src/pages/PrivacyPage.tsx`
@@ -210,7 +212,7 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `client/src/store/__tests__/exportImport.test.ts`
 - [IN PROGRESS] `client/src/store/actionStore.ts`
 - [PENDING] `client/src/store/discordCacheStore.ts`
-- [PENDING] `client/src/store/globalStore.ts`
+- [IN PROGRESS] `client/src/store/globalStore.ts`
 - [PENDING] `client/src/store/messageStore.ts`
 - [PENDING] `client/src/store/settingsStore.ts`
 - [PENDING] `client/src/store/templateStore.ts`
@@ -240,7 +242,7 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `client/src/utils/exportImport.ts`
 - [PENDING] `client/src/utils/floatingPosition.ts`
 - [PENDING] `client/src/utils/mentionParser.ts`
-- [IN PROGRESS] `client/src/utils/mentionValidation.ts`
+- [PENDING] `client/src/utils/mentionValidation.ts`
 - [PENDING] `client/src/utils/previewSelection.ts`
 - [IN PROGRESS] `client/src/utils/puckAppLayout.ts`
 - [PENDING] `client/src/utils/puckDesignStorage.ts`
@@ -272,8 +274,8 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 
 ### server
 
-- [PENDING] `server/.env.example`
-- [PENDING] `server/Dockerfile`
+- [REVIEWED] `server/.env.example`
+- [REVIEWED] `server/Dockerfile`
 - [PENDING] `server/benchmarks/runner.ts`
 - [PENDING] `server/benchmarks/suites/suite1_flow_latency.ts`
 - [PENDING] `server/benchmarks/suites/suite2_mention_scrubber.ts`
@@ -297,7 +299,7 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `server/src/actions/sendDm.ts`
 - [PENDING] `server/src/actions/sendEphemeralReply.ts`
 - [REVIEWED] `server/src/actions/sendMessage.ts`
-- [PENDING] `server/src/actions/sendWebhookMessage.ts`
+- [REVIEWED] `server/src/actions/sendWebhookMessage.ts`
 - [PENDING] `server/src/actions/setVariable.ts`
 - [PENDING] `server/src/actions/stop.ts`
 - [PENDING] `server/src/actions/toggleRole.ts`
@@ -305,11 +307,11 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `server/src/actions/wait.ts`
 - [PENDING] `server/src/app.ts`
 - [IN PROGRESS] `server/src/config/database.ts`
-- [PENDING] `server/src/config/env.ts`
+- [IN PROGRESS] `server/src/config/env.ts`
 - [PENDING] `server/src/config/migrate.ts`
 - [IN PROGRESS] `server/src/config/migrations.ts`
 - [PENDING] `server/src/config/tursoPipeline.ts`
-- [PENDING] `server/src/index.ts`
+- [IN PROGRESS] `server/src/index.ts`
 - [REVIEWED] `server/src/middleware/auth.ts`
 - [PENDING] `server/src/middleware/errorHandler.ts`
 - [PENDING] `server/src/middleware/multipart.ts`
@@ -327,21 +329,21 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [PENDING] `server/src/repositories/sessionRepository.ts`
 - [PENDING] `server/src/repositories/sessionRevocationRepository.ts`
 - [REVIEWED] `server/src/repositories/settingsRepository.ts`
-- [PENDING] `server/src/repositories/staffRepository.ts`
+- [IN PROGRESS] `server/src/repositories/staffRepository.ts`
 - [PENDING] `server/src/repositories/templateRepository.ts`
 - [PENDING] `server/src/repositories/trackedMessageRepository.ts`
 - [REVIEWED] `server/src/repositories/userRepository.ts`
-- [PENDING] `server/src/routes/access.ts`
-- [PENDING] `server/src/routes/auth.ts`
-- [PENDING] `server/src/routes/config.ts`
-- [PENDING] `server/src/routes/design.ts`
+- [REVIEWED] `server/src/routes/access.ts`
+- [IN PROGRESS] `server/src/routes/auth.ts`
+- [REVIEWED] `server/src/routes/config.ts`
+- [IN PROGRESS] `server/src/routes/design.ts`
 - [IN PROGRESS] `server/src/routes/discord.ts`
-- [PENDING] `server/src/routes/executors.ts`
-- [PENDING] `server/src/routes/health.ts`
+- [REVIEWED] `server/src/routes/executors.ts`
+- [REVIEWED] `server/src/routes/health.ts`
 - [IN PROGRESS] `server/src/routes/interactions.ts`
 - [IN PROGRESS] `server/src/routes/send.ts`
 - [IN PROGRESS] `server/src/routes/settings.ts`
-- [PENDING] `server/src/routes/templates.ts`
+- [REVIEWED] `server/src/routes/templates.ts`
 - [IN PROGRESS] `server/src/routes/tracking.ts`
 - [IN PROGRESS] `server/src/routes/weao.ts`
 - [IN PROGRESS] `server/src/services/actionExecutor.ts`
@@ -424,12 +426,12 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 
 ## Next audit sequence
 
-1. Finish all in-progress server route, middleware, service, repository and migration paths; trace every caller.
-2. Audit every server action handler and its error/response semantics.
-3. Complete the client Puck/runtime, stores, API, responsive CSS and interaction paths.
-4. Audit all shared types and cross-package consumers.
-5. Audit root/infrastructure/deployment configuration and security boundaries.
-6. Review all tests/fixtures and update them for the removed feature contracts.
-7. Rebuild the inventory at the final source commit and record the owner's local verification results separately.
+1. Complete remaining server route/service/repository/migration review and trace every caller.
+2. Finish action executor and every action handler dependency/permission/data-flow review.
+3. Complete client Puck/runtime, stores, API, editor, preview and responsive CSS review.
+4. Audit shared types and all cross-package consumers.
+5. Finish root/infrastructure review, including the full lockfile and actual deployment configuration.
+6. Review every test/fixture for changed contracts and add missing regression coverage.
+7. Rebuild the inventory at the final source commit and record owner-run verification separately.
 
 **Overall audit remains incomplete until every tracked file has a final disposition and every confirmed finding is fixed or explicitly deferred.**
