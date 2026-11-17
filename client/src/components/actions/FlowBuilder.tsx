@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Wand2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { ComponentType, type ComponentNode, type FlowStep } from "@dmb/shared";
 import { buildCustomId, parseCustomId } from "@dmb/shared";
 import { useActionStore } from "../../store/actionStore";
