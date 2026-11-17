@@ -8,6 +8,10 @@ import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import api from "./api/client";
 
+const DesignLabPage = React.lazy(() =>
+  import("./pages/DesignLabPage").then((module) => ({ default: module.DesignLabPage })),
+);
+
 const DocsPage = React.lazy(() =>
   import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
 );
@@ -123,6 +127,14 @@ export const App: React.FC = () => {
       <>
         <LoginScreen authError={authError} />
       </>
+    );
+  }
+
+  if (route === "design") {
+    return (
+      <React.Suspense fallback={<AppLoadingScreen label="Loading Design Lab…" />}>
+        <DesignLabPage />
+      </React.Suspense>
     );
   }
 

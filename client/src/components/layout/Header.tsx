@@ -13,6 +13,7 @@ import {
   FileJson,
   Trash2,
   Send,
+  LayoutTemplate,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
@@ -131,6 +132,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
+          <a href="/design" title="Open visual website builder" aria-label="Open Design Lab" className="inline-flex items-center gap-1.5 rounded-lg border border-[#818CF8]/30 bg-[#818CF8]/10 px-2 py-1.5 text-xs font-semibold text-[#c7cbff] transition-colors hover:border-[#818CF8]/60 hover:bg-[#818CF8]/20 hover:text-white shrink-0">
+            <LayoutTemplate size={14} /><span className="hidden lg:inline">Design Lab</span>
+          </a>
           {hasDefaultBotAccess && (
             <div className="w-[104px] sm:w-32 lg:w-48 min-w-0 relative shrink-0">
               <SearchableDiscordSelect

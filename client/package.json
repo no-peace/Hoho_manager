@@ -30,7 +30,8 @@
     "tailwind-merge": "^2.2.0",
     "zustand": "^5.1.0",
     "gsap": "^3.13.0",
-    "sileo": "^0.1.4"
+    "sileo": "^0.1.4",
+    "@puckeditor/core": "^0.24.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
