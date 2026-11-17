@@ -27,6 +27,21 @@ describe("bot/lib/api: Internal API Client Suite", () => {
     expect(capturedHeaders["x-admin-key"]).toBeUndefined();
   });
 
+  it("applies a timeout signal to API requests", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => {
+      capturedSignal = init?.signal as AbortSignal | undefined;
+      return {
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ status: "ok" }),
+      } as any;
+    });
+
+    await api.health();
+    expect(capturedSignal).toBeInstanceOf(AbortSignal);
+  });
+
   it("attaches x-admin-key header on protected endpoints", async () => {
     let capturedHeaders: any;
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) => {
