@@ -90,8 +90,7 @@
 }
 
 .hoho-runtime-workspace--mobile {
-  padding: var(--hoho-layout-mobile-panel-padding, 12px);
-  gap: var(--hoho-layout-mobile-workspace-gap, 8px);
+  margin-bottom: var(--hoho-layout-mobile-workspace-gap, 8px);
 }
 
 .hoho-runtime-mobile-pane {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Edit3, Eye, Plus, Send } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Header } from "./Header";
 import { MessageEditor } from "../editor/MessageEditor";
 import { MessagePreview } from "../preview/MessagePreview";
@@ -25,6 +25,7 @@ export const StudioLayout: React.FC = () => {
   const publishedLayout = usePublishedAppLayout();
   const { layout, isDesktop, cssVariables } = publishedLayout;
   const activeLayout = isDesktop ? layout.desktop : layout.mobile;
+  const prefersReducedMotion = useReducedMotion();
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
   const mobilePaneTouched = useRef(false);
   const initialMobilePaneApplied = useRef(false);
@@ -190,7 +191,7 @@ export const StudioLayout: React.FC = () => {
         <SplitPane
           initialRatio={layout.desktop.editorRatio / 100}
           panelOrder={layout.desktop.panelOrder}
-          workspaceMotion={layout.desktop.workspaceMotion}
+          workspaceMotion={activeLayout.workspaceMotion}
           left={
             <section
               className="hoho-runtime-panel hoho-runtime-panel--editor"
@@ -277,7 +278,7 @@ export const StudioLayout: React.FC = () => {
             <motion.span
               layoutId="mobileWorkspaceTab"
               className="hoho-runtime-nav-active absolute inset-0 rounded-lg"
-              transition={{ type: "spring", stiffness: 500, damping: 38 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
             />
           )}
           <Edit3 size={14} className="relative z-10" />
@@ -302,7 +303,7 @@ export const StudioLayout: React.FC = () => {
             <motion.span
               layoutId="mobileWorkspaceTab"
               className="hoho-runtime-nav-active absolute inset-0 rounded-lg"
-              transition={{ type: "spring", stiffness: 500, damping: 38 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
             />
           )}
           <Eye size={14} className="relative z-10" />
