@@ -25,8 +25,8 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.defaultPane).toBe("editor");
     expect(layout.mobile.navHeight).toBe(60);
     expect(layout.mobile.tabOrder).toBe("editor-first");
-    expect(layout.mobile.showInspector).toBe(false);
-    expect(layout.mobile.inspectorHeight).toBe(300);
+    expect(layout.mobile).not.toHaveProperty("showInspector");
+    expect(layout.mobile).not.toHaveProperty("inspectorHeight");
     expect(layout.mobile).not.toHaveProperty("previewActiveTab");
     expect(layout.mobile.editorTabLabel).toBe("Editor");
     expect(layout.mobile.previewTabLabel).toBe("Preview");
