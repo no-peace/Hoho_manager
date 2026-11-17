@@ -186,6 +186,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -308,6 +309,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -317,7 +319,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           {cardHeader}
           <div className="p-3 space-y-3">
             {sectionTexts.map((tNode, tIdx) => (
-              <div key={tNode._id || tIdx} className="space-y-1">
+              <div key={tNode._id || tIdx} data-editor-target-id={tNode._id} className="space-y-1">
                 <DiscordMentionInput
                   label={`Section Text #${tIdx + 1}`}
                   maxLength={Limits.components.textDisplay}
@@ -336,7 +338,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
 
             {/* Accessory Editor */}
             {accessory && (
-              <div className="rounded bg-[#161A23] border border-[#272D3A] p-2.5 space-y-2">
+              <div data-editor-target-id={accessory._id} className="rounded bg-[#161A23] border border-[#272D3A] p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">
                     Accessory {" "}
@@ -492,6 +494,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -581,6 +584,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -612,6 +616,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -675,6 +680,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
@@ -700,6 +706,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       return (
         <div
           key={id || compIdx}
+          data-editor-target-id={id}
           onClick={(e) => {
             e.stopPropagation();
             ensureActive();
