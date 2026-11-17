@@ -1,4 +1,4 @@
-## Batch C — responsive Studio layout editor (implementation prepared for commit)
+## Batch C — responsive Studio layout editor (committed)
 
 - Replaced the old generic marketing-page Puck starter with two independent Puck documents: Desktop and Mobile. Each mode has its own editor viewport and local draft.
 - Starter values are mapped from the existing Studio source: 56 px header, desktop 50/50 editor/preview split, 440 px inspector overlay, mobile Editor default pane, 60 px bottom navigation, and the existing editor/preview/inspector surfaces.
@@ -11,7 +11,8 @@
 - The editor page uses Puck's documented `iframe.syncHostStyles` and `waitForStyles` options so the canvas receives the same layout styles without an unstyled flash.
 - Added `puckAppLayout.test.ts` for current defaults, independent desktop/mobile state, safe value clamping, malformed/duplicate document rejection, optional Puck root props, and per-user draft persistence. Tests are authored but not executed in this environment.
 - **Not yet complete:** no production layout API or database migration exists in this batch; the editor saves local drafts and exports files. Batch D must add owner-only atomic publishing and wire the resolved values into the real Studio header, split pane, inspector and mobile navigation.
-- Files in this batch: `DesignLabPage.tsx`, `appLayoutConfig.tsx`, `defaultAppLayouts.ts`, `puckAppLayout.ts`, `app-layout-preview.css`, `layout-lab.css`, `ErrorBoundary.tsx`, `puckAppLayout.test.ts`, and `PUCK_DESIGN_LAB.md`.
+- **Batch C commit:** `9fa2eabd55919758ea4b5d15bc9e2379ef24a983` — [view commit](https://github.com/no-peace/Hoho_manager/commit/9fa2eabd55919758ea4b5d15bc9e2379ef24a983). GitHub compare confirms 10 files changed.
+- Files in this batch: `client/src/pages/DesignLabPage.tsx`, `client/src/config/puck/appLayoutConfig.tsx`, `client/src/config/puck/defaultAppLayouts.ts`, `client/src/utils/puckAppLayout.ts`, `client/src/pages/app-layout-preview.css`, `client/src/pages/layout-lab.css`, `client/src/components/ui/ErrorBoundary.tsx`, `client/src/utils/__tests__/puckAppLayout.test.ts`, `docs/PUCK_DESIGN_LAB.md`, and this handoff.
 - Verification remains source/static review only. The local Terminal MCP endpoint is still unavailable (404); do not claim npm or browser checks passed on these changes.
 
 ## Current repair program — batch ledger (2026-11-17)
@@ -27,7 +28,7 @@
 - **Settings behavior detail:** General is the only current tab, so it is rendered as a selected tab rather than a button with a no-op handler. Event rows keep a stable surface; the custom checkbox indicator alone changes checked state and receives a visible keyboard focus ring.
 - **Verification:** compare confirms exactly nine files changed in the Batch B commit. No npm commands or browser visual checks were run in this batch because the connected local Terminal service returned an unavailable/404 response. The user reported that the earlier `npm run typecheck`, `npm test`, and `npm run build` all passed before these new changes; those earlier results do not verify this batch. Rerun all checks after implementation.
 - **Still outstanding:** Batch C onward (real responsive Studio Puck editor, atomic DB publishing and runtime application, preset durability audit, performance/security work, full repository audit, and final verification). The Design Lab still uses the separate promotional page builder at this point.
-- **Important process rule:** only commits on `main` count as implementation. This handoff is synchronized to Batch B commit `a6072fd...`.
+- **Important process rule:** only commits on `main` count as implementation. This handoff was synchronized to Batch C commit `9fa2eabd...`.
 
 
 # HoHo Manager — Current Gemini Handoff & Repair Plan
