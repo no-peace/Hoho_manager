@@ -472,10 +472,10 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
  * it with just the inline action in the `custom_id`.
  */
 export const containsWeaoPlaceholder = (value: unknown): boolean => {
-  if (typeof value === "string") return /\\{\\s*exploit(?:\\.|:)/i.test(value);
+  if (typeof value === "string") return /\{\s*exploit(?:\.|:)/i.test(value);
   if (value === null || typeof value !== "object") return false;
   try {
-    return /\\{\\s*exploit(?:\\.|:)/i.test(JSON.stringify(value) ?? "");
+    return /\{\s*exploit(?:\.|:)/i.test(JSON.stringify(value) ?? "");
   } catch {
     return false;
   }
