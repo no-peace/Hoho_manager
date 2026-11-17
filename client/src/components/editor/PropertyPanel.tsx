@@ -13,16 +13,12 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import type { ResolvedAppLayout } from "../../utils/puckAppLayout";
 
 type InspectorRuntimeLayout = Pick<ResolvedAppLayout["desktop"],
-  "inspectorBackground" | "inspectorPadding" | "inspectorRadius" | "inspectorLabel" | "inspectorMotion"
-> & Partial<Pick<ResolvedAppLayout["desktop"], "inspectorWidth" | "inspectorPosition">>;
+  "inspectorLabel" | "inspectorMotion"
+> & Partial<Pick<ResolvedAppLayout["desktop"], "inspectorPosition">>;
 
 const getInspectorRuntimeStyle = (layout?: InspectorRuntimeLayout): CSSProperties | undefined => layout ? ({
-  "--hoho-runtime-inspector-background": layout.inspectorBackground,
-  "--hoho-runtime-inspector-padding": `${layout.inspectorPadding}px`,
-  "--hoho-runtime-inspector-radius": `${layout.inspectorRadius}px`,
-  "--hoho-runtime-inspector-width": layout.inspectorWidth ? `${layout.inspectorWidth}px` : "min(440px, 42vw)",
-  "--hoho-runtime-motion-duration": layout.inspectorMotion.duration,
-  "--hoho-runtime-motion-delay": layout.inspectorMotion.delay,
+  "--hoho-motion-duration": layout.inspectorMotion.duration,
+  "--hoho-motion-delay": layout.inspectorMotion.delay,
 } as CSSProperties) : undefined;
 
 type PanelTab = "properties" | "flow";
