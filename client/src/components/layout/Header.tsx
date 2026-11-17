@@ -21,6 +21,7 @@ import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
+import type { ResolvedAppLayoutMotion } from "../../utils/puckAppLayout";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
@@ -50,9 +51,10 @@ export interface HeaderProps {
   onOpenJson?: () => void;
   onClearAll?: () => void;
   onOpenSend?: (mode: "send" | "edit") => void;
+  runtimeMotion?: ResolvedAppLayoutMotion;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend, runtimeMotion }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [themeSettingsOpen, setThemeSettingsOpen] = useState(false);
@@ -101,7 +103,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
   return (
     <>
-      <header className={UI_THEME_CONFIG.surfaces.studioHeaderBar}>
+      <header
+        className={UI_THEME_CONFIG.surfaces.studioHeaderBar + " hoho-runtime-header"}
+        data-hoho-motion={runtimeMotion?.animation ?? "none"}
+        style={runtimeMotion ? ({
+          "--hoho-motion-duration": runtimeMotion.duration,
+          "--hoho-motion-delay": runtimeMotion.delay,
+        } as React.CSSProperties) : undefined}
+      >
         {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
           {isSubRoute && (
@@ -126,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               height={32}
               decoding="async"
               fetchPriority="high"
-              className="h-8 w-8 object-contain group-hover:scale-105 transition-transform shrink-0"
+              className="hoho-runtime-logo h-8 w-8 object-contain group-hover:scale-105 transition-transform shrink-0"
             />
             <h1 className="text-[0.9375rem] font-bold text-white tracking-wide mr-1 hidden md:inline m-0">
               HoHo Manager
