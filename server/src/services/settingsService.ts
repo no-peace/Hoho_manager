@@ -49,7 +49,6 @@ export const settingsService = {
       guild_id: targetGuildId,
       log_channel_id: null,
       head_admin_ids: [],
-      bot_profile_id: null,
       extra_settings: {},
       created_at: 0,
       updated_at: 0,
