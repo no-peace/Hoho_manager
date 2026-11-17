@@ -163,6 +163,12 @@ export const executeCustomId = async (
   if (!parsed && stored.length === 0) {
     return { response: undefined, handled: false, type: null };
   }
+  // Component interactions always include their source message. For those,
+  // only server-registered message/template flows may execute. Inline custom IDs
+  // remain supported for modal submissions and non-message internal callers.
+  if (messageId && stored.length === 0 && parsed?.type !== "modal_submit") {
+    return { response: undefined, handled: false, type: null };
+  }
 
   const actionType = parsed?.type ?? stored[0]?.action_type ?? "modal_submit";
 
