@@ -154,31 +154,25 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** REVIEW REQUIRED — review correction committed; verification blocked by unavailable execution environment  
+**Status:** IN PROGRESS — architecture correction authorized; implementation underway  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Corrected the reviewer-identified test expectation. No Part C work.  
-**Current batch:** B2 — validator message expectation correction and verification attempt  
-**Files claimed / in progress:** None — correction submitted for review  
-**Files changed in this batch:**
+**Scope:** Part B only. Reconcile every editable Puck property with the resolved production contract and Part C runtime handoff.  
+**Current batch:** B3 — production contract completeness for motion, panel labels and editor toolbar visibility  
+**Files claimed / in progress:**
+- `client/src/utils/puckAppLayout.ts`
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
+- `docs/PUCK_DESIGN_LAB.md`
 - `docs/AGENTS.md` (this Agent 2 status section only)
 
-**Review finding fixed:** Changed the missing-shell assertion from `toThrow(/required application section/i)` to `toThrow(/required shell sections/i)`, matching the actual validator error. No production code changed in this batch.  
-**Focused test:** `npm run test --workspace client -- src/utils/__tests__/puckAppLayout.test.ts` — **NOT RUN**. The connected Terminal execution service returned `McpServerError: MCP SSE probe returned 404 from ngrok-free.dev` before a process could start.  
-**Typecheck:** `npm run typecheck` — **NOT RUN**, same Terminal service unavailable error.  
-**Full tests:** `npm test` — **NOT RUN**, same Terminal service unavailable error.  
-**Build:** `npm run build` — **NOT RUN**, same Terminal service unavailable error.  
-**Additional environment check:** Attempted `git clone --depth 1 --branch agent/responsive-design-lab https://github.com/no-peace/Hoho_manager.git`; failed because this runtime could not resolve `github.com` (`Could not resolve host`). GitHub reports no Actions workflow runs or commit status checks for correction commit `45ddeaf9ad67c87c874a89e40b085618fb7667a3`. These are environment limitations, not passing test results.  
-**Correction commit SHA:** `45ddeaf9ad67c87c874a89e40b085618fb7667a3`  
-**Status-report commit SHA:** `67e4f15f7556b0d8fa542c2c447882875354e65e` (verification report recorded)  
-**Previous implementation commit:** `7092445712b6bffe3f6535beec62a482bad14386`  
-**Schema handoff:** Provisionally acceptable; final Part B acceptance remains subject to successful verification and Head Agent approval.  
-**Remaining work:** Re-run the focused test, `npm run typecheck`, `npm test`, and `npm run build` in an available checkout/terminal environment. Fix any failures attributable to Part B, then resubmit.  
-**Risks / blockers:** Automated verification is outstanding. Do not treat this batch as technically verified.  
-**Next action:** Wait for Head Agent direction or an available execution environment; do not implement Part C, edit shared Studio runtime files, or merge to `main`.
+**Architecture decision:** Motion presets/timing, Editor/Preview/Inspector panel labels, and `EditorPanel.showToolbar` are production-facing settings. The resolver will expose them separately for Desktop and Mobile. Part C must apply them to the real shell and preserve reduced-motion behavior. The Mobile inspector visibility and active navigation tab remain preview-only settings.
+**Files changed:** None yet in this batch.  
+**Tests executed:** None. The user explicitly deferred npm checks to final verification.  
+**Commit SHA:** Pending.  
+**Remaining work:** Complete the typed resolved contract, resolution, regression assertions and exact Part C application documentation; commit and submit for review.  
+**Risks / blockers:** No npm checks are to be run in this batch.  
+**Next action:** Complete B3, mark REVIEW REQUIRED and wait for Head Agent approval. Do not implement Part C, edit Agent 1 files or shared Studio runtime files, or merge to `main`.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
-
 ## 11. Agent 3 — Part C: Database and publishing
 
 **Status:** BLOCKED — inspection only  
