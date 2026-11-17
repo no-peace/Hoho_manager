@@ -154,28 +154,29 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** IN PROGRESS — authorized  
+**Status:** REVIEW REQUIRED — implementation submitted; awaiting Head Agent review  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Audit the existing Puck Responsive Design Lab, close verified gaps, and produce a precise Desktop/Mobile schema and runtime contract for Agent 3.  
+**Scope:** Part B only. Existing Puck Design Lab preserved; verified validation and navigation-preview gaps addressed.  
 **Current batch:** B1 — strict document validation, navigation preview fidelity and schema handoff  
-**Files claimed / in progress:**
+**Files claimed / in progress:** None — batch submitted for review  
+**Files changed:**
 - `client/src/utils/puckAppLayout.ts`
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
 - `client/src/config/puck/appLayoutConfig.tsx`
 - `client/src/config/puck/defaultAppLayouts.ts`
-- `client/src/pages/app-layout-preview.css`
 - `docs/PUCK_DESIGN_LAB.md`
 - `docs/AGENTS.md` (this Agent 2 status section only)
 
-**Files changed:** None yet  
-**Findings verified:** Existing Puck editor, independent Desktop/Mobile documents, per-user local drafts, versioned import/export and preview are present and will be preserved. The current validator accepts unknown component props, does not enforce component-specific nesting/property types/ranges, permits empty IDs, and has no document byte limit. Motion strings are not validated. Mobile nav preview never applies the existing active-tab CSS class.  
-**Implementation decisions:** Keep Puck 0.24 and the existing two-document architecture. Add strict schema validation for the current version-1 documents, bounded serialized size, component/property allowlists, exact required section/panel structure, and validation of numeric/color/label/choice/motion values. Add explicit mobile tab labels and render the active state from the configured default pane. Document a versioned, server-consumable schema and resolved runtime contract; do not add publishing/API/database code.  
-**Tests executed:** None yet  
-**Commit SHA:** Pending  
-**Schema handoff:** In progress; not submitted for Agent 3 use until Head Agent review  
-**Remaining work:** Implement B1, add focused validator/navigation tests, update schema documentation, run available checks, review diff, then update this section and commit on this branch.  
-**Risks / blockers:** Puck documents must remain compatible with existing version-1 exports. Agent 1's claimed files are not listed in the control file; no overlapping Part A files are claimed here.  
-**Next action:** Implement only the claimed Part B files and verify against existing defaults/import-export behavior.
+**Findings addressed:** Component-specific property allowlists; strict node/root structure; required Desktop/Mobile shell regions; exactly one Editor/Preview/Inspector panel per workspace; safe unique IDs; integer ranges; HEX-only colors; bounded motion presets; label constraints; 64 KiB combined document limit; strict version-1 import envelope; legacy version-1 normalization; mobile nav label controls and selected-tab preview state.  
+**Implementation decisions:** Preserved the Puck 0.24 editor and independent Desktop/Mobile documents. Existing per-user local draft and version-1 import/export paths remain in place. New mobile nav fields normalize to defaults when absent in older version-1 exports; legacy boolean `EditorPanel.showToolbar` values normalize to `show | hide`. The selected tab is preview-only and does not dispatch or mutate Studio/message state. No Part C publishing/API/database/runtime code was added.  
+**Tests added:** 10 focused cases in `puckAppLayout.test.ts`, including strict property/range/motion checks, malformed structure, duplicate/empty IDs, size limit, independent documents, navigation labels/active state, per-user draft persistence and legacy version-1 import compatibility.  
+**Tests executed:** Not run. No repository test execution was performed in this session; no GitHub Actions workflow runs were returned for this branch.  
+**Implementation commit SHA:** `7092445712b6bffe3f6535beec62a482bad14386`  
+**Branch comparison:** 10 commits ahead of `main`, 0 behind at review preparation; no changes made to `main`.  
+**Schema handoff:** Documented in `docs/PUCK_DESIGN_LAB.md`; submitted for Head Agent review. Agent 3 remains BLOCKED until explicit Head Agent approval.  
+**Remaining work:** Head Agent review; run `npm run typecheck`, `npm test`, `npm run build` and browser QA against the reviewed branch before acceptance.  
+**Risks / blockers:** Part C must reproduce the documented server-side schema constraints and independently validate both documents before atomic persistence. Client validation is not a security boundary. Automated test/build results remain unverified.  
+**Next action:** Wait for Head Agent review. Do not implement Part C or merge to `main`.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 
