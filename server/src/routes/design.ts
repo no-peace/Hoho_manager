@@ -4,6 +4,8 @@ import { db } from "../config/database.js";
 import { env } from "../config/env.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { appLayoutRepository } from "../repositories/appLayoutRepository.js";
+import { validateAppLayoutPair } from "../utils/appLayoutValidation.js";
 
 const router = Router();
 interface Identity { discordId: string; isOwner: boolean; }
@@ -217,6 +219,58 @@ router.post("/themes/:id/publish", asyncHandler(async (req, res) => {
   const theme = validateTheme(parseTheme(row).theme);
   await publishServerTheme(identity, theme);
   res.json({ theme: { theme, sourceThemeId: row.id, updatedAt: new Date().toISOString() } });
+}));
+
+
+const parsePublishedLayout = (row: Awaited<ReturnType<typeof appLayoutRepository.getPublished>>) => {
+  if (!row) return null;
+  try {
+    const checked = validateAppLayoutPair({
+      schemaVersion: row.schema_version,
+      desktop: JSON.parse(row.desktop_document),
+      mobile: JSON.parse(row.mobile_document),
+    });
+    return {
+      schemaVersion: checked.schemaVersion,
+      desktop: checked.desktop,
+      mobile: checked.mobile,
+      publisher: { discordId: row.published_by_discord_id },
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  } catch {
+    // Never serve a corrupt or obsolete stored document to the live application.
+    return null;
+  }
+};
+
+/** Public read endpoint; published data contains only allowlisted layout settings. */
+router.get("/app-layout", asyncHandler(async (_req, res) => {
+  const row = await appLayoutRepository.getPublished();
+  const layout = parsePublishedLayout(row);
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ layout, fallback: !layout });
+}));
+
+/** Application layout publication is owner-only; the Discord ID comes from the verified session. */
+router.put("/app-layout", asyncHandler(async (req, res) => {
+  const session = await getSessionUserFromRequest(req);
+  if (!session) throw ApiError.unauthorized();
+  const isOwner = env.ownerDiscordIds.includes(session.id) || (!env.isProd && session.role === "admin");
+  if (!isOwner) {
+    throw ApiError.forbidden("Only the HoHo Manager owner can publish the application layout.");
+  }
+  const pair = validateAppLayoutPair(req.body);
+  const row = await appLayoutRepository.publish({
+    schemaVersion: pair.schemaVersion,
+    desktop: pair.desktop,
+    mobile: pair.mobile,
+    publisherDiscordId: session.id,
+  });
+  const layout = parsePublishedLayout(row);
+  if (!layout) throw new Error("The published layout could not be validated after persistence.");
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true, layout });
 }));
 
 export default router;

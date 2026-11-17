@@ -415,4 +415,27 @@ export const migrations: readonly Migration[] = [
       );
     `,
   },
+  {
+    id: "015_published_responsive_app_layout",
+    sql: `
+      -- One authoritative row stores the complete Desktop/Mobile pair.
+      -- Keeping both documents in one row prevents partial responsive publishes.
+      CREATE TABLE IF NOT EXISTS published_app_layouts (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        schema_version INTEGER NOT NULL,
+        desktop_document TEXT NOT NULL,
+        mobile_document TEXT NOT NULL,
+        published_by_discord_id TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `,
+  },
+  {
+    id: "016_remove_legacy_app_layout_publishers",
+    sql: `
+      -- Remove the temporary allowlist table created by the unapproved Part C draft.
+      DROP TABLE IF EXISTS app_layout_publishers;
+    `,
+  },
 ];
