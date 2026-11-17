@@ -88,23 +88,35 @@ export const SplitPane = ({
       <div
         ref={containerRef}
         onTouchStart={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest("button, a, input, textarea, select, [role='button'], [data-no-pane-swipe]")) {
+            touchStartXRef.current = null;
+            touchStartYRef.current = null;
+            return;
+          }
           const touch = e.touches[0];
           if (!touch) return;
           touchStartXRef.current = touch.clientX;
           touchStartYRef.current = touch.clientY;
         }}
         onTouchEnd={(e) => {
-          if (touchStartXRef.current === null || touchStartYRef.current === null || !onMobilePaneChange) return;
-          const touch = e.changedTouches[0];
-          if (!touch) return;
-          const dx = touch.clientX - touchStartXRef.current;
-          const dy = touch.clientY - touchStartYRef.current;
+          const startX = touchStartXRef.current;
+          const startY = touchStartYRef.current;
           touchStartXRef.current = null;
           touchStartYRef.current = null;
+          if (startX === null || startY === null || !onMobilePaneChange) return;
+          const touch = e.changedTouches[0];
+          if (!touch) return;
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
           if (Math.abs(dx) > 72 && Math.abs(dx) > Math.abs(dy) * 1.8) {
             if (dx < 0 && mobileActivePane === "left") onMobilePaneChange("right");
             else if (dx > 0 && mobileActivePane === "right") onMobilePaneChange("left");
           }
+        }}
+        onTouchCancel={() => {
+          touchStartXRef.current = null;
+          touchStartYRef.current = null;
         }}
         className={`relative flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}
       >
