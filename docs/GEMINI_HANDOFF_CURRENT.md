@@ -20,7 +20,7 @@
 - Removed server-side webhook URL message delivery and webhook inspection APIs from `discordService.ts`.
 - Removed the direct client webhook sender module, webhook URL parser, shared webhook URL regex, and webhook-specific parser tests.
 - Removed webhook URL configuration from the Action Builder.
-- Removed webhook profile repository wiring, the repository file, shared webhook/bot profile record types, and the obsolete staff permission flags `can_use_webhooks` and `can_override_profile` from the access API and client types.
+- Removed webhook profile repository wiring, the repository file, shared webhook/bot profile record types, client profile CRUD APIs, and the obsolete staff permission flags `can_use_webhooks` and `can_override_profile` from the access API and client types.
 - Migration 011 already drops the `webhook_profiles` and `bot_profiles` tables. New migration 018 drops the remaining `settings.bot_profile_id`, `staff_access.can_use_webhooks` and `staff_access.can_override_profile` columns.
 - The send route explicitly rejects legacy `webhookUrl` input.
 - The legacy `send_webhook_message` action type/handler remains only as a compatibility tombstone: old saved flows receive a structured failure and cannot send. It is not exposed in the Action Builder.
@@ -78,6 +78,8 @@
 - The complete 23-file Bot package has been read. Findings include command authorization, gateway relay timing, startup validation and documentation corrections; fixes/tests are recorded above.
 - The 20-file server action-handler directory has received an initial failure-path pass. All explicit action error branches inspected use `actionFailed()`; full dependency/caller review remains open.
 - The 13 server routes have begun a focused review. Access, authentication, configuration, design publishing, executors, health and templates were inspected; complete validation and caller tracing remains open.
+- The public health endpoint no longer queries or exposes the total user count.
+- Puck production CSS variable mapping was compared against the runtime stylesheet: every emitted layout variable is consumed by the live runtime; Desktop split ratio is passed directly to `SplitPane`.
 - Critical action execution, interaction handling, send/Discord routes, settings, Puck resolver and selected client/server test paths have been reviewed.
 - The audit is **not complete**. Client, server, shared, root/infrastructure, database migration, tests and docs still need systematic file-by-file and caller/dependency review. The ledger is authoritative for per-file status.
 - Do not mark a file reviewed from a search result or excerpt alone. Review its full contents and relevant callers/dependencies.
