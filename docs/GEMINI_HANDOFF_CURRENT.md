@@ -6,7 +6,7 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Latest branch HEAD including documentation: `b7cb5c8c3de278356efe55f0fe2844d23dbcd0a9`.
+- Latest audit-ledger synchronization commit before this handoff update: `3ee84455f1613303e725b30ee0a8582021880d03`. This handoff update itself creates another documentation-only commit; use the branch ref for the exact latest HEAD.
 - Latest code/test change before documentation synchronization: `b2d0490af16a52f2be7ab343373de2f4ec555117`.
 - Recursive Git tree: **355 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - `main` has not been changed by this implementation batch. Do not assume the changes are deployed or merged.
