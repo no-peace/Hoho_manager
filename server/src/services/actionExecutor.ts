@@ -185,24 +185,24 @@ export const executeCustomId = async (
       .catch(() => null)) || (await discord.resolveBotToken().catch(() => null));
 
   const guildId = interaction.guild_id;
-  if (guildId && botToken) {
-    // Fetch the full Guild resource so the unqualified {server.*} placeholders
-    // continue to describe the server where this interaction happened.
-    const guild = await discord.getGuild(guildId, botToken).catch(() => null);
-    if (guild) {
-      Object.assign(variables, buildGuildVariables(guildId, guild));
-    } else if (variables["server.name"] === "Server") {
-      // Retain the previous lightweight fallback if the full Guild endpoint
-      // is unavailable, so the established name/icon placeholders still work.
-      const guilds = await discord.getBotGuilds().catch(() => []);
-      const matchedGuild = guilds.find((entry) => entry.id === guildId);
-      if (matchedGuild) Object.assign(variables, buildGuildVariables(guildId, matchedGuild));
+  if (botToken) {
+    if (guildId) {
+      // Fetch the full Guild resource so the unqualified {server.*} placeholders
+      // continue to describe the server where this interaction happened.
+      const guild = await discord.getGuild(guildId, botToken).catch(() => null);
+      if (guild) {
+        Object.assign(variables, buildGuildVariables(guildId, guild));
+      } else if (variables["server.name"] === "Server") {
+        // Retain the previous lightweight fallback if the full Guild endpoint
+        // is unavailable, so the established name/icon placeholders still work.
+        const guilds = await discord.getBotGuilds().catch(() => []);
+        const matchedGuild = guilds.find((entry) => entry.id === guildId);
+        if (matchedGuild) Object.assign(variables, buildGuildVariables(guildId, matchedGuild));
+      }
     }
 
-    // Explicitly-addressed placeholders can read a different server:
-    // {server.<guildId>.name}, {server.<guildId>.icon}, {server.<guildId>.banner}.
-    // Discord only returns this resource when the configured bot can access
-    // that guild (normally, the bot must be a member of it).
+    // Explicitly-addressed placeholders can read any other server the bot
+    // can access, even when the interaction itself is not in a guild.
     const referencedGuildIds = extractReferencedGuildIds(steps);
     await Promise.all(
       referencedGuildIds.map(async (referencedGuildId) => {
