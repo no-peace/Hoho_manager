@@ -105,6 +105,29 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(imported.mobile.content[2].type).toBe("MobileBottomNavigation");
   });
 
+  it("normalizes early version-1 exports without breaking their existing fields", () => {
+    const desktop = clone(defaultDesktopLayoutData);
+    const mobile = clone(defaultMobileLayoutData);
+    delete mobile.content[2].props.activeTab;
+    delete mobile.content[2].props.editorLabel;
+    delete mobile.content[2].props.previewLabel;
+    delete mobile.content[2].props.dispatchLabel;
+    desktop.content[1].props.content[0].props.showToolbar = true;
+
+    const imported = parseAppLayoutFile({
+      format: "hoho-app-layout",
+      version: 1,
+      exportedAt: "2026-11-17T00:00:00.000Z",
+      desktop,
+      mobile,
+    });
+    expect(imported.desktop.content[1].props.content[0].props.showToolbar).toBe("show");
+    expect(imported.mobile.content[2].props.activeTab).toBe("editor");
+    expect(imported.mobile.content[2].props.editorLabel).toBe("Editor");
+    expect(imported.mobile.content[2].props.previewLabel).toBe("Preview");
+    expect(imported.mobile.content[2].props.dispatchLabel).toBe("Dispatch");
+  });
+
   it("validates and resolves editable mobile navigation labels and active state", () => {
     const mobile = clone(defaultMobileLayoutData);
     mobile.content[2].props.editorLabel = "Write";
