@@ -6,7 +6,7 @@ export { replaceVariables } from "./variableInterpolation.js";
 import { getActionHandler } from "../actions/index.js";
 import { actionFailed } from "../actions/responses.js";
 import type { ActionContext, ActionResponse } from "../actions/types.js";
-import { actionRepository, webhookProfileRepository } from "../repositories/index.js";
+import { actionRepository } from "../repositories/index.js";
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
@@ -233,7 +233,6 @@ export const executeCustomId = async (
     variables,
     botToken,
     discord,
-    repositories: { webhookProfiles: webhookProfileRepository },
     logger: log,
   };
 
