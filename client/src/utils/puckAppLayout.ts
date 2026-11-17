@@ -295,10 +295,10 @@ const validateComponentProps = (type: string, props: Record<string, any>) => {
     assertHex(props, "accent");
     assertChoice(props, "tabOrder", ["editor-first", "preview-first"]);
     assertChoice(props, "showLabels", ["show", "hide"]);
-    assertChoice(props, "activeTab", ["editor", "preview", "dispatch"]);
-    assertLabel(props, "editorLabel");
-    assertLabel(props, "previewLabel");
-    assertLabel(props, "dispatchLabel");
+    if (props.activeTab !== undefined) assertChoice(props, "activeTab", ["editor", "preview", "dispatch"]);
+    if (props.editorLabel !== undefined) assertLabel(props, "editorLabel");
+    if (props.previewLabel !== undefined) assertLabel(props, "previewLabel");
+    if (props.dispatchLabel !== undefined) assertLabel(props, "dispatchLabel");
     assertMotion(props);
     return;
   }
@@ -337,27 +337,39 @@ const validateDocument = (value: unknown, mode: AppLayoutMode): AppLayoutDocumen
         (expectedType && node.type !== expectedType) || !isRecord(node.props)) {
       throw new Error("The " + mode + " layout contains an invalid component or nesting structure.");
     }
-    validateComponentProps(node.type, node.props);
-    const id = node.props.id as string;
+    const normalizedProps = { ...node.props };
+    // Normalize the two fields added after the original version-1 export format.
+    if (node.type === "MobileBottomNavigation") {
+      normalizedProps.activeTab ??= "editor";
+      normalizedProps.editorLabel ??= "Editor";
+      normalizedProps.previewLabel ??= "Preview";
+      normalizedProps.dispatchLabel ??= "Dispatch";
+    }
+    // Earlier Puck defaults serialized showToolbar as a boolean.
+    if (node.type === "EditorPanel" && typeof normalizedProps.showToolbar === "boolean") {
+      normalizedProps.showToolbar = normalizedProps.showToolbar ? "show" : "hide";
+    }
+    validateComponentProps(node.type, normalizedProps);
+    const id = normalizedProps.id as string;
     if (ids.has(id)) throw new Error("Layout component IDs must be unique.");
     ids.add(id);
 
     const isWorkspace = node.type === "DesktopWorkspace" || node.type === "MobileWorkspace";
     if (isWorkspace) {
-      if (!Array.isArray(node.props.content) || node.props.content.length !== 3) {
+      if (!Array.isArray(normalizedProps.content) || normalizedProps.content.length !== 3) {
         throw new Error("Each workspace must contain exactly one Editor, Preview and Inspector panel.");
       }
       const panelTypes = ["EditorPanel", "PreviewPanel", "InspectorPanel"];
-      const panels = node.props.content.map((child: unknown) => validateNode(child));
+      const panels = normalizedProps.content.map((child: unknown) => validateNode(child));
       if (panelTypes.some((type) => panels.filter((panel) => panel.type === type).length !== 1)) {
         throw new Error("Each workspace must contain exactly one Editor, Preview and Inspector panel.");
       }
-      return { ...node, props: { ...node.props, content: panels } } as AppLayoutNode;
+      return { ...node, props: { ...normalizedProps, content: panels } } as AppLayoutNode;
     }
-    if (Object.prototype.hasOwnProperty.call(node.props, "content")) {
+    if (Object.prototype.hasOwnProperty.call(normalizedProps, "content")) {
       throw new Error("Only workspace components may contain panel slots.");
     }
-    return node as AppLayoutNode;
+    return { ...node, props: normalizedProps } as AppLayoutNode;
   };
 
   const content = value.content.map((node: unknown, index: number) =>
