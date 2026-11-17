@@ -93,7 +93,7 @@ interface AppLayoutNode {
 
 No other keys are allowed at the document, root, node, or component-props level. The root props object must be empty. Every component node has exactly `type` and `props`. Every component props object includes an `id`; IDs match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`, are at most 64 characters, and are globally unique within that responsive document.
 
-The document is JSON-only. Arbitrary HTML, JavaScript, event handlers, CSS strings, selectors, URLs, custom components and unknown properties are rejected.
+The document is JSON-only. Arbitrary HTML, JavaScript, event handlers, CSS strings, selectors, URLs, custom components and unknown properties are rejected. Component `id` values are editor/document identity and validation keys only; Part C must not treat them as caller-controlled production DOM IDs or selectors.
 
 ### Desktop document
 
@@ -216,6 +216,9 @@ The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It valid
 | `editorMotion`, `previewMotion`, `inspectorMotion` | Apply independently to the corresponding panel surfaces at each breakpoint. |
 | `editorLabel`, `previewLabel`, `inspectorLabel` | Render as the visible headings/titles of the real Editor, Preview and Inspector panels at the matching breakpoint. |
 | `showToolbar` | Show or hide only the real editor toolbar for that breakpoint. Hiding it must not hide the editor, message content, or unrelated critical controls. |
+| `defaultPane` | Select the initial Editor or Preview pane when a Mobile Studio workspace is first mounted. A later configuration refresh must not unexpectedly reset a pane the user has already selected. |
+| `showLabels` | Show or hide the text labels on the real Mobile bottom navigation while preserving its accessible names. |
+| `editorTabLabel`, `previewTabLabel`, `dispatchTabLabel` | Render as text in the corresponding real Mobile navigation items. |
 
 For reduced motion, Part C must detect `prefers-reduced-motion: reduce` in the production shell and disable the configured entrance/loop animation and delay for every motion-bearing region. This override takes precedence over the published motion values. The preview must use the same reduced-motion policy.
 
@@ -227,7 +230,7 @@ Part C must:
 5. Apply only the resolved allowlisted values to the real Studio shell as specified above. Never render Puck documents as arbitrary production markup and never mount a second Studio instance for preview.
 6. Keep local drafts distinct from published server state. The local draft namespace is not a publish store.
 
-The Mobile `showInspector` setting and `activeTab` are Design Lab preview-only settings. They do not remove the production inspector, change the real editor pane, dispatch messages, mutate message state, or trigger Discord operations. Mobile tab labels, by contrast, are production navigation text and must be applied to the real navigation.
+The following settings are explicitly Design Lab preview-only and are not part of the production behavior contract: Mobile `showInspector` (whether the preview draws the inspector bottom sheet) and Mobile `activeTab` (which navigation item is highlighted in the preview). They must not remove the production inspector or force the live app's currently selected pane/tab. Component `id` values are also not production DOM IDs. Preview-only settings must not dispatch messages, mutate message state, or trigger Discord operations. Mobile tab labels, tab order, navigation sizing/colors, and label visibility are production settings and must be applied to the real navigation.
 
 ## Publishing and runtime integration status
 
