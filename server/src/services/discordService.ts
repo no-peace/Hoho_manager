@@ -344,9 +344,9 @@ export const editChannelMessage = async (
   channelId: string,
   messageId: string,
   payload: DiscordMessagePayload,
-  { profileId = null, files }: BotSendOptions = {},
+  { files }: BotSendOptions = {},
 ): Promise<DiscordMessage | null> => {
-  const token = await resolveBotToken(profileId);
+  const token = await resolveBotToken();
   const hasFiles = files && files.length > 0;
   const body = hasFiles
     ? buildMultipartPayload(payload, files)
@@ -363,9 +363,8 @@ export const editChannelMessage = async (
 };
 
 export const getBotGuilds = async (
-  profileId: number | null = null,
-): Promise<DiscordGuildSummary[]> => {
-  const token = await resolveBotToken(profileId);
+ ): Promise<DiscordGuildSummary[]> => {
+  const token = await resolveBotToken();
   return (await apiRequest<DiscordGuildSummary[]>("GET", "/users/@me/guilds", { token })) ?? [];
 };
 
@@ -632,7 +631,7 @@ export const getDiscordUser = async (userId: string): Promise<DiscordMemberSumma
   let lookupPromise: Promise<DiscordMemberSummary>;
 
   lookupPromise = (async () => {
-    const token = await resolveBotToken(profileId);
+    const token = await resolveBotToken();
     const data = await apiRequest<{
       id?: string;
       username?: string;
@@ -765,7 +764,7 @@ export const searchGuildMembers = async (guildId: string, query: string): Promis
 };
 
 export const getChannelMessages = async (channelId: string): Promise<DiscordMessageRecord[]> => {
-  const token = await resolveBotToken(profileId);
+  const token = await resolveBotToken();
   return (
     (await apiRequest<DiscordMessageRecord[]>(
       "GET",
@@ -776,7 +775,7 @@ export const getChannelMessages = async (channelId: string): Promise<DiscordMess
 };
 
 export const getChannelMessage = async (channelId: string, messageId: string): Promise<DiscordMessageRecord | null> => {
-  const token = await resolveBotToken(profileId);
+  const token = await resolveBotToken();
   return apiRequest<DiscordMessageRecord>(
     "GET",
     `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`,
