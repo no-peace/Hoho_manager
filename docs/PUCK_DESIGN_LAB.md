@@ -4,7 +4,7 @@ HoHo Manager has two separate appearance layers: the **server theme** and each s
 
 ## Theme settings
 
-The Theme button in the authenticated app header opens Appearance & Themes. It is available to every signed-in user; the old /design Puck editor remains owner-only.
+Appearance & Themes remains available to signed-in users. The owner-only Design Lab link is inside the authenticated profile dropdown (not the top bar); /design remains protected by the existing server-side access check.
 
 ### Server theme (owner only)
 
@@ -19,8 +19,8 @@ The Theme button in the authenticated app header opens Appearance & Themes. It i
 ### Personal themes
 
 - Every authenticated user can open Theme Settings, edit colors/radius/font, preview the result, and apply it privately.
-- Save privately stores named private theme presets and the active theme selection in browser localStorage. These are not database writes and are not visible to other users.
-- Private theme library and active selection are keyed by Discord user ID, expire 14 days after the user's last successful authenticated app load, and their expiry is refreshed on the next successful login/session verification. Expired or malformed cache is discarded.
+- Save privately stores named private theme presets in browser localStorage and immediately downloads a portable `.hoho-theme.json` file. Presets are not database writes and are not visible to other users. Each preset can be exported again or imported from its file.
+- The private theme library is keyed by Discord user ID and does not expire. The active theme selection remains a separate 14-day session cache. Older private-library records with an expiry field are migrated without deleting the saved presets. Downloaded `.hoho-theme.json` files remain available even if browser storage is cleared.
 - Personal cache is not refreshed merely by changing browser tabs.
 - The selected personal theme overrides the server theme only in that user's browser. Reset to server removes the local override.
 
@@ -40,7 +40,7 @@ Themes are restricted to a fixed token schema: eight six-digit HEX colors, a sup
 - Muted text must meet at least 3:1 contrast against the app background and panel.
 - No arbitrary CSS, selectors, HTML, scripts, layout definitions, or component structure are accepted by the theme API.
 - Theme tokens only change visual CSS variables (colors, font family and radius). They cannot remove, hide, replace, or reorder application controls such as the Send button.
-- The Puck document remains a separate owner-only design artifact and is not used as a theme payload for the community gallery.
+- The Puck document remains a separate owner-only design artifact and is not used as a theme payload for the community gallery. Design Lab now loads the current server theme as its starter palette, exposes page-level brand controls and per-block entrance animation/duration/delay fields, and uses Puck's documented CSS design tokens to style the editor panels and fields.
 - Server endpoints never return process.env, .env files, OAuth credentials, bot tokens, database credentials, or server configuration.
 
 ## Persistence and deployment
@@ -69,3 +69,12 @@ Run from the repository root:
 - npm run build
 
 Then run the existing mobile and desktop Lighthouse configurations. Do not treat the change as verified until these checks have been run against the deployed/current environment.
+
+
+## Design Lab editor experience
+
+- The Design Lab entry is located in the profile dropdown for accounts with Design Lab permission; it is removed from the top navigation row.
+- The Puck editor chrome uses the documented `--puck-*` theme tokens for dark surfaces, high-contrast text, readable fields, focus rings, responsive sidebars, and selection states.
+- The starter page is HoHo Manager-branded (Message Studio, Live Preview, and Interaction Builder) and uses HoHo Manager's current dark palette and the current server theme is loaded when the editor opens. The page root exposes background, content width, base text, accent, card surface, font family, and global corner radius. Heading and paragraph blocks expose type scale, weight, line-height, alignment, and readable width; buttons expose custom colors/radius; feature cards expose surface, border, radius, padding, and shadow controls.
+- Every visual block exposes entrance animation, duration, and delay controls. Supported motion presets are fade, fade-up, slide-left/right, zoom, float, and pulse; reduced-motion preferences disable those animations.
+- The editor retains Puck's drag-and-drop, outline, inspector, and desktop/tablet/mobile viewport tools. No application control tree or live production dashboard controls are modified by this page builder.

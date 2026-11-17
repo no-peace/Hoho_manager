@@ -105,17 +105,19 @@ export const loadUserThemeLibrary = (userId: string): LocalUserTheme[] => {
     const raw = localStorage.getItem(libraryKey(userId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || typeof parsed.expiresAt !== "number" || parsed.expiresAt <= Date.now() || !Array.isArray(parsed.themes)) {
-      localStorage.removeItem(libraryKey(userId));
-      return [];
-    }
-    return parsed.themes.flatMap((item: any) => {
+    // Legacy 14-day expiry applied to the preset library by mistake. Ignore it:
+    // only the active theme override expires; private presets remain permanent.
+    const source = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? parsed.themes : null;
+    if (!Array.isArray(source)) return [];
+    return source.flatMap((item: any) => {
       if (!item || typeof item !== "object" || typeof item.name !== "string") return [];
       const checked = validateUiTheme(item.theme);
       return checked.valid ? [{
-        id: String(item.id || ""), name: item.name.slice(0, 60),
+        id: String(item.id || ""),
+        name: item.name.slice(0, 60),
         description: typeof item.description === "string" ? item.description.slice(0, 180) : "",
-        theme: checked.theme, createdAt: Number(item.createdAt) || Date.now(),
+        theme: checked.theme,
+        createdAt: Number(item.createdAt) || Date.now(),
       }] : [];
     });
   } catch { return []; }
@@ -123,9 +125,7 @@ export const loadUserThemeLibrary = (userId: string): LocalUserTheme[] => {
 export const refreshUserThemeLibraryExpiry = (userId: string): void => {
   try {
     const themes = loadUserThemeLibrary(userId);
-    if (themes.length) localStorage.setItem(libraryKey(userId), JSON.stringify({
-      themes, expiresAt: Date.now() + USER_THEME_CACHE_TTL_MS,
-    }));
+    if (themes.length) localStorage.setItem(libraryKey(userId), JSON.stringify({ version: 2, themes }));
   } catch { /* storage unavailable */ }
 };
 export const saveUserThemeToLibrary = (userId: string, name: string, description: string, value: unknown): LocalUserTheme | null => {
@@ -139,7 +139,7 @@ export const saveUserThemeToLibrary = (userId: string, name: string, description
       theme: checked.theme, createdAt: Date.now(),
     };
     localStorage.setItem(libraryKey(userId), JSON.stringify({
-      themes: [theme, ...themes].slice(0, 50), expiresAt: Date.now() + USER_THEME_CACHE_TTL_MS,
+      version: 2, themes: [theme, ...themes],
     }));
     return theme;
   } catch { return null; }
@@ -148,8 +148,42 @@ export const deleteUserThemeFromLibrary = (userId: string, id: string): void => 
   try {
     const themes = loadUserThemeLibrary(userId).filter((theme) => theme.id !== id);
     if (themes.length) localStorage.setItem(libraryKey(userId), JSON.stringify({
-      themes, expiresAt: Date.now() + USER_THEME_CACHE_TTL_MS,
+      version: 2, themes,
     }));
     else localStorage.removeItem(libraryKey(userId));
   } catch { /* storage unavailable */ }
+};
+
+/** Download a portable preset file independent of browser storage and expiry. */
+export const downloadUserThemeFile = (theme: LocalUserTheme): void => {
+  if (typeof document === "undefined") return;
+  const slug = theme.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "theme";
+  const payload = {
+    format: "hoho-theme",
+    version: 1,
+    name: theme.name,
+    description: theme.description,
+    theme: theme.theme,
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "hoho-" + slug + ".hoho-theme.json";
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+export const parseUserThemeFile = (value: unknown): { name: string; description: string; theme: UiThemeTokens } => {
+  if (!value || typeof value !== "object") throw new Error("This is not a HoHo theme file.");
+  const input = value as Record<string, unknown>;
+  if (input.format !== "hoho-theme" || input.version !== 1) throw new Error("Unsupported theme file format or version.");
+  const checked = validateUiTheme(input.theme);
+  if (!checked.valid) throw new Error(checked.errors.join(" "));
+  return {
+    name: typeof input.name === "string" && input.name.trim() ? input.name.trim().slice(0, 60) : "Imported theme",
+    description: typeof input.description === "string" ? input.description.slice(0, 180) : "",
+    theme: checked.theme,
+  };
 };

@@ -290,3 +290,153 @@
   .hoho-design-lab__field--wide { grid-column: auto; }
   .hoho-design-lab__color-field { grid-template-columns: minmax(0, 1fr) 30px auto; }
 }
+
+
+/* HoHo Manager branded Puck editor — use Puck's supported design tokens. */
+.hoho-design-lab__editor {
+  --puck-color-surface: #161a23;
+  --puck-color-surface-muted: #10131a;
+  --puck-color-surface-subtle: #0b0d12;
+  --puck-color-surface-inverse: #090b10;
+  --puck-color-border: #30394b;
+  --puck-color-border-hover: #818cf8;
+  --puck-color-border-muted: #252d3b;
+  --puck-color-border-inverse: #68738a;
+  --puck-color-text: #f1f3f9;
+  --puck-color-text-secondary: #c5ccda;
+  --puck-color-text-muted: #a1a8b8;
+  --puck-color-text-subtle: #8792a6;
+  --puck-color-text-inverse: #ffffff;
+  --puck-color-interactive: #818cf8;
+  --puck-color-interactive-hover: #6d75e8;
+  --puck-color-interactive-active: #555fd0;
+  --puck-color-interactive-subtle: rgba(129,140,248,.18);
+  --puck-color-interactive-soft: #20263a;
+  --puck-color-interactive-soft-hover: #292f47;
+  --puck-color-interactive-neutral-hover: #252d3d;
+  --puck-color-interactive-inverse-hover: #c7cbff;
+  --puck-color-interactive-inverse-active: #a5adff;
+  --puck-color-focus-ring: #a5adff;
+  --puck-color-selection-bg: rgba(129,140,248,.18);
+  --puck-color-selection-border: #a5adff;
+  --puck-color-line-placeholder: #a5adff;
+  --puck-color-bg-disabled: #303849;
+  --puck-color-text-disabled: #929bad;
+  --puck-color-overlay-backdrop: rgba(0,0,0,.78);
+  --puck-space-chrome-gutter: 16px;
+  --puck-radius-m: 8px;
+  --puck-radius-l: 12px;
+  --puck-duration-fast: 100ms;
+  --puck-duration-medium: 160ms;
+  --puck-duration-slow: 220ms;
+  --puck-font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  --puck-font-size-base: 14px;
+  --puck-user-sidebar-left-width: clamp(220px, 19vw, 300px);
+  --puck-user-sidebar-right-width: clamp(280px, 24vw, 360px);
+  min-height: 0;
+  height: 100%;
+  color: #f1f3f9;
+  background: #0b0d12;
+}
+.hoho-design-lab__editor > div,
+.hoho-design-lab__editor [class*="Puck"] { min-height: 0; }
+.hoho-design-lab__editor input,
+.hoho-design-lab__editor textarea,
+.hoho-design-lab__editor select {
+  color: #f1f3f9;
+  background-color: #10131a;
+  border-color: #30394b;
+  font-size: .8125rem;
+}
+.hoho-design-lab__editor input::placeholder,
+.hoho-design-lab__editor textarea::placeholder { color: #8792a6; opacity: 1; }
+.hoho-design-lab__editor input:focus,
+.hoho-design-lab__editor textarea:focus,
+.hoho-design-lab__editor select:focus {
+  border-color: #818cf8;
+  outline-color: #818cf8;
+}
+.hoho-design-lab__editor button { font-family: inherit; }
+.hoho-design-lab__editor button:focus-visible,
+.hoho-design-lab__editor input:focus-visible,
+.hoho-design-lab__editor textarea:focus-visible,
+.hoho-design-lab__editor select:focus-visible {
+  outline: 2px solid #a5adff;
+  outline-offset: 2px;
+}
+.hoho-design-lab__editor [class*="FieldLabel"],
+.hoho-design-lab__editor label { color: #d5dbea; }
+.hoho-design-lab__editor [class*="Sidebar"] { color: #f1f3f9; }
+.hoho-design-lab__editor [class*="Canvas"] { background-color: #0b0d12; }
+.hoho-design-lab__editor [class*="Drawer"] { background-color: #10131a; }
+.hoho-design-lab__editor [class*="Header"] { border-color: #272d3a; }
+.hoho-design-lab__editor [class*="Button"] { border-radius: 8px; }
+.hoho-design-lab__editor [class*="Field"] { line-height: 1.45; }
+.hoho-design-lab__editor [class*="Field"] input,
+.hoho-design-lab__editor [class*="Field"] textarea,
+.hoho-design-lab__editor [class*="Field"] select { min-height: 36px; padding: .5rem .65rem; }
+.hoho-design-lab__editor [class*="Field"] textarea { min-height: 88px; resize: vertical; }
+.hoho-design-lab__editor [class*="Sidebar"] [class*="Field"] { margin-bottom: .4rem; }
+.hoho-design-lab__editor [class*="Canvas"] iframe { background: #0b0d12; }
+.hoho-design-lab__editor [class*="Outline"] { color: #dce2ee; }
+.hoho-design-lab__editor [class*="Outline"] button:hover { background: #20263a; }
+.hoho-design-lab__editor [class*="Preview"] { background: #0b0d12; }
+.hoho-design-lab__editor [class*="Empty"] { color: #a1a8b8; }
+.hoho-design-lab__editor [class*="ActionBar"] {
+  border: 1px solid #30394b;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+}
+.hoho-design-lab__editor [class*="Menu"] { color: #f1f3f9; }
+.hoho-design-lab__editor [class*="Menu"] [role="menuitem"]:hover { background: #252d3d; }
+.hoho-design-lab__editor [class*="Puck"] ::selection { color: #fff; background: rgba(129,140,248,.4); }
+
+.hoho-design-page { color: var(--hoho-theme-text, #f1f3f9); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.hoho-design-page__content { width: 100%; }
+.hoho-hero { background: var(--hoho-theme-panel, #161a23); }
+.hoho-eyebrow { color: var(--hoho-design-accent, var(--hoho-theme-accent, #818cf8)); }
+.hoho-hero__subtitle { color: var(--hoho-theme-muted, #a1a8b8); }
+.hoho-button--primary { background: var(--hoho-design-accent, var(--hoho-theme-accent, #818cf8)); }
+.hoho-feature-card {
+  color: var(--hoho-theme-text, #f1f3f9);
+  border-color: var(--hoho-theme-border, #272d3a);
+  border-radius: var(--hoho-design-radius, var(--hoho-theme-radius, 10px));
+  background: var(--hoho-design-surface, var(--hoho-theme-surface, #1d2230));
+}
+.hoho-feature-card h3 { color: var(--hoho-theme-text, #f1f3f9); }
+.hoho-feature-card p { color: var(--hoho-theme-muted, #a1a8b8); }
+.hoho-quote { border-left-color: var(--hoho-design-accent, #818cf8); background: var(--hoho-design-surface, #1d2230); }
+.hoho-quote p { color: var(--hoho-theme-text, #f1f3f9); }
+.hoho-heading { color: var(--hoho-theme-text, #f1f3f9); }
+.hoho-text { color: var(--hoho-theme-muted, #a1a8b8); }
+
+.hoho-design-lab [data-hoho-animation="fade-in"] { animation: hoho-fade-in var(--hoho-motion-duration, 600ms) ease both; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="fade-up"] { animation: hoho-fade-up var(--hoho-motion-duration, 600ms) cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="slide-left"] { animation: hoho-slide-left var(--hoho-motion-duration, 600ms) cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="slide-right"] { animation: hoho-slide-right var(--hoho-motion-duration, 600ms) cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="zoom-in"] { animation: hoho-zoom-in var(--hoho-motion-duration, 600ms) cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="float"] { animation: hoho-float var(--hoho-motion-duration, 4s) ease-in-out infinite; animation-delay: var(--hoho-motion-delay, 0ms); }
+.hoho-design-lab [data-hoho-animation="pulse"] { animation: hoho-pulse var(--hoho-motion-duration, 2.8s) ease-in-out infinite; animation-delay: var(--hoho-motion-delay, 0ms); }
+@keyframes hoho-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hoho-fade-up { from { opacity: 0; transform: translate3d(0, 22px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes hoho-slide-left { from { opacity: 0; transform: translate3d(28px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes hoho-slide-right { from { opacity: 0; transform: translate3d(-28px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes hoho-zoom-in { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes hoho-float { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(0,-7px,0); } }
+@keyframes hoho-pulse { 0%,100% { opacity: 1; } 50% { opacity: .72; } }
+@media (prefers-reduced-motion: reduce) {
+  .hoho-design-lab [data-hoho-animation] { animation: none !important; }
+}
+@media (max-width: 900px) {
+  .hoho-design-lab__editor {
+    --puck-user-sidebar-left-width: 200px;
+    --puck-user-sidebar-right-width: 280px;
+  }
+}
+@media (max-width: 640px) {
+  .hoho-design-lab__editor {
+    --puck-user-sidebar-left-width: 0px;
+    --puck-user-sidebar-right-width: 100%;
+  }
+  .hoho-design-lab__editor [class*="Sidebar"] { max-width: min(86vw, 340px); }
+}

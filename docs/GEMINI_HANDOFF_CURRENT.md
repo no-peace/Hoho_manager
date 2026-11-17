@@ -1417,3 +1417,15 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - The owner theme gallery query includes all saved theme rows, including legacy private themes from earlier Design Lab versions, so the owner can inspect and promote any user's saved theme.
 - Non-owner accounts still see only their own themes and themes explicitly shared with the community.
 - Owner publish/copy endpoints can promote a legacy private theme; the server theme itself remains owner-only.
+
+
+## Design Lab usability and private preset persistence — 2026-11-17
+
+- Moved the owner-permission-gated Design Lab link out of the main header row and into the authenticated profile dropdown. The `/design` route continues to enforce the server-side access check.
+- Reworked the Puck editor chrome with Puck's supported `--puck-*` design tokens: dark branded surfaces, high-contrast labels, readable inputs, visible focus states, clearer field sizing, and responsive sidebar widths.
+- The Design Lab now starts with the HoHo Manager palette and fetches the live server theme before loading the editor. The starter page is branded around HoHo Manager's Message Studio, Live Preview, and Interaction Builder. Its root exposes background, content width, text/accent/surface colors, font family, and global radius; starter blocks inherit the live server palette. Heading/text typography, button colors/radius, and feature-card surface/border/radius/padding/shadow are individually editable.
+- Added reusable animation, duration, and delay fields to every visual Puck block. Supported options: fade-in, fade-up, slide-left, slide-right, zoom-in, float, pulse, and none. Duration and delay can be adjusted per block. CSS animations are disabled under `prefers-reduced-motion`.
+- Private theme presets are now permanent in the local preset library: the 14-day expiry applies only to the active theme session cache. Legacy preset-library records are migrated without deleting presets, including records whose old expiry timestamp has passed.
+- Saving a private preset downloads a portable `.hoho-theme.json` file. Users can import those files and export any saved preset again. This file is independent of localStorage and browser-cache cleanup.
+- Files updated: `Header.tsx`, `puckTheme.ts`, `ThemeSettingsModal.tsx`, `DesignLabPage.tsx`, `designConfig.tsx`, `design-lab.css`, `PUCK_DESIGN_LAB.md`, and this handoff.
+- Verification: GitHub source updates only. `npm run typecheck`, `npm test`, `npm run build`, browser interaction/responsive checks, and Lighthouse have NOT been run in this session. Do not report them as passing until executed against this commit.

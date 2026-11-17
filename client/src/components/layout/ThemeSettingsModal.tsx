@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Palette, Plus, RefreshCw, Save, ShieldCheck, Trash2, X } from "lucide-react";
+import { Check, Copy, Download, FileUp, Palette, Plus, RefreshCw, Save, ShieldCheck, Trash2, X } from "lucide-react";
 import { useGlobalStore } from "../../store/globalStore";
 import { designApi, type DesignTheme } from "../../api/design";
 import {
   applyUiTheme, DEFAULT_UI_THEME, loadUserThemeCache, saveUserThemeCache,
   loadUserThemeLibrary, saveUserThemeToLibrary, deleteUserThemeFromLibrary,
-  validateUiTheme, type LocalUserTheme, type UiThemeTokens,
+  downloadUserThemeFile, parseUserThemeFile, validateUiTheme, type LocalUserTheme, type UiThemeTokens,
 } from "../../utils/puckTheme";
 
 type TokenKey = keyof UiThemeTokens;
@@ -31,6 +31,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const privateFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -96,15 +97,36 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     const saved = saveUserThemeToLibrary(user.id, name, description, result.theme);
     if (!saved) { showToast("Could not save your private theme in this browser.", "error"); return; }
     setPrivateThemes(loadUserThemeLibrary(user.id));
+    downloadUserThemeFile(saved);
     applyPersonal(result.theme, saved.id);
     setEditingId(null);
-    showToast("Private theme saved in this browser. It is not visible to other users.", "success");
+    showToast("Private preset saved locally and downloaded as a permanent .hoho-theme.json file.", "success");
   };
   const applySavedPrivate = (theme: LocalUserTheme) => {
     applyPersonal(theme.theme, theme.id);
     setTokens(theme.theme);
     setName(theme.name);
     setDescription(theme.description);
+  };
+  const importPrivateTheme = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+    try {
+      const imported = parseUserThemeFile(JSON.parse(await file.text()));
+      const saved = saveUserThemeToLibrary(user.id, imported.name, imported.description, imported.theme);
+      if (!saved) throw new Error("Could not save this preset in browser storage. Keep the original file as your backup.");
+      setPrivateThemes(loadUserThemeLibrary(user.id));
+      setTokens(saved.theme);
+      setName(saved.name);
+      setDescription(saved.description);
+      setEditingId(null);
+      applyPersonal(saved.theme, saved.id);
+      showToast("Private theme file imported. Your original file remains unchanged.", "success");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not import this theme file.", "error");
+    } finally {
+      event.target.value = "";
+    }
   };
   const removePrivate = (id: string) => {
     if (!user?.id) return;
@@ -164,6 +186,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-2 sm:p-5" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="theme-settings-title" className="flex max-h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[#303849] bg-[#0d1017] text-[#F1F3F9] shadow-2xl">
+        <input ref={privateFileInputRef} type="file" accept="application/json,.json" className="sr-only" onChange={importPrivateTheme} />
         <header className="flex items-center justify-between gap-3 border-b border-[#272D3A] px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3"><span className="rounded-xl bg-[#818CF8]/15 p-2 text-[#a5adff]"><Palette size={19}/></span><div><h2 id="theme-settings-title" className="text-sm font-bold">Appearance & themes</h2><p className="text-[11px] text-[#929bad]">Personal preferences · community themes · server appearance</p></div></div>
           <button type="button" onClick={onClose} aria-label="Close theme settings" className="rounded-lg p-2 text-[#9ca3af] hover:bg-white/10"><X size={18}/></button>
@@ -193,14 +216,14 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
               <button type="button" onClick={save} disabled={busy || !validation.valid || !name.trim()} className="inline-flex items-center gap-2 rounded-lg bg-[#818CF8] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"><Save size={14}/>{editingId ? "Update shared theme" : "Share with community"}</button>
               {isOwner ? <button type="button" onClick={() => void publishServer(tokens)} disabled={busy || !validation.valid} className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40"><ShieldCheck size={14}/>Set as server theme</button> : null}
             </div>
-            <p className="text-[10px] leading-relaxed text-[#778196]">Your selected theme is cached in this browser for 14 days after your last successful login. Published community themes are shared so other users can discover and copy them.</p>
+            <p className="text-[10px] leading-relaxed text-[#778196]">Only the active theme override uses the 14-day session cache. Private preset files do not expire. Published community themes are shared so other users can discover and copy them.</p>
           </div>
           <aside className="min-w-0 p-4 sm:p-6">
             <div className="mb-3 flex items-center justify-between gap-2"><div><h3 className="text-xs font-bold uppercase tracking-wider">Community gallery</h3><p className="mt-1 text-[11px] text-[#929bad]">{themes.length} shared themes</p></div><button type="button" onClick={() => void refresh()} className="rounded-lg border border-[#303849] p-2 text-[#aab2c1] hover:bg-white/5" aria-label="Refresh themes"><RefreshCw size={14}/></button></div>
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search themes..." className="mb-3 w-full rounded-lg border border-[#303849] bg-[#151a24] px-3 py-2 text-xs outline-none focus:border-[#818CF8]"/>
             <div className="mb-4">
-              <div className="mb-2 flex items-center justify-between"><h4 className="text-[11px] font-bold uppercase tracking-wider text-[#c5caff]">My private themes</h4><span className="text-[10px] text-[#778196]">{privateThemes.length} saved locally</span></div>
-              {privateThemes.length ? <div className="space-y-2">{privateThemes.map((theme) => <article key={theme.id} className="rounded-lg border border-[#818CF8]/20 bg-[#151827] p-2.5"><div className="mb-2 flex items-center justify-between gap-2"><span className="truncate text-xs font-semibold">{theme.name}</span><div className="flex gap-1">{Object.values(theme.theme).slice(0,8).map((color,index)=><span key={index} className="h-2.5 w-2.5 rounded-full border border-white/10" style={{background:color}}/>)}</div></div><div className="flex gap-1.5"><button type="button" onClick={() => applySavedPrivate(theme)} className="rounded-md bg-[#818CF8]/15 px-2 py-1.5 text-[10px] text-[#c5caff]">Use</button><button type="button" onClick={() => {setTokens(theme.theme);setName(theme.name);setDescription(theme.description);setEditingId(null);applyUiTheme(theme.theme);}} className="rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]">Edit</button><button type="button" onClick={() => removePrivate(theme.id)} className="rounded-md border border-red-500/20 px-2 py-1.5 text-[10px] text-red-300"><Trash2 size={11}/></button></div></article>)}</div> : <p className="rounded-lg border border-dashed border-[#303849] p-3 text-[10px] text-[#929bad]">Your private themes stay in this browser and are not shared.</p>}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h4 className="text-[11px] font-bold uppercase tracking-wider text-[#c5caff]">My private themes</h4><div className="flex items-center gap-2"><span className="text-[10px] text-[#778196]">{privateThemes.length} saved permanently</span><button type="button" onClick={() => privateFileInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-md border border-[#303849] px-2 py-1 text-[10px] text-[#c5caff] hover:bg-white/5"><FileUp size={11}/>Import file</button></div></div>
+              {privateThemes.length ? <div className="space-y-2">{privateThemes.map((theme) => <article key={theme.id} className="rounded-lg border border-[#818CF8]/20 bg-[#151827] p-2.5"><div className="mb-2 flex items-center justify-between gap-2"><span className="truncate text-xs font-semibold">{theme.name}</span><div className="flex gap-1">{Object.values(theme.theme).slice(0,8).map((color,index)=><span key={index} className="h-2.5 w-2.5 rounded-full border border-white/10" style={{background:color}}/>)}</div></div><div className="flex gap-1.5"><button type="button" onClick={() => applySavedPrivate(theme)} className="rounded-md bg-[#818CF8]/15 px-2 py-1.5 text-[10px] text-[#c5caff]">Use</button><button type="button" onClick={() => {setTokens(theme.theme);setName(theme.name);setDescription(theme.description);setEditingId(null);applyUiTheme(theme.theme);}} className="rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]">Edit</button><button type="button" onClick={() => downloadUserThemeFile(theme)} title="Download permanent theme file" aria-label={"Export " + theme.name} className="rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]"><Download size={11}/></button><button type="button" onClick={() => removePrivate(theme.id)} className="rounded-md border border-red-500/20 px-2 py-1.5 text-[10px] text-red-300"><Trash2 size={11}/></button></div></article>)}</div> : <p className="rounded-lg border border-dashed border-[#303849] p-3 text-[10px] text-[#929bad]">Private presets do not expire. Downloaded .hoho-theme.json files remain yours even if browser data is cleared.</p>}
             </div>
             {isOwner ? <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"><div className="flex items-center gap-2 text-xs font-semibold text-emerald-200"><ShieldCheck size={14}/>Current server theme</div><p className="mt-1 text-[10px] text-[#aab2c1]">Changes here publish to the hosted app for every visitor.</p><button type="button" onClick={() => {setTokens(serverTheme);setName("Server theme");setEditingId(null);applyUiTheme(serverTheme);}} className="mt-2 text-[11px] text-emerald-200 underline">Edit server theme</button></div> : null}
             {loading ? <div className="flex items-center gap-2 py-8 text-xs text-[#929bad]"><RefreshCw size={14} className="animate-spin"/>Loading shared themes…</div> : filteredThemes.length === 0 ? <div className="rounded-xl border border-dashed border-[#303849] p-6 text-center text-xs text-[#929bad]">No community themes yet. Create the first one.</div> : <div className="space-y-2">

@@ -136,11 +136,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
-          {currentUser?.isDesignAllowed ? (
-            <a href="/design" title="Open visual website builder" aria-label="Open Design Lab" className="inline-flex items-center gap-1.5 rounded-lg border border-[#818CF8]/30 bg-[#818CF8]/10 px-2 py-1.5 text-xs font-semibold text-[#c7cbff] transition-colors hover:border-[#818CF8]/60 hover:bg-[#818CF8]/20 hover:text-white shrink-0">
-              <LayoutTemplate size={14} /><span className="hidden lg:inline">Design Lab</span>
-            </a>
-          ) : null}
           {hasDefaultBotAccess && (
             <div className="w-[104px] sm:w-32 lg:w-48 min-w-0 relative shrink-0">
               <SearchableDiscordSelect
@@ -304,6 +299,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
+                    {currentUser.isDesignAllowed ? (
+                      <a href="/design" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                        <LayoutTemplate size={14} className="text-[#a5adff]" />
+                        <span>Design Lab</span>
+                      </a>
+                    ) : null}
                     <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <BookOpen size={14} className="text-[#949cf7]" />
                       <span>Documentation</span>

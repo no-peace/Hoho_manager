@@ -5,7 +5,8 @@ import { ArrowLeft, Download, Eye, FileUp, FolderOutput, LayoutTemplate, RotateC
 import { useGlobalStore } from "../store/globalStore";
 import { designConfig, initialDesignData } from "../config/puck/designConfig";
 import { publishedDesign } from "../config/puck/publishedDesign";
-import { applyUiTheme, DEFAULT_UI_THEME, type UiThemeTokens } from "../utils/puckTheme";
+import { publishedThemeTokens } from "../config/puck/publishedTheme";
+import { applyUiTheme, type UiThemeTokens } from "../utils/puckTheme";
 import { writeDesignFilesToLocalProject } from "../utils/puckSourceExport";
 import { designApi, type DesignTheme } from "../api/design";
 import { downloadDesign, getDesignStorageKey, loadDesign, parseDesignFile, saveDesign } from "../utils/puckDesignStorage";
@@ -15,6 +16,42 @@ import "./design-lab.css";
 type SaveState = "saved" | "saving" | "error";
 type ThemeTokenKey = keyof UiThemeTokens;
 const initialPublishedData = publishedDesign && typeof publishedDesign === "object" ? publishedDesign : initialDesignData;
+
+const createThemeStarter = (theme: UiThemeTokens): any => {
+  const base = JSON.parse(JSON.stringify(initialPublishedData));
+  const mapBlocks = (blocks: any[]): any[] => blocks.map((block) => {
+    const props = { ...(block.props || {}) };
+    if (block.type === "Hero") {
+      props.background = theme.panel;
+      props.textColor = theme.text;
+    } else if (block.type === "Heading") {
+      props.color = theme.text;
+    } else if (block.type === "Text") {
+      props.color = theme.muted;
+    } else if (block.type === "FeatureCard") {
+      props.accent = theme.accent;
+    }
+    if (Array.isArray(props.content)) props.content = mapBlocks(props.content);
+    return { ...block, props };
+  });
+  return {
+    ...base,
+    root: {
+      ...(base.root || {}),
+      props: {
+        ...((base.root && base.root.props) || {}),
+        title: "HoHo Manager — Current Theme",
+        background: theme.background,
+        textColor: theme.text,
+        accentColor: theme.accent,
+        surfaceColor: theme.surface,
+        fontFamily: theme.fontFamily,
+        radius: theme.radius,
+      },
+    },
+    content: mapBlocks(Array.isArray(base.content) ? base.content : []),
+  };
+};
 
 export const DesignLabPage: React.FC = () => {
   const currentUser = useGlobalStore((state) => state.currentUser);
@@ -26,7 +63,7 @@ export const DesignLabPage: React.FC = () => {
         : initialPublishedData;
     } catch { return initialPublishedData; }
   });
-  const [tokens, setTokens] = useState<UiThemeTokens>(DEFAULT_UI_THEME);
+  const [tokens, setTokens] = useState<UiThemeTokens>(publishedThemeTokens);
   const [themes, setThemes] = useState<DesignTheme[]>([]);
   const [activeThemeId, setActiveThemeId] = useState<string | null>(null);
   const [themeName, setThemeName] = useState("My HoHo theme");
@@ -57,16 +94,26 @@ export const DesignLabPage: React.FC = () => {
         if (!active) return;
         setIsOwner(access.isOwner);
         setAllowedUsers(access.allowedUsers);
-        const result = await designApi.themes();
+        const [result, serverThemeResponse] = await Promise.all([
+          designApi.themes(),
+          designApi.defaultTheme(),
+        ]);
         if (!active) return;
         setThemes(result.themes);
+        const liveServerTheme = serverThemeResponse.theme?.theme || publishedThemeTokens;
+        setTokens(liveServerTheme);
+        applyUiTheme(liveServerTheme);
         const hasLocalDraft = typeof window !== "undefined" && window.localStorage.getItem(storageKey) !== null;
         const ownTheme = result.themes.find((theme) => theme.ownerDiscordId === (currentUser?.id || "local-admin") && !theme.isDefault);
         const defaultTheme = result.themes.find((theme) => theme.isDefault);
         const selected = ownTheme || defaultTheme;
-        if (!hasLocalDraft && selected?.data?.puck) setData(selected.data.puck);
+        if (!hasLocalDraft) {
+          setData(selected?.data?.puck && typeof selected.data.puck === "object"
+            ? selected.data.puck
+            : createThemeStarter(liveServerTheme));
+        }
         if (selected?.data?.theme) {
-          const nextTokens = { ...DEFAULT_UI_THEME, ...selected.data.theme };
+          const nextTokens = { ...publishedThemeTokens, ...selected.data.theme };
           setTokens(nextTokens);
           applyUiTheme(nextTokens);
         }
@@ -134,7 +181,7 @@ export const DesignLabPage: React.FC = () => {
     const nextPuck = selected.data?.puck;
     if (nextPuck && typeof nextPuck === "object") persist(nextPuck);
     if (selected.data?.theme) {
-      const nextTokens = { ...DEFAULT_UI_THEME, ...selected.data.theme };
+      const nextTokens = { ...publishedThemeTokens, ...selected.data.theme };
       setTokens(nextTokens);
       applyUiTheme(nextTokens);
     }
