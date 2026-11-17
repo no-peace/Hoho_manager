@@ -55,7 +55,7 @@ Official references:
 - Motion settings.
 
 ### Motion
-Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and pulse. Duration and delay are bounded options. The preview and production shell must respect `prefers-reduced-motion`.
+Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and pulse. Duration and delay are bounded options. These are production-facing settings, not preview-only decoration: Part C must apply them to the corresponding real Studio header, workspace, navigation and panel surfaces. The Design Lab preview and production shell must both respect `prefers-reduced-motion`; when reduction is requested, suppress preset animation and its delay (do not merely shorten it).
 
 ## Draft and export behavior
 
@@ -196,22 +196,38 @@ All panels require:
 
 Part C must treat the Desktop/Mobile pair as one atomic published configuration, with a schema version of `1`. Server validation must independently implement the same allowlists and constraints above; client validation is not an authorization or security boundary.
 
-The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object:
+The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object. The resolved object is the explicit production contract; Part C must consume these resolved fields rather than reading arbitrary Puck props at runtime.
 
-- `desktop`: `headerHeight`, `headerPadding`, `logoSize`, `headerBackground`, `headerBorder`, `editorRatio` (fraction 0.28–0.72), `inspectorWidth`, `workspaceGap`, `panelOrder`, `inspectorPosition`, `borderColor`, per-panel `editorBackground`/`previewBackground`/`inspectorBackground`, per-panel padding and radius.
-- `mobile`: `headerHeight`, `headerPadding`, `logoSize`, `headerBackground`, `headerBorder`, `defaultPane`, `showInspector` (boolean), `inspectorHeight`, `workspaceGap`, `panelPadding`, `borderColor`, per-panel backgrounds/radii, inspector padding, `navHeight`, `navPadding`, `navBackground`, `navAccent`, `tabOrder`, `showLabels` (boolean), `activeTab`, and the three resolved navigation labels.
+- `desktop`: header dimensions/colors plus `headerMotion`; workbench split, inspector geometry, order, gap, border and `workspaceMotion`; each panel's background, padding, radius and label (`editorLabel`, `previewLabel`, `inspectorLabel`); `showToolbar` for the Desktop Editor; and `editorMotion`, `previewMotion`, `inspectorMotion`.
+- `mobile`: header dimensions/colors plus `headerMotion`; default pane, inspector-preview visibility/height, workspace spacing and `workspaceMotion`; each panel's background, padding/radius where supported and label; Mobile Editor `showToolbar`; `editorMotion`, `previewMotion`, `inspectorMotion`; navigation dimensions/colors/order/label visibility/active state and resolved tab labels; and `navMotion`.
+- Each resolved motion value has the typed shape `{ animation, duration, delay }`. The allowed animation presets are `none | fade | fade-up | slide-left | slide-right | zoom-in | float | pulse`; duration is one of `180ms | 300ms | 500ms | 700ms | 1200ms | 2000ms | 3000ms`; delay is one of `0ms | 100ms | 200ms | 350ms`.
+- `showToolbar` is a boolean resolved independently for Desktop and Mobile from the corresponding `EditorPanel`.
+- Panel labels are trimmed, validated text (1–48 characters, no control characters) and are resolved independently for Desktop and Mobile.
 
-`getAppLayoutCssVariables(resolved)` maps the CSS-supported dimensions, colors, panel geometry and positioning to the existing `--hoho-layout-*` custom properties. Navigation text and selected-tab state are typed resolved values and must be applied as text/class state by the real shell, not interpolated into CSS.
+`getAppLayoutCssVariables(resolved)` maps the CSS-supported dimensions, colors, panel geometry and positioning to the existing `--hoho-layout-*` custom properties. Motion is intentionally exposed as typed values rather than arbitrary CSS. Part C must map each preset through a fixed, code-owned animation/class allowlist and apply the validated duration and delay as bounded timing values; never pass a document-provided CSS string or selector to the DOM. Panel and navigation labels must be assigned as text content, and selected-tab state as a fixed class/state. Do not interpolate labels into CSS or HTML.
+
+### Required production application by Part C
+
+| Resolved setting | Required real Studio behavior |
+|---|---|
+| `headerMotion` | Apply to the corresponding Desktop/Mobile Studio header. |
+| `workspaceMotion` | Apply to the Desktop workbench or Mobile workspace container. |
+| `navMotion` | Apply to the real Mobile bottom navigation. |
+| `editorMotion`, `previewMotion`, `inspectorMotion` | Apply independently to the corresponding panel surfaces at each breakpoint. |
+| `editorLabel`, `previewLabel`, `inspectorLabel` | Render as the visible headings/titles of the real Editor, Preview and Inspector panels at the matching breakpoint. |
+| `showToolbar` | Show or hide only the real editor toolbar for that breakpoint. Hiding it must not hide the editor, message content, or unrelated critical controls. |
+
+For reduced motion, Part C must detect `prefers-reduced-motion: reduce` in the production shell and disable the configured entrance/loop animation and delay for every motion-bearing region. This override takes precedence over the published motion values. The preview must use the same reduced-motion policy.
 
 Part C must:
 1. Validate Desktop and Mobile fully before any write.
 2. Persist both documents in one versioned record, with publisher identity and timestamps as required by Part C.
 3. Commit both or neither; never publish a partial responsive pair.
 4. Resolve the pair using the same documented defaults/ranges and fall back to the built-in Desktop/Mobile defaults if the stored record is missing, malformed or unsupported.
-5. Apply only the resolved allowlisted values to the real Studio shell. Never render Puck documents as arbitrary production markup and never mount a second Studio instance for preview.
+5. Apply only the resolved allowlisted values to the real Studio shell as specified above. Never render Puck documents as arbitrary production markup and never mount a second Studio instance for preview.
 6. Keep local drafts distinct from published server state. The local draft namespace is not a publish store.
 
-The Design Lab preview's `activeTab` is a presentation setting only. It does not dispatch messages, change the real editor pane, mutate message state, or trigger Discord operations.
+The Mobile `showInspector` setting and `activeTab` are Design Lab preview-only settings. They do not remove the production inspector, change the real editor pane, dispatch messages, mutate message state, or trigger Discord operations. Mobile tab labels, by contrast, are production navigation text and must be applied to the real navigation.
 
 ## Publishing and runtime integration status
 
