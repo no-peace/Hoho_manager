@@ -47,7 +47,7 @@ describe("PublishAppLayoutControl", () => {
 
   it("validates both Desktop and Mobile documents before confirmation or publishing", async () => {
     const docs = makeDocuments();
-    docs.mobile.content[1].props.panelPadding = 999;
+    docs.mobile.content[0].props.panelPadding = 999;
 
     render(<PublishAppLayoutControl isOwner documents={docs as any} />);
     fireEvent.click(screen.getByRole("button", { name: /Publish Desktop + Mobile/i }));
