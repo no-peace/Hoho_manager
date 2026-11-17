@@ -52,6 +52,20 @@ export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) =
 
   const adminKey = req.get("x-admin-key");
   const hasValidAdminKey = Boolean(adminKey && safeEqual(adminKey, env.adminApiKey));
+  const machineStaffId = req.get("x-staff-id");
+
+  // The gateway worker may act on behalf of the Discord user who invoked a
+  // slash command. The shared admin key authenticates the worker; the staff
+  // middleware still verifies this actor against the live staff-access table.
+  if (hasValidAdminKey && machineStaffId && /^\\d{17,20}$/.test(machineStaffId)) {
+    req.user = await userRepository.upsert({
+      discordId: machineStaffId,
+      username: req.get("x-staff-username")?.trim() || `Discord ${machineStaffId}`,
+      avatar: null,
+      role: "editor",
+    });
+    return next();
+  }
 
   if (!env.isProd || hasValidAdminKey) {
     req.user = await userRepository.findByDiscordId("local-admin");
