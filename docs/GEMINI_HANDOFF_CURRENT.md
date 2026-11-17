@@ -20,8 +20,8 @@
 - Removed server-side webhook URL message delivery and webhook inspection APIs from `discordService.ts`.
 - Removed the direct client webhook sender module, webhook URL parser, shared webhook URL regex, and webhook-specific parser tests.
 - Removed webhook URL configuration from the Action Builder.
-- Removed webhook profile repository wiring, the repository file, and the shared webhook/bot profile record types.
-- Migration 011 already drops the `webhook_profiles` and `bot_profiles` tables. No new destructive table migration was required.
+- Removed webhook profile repository wiring, the repository file, shared webhook/bot profile record types, and the obsolete staff permission flags `can_use_webhooks` and `can_override_profile` from the access API and client types.
+- Migration 011 already drops the `webhook_profiles` and `bot_profiles` tables. New migration 018 drops the remaining `settings.bot_profile_id`, `staff_access.can_use_webhooks` and `staff_access.can_override_profile` columns.
 - The send route explicitly rejects legacy `webhookUrl` input.
 - The legacy `send_webhook_message` action type/handler remains only as a compatibility tombstone: old saved flows receive a structured failure and cannot send. It is not exposed in the Action Builder.
 - Discord's interaction callback mechanism is still present. It uses the interaction token for required component/modal acknowledgements; it is not arbitrary webhook URL sending.
@@ -30,7 +30,7 @@
 
 - Removed `profileId` selection from the client Discord API, Discord routes, configured-bot service methods and author enrichment.
 - Removed bot-profile selection from the settings API/repository/types and stopped initializing the legacy setting.
-- The old `bot_profiles` table is already dropped by migration 011.
+- Removed the obsolete webhook/profile permission flags from staff records and API responses. Migration 018 drops the legacy setting/permission columns; migration 011 already drops the old profile tables.
 - All message, edit, channel lookup and author-enrichment paths now use the one configured server bot.
 - The legacy nullable settings schema column may remain for compatibility, but application code no longer reads or writes it.
 - Sender username/avatar overrides remain unsupported and are not reintroduced.
@@ -74,6 +74,8 @@
 
 - The audit ledger inventories all **355** current tracked files.
 - The complete 23-file Bot package has been read. Findings include command authorization, gateway relay timing, startup validation and documentation corrections; fixes/tests are recorded above.
+- The 20-file server action-handler directory has received an initial failure-path pass. All explicit action error branches inspected use `actionFailed()`; full dependency/caller review remains open.
+- The 13 server routes have begun a focused review. Access, authentication, configuration, design publishing, executors, health and templates were inspected; complete validation and caller tracing remains open.
 - Critical action execution, interaction handling, send/Discord routes, settings, Puck resolver and selected client/server test paths have been reviewed.
 - The audit is **not complete**. Client, server, shared, root/infrastructure, database migration, tests and docs still need systematic file-by-file and caller/dependency review. The ledger is authoritative for per-file status.
 - Do not mark a file reviewed from a search result or excerpt alone. Review its full contents and relevant callers/dependencies.
