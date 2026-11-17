@@ -143,11 +143,11 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 **Status:** IN PROGRESS — authorized  
 **Branch:** `agent/ui-regressions`  
 **Scope:** Part A only. Audit the existing V12/login/preview/mobile quick-edit/FlowBuilder work, identify residual gaps and fix only verified issues.  
-**Current batch:** A1 — targeted Components V2 quick-edit regression (implementation committed; verification pending)  
+**Current batch:** A2 — login hero canvas resize regression (implementation committed; verification pending)  
 **Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` (new)  
-**Files changed:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`  
-**Tests executed:** Added 3 focused Vitest cases for nested lookup, depth-first ordering and missing type. Not executed: connected Terminal endpoint returned HTTP 404; GitHub reports no status checks or workflow runs for the commit.  
-**Commit SHA:** `025f42518cdd4498db613d5219af8097bdc3dcba` (implementation/test commit; branch also contains status and utility/panel commits)  
+**Files changed:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx`  
+**Tests executed:** Added 3 focused tree-lookup Vitest cases and 1 canvas resize-redraw case. Not executed: connected Terminal endpoint returned HTTP 404; GitHub reports no status checks or workflow runs for the branch commits.  
+**Commit SHA:** Code/test commits: `ba1324cb2dd12748676108701937c12a41b4f829`, `64264c1f17afabe3279cb01fc7ee93dc86c7795d`, `025f42518cdd4498db613d5219af8097bdc3dcba`, `972583df3caa88e3b705c485905abd637c341f09`, `0fcbbb0c0dae8d5370b26f72f0f0cc56d32298b6`, `c4990761da324f45a5fa8247e8bc1022bbdc5e3a`.  
 **Findings:** Quick-edit previously searched only top-level components for TextDisplay, despite nested V2 structures being supported by the editor and tree utilities. It could display an empty field and create a new top-level TextDisplay instead of editing the nested one. V2 detection also differed from MessageEditor/MessagePreview by checking only the flags bit.  
 **Implementation:** Added a recursive depth-first component-type lookup; quick-edit now uses it, recognizes both the V2 flag and internal V2 mode, and restores the selected-message inspector if it must synchronize the active message index. Added focused utility regression tests.  
 **Verification status:** Source diff reviewed. Typecheck, tests, build and browser interaction checks remain unverified because the connected local Terminal endpoint is unavailable and no GitHub Actions checks ran.  
