@@ -169,88 +169,28 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Studio runtime integration
 
-**Status:** REVIEW REQUIRED — runtime source accepted; regression tests submitted  
+**Status:** REVIEW REQUIRED — runtime source accepted; regression-test batch corrected and awaiting Head Agent review  
 **Branch:** `agent/layout-publishing`  
-**Scope:** Part C Studio runtime integration only. Backend/API/migration implementation remains the previously reviewed batch integrated through PR #47.  
-**Current batch:** Three authorized focused regression test files committed for Head Agent review.
+**Scope:** Part C Studio runtime integration and its explicitly authorized client regression tests. Backend/API/migration work remains integrated through PR #47; runtime source remains source-review accepted.
 
-**Files claimed / in progress (exclusive ownership under Directive 024):**
-1. `client/src/components/layout/StudioLayout.tsx`
-2. `client/src/components/layout/Header.tsx`
-3. `client/src/components/layout/SplitPane.tsx`
-4. `client/src/components/editor/PropertyPanel.tsx`
-5. `client/src/pages/DesignLabPage.tsx`
-6. `client/src/hooks/usePublishedAppLayout.ts` (new; confirmed absent before implementation)
-7. `client/src/utils/appLayoutApi.ts` (new; confirmed absent before implementation)
-8. `client/src/components/design/PublishAppLayoutControl.tsx` (new; confirmed absent before implementation)
-9. `client/src/styles/appLayoutRuntime.css` (new; confirmed absent before implementation)
+**Current batch:** Head Agent requested a targeted correction to the responsive-selection regression test. The `matchMedia()` mock now exposes `matches` through a getter that reads the mutable `mediaMatches` variable, so changing the variable before firing the media listener updates the mocked query result.
 
-**Files changed by this runtime batch:**
-- The nine authorized files listed above.
-- `docs/AGENTS.md` — this Agent 3 status section only.
-
-**Implementation delivered:**
-- Added credentialed GET/PUT client calls for `/api/design/app-layout`; PUT sends schema version 1 and both responsive documents after client validation.
-- Added a default-safe runtime hook that resolves both documents through `resolveAppLayoutData()`, applies `getAppLayoutCssVariables()`, selects Desktop/Mobile with a cleaned-up media-query listener, and refreshes on mount, focus, visibility, page show and navigation return with a cooldown/no polling. Failed refreshes preserve the last valid published configuration; initial failures/missing/invalid records retain built-in defaults.
-- Applied header dimensions/colors/motion, editor-preview ratio/order/gap, panel surfaces/padding/radii/labels/motion, inspector dimensions/position and Mobile navigation dimensions/colors/order/labels/visibility/motion to the production Studio shell. Mobile initial pane is applied once and is not reset after user interaction or later configuration refreshes.
-- Kept Discord message preview rendering and message/editor/dispatch/auth state untouched inside their existing components. Toolbar visibility targets only the MessageEditor footer action bar; it does not hide message content or message-card controls.
-- Kept preview-only Mobile `showInspector`, `inspectorHeight` and `activeTab` out of production behavior. All document-derived labels are rendered as text; motion values and styles use the approved resolver/allowlists and existing CSS variables. Reduced-motion preferences suppress configured CSS and mobile-tab motion.
-- Added a separate owner-only Design Lab publish control. It validates both documents, confirms the atomic pair publish, reports loading/errors and only shows success after the server response. It displays the server publisher/timestamp and whether the local draft differs from the published pair. Local draft autosave/import/export remains separate from server publishing.
-
-**Runtime commit series:**
-- Claim record: `479819705f3c6148716d79d2ec728f4425226dd4`
-- Runtime API/hook/publish control/CSS: `e0df70cd1e9036d395046915d5de3e7cdf760cb3`
-- Studio/Header/SplitPane/PropertyPanel wiring: `e05d80a2e8b47d394f8aa3974e7f7a08308cc8c0`
-- Design Lab publishing integration: `1c4e4787a79ff02fb80a1b281c7a8194ae7e5071`
-- Responsive motion/workspace spacing: `5d691ca9400630584414a3dd53bff5b8cb004603`
-- Inspector/lifecycle refinements: `0fdf52a34257da63faaf94fcaa7c1c28469f1dd0`
-- Navigation-return refresh: `55fe828b1cb5ce58df192775ffd22f1abece3ac5`
-- Resolved inspector CSS-variable mapping: `81d42fcafdf3d03c0bc717bb04e9fea0d8fd6b0e`
-- Published-status error handling: `3716d9a5711ee42656c569b8db4f37d0332fee07`
-- Local-vs-published draft state: `7ab60b1a9b98f5641d490ecdda674d6c06c00c77`
-- Resolved editor ratio normalization: `2fff5ebb7b078db45eb6268777d73822cbc77509`
-- **Final status update:** this commit.
-
-**Tests executed:** None. npm tests, typecheck and build were not run, as deferred by the user. Focused regression test files were not added because Directive 024's exact authorized file list does not include test paths; separate Head Agent authorization is required before editing test files.
-
-**Branch/integration note:** Last comparison before this status update reported `agent/layout-publishing` as 38 commits ahead and 83 behind `main`. The branch was not merged, rebased, force-pushed or synchronized by rewriting history. It still contains the previously submitted backend batch and its history; this runtime batch did not modify backend routes, repositories, migrations or backend tests. Head Agent should selectively integrate the nine authorized runtime files and preserve the latest `main` control document.
-
-**Remaining work / risks:**
-- Head Agent source review of the runtime diff.
-- Authorize exact test paths if focused client regression tests are required before integration.
-- Run automated/browser verification only during the deferred final verification stage.
-- Resolve branch integration through the Head Agent's controlled selective integration process; do not merge/rebase this branch.
-
-**Next action:** Wait for Head Agent review. Do not start Part D or any theme-related work.
-
-
-**Directive 026 test-file ownership claimed before editing (exclusive):**
-1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` (new)
-2. `client/src/utils/__tests__/appLayoutApi.test.ts` (new)
-3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx` (new)
-
-Only these three test paths were added. Runtime source files remain SOURCE REVIEW ACCEPTED and were not modified.
-
-**Regression coverage added:**
-- Hook fallback for missing, failed, malformed and unsupported-version responses.
-- Desktop/Mobile responsive selection and media-query listener cleanup.
-- Last-valid-layout preservation after a failed refresh.
-- Navigation-return refresh and lifecycle listener cleanup.
-- Credentialed, uncached GET and atomic version-1 PUT request contracts.
-- Client validation of both documents before network publishing; server error/status propagation.
-- Owner-only publishing visibility, both-document validation, confirmation cancellation, pending state, server-confirmed success and failure/status-load errors.
-
-**Test batch commit:** `8d6dac91d332b04f8977e52be4b573cd34355cf3`
-
-**Verification:** No npm tests, typecheck or build were run, as explicitly deferred. Tests have been source-reviewed only; execution remains pending Head Agent authorization/final verification.
-
-**Changed paths in the test commit (exactly):**
+**Files claimed / in progress (exclusive under Directive 026):**
 1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`
 2. `client/src/utils/__tests__/appLayoutApi.test.ts`
 3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 
-The test batch is submitted as **REVIEW REQUIRED**. Runtime source files were not edited. Wait for Head Agent review.
+**Files changed in the correction batch:**
+- `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` only.
 
+**Regression-test commits:**
+- Initial three-file batch: `8d6dac91d332b04f8977e52be4b573cd34355cf3`
+- Head Agent correction — dynamic `matchMedia().matches` getter: `37f4db89f299c899ae8941e9ead68f954bc2ea0c`
+
+**Verification:** No npm tests, typecheck or build were run, as explicitly deferred. The corrected test has not been executed.
+
+**Restrictions observed:** No runtime source files or other test files were modified. No merge, rebase or force-push was performed. Wait for Head Agent review; do not begin unrelated work.
+ 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
 **Status:** INSPECTION ONLY  
@@ -506,3 +446,19 @@ The report's branch counts were stale and must not be used as current status. Pr
 - Agent 3 / Part C: **IN PROGRESS — runtime implementation authorized under Directive 024**. Backend/API/migration batch already integrated.
 - Agent 4 / Part D: **BLOCKED — not authorized**. Part E: **COMPLETED — source reviewed and integrated**. Do not start Part D until Agent 3 runtime is integrated and Head Agent provides a separate exact file authorization.
 - Head Agent owns Parts F, G and H. Do not run npm verification until the complete implementation program is ready for final verification.
+
+
+## 26. Head Agent review — Agent 3 Part C Studio runtime (2026-11-17)
+
+- **Branch reviewed:** `agent/layout-publishing`, submitted HEAD `12181bedb6ae82f3a48afbed6d3f942107fe17ad`.
+- The branch comparison against main is diverged (39 commits ahead / 83 behind at review time). The comparison includes the previously integrated Part C backend batch and the submitted runtime batch. Do not merge the branch wholesale. Head Agent will selectively integrate only explicitly accepted files onto current main and preserve this control document.
+- **Runtime source review:** The nine authorized runtime files were inspected. No source-level blocker was found in the API request shape, use of the public GET /api/design/app-layout and owner-only PUT endpoint, Desktop/Mobile resolution, fallback behavior, controlled refresh, owner-gated Design Lab UI, draft separation, or the production Studio wiring. The footer-toolbar selector was checked against the existing MessageEditor DOM and targets its footer action bar, not message content or preview controls.
+- The implementation consumes `resolveAppLayoutData()` and `getAppLayoutCssVariables()` from the current Part B utility on main. During selective integration, do not copy the stale branch copy of any shared utility; use the current main version, which includes the Mobile Editor/Preview padding variables.
+- **Decision:** Runtime implementation is **SOURCE REVIEW ACCEPTED — REGRESSION TESTS REQUIRED**. This is not merge approval or Part C completion. No npm checks, browser QA, or deployment verification were run.
+- The agent did not add client regression tests because test paths were not in Directive 024. The Head Agent now grants exclusive test-file ownership on `agent/layout-publishing` for this follow-up batch:
+  1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` (new)
+  2. `client/src/utils/__tests__/appLayoutApi.test.ts` (new)
+  3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx` (new)
+- Add focused Vitest tests using existing repository conventions for: built-in fallback on missing/failed/invalid API data; responsive Desktop/Mobile selection and listener cleanup; preserving last valid published state across failed refresh; credentialed GET/PUT request contract and validation; owner-only publish UI; both-document validation; and server-confirmed success/error behavior. Mock network and browser confirmation; do not make live requests.
+- Do not modify any existing source file or any path outside the three authorized test paths, except for updating only Agent 3's own status section in `docs/AGENTS.md` to record the exact test-file claim and final report. Re-fetch the latest main control document before editing and before committing. The Head Agent will exclude the branch copy of `docs/AGENTS.md` during selective integration. Work only on `agent/layout-publishing`; no merge/rebase/force-push and no npm test/typecheck/build. Mark the test batch REVIEW REQUIRED and report exact changed paths and commit SHA.
+- Agent 3 Part C remains **REVIEW REQUIRED** until the tests are source-reviewed and the nine runtime files plus accepted tests are selectively integrated. Agent 4 Part D remains blocked until Part C integration is complete and separate exact authorization is issued.
