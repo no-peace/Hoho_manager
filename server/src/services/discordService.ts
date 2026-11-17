@@ -109,7 +109,7 @@ const readErrorMessage = (data: unknown, status: number): string => {
  * The optional argument is retained temporarily for legacy internal callers,
  * but is deliberately ignored so stored custom tokens can never be selected.
  */
-export const resolveBotToken = async (_legacyProfileId?: number | null): Promise<string> => {
+export const resolveBotToken = async (): Promise<string> => {
   if (!env.discord.botToken) {
     throw new ApiError(503, "No bot token is configured on the server", {
       code: "bot_token_missing",
@@ -279,12 +279,8 @@ export const getChannelGuildId = async (channelId: string): Promise<string | nul
   return typeof channel?.guild_id === "string" ? channel.guild_id : null;
 };
 
-export const getGuildEmojis = async (
-  guildId: string,
-  profileId: number | string | null = null,
-): Promise<DiscordEmojiSummary[]> => {
-  const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
+export const getGuildEmojis = async (guildId: string): Promise<DiscordEmojiSummary[]> => {
+  const token = await resolveBotToken();
   const emojis = await apiRequest<DiscordEmojiSummary[]>(
     "GET",
     `/guilds/${encodeURIComponent(guildId)}/emojis`,
@@ -300,7 +296,6 @@ export const getGuildEmojis = async (
 };
 
 export interface BotSendOptions {
-  profileId?: number | null;
   files?: DiscordAttachmentFile[];
 }
 
@@ -308,9 +303,9 @@ export interface BotSendOptions {
 export const sendChannelMessage = async (
   channelId: string,
   payload: DiscordMessagePayload,
-  { profileId = null, files }: BotSendOptions = {},
+  { files }: BotSendOptions = {},
 ): Promise<DiscordMessage | null> => {
-  const token = await resolveBotToken(profileId);
+  const token = await resolveBotToken();
 
   const hasFiles = files && files.length > 0;
   const body = hasFiles
@@ -470,12 +465,8 @@ export const getGuildPreview = async (
   }
 };
 
-export const getGuildChannels = async (
-  guildId: string,
-  profileId: number | string | null = null,
-): Promise<DiscordChannelSummary[]> => {
-  const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
+export const getGuildChannels = async (guildId: string): Promise<DiscordChannelSummary[]> => {
+  const token = await resolveBotToken();
   return (
     (await apiRequest<DiscordChannelSummary[]>(
       "GET",
@@ -508,12 +499,8 @@ export const getGuildRolesWithToken = async (
     .sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
 };
 
-export const getGuildRoles = async (
-  guildId: string,
-  profileId: number | string | null = null,
-): Promise<DiscordRoleSummary[]> => {
-  const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
+export const getGuildRoles = async (guildId: string): Promise<DiscordRoleSummary[]> => {
+  const token = await resolveBotToken();
   return getGuildRolesWithToken(guildId, token);
 };
 
@@ -631,10 +618,7 @@ export const getDiscordUserAvatarUrl = (user: {
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 };
 
-export const getDiscordUser = async (
-  userId: string,
-  profileId: number | null = null,
-): Promise<DiscordMemberSummary> => {
+export const getDiscordUser = async (userId: string): Promise<DiscordMemberSummary> => {
   if (!/^\d{17,20}$/.test(userId)) {
     throw ApiError.badRequest("Invalid Discord user ID");
   }
@@ -702,16 +686,11 @@ export const getMemberSearchCacheStats = (): CacheStats => {
   return memberSearchCache.getStats();
 };
 
-export const searchGuildMembers = async (
-  guildId: string,
-  query: string,
-  profileId: number | string | null = null,
-): Promise<DiscordMemberSummary[]> => {
+export const searchGuildMembers = async (guildId: string, query: string): Promise<DiscordMemberSummary[]> => {
   const trimmed = (query ?? "").trim();
   if (!trimmed) return [];
 
-  const pid = profileId != null ? Number(profileId) : null;
-  const cacheKey = `${pid ?? "default"}:${guildId}:${trimmed.toLowerCase()}`;
+  const cacheKey = `${guildId}:${trimmed.toLowerCase()}`;
 
   // 1. Check LRU/TTL Cache
   const cached = memberSearchCache.get(cacheKey);
@@ -723,7 +702,7 @@ export const searchGuildMembers = async (
 
   const searchPromise = (async () => {
     try {
-      const token = await resolveBotToken(pid);
+      const token = await resolveBotToken();
 
       // If query is a snowflake ID, attempt direct member lookup via REST API
       if (/^\d{17,20}$/.test(trimmed)) {
@@ -785,10 +764,7 @@ export const searchGuildMembers = async (
   return searchPromise;
 };
 
-export const getChannelMessages = async (
-  channelId: string,
-  profileId: number | null = null,
-): Promise<DiscordMessageRecord[]> => {
+export const getChannelMessages = async (channelId: string): Promise<DiscordMessageRecord[]> => {
   const token = await resolveBotToken(profileId);
   return (
     (await apiRequest<DiscordMessageRecord[]>(
@@ -799,11 +775,7 @@ export const getChannelMessages = async (
   );
 };
 
-export const getChannelMessage = async (
-  channelId: string,
-  messageId: string,
-  profileId: number | null = null,
-): Promise<DiscordMessageRecord | null> => {
+export const getChannelMessage = async (channelId: string, messageId: string): Promise<DiscordMessageRecord | null> => {
   const token = await resolveBotToken(profileId);
   return apiRequest<DiscordMessageRecord>(
     "GET",
