@@ -140,17 +140,19 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 
 ## 9. Agent 1 — Part A: UI regressions
 
-**Status:** IN PROGRESS — authorized  
+**Status:** REVIEW REQUIRED — Part A source batch accepted by Head Agent source review; latest main synchronized; final verification deferred  
 **Branch:** `agent/ui-regressions`  
-**Scope:** Part A only. Audit the existing V12/login/preview/mobile quick-edit/FlowBuilder work, identify residual gaps and fix only verified issues.  
-**Current batch:** Baseline reconciliation  
-**Files claimed / in progress:** None reported yet  
-**Files changed:** None  
-**Tests executed:** None reported  
-**Commit SHA:** None  
-**Next action:** Fetch latest main, create/use assigned branch only if Head Agent confirms it exists, inspect source and handoff, then report file claims before edits.
+**Scope:** Part A only. V12/login/preview/mobile quick-edit/FlowBuilder regression fixes.  
+**Current batch:** Controlled integration sync completed; awaiting Head Agent integration review and final verification  
+**Files claimed / in progress:** None  
+**Files changed by Part A:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx`, `client/src/components/preview/ActionRowPreview.tsx`, `client/src/components/preview/__tests__/ActionRowPreview.test.tsx`, `client/src/components/layout/StudioLayout.tsx`, `client/src/utils/previewSelection.ts`, `client/src/utils/__tests__/previewSelection.test.ts`, `client/src/components/preview/MessagePreview.tsx`, `client/src/components/preview/__tests__/MessagePreview.test.tsx`.  
+**Tests executed:** None. Focused regression tests were added for nested TextDisplay lookup, canvas resize redraw, unsupported ActionRow animation classes, preview selection behavior and the actual MessagePreview interactive/non-interactive click path. npm tests, typecheck, build and browser verification were not run, per instruction.  
+**Source review:** Head Agent accepted the Part A source batch for integration review, including the A5 callback-order correction and rendered click-path tests. This is not final runtime/test verification and does not mark Part A COMPLETED.  
+**Synchronization:** Merged latest `main` into this branch with merge commit `c547661fc38643f88ae2107a14a760cc34097c69`. The exact latest-main `docs/AGENTS.md` was preserved, then only this Agent 1 section was updated. Main's Agent 3 backend files and Agent 4 Part E files remain present. No Part C runtime files were changed.  
+**Part A implementation commits:** `ba1324cb2dd12748676108701937c12a41b4f829`, `64264c1f17afabe3279cb01fc7ee93dc86c7795d`, `025f42518cdd4498db613d5219af8097bdc3dcba`, `972583df3caa88e3b705c485905abd637c341f09`, `0fcbbb0c0dae8d5370b26f72f0f0cc56d32298b6`, `c4990761da324f45a5fa8247e8bc1022bbdc5e3a`, `ed74665e9031978b577848d38b81a9420f52c74e`, `84db008e9f4606d4c9730bf663ad3bf362ffed80`, `47ea6a0a8cf3ecb975f7348da91198c91895e6de`, `ee6d91293963c911819106c6099c8af20956b1d5`, `d64e379d1e8c7566c1b97a452ec898d599a12796`, `22de5562321248068b378579e901205a99542761`, `02bd91776fd2f27ea9881eba78ff837491aa7c08`, `69c308d91490922dff083e954eae1c7f9ef6911c`.  
+**Remaining work:** Await Head Agent integration review and final verification. Do not begin Part B or Part C runtime work.
 
-Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coordinate before touching shared Studio shell files.
+Restrictions: Do not edit Puck Design Lab files or Part C publishing/runtime files. Do not merge this branch into main. Coordinate before touching shared Studio shell files.
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
