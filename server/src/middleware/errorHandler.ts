@@ -51,7 +51,7 @@ export const errorHandler = (
     code: isApiError ? error.code : "internal_error",
   };
 
-  if (isApiError && error.details !== undefined) body.details = error.details;
+  if (isApiError && error.expose && error.details !== undefined) body.details = error.details;
   // Include the stack only in development to speed up debugging.
   if (env.isDev && status >= 500 && error instanceof Error) body.stack = error.stack;
 
