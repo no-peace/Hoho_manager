@@ -431,4 +431,11 @@ export const migrations: readonly Migration[] = [
       );
     `,
   },
+  {
+    id: "016_remove_legacy_app_layout_publishers",
+    sql: `
+      -- Remove the temporary allowlist table created by the unapproved Part C draft.
+      DROP TABLE IF EXISTS app_layout_publishers;
+    `,
+  },
 ];
