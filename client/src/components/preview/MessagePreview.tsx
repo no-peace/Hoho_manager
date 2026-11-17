@@ -9,7 +9,7 @@ import { ContainerPreview } from "./ContainerPreview";
 import { AutoComponent } from "./ComponentPreview";
 import { ActionRowPreview } from "./ActionRowPreview";
 import { useGlobalStore } from "../../store/globalStore";
-import { useMessageStore, type AttachedFile } from "../../store/messageStore";
+import { useMessageStore, type AttachedFile, type EmbedPreviewPart } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
 import { scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 
@@ -114,9 +114,10 @@ const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
 interface MessagePreviewProps {
   onSelectMessage?: (index: number) => void;
   onSelectPreviewComponent?: (index: number, componentId: string, isInteractive: boolean) => void;
+  onSelectPreviewEmbed?: (index: number, embedId: string, part?: EmbedPreviewPart, fieldId?: string) => void;
 }
 
-export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: MessagePreviewProps) => {
+export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSelectPreviewEmbed }: MessagePreviewProps) => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
@@ -256,13 +257,31 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent }: Me
                   <div
                     key={index}
                     onClick={(event) => {
-                      const componentElement = (event.target as HTMLElement).closest<HTMLElement>("[data-preview-component-id]");
+                      const target = event.target as HTMLElement;
+                      const embedElement = target.closest<HTMLElement>("[data-preview-embed-id]");
+                      const embedId = embedElement?.dataset.previewEmbedId;
+                      if (embedId) {
+                        const partElement = target.closest<HTMLElement>("[data-preview-embed-part]");
+                        const part = partElement?.dataset.previewEmbedPart as EmbedPreviewPart | undefined;
+                        const fieldId = partElement?.dataset.previewEmbedFieldId;
+                        if (target.closest("a")) event.preventDefault();
+                        setActiveMessageIndex?.(index);
+                        if (onSelectPreviewEmbed) {
+                          onSelectPreviewEmbed(index, embedId, part, fieldId);
+                        } else {
+                          selectComponent({ kind: "embed", id: embedId, part, fieldId });
+                        }
+                        return;
+                      }
+
+                      const componentElement = target.closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
                       if (componentId) {
                         setActiveMessageIndex?.(index);
-                        const isInteractive = componentElement?.dataset.previewInteractive === "true";
-                        onSelectPreviewComponent?.(index, componentId, isInteractive);
-                        if (!onSelectPreviewComponent) {
+                        const isInteractive = componentElement.dataset.previewInteractive === "true";
+                        if (onSelectPreviewComponent) {
+                          onSelectPreviewComponent(index, componentId, isInteractive);
+                        } else {
                           selectComponent({ kind: "component", id: componentId });
                         }
                         return;
