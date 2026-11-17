@@ -3,6 +3,7 @@ import { BaseRepository } from "./baseRepository.js";
 
 interface InteractionReceiptRow {
   response_json: string | null;
+  duplicate_delivery: number;
 }
 
 const RECEIPT_TTL_SECONDS = 15 * 60;
@@ -15,6 +16,7 @@ export class InteractionReceiptRepository extends BaseRepository {
        VALUES (@interactionId, @expiresAt, @createdAt)
        ON CONFLICT(interaction_id) DO UPDATE SET
          response_json = NULL,
+         duplicate_delivery = 0,
          expires_at = @expiresAt,
          created_at = @createdAt
        WHERE interaction_receipts.expires_at <= @createdAt`,
@@ -45,12 +47,36 @@ export class InteractionReceiptRepository extends BaseRepository {
     }
   }
 
-  async complete(interactionId: string, response: InteractionResponse): Promise<void> {
+  async markDuplicate(interactionId: string): Promise<void> {
     await this.db.run(
-      `UPDATE interaction_receipts SET response_json = @response
-       WHERE interaction_id = @interactionId`,
-      { interactionId, response: JSON.stringify(response) },
+      `UPDATE interaction_receipts SET duplicate_delivery = 1
+       WHERE interaction_id = @interactionId
+         AND expires_at > @now
+         AND response_json IS NULL`,
+      { interactionId, now: new Date().toISOString() },
     );
+  }
+
+  async complete(
+    interactionId: string,
+    response: InteractionResponse,
+    duplicateResponse: InteractionResponse = response,
+  ): Promise<boolean> {
+    await this.db.run(
+      `UPDATE interaction_receipts
+       SET response_json = CASE WHEN duplicate_delivery = 1 THEN @duplicateResponse ELSE @response END
+       WHERE interaction_id = @interactionId`,
+      {
+        interactionId,
+        response: JSON.stringify(response),
+        duplicateResponse: JSON.stringify(duplicateResponse),
+      },
+    );
+    const row = await this.db.get<{ duplicate_delivery: number }>(
+      "SELECT duplicate_delivery FROM interaction_receipts WHERE interaction_id = @interactionId",
+      { interactionId },
+    );
+    return row?.duplicate_delivery === 1;
   }
 
   async pruneExpired(): Promise<number> {
