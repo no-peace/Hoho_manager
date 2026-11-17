@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Wand2 } from "lucide-react";
-import type { ComponentNode, FlowStep } from "@dmb/shared";
+import { ComponentType, type ComponentNode, type FlowStep } from "@dmb/shared";
 import { buildCustomId, parseCustomId } from "@dmb/shared";
 import { useActionStore } from "../../store/actionStore";
 import { useMessageStore } from "../../store/messageStore";
@@ -43,6 +43,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
 
   const customId = component.custom_id ?? "";
   const componentId = component._id ?? "";
+  const triggerLabel = component.type === ComponentType.Button ? "Button Click" : "Select Option";
 
   // Prefer the stored flow; fall back to whatever the custom_id encodes so an
   // imported message still shows its first step.
@@ -81,7 +82,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
           nextCustomId = customId;
         }
         setWarning(
-          "This step's settings are too long to fit in the button id, so they only run when the flow is registered (template or bot-token send).",
+          "This step's settings are too long to fit in the button id, so they only run when the flow is registered (template or Server Bot mode send).",
         );
       }
     } else {
@@ -111,22 +112,35 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
   });
 
   return (
-    <div className="space-y-3">
-      <p className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#A1A8B8]">
-        <Wand2 size={12} className="text-[#818CF8]" />
-        Flow steps run top to bottom when this is clicked
-      </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 border-b border-[#272D3A] pb-3">
+        <div className="min-w-0">
+          <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-[#A1A8B8]">
+            Interaction Flow
+          </span>
+          <span className="block break-all font-mono text-xs text-[#818CF8]">
+            {customId || "No custom ID yet"}
+          </span>
+        </div>
+        <div className="shrink-0 text-right">
+          <span className="block text-[0.6875rem] text-[#6F788A]">Trigger Event</span>
+          <span className="text-xs font-medium text-[#F1F3F9]">{triggerLabel}</span>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-[#272D3A] bg-[#10131A] p-3 text-xs text-[#A1A8B8]">
+        Define what happens when a user interacts with this component in Discord.
+        <span className="mt-1 block text-[0.6875rem] text-[#6F788A]">
+          Multi-step and branching actions require a registered server-side flow. Use Server Bot mode when dispatching the message.
+        </span>
+      </div>
 
       <StepList steps={steps} onChange={commit} depth={0} />
-
-      <p className="break-all font-mono text-[0.625rem] text-[#6F788A]">
-        custom_id: {customId || ""} ({customId.length}/100)
-      </p>
 
       {(steps.length > 1 || hasBranches) && (
         <p className="rounded bg-[#10131A] px-2 py-1.5 text-[0.6875rem] text-[#6F788A]">
           Multi-step and branching flows run on the server. Save this as a template, or send it in{" "}
-          <span className="text-[#F1F3F9]">bot token</span> mode so the steps are registered before the
+          <span className="text-[#F1F3F9]">Server Bot mode</span> so the steps are registered before the
           message goes out.
         </p>
       )}
