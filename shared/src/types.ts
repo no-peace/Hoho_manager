@@ -497,8 +497,6 @@ export interface StaffRecord {
   can_mention_roles: number;
   allowed_role_mention_ids: string[];
   max_messages_per_hour: number;
-  can_use_webhooks?: number;
-  can_override_profile?: number;
   can_attach_files?: number;
   can_use_components_v2?: number;
   can_use_weao_exploits?: number;
@@ -515,8 +513,6 @@ export interface StaffMentionPermissions {
   can_mention_here: boolean;
   can_mention_roles: boolean;
   allowed_role_mention_ids: string[];
-  can_use_webhooks?: boolean;
-  can_override_profile?: boolean;
   can_attach_files?: boolean;
   can_use_components_v2?: boolean;
   can_use_weao_exploits?: boolean;
