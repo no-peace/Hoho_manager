@@ -57,6 +57,29 @@ describe("bot/lib/api: Internal API Client Suite", () => {
     expect(capturedHeaders["x-admin-key"]).toBe(env.adminApiKey);
   });
 
+  it("forwards the invoking Discord actor with protected bot send requests", async () => {
+    let capturedHeaders: Record<string, string> | undefined;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => {
+      capturedHeaders = init?.headers as Record<string, string>;
+      return {
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ ok: true, messageId: "msg_actor" }),
+      } as any;
+    });
+
+    await api.sendMessage({
+      channelId: "123456789012345678",
+      content: "Hello",
+      authorUserId: "987654321098765432",
+      authorUsername: "staff-user",
+    });
+
+    expect(capturedHeaders?.["x-admin-key"]).toBe(env.adminApiKey);
+    expect(capturedHeaders?.["x-staff-id"]).toBe("987654321098765432");
+    expect(capturedHeaders?.["x-staff-username"]).toBe("staff-user");
+  });
+
   it("throws ApiError with formatted error and details on HTTP error", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,
