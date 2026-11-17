@@ -222,11 +222,15 @@ router.patch("/access/:discordId", asyncHandler(async (req, res) => {
   if (!isRecord(req.body) || typeof req.body.canPublishServerTheme !== "boolean") {
     throw ApiError.badRequest("canPublishServerTheme must be a boolean.");
   }
-  const result = await db.run(
+  const activeGrant = await db.get<{ discord_user_id: string }>(
+    "SELECT discord_user_id FROM design_access_users WHERE discord_user_id = @discordId AND is_active = 1",
+    { discordId },
+  );
+  if (!activeGrant) throw ApiError.notFound();
+  await db.run(
     "UPDATE design_access_users SET can_publish_server_theme = @enabled WHERE discord_user_id = @discordId AND is_active = 1",
     { enabled: req.body.canPublishServerTheme ? 1 : 0, discordId },
   );
-  if (!result.changes) throw ApiError.notFound();
   res.json({ ok: true, discordId, canPublishServerTheme: req.body.canPublishServerTheme });
 }));
 
