@@ -80,11 +80,6 @@ export const InteractionResponseType = {
   Modal: 9,
 } as const;
 
-/** Destination kinds inside an exported `QueryData` document. */
-export const TargetType = {
-  Webhook: 1,
-} as const;
-
 /**
  * Discord's documented hard limits. The editor validates against these before a
  * payload ever leaves the browser, so users get a real explanation instead of an
@@ -166,6 +161,4 @@ export const DISCORD_API_BASE = "https://discord.com/api/v10";
 /** Matches a Discord snowflake id. */
 export const SNOWFLAKE_REGEX = /^\d{17,20}$/;
 
-/** Matches a Discord webhook URL and captures `id` and `token`. */
-export const WEBHOOK_URL_REGEX =
   /^https?:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/(\d+)\/([\w-]+)$/;
