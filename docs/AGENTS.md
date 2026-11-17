@@ -217,3 +217,34 @@ Append a compact record for each reviewed batch:
 - Remaining work:
 
 Only the Head Agent may mark a part COMPLETED.
+
+
+## 16. Head Agent directives — current decisions (2026-11-17)
+
+These directives supersede earlier status labels and next-action text above where they conflict.
+
+### Directive 004 — Review queue and deferred verification
+- Agent 1 / Part A: **REVIEW REQUIRED** on `agent/ui-regressions`. The submitted branch is 27 commits ahead of main and 0 behind at the time of this directive. Head Agent review is pending; do not begin unrelated Part B work or merge.
+- Agent 2 / Part B: **REVIEW REQUIRED** on `agent/responsive-design-lab`. The submitted branch is 28 commits ahead of main and 0 behind at the time of this directive. The schema handoff is not yet approved because every editable Puck property must be reconciled with the resolved production runtime contract, including animation settings/reduced-motion, panel labels and `EditorPanel.showToolbar`.
+- Agent 3 / Part C: remains **BLOCKED** until the Head Agent explicitly approves Agent 2's schema/runtime handoff. Inspection only; no migrations, API/schema changes or runtime wiring.
+- Automated npm verification is deferred until the implementation program is complete at the user's direction. Agents may add or update focused tests, but must not spend time attempting to run npm checks. Record them as not run; do not claim they passed. The Head Agent will tell the user when to pull and run final checks.
+
+### Directive 005 — Server-theme publishing authorization model
+- **Decision: Yes, explicitly authorized Design Lab Discord user IDs may publish server themes, but Design Lab access alone does not grant publishing permission.**
+- Publishing permission must be granted through a server-side trusted allowlist/authorization check against the authenticated Discord user ID. Never trust a client-supplied ID, hidden UI control, local storage flag, or role claim that the server has not independently verified.
+- The authorization check must run on every server-theme publish/update/delete operation. Unauthorized users may preview and edit local/private drafts but must be denied server-theme mutations.
+- Keep server themes distinct from personal/private presets. A server-theme publish must not overwrite or delete a user's private preset.
+- Agent 4 must inspect the existing authentication, theme routes/services and ownership model, then propose the smallest compatible implementation. Do not invent a new role system or expose a public endpoint merely to implement this decision.
+- This decision applies to server themes only. It does not change Part C's owner-only application-layout publishing requirement.
+
+### Directive 006 — Agent 4 Parts D/E inspection and authorization
+- Agent 4 remains **INSPECTION ONLY**. Part D/E implementation is **not yet authorized** because no verified inspection report or proposed file ownership list has been submitted.
+- Agent 4 must submit: (1) confirmed current behavior with exact source paths, (2) verified gaps against Parts D/E, (3) proposed minimal changes, (4) exact files it wants to claim, (5) shared-file conflicts with Agents 1/2/3, and (6) security/compatibility risks.
+- No file may be claimed or edited until the Head Agent approves the file list. In particular, coordinate any proposed edits to `StudioLayout.tsx`, `Header.tsx`, `DocsPage.tsx`, `globals.css`, `uiThemeConfig.ts`, `DesignLabPage.tsx`, Puck files, theme routes/services and database migrations.
+- After the report is reviewed, the Head Agent will issue a narrow implementation authorization with exclusive file ownership and batch acceptance criteria. Until then, no commits on `agent/themes-ui`.
+
+### Directive 007 — Agent 1 callback regression
+- Agent 1's submitted branch remains under review. Head Agent review must verify that interactive preview controls are checked before `setActiveMessageIndex` is called, and that the actual `MessagePreview` click path is covered by regression tests.
+- Interactive controls must not change active message, selected component, inspector state or editor navigation. Non-interactive preview selection/navigation must remain unchanged.
+- Do not merge until this is verified in source.
+
