@@ -20,7 +20,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
   const showToast = useGlobalStore((state) => state.showToast);
   const [themes, setThemes] = useState<DesignTheme[]>([]);
   const [privateThemes, setPrivateThemes] = useState<LocalUserTheme[]>([]);
-  const [isOwner, setIsOwner] = useState(false);
+  const [canPublishServerTheme, setCanPublishServerTheme] = useState(false);
   const [tokens, setTokens] = useState<UiThemeTokens>(DEFAULT_UI_THEME);
   const [name, setName] = useState("My theme");
   const [description, setDescription] = useState("");
@@ -38,15 +38,15 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     setLoading(true);
     try {
       const [listResult, serverResult] = await Promise.allSettled([
-        user?.id ? designApi.themes() : Promise.resolve({ themes: [], isOwner: false }),
+        user?.id ? designApi.themes() : Promise.resolve({ themes: [], isOwner: false, canPublishServerTheme: false }),
         designApi.defaultTheme(),
       ]);
       if (listResult.status === "fulfilled") {
         setThemes(listResult.value.themes);
-        setIsOwner(listResult.value.isOwner);
+        setCanPublishServerTheme(listResult.value.canPublishServerTheme);
       } else {
         setThemes([]);
-        setIsOwner(false);
+        setCanPublishServerTheme(false);
       }
       const nextServerTheme = serverResult.status === "fulfilled"
         ? serverResult.value.theme?.theme || DEFAULT_UI_THEME
@@ -173,7 +173,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
     finally { setBusy(false); }
   };
   const publishServer = async (theme: UiThemeTokens, sourceId?: string) => {
-    if (!isOwner || !validation.valid && !sourceId) return;
+    if (!canPublishServerTheme || !validation.valid && !sourceId) return;
     setBusy(true);
     try {
       if (sourceId) await designApi.publishCommunityTheme(sourceId);
@@ -237,7 +237,7 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
               <button type="button" onClick={() => { applyPersonal(validation.theme, null); onClose(); }} disabled={busy || !validation.valid} className="inline-flex items-center gap-2 rounded-lg bg-[#818CF8] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"><Check size={14}/>Apply to this browser</button>
               <button type="button" onClick={applyPrivate} disabled={busy || !validation.valid || !name.trim()} className="inline-flex items-center gap-2 rounded-lg border border-[#818CF8]/40 bg-[#818CF8]/10 px-3 py-2 text-xs font-semibold text-[#c5caff] disabled:opacity-40"><Save size={14}/>Save privately</button>
               <button type="button" onClick={save} disabled={busy || !validation.valid || !name.trim()} className="inline-flex items-center gap-2 rounded-lg bg-[#818CF8] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"><Save size={14}/>{editingId ? "Update shared theme" : "Share with community"}</button>
-              {isOwner ? <button type="button" onClick={() => void publishServer(tokens)} disabled={busy || !validation.valid} className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40"><ShieldCheck size={14}/>Set as server theme</button> : null}
+              {canPublishServerTheme ? <button type="button" onClick={() => void publishServer(tokens)} disabled={busy || !validation.valid} className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40"><ShieldCheck size={14}/>Set as server theme</button> : null}
             </div>
             <p className="text-[10px] leading-relaxed text-[#778196]">Only the active theme override uses the 14-day session cache. Private preset files do not expire. Published community themes are shared so other users can discover and copy them.</p>
           </div>
@@ -248,12 +248,12 @@ export const ThemeSettingsModal: React.FC<{ open: boolean; onClose: () => void }
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h4 className="text-[11px] font-bold uppercase tracking-wider text-[#c5caff]">My private themes</h4><div className="flex items-center gap-2"><span className="text-[10px] text-[#778196]">{privateThemes.length} saved permanently</span><button type="button" onClick={() => privateFileInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-md border border-[#303849] px-2 py-1 text-[10px] text-[#c5caff] hover:bg-white/5"><FileUp size={11}/>Import file</button></div></div>
               {privateThemes.length ? <div className="space-y-2">{privateThemes.map((theme) => <article key={theme.id} className="rounded-lg border border-[#818CF8]/20 bg-[#151827] p-2.5"><div className="mb-2 flex items-center justify-between gap-2"><span className="truncate text-xs font-semibold">{theme.name}</span><div className="flex gap-1">{Object.values(theme.theme).slice(0,8).map((color,index)=><span key={index} className="h-2.5 w-2.5 rounded-full border border-white/10" style={{background:color}}/>)}</div></div><div className="flex gap-1.5"><button type="button" onClick={() => applySavedPrivate(theme)} className="rounded-md bg-[#818CF8]/15 px-2 py-1.5 text-[10px] text-[#c5caff]">Use</button><button type="button" onClick={() => {setTokens(theme.theme);setName(theme.name);setDescription(theme.description);setEditingId(null);applyUiTheme(theme.theme);}} className="rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]">Edit</button><button type="button" onClick={() => downloadUserThemeFile(theme)} title="Download permanent theme file" aria-label={"Export " + theme.name} className="rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]"><Download size={11}/></button><button type="button" onClick={() => removePrivate(theme.id)} className="rounded-md border border-red-500/20 px-2 py-1.5 text-[10px] text-red-300"><Trash2 size={11}/></button></div></article>)}</div> : <p className="rounded-lg border border-dashed border-[#303849] p-3 text-[10px] text-[#929bad]">Private presets do not expire. Downloaded .hoho-theme.json files remain yours even if browser data is cleared.</p>}
             </div>
-            {isOwner ? <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"><div className="flex items-center gap-2 text-xs font-semibold text-emerald-200"><ShieldCheck size={14}/>Current server theme</div><p className="mt-1 text-[10px] text-[#aab2c1]">Changes here publish to the hosted app for every visitor.</p><button type="button" onClick={() => {setTokens(serverTheme);setName("Server theme");setEditingId(null);applyUiTheme(serverTheme);}} className="mt-2 text-[11px] text-emerald-200 underline">Edit server theme</button></div> : null}
+            {canPublishServerTheme ? <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"><div className="flex items-center gap-2 text-xs font-semibold text-emerald-200"><ShieldCheck size={14}/>Current server theme</div><p className="mt-1 text-[10px] text-[#aab2c1]">Changes here publish to the hosted app for every visitor.</p><button type="button" onClick={() => {setTokens(serverTheme);setName("Server theme");setEditingId(null);applyUiTheme(serverTheme);}} className="mt-2 text-[11px] text-emerald-200 underline">Edit server theme</button></div> : null}
             {loading ? <div className="flex items-center gap-2 py-8 text-xs text-[#929bad]"><RefreshCw size={14} className="animate-spin"/>Loading shared themes…</div> : filteredThemes.length === 0 ? <div className="rounded-xl border border-dashed border-[#303849] p-6 text-center text-xs text-[#929bad]">No community themes yet. Create the first one.</div> : <div className="space-y-2">
               {filteredThemes.map((theme) => <article key={theme.id} className="rounded-xl border border-[#293243] bg-[#121721] p-3">
                 <div className="mb-2 flex items-center justify-between gap-2"><div className="min-w-0"><h4 className="truncate text-xs font-semibold">{theme.name}</h4><p className="text-[10px] text-[#8993a5]">by {theme.ownerDiscordId === user?.id ? "you" : theme.ownerDiscordId.slice(0,5)+"…"+theme.ownerDiscordId.slice(-4)} · {theme.isPublic ? "Community" : "Private"}</p></div><div className="flex shrink-0 gap-1">{Object.values(theme.theme).slice(0,5).map((color,index)=><span key={index} className="h-3 w-3 rounded-full border border-white/10" style={{background:color}}/>)}</div></div>
                 {theme.description ? <p className="mb-2 line-clamp-2 text-[10px] text-[#929bad]">{theme.description}</p> : null}
-                <div className="flex flex-wrap gap-1.5"><button type="button" onClick={() => applyPersonal(theme.theme,theme.id)} className="inline-flex items-center gap-1 rounded-md bg-[#818CF8]/15 px-2 py-1.5 text-[10px] font-semibold text-[#c5caff]"><Check size={11}/>Use theme</button><button type="button" onClick={() => editTheme(theme)} className="inline-flex items-center gap-1 rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]"><Copy size={11}/>Copy / edit</button>{isOwner ? <button type="button" onClick={() => void publishServer(theme.theme,theme.id)} className="rounded-md border border-emerald-500/30 px-2 py-1.5 text-[10px] text-emerald-200">Make server theme</button> : null}{theme.ownerDiscordId === user?.id ? <button type="button" onClick={() => void remove(theme)} className="rounded-md border border-red-500/20 px-2 py-1.5 text-[10px] text-red-300"><Trash2 size={11}/></button> : null}</div>
+                <div className="flex flex-wrap gap-1.5"><button type="button" onClick={() => applyPersonal(theme.theme,theme.id)} className="inline-flex items-center gap-1 rounded-md bg-[#818CF8]/15 px-2 py-1.5 text-[10px] font-semibold text-[#c5caff]"><Check size={11}/>Use theme</button><button type="button" onClick={() => editTheme(theme)} className="inline-flex items-center gap-1 rounded-md border border-[#303849] px-2 py-1.5 text-[10px] text-[#c4cad5]"><Copy size={11}/>Copy / edit</button>{canPublishServerTheme ? <button type="button" onClick={() => void publishServer(theme.theme,theme.id)} className="rounded-md border border-emerald-500/30 px-2 py-1.5 text-[10px] text-emerald-200">Make server theme</button> : null}{theme.ownerDiscordId === user?.id ? <button type="button" onClick={() => void remove(theme)} className="rounded-md border border-red-500/20 px-2 py-1.5 text-[10px] text-red-300"><Trash2 size={11}/></button> : null}</div>
               </article>)}
             </div>}
             <button type="button" onClick={() => {setTokens(DEFAULT_UI_THEME);setName("New theme");setDescription("");setEditingId(null);setErrors([]);applyUiTheme(DEFAULT_UI_THEME);}} className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold text-[#a5adff]"><Plus size={13}/>Start a new theme</button>
