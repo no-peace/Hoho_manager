@@ -46,7 +46,9 @@ export interface ResolvedAppLayout {
     headerMotion: ResolvedAppLayoutMotion;
     defaultPane: "editor" | "preview"; showInspector: boolean; inspectorHeight: number; workspaceGap: number; panelPadding: number; borderColor: string;
     workspaceMotion: ResolvedAppLayoutMotion;
-    editorBackground: string; previewBackground: string; inspectorBackground: string; editorRadius: number; previewRadius: number; inspectorRadius: number; inspectorPadding: number;
+    editorBackground: string; previewBackground: string; inspectorBackground: string;
+    editorPadding: number; previewPadding: number; inspectorPadding: number;
+    editorRadius: number; previewRadius: number; inspectorRadius: number;
     editorLabel: string; previewLabel: string; inspectorLabel: string; showToolbar: boolean;
     editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion; inspectorMotion: ResolvedAppLayoutMotion;
     navHeight: number; navPadding: number; navBackground: string; navAccent: string;
@@ -154,10 +156,12 @@ export const resolveAppLayoutData = (
       editorBackground: safeHex(mobileEditor.surface, "#2B2D31"),
       previewBackground: safeHex(mobilePreview.surface, "#313338"),
       inspectorBackground: safeHex(mobileInspector.surface, "#161A23"),
+      editorPadding: boundedNumber(mobileEditor.padding, 12, 0, 32),
+      previewPadding: boundedNumber(mobilePreview.padding, 12, 0, 32),
+      inspectorPadding: boundedNumber(mobileInspector.padding, 14, 0, 32),
       editorRadius: boundedNumber(mobileEditor.radius, 10, 0, 24),
       previewRadius: boundedNumber(mobilePreview.radius, 10, 0, 24),
       inspectorRadius: boundedNumber(mobileInspector.radius, 10, 0, 24),
-      inspectorPadding: boundedNumber(mobileInspector.padding, 14, 0, 32),
       editorLabel: safeLabel(mobileEditor.label, "Message Editor"),
       previewLabel: safeLabel(mobilePreview.label, "Live Preview"),
       inspectorLabel: safeLabel(mobileInspector.label, "Properties"),
