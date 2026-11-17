@@ -458,5 +458,14 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE staff_access DROP COLUMN can_override_profile;
     `,
   },
+  {
+    id: "019_interaction_duplicate_delivery_state",
+    sql: `
+      -- A duplicate may arrive on another server instance while the first delivery is running.
+      -- Persist the duplicate flag so the original worker can choose a deferred ACK atomically.
+      ALTER TABLE interaction_receipts
+        ADD COLUMN duplicate_delivery INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 
 ];
