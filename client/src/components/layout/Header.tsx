@@ -14,6 +14,7 @@ import {
   Trash2,
   Send,
   LayoutTemplate,
+  Palette,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
@@ -23,6 +24,7 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
+const ThemeSettingsModal = React.lazy(() => import("./ThemeSettingsModal").then((module) => ({ default: module.ThemeSettingsModal })));
 
 import { HOHO_LOGO_URL } from "./HoHoLogoMark";
 export { HOHO_LOGO_URL } from "./HoHoLogoMark";
@@ -53,6 +55,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [themeSettingsOpen, setThemeSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -118,6 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           >
             <img
               src={HOHO_LOGO_URL}
+              alt="HoHo Manager logo"
               width={32}
               height={32}
               decoding="async"
@@ -196,6 +200,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Right: Staff Access + Authenticated User Profile + Docs */}
         <div className="flex items-center justify-self-end gap-2 min-w-0">
+          <button type="button" onClick={() => setThemeSettingsOpen(true)} className="flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#818CF8]/30 bg-[#818CF8]/10 hover:bg-[#818CF8]/20 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-colors" title="Appearance and themes">
+            <Palette size={14} className="text-[#a5adff]" /><span className="hidden md:inline">Theme</span>
+          </button>
+
           {isAdmin && (
             <button
               type="button"
@@ -362,6 +370,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
         </div>
       </header>
       
+      <React.Suspense fallback={null}>
+        <ThemeSettingsModal open={themeSettingsOpen} onClose={() => setThemeSettingsOpen(false)} />
+      </React.Suspense>
+
       {isAdmin && (
         <React.Suspense fallback={null}>
           <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />

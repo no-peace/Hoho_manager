@@ -1,61 +1,71 @@
-# HoHo Manager Design Lab
+# HoHo Manager Design Lab and Theme System
 
-The Design Lab is a private Puck-powered visual editor. It stores account-owned themes in the server database and supports owner-only publishing of generated theme/design source files into a local checkout.
+HoHo Manager has two separate appearance layers: the **server theme** and each signed-in user's **personal theme**.
 
-## Access control
+## Theme settings
 
-- Production owner Discord IDs must be configured in server/.env using OWNER_DISCORD_IDS=123...,456....
-- The owner can grant or revoke additional Discord IDs from Theme config → Allowed Discord accounts.
-- Unauthorized or signed-out visitors receive the normal HoHo 404 page at /design; the API also returns 404 for unauthorized editor requests.
-- Authorized non-owner users can create, update, and delete only their own themes.
-- Only the configured owner can set the global default theme, grant/revoke access, or write generated files into a local project folder.
-- In local development, the existing Local Developer admin session is treated as the editor owner.
+The Theme button in the authenticated app header opens Appearance & Themes. It is available to every signed-in user; the old /design Puck editor remains owner-only.
 
-## Theme workflow
+### Server theme (owner only)
 
-1. Sign in with Discord and open /design.
-2. Use Puck to edit the page composition. Use Theme config to edit global palette, radius, and font tokens.
-3. Save a named theme. It is stored in the database and scoped to the Discord account.
-4. The owner can select one of their own themes and choose Set as default. The public application fetches only this published default token set.
-5. Authorized non-owner accounts can save personal themes but cannot set the default or publish local source files.
+- The server theme is stored in the production database table server_theme_settings.
+- Only Discord IDs listed in OWNER_DISCORD_IDS can publish or edit it. Local Developer admin access is retained in non-production.
+- Publishing from the Theme Settings modal writes the validated token set directly to the database. It does not require a Git commit, redeploy, or local file export.
+- All website visitors receive the current server theme from GET /api/design/default.
+- Open tabs refresh the server theme when they regain focus or become visible. The endpoint uses a short 30-second public cache.
+- The owner can publish their current editor values or copy any published community theme to the server.
+- Existing checked-in CSS/theme tokens remain the safe initial fallback if the database/API is unavailable.
 
-The default theme currently drives the app-wide palette tokens, font family, and shared corner-radius utility. Puck page composition is stored separately as a Puck document.
+### Personal themes
 
-## Write generated source files to your local repository
+- Every authenticated user can open Theme Settings, edit colors/radius/font, preview the result, and apply it privately.
+- Save privately stores named private theme presets and the active theme selection in browser localStorage. These are not database writes and are not visible to other users.
+- Private theme library and active selection are keyed by Discord user ID, expire 14 days after the user's last successful authenticated app load, and their expiry is refreshed on the next successful login/session verification. Expired or malformed cache is discarded.
+- Personal cache is not refreshed merely by changing browser tabs.
+- The selected personal theme overrides the server theme only in that user's browser. Reset to server removes the local override.
 
-The owner-only Write local files action uses the browser's File System Access API:
+### Community theme gallery
 
-1. Open Design Lab in Chrome or Edge on your local development machine.
-2. Click Write local files.
-3. Select the root folder of your local Hoho_manager checkout (the folder containing client/).
-4. The editor writes these files under client/src/config/puck/:
-   - publishedDesign.ts — the owner-published Puck document.
-   - publishedTheme.ts — typed theme tokens imported by the app.
-   - publishedTheme.css — CSS variables and palette overrides imported by App.tsx.
-5. Review the Git diff, run your local typecheck/build/tests, then commit and push the changes yourself.
+- Share with community publishes a validated theme definition to design_themes. This shared registry is required for other users to discover and copy a theme.
+- The gallery is available to all signed-in users. Regular users see published themes plus their own private legacy themes. The owner can inspect all users' themes, including older private Design Lab themes.
+- A user can edit/delete only their own published theme. Copy/edit creates a new draft owned by the current user.
+- The owner can inspect all users' themes and choose Make server theme to copy a selected theme's token set into server_theme_settings.
+- The registry stores reusable theme definitions, not each user's active selection or private draft cache.
 
-The browser asks you to select the folder and cannot access arbitrary local files without that permission. This action is not available to non-owner accounts. It does not send files to GitHub or deploy the site.
+## Validation and safety
 
-The Puck document is an exported visual page composition; it does not rewrite arbitrary existing React component implementations. The theme token export updates the app-wide palette hooks covered by publishedTheme.css. Expanding Puck to structurally redesign every individual application screen requires mapping those screens to editable Puck components rather than blindly rewriting existing TSX files.
+Themes are restricted to a fixed token schema: eight six-digit HEX colors, a supported radius, and one of the supported font families. Server-side validation is authoritative and client-side validation provides immediate feedback.
 
-## Secret handling
+- Primary text must meet WCAG AA 4.5:1 contrast against the app background and panel.
+- Muted text must meet at least 3:1 contrast against the app background and panel.
+- No arbitrary CSS, selectors, HTML, scripts, layout definitions, or component structure are accepted by the theme API.
+- Theme tokens only change visual CSS variables (colors, font family and radius). They cannot remove, hide, replace, or reorder application controls such as the Send button.
+- The Puck document remains a separate owner-only design artifact and is not used as a theme payload for the community gallery.
+- Server endpoints never return process.env, .env files, OAuth credentials, bot tokens, database credentials, or server configuration.
 
-Design endpoints never return process.env, .env files, OAuth credentials, bot tokens, database credentials, or server configuration. The editor stores only the JSON design and validated theme tokens supplied by the user. Never paste secrets into a design field.
+## Persistence and deployment
 
-## Puck component library
+Migration 014_community_and_server_themes adds the public registry flag and server_theme_settings table. The existing migration runner applies it automatically on server startup. Existing Design Lab themes remain private by default; newly shared themes are public.
 
-- Layout: Section, Container, Grid, Spacer, Divider.
-- Typography: Heading, Text, Quote.
-- Marketing: Hero, Button, Feature Card.
-- Media: Image.
+For Render, configure OWNER_DISCORD_IDS in the server environment. After the code is deployed and the migration has run, the owner can change the server theme directly from the hosted website. No redeploy is needed for later theme changes.
 
-## Dependencies and verification
+## Performance
 
-The client uses @puckeditor/core. Database schema migration 013_design_lab_themes_and_access is applied automatically by the existing migration runner on server startup.
+- The gallery is loaded only when the user opens Theme Settings; it is not part of the initial page render.
+- The Theme Settings component is lazy-loaded from the header.
+- The server default endpoint is small and cacheable for 30 seconds.
+- Personal theme application is local and does not add a database request to normal app navigation beyond the existing default-theme fetch.
+- The app refreshes the server theme on tab focus/visibility, not through a continuously running polling loop.
 
-Run locally:
+## Logo alternative text
+
+The HoHo Manager logo image uses descriptive alternative text in the shared logo component, header, and not-found page. The loading-screen logo is also labelled as the HoHo Manager logo.
+
+## Verification
+
+Run from the repository root:
 - npm run typecheck
 - npm test
 - npm run build
 
-Do not assume these checks pass until they have been run against the local dependency lockfile and environment.
+Then run the existing mobile and desktop Lighthouse configurations. Do not treat the change as verified until these checks have been run against the deployed/current environment.

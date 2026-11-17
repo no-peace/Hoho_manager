@@ -8,7 +8,7 @@ import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import api from "./api/client";
 import { designApi } from "./api/design";
-import { applyUiTheme } from "./utils/puckTheme";
+import { applyUiTheme, loadUserThemeCache, refreshUserThemeLibraryExpiry } from "./utils/puckTheme";
 import { publishedThemeTokens } from "./config/puck/publishedTheme";
 import "./config/puck/publishedTheme.css";
 
@@ -38,7 +38,7 @@ const AppLoadingScreen: React.FC<{ label?: string }> = ({ label = "Loading HoHo 
     aria-label={label}
   >
     <div className="app-loading-mark">
-      <HoHoLogoMark className="h-14 w-14 object-contain" alt="" />
+      <HoHoLogoMark className="h-14 w-14 object-contain" alt="HoHo Manager logo" />
     </div>
     <span className="app-loading-label">{label}</span>
     <span className="app-loading-indicator" aria-hidden="true">
@@ -61,13 +61,37 @@ export const App: React.FC = () => {
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
 
   useEffect(() => {
+    let active = true;
+    const refreshTheme = async (refreshUserCacheExpiry = false) => {
+      try {
+        const response = await designApi.defaultTheme();
+        if (!active) return;
+        const serverTheme = response.theme?.theme || publishedThemeTokens;
+        applyUiTheme(serverTheme);
+        if (currentUser?.id) {
+          const cached = loadUserThemeCache(currentUser.id, refreshUserCacheExpiry);
+          if (cached) applyUiTheme(cached.theme);
+          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(currentUser.id);
+        }
+      } catch {
+        if (active && currentUser?.id) {
+          const cached = loadUserThemeCache(currentUser.id, refreshUserCacheExpiry);
+          if (cached) applyUiTheme(cached.theme);
+          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(currentUser.id);
+        }
+      }
+    };
     applyUiTheme(publishedThemeTokens);
-    void designApi.defaultTheme().then(({ theme }) => {
-      if (theme?.data?.theme) applyUiTheme(theme.data.theme);
-    }).catch(() => {
-      // The checked-in local theme remains the fallback when the API is unavailable.
-    });
-  }, []);
+    void refreshTheme(true);
+    const handleFocus = () => { if (document.visibilityState === "visible") void refreshTheme(false); };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [currentUser?.id]);
 
   useEffect(() => {
     void (async () => {

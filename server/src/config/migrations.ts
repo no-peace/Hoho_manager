@@ -400,4 +400,19 @@ export const migrations: readonly Migration[] = [
         ON design_access_users(is_active);
     `,
   },
+  {
+    id: "014_community_and_server_themes",
+    sql: `
+      ALTER TABLE design_themes ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_design_themes_public_updated
+        ON design_themes(is_public, updated_at);
+
+      CREATE TABLE IF NOT EXISTS server_theme_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        theme_data TEXT NOT NULL,
+        updated_by TEXT NOT NULL,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `,
+  },
 ];

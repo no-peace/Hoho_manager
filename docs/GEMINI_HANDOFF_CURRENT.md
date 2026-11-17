@@ -1410,3 +1410,10 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Preview-only fields are limited to the data Discord includes in the Guild Preview object; fields absent from that object resolve to empty values. Icon/banner hashes can still be converted into CDN URLs.
 - Added autocomplete examples in `Field.tsx`, documentation entries in `DocsPage.tsx`, and unit tests for scoped variables and guild-ID extraction.
 - Verification status: tests, typecheck, production build, browser QA, and live Discord API behavior have not been executed in this GitHub editing session. PR #45 was subsequently merged into `main` as `2608ab8f93bde889b9abf4ba0c91b8e409337e9c`; deployment is not confirmed.
+
+
+### Owner visibility refinement
+
+- The owner theme gallery query includes all saved theme rows, including legacy private themes from earlier Design Lab versions, so the owner can inspect and promote any user's saved theme.
+- Non-owner accounts still see only their own themes and themes explicitly shared with the community.
+- Owner publish/copy endpoints can promote a legacy private theme; the server theme itself remains owner-only.
