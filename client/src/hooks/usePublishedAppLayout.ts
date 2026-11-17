@@ -33,6 +33,12 @@ export const usePublishedAppLayout = () => {
   );
   const lastAttemptRef = useRef(0);
   const inFlightRef = useRef<Promise<void> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const refresh = useCallback(async (force = false): Promise<void> => {
     if (inFlightRef.current) return inFlightRef.current;
@@ -43,6 +49,7 @@ export const usePublishedAppLayout = () => {
     const task = (async () => {
       try {
         const response = await appLayoutApi.getPublished();
+        if (!mountedRef.current) return;
         if (!response.layout) {
           setState({
             layout: builtInLayout,
@@ -63,6 +70,7 @@ export const usePublishedAppLayout = () => {
           publishedRecord: response.layout,
         });
       } catch (error) {
+        if (!mountedRef.current) return;
         setState((current) => ({
           ...current,
           loaded: true,
@@ -90,15 +98,18 @@ export const usePublishedAppLayout = () => {
   useEffect(() => {
     void refresh(true);
     const refreshWhenActive = () => { void refresh(false); };
+    const refreshOnNavigationReturn = () => { void refresh(true); };
     const onVisibility = () => {
       if (document.visibilityState === "visible") refreshWhenActive();
     };
     window.addEventListener("focus", refreshWhenActive);
     window.addEventListener("pageshow", refreshWhenActive);
+    window.addEventListener("popstate", refreshOnNavigationReturn);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("focus", refreshWhenActive);
       window.removeEventListener("pageshow", refreshWhenActive);
+      window.removeEventListener("popstate", refreshOnNavigationReturn);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [refresh]);
