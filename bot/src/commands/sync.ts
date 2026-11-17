@@ -1,5 +1,5 @@
 import { Command } from "@sapphire/framework";
-import { MessageFlags } from "discord.js";
+import { MessageFlags, PermissionFlagsBits } from "discord.js";
 import { api } from "../lib/api.js";
 import { commandRegistration } from "../lib/registration.js";
 
@@ -17,7 +17,8 @@ export class SyncCommand extends Command {
       (builder) =>
         builder
           .setName(this.name)
-          .setDescription(this.description),
+          .setDescription(this.description)
+          .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
       commandRegistration,
     );
   }
