@@ -15,6 +15,10 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     addGuildMemberRole: vi.fn().mockResolvedValue(true),
     removeGuildMemberRole: vi.fn().mockResolvedValue(true),
     hasRole: vi.fn().mockResolvedValue(false),
+    getGuildRolesWithToken: vi.fn().mockResolvedValue([
+      { id: "role_new", permissions: "0", managed: false },
+      { id: "role_toggle", permissions: "0", managed: false },
+    ]),
     sendDirectMessage: vi.fn().mockResolvedValue({ id: "dm_1" } as any),
     sendChannelMessage: vi.fn().mockResolvedValue({ id: "chan_msg_1" } as any),
     sendChannelMessageWithToken: vi.fn().mockResolvedValue({ id: "token_msg_1" } as any),
@@ -36,6 +40,10 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       addGuildMemberRole: vi.fn().mockResolvedValue(true),
       removeGuildMemberRole: vi.fn().mockResolvedValue(true),
       hasRole: vi.fn().mockResolvedValue(false),
+      getGuildRolesWithToken: vi.fn().mockResolvedValue([
+        { id: "role_new", permissions: "0", managed: false },
+        { id: "role_toggle", permissions: "0", managed: false },
+      ]),
       sendDirectMessage: vi.fn().mockResolvedValue({ id: "dm_1" } as any),
       sendChannelMessage: vi.fn().mockResolvedValue({ id: "chan_msg_1" } as any),
       sendChannelMessageWithToken: vi.fn().mockResolvedValue({ id: "token_msg_1" } as any),
@@ -295,6 +303,24 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
 
     // 3. addRole
     describe("actions/addRole.ts", () => {
+      it("rejects a role with elevated permissions before assigning it", async () => {
+        vi.mocked(mockDiscordApi.getGuildRolesWithToken).mockResolvedValueOnce([
+          { id: "role_new", permissions: String(1n << 3n), managed: false },
+        ]);
+        const handler = getActionHandler("add_role");
+        const res = await handler?.run({ ...mockContext, config: { roleId: "role_new" } });
+        expect(mockDiscordApi.addGuildMemberRole).not.toHaveBeenCalled();
+        expect((res?.data as any)?.content).toContain("moderation or administration permissions");
+      });
+
+      it("fails closed when role permissions cannot be verified", async () => {
+        vi.mocked(mockDiscordApi.getGuildRolesWithToken).mockRejectedValueOnce(new Error("Discord unavailable"));
+        const handler = getActionHandler("add_role");
+        const res = await handler?.run({ ...mockContext, config: { roleId: "role_new" } });
+        expect(mockDiscordApi.addGuildMemberRole).not.toHaveBeenCalled();
+        expect((res?.data as any)?.content).toContain("couldn't verify that role's permissions");
+      });
+
       it("calls discord.addGuildMemberRole and replies", async () => {
         const handler = getActionHandler("add_role");
         const res = await handler?.run({ ...mockContext, config: { roleId: "role_new" } });
