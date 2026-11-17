@@ -10,6 +10,11 @@ import { actionRepository, webhookProfileRepository } from "../repositories/inde
 import { logger } from "../utils/logger.js";
 import { hasBranches, selectBranch, type ExecutableStep } from "./branches.js";
 import * as discord from "./discordService.js";
+import {
+  buildGuildScopedVariables,
+  buildGuildVariables,
+  extractReferencedGuildIds,
+} from "./guildVariables.js";
 
 const log = logger.child("actions");
 const MAX_BRANCH_DEPTH = 10;
@@ -180,15 +185,41 @@ export const executeCustomId = async (
       .catch(() => null)) || (await discord.resolveBotToken().catch(() => null));
 
   const guildId = interaction.guild_id;
-  if (guildId && botToken && variables["server.name"] === "Server") {
-    const guilds = await discord.getBotGuilds().catch(() => []);
-    const matchedGuild = guilds.find((g) => g.id === guildId);
-    if (matchedGuild) {
-      variables["server.name"] = matchedGuild.name;
-      if (matchedGuild.icon) {
-        variables["server.icon"] = `https://cdn.discordapp.com/icons/${guildId}/${matchedGuild.icon}.png`;
+  if (botToken) {
+    if (guildId) {
+      // Fetch the full Guild resource so the unqualified {server.*} placeholders
+      // continue to describe the server where this interaction happened.
+      const guild = await discord.getGuild(guildId, botToken).catch(() => null);
+      if (guild) {
+        Object.assign(variables, buildGuildVariables(guildId, guild));
+      } else if (variables["server.name"] === "Server") {
+        // Retain the previous lightweight fallback if the full Guild endpoint
+        // is unavailable, so the established name/icon placeholders still work.
+        const guilds = await discord.getBotGuilds().catch(() => []);
+        const matchedGuild = guilds.find((entry) => entry.id === guildId);
+        if (matchedGuild) Object.assign(variables, buildGuildVariables(guildId, matchedGuild));
       }
     }
+
+    // Explicitly-addressed placeholders can read any other server the bot
+    // can access, even when the interaction itself is not in a guild.
+    const referencedGuildIds = extractReferencedGuildIds(steps);
+    await Promise.all(
+      referencedGuildIds.map(async (referencedGuildId) => {
+        // Prefer the full Guild resource for bot-member servers. If the bot
+        // is not a member, Discord may still expose a public Preview for
+        // discoverable guilds; non-discoverable guilds remain inaccessible.
+        const referencedGuild =
+          (await discord.getGuild(referencedGuildId, botToken).catch(() => null)) ??
+          (await discord.getGuildPreview(referencedGuildId, botToken).catch(() => null));
+        if (referencedGuild) {
+          Object.assign(
+            variables,
+            buildGuildScopedVariables(referencedGuildId, referencedGuild),
+          );
+        }
+      }),
+    );
   }
 
   const context: Omit<ActionContext, "config"> = {

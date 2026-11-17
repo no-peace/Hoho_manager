@@ -1,6 +1,6 @@
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
-**Updated:** 2026-11-17 (V12 merged; owner-reported tests passed; mobile Lighthouse baseline 97)  
+**Updated:** 2026-11-17 (V12 baseline retained at mobile Lighthouse 97; expanded server placeholders in feature branch)  
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Production URL:** https://hoho-manager.onrender.com  
 **Authoritative branch:** `main`  
@@ -8,6 +8,60 @@
 **Latest implementation PR:** [#44 — v12: atmospheric login, preview interactions, and UX fixes](https://github.com/no-peace/Hoho_manager/pull/44)  
 **Implementation branch:** `feat/v12-ultimate-ux-implementation` (merged into `main`)  
 **Current status:** V12 is merged. The owner subsequently reported that all tests passed and the mobile Lighthouse Performance score reached 97. The owner explicitly chose to keep 97 as the baseline and stop further performance tuning. Do not initiate additional Lighthouse-driven optimization or refactoring unless the owner asks. The test result is owner-reported; it was not independently executed in this GitHub editing session. No deployment is claimed.
+
+## Latest continuation — expanded Discord server placeholders (2026-11-17)
+
+**Branch:** `feat/server-guild-variables`  
+**Pull request:** [#45 — expose Discord Guild fields as server placeholders](https://github.com/no-peace/Hoho_manager/pull/45) (draft; not merged)  
+**Base:** `main` at the V12 merge checkpoint plus the subsequent handoff documentation update.  
+**Status:** Implementation committed to the feature branch; not merged or deployed. Review and run CI before considering merge.
+
+### Owner request and scope
+
+The owner asked for a `{server.id}`-style autocomplete namespace that exposes as much server data as Discord's API allows. This implementation targets the Discord **Guild resource** returned by `GET /guilds/{guild.id}?with_counts=true`. It does not claim to expose every separate Discord API endpoint. Channels, complete member lists, bans, integrations, audit logs, and similar resources have separate routes and permission/intent requirements and are outside this change.
+
+### Implementation
+
+- Added `server/src/services/discordService.ts:getGuild()` to fetch the full Guild resource with `with_counts=true`.
+- Added a 60-second per-guild cache, in-flight request deduplication, and a 500-entry bound to avoid repeatedly requesting unchanged guild data for each action.
+- Added `server/src/services/guildVariables.ts` to flatten the returned Guild object into string placeholders:
+  - Scalar values become `{server.<field>}`.
+  - Nested object values are JSON-serialized and their nested properties are also exposed with dot notation (for example `{server.incidents_data.invites_disabled_until}`).
+  - Arrays are JSON-serialized when they contain objects; their entries are addressable by numeric index (for example `{server.roles.0.name}`). Primitive arrays such as `features` become comma-separated strings.
+  - Null optional fields resolve to an empty string.
+  - Existing `{server.icon}` behavior is preserved as a CDN URL. The raw hash is available as `{server.icon_hash}`; URL aliases are provided for icon, banner, splash, and discovery splash. Animated hashes use GIF URLs.
+- Updated `server/src/services/actionExecutor.ts` to enrich the action variable dictionary from the current Guild resource. If the full Guild lookup fails, the previous lightweight bot-guild lookup remains as a fallback for `{server.name}` and `{server.icon}`; `{server.id}` always comes from the interaction payload. The action is not failed solely because Guild enrichment fails.
+- Expanded the shared variable suggestions in `client/src/components/ui/Field.tsx` and the Studio `MentionInput` so typing `{server.` shows the new fields. Increased the result cap to 50 so the expanded server list is not silently truncated.
+- Expanded the `/docs` variable reference with the Guild fields and examples.
+- Added `server/tests/guildVariables.test.ts` for scalar fields, animated CDN URLs, JSON arrays, indexed nested fields, nested object fields, and null handling.
+
+### Discord API availability caveats
+
+- `approximate_member_count` and `approximate_presence_count` are requested with `with_counts=true`; they are approximate counts, not exact member/presence totals.
+- Some Guild fields are optional, null, feature-dependent, or omitted by Discord. An absent/null value resolves to an empty string.
+- The bot must be in the server and Discord must authorize the bot's Guild request. If the lookup fails, the additional `{server.*}` values will remain unresolved; existing `{server.id}` remains available from the interaction payload.
+- This does not bypass privileged intents or permissions. Full member lists and other separate resources are not implicitly included by the Guild endpoint.
+- `{server.icon}` remains a URL for backwards compatibility rather than changing to Discord's raw icon hash. Use `{server.icon_hash}` for the raw hash.
+
+### Files changed
+
+- `server/src/services/discordService.ts`
+- `server/src/services/actionExecutor.ts`
+- `server/src/services/guildVariables.ts` (new)
+- `server/tests/guildVariables.test.ts` (new)
+- `client/src/components/ui/Field.tsx`
+- `client/src/components/editor/MentionInput/index.tsx`
+- `client/src/pages/DocsPage.tsx`
+
+### Verification status
+
+- GitHub source re-fetch checks confirmed the Guild fetch, action-executor enrichment, expanded Field and editor suggestion limits, documentation entries, and helper test file are present on the feature branch.
+- The new Vitest file has been authored but **has not been executed** in this GitHub editing session.
+- TypeScript typecheck, full test suite, production build, and browser autocomplete/runtime checks have **not** been executed. Do not describe this change as tested or verified at runtime until those checks run.
+- No merge or deployment has been performed.
+- The owner's previously stated mobile Lighthouse 97 baseline remains unchanged; do not reopen Lighthouse optimization as part of this feature.
+
+---
 
 ## Latest continuation — V12 finalization and verified owner feedback (2026-11-17)
 
@@ -97,7 +151,6 @@ Interpretation: mobile Performance improved by 3 points and LCP by 0.5 s; Access
 ### Remaining performance observation
 
 The Navigation reports show a smaller remaining render-blocking request from the app's local CSS (roughly 50 ms desktop / 160 ms mobile in the reviewed captures; Lighthouse estimated about 150 ms potential mobile savings). The app imports its global Tailwind stylesheet from `client/src/main.tsx`, and Vite emits/loads the production CSS asset. Do not blindly make this stylesheet asynchronous: it contains the initial layout and theme rules, and deferring it can cause a flash of unstyled content and layout shift. Reassess with the generated production asset and a fresh Navigation trace before changing CSS delivery.
-
 ### Branded loading-screen implementation
 
 The user reported that the app initially displayed a blank screen and requested the existing HoHo logo centered in the loading state.
@@ -197,8 +250,7 @@ The root `npm run dev` command starts shared build + server + Vite client + bot.
 ### Interpretation for the owner's local score
 
 - INP 280 ms is in the "needs improvement" range (good is <=200 ms; poor is >500 ms). Attribute the slow interaction before optimizing; inspect the DevTools Performance interaction track / INP attribution to identify the actual event and target.
-- LCP 2.60 s is just over the 2.5 s "good" threshold and in the "needs improvement" range, not a severe/poor LCP.
-- A local Lighthouse Performance score of 20–30 is not explained by the CI artifacts. First verify whether Lighthouse was run against the Vite development server (commonly port 5173) rather than a production build served by `vite preview` (the CI target is port 4173). Development transforms, HMR and module loading can distort the score substantially.
+- LCP 2.60 s is just over the 2.5 s "good" threshold and in the "needs improvement" range, not a severe/poor LCP.- A local Lighthouse Performance score of 20–30 is not explained by the CI artifacts. First verify whether Lighthouse was run against the Vite development server (commonly port 5173) rather than a production build served by `vite preview` (the CI target is port 4173). Development transforms, HMR and module loading can distort the score substantially.
 - Laptop hardware, background CPU/memory pressure, thermal/power mode, browser extensions, and concurrent development processes can affect local lab runs. Integrated graphics is unlikely to be the primary cause of JavaScript/INP latency.
 - Do not make speculative bundle or Vite chunking/proxy edits based only on a local 20–30 score. The next performance step is to reproduce against production preview under controlled conditions and capture the full Lighthouse JSON/trace, especially the actual LCP element and the interaction attribution for the 280 ms INP.
 - The existing Lighthouse artifacts' LCP element detail is missing; a new report/trace with element attribution is needed before targeting a specific image or DOM node.
@@ -297,8 +349,7 @@ The following commits are on main (newest first). They are grouped here for Gemi
 - c40ac0b01e143d5dd503bb4c6564b8075b663c02 — enable top-level V2 container preview selection.
 - b2a9f318c795cff55398426e588de663428eeb31 — use real newline separators for V2-to-Classic content.
 - e0f563c6e4ad34e3197c6f39e4f5e6b9bf65a3f4 — validate conversion component compatibility and limits.
-- 07e838db3b565673d115023a9cd4b30bedca42ff — harden inspector focus for non-text controls and repeated selections.
-- e12ea4316a6950c541fb15e33b0b489218746b87 — guard Classic/V2 conversion.
+- 07e838db3b565673d115023a9cd4b30bedca42ff — harden inspector focus for non-text controls and repeated selections.- e12ea4316a6950c541fb15e33b0b489218746b87 — guard Classic/V2 conversion.
 - e5a4ad023be176c6ed75b63e365e9a62653b3739 — preserve text and action rows during mode conversion.
 - 2721d4ac92dc63c3ba4fe1a123012c0a2449dd85 — disable variable insertion for V2 section accessory labels.
 - 2867c11f2896d4cc93e5943e66f970292ad3ab43 — disable variable insertion for standard Discord button labels.
@@ -398,7 +449,6 @@ Continue V10 Batch 14 with a focused comments/test audit and reconcile the sideb
 ---
 
 > **Read this document first.** It supersedes the stale branch/PR status and earlier implementation status near the top of `docs/GEMINI_HANDOFF_REPORT.md`. The older report remains below as historical project context. Current source on `main` is authoritative.
-
 ## Authoritative repository-wide source-tree and targeted source reconciliation — 2026-11-16
 
 **This section overrides older repository counts, plan-status statements, and file-existence assumptions elsewhere in this document.** It was prepared from the complete tracked-path inventory and targeted source inspection at snapshot commit c35d762b5862046ae95394f17ffafcdd1989917e. Audit scope: all tracked paths were enumerated; high-risk UI, autocomplete, resolver, WEAO, auth/performance, tests, package manifests, and workflows were opened and traced. This was not a line-by-line review of every unrelated source file.
@@ -797,7 +847,6 @@ Do not treat a partial dotted exploit name as a field. Do not make a failed cata
 **Repair:** Remove the density state and toolbar control. Keep one stable Discord-like preview style (the current Cozy-style message layout is the default baseline), including multi-message grouping where appropriate. Remove only the density toggle and compact-only branches; do not remove message selection, attachments, embeds, Components V2, or action-row previews.
 
 ### 3.8 Existing Thread ID is not wired through the normal send flow
-
 **Files:** `client/src/utils/discord.ts`, `client/src/components/editor/MessageEditor/ContentTab.tsx`, `client/src/hooks/useSend.ts`, `server/src/routes/send.ts`, `server/src/services/discordService.ts`, `client/src/components/actions/StepList.tsx`, `server/src/actions/sendMessage.ts`.
 
 - `ExtendedMessageData` includes `thread_name` through the shared message type, but has no editor-level `thread_id` field.
@@ -897,8 +946,7 @@ When Terminal and Playwright are available again:
 - Run the existing Vitest suite with `npm test`.
 - Run `npm run build` for production compilation.
 - `npm run typecheck` is a separate TypeScript check; it is not a test runner. Do not substitute `tsc` for Vitest.
-- Use Playwright against the app after a local build/startup is available and the owner authorizes it.
-- Capture screenshots and console/network diagnostics for the viewports listed below.
+- Use Playwright against the app after a local build/startup is available and the owner authorizes it.- Capture screenshots and console/network diagnostics for the viewports listed below.
 - Do not claim zero errors or a visual fix without a successful check.
 
 ## 6. Required regression matrix
@@ -1198,7 +1246,6 @@ Run the full test, typecheck, and build commands against the implementation head
 - Files: `PropertyPanel.tsx`, `StudioLayout.tsx`, `messageStore.ts`.
 - Validation: source-level guards passed. Runtime state behavior, tests, typecheck, and build remain pending.
 
-
 ## Gemini V12 implementation — Batch 4 (2026-11-16)
 
 - `FlowBuilder.tsx`: replaced legacy semantic utility names with explicit SaaS Studio hex tokens for the heading, custom ID, server-mode note, and unsaved warning. Updated the mode label to `Server Bot mode`.
@@ -1321,3 +1368,16 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - These are source-content guards only. They are not substitutes for Vitest, TypeScript, production build, browser QA, or Lighthouse execution.
 - Latest implementation head before this handoff append: `b8dd14ac20c8bd58ba01e02db4962f1a133c633b`.
 - Latest GitHub Actions query still returned zero runs and zero commit statuses for the branch. Desktop Commander and Playwright MCP endpoints both returned HTTP 404 during this session; local test/Lighthouse execution remains blocked by tool availability.
+
+## Explicit server-ID placeholders — 2026-11-17
+
+- Follow-up to PR #45: added explicit target-guild placeholders using `{server.<guild_id>.<field>}`, for example `{server.123456789012345678.icon}` and `{server.123456789012345678.banner}`.
+- The existing unqualified `{server.*}` placeholders remain scoped to the server where the interaction occurred; explicit numeric IDs are namespaced and do not overwrite those values.
+- The action executor scans its action-step configuration for explicit guild IDs and fetches each referenced Guild resource through Discord's `GET /guilds/{guild.id}?with_counts=true` endpoint, reusing the existing short-lived cache. Up to 10 unique target guild IDs are resolved per action to bound REST fan-out. Explicit target IDs can also resolve when the interaction itself is not in a guild.
+- Target-scoped `.icon` and `.banner` return direct CDN URLs; `.icon_url` and `.banner_url` are aliases, while `.icon_hash` and `.banner_hash` expose raw hashes. Missing banner/icon values resolve to empty strings.
+- Explicit target lookups first request the full Guild resource via `GET /guilds/{guild.id}?with_counts=true`. If that fails, they fall back to `GET /guilds/{guild.id}/preview`.
+- The preview fallback allows access without bot membership only when Discord exposes a public preview (the guild must be discoverable). Private/non-discoverable guilds still require bot membership; inaccessible IDs remain unresolved and do not fail the action.
+- Full Guild and Preview responses are cached independently for 60 seconds with in-flight request deduplication and a 500-entry bound.
+- Preview-only fields are limited to the data Discord includes in the Guild Preview object; fields absent from that object resolve to empty values. Icon/banner hashes can still be converted into CDN URLs.
+- Added autocomplete examples in `Field.tsx`, documentation entries in `DocsPage.tsx`, and unit tests for scoped variables and guild-ID extraction.
+- Verification status: tests, typecheck, production build, browser QA, and live Discord API behavior have not been executed in this GitHub editing session. PR #45 is not yet merged or deployed.

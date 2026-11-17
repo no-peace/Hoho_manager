@@ -258,7 +258,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         }
       });
 
-      return items.slice(0, 20);
+      return items.slice(0, 50);
     }
 
     // WEAO Exploit Name Picker (`{exploit.<Name>.`)
