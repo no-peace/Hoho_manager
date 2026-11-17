@@ -135,8 +135,8 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
     });
   });
 
-  describe("2,200ms ACK Deadline Enforcement", () => {
-    it("aborts the outbound request when the API takes > 2,200ms", async () => {
+  describe("2,700ms Gateway Relay Fallback Deadline", () => {
+    it("aborts the outbound request when the API takes > 2,700ms", async () => {
       vi.useFakeTimers();
 
       let abortSignal: AbortSignal | undefined;
@@ -154,8 +154,8 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
       const interaction = { type: 3, id: "late_1", token: "tok_late" };
       const relayPromise = relay.run({ t: "INTERACTION_CREATE", d: interaction });
 
-      // Fast-forward past the 2,200ms abort deadline
-      await vi.advanceTimersByTimeAsync(2250);
+      // Fast-forward past the 2,700ms abort deadline
+      await vi.advanceTimersByTimeAsync(2750);
       await relayPromise;
 
       expect(abortSignal?.aborted).toBe(true);
