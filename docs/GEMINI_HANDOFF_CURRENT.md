@@ -1368,3 +1368,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - These are source-content guards only. They are not substitutes for Vitest, TypeScript, production build, browser QA, or Lighthouse execution.
 - Latest implementation head before this handoff append: `b8dd14ac20c8bd58ba01e02db4962f1a133c633b`.
 - Latest GitHub Actions query still returned zero runs and zero commit statuses for the branch. Desktop Commander and Playwright MCP endpoints both returned HTTP 404 during this session; local test/Lighthouse execution remains blocked by tool availability.
+
+## Explicit server-ID placeholders — 2026-11-17
+
+- Follow-up to PR #45: added explicit target-guild placeholders using `{server.<guild_id>.<field>}`, for example `{server.123456789012345678.icon}` and `{server.123456789012345678.banner}`.
+- The existing unqualified `{server.*}` placeholders remain scoped to the server where the interaction occurred; explicit numeric IDs are namespaced and do not overwrite those values.
+- The action executor scans its action-step configuration for explicit guild IDs and fetches each referenced Guild resource through Discord's `GET /guilds/{guild.id}?with_counts=true` endpoint, reusing the existing short-lived cache. Up to 10 unique target guild IDs are resolved per action to bound REST fan-out. Explicit target IDs can also resolve when the interaction itself is not in a guild.
+- Target-scoped `.icon` and `.banner` return direct CDN URLs; `.icon_url` and `.banner_url` are aliases, while `.icon_hash` and `.banner_hash` expose raw hashes. Missing banner/icon values resolve to empty strings.
+- The bot must be able to access the target guild (normally it must be a member). Guilds the bot cannot access and invalid IDs remain unresolved rather than causing the action to fail.
+- Added autocomplete examples in `Field.tsx`, documentation entries in `DocsPage.tsx`, and unit tests for scoped variables and guild-ID extraction.
+- Verification status: tests, typecheck, production build, browser QA, and live Discord API behavior have not been executed in this GitHub editing session. PR #45 remains draft; no merge or deployment performed.
