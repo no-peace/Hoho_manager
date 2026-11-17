@@ -110,6 +110,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       const json = await res.json();
       expect(json.status).toBe("ok");
       expect(json.database.connected).toBe(true);
+      expect(json.database).not.toHaveProperty("users");
     });
 
     it("returns HTTP 503 degraded when database connection throws (NEW-02)", async () => {
