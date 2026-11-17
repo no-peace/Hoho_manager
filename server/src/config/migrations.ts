@@ -448,5 +448,15 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_design_access_theme_publish
         ON design_access_users(is_active, can_publish_server_theme);
     `,
+  },  {
+    id: "018_remove_retired_dispatch_fields",
+    sql: `
+      -- These fields only supported webhook URL delivery and custom bot profiles.
+      -- Both dispatch paths and their profile tables have been retired.
+      ALTER TABLE settings DROP COLUMN bot_profile_id;
+      ALTER TABLE staff_access DROP COLUMN can_use_webhooks;
+      ALTER TABLE staff_access DROP COLUMN can_override_profile;
+    `,
   },
+
 ];
