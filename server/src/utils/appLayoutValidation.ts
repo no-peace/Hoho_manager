@@ -1,8 +1,7 @@
 import { ApiError } from "./errors.js";
 
 export const APP_LAYOUT_SCHEMA_VERSION = 1;
-export const MAX_APP_LAYOUT_DOCUMENT_BYTES = 256 * 1024;
-export const MAX_APP_LAYOUT_PAIR_BYTES = 512 * 1024;
+export const MAX_APP_LAYOUT_PAIR_BYTES = 65_536;
 
 export interface AppLayoutDocument {
   root: { props: Record<string, never> };
@@ -28,6 +27,8 @@ const PANEL_ORDER = ["editor-first", "preview-first"] as const;
 const SIDES = ["left", "right"] as const;
 const PANES = ["editor", "preview"] as const;
 const VISIBILITY = ["show", "hide"] as const;
+const ACTIVE_TABS = ["editor", "preview", "dispatch"] as const;
+const COMPONENT_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
 const motionRules: Record<string, PropertyRule> = {
   animation: { kind: "choice", values: MOTIONS },
@@ -35,15 +36,25 @@ const motionRules: Record<string, PropertyRule> = {
   animationDelay: { kind: "choice", values: DELAYS },
 };
 
+const headerRules = (height: number, padding: number, logo: number): Record<string, PropertyRule> => ({
+  height: { kind: "number", min: 44, max: height },
+  horizontalPadding: { kind: "number", min: 8, max: padding },
+  logoSize: { kind: "number", min: 20, max: logo },
+  background: { kind: "color" },
+  borderColor: { kind: "color" },
+  ...motionRules,
+});
+
+const panelRules: Record<string, PropertyRule> = {
+  label: { kind: "label" },
+  surface: { kind: "color" },
+  padding: { kind: "number", min: 0, max: 32 },
+  radius: { kind: "number", min: 0, max: 24 },
+  ...motionRules,
+};
+
 const componentRules: Record<string, Record<string, PropertyRule>> = {
-  DesktopHeader: {
-    height: { kind: "number", min: 44, max: 80 },
-    horizontalPadding: { kind: "number", min: 8, max: 36 },
-    logoSize: { kind: "number", min: 20, max: 48 },
-    background: { kind: "color" },
-    borderColor: { kind: "color" },
-    ...motionRules,
-  },
+  DesktopHeader: headerRules(80, 36, 48),
   DesktopWorkspace: {
     editorRatio: { kind: "number", min: 28, max: 72 },
     inspectorWidth: { kind: "number", min: 300, max: 520 },
@@ -53,14 +64,7 @@ const componentRules: Record<string, Record<string, PropertyRule>> = {
     borderColor: { kind: "color" },
     ...motionRules,
   },
-  MobileHeader: {
-    height: { kind: "number", min: 44, max: 72 },
-    horizontalPadding: { kind: "number", min: 8, max: 28 },
-    logoSize: { kind: "number", min: 20, max: 40 },
-    background: { kind: "color" },
-    borderColor: { kind: "color" },
-    ...motionRules,
-  },
+  MobileHeader: headerRules(72, 28, 40),
   MobileWorkspace: {
     defaultPane: { kind: "choice", values: PANES },
     showInspector: { kind: "choice", values: VISIBILITY },
@@ -80,26 +84,19 @@ const componentRules: Record<string, Record<string, PropertyRule>> = {
     ...motionRules,
   },
   EditorPanel: {
-    label: { kind: "label" },
-    surface: { kind: "color" },
-    padding: { kind: "number", min: 0, max: 32 },
-    radius: { kind: "number", min: 0, max: 24 },
+    ...panelRules,
     showToolbar: { kind: "choice", values: VISIBILITY },
-    ...motionRules,
   },
-  PreviewPanel: {
-    label: { kind: "label" },
-    surface: { kind: "color" },
-    padding: { kind: "number", min: 0, max: 32 },
-    radius: { kind: "number", min: 0, max: 24 },
-    ...motionRules,
-  },
-  InspectorPanel: {
-    label: { kind: "label" },
-    surface: { kind: "color" },
-    padding: { kind: "number", min: 0, max: 32 },
-    radius: { kind: "number", min: 0, max: 24 },
-    ...motionRules,
+  PreviewPanel: { ...panelRules },
+  InspectorPanel: { ...panelRules },
+};
+
+const OPTIONAL_PROPERTIES: Record<string, Record<string, PropertyRule>> = {
+  MobileBottomNavigation: {
+    activeTab: { kind: "choice", values: ACTIVE_TABS },
+    editorLabel: { kind: "label" },
+    previewLabel: { kind: "label" },
+    dispatchLabel: { kind: "label" },
   },
 };
 
@@ -134,7 +131,7 @@ const validateProperty = (name: string, value: unknown, rule: PropertyRule, comp
     }
     return value;
   }
-  if (typeof value !== "string" || value.trim().length < 1 || value.length > 48 || /[\u0000-\u001f\u007f]/.test(value)) {
+  if (typeof value !== "string" || value.trim().length < 1 || value.trim().length > 48 || /[\u0000-\u001f\u007f]/.test(value)) {
     fail(`${component}.${name} must contain 1–48 printable characters.`);
   }
   return value.trim();
@@ -145,8 +142,9 @@ const validateDocument = (value: unknown, mode: "desktop" | "mobile"): AppLayout
   exactKeys(value, ["root", "content"], `The ${mode} document`);
   if (!isRecord(value.root)) fail(`The ${mode} layout root is invalid.`);
   exactKeys(value.root, ["props"], `The ${mode} root`);
-  if (!isRecord(value.root.props) || Object.keys(value.root.props).length !== 0) {
-    fail(`The ${mode} layout root does not support custom properties.`);
+  const rootProps = value.root.props === undefined ? {} : value.root.props;
+  if (!isRecord(rootProps) || Object.keys(rootProps).length !== 0) {
+    fail(`The ${mode} layout root props must be an empty object.`);
   }
   if (!Array.isArray(value.content)) fail(`The ${mode} layout content must be an array.`);
 
@@ -155,6 +153,7 @@ const validateDocument = (value: unknown, mode: "desktop" | "mobile"): AppLayout
     : ["MobileHeader", "MobileWorkspace", "MobileBottomNavigation"];
   if (value.content.length !== topLevel.length) fail(`The ${mode} layout must contain its required shell sections only.`);
 
+  // IDs are unique within this responsive document, not across Desktop and Mobile.
   const ids = new Set<string>();
   const validateNode = (raw: unknown, expectedType: string): Record<string, unknown> => {
     if (!isRecord(raw)) fail(`The ${mode} layout contains an invalid component.`);
@@ -162,29 +161,55 @@ const validateDocument = (value: unknown, mode: "desktop" | "mobile"): AppLayout
     if (raw.type !== expectedType || !isRecord(raw.props)) fail(`The ${mode} layout contains an unexpected component type.`);
     const rules = componentRules[expectedType];
     if (!rules) fail(`Unsupported layout component: ${expectedType}.`);
-    const props = raw.props;
-    exactKeys(props, ["id", ...Object.keys(rules), ...(expectedType.endsWith("Workspace") ? ["content"] : [])], expectedType);
-    if (typeof props.id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(props.id)) {
-      fail(`${expectedType} requires a valid component ID.`);
-    }
-    if (ids.has(props.id)) fail("Layout component IDs must be unique within each responsive document.");
-    ids.add(props.id);
+    const optionalRules = OPTIONAL_PROPERTIES[expectedType] ?? {};
+    const isWorkspace = expectedType === "DesktopWorkspace" || expectedType === "MobileWorkspace";
+    exactKeys(
+      raw.props,
+      ["id", ...Object.keys(rules), ...Object.keys(optionalRules), ...(isWorkspace ? ["content"] : [])],
+      expectedType,
+    );
 
-    const cleanProps: Record<string, unknown> = { id: props.id };
-    for (const [name, property] of Object.entries(rules)) {
-      if (Object.prototype.hasOwnProperty.call(props, name)) {
-        cleanProps[name] = validateProperty(name, props[name], property, expectedType);
+    const id = raw.props.id;
+    if (typeof id !== "string" || !COMPONENT_ID.test(id)) {
+      fail(`${expectedType} requires an ID matching the approved 1–64 character component ID format.`);
+    }
+    if (ids.has(id)) fail(`Component IDs must be unique within the ${mode} document.`);
+    ids.add(id);
+
+    const cleanProps: Record<string, unknown> = { id };
+    for (const [name, rule] of Object.entries(rules)) {
+      if (!Object.prototype.hasOwnProperty.call(raw.props, name)) {
+        fail(`${expectedType} is missing required property: ${name}.`);
+      }
+      const rawValue = raw.props[name];
+      if (expectedType === "EditorPanel" && name === "showToolbar" && typeof rawValue === "boolean") {
+        cleanProps[name] = rawValue ? "show" : "hide";
+      } else {
+        cleanProps[name] = validateProperty(name, rawValue, rule, expectedType);
       }
     }
 
-    if (expectedType.endsWith("Workspace")) {
-      if (!Array.isArray(props.content) || props.content.length !== 3) {
+    for (const [name, rule] of Object.entries(optionalRules)) {
+      if (Object.prototype.hasOwnProperty.call(raw.props, name)) {
+        cleanProps[name] = validateProperty(name, raw.props[name], rule, expectedType);
+      }
+    }
+
+    if (expectedType === "MobileBottomNavigation") {
+      cleanProps.activeTab ??= "editor";
+      cleanProps.editorLabel ??= "Editor";
+      cleanProps.previewLabel ??= "Preview";
+      cleanProps.dispatchLabel ??= "Dispatch";
+    }
+
+    if (isWorkspace) {
+      if (!Array.isArray(raw.props.content) || raw.props.content.length !== 3) {
         fail(`${expectedType} must contain Editor, Preview and Inspector panels exactly once.`);
       }
-      const panels = ["EditorPanel", "PreviewPanel", "InspectorPanel"];
+      const panelTypes = ["EditorPanel", "PreviewPanel", "InspectorPanel"];
       const seen = new Set<string>();
-      const cleanPanels = props.content.map((panel) => {
-        if (!isRecord(panel) || typeof panel.type !== "string" || !panels.includes(panel.type) || seen.has(panel.type)) {
+      const cleanPanels = raw.props.content.map((panel) => {
+        if (!isRecord(panel) || typeof panel.type !== "string" || !panelTypes.includes(panel.type) || seen.has(panel.type)) {
           fail(`${expectedType} contains an invalid or duplicate panel.`);
         }
         seen.add(panel.type);
@@ -207,40 +232,20 @@ export const validateAppLayoutPair = (value: unknown): ValidatedAppLayoutPair =>
     fail(`Unsupported layout schema version. Expected ${APP_LAYOUT_SCHEMA_VERSION}.`);
   }
 
-  let desktopBytes: number;
-  let mobileBytes: number;
+  let pairBytes: number;
   try {
-    const desktopJson = JSON.stringify(value.desktop);
-    const mobileJson = JSON.stringify(value.mobile);
-    if (typeof desktopJson !== "string" || typeof mobileJson !== "string") {
-      fail("The responsive layout documents must be valid JSON values.");
-    }
-    desktopBytes = Buffer.byteLength(desktopJson, "utf8");
-    mobileBytes = Buffer.byteLength(mobileJson, "utf8");
+    const pairJson = JSON.stringify({ desktop: value.desktop, mobile: value.mobile });
+    if (typeof pairJson !== "string") fail("The responsive layout documents must be valid JSON values.");
+    pairBytes = Buffer.byteLength(pairJson, "utf8");
   } catch {
     fail("The responsive layout documents must be valid JSON values.");
   }
-  if (desktopBytes! > MAX_APP_LAYOUT_DOCUMENT_BYTES || mobileBytes! > MAX_APP_LAYOUT_DOCUMENT_BYTES) {
-    throw ApiError.payloadTooLarge("Each responsive layout document must be 256 KiB or smaller.");
-  }
-  if (desktopBytes! + mobileBytes! > MAX_APP_LAYOUT_PAIR_BYTES) {
-    throw ApiError.payloadTooLarge("The responsive layout pair must be 512 KiB or smaller.");
+  if (pairBytes! > MAX_APP_LAYOUT_PAIR_BYTES) {
+    throw ApiError.payloadTooLarge("The combined Desktop and Mobile layout documents must not exceed 65,536 bytes (64 KiB).");
   }
 
+  // Fully validate and normalize both documents before the caller can persist either one.
   const desktop = validateDocument(value.desktop, "desktop");
   const mobile = validateDocument(value.mobile, "mobile");
-  const ids = new Set(desktop.content.flatMap((node) => collectIds(node)));
-  for (const id of mobile.content.flatMap((node) => collectIds(node))) {
-    if (ids.has(id)) fail("Desktop and Mobile component IDs must be unique across the published pair.");
-    ids.add(id);
-  }
   return { schemaVersion: APP_LAYOUT_SCHEMA_VERSION, desktop, mobile };
-};
-
-const collectIds = (node: { type: string; props: Record<string, unknown> }): string[] => {
-  const id = typeof node.props.id === "string" ? [node.props.id] : [];
-  const nested = Array.isArray(node.props.content)
-    ? (node.props.content as Array<{ type: string; props: Record<string, unknown> }>).flatMap(collectIds)
-    : [];
-  return [...id, ...nested];
 };
