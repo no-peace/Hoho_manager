@@ -142,7 +142,7 @@ export const StudioLayout: React.FC = () => {
   };
 
   return (
-    <div className={UI_THEME_CONFIG.surfaces.appShell}>
+    <div className={UI_THEME_CONFIG.surfaces.appShell + " hoho-studio-shell"}>
       <Header
         onOpenBackups={() => setBackupsModalOpen(true)}
         onOpenJson={() => setJsonModalOpen(true)}

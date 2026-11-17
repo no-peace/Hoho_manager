@@ -5,7 +5,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { useGlobalStore } from "../../store/globalStore";
 import { request } from "../../api/client";
 import { ALL_LOG_EVENTS, DEFAULT_LOG_EVENTS } from "@dmb/shared";
-import { CheckSquare, Square, Shield, Bell, RefreshCw } from "lucide-react";
+import { Check, Shield, Bell, RefreshCw } from "lucide-react";
 
 interface SettingsData {
   log_channel_id: string | null;
@@ -144,7 +144,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
       <div className="flex flex-col sm:flex-row gap-4 h-[75vh] min-w-0">
         <div className="w-full sm:w-44 bg-[#10131A] border border-[#272D3A] rounded-lg p-1.5 sm:p-2 flex flex-row sm:flex-col gap-1 shrink-0 min-w-0">
           <button
-            onClick={() => tab}
+            onClick={() => undefined}
             className={`text-left px-3 py-2 rounded text-xs font-bold uppercase ${tab === "general" ? "bg-[#818CF8] text-white" : "text-[#A1A8B8] hover:bg-[#252B3A]"}`}
           >
             General
@@ -261,19 +261,25 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                                 return (
                                   <label
                                     key={event}
-                                    onClick={() => toggleEvent(event)}
-                                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded cursor-pointer transition-colors text-xs select-none ${
-                                      checked
-                                        ? "bg-[#818CF8]/15 text-white border border-[#818CF8]/30"
-                                        : "bg-[#1D2230] text-[#A1A8B8] hover:text-[#F1F3F9] border border-transparent"
-                                    }`}
+                                    className="flex min-w-0 items-center gap-2.5 rounded-md border border-transparent bg-[#1D2230] px-2.5 py-2 text-xs text-[#A1A8B8] cursor-pointer select-none transition-colors hover:border-[#343C4E] hover:text-[#F1F3F9]"
                                   >
-                                    {checked ? (
-                                      <CheckSquare size={14} className="text-[#818CF8] shrink-0" />
-                                    ) : (
-                                      <Square size={14} className="text-[#343C4E] shrink-0" />
-                                    )}
-                                    <span className="truncate font-medium">{label}</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => toggleEvent(event)}
+                                      className="peer sr-only"
+                                    />
+                                    <span
+                                      aria-hidden="true"
+                                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-[background-color,border-color,color,box-shadow] ${
+                                        checked
+                                          ? "border-[#818CF8] bg-[#818CF8] text-[#0B0D12]"
+                                          : "border-[#465066] bg-[#10131A] text-transparent peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
+                                      }`}
+                                    >
+                                      {checked ? <Check size={11} strokeWidth={3} /> : null}
+                                    </span>
+                                    <span className="min-w-0 truncate font-medium">{label}</span>
                                   </label>
                                 );
                               })}
