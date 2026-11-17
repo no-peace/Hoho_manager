@@ -169,10 +169,10 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Studio runtime integration
 
-**Status:** REVIEW REQUIRED — runtime source accepted; regression test batch in progress  
+**Status:** REVIEW REQUIRED — runtime source accepted; regression tests submitted  
 **Branch:** `agent/layout-publishing`  
 **Scope:** Part C Studio runtime integration only. Backend/API/migration implementation remains the previously reviewed batch integrated through PR #47.  
-**Current batch:** Three authorized focused regression test files for the accepted runtime implementation.
+**Current batch:** Three authorized focused regression test files committed for Head Agent review.
 
 **Files claimed / in progress (exclusive ownership under Directive 024):**
 1. `client/src/components/layout/StudioLayout.tsx`
@@ -229,7 +229,27 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 2. `client/src/utils/__tests__/appLayoutApi.test.ts` (new)
 3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx` (new)
 
-Only these three test paths may be added in this batch. Runtime source files remain SOURCE REVIEW ACCEPTED and must not be modified. No npm tests, typecheck or build will be run. Status will remain REVIEW REQUIRED pending Head Agent review.
+Only these three test paths were added. Runtime source files remain SOURCE REVIEW ACCEPTED and were not modified.
+
+**Regression coverage added:**
+- Hook fallback for missing, failed, malformed and unsupported-version responses.
+- Desktop/Mobile responsive selection and media-query listener cleanup.
+- Last-valid-layout preservation after a failed refresh.
+- Navigation-return refresh and lifecycle listener cleanup.
+- Credentialed, uncached GET and atomic version-1 PUT request contracts.
+- Client validation of both documents before network publishing; server error/status propagation.
+- Owner-only publishing visibility, both-document validation, confirmation cancellation, pending state, server-confirmed success and failure/status-load errors.
+
+**Test batch commit:** `8d6dac91d332b04f8977e52be4b573cd34355cf3`
+
+**Verification:** No npm tests, typecheck or build were run, as explicitly deferred. Tests have been source-reviewed only; execution remains pending Head Agent authorization/final verification.
+
+**Changed paths in the test commit (exactly):**
+1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`
+2. `client/src/utils/__tests__/appLayoutApi.test.ts`
+3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
+
+The test batch is submitted as **REVIEW REQUIRED**. Runtime source files were not edited. Wait for Head Agent review.
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
