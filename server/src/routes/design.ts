@@ -217,7 +217,7 @@ router.patch("/access/:discordId", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
   requireOwner(identity);
   const discordId = String(req.params.discordId ?? "");
-  if (!/^\\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord ID.");
+  if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord ID.");
   if (env.ownerDiscordIds.includes(discordId)) throw ApiError.badRequest("Owners already have server-theme publishing permission.");
   if (!isRecord(req.body) || typeof req.body.canPublishServerTheme !== "boolean") {
     throw ApiError.badRequest("canPublishServerTheme must be a boolean.");
