@@ -20,6 +20,7 @@ import authRouter from "./routes/auth.js";
 import weaoRouter from "./routes/weao.js";
 import executorsRouter from "./routes/executors.js";
 import trackingRouter from "./routes/tracking.js";
+import designRouter from "./routes/design.js";
 
 export const createApp = (): Express => {
   const app = express();
@@ -176,6 +177,7 @@ export const createApp = (): Express => {
   app.use("/api/weao", weaoRouter);
   app.use("/api/executors", executorsRouter);
   app.use("/api/tracking", trackingRouter);
+  app.use("/api/design", designRouter);
 
   // Serve built frontend if client/dist exists (Express 5 compatible SPA fallback)
   const clientDist = path.resolve(serverRoot, "../client/dist");

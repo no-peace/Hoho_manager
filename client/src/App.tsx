@@ -7,6 +7,10 @@ import { HoHoLogoMark } from "./components/layout/HoHoLogoMark";
 import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import api from "./api/client";
+import { designApi } from "./api/design";
+import { applyUiTheme } from "./utils/puckTheme";
+import { publishedThemeTokens } from "./config/puck/publishedTheme";
+import "./config/puck/publishedTheme.css";
 
 const DesignLabPage = React.lazy(() =>
   import("./pages/DesignLabPage").then((module) => ({ default: module.DesignLabPage })),
@@ -55,6 +59,15 @@ export const App: React.FC = () => {
   const authLoading = useGlobalStore((state) => state.authLoading);
   const fetchCurrentUser = useGlobalStore((state) => state.fetchCurrentUser);
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
+
+  useEffect(() => {
+    applyUiTheme(publishedThemeTokens);
+    void designApi.defaultTheme().then(({ theme }) => {
+      if (theme?.data?.theme) applyUiTheme(theme.data.theme);
+    }).catch(() => {
+      // The checked-in local theme remains the fallback when the API is unavailable.
+    });
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -118,6 +131,14 @@ export const App: React.FC = () => {
     return <SessionAuthLoader />;
   }
 
+  if (route === "design") {
+    return (
+      <React.Suspense fallback={<AppLoadingScreen label="Loading Design Lab…" />}>
+        <DesignLabPage />
+      </React.Suspense>
+    );
+  }
+
   if (!currentUser) {
     const authError =
       typeof window !== "undefined"
@@ -127,14 +148,6 @@ export const App: React.FC = () => {
       <>
         <LoginScreen authError={authError} />
       </>
-    );
-  }
-
-  if (route === "design") {
-    return (
-      <React.Suspense fallback={<AppLoadingScreen label="Loading Design Lab…" />}>
-        <DesignLabPage />
-      </React.Suspense>
     );
   }
 

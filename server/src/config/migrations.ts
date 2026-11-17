@@ -372,5 +372,32 @@ export const migrations: readonly Migration[] = [
         ON auth_session_revocations(revoked_at_ms);
     `,
   },
-];
+  {
+    id: "013_design_lab_themes_and_access",
+    sql: `
+      CREATE TABLE IF NOT EXISTS design_themes (
+        id TEXT PRIMARY KEY,
+        owner_discord_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        data TEXT NOT NULL,
+        is_default INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_design_themes_owner
+        ON design_themes(owner_discord_id, updated_at);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_design_themes_single_default
+        ON design_themes(is_default) WHERE is_default = 1;
 
+      CREATE TABLE IF NOT EXISTS design_access_users (
+        discord_user_id TEXT PRIMARY KEY,
+        granted_by_discord_id TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_design_access_active
+        ON design_access_users(is_active);
+    `,
+  },
+];

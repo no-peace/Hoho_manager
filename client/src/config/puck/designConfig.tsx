@@ -161,7 +161,7 @@ export const designConfig: any = {
       },
       defaultProps: { text: "Your heading goes here", level: "h2", align: "left", color: "#f8fafc" },
       render: ({ text, level, align, color }: any) => {
-        const Tag = (["h1", "h2", "h3", "h4"].includes(level) ? level : "h2") as keyof JSX.IntrinsicElements;
+        const Tag = (["h1", "h2", "h3", "h4"].includes(level) ? level : "h2") as React.ElementType;
         return <Tag className={`hoho-heading hoho-heading--${level || "h2"}`} style={textStyle(color, align)}>{text}</Tag>;
       },
     },
