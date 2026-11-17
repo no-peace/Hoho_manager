@@ -18,6 +18,12 @@ export interface AppLayoutDocuments {
 
 const DRAFT_PREFIX = "hoho:app-layout-draft:v1:";
 
+export interface ResolvedAppLayoutMotion {
+  animation: "none" | "fade" | "fade-up" | "slide-left" | "slide-right" | "zoom-in" | "float" | "pulse";
+  duration: string;
+  delay: string;
+}
+
 export interface ResolvedAppLayout {
   desktop: {
     headerHeight: number; headerPadding: number; logoSize: number; headerBackground: string; headerBorder: string;
@@ -26,6 +32,10 @@ export interface ResolvedAppLayout {
     editorBackground: string; previewBackground: string; inspectorBackground: string;
     editorPadding: number; previewPadding: number; inspectorPadding: number;
     editorRadius: number; previewRadius: number; inspectorRadius: number;
+    editorLabel: string; previewLabel: string; inspectorLabel: string; showToolbar: boolean;
+    headerMotion: ResolvedAppLayoutMotion; workspaceMotion: ResolvedAppLayoutMotion;
+    editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion;
+    inspectorMotion: ResolvedAppLayoutMotion;
   };
   mobile: {
     headerHeight: number; headerPadding: number; logoSize: number; headerBackground: string; headerBorder: string;
@@ -33,6 +43,11 @@ export interface ResolvedAppLayout {
     editorBackground: string; previewBackground: string; inspectorBackground: string; editorRadius: number; previewRadius: number; inspectorRadius: number; inspectorPadding: number;
     navHeight: number; navPadding: number; navBackground: string; navAccent: string;
     tabOrder: "editor-first" | "preview-first"; showLabels: boolean;
+    editorLabel: string; previewLabel: string; inspectorLabel: string; showToolbar: boolean;
+    editorTabLabel: string; previewTabLabel: string; dispatchTabLabel: string;
+    headerMotion: ResolvedAppLayoutMotion; workspaceMotion: ResolvedAppLayoutMotion;
+    editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion;
+    inspectorMotion: ResolvedAppLayoutMotion; navMotion: ResolvedAppLayoutMotion;
   };
 }
 
@@ -59,6 +74,25 @@ const safeChoice = <T extends string>(value: unknown, choices: readonly T[], fal
 
 const propsOf = (nodes: AppLayoutNode[], type: string): Record<string, any> =>
   findNode(nodes, type)?.props || {};
+
+const resolveMotion = (props: Record<string, any>): ResolvedAppLayoutMotion => ({
+  animation: safeChoice(
+    props.animation,
+    ["none", "fade", "fade-up", "slide-left", "slide-right", "zoom-in", "float", "pulse"] as const,
+    "none",
+  ),
+  duration: safeChoice(
+    props.animationDuration,
+    ["180ms", "300ms", "500ms", "700ms", "1200ms", "2000ms", "3000ms"] as const,
+    "300ms",
+  ),
+  delay: safeChoice(props.animationDelay, ["0ms", "100ms", "200ms", "350ms"] as const, "0ms"),
+});
+
+const safeLabel = (value: unknown, fallback: string): string =>
+  typeof value === "string" && value.trim().length > 0 && value.trim().length <= 48
+    ? value.trim()
+    : fallback;
 
 export const resolveAppLayoutData = (
   desktopValue: unknown,
@@ -100,6 +134,15 @@ export const resolveAppLayoutData = (
       editorRadius: boundedNumber(desktopEditor.radius, 10, 0, 24),
       previewRadius: boundedNumber(desktopPreview.radius, 10, 0, 24),
       inspectorRadius: boundedNumber(desktopInspector.radius, 10, 0, 24),
+      editorLabel: safeLabel(desktopEditor.label, "Message Editor"),
+      previewLabel: safeLabel(desktopPreview.label, "Live Preview"),
+      inspectorLabel: safeLabel(desktopInspector.label, "Properties"),
+      showToolbar: desktopEditor.showToolbar !== "hide" && desktopEditor.showToolbar !== false,
+      headerMotion: resolveMotion(desktopHeader),
+      workspaceMotion: resolveMotion(desktopWorkspace),
+      editorMotion: resolveMotion(desktopEditor),
+      previewMotion: resolveMotion(desktopPreview),
+      inspectorMotion: resolveMotion(desktopInspector),
     },
     mobile: {
       headerHeight: boundedNumber(mobileHeader.height, 56, 44, 72),
@@ -126,6 +169,19 @@ export const resolveAppLayoutData = (
       navAccent: safeHex(mobileNav.accent, "#818CF8"),
       tabOrder: safeChoice(mobileNav.tabOrder, ["editor-first", "preview-first"] as const, "editor-first"),
       showLabels: mobileNav.showLabels !== "hide",
+      editorLabel: safeLabel(mobileEditor.label, "Message Editor"),
+      previewLabel: safeLabel(mobilePreview.label, "Live Preview"),
+      inspectorLabel: safeLabel(mobileInspector.label, "Properties"),
+      showToolbar: mobileEditor.showToolbar !== "hide" && mobileEditor.showToolbar !== false,
+      editorTabLabel: safeLabel(mobileNav.editorLabel, "Editor"),
+      previewTabLabel: safeLabel(mobileNav.previewLabel, "Preview"),
+      dispatchTabLabel: safeLabel(mobileNav.dispatchLabel, "Dispatch"),
+      headerMotion: resolveMotion(mobileHeader),
+      workspaceMotion: resolveMotion(mobileWorkspace),
+      editorMotion: resolveMotion(mobileEditor),
+      previewMotion: resolveMotion(mobilePreview),
+      inspectorMotion: resolveMotion(mobileInspector),
+      navMotion: resolveMotion(mobileNav),
     },
   };
 };
