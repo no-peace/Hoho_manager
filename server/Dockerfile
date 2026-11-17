@@ -14,6 +14,7 @@ COPY package.json package-lock.json* tsconfig.base.json ./
 COPY shared/package.json shared/tsconfig.json ./shared/
 COPY server/package.json server/tsconfig.json ./server/
 COPY client/package.json client/tsconfig.json ./client/
+COPY bot/package.json ./bot/
 RUN npm install --workspace server --include-workspace-root
 
 COPY shared ./shared
