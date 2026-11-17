@@ -590,7 +590,6 @@ router.get(
   attachUser,
   requireStaffPermission("edit"),
   asyncHandler(async (req, res) => {
-    const profileId = parseProfileId(req.query.profileId);
     const channelId = req.params.channelId;
     const messageId = req.params.messageId;
     if (typeof channelId !== "string" || typeof messageId !== "string") {
@@ -632,7 +631,7 @@ router.get(
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     const profileId = parseProfileId(req.query.profileId);
-    const token = await discord.resolveBotToken(profileId);
+    const token = await discord.resolveBotToken();
     const data = await discord.getBotIdentity(token);
     if (!data || !data.id) return res.json(null);
 
