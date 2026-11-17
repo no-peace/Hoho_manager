@@ -59,7 +59,7 @@ export const UI_THEME_CONFIG = {
       lg: "h-10 px-5 text-sm rounded-[8px]",
     },
     iconButtonBase:
-      "relative inline-flex items-center justify-center rounded-lg p-1.5 transition-[transform,background-color,border-color,color,opacity] duration-150 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] after:content-[''] after:absolute after:-inset-1.5",
+      "relative inline-flex items-center justify-center rounded-lg p-1.5 transition-[transform,background-color,color,opacity] duration-150 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] after:content-[''] after:absolute after:-inset-1.5",
   },
 
   /**
