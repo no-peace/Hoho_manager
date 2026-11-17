@@ -325,3 +325,36 @@ Fresh compare against current `main` during review:
 The report's branch counts were stale and must not be used as current status. Preserve current `main` control document during all integrations.
 - Source spot-checks on current `main` confirm the no-op General tab handler in `SettingsModal.tsx`, and the owner-only server-theme checks in `server/src/routes/design.ts`. The report's Docs membership inconsistency is consistent with the current Docs variable descriptions and the report's cited Guild Preview fallback; implementation must retain that limitation.
 - No browser QA, npm tests, typecheck, build or Lighthouse checks were run as part of this review. Do not claim they passed.
+
+## 20. Head Agent review — Agent 3 Part C backend and Agent 4 Part E (2026-11-17)
+
+### Agent 3 — Part C backend batch
+- Current branch comparison: `agent/layout-publishing` is 24 commits ahead and 2 behind `main`. The submitted diff includes the stale branch copy of `docs/AGENTS.md`; preserve the current `main` control document during integration.
+- Reviewed source files: `server/src/config/migrations.ts`, `server/src/repositories/appLayoutRepository.ts`, `server/src/routes/design.ts`, `server/src/utils/appLayoutValidation.ts`, and `server/tests/appLayoutPublishing.test.ts`.
+- **Source review decision: Part C backend/API/migration batch APPROVED for integration review.** The earlier blockers have been addressed:
+  - one authoritative row stores the complete Desktop/Mobile pair;
+  - repository publication uses a database transaction;
+  - both documents are validated and normalized before persistence;
+  - public GET and owner-only authenticated PUT endpoints are present;
+  - publisher identity is taken from the verified session, and the non-production admin simulation is explicitly gated by `!env.isProd`;
+  - no application-layout publisher allowlist or publisher-management endpoint remains;
+  - combined pair limit is 65,536 bytes;
+  - required component properties, exact ID format/length, omitted root props, v1 navigation defaults, boolean `showToolbar` compatibility, and per-document (not cross-document) ID uniqueness are handled;
+  - regression cases cover the corrected validation and authorization paths.
+- Migration 015 creates the single published-pair table. Migration 016 safely removes the abandoned `app_layout_publishers` table with `DROP TABLE IF EXISTS`; do not rewrite or remove already-numbered migrations.
+- **Important scope boundary:** This approval covers backend/API/migration source only. It does not approve Studio runtime integration, production UI wiring, or the overall Part C completion. Agent 3 must wait for an exact runtime file list and exclusive ownership authorization before touching `StudioLayout.tsx`, `Header.tsx`, `SplitPane.tsx`, `PropertyPanel.tsx` or shared UI/theme/CSS.
+- Automated checks were not run. The submitted tests are source-reviewed only; do not claim they passed.
+- Integration remains Head Agent-controlled. Do not merge the stale `docs/AGENTS.md` from the branch.
+
+### Agent 4 — Part E batch
+- Current branch comparison: `agent/themes-ui` is 5 commits ahead and 0 behind `main`.
+- Source review accepted the two authorized code changes:
+  - `client/src/pages/DocsPage.tsx`: accurately distinguishes full Guild access from discoverable-server public Guild Preview access.
+  - `client/src/components/layout/SettingsModal.tsx`: replaces the no-op General button with a static current-section label and applies the keyboard focus ring to both checked and unchecked custom checkbox states.
+- **Decision: Part E two-file source batch APPROVED for integration.** The branch also changes `docs/AGENTS.md` for its status record. Do not merge that branch copy; preserve the latest `main` control document.
+- Agent 4's Part D remains **BLOCKED / NOT AUTHORIZED**. It must not start theme permission routes, migrations, theme utility changes or Design Lab UI work until Part C integration is resolved and the Head Agent grants exact file ownership.
+- No npm tests, typecheck, build or browser QA were run. Do not claim verification beyond source review.
+
+### Branch state at this review
+- Agent 3: 24 ahead / 2 behind; backend source approved for integration review, runtime work not authorized.
+- Agent 4: 5 ahead / 0 behind; Part E two-file source batch approved for integration, Part D blocked.
