@@ -301,3 +301,27 @@ These directives supersede earlier status labels and next-action text above wher
 
 ### Part D/E report status
 - Agent 4 reports `REPORT SUBMITTED / REVIEW REQUIRED`, but no report content or changed report file is present in the current Head Agent conversation or the `agent/themes-ui` branch (0 commits ahead, 2 behind). Do not authorize Parts D/E implementation until the actual inspection report and exact proposed file ownership list are available for review.
+
+## 19. Head Agent review — Agent 4 Parts D/E inspection report (2026-11-17)
+
+### Report review and decisions
+- Agent 4's inspection report was received in the Head Agent conversation. It reports no files changed, no commits and no automated checks run. The report is accepted as a useful source-level inventory, not as browser QA or runtime verification.
+- **Part D architecture:** Preserve the existing separation between server themes, per-user active-theme cache, community themes and private presets. The 14-day expiry applies only to active-theme cache; private preset libraries and portable exports must remain independent and durable.
+- **Server-theme authorization:** Approve a distinct server-side `canPublishServerTheme` capability for explicitly authorized Design Lab Discord IDs, in addition to existing owners. Design Lab access alone must not imply publishing permission. Check the authenticated session identity and trusted server-side permission on every server-theme mutation; never trust client-supplied IDs, local storage, UI visibility or unverified role claims. Return the capability separately from `isOwner`. Keep Part C application-layout publishing owner-only.
+- **Permission storage/UI:** The report's proposal to add a separate capability to `design_access_users` and manage it through the existing owner-only access UI is approved in principle, subject to implementation review and coordination with Agent 3. Do not modify the already-applied migration 013; use a new forward-only migration. Permission revocation must take effect on the next mutation request.
+- **Part D implementation is NOT YET AUTHORIZED.** Agent 3 currently has an active Part C branch touching `server/src/routes/design.ts` and `server/src/config/migrations.ts`; Agent 4 must not edit these or any other Part D files until Part C backend integration is resolved and the Head Agent grants exact exclusive file ownership. `DesignLabPage.tsx` also requires a fresh ownership check before assignment.
+- **Part E implementation is AUTHORIZED as a separate narrow batch** on `agent/themes-ui`, limited exclusively to:
+  1. `client/src/pages/DocsPage.tsx`: correct the outdated statement that bot membership is always required, while accurately limiting non-member access to discoverable servers with a public Guild Preview and its available fields.
+  2. `client/src/components/layout/SettingsModal.tsx`: remove the no-op General tab button/navigation interaction (use a static selected section label or a clear non-interactive layout) and ensure the checked custom checkbox indicator retains the keyboard-visible focus ring.
+- No other files are authorized in this Part E batch. In particular, no theme utilities/tests/routes/migrations, `DesignLabPage.tsx`, shared CSS/theme config, Studio runtime, Puck files or `docs/AGENTS.md` edits by Agent 4.
+- Agent 4 must re-fetch this latest main control document before editing and before committing, record its two-file claim in its own status section, implement only these fixes, add focused regression coverage only if it can do so without editing unapproved files (otherwise report the test gap), and commit only to `agent/themes-ui`. Do not run npm checks; the user deferred them. Report commit SHA and exact diff, then mark REVIEW REQUIRED. No self-merge.
+
+### Report corrections / current branch state
+Fresh compare against current `main` during review:
+- Agent 1: 27 commits ahead, 3 behind.
+- Agent 2: 32 commits ahead, 3 behind.
+- Agent 3: 10 commits ahead, 1 behind; Part C remains not approved pending the corrections in section 18.
+- Agent 4: 0 commits ahead, 3 behind; inspection only, no committed files.
+The report's branch counts were stale and must not be used as current status. Preserve current `main` control document during all integrations.
+- Source spot-checks on current `main` confirm the no-op General tab handler in `SettingsModal.tsx`, and the owner-only server-theme checks in `server/src/routes/design.ts`. The report's Docs membership inconsistency is consistent with the current Docs variable descriptions and the report's cited Guild Preview fallback; implementation must retain that limitation.
+- No browser QA, npm tests, typecheck, build or Lighthouse checks were run as part of this review. Do not claim they passed.
