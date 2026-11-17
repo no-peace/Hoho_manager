@@ -169,24 +169,39 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Database and publishing
 
-**Status:** IN PROGRESS — backend/API/migration implementation authorized  
+**Status:** REVIEW REQUIRED — backend/API/migration batch submitted; runtime integration not authorized  
 **Branch:** `agent/layout-publishing`  
-**Scope:** Part C backend only. Runtime integration remains unauthorized.  
+**Scope:** Part C backend only. No production Studio runtime or shared UI/theme/CSS files changed.  
 **Dependency:** Satisfied — Head Agent approved Agent 2's Desktop/Mobile schema and runtime contract on 2026-11-17.  
-**Current batch:** Batch 1 — backend architecture review and exclusive file claims  
-**Files claimed / in progress:**
-- `server/src/config/migrations.ts` — append an idempotent forward-only migration for the singleton published responsive-layout record and explicit layout-publisher allowlist.
-- `server/src/repositories/appLayoutRepository.ts` — new repository for atomic pair reads/writes and publisher allowlist operations using the existing database abstraction.
-- `server/src/utils/appLayoutValidation.ts` — new strict server-side validator for the approved Desktop/Mobile Puck document contract, component/property allowlists, bounds, motion values, IDs, schema version and payload limits.
-- `server/src/routes/design.ts` — extend the existing design API with public published-layout read, authenticated atomic publish, and owner-only publisher allowlist management; preserve all theme/preset routes.
-- `server/tests/appLayoutPublishing.test.ts` — focused regression coverage for schema validation, authorization, atomic pair persistence and read metadata.
-- `docs/AGENTS.md` — this Agent 3 section only.
-**Files changed:** `docs/AGENTS.md` (Agent 3 claims/status only).  
-**Architecture findings:** Existing persistence is SQLite/Turso via `db` in `server/src/config/database.ts`; migrations are ordered in `server/src/config/migrations.ts`; `db.transaction()` supports SQLite and Turso; `/api/design` is already mounted in `server/src/app.ts`; Discord identity must come from `getSessionUserFromRequest()`. Existing `design_access_users` is for Design Lab access and will not be treated as publishing permission. A separate explicit publisher allowlist is required; it is an allowlist, not a new role system. Existing theme data and private presets remain untouched.
-**Branch baseline:** Fast-forwarded `agent/layout-publishing` from `5381b21d751491c0bdd50030934d48c00293a860` to current main `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation.
-**Tests executed:** None. npm checks are explicitly deferred.
-**Commit SHA:** None.
-**Next action:** Implement only the claimed backend files; validate both documents fully before opening a transaction and commit only after refreshing this control file.
+**Current batch:** Backend publishing persistence, validation, authorization and API  
+**Files claimed / in progress:** None remaining in implementation. Runtime files remain unclaimed and unauthorized.  
+**Files changed:**
+- `server/src/config/migrations.ts`
+- `server/src/repositories/appLayoutRepository.ts`
+- `server/src/routes/design.ts`
+- `server/src/utils/appLayoutValidation.ts`
+- `server/tests/appLayoutPublishing.test.ts`
+- `docs/AGENTS.md` (Agent 3 section only)
+
+**Migration behavior:** Appended forward-only migration `015_published_responsive_app_layout`. It creates a singleton `published_app_layouts` row containing schema version, both JSON documents, publisher Discord ID, and created/updated timestamps. It also creates `app_layout_publishers`, an explicit, owner-managed Discord-ID allowlist separate from Design Lab access. DDL uses `IF NOT EXISTS`; existing theme and private-preset tables are untouched.
+
+**API contract:**
+- `GET /api/design/app-layout` — public read. Returns `{ layout, fallback }`; missing or invalid stored data returns `layout: null` so the client can use built-in defaults. Valid responses include schema version, Desktop, Mobile, publisher Discord ID, and created/updated timestamps.
+- `PUT /api/design/app-layout` — authenticated publish. Request body is exactly `{ schemaVersion: 1, desktop, mobile }`. Returns `{ ok: true, layout }` after persistence.
+- `GET /api/design/app-layout/publishers`, `POST /api/design/app-layout/publishers`, and `DELETE /api/design/app-layout/publishers/:discordId` — owner-only management of the explicit publisher allowlist.
+
+**Validation and persistence:** Server validator enforces schema version 1; exact Desktop/Mobile shell sections; component and property allowlists; fixed panel composition; unique IDs across the pair; six-digit HEX colors; integer dimension bounds; enumerated motion names/durations/delays; bounded printable labels; and 256 KiB per document / 512 KiB per pair limits. It rejects arbitrary HTML/JS/CSS and unknown properties. Both documents are fully validated and normalized before repository access. The repository stores both documents in one singleton row inside the existing `db.transaction()` abstraction, so a publish cannot persist only one responsive document.
+
+**Authorization:** Publisher identity comes only from the verified Discord session. The configured owner IDs (plus the existing local-development admin behavior outside production) may publish and manage the allowlist. Other users must have an active row in `app_layout_publishers`; Design Lab access alone is not sufficient. The request body cannot supply or override publisher identity. Every publish and allowlist mutation checks authorization server-side.
+
+**Tests added:** Six focused Vitest cases cover accepted schema/normalization, unsupported component/property/motion/ID/version values, dimensions/colors/size limits, unauthorized publishing and spoofed publisher fields, successful publish/read metadata, invalid-pair preservation of the previous published pair, and owner-only publisher grant/revoke. Tests were authored but **not run**, as instructed. No npm checks were run.
+
+**Branch baseline:** `agent/layout-publishing` was fast-forwarded to `main` at `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation. It is currently 8 commits ahead and 0 behind `main`; no push or merge to `main` was performed.
+**Implementation/test head before this status update:** `ecde6c02852bfc5b485175dea857d9c954986b84`.
+**Remaining work:** Head Agent source review and deferred final verification. Runtime integration requires a separate explicit file-list approval and start signal.
+**Tests executed:** None.
+**Commit SHA:** See implementation/test head above; the current control-file update is a separate commit.
+**Next action:** Wait for Head Agent review. Do not begin runtime integration.
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
