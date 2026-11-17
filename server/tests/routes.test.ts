@@ -1,6 +1,6 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { env } from "../src/config/env.js";
 import { db, initializeDatabase } from "../src/config/database.js";
@@ -77,6 +77,10 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   // 1. /api/health
