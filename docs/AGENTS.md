@@ -144,7 +144,7 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 **Branch:** `agent/ui-regressions`  
 **Scope:** Part A only. Audit the existing V12/login/preview/mobile quick-edit/FlowBuilder work, identify residual gaps and fix only verified issues.  
 **Current batch:** A1 — targeted Components V2 quick-edit regression (implementation committed; verification pending)  
-**Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`  
+**Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`, `client/src/components/reactbits/ThreeHeroCanvas.tsx`, `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` (new)  
 **Files changed:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`  
 **Tests executed:** Added 3 focused Vitest cases for nested lookup, depth-first ordering and missing type. Not executed: connected Terminal endpoint returned HTTP 404; GitHub reports no status checks or workflow runs for the commit.  
 **Commit SHA:** `025f42518cdd4498db613d5219af8097bdc3dcba` (implementation/test commit; branch also contains status and utility/panel commits)  
