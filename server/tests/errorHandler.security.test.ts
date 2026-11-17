@@ -43,6 +43,14 @@ describe("API error detail disclosure", () => {
     });
   });
 
+  it("does not reflect query-string credentials in 404 responses", async () => {
+    const response = await fetch(`${baseUrl}/missing?access_token=secret-query-token`);
+    const body = await response.json() as { error: string };
+    expect(response.status).toBe(404);
+    expect(body.error).toBe("No route matches GET /missing");
+    expect(body.error).not.toContain("secret-query-token");
+  });
+
   it("keeps explicitly safe details available to clients", async () => {
     const response = await fetch(`${baseUrl}/safe-error`);
     expect(response.status).toBe(504);
