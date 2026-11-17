@@ -181,15 +181,15 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
-**Status:** INSPECTION ONLY  
+**Status:** IN PROGRESS — Part E implementation authorized; Part D blocked  
 **Branch:** `agent/themes-ui`  
-**Scope:** Parts D and E. Verify existing theme/preset/cache, Docs, Settings and shared UI behavior; report only confirmed gaps and proposed file list.  
-**Current batch:** Read-only audit  
-**Files claimed / in progress:** None  
-**Files changed:** None  
-**Tests executed:** None  
-**Commit SHA:** None  
-**Next action:** Inspect current source and handoff; submit findings to Head Agent. No implementation or commits until explicit authorization.
+**Scope:** Part E only for the current batch. Part D remains blocked pending Part C integration and explicit file ownership authorization.  
+**Current batch:** Docs membership guidance and Settings accessibility fixes  
+**Files claimed / in progress:** `client/src/pages/DocsPage.tsx`; `client/src/components/layout/SettingsModal.tsx`  
+**Files changed:** `docs/AGENTS.md` (this status/claim update only)  
+**Tests executed:** None; npm checks deferred by Head Agent directive  
+**Commit SHA:** Pending  
+**Next action:** Implement only the two claimed Part E files, re-fetch this control document before committing, then report the exact diff and mark REVIEW REQUIRED.
 
 ## 13. Architecture decisions
 
