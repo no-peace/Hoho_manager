@@ -1,5 +1,5 @@
 // client/src/components/preview/Markdown.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useGlobalStore } from "../../store/globalStore";
@@ -148,7 +148,7 @@ const UserMention: React.FC<{ id: string }> = ({ id }) => {
             }
           : undefined
       }
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight align-baseline transition-colors cursor-pointer select-none mx-0.5 ${
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight align-baseline transition-colors select-none mx-0.5 ${
         roleColor ? "hover:brightness-110" : "bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40"
       }`}
     >
@@ -200,7 +200,7 @@ const RoleMention: React.FC<{ id: string }> = ({ id }) => {
             }
           : undefined
       }
-      className={`inline-flex items-center px-1 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 ${
+      className={`inline-flex items-center px-1 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors select-none mx-0.5 ${
         rgb ? "hover:brightness-110" : "bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40"
       }`}
     >
@@ -235,7 +235,7 @@ const ChannelMention: React.FC<{ id: string }> = ({ id }) => {
   return (
     <span
       title={`<#${id}>`}
-      className="inline-flex items-center gap-0.5 bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40 hover:text-white px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors cursor-pointer select-none mx-0.5 align-baseline"
+      className="inline-flex items-center gap-0.5 bg-[#5865f2]/25 text-[#c9cdfb] hover:bg-[#5865f2]/40 hover:text-white px-1.5 py-0.5 rounded font-medium text-[14px] leading-tight transition-colors select-none mx-0.5 align-baseline"
     >
       <Icon size={13} className="inline-block shrink-0" />
       <span>{channel ? channel.name : `channel-${id.slice(-4)}`}</span>
@@ -332,7 +332,7 @@ const TimestampMention: React.FC<{ unix: number; format?: string }> = ({
   return (
     <span
       title={date.toLocaleString()}
-      className="inline-flex items-center gap-1 rounded bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 cursor-pointer select-none"
+      className="inline-flex items-center gap-1 rounded bg-[#3c3f45]/80 px-1.5 py-0.5 text-[13px] text-[#dbdee1] font-normal mx-0.5 select-none"
     >
       <Clock size={11} className="text-[#949ba4] shrink-0" />
       <span>{formatted}</span>
@@ -371,18 +371,23 @@ const CustomEmojiImg: React.FC<{
 
 const SpoilerText: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [revealed, setRevealed] = useState(false);
+  const contentId = useId();
   return (
-    <span
-      onClick={() => setRevealed(!revealed)}
+    <button
+      type="button"
+      aria-expanded={revealed}
+      aria-label={revealed ? "Hide spoiler" : "Reveal spoiler"}
+      aria-describedby={revealed ? contentId : undefined}
+      onClick={() => setRevealed((value) => !value)}
       title={revealed ? "Click to hide spoiler" : "Click to reveal spoiler"}
-      className={`inline-block px-1 py-0.5 rounded cursor-pointer transition-colors ${
+      className={`inline-block appearance-none border-0 px-1 py-0.5 rounded font-[inherit] text-left transition-colors ${
         revealed
           ? "bg-[#2b2d31] text-[#dbdee1] border border-[#3f4147]"
           : "bg-[#202225] text-transparent hover:bg-[#25282c] select-none"
       }`}
     >
-      {children}
-    </span>
+      <span id={contentId} aria-hidden={!revealed}>{children}</span>
+    </button>
   );
 };
 
