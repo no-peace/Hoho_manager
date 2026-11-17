@@ -139,40 +139,6 @@ export interface TemplateDetailResponse {
   };
 }
 
-export interface WebhookProfile {
-  id: number;
-  user_id: number;
-  name: string;
-  url: string;
-  guild_id: string | null;
-  channel_id: string | null;
-  avatar_url: string | null;
-  is_default: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BotProfile {
-  id: number;
-  user_id: number;
-  name: string;
-  public_key: string;
-  application_id: string;
-  default_guild_id: string | null;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-  has_token: boolean;
-}
-
-export interface WebhookListResponse {
-  profiles: WebhookProfile[];
-}
-
-export interface BotListResponse {
-  profiles: BotProfile[];
-}
-
 export interface TemplateSaveBody {
   name: string;
   data?: unknown;
@@ -206,36 +172,6 @@ export const api = {
     update: (id: number, template: TemplateSaveBody) =>
       request<TemplateDetailResponse>(`/api/templates/${id}`, { method: "PUT", body: template }),
     remove: (id: number) => request<null>(`/api/templates/${id}`, { method: "DELETE" }),
-  },
-
-  profiles: {
-    listWebhooks: () => request<WebhookListResponse>("/api/profiles/webhooks"),
-    createWebhook: (profile: Record<string, unknown>) =>
-      request<{ profile: WebhookProfile }>("/api/profiles/webhooks", {
-        method: "POST",
-        body: profile,
-      }),
-    updateWebhook: (id: number, profile: Record<string, unknown>) =>
-      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${id}`, {
-        method: "PATCH",
-        body: profile,
-      }),
-    setDefaultWebhook: (id: number) =>
-      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${id}/default`, {
-        method: "POST",
-      }),
-    removeWebhook: (id: number) =>
-      request<null>(`/api/profiles/webhooks/${id}`, { method: "DELETE" }),
-
-    listBots: () => request<BotListResponse>("/api/profiles/bots"),
-    createBot: (profile: Record<string, unknown>) =>
-      request<{ profile: BotProfile }>("/api/profiles/bots", { method: "POST", body: profile }),
-    updateBot: (id: number, profile: Record<string, unknown>) =>
-      request<{ profile: BotProfile }>(`/api/profiles/bots/${id}`, {
-        method: "PATCH",
-        body: profile,
-      }),
-    removeBot: (id: number) => request<null>(`/api/profiles/bots/${id}`, { method: "DELETE" }),
   },
 
   discord: {
