@@ -50,6 +50,8 @@ export interface DiscordRoleSummary {
   color: number;
   position: number;
   hoist?: boolean;
+  permissions?: string;
+  managed?: boolean;
 }
 
 export type DiscordRole = DiscordRoleSummary;
@@ -549,12 +551,10 @@ export const getGuildChannels = async (
   );
 };
 
-export const getGuildRoles = async (
+export const getGuildRolesWithToken = async (
   guildId: string,
-  profileId: number | string | null = null,
+  token: string,
 ): Promise<DiscordRoleSummary[]> => {
-  const pid = profileId != null ? Number(profileId) : null;
-  const token = await resolveBotToken(pid);
   const roles = await apiRequest<DiscordRoleSummary[]>(
     "GET",
     `/guilds/${encodeURIComponent(guildId)}/roles`,
@@ -562,14 +562,25 @@ export const getGuildRoles = async (
   );
   if (!roles) return [];
   return roles
-    .map((r) => ({
-      id: r.id,
-      name: r.name,
-      color: r.color ?? 0,
-      position: r.position ?? 0,
-      hoist: r.hoist ?? false,
+    .map((role) => ({
+      id: role.id,
+      name: role.name,
+      color: role.color ?? 0,
+      position: role.position ?? 0,
+      hoist: role.hoist ?? false,
+      permissions: role.permissions,
+      managed: role.managed ?? false,
     }))
     .sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
+};
+
+export const getGuildRoles = async (
+  guildId: string,
+  profileId: number | string | null = null,
+): Promise<DiscordRoleSummary[]> => {
+  const pid = profileId != null ? Number(profileId) : null;
+  const token = await resolveBotToken(pid);
+  return getGuildRolesWithToken(guildId, token);
 };
 
 // ============================================================================
