@@ -55,4 +55,7 @@ export const modal = ({
 /** Standard "this action failed" message used by handlers and the executor. */
 export const actionFailed = (
   message = "That action could not be completed.",
-): ActionResponse => ephemeral(`\u26a0\ufe0f ${message}`);
+): ActionResponse => ({
+  ...ephemeral(`\u26a0\ufe0f ${message}`),
+  outcome: "failure",
+});
