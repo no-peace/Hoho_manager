@@ -6,6 +6,7 @@ import { env } from "../src/config/env.js";
 import { db, initializeDatabase } from "../src/config/database.js";
 import * as discordService from "../src/services/discordService.js";
 import * as weaoService from "../src/services/weaoService.js";
+import * as actionExecutor from "../src/services/actionExecutor.js";
 import { staffRepository } from "../src/repositories/staffRepository.js";
 import { userRepository } from "../src/repositories/userRepository.js";
 import { templateRepository } from "../src/repositories/templateRepository.js";
@@ -435,6 +436,44 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
         body: JSON.stringify({ type: 3 }),
       });
       expect(res.status).toBe(401);
+    });
+
+    it("keeps a deferred result alive when the gateway callback reports a duplicate ACK", async () => {
+      vi.spyOn(actionExecutor, "executeCustomId").mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1_300));
+        return {
+          handled: true,
+          response: {
+            type: 4,
+            data: { content: "The original action completed." },
+          },
+        } as any;
+      });
+      vi.mocked(discordService.createInteractionResponse).mockRejectedValueOnce(
+        new Error("Unknown interaction: already acknowledged"),
+      );
+      const followupSpy = vi.spyOn(discordService, "createFollowupMessage").mockResolvedValue({
+        id: "late_followup",
+      } as any);
+
+      const interaction = {
+        type: 3,
+        id: "123456789012345679",
+        application_id: env.discord.applicationId ?? "223456789012345678",
+        token: "tok_duplicate_ack_1234567890",
+        data: { custom_id: "action:dud" },
+      };
+      const res = await fetch(`${baseUrl}/api/interactions/relay`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+        },
+        body: JSON.stringify(interaction),
+      });
+
+      expect(res.status).toBe(502);
+      await vi.waitFor(() => expect(followupSpy).toHaveBeenCalled());
     });
 
     it("accepts POST /api/interactions/relay with valid x-admin-key and complete payload", async () => {
