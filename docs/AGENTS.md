@@ -9,7 +9,7 @@
 - Current tracked tree: 355 files. The file-by-file ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - The 23-file Bot package has been read. Critical action, interaction, send/Discord, settings, Puck and selected test paths have also been reviewed. The complete repository audit is still in progress.
 - Webhook URL sending and custom bot-profile dispatch have been removed from active application paths. The old webhook action remains only as a failure-only compatibility tombstone for saved flows.
-- Structured action failures, Puck preview/runtime separation, Discord ACK/defer/duplicate handling, and bot slash-command actor authorization have been implemented in this branch. Source tests have been added/updated but not executed.
+- Structured action failures, Puck preview/runtime separation, database-backed Discord ACK/defer/duplicate handling (migrations 018/019), and bot slash-command actor authorization have been implemented in this branch. Source tests have been added/updated but not executed.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
 - Do not run `npm run typecheck`, `npm test` or `npm run build`; the owner intends to run these locally after implementation is ready. Tests may be inspected/updated, but must be reported as not executed.
 - Do not claim browser QA, Lighthouse, security certification, live Discord behavior, migration execution or deployment without evidence.
