@@ -301,7 +301,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(inspectedSignal).toBeInstanceOf(AbortSignal);
     });
 
-    it("Probe 2.2: Fast interaction callback uses 2.5s timeout signal", async () => {
+    it("Probe 2.2: Fast interaction callback uses a 1s attempt timeout", async () => {
       let callCount = 0;
 
       globalThis.fetch = vi.fn().mockImplementation(async () => {
