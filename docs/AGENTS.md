@@ -175,7 +175,7 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 **Validation/resolution:** Existing strict validation already checks every motion preset, duration and delay against fixed enums, validates all panel labels (1–48 trimmed characters, no control characters), and validates `showToolbar` as `show | hide` (with legacy boolean normalization). Resolver now exposes each validated value for both breakpoints.  
 **Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, and mobile navigation motion.  
 **Tests executed:** None. Per the Head Agent/user instruction, npm checks are deferred to final verification; no test/typecheck/build result is claimed.  
-**Commit SHA:** Pending this status update; implementation commits in this batch:
+**Commit SHA:** `863b61dc4e101e508873a00c67525928f8489378` (Agent 2 review-submission/status commit); implementation commits in this batch:
 - `c6e3ab251f755f4f134e928e79068e1223dbbd2b` — resolved production motion, labels and toolbar values.
 - `9d647bf8d1ab5388821d7e2f656981f8e8e01c04` — expanded resolved-contract regression assertions.
 - `8c608557a3a659fa1fcc65b56787c338eb47ae7c` — reconciled production vs preview-only documentation and Part C application requirements.
