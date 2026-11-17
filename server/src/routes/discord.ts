@@ -122,7 +122,6 @@ router.get("/guilds/:guildId/channels", requireStaffPermission("send"), requireA
     throw ApiError.badRequest("`guildId` is required");
   }
 
-  const profileId = parseProfileId(req.query.profileId);
   let channels = await discord.getGuildChannels(guildId);
 
   const staffCtx = req.staffContext;
