@@ -125,6 +125,17 @@ describe("responsive application layout publishing", () => {
     duplicateIds.mobile.content[0]!.props.id = duplicateIds.desktop.content[0]!.props.id;
     expect(() => validateAppLayoutPair(duplicateIds)).toThrow();
 
+    const invalidDimension = structuredClone(makePair());
+    (invalidDimension.desktop.content[0]!.props as Record<string, unknown>).height = 1000;
+    expect(() => validateAppLayoutPair(invalidDimension)).toThrow();
+
+    const invalidColor = structuredClone(makePair());
+    (invalidColor.mobile.content[2]!.props as Record<string, unknown>).accent = "red";
+    expect(() => validateAppLayoutPair(invalidColor)).toThrow();
+
+    const oversized = { ...makePair(), desktop: "x".repeat(256 * 1024 + 1) };
+    expect(() => validateAppLayoutPair(oversized)).toThrow();
+
     const wrongVersion = { ...makePair(), schemaVersion: 2 };
     expect(() => validateAppLayoutPair(wrongVersion)).toThrow();
   });
