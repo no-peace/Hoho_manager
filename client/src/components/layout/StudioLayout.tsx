@@ -68,7 +68,7 @@ export const StudioLayout: React.FC = () => {
     store.select({ kind: "embed", id: embedId, part, fieldId });
 
     if (!isMobileWorkspace()) {
-      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, embedId)));
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, embedId, part, fieldId)));
     }
   };
 
@@ -79,10 +79,12 @@ export const StudioLayout: React.FC = () => {
       selection?.kind === "embed" || selection?.kind === "component"
         ? selection.id
         : undefined;
+    const targetPart = selection?.kind === "embed" ? selection.part : undefined;
+    const fieldId = selection?.kind === "embed" ? selection.fieldId : undefined;
 
     store.setActiveMessageIndex(index);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      scrollToMessageEditor(index, targetId);
+      scrollToMessageEditor(index, targetId, targetPart, fieldId);
       store.select(null);
     }));
   };
