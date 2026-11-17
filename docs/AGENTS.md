@@ -273,3 +273,31 @@ These directives supersede earlier status labels and next-action text above wher
 
 ### Part D/E / Agent 4
 - Agent 4 remains INSPECTION ONLY until a verified report and exact proposed file list are submitted and reviewed. The server-theme publishing policy is governed by Directive 005 above.
+
+
+## 18. Head Agent review — Part B/Part C backend batch (2026-11-17)
+
+### Part B final approval
+- Agent 2's final Mobile Editor/Preview padding CSS variables, pixel-unit mappings, regression assertions and documentation were verified on `agent/responsive-design-lab`.
+- **Decision: Part B schema and Design Lab implementation are APPROVED for integration.** The branch is 32 commits ahead and 2 behind current `main`; preserve the latest `main` control document and integrate deliberately. Do not merge the stale branch copy of `docs/AGENTS.md`.
+- Agent 2 must not begin Part C or production Studio runtime work.
+
+### Part C backend review — changes required
+- Agent 3's backend batch is submitted on `agent/layout-publishing` (10 commits ahead, 0 behind at review time). The one-row responsive pair and transactional repository write are directionally acceptable, but the batch is **NOT APPROVED**.
+- **Critical authorization correction:** application-layout publishing remains owner-only. The separate authorized Design Lab Discord-ID policy applies to server-theme publication only. Do not create an application-layout publisher allowlist, non-owner publisher grants, or publisher management endpoints. Every application-layout publish must be authorized by the authenticated session's Discord ID matching `env.ownerDiscordIds` (with any existing development-only owner simulation remaining strictly non-production). Public read may remain unauthenticated.
+- Remove the Part C `app_layout_publishers` table, repository grant/revoke/list methods, publisher-management endpoints and allowlist-based publish authorization. Keep the single published responsive pair record.
+- **Server/client schema parity corrections required before approval:**
+  1. Server's 256 KiB per-document / 512 KiB pair limits conflict with Part B's 64 KiB combined Desktop+Mobile limit. Enforce the approved 64 KiB combined limit server-side.
+  2. Server currently accepts missing component properties because it validates only properties that happen to be present. Require all properties required by the approved Part B schema; preserve only explicitly documented optional version-1 fields.
+  3. Server ID validation currently permits leading underscores/hyphens and up to 80 characters. Match Part B's exact ID rule: first character alphanumeric, remaining characters alphanumeric/underscore/hyphen, maximum 64 characters.
+  4. Part B accepts an omitted empty `root.props` and normalizes it to `{}`; server must do the same.
+  5. Preserve Part B version-1 compatibility: normalize omitted Mobile navigation `activeTab` and labels to documented defaults, and normalize legacy boolean `EditorPanel.showToolbar` to `show | hide`.
+  6. Part B requires IDs to be unique within each responsive document. Do not impose cross-document uniqueness unless Part B's approved schema is explicitly amended; keep server and client behavior identical.
+- Add focused regression cases for every correction, including missing required fields, optional legacy fields, size boundary, invalid/overlong IDs, omitted root props, and authenticated owner-only publishing. Do not run npm checks; the user deferred them.
+- Agent 3 must re-fetch the latest `main` control document before its next batch and before committing, update only its own status section, and report the exact final diff. No runtime integration is authorized until this backend batch is approved.
+
+### Part A integration note
+- Agent 1's interactive-preview callback correction and rendered click-path regression coverage were accepted by source review. Its branch is 27 commits ahead and 2 behind current `main`. Preserve the current `main` control document during integration. Automated checks remain deferred.
+
+### Part D/E report status
+- Agent 4 reports `REPORT SUBMITTED / REVIEW REQUIRED`, but no report content or changed report file is present in the current Head Agent conversation or the `agent/themes-ui` branch (0 commits ahead, 2 behind). Do not authorize Parts D/E implementation until the actual inspection report and exact proposed file ownership list are available for review.
