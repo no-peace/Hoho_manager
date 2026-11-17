@@ -181,15 +181,17 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
-**Status:** INSPECTION ONLY  
+**Status:** REVIEW REQUIRED — Part E batch submitted; Part D remains blocked  
 **Branch:** `agent/themes-ui`  
-**Scope:** Parts D and E. Verify existing theme/preset/cache, Docs, Settings and shared UI behavior; report only confirmed gaps and proposed file list.  
-**Current batch:** Read-only audit  
-**Files claimed / in progress:** None  
-**Files changed:** None  
-**Tests executed:** None  
-**Commit SHA:** None  
-**Next action:** Inspect current source and handoff; submit findings to Head Agent. No implementation or commits until explicit authorization.
+**Scope:** Part E only for this submitted batch. Part D remains blocked pending Part C integration and explicit file ownership authorization.  
+**Current batch:** Docs membership guidance and Settings accessibility fixes  
+**Files claimed:** `client/src/pages/DocsPage.tsx`; `client/src/components/layout/SettingsModal.tsx`  
+**Files changed:** `client/src/pages/DocsPage.tsx`; `client/src/components/layout/SettingsModal.tsx`; `docs/AGENTS.md` (Agent 4 status/claim record)  
+**Implementation commits:** `9203f54896bee6187e2dc5442f7dffa5cc9bf784` (Docs); `54dfc22357fa5770e25fc34ecec18d9e6a5737cf` and `97cb898f6100f2e6c8e5446d5099c72b03bc1d72` (Settings)  
+**Tests executed:** None; npm checks deferred by Head Agent directive  
+**Verification:** Source diff reviewed; no automated tests, typecheck, build or browser QA run  
+**Commit SHA:** `97cb898f6100f2e6c8e5446d5099c72b03bc1d72` (latest implementation commit; this status update is a separate documentation commit)  
+**Next action:** Wait for Head Agent review. No self-merge.
 
 ## 13. Architecture decisions
 
