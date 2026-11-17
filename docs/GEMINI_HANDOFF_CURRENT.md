@@ -6,7 +6,7 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Latest code change: `e97c9624b4` (server production session-secret enforcement). Documentation-only synchronization commits have followed; use the active branch ref for the exact latest HEAD.
+- Latest code/test change: `63475935ac` (retired profile API regression coverage). Documentation-only synchronization commits have followed; use the active branch ref for the exact latest HEAD.
 - Recursive Git tree: **355 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - `main` has not been changed by this implementation batch. Do not assume the changes are deployed or merged.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a defect.
