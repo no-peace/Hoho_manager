@@ -227,7 +227,10 @@ const validateDocument = (value: unknown, mode: "desktop" | "mobile"): AppLayout
 
 export const validateAppLayoutPair = (value: unknown): ValidatedAppLayoutPair => {
   if (!isRecord(value)) fail("A responsive layout payload is required.");
-  exactKeys(value, ["schemaVersion", "desktop", "mobile"], "The publish payload");
+  exactKeys(value, ["schemaVersion", "desktop", "mobile", "updatedAt"], "The publish payload");
+  if (value.updatedAt !== undefined && (typeof value.updatedAt !== "string" || value.updatedAt.length > 64)) {
+    fail("updatedAt metadata must be a string of at most 64 characters.");
+  }
   if (value.schemaVersion !== APP_LAYOUT_SCHEMA_VERSION) {
     fail(`Unsupported layout schema version. Expected ${APP_LAYOUT_SCHEMA_VERSION}.`);
   }
