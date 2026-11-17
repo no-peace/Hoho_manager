@@ -4,7 +4,7 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Code snapshot before documentation reconciliation: `e97c9624b4`.
+- Code snapshot before documentation reconciliation: `63475935ac`.
 - The working branch is not merged; `main` remains unchanged. No PR has been created for this branch.
 - Current tracked tree: 355 files. The file-by-file ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - The 23-file Bot package has been read. Critical action, interaction, send/Discord, settings, Puck and selected test paths have also been reviewed. The complete repository audit is still in progress.
