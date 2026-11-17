@@ -129,4 +129,118 @@ describe("MessageEditor", () => {
     expect(screen.getByText("Components V2 Text Block")).toBeTruthy();
   });
 
+  it("routes clicks on an embed author to the owning embed", () => {
+    const message = {
+      content: "",
+      embeds: [{
+        _id: "preview-embed",
+        author: { name: "Preview Author" },
+        title: "Preview Title",
+        description: "Preview description",
+        fields: [],
+        footer: { text: "Preview Footer" },
+      }],
+      flags: 0,
+      components: [],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+    const onSelectPreviewEmbed = vi.fn();
+    render(<MessagePreview onSelectPreviewEmbed={onSelectPreviewEmbed} />);
+
+    fireEvent.click(screen.getByText("Preview Author"));
+
+    expect(onSelectPreviewEmbed).toHaveBeenCalledWith(0, "preview-embed", "author", undefined);
+  });
+
+  it("routes clicks on an embed footer to the owning embed", () => {
+    const message = {
+      content: "",
+      embeds: [{
+        _id: "footer-embed",
+        title: "Footer Embed",
+        fields: [],
+        footer: { text: "Footer target text" },
+      }],
+      flags: 0,
+      components: [],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+    const onSelectPreviewEmbed = vi.fn();
+    render(<MessagePreview onSelectPreviewEmbed={onSelectPreviewEmbed} />);
+
+    fireEvent.click(screen.getByText("Footer target text"));
+
+    expect(onSelectPreviewEmbed).toHaveBeenCalledWith(0, "footer-embed", "footer", undefined);
+  });
+
+  it("selects the deepest nested Components V2 preview component", () => {
+    const message = {
+      content: "",
+      embeds: [],
+      flags: 1 << 15,
+      components: [{
+        _id: "container-preview",
+        type: ComponentType.Container,
+        components: [{
+          _id: "nested-text-preview",
+          type: ComponentType.TextDisplay,
+          content: "Nested preview content",
+        }],
+      }],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+    const onSelectPreviewComponent = vi.fn();
+    render(<MessagePreview onSelectPreviewComponent={onSelectPreviewComponent} />);
+
+    fireEvent.click(screen.getByText("Nested preview content"));
+
+    expect(onSelectPreviewComponent).toHaveBeenCalledWith(0, "nested-text-preview", false);
+  });
+
+  it("renders the embed inspector for an embed selection on the active message", () => {
+    const first = { content: "First", embeds: [], components: [], flags: 0 } as any;
+    const second = {
+      content: "",
+      embeds: [{
+        _id: "selected-embed",
+        author: { name: "Selected Author" },
+        title: "Selected Embed",
+        fields: [],
+        footer: { text: "Selected Footer" },
+      }],
+      components: [],
+      flags: 0,
+    } as any;
+    useMessageStore.setState({
+      data: second,
+      messages: [first, second],
+      activeMessageIndex: 1,
+      selection: { kind: "embed", id: "selected-embed", part: "footer" },
+      attachedFiles: [],
+    });
+    render(<PropertyPanel />);
+
+    expect(screen.getByText("Embed Inspector")).toBeTruthy();
+    expect(screen.getByText(/Footer · Selected Embed/)).toBeTruthy();
+    expect(screen.getByText("Footer & Timestamp")).toBeTruthy();
+  });
+
 });
