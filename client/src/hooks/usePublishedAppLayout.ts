@@ -83,12 +83,8 @@ export const usePublishedAppLayout = () => {
     const media = window.matchMedia("(min-width: 1200px)");
     const updateMode = () => setIsDesktop(media.matches);
     updateMode();
-    media.addEventListener?.("change", updateMode);
-    if (!media.addEventListener) media.addListener(updateMode);
-    return () => {
-      media.removeEventListener?.("change", updateMode);
-      if (!media.removeEventListener) media.removeListener(updateMode);
-    };
+    media.addEventListener("change", updateMode);
+    return () => media.removeEventListener("change", updateMode);
   }, []);
 
   useEffect(() => {

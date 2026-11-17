@@ -241,10 +241,10 @@ export const PropertyPanel = ({
         {/* Inspector Header */}
         <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
           <div className="min-w-0 flex-1">
+            <span className="hoho-runtime-inspector-label">{runtimeLayout?.inspectorLabel ?? "Properties"}</span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">
               Component Inspector
             </span>
-            <span className="hoho-runtime-inspector-label">{runtimeLayout?.inspectorLabel ?? "Properties"}</span>
             <h2 className="truncate text-base font-bold text-white">
               {componentLabel(component)}
             </h2>

@@ -211,6 +211,14 @@
     border-radius: var(--hoho-layout-desktop-inspector-radius, 10px) !important;
     border-color: var(--hoho-layout-desktop-border, #272d3a) !important;
   }
+  .hoho-runtime-inspector[data-hoho-inspector-position="left"] {
+    border-left: 0 !important;
+    border-right: 1px solid var(--hoho-layout-desktop-border, #272d3a) !important;
+  }
+  .hoho-runtime-inspector[data-hoho-inspector-position="right"] {
+    border-left: 1px solid var(--hoho-layout-desktop-border, #272d3a) !important;
+    border-right: 0 !important;
+  }
   .hoho-runtime-inspector [data-component-inspector-body],
   .hoho-runtime-inspector [data-embed-inspector-body],
   .hoho-runtime-inspector [data-message-quick-editor] {
