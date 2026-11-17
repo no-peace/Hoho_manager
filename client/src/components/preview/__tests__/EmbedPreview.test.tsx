@@ -32,8 +32,7 @@ const renderEmbed = (url: string) => render(
 describe("EmbedPreview external links", () => {
   it("keeps valid HTTPS links clickable", () => {
     renderEmbed("https://example.com/path");
-    expect(screen.getByRole("link", { name: "Link title" })).toHaveAttribute(
-      "href",
+    expect(screen.getByRole("link", { name: "Link title" }).getAttribute("href")).toBe(
       "https://example.com/path",
     );
   });
@@ -46,14 +45,13 @@ describe("EmbedPreview external links", () => {
     "not a URL",
   ])("does not render an unsafe or ambiguous URL as a link: %s", (url) => {
     renderEmbed(url);
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByText("Link title")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText("Link title").textContent).toBe("Link title");
   });
 
   it("keeps valid HTTP links clickable", () => {
     renderEmbed("http://example.com");
-    expect(screen.getByRole("link", { name: "Link title" })).toHaveAttribute(
-      "href",
+    expect(screen.getByRole("link", { name: "Link title" }).getAttribute("href")).toBe(
       "http://example.com/",
     );
   });
