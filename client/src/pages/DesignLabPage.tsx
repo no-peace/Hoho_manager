@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useGlobalStore } from "../store/globalStore";
 import { designApi } from "../api/design";
+import { PublishAppLayoutControl } from "../components/design/PublishAppLayoutControl";
 import { publishedThemeTokens } from "../config/puck/publishedTheme";
 import { appLayoutConfig } from "../config/puck/appLayoutConfig";
 import { defaultDesktopLayoutData, defaultMobileLayoutData } from "../config/puck/defaultAppLayouts";
@@ -206,6 +207,7 @@ export const DesignLabPage: React.FC = () => {
             <span />{saveState === "saving" ? "Saving draft…" : saveState === "error" ? "Draft not saved" : dirty ? "Draft saved" : "Current defaults"}
           </span>
           {isOwner ? <button type="button" onClick={() => setAccessOpen((value) => !value)} className={accessOpen ? "is-active" : ""}><Shield size={15} /><span className="hoho-design-lab__optional-label">Access</span></button> : null}
+          {isOwner ? <PublishAppLayoutControl isOwner={isOwner} documents={documents} /> : null}
           <button type="button" onClick={() => setPreviewMode((value) => !value)} className={previewMode ? "is-active" : ""}><Eye size={15} /><span>{previewMode ? "Edit" : "Preview"}</span></button>
           <button type="button" onClick={exportLayouts}><Download size={15} /><span className="hoho-design-lab__optional-label">Export</span></button>
           <button type="button" onClick={() => fileInputRef.current?.click()}><FileUp size={15} /><span className="hoho-design-lab__optional-label">Import</span></button>
@@ -256,7 +258,7 @@ export const DesignLabPage: React.FC = () => {
               onChange={updateDocument}
               onPublish={async (nextData: any) => {
                 updateDocument(nextData);
-                setMessage(`${modeLabel(mode)} draft saved in this browser. Publish will be enabled after the responsive database endpoint is connected.`);
+                setMessage(`${modeLabel(mode)} draft saved in this browser. Use the owner-only Publish control to publish both responsive layouts.`);
               }}
               headerTitle={`${modeLabel(mode)} Layout`}
               headerPath="/design"
