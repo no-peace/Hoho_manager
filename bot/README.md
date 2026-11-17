@@ -9,8 +9,13 @@ It has two jobs, and the second one is the reason it is not optional everywhere.
 
 ### 1. Slash commands
 
-`/ping`, `/status`, `/server`, `/send`  things only a persistent gateway connection can do, plus
+`/ping`, `/status`, `/server`, `/send`, `/exploit` and `/sync` are handled by this worker, along with
 presence and (with the privileged intents enabled) member/reaction events.
+
+`/send` and `/exploit` forward the invoking Discord user ID with the machine API key. The server
+checks that user against the live `staff_access` record and action-specific permissions; the key
+alone does not grant those slash commands administrator access. `/sync` is a maintenance command
+restricted to Discord administrators.
 
 ### 2. The interaction relay  for hosts with no public address
 
@@ -58,13 +63,15 @@ SQLite writer.
 cp bot/.env.example bot/.env     # from the repo root
 ```
 
+Startup validation fails closed: if any required token, API origin or production key check fails, the worker does not log in.
+
 Fill in:
 
 | Variable | Notes |
 | -------- | ----- |
 | `DISCORD_BOT_TOKEN` | Same token the API uses |
 | `API_BASE_URL` | Origin of the Express API (default `http://localhost:3001`) |
-| `ADMIN_API_KEY` | Must match `server/.env`  sent as `x-admin-key` |
+| `ADMIN_API_KEY` | Must match `server/.env`; sent as `x-admin-key`. User-facing staff commands also send `x-staff-id` for server-side permission checks. |
 | `DEV_GUILD_ID` | Optional. Scopes command registration to one guild so changes appear instantly |
 | `NODE_ENV` | `production` in production (warns about the default admin key otherwise) |
 
@@ -89,7 +96,9 @@ src/
 │   ├── ping.ts            latency check
 │   ├── status.ts          API + integration health
 │   ├── server.ts          current guild status (members, channels, roles, boost, owner)
-│   └── send.ts            post a message through the builder API
+│   ├── send.ts            staff-authorized message dispatch through the API
+│   ├── exploit.ts         staff-authorized exploit resolution and dispatch
+│   └── sync.ts            administrator-only tracked-message maintenance
 └── listeners/
     ├── ready.ts           logs login state
     └── interactionRelay.ts forwards component/modal interactions to the API
