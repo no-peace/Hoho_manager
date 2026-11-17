@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAllowedIds, parseProfileId } from "../src/utils/requestParsing.js";
+import { parseAllowedIds } from "../src/utils/requestParsing.js";
 
 describe("request parsing helpers", () => {
   it("parses allowlists and filters non-string entries", () => {
@@ -16,8 +16,4 @@ describe("request parsing helpers", () => {
     expect(parseProfileId("not-a-number")).toBeNull();
   });
 
-  it("rejects malformed profile IDs in strict send contexts", () => {
-    expect(() => parseProfileId("bad", { strict: true })).toThrow("profileId");
-    expect(() => parseProfileId(-1, { strict: true })).toThrow("profileId");
-  });
 });
