@@ -72,7 +72,7 @@ export const StudioLayout: React.FC = () => {
     }
   };
 
-  const handleOpenFullEditor = (selection?: Selection) => {
+  const scrollSelectedTargetIntoEditor = (selection?: Selection) => {
     const store = useMessageStore.getState();
     const index = selection?.kind === "message" ? selection.index : store.activeMessageIndex;
     const targetId =
@@ -80,11 +80,16 @@ export const StudioLayout: React.FC = () => {
         ? selection.id
         : undefined;
 
-    setMobileView("editor");
+    store.setActiveMessageIndex(index);
     requestAnimationFrame(() => requestAnimationFrame(() => {
       scrollToMessageEditor(index, targetId);
       store.select(null);
     }));
+  };
+
+  const handleOpenFullEditor = (selection?: Selection) => {
+    setMobileView("editor");
+    scrollSelectedTargetIntoEditor(selection);
   };
 
   const currentUser = useGlobalStore((state) => state.currentUser);
@@ -189,7 +194,10 @@ export const StudioLayout: React.FC = () => {
           }
           right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} /></div>}
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
-          onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
+          onMobilePaneChange={(pane) => {
+            setMobileView(pane === "left" ? "editor" : "preview");
+            if (pane === "left") scrollSelectedTargetIntoEditor(useMessageStore.getState().selection ?? undefined);
+          }}
           className="min-h-0 min-w-0 flex-1"
         />
         <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} /></React.Suspense>
