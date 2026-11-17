@@ -199,7 +199,7 @@ Part C must treat the Desktop/Mobile pair as one atomic published configuration,
 The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object. The resolved object is the explicit production contract; Part C must consume these resolved fields rather than reading arbitrary Puck props at runtime.
 
 - `desktop`: header dimensions/colors plus `headerMotion`; workbench split, inspector geometry, order, gap, border and `workspaceMotion`; each panel's background, padding, radius and label (`editorLabel`, `previewLabel`, `inspectorLabel`); `showToolbar` for the Desktop Editor; and `editorMotion`, `previewMotion`, `inspectorMotion`.
-- `mobile`: header dimensions/colors plus `headerMotion`; default pane, inspector-preview visibility/height, workspace spacing and `workspaceMotion`; each panel's background, padding/radius where supported and label; Mobile Editor `showToolbar`; `editorMotion`, `previewMotion`, `inspectorMotion`; navigation dimensions/colors/order/label visibility/active state and resolved tab labels; and `navMotion`.
+- `mobile`: header dimensions/colors plus `headerMotion`; default pane, inspector-preview visibility/height, workspace spacing and `workspaceMotion`; each panel's background, independent `editorPadding`/`previewPadding`/`inspectorPadding`, radius and label; Mobile Editor `showToolbar`; `editorMotion`, `previewMotion`, `inspectorMotion`; navigation dimensions/colors/order/label visibility/active state and resolved tab labels; and `navMotion`.
 - Each resolved motion value has the typed shape `{ animation, duration, delay }`. The allowed animation presets are `none | fade | fade-up | slide-left | slide-right | zoom-in | float | pulse`; duration is one of `180ms | 300ms | 500ms | 700ms | 1200ms | 2000ms | 3000ms`; delay is one of `0ms | 100ms | 200ms | 350ms`.
 - `showToolbar` is a boolean resolved independently for Desktop and Mobile from the corresponding `EditorPanel`.
 - Panel labels are trimmed, validated text (1–48 characters, no control characters) and are resolved independently for Desktop and Mobile.
@@ -215,6 +215,7 @@ The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It valid
 | `navMotion` | Apply to the real Mobile bottom navigation. |
 | `editorMotion`, `previewMotion`, `inspectorMotion` | Apply independently to the corresponding panel surfaces at each breakpoint. |
 | `editorLabel`, `previewLabel`, `inspectorLabel` | Render as the visible headings/titles of the real Editor, Preview and Inspector panels at the matching breakpoint. |
+| `editorPadding`, `previewPadding`, `inspectorPadding` (Mobile) | Apply the corresponding independently resolved padding to each real Mobile panel. Do not substitute the workspace-level `panelPadding` for these panel-level values. |
 | `showToolbar` | Show or hide only the real editor toolbar for that breakpoint. Hiding it must not hide the editor, message content, or unrelated critical controls. |
 | `defaultPane` | Select the initial Editor or Preview pane when a Mobile Studio workspace is first mounted. A later configuration refresh must not unexpectedly reset a pane the user has already selected. |
 | `showLabels` | Show or hide the text labels on the real Mobile bottom navigation while preserving its accessible names. |
