@@ -143,13 +143,16 @@ A commit is not completion. Mark your work REVIEW REQUIRED and wait for Head Age
 **Status:** IN PROGRESS — authorized  
 **Branch:** `agent/ui-regressions`  
 **Scope:** Part A only. Audit the existing V12/login/preview/mobile quick-edit/FlowBuilder work, identify residual gaps and fix only verified issues.  
-**Current batch:** A1 — targeted Components V2 quick-edit regression  
-**Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts` (new)  
-**Files changed:** None yet  
-**Tests executed:** None  
-**Commit SHA:** None (implementation)  
-**Findings:** The quick-edit panel locates TextDisplay only in the message's top-level component array, while the existing component tree and editor support nested TextDisplay nodes. This can cause nested content to be ignored and a new top-level TextDisplay to be created instead. The panel's V2 detection also checks only the flags bit, unlike MessageEditor and MessagePreview which additionally recognize the internal V2 mode.  
-**Next action:** Implement a recursive first-TextDisplay lookup and align quick-edit V2 detection with the existing mode/flag checks; add focused utility regression tests.
+**Current batch:** A1 — targeted Components V2 quick-edit regression (implementation committed; verification pending)  
+**Files claimed / in progress:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`  
+**Files changed:** `client/src/components/editor/PropertyPanel.tsx`, `client/src/utils/tree.ts`, `client/src/utils/__tests__/tree.test.ts`  
+**Tests executed:** Added 3 focused Vitest cases for nested lookup, depth-first ordering and missing type. Not executed: connected Terminal endpoint returned HTTP 404; GitHub reports no status checks or workflow runs for the commit.  
+**Commit SHA:** `025f42518cdd4498db613d5219af8097bdc3dcba` (implementation/test commit; branch also contains status and utility/panel commits)  
+**Findings:** Quick-edit previously searched only top-level components for TextDisplay, despite nested V2 structures being supported by the editor and tree utilities. It could display an empty field and create a new top-level TextDisplay instead of editing the nested one. V2 detection also differed from MessageEditor/MessagePreview by checking only the flags bit.  
+**Implementation:** Added a recursive depth-first component-type lookup; quick-edit now uses it, recognizes both the V2 flag and internal V2 mode, and restores the selected-message inspector if it must synchronize the active message index. Added focused utility regression tests.  
+**Verification status:** Source diff reviewed. Typecheck, tests, build and browser interaction checks remain unverified because the connected local Terminal endpoint is unavailable and no GitHub Actions checks ran.  
+**Risks/blockers:** Runtime verification is still required before this batch can be considered complete.  
+**Next action:** Obtain a working test runner, run the focused test plus client typecheck/test/build, then continue the remaining Part A audit.
 
 Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coordinate before touching shared Studio shell files.
 
