@@ -1,17 +1,42 @@
 # HoHo Manager — Repository Audit Ledger
 
+**Inventory snapshot:** `95c3de2468b67199f0174f709aeac7bf0b64d364`  
 **Branch:** `feat/remove-legacy-dispatch-and-hardening`  
-**Inventory commit:** `45a44a94c1d6e610606d316ff532061583ed67d2`  
-**Tracked files:** 356  
-**Status:** Audit started; not complete.  
+**Tracked files:** 355  
+**Status:** Audit in progress; not complete.
 
-## Rules
+## Status definitions
 
-- Every tracked file must be marked `REVIEWED`, `IN PROGRESS`, `NOT APPLICABLE`, or `PENDING`.
-- `REVIEWED` means the full file and its relevant callers/dependencies were inspected; a search excerpt is not enough.
-- Record defects and fixes in the findings section below. Do not infer runtime correctness from source presence.
-- Rebuild this inventory when the tracked tree changes and record the new commit SHA.
-- No npm/typecheck/build/browser/Lighthouse verification is claimed here; the owner will run local npm checks.
+- `REVIEWED`: full file and relevant callers/dependencies inspected.
+- `IN PROGRESS`: partial source review or call-site tracing has started; not accepted as complete.
+- `PENDING`: not yet reviewed.
+- `NOT APPLICABLE`: disposition recorded with a reason.
+
+A search result, excerpt or successful source edit is not enough to mark a file reviewed. Refresh this inventory whenever the tracked tree changes.
+
+## Audit findings
+
+### Confirmed changes in the active branch
+
+- Webhook URL delivery/inspection APIs, direct client sender, URL parser/regex, webhook profile repository wiring and shared profile record types have been removed. The deprecated `send_webhook_message` handler remains only to fail old saved flows. The send route rejects legacy `webhookUrl` input.
+- Custom bot-profile selection was removed from client APIs, server routes/services, author enrichment and settings application code. The old profile tables are already dropped by migration 011. The nullable legacy settings column is no longer read or written by application code.
+- Action failures now carry internal structured metadata from `actionFailed()`; the executor logs failure state from metadata and strips it before Discord callbacks.
+- Puck preview-only `activeTab`, `showInspector` and `inspectorHeight` remain in the editor document but are excluded from the production resolved runtime model. Desktop `editorRatio` is passed directly to `SplitPane`.
+- Interaction ACK budget, callback retry behavior, gateway relay timeout and in-process duplicate delivery coordination were updated. Tests were added but not executed.
+- Bot slash commands `/send` and `/exploit` forward the invoking Discord actor and now pass through live staff permission checks. `/sync` is Discord-administrator-only. Bot startup fails closed on environment validation errors.
+
+### Audit coverage
+
+- All 23 files in `bot/` have been read, including commands, listeners, API client, environment, tests, package configuration and README.
+- Core staff middleware and user/settings repository paths have been read.
+- The Puck schema/runtime mapping, interaction handling and action failure paths have been partially inspected.
+- Remaining client, server, shared, root/infrastructure, migrations, cross-package call sites and tests are not fully audited.
+
+### Verification limits
+
+- No npm typecheck, test suite or build was run.
+- No browser QA, Lighthouse, live Discord callback, multi-instance interaction test, database migration execution or deployment verification was performed.
+- GitHub Actions are intentionally disabled by the owner and are not an audit blocker.
 
 ## File inventory
 
@@ -45,29 +70,29 @@
 
 ### bot
 
-- [PENDING] `bot/.env.example`
-- [PENDING] `bot/README.md`
-- [PENDING] `bot/package.json`
-- [PENDING] `bot/src/commands/exploit.ts`
-- [PENDING] `bot/src/commands/ping.ts`
-- [PENDING] `bot/src/commands/send.ts`
-- [PENDING] `bot/src/commands/server.ts`
-- [PENDING] `bot/src/commands/status.ts`
-- [PENDING] `bot/src/commands/sync.ts`
-- [PENDING] `bot/src/index.ts`
-- [PENDING] `bot/src/lib/api.ts`
-- [PENDING] `bot/src/lib/commandCooldown.ts`
-- [PENDING] `bot/src/lib/env.ts`
-- [PENDING] `bot/src/lib/registration.ts`
-- [PENDING] `bot/src/listeners/interactionRelay.ts`
-- [PENDING] `bot/src/listeners/ready.ts`
-- [PENDING] `bot/tests/api.test.ts`
-- [PENDING] `bot/tests/commands.test.ts`
-- [PENDING] `bot/tests/env.test.ts`
-- [PENDING] `bot/tests/relay.test.ts`
-- [PENDING] `bot/tsconfig.build.json`
-- [PENDING] `bot/tsconfig.json`
-- [PENDING] `bot/vitest.config.ts`
+- [REVIEWED] `bot/.env.example`
+- [REVIEWED] `bot/README.md`
+- [REVIEWED] `bot/package.json`
+- [REVIEWED] `bot/src/commands/exploit.ts`
+- [REVIEWED] `bot/src/commands/ping.ts`
+- [REVIEWED] `bot/src/commands/send.ts`
+- [REVIEWED] `bot/src/commands/server.ts`
+- [REVIEWED] `bot/src/commands/status.ts`
+- [REVIEWED] `bot/src/commands/sync.ts`
+- [REVIEWED] `bot/src/index.ts`
+- [REVIEWED] `bot/src/lib/api.ts`
+- [REVIEWED] `bot/src/lib/commandCooldown.ts`
+- [REVIEWED] `bot/src/lib/env.ts`
+- [REVIEWED] `bot/src/lib/registration.ts`
+- [REVIEWED] `bot/src/listeners/interactionRelay.ts`
+- [REVIEWED] `bot/src/listeners/ready.ts`
+- [REVIEWED] `bot/tests/api.test.ts`
+- [REVIEWED] `bot/tests/commands.test.ts`
+- [REVIEWED] `bot/tests/env.test.ts`
+- [REVIEWED] `bot/tests/relay.test.ts`
+- [REVIEWED] `bot/tsconfig.build.json`
+- [REVIEWED] `bot/tsconfig.json`
+- [REVIEWED] `bot/vitest.config.ts`
 
 ### client
 
@@ -82,11 +107,10 @@
 - [PENDING] `client/src/App.tsx`
 - [PENDING] `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
 - [PENDING] `client/src/api/__tests__/design.test.ts`
-- [PENDING] `client/src/api/client.ts`
+- [IN PROGRESS] `client/src/api/client.ts`
 - [PENDING] `client/src/api/design.ts`
-- [PENDING] `client/src/api/discord.ts`
 - [PENDING] `client/src/components/actions/FlowBuilder.tsx`
-- [PENDING] `client/src/components/actions/StepList.tsx`
+- [IN PROGRESS] `client/src/components/actions/StepList.tsx`
 - [PENDING] `client/src/components/design/PublishAppLayoutControl.tsx`
 - [PENDING] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 - [PENDING] `client/src/components/editor/AllowedMentionsModal.tsx`
@@ -124,7 +148,7 @@
 - [PENDING] `client/src/components/layout/SettingsModal.tsx`
 - [PENDING] `client/src/components/layout/Sidebar.tsx`
 - [PENDING] `client/src/components/layout/SplitPane.tsx`
-- [REVIEWED] `client/src/components/layout/StudioLayout.tsx`
+- [IN PROGRESS] `client/src/components/layout/StudioLayout.tsx`
 - [PENDING] `client/src/components/layout/StudioModals.tsx`
 - [PENDING] `client/src/components/layout/StudioRouter.tsx`
 - [PENDING] `client/src/components/layout/ThemeSettingsModal.tsx`
@@ -160,8 +184,8 @@
 - [PENDING] `client/src/components/ui/__tests__/Modal.test.tsx`
 - [PENDING] `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx`
 - [PENDING] `client/src/components/ui/icon.ts`
-- [PENDING] `client/src/config/puck/appLayoutConfig.tsx`
-- [PENDING] `client/src/config/puck/defaultAppLayouts.ts`
+- [IN PROGRESS] `client/src/config/puck/appLayoutConfig.tsx`
+- [IN PROGRESS] `client/src/config/puck/defaultAppLayouts.ts`
 - [PENDING] `client/src/config/puck/designConfig.tsx`
 - [PENDING] `client/src/config/puck/publishedDesign.ts`
 - [PENDING] `client/src/config/puck/publishedTheme.css`
@@ -179,18 +203,18 @@
 - [PENDING] `client/src/pages/DocsPage.tsx`
 - [PENDING] `client/src/pages/NotFoundPage.tsx`
 - [PENDING] `client/src/pages/PrivacyPage.tsx`
-- [PENDING] `client/src/pages/app-layout-preview.css`
+- [IN PROGRESS] `client/src/pages/app-layout-preview.css`
 - [PENDING] `client/src/pages/design-lab.css`
 - [PENDING] `client/src/pages/docs-page.css`
 - [PENDING] `client/src/pages/layout-lab.css`
 - [PENDING] `client/src/store/__tests__/exportImport.test.ts`
-- [PENDING] `client/src/store/actionStore.ts`
+- [IN PROGRESS] `client/src/store/actionStore.ts`
 - [PENDING] `client/src/store/discordCacheStore.ts`
 - [PENDING] `client/src/store/globalStore.ts`
 - [PENDING] `client/src/store/messageStore.ts`
 - [PENDING] `client/src/store/settingsStore.ts`
 - [PENDING] `client/src/store/templateStore.ts`
-- [PENDING] `client/src/styles/appLayoutRuntime.css`
+- [IN PROGRESS] `client/src/styles/appLayoutRuntime.css`
 - [PENDING] `client/src/styles/globals.css`
 - [PENDING] `client/src/test/setup.ts`
 - [PENDING] `client/src/utils/__tests__/appLayoutApi.test.ts`
@@ -201,7 +225,7 @@
 - [PENDING] `client/src/utils/__tests__/mentionParser.test.ts`
 - [PENDING] `client/src/utils/__tests__/mentionParserAutocomplete.test.ts`
 - [PENDING] `client/src/utils/__tests__/previewSelection.test.ts`
-- [PENDING] `client/src/utils/__tests__/puckAppLayout.test.ts`
+- [IN PROGRESS] `client/src/utils/__tests__/puckAppLayout.test.ts`
 - [PENDING] `client/src/utils/__tests__/puckTheme.test.ts`
 - [PENDING] `client/src/utils/__tests__/stress_m2.test.ts`
 - [PENDING] `client/src/utils/__tests__/tree.test.ts`
@@ -216,9 +240,9 @@
 - [PENDING] `client/src/utils/exportImport.ts`
 - [PENDING] `client/src/utils/floatingPosition.ts`
 - [PENDING] `client/src/utils/mentionParser.ts`
-- [REVIEWED] `client/src/utils/mentionValidation.ts`
+- [IN PROGRESS] `client/src/utils/mentionValidation.ts`
 - [PENDING] `client/src/utils/previewSelection.ts`
-- [PENDING] `client/src/utils/puckAppLayout.ts`
+- [IN PROGRESS] `client/src/utils/puckAppLayout.ts`
 - [PENDING] `client/src/utils/puckDesignStorage.ts`
 - [PENDING] `client/src/utils/puckSourceExport.ts`
 - [PENDING] `client/src/utils/puckTheme.ts`
@@ -233,12 +257,13 @@
 
 ### docs
 
-- [PENDING] `docs/AGENTS.md`
-- [PENDING] `docs/GEMINI_HANDOFF_CURRENT.md`
-- [PENDING] `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md`
+- [IN PROGRESS] `docs/AGENTS.md`
+- [IN PROGRESS] `docs/GEMINI_HANDOFF_CURRENT.md`
+- [IN PROGRESS] `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md`
 - [PENDING] `docs/PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md`
-- [PENDING] `docs/PUCK_DESIGN_LAB.md`
+- [REVIEWED] `docs/PUCK_DESIGN_LAB.md`
 - [PENDING] `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md`
+- [IN PROGRESS] `docs/REPOSITORY_AUDIT_LEDGER.md`
 - [PENDING] `docs/hoho_v12_ultimate_ux_login_and_optimization_master_plan.md`
 
 ### scripts
@@ -267,29 +292,29 @@
 - [PENDING] `server/src/actions/modalSubmit.ts`
 - [PENDING] `server/src/actions/openModal.ts`
 - [PENDING] `server/src/actions/removeRole.ts`
-- [REVIEWED] `server/src/actions/responses.ts`
+- [IN PROGRESS] `server/src/actions/responses.ts`
 - [PENDING] `server/src/actions/roleSafety.ts`
 - [PENDING] `server/src/actions/sendDm.ts`
 - [PENDING] `server/src/actions/sendEphemeralReply.ts`
-- [PENDING] `server/src/actions/sendMessage.ts`
+- [REVIEWED] `server/src/actions/sendMessage.ts`
 - [PENDING] `server/src/actions/sendWebhookMessage.ts`
 - [PENDING] `server/src/actions/setVariable.ts`
 - [PENDING] `server/src/actions/stop.ts`
 - [PENDING] `server/src/actions/toggleRole.ts`
-- [REVIEWED] `server/src/actions/types.ts`
+- [IN PROGRESS] `server/src/actions/types.ts`
 - [PENDING] `server/src/actions/wait.ts`
 - [PENDING] `server/src/app.ts`
-- [PENDING] `server/src/config/database.ts`
+- [IN PROGRESS] `server/src/config/database.ts`
 - [PENDING] `server/src/config/env.ts`
 - [PENDING] `server/src/config/migrate.ts`
-- [PENDING] `server/src/config/migrations.ts`
+- [IN PROGRESS] `server/src/config/migrations.ts`
 - [PENDING] `server/src/config/tursoPipeline.ts`
 - [PENDING] `server/src/index.ts`
-- [PENDING] `server/src/middleware/auth.ts`
+- [REVIEWED] `server/src/middleware/auth.ts`
 - [PENDING] `server/src/middleware/errorHandler.ts`
 - [PENDING] `server/src/middleware/multipart.ts`
 - [PENDING] `server/src/middleware/rateLimit.ts`
-- [PENDING] `server/src/middleware/staffPermissions.ts`
+- [REVIEWED] `server/src/middleware/staffPermissions.ts`
 - [PENDING] `server/src/middleware/verifyDiscordSignature.ts`
 - [PENDING] `server/src/repositories/actionRepository.ts`
 - [PENDING] `server/src/repositories/appLayoutRepository.ts`
@@ -297,39 +322,38 @@
 - [PENDING] `server/src/repositories/baseRepository.ts`
 - [PENDING] `server/src/repositories/customExecutorRepository.ts`
 - [PENDING] `server/src/repositories/flowRepository.ts`
-- [PENDING] `server/src/repositories/index.ts`
-- [REVIEWED] `server/src/repositories/interactionReceiptRepository.ts`
-- [PENDING] `server/src/repositories/profileRepository.ts`
+- [REVIEWED] `server/src/repositories/index.ts`
+- [IN PROGRESS] `server/src/repositories/interactionReceiptRepository.ts`
 - [PENDING] `server/src/repositories/sessionRepository.ts`
 - [PENDING] `server/src/repositories/sessionRevocationRepository.ts`
-- [PENDING] `server/src/repositories/settingsRepository.ts`
+- [REVIEWED] `server/src/repositories/settingsRepository.ts`
 - [PENDING] `server/src/repositories/staffRepository.ts`
 - [PENDING] `server/src/repositories/templateRepository.ts`
 - [PENDING] `server/src/repositories/trackedMessageRepository.ts`
-- [PENDING] `server/src/repositories/userRepository.ts`
+- [REVIEWED] `server/src/repositories/userRepository.ts`
 - [PENDING] `server/src/routes/access.ts`
 - [PENDING] `server/src/routes/auth.ts`
 - [PENDING] `server/src/routes/config.ts`
 - [PENDING] `server/src/routes/design.ts`
-- [PENDING] `server/src/routes/discord.ts`
+- [IN PROGRESS] `server/src/routes/discord.ts`
 - [PENDING] `server/src/routes/executors.ts`
 - [PENDING] `server/src/routes/health.ts`
-- [REVIEWED] `server/src/routes/interactions.ts`
+- [IN PROGRESS] `server/src/routes/interactions.ts`
 - [IN PROGRESS] `server/src/routes/send.ts`
-- [PENDING] `server/src/routes/settings.ts`
+- [IN PROGRESS] `server/src/routes/settings.ts`
 - [PENDING] `server/src/routes/templates.ts`
-- [PENDING] `server/src/routes/tracking.ts`
-- [PENDING] `server/src/routes/weao.ts`
-- [REVIEWED] `server/src/services/actionExecutor.ts`
+- [IN PROGRESS] `server/src/routes/tracking.ts`
+- [IN PROGRESS] `server/src/routes/weao.ts`
+- [IN PROGRESS] `server/src/services/actionExecutor.ts`
 - [PENDING] `server/src/services/auditLog.ts`
-- [PENDING] `server/src/services/authorService.ts`
+- [IN PROGRESS] `server/src/services/authorService.ts`
 - [PENDING] `server/src/services/branches.ts`
 - [IN PROGRESS] `server/src/services/discordService.ts`
 - [PENDING] `server/src/services/guildVariables.ts`
-- [REVIEWED] `server/src/services/interactionHandler.ts`
+- [IN PROGRESS] `server/src/services/interactionHandler.ts`
 - [PENDING] `server/src/services/maintenanceService.ts`
 - [PENDING] `server/src/services/messageTrackerService.ts`
-- [PENDING] `server/src/services/settingsService.ts`
+- [IN PROGRESS] `server/src/services/settingsService.ts`
 - [PENDING] `server/src/services/templateService.ts`
 - [PENDING] `server/src/services/variableInterpolation.ts`
 - [PENDING] `server/src/services/weaoService.ts`
@@ -339,13 +363,13 @@
 - [PENDING] `server/src/utils/errors.ts`
 - [PENDING] `server/src/utils/logger.ts`
 - [PENDING] `server/src/utils/mentionScrubber.ts`
-- [PENDING] `server/src/utils/requestParsing.ts`
+- [IN PROGRESS] `server/src/utils/requestParsing.ts`
 - [PENDING] `server/src/utils/session.ts`
 - [PENDING] `server/src/utils/urlAttachments.ts`
-- [PENDING] `server/src/utils/validation.ts`
+- [IN PROGRESS] `server/src/utils/validation.ts`
 - [PENDING] `server/tests/accessSecurity.test.ts`
-- [PENDING] `server/tests/actions.test.ts`
-- [PENDING] `server/tests/adversarial_streaming_memory.test.ts`
+- [IN PROGRESS] `server/tests/actions.test.ts`
+- [IN PROGRESS] `server/tests/adversarial_streaming_memory.test.ts`
 - [PENDING] `server/tests/appLayoutPublishing.test.ts`
 - [PENDING] `server/tests/authorService.test.ts`
 - [PENDING] `server/tests/challenger_bot_relay.test.ts`
@@ -356,22 +380,22 @@
 - [PENDING] `server/tests/challenger_retention_maintenance.test.ts`
 - [PENDING] `server/tests/challenger_staffRepository.test.ts`
 - [PENDING] `server/tests/crypto.test.ts`
-- [PENDING] `server/tests/discordService.timeout.test.ts`
+- [IN PROGRESS] `server/tests/discordService.timeout.test.ts`
 - [PENDING] `server/tests/environmentMode.test.ts`
 - [PENDING] `server/tests/errorHandler.security.test.ts`
 - [PENDING] `server/tests/flowRepository.test.ts`
 - [PENDING] `server/tests/guildVariables.test.ts`
-- [PENDING] `server/tests/interactionMemory.test.ts`
+- [IN PROGRESS] `server/tests/interactionMemory.test.ts`
 - [PENDING] `server/tests/m3_challenger2_retention_cache.test.ts`
 - [PENDING] `server/tests/middleware.test.ts`
 - [PENDING] `server/tests/repositories.test.ts`
-- [PENDING] `server/tests/requestParsing.test.ts`
-- [PENDING] `server/tests/routes.test.ts`
+- [IN PROGRESS] `server/tests/requestParsing.test.ts`
+- [IN PROGRESS] `server/tests/routes.test.ts`
 - [PENDING] `server/tests/serverThemePublishing.test.ts`
 - [PENDING] `server/tests/session.test.ts`
 - [PENDING] `server/tests/sqlSplitter.stress.test.ts`
 - [PENDING] `server/tests/staff_logging_enhancements.test.ts`
-- [PENDING] `server/tests/staff_security_regression.test.ts`
+- [REVIEWED] `server/tests/staff_security_regression.test.ts`
 - [PENDING] `server/tests/tursoPipeline.test.ts`
 - [PENDING] `server/tests/urlAttachments.security.test.ts`
 - [PENDING] `server/tests/validation.test.ts`
@@ -384,11 +408,11 @@
 ### shared
 
 - [PENDING] `shared/package.json`
-- [PENDING] `shared/src/constants.ts`
+- [IN PROGRESS] `shared/src/constants.ts`
 - [PENDING] `shared/src/customId.ts`
 - [PENDING] `shared/src/index.ts`
-- [PENDING] `shared/src/types.ts`
-- [PENDING] `shared/tests/constants.test.ts`
+- [IN PROGRESS] `shared/src/types.ts`
+- [IN PROGRESS] `shared/tests/constants.test.ts`
 - [PENDING] `shared/tests/customId.test.ts`
 - [PENDING] `shared/tsconfig.build.json`
 - [PENDING] `shared/tsconfig.json`
@@ -398,24 +422,14 @@
 
 - [PENDING] `tunnel/config.yml.example`
 
-## Findings and decisions
+## Next audit sequence
 
-### Confirmed in this audit batch
+1. Finish all in-progress server route, middleware, service, repository and migration paths; trace every caller.
+2. Audit every server action handler and its error/response semantics.
+3. Complete the client Puck/runtime, stores, API, responsive CSS and interaction paths.
+4. Audit all shared types and cross-package consumers.
+5. Audit root/infrastructure/deployment configuration and security boundaries.
+6. Review all tests/fixtures and update them for the removed feature contracts.
+7. Rebuild the inventory at the final source commit and record the owner's local verification results separately.
 
-- `server/src/services/actionExecutor.ts`: action failure classification previously depended on the user-facing warning prefix. Replaced with internal `ActionResponse.outcome = "failure"`; executor strips this metadata before returning a Discord callback body.
-- `server/src/actions/responses.ts`: `actionFailed()` now marks failure structurally.
-- `server/src/services/interactionHandler.ts`, `server/src/routes/interactions.ts`, and `server/src/repositories/interactionReceiptRepository.ts`: reviewed as the core ACK/defer/deduplication path; race and duplicate-delivery behavior still requires targeted test expansion and runtime verification.
-- `client/src/components/layout/StudioLayout.tsx`: removed the stale banner claiming users can dispatch through their own custom bot profile.
-- `client/src/utils/mentionValidation.ts`: removed the stale comment implying a custom bot profile bypasses mention permissions.
-- `server/src/actions/types.ts`: removed webhook-send API and webhook-profile repository dependencies from action contexts.
-
-### In progress
-
-- Full removal of webhook URL sending and custom bot-profile dispatch, including obsolete parsing, service methods, client controls, legacy types, settings fields, and tests.
-- Puck runtime contract audit: verify every exposed setting has an intentional runtime or preview-only consumer.
-- Discord interaction ACK/defer/duplicate/timeout tests.
-- Remaining file-by-file audit across root, client, server, bot, shared, tests and docs.
-
-### Not verified
-
-- No local npm commands, integration tests, live Discord calls, browser QA, Lighthouse, migration execution, or deployment checks were run by this audit batch.
+**Overall audit remains incomplete until every tracked file has a final disposition and every confirmed finding is fixed or explicitly deferred.**
