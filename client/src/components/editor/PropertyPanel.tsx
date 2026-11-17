@@ -6,7 +6,8 @@ import { FlowBuilder } from "../actions/FlowBuilder";
 import { COMPONENT_FORMS } from "./ComponentForms";
 import { EmbedEditor } from "./EmbedEditor";
 import { componentLabel, isInteractiveComponent } from "../../utils/componentsV2";
-import { findComponent } from "../../utils/tree";
+import { findComponent, findFirstComponentByType } from "../../utils/tree";
+import { EDITOR_MODES } from "../../utils/constants";
 import { useMessageStore, type Selection } from "../../store/messageStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
@@ -20,9 +21,11 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
   const targetMessageIndex = selection?.kind === "message" ? selection.index : activeMessageIndex;
   const messageData = (messages && messages[targetMessageIndex]) || data;
-  const isV2Message = Boolean((messageData.flags ?? 0) & (1 << 15));
+  const isV2Message =
+    Boolean((messageData.flags ?? 0) & (1 << 15)) ||
+    (messageData as any).mode === EDITOR_MODES.V2;
   const primaryTextDisplay = isV2Message
-    ? (messageData.components || []).find((component) => component.type === ComponentType.TextDisplay)
+    ? findFirstComponentByType(messageData.components, ComponentType.TextDisplay)
     : undefined;
   const components = messageData.components || [];
   const select = useMessageStore((state) => state.select);
@@ -92,7 +95,10 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
               id="preview-message-content"
               value={isV2Message ? (primaryTextDisplay?.content ?? "") : (messageData.content ?? "")}
               onChange={(event) => {
-                if (selection.index !== activeMessageIndex) setActiveMessageIndex(selection.index);
+                if (selection.index !== activeMessageIndex) {
+                  setActiveMessageIndex(selection.index);
+                  select({ kind: "message", index: selection.index });
+                }
                 if (!isV2Message) {
                   setContent(event.target.value);
                   return;
