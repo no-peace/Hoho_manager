@@ -201,7 +201,7 @@ describe("responsive application layout publishing", () => {
     expect(() => validateAppLayoutPair(sameAcrossDocuments)).not.toThrow();
 
     const duplicateWithinDesktop = makePair();
-    duplicateWithinDesktop.desktop.content[1]!.props.content[0]!.props.id =
+    (((duplicateWithinDesktop.desktop.content[1]!.props as Record<string, any>).content[0].props) as Record<string, unknown>).id =
       duplicateWithinDesktop.desktop.content[0]!.props.id;
     expect(() => validateAppLayoutPair(duplicateWithinDesktop)).toThrow("unique within the desktop document");
   });
@@ -248,7 +248,7 @@ describe("responsive application layout publishing", () => {
 
     const invalidPair = makePair("after");
     delete (invalidPair.mobile.content[2]!.props as Record<string, unknown>).activeTab;
-    (invalidPair.mobile.content[1]!.props.content[0]!.props as Record<string, unknown>).surface = "not-a-color";
+    (((invalidPair.mobile.content[1]!.props as Record<string, any>).content[0].props) as Record<string, unknown>).surface = "not-a-color";
     const rejected = await fetch(`${baseUrl}/api/design/app-layout`, {
       method: "PUT",
       headers: sessionHeaders("111111111111111111", "admin"),
