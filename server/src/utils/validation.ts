@@ -506,8 +506,12 @@ export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {
 
 /** Parse a positive integer id, or throw a 400. */
 export const requireId = (value: unknown, label = "id"): number => {
-  const parsed = Number.parseInt(String(value), 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  const raw = typeof value === "string" || typeof value === "number" ? String(value) : "";
+  if (!/^\d+$/.test(raw)) {
+    throw ApiError.badRequest(`\`${label}\` must be a positive integer`);
+  }
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
     throw ApiError.badRequest(`\`${label}\` must be a positive integer`);
   }
   return parsed;
