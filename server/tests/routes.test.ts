@@ -20,6 +20,7 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     getGuildChannels: vi.fn().mockResolvedValue([]),
     getChannelGuildId: vi.fn().mockResolvedValue("guild_123"),
     getGuildRoles: vi.fn().mockResolvedValue([]),
+    getGuildMember: vi.fn().mockResolvedValue({ user: { username: "staff", global_name: "Staff" }, nick: "Staff" }),
     getBotGuilds: vi.fn().mockResolvedValue([]),
     getDiscordUser: vi.fn(),
     getDiscordUserAvatarUrl: vi.fn((user: { id: string; avatar: string | null }) =>
