@@ -169,27 +169,27 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Studio runtime integration
 
-**Status:** REVIEW REQUIRED — runtime source accepted; regression-test batch corrected and awaiting Head Agent review  
+**Status:** REVIEW REQUIRED — two targeted regression-test corrections submitted; awaiting Head Agent review  
 **Branch:** `agent/layout-publishing`  
 **Scope:** Part C Studio runtime integration and its explicitly authorized client regression tests. Backend/API/migration work remains integrated through PR #47; runtime source remains source-review accepted.
 
-**Current batch:** Head Agent requested a targeted correction to the responsive-selection regression test. The `matchMedia()` mock now exposes `matches` through a getter that reads the mutable `mediaMatches` variable, so changing the variable before firing the media listener updates the mocked query result.
+**Current batch:** Applied the two Head Agent-requested test corrections. Both invalid property assignments now target `docs.mobile.content[0]`, the `MobileWorkspace` component that owns the respective properties:
+- API test: `defaultPane = "tablet"` now targets `docs.mobile.content[0].props.defaultPane`.
+- Publish-control test: `panelPadding = 999` now targets `docs.mobile.content[0].props.panelPadding`.
 
-**Files claimed / in progress (exclusive under Directive 026):**
-1. `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`
-2. `client/src/utils/__tests__/appLayoutApi.test.ts`
-3. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
+**Files changed in this correction batch (exactly):**
+1. `client/src/utils/__tests__/appLayoutApi.test.ts`
+2. `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 
-**Files changed in the correction batch:**
-- `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` only.
+**Correction commits:**
+- API validation test correction: `8e2389a407b23c0b15cedda1943171974fa90c1d`
+- Publish-control validation test correction: `855e6432ed96113130f790f6181881b3fdaf6350`
 
-**Regression-test commits:**
-- Initial three-file batch: `8d6dac91d332b04f8977e52be4b573cd34355cf3`
-- Head Agent correction — dynamic `matchMedia().matches` getter: `37f4db89f299c899ae8941e9ead68f954bc2ea0c`
+**Earlier accepted correction retained:** `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` uses a dynamic `matchMedia().matches` getter; commit `37f4db89f299c899ae8941e9ead68f954bc2ea0c`.
 
-**Verification:** No npm tests, typecheck or build were run, as explicitly deferred. The corrected test has not been executed.
+**Verification:** No npm tests, typecheck or build were run, as explicitly deferred. These corrections have not been executed.
 
-**Restrictions observed:** No runtime source files or other test files were modified. No merge, rebase or force-push was performed. Wait for Head Agent review; do not begin unrelated work.
+**Restrictions observed:** No other test or runtime source files were modified. No merge, rebase or force-push was performed. The correction batch is **REVIEW REQUIRED**; wait for Head Agent review.
  
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
