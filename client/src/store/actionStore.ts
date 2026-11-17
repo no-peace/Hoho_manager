@@ -64,8 +64,6 @@ const defaultConfig = (type: ActionType): Record<string, unknown> => {
       return { title: "Form", customId: "modal:form" };
     case "send_message":
       return { content: "" };
-    case "send_webhook_message":
-      return { content: "" };
     case "create_thread":
       return { name: "" };
     case "wait":
