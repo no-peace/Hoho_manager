@@ -26,7 +26,7 @@ const baseUserDirectory = fileURLToPath(new URL(".", import.meta.url));
 const errors = validateEnv();
 if (errors.length > 0) {
   for (const error of errors) console.error(`[config] ${error}`);
-  if (!env.token) process.exit(1);
+  process.exitCode = 1;
 }
 
 const client = new SapphireClient({
@@ -55,8 +55,9 @@ const shutdown = async (signal: string): Promise<void> => {
 process.once("SIGINT", () => void shutdown("SIGINT"));
 process.once("SIGTERM", () => void shutdown("SIGTERM"));
 
-client
-  .login(env.token)
+if (errors.length === 0) {
+  client
+    .login(env.token)
   .then(() => {
     console.log(`[bot] logged in as ${client.user?.tag ?? "unknown"}`);
     console.log(`[bot] API base: ${env.apiBaseUrl}`);
@@ -67,3 +68,4 @@ client
     await client.destroy().catch(() => undefined);
     process.exitCode = 1;
   });
+}
