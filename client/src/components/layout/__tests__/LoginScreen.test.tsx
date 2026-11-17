@@ -43,6 +43,10 @@ describe("LoginScreen mobile and desktop regressions", () => {
     expect(root.querySelector(".lg\\:col-span-5")).toBeTruthy();
     expect(root.querySelector(".lg\\:col-span-7")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Login with Discord/i })).toBeTruthy();
+
+    const studioLink = screen.getByRole("link", { name: "Studio" });
+    expect(studioLink.getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("navigation", { name: "Public navigation" })).toBeTruthy();
   });
 
 });
