@@ -1,6 +1,7 @@
 import type { ActionType } from "@dmb/shared";
 import { actionFailed, ephemeral } from "./responses.js";
 import { configString, type ActionContext, type ActionResponse } from "./types.js";
+import { getSelfAssignableRoleError } from "./roleSafety.js";
 
 export const type: ActionType = "toggle_role";
 export const description = "Add the role if absent, remove it if present";
@@ -28,6 +29,9 @@ export const run = async ({
       await discord.removeGuildMemberRole(guildId, userId, roleId, botToken);
       return ephemeral(`✅ **Role Removed** — Removed <@&${roleId}>.`);
     }
+
+    const roleError = await getSelfAssignableRoleError({ discord, botToken }, guildId, roleId);
+    if (roleError) return actionFailed(roleError);
 
     await discord.addGuildMemberRole(guildId, userId, roleId, botToken);
     return ephemeral(`✅ **Role Added** — Gave you <@&${roleId}>.`);
