@@ -15,6 +15,7 @@ export const PublishAppLayoutControl: React.FC<{
   const [published, setPublished] = useState<PublishedAppLayout | null>(null);
   const [loadingPublished, setLoadingPublished] = useState(true);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export const PublishAppLayoutControl: React.FC<{
     void appLayoutApi.getPublished().then((response) => {
       if (active) setPublished(response.layout);
     }).catch((reason) => {
-      if (active) setError(reason instanceof Error ? reason.message : "Could not load published layout status.");
+      if (active) setLoadError(reason instanceof Error ? reason.message : "Could not load published layout status.");
     }).finally(() => {
       if (active) setLoadingPublished(false);
     });
@@ -50,6 +51,7 @@ export const PublishAppLayoutControl: React.FC<{
     try {
       const result = await appLayoutApi.publish(checked);
       setPublished(result.layout);
+      setLoadError("");
       setState("success");
       setStatus("Both Desktop and Mobile layouts were published successfully.");
     } catch (reason) {
@@ -71,9 +73,11 @@ export const PublishAppLayoutControl: React.FC<{
       <p className="text-[0.625rem] text-[#a1a8b8]" aria-live="polite">
         {loadingPublished
           ? "Checking published version…"
-          : published
-            ? `Published ${updatedAt ? `· ${updatedAt}` : ""}${published.publisher?.discordId ? ` · by ${published.publisher.discordId}` : ""}`
-            : "No server layout published; the live Studio uses built-in defaults."}
+          : loadError
+            ? "Published status unavailable."
+            : published
+              ? `Published ${updatedAt ? `· ${updatedAt}` : ""}${published.publisher?.discordId ? ` · by ${published.publisher.discordId}` : ""}`
+              : "No server layout published; the live Studio uses built-in defaults."}
       </p>
       <button
         type="button"
@@ -84,7 +88,7 @@ export const PublishAppLayoutControl: React.FC<{
         {state === "publishing" ? "Publishing both layouts…" : "Publish Desktop + Mobile"}
       </button>
       {status ? <p className="text-[0.6875rem] text-emerald-300" role="status">{status}</p> : null}
-      {error ? <p className="text-[0.6875rem] text-rose-300" role="alert">{error}</p> : null}
+      {error || loadError ? <p className="text-[0.6875rem] text-rose-300" role="alert">{error || loadError}</p> : null}
     </section>
   );
 };
