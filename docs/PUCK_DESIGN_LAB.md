@@ -155,8 +155,8 @@ Top-level `content` contains exactly these components in this order:
 - `background`, `accent`: `#RRGGBB`.
 - `tabOrder`: `editor-first | preview-first`.
 - `showLabels`: `show | hide`.
-- `activeTab`: `editor | preview | dispatch` (preview-only selected-state presentation).
-- `editorLabel`, `previewLabel`, `dispatchLabel`: trimmed text, 1–48 characters, no control characters.
+- `activeTab`: `editor | preview | dispatch` (preview-only selected-state presentation; optional in earlier version-1 exports, defaults to `editor`).
+- `editorLabel`, `previewLabel`, `dispatchLabel`: trimmed text, 1–48 characters, no control characters (optional in earlier version-1 exports; defaults to `Editor`, `Preview`, and `Dispatch`).
 - `animation`, `animationDuration`, `animationDelay`: same motion enums.
 
 ### Workspace panel schemas
@@ -181,7 +181,7 @@ All panels require:
 - Unknown or missing component properties, unknown component types, malformed nodes, invalid nesting, duplicate/empty IDs, missing shell regions and duplicate/missing workspace panels are rejected.
 - The optional `updatedAt` metadata value is a string of at most 64 characters.
 - Version-1 export envelope has exactly `format: "hoho-app-layout"`, `version: 1`, `exportedAt` (string, max 64 characters), `desktop`, and `mobile`. The import parser validates the entire pair before replacing the editor state.
-- Existing version-1 exports produced by the current defaults remain compatible. The optional empty `root.props` object may be omitted and is normalized to `{}`.
+- Existing version-1 exports produced before the navigation-label controls remain compatible: missing `activeTab` and tab labels normalize to the defaults above. Legacy boolean `EditorPanel.showToolbar` values normalize to the current string enum. The optional empty `root.props` object may be omitted and is normalized to `{}`.
 
 ### Local persistence expectations
 
