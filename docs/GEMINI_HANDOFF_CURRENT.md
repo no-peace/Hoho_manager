@@ -1,3 +1,17 @@
+## Current repair program — verified baseline and batch plan (2026-11-17)
+
+- Current `main` head inspected for this work: `c3cd6ad78ab7275bf786431b64db76ffe3c72903` (`fix theme scope and general settings selection`).
+- The earlier status below referenced `97d38f0...` and was stale when this repair program began. Treat the baseline above as authoritative until a later implementation commit supersedes it.
+- Repository tree at baseline: 321 tracked files. The audit is staged and has not yet completed a file-by-file review.
+- Confirmed architecture gap: `/design` uses Puck 0.24 to build a separate promotional page. Its draft is localStorage-backed. Existing design API/migrations persist theme records and a server theme, but do not persist the actual responsive Studio layout. The live app layout is implemented separately in StudioLayout/SplitPane/Header/MessageEditor/MessagePreview/PropertyPanel.
+- Theme button trace begins at Header state `themeSettingsOpen`; it lazy-loads ThemeSettingsModal. The control path from modal fields through CSS tokens to all actual Studio surfaces must be verified and repaired in Batch B.
+- General Settings has a single General tab and a no-op tab click handler; its event checkbox rows were restyled in the latest commit. Keyboard/label interaction still requires a regression check.
+- Docs has distinct desktop-table/mobile-card markup and SpotlightCard wrappers. The reported breakage needs a concrete reproduction before changing the page.
+- Puck 0.24 API references reviewed: component configuration, `renderFields`, `FieldGroup`, `FieldTab`, slot field `allow`, permissions, viewports, `dnd`, and CSS theming. Use the actual installed API.
+- User-reported npm checks passed at an earlier checkpoint. All checks must be rerun after the new implementation; this baseline inspection did not execute npm commands.
+- Full batch-by-batch execution plan: `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md`.
+- Work rule: direct commits to `main`; update this handoff in each implementation batch; never count uncommitted blobs or draft patches as completed code.
+
 # HoHo Manager — Current Gemini Handoff & Repair Plan
 
 ## Latest main status — Preview/editor navigation repair (2026-11-17)
