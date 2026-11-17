@@ -252,6 +252,14 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const renderFields = (index: number, step: FlowStep) => {
     const config = step.config ?? {};
 
+    if (step.type === "send_webhook_message") {
+      return (
+        <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          This saved action is deprecated. Webhook URL sending has been removed. Delete this step and replace it with <strong>Send Message</strong> to use the configured server bot.
+        </p>
+      );
+    }
+
     if (step.type === SET_VARIABLE_KEY) {
       const mode = asText(config.varType) || "static";
 
