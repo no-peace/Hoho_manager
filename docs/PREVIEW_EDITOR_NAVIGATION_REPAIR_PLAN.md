@@ -77,10 +77,12 @@ On desktop, non-interactive component clicks are reduced to message selection an
 The desktop terminal connector was unavailable (MCP endpoint returned HTTP 404). The added Vitest tests, client typecheck, and production build have therefore **not** been executed. Browser interaction QA and Lighthouse have also not been run. Treat all checks as pending until run from the repository root:
 
 ```bash
-npm test --workspace client
-npm run typecheck --workspace client
-npm run build --workspace client
+npm test
+npm run typecheck
+npm run build
 ```
+
+The focused client checks can also be run with the `--workspace client` flag.
 
 ## External implementation references reviewed
 
