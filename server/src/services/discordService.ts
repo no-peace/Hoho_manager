@@ -912,9 +912,10 @@ export const createInteractionResponse = async (
   apiRequest("POST", `/interactions/${encodeURIComponent(interactionId)}/${encodeURIComponent(interactionToken)}/callback`, {
     auth: "",
     body: response,
-    retries: 1,
-    // Keep the first attempt + retry + backoff below Discord's 3-second initial-response deadline.
-    timeoutMs: options?.timeoutMs ?? 1_000,
+    retries: 0,
+    // Never retry an initial callback: a timed-out attempt may already have been accepted.
+    // One bounded attempt leaves room for the gateway worker fallback before Discord's 3s deadline.
+    timeoutMs: options?.timeoutMs ?? 1_500,
   });
 
 export const createFollowupMessage = async (
