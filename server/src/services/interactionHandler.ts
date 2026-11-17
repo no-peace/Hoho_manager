@@ -7,7 +7,7 @@ import * as discord from "./discordService.js";
 import { logger } from "../utils/logger.js";
 
 const log = logger.child("interactions");
-const ACK_DEADLINE_MS = 2_200;
+const ACK_DEADLINE_MS = 900;
 const DEFERRED_SAFEGUARD_TTL_MS = 30_000;
 
 export interface PendingDeferredEntry {
