@@ -381,7 +381,7 @@ export const sendChannelMessage = async (
     ? buildMultipartPayload(payload, files)
     : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
 
-  const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
+  const message = await apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channelId)}/messages`, {
     token,
     body,
   });
@@ -401,7 +401,7 @@ export const sendChannelMessageWithToken = async (
     ? buildMultipartPayload(payload, files)
     : { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } };
 
-  const message = await apiRequest<DiscordMessage>("POST", `/channels/${channelId}/messages`, {
+  const message = await apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channelId)}/messages`, {
     token,
     body,
   });
@@ -877,7 +877,7 @@ export const addGuildMemberRole = async (
   roleId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("PUT", `/guilds/${guildId}/members/${userId}/roles/${roleId}`, { token });
+  await apiRequest("PUT", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`, { token });
   return true;
 };
 
@@ -887,7 +887,7 @@ export const removeGuildMemberRole = async (
   roleId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("DELETE", `/guilds/${guildId}/members/${userId}/roles/${roleId}`, { token });
+  await apiRequest("DELETE", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`, { token });
   return true;
 };
 
@@ -896,7 +896,7 @@ export const getGuildMember = async (
   userId: string,
   token: string,
 ): Promise<GuildMember | null> =>
-  apiRequest<GuildMember>("GET", `/guilds/${guildId}/members/${userId}`, { token });
+  apiRequest<GuildMember>("GET", `/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}`, { token });
 
 export const hasRole = async (
   guildId: string,
@@ -920,7 +920,7 @@ export const sendDirectMessage = async (
   });
   if (!channel) throw ApiError.upstream("Discord did not return a DM channel");
 
-  return apiRequest<DiscordMessage>("POST", `/channels/${channel.id}/messages`, {
+  return apiRequest<DiscordMessage>("POST", `/channels/${encodeURIComponent(channel.id)}/messages`, {
     token,
     body: { ...payload, allowed_mentions: payload.allowed_mentions ?? { parse: [] } },
   });
@@ -931,7 +931,7 @@ export const deleteChannelMessage = async (
   messageId: string,
   token: string,
 ): Promise<boolean> => {
-  await apiRequest("DELETE", `/channels/${channelId}/messages/${messageId}`, { token });
+  await apiRequest("DELETE", `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`, { token });
   return true;
 };
 
@@ -947,7 +947,7 @@ export const createThreadFromMessage = async (
   name: string,
   token: string,
 ): Promise<{ id: string } | null> =>
-  apiRequest<{ id: string }>("POST", `/channels/${channelId}/messages/${messageId}/threads`, {
+  apiRequest<{ id: string }>("POST", `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}/threads`, {
     token,
     body: { name },
   });
@@ -966,7 +966,7 @@ export const createInteractionResponse = async (
   response: InteractionResponse,
   options?: { timeoutMs?: number },
 ): Promise<unknown> =>
-  apiRequest("POST", `/interactions/${interactionId}/${interactionToken}/callback`, {
+  apiRequest("POST", `/interactions/${encodeURIComponent(interactionId)}/${encodeURIComponent(interactionToken)}/callback`, {
     auth: "",
     body: response,
     retries: 1,
@@ -984,7 +984,7 @@ export const createFollowupMessage = async (
     params.set("with_components", "true");
   }
   const query = params.toString();
-  return apiRequest("POST", `/webhooks/${applicationId}/${interactionToken}${query ? `?${query}` : ""}`, { body: payload });
+  return apiRequest("POST", `/webhooks/${encodeURIComponent(applicationId)}/${encodeURIComponent(interactionToken)}${query ? `?${query}` : ""}`, { body: payload });
 };
 
 export const editOriginalResponse = async (
@@ -997,7 +997,7 @@ export const editOriginalResponse = async (
     params.set("with_components", "true");
   }
   const query = params.toString();
-  return apiRequest("PATCH", `/webhooks/${applicationId}/${interactionToken}/messages/@original${query ? `?${query}` : ""}`, {
+  return apiRequest("PATCH", `/webhooks/${encodeURIComponent(applicationId)}/${encodeURIComponent(interactionToken)}/messages/@original${query ? `?${query}` : ""}`, {
     body: payload,
   });
 };
