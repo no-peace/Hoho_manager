@@ -214,8 +214,6 @@ router.patch(
       "can_mention_here",
       "can_mention_roles",
       "max_messages_per_hour",
-      "can_use_webhooks",
-      "can_override_profile",
       "can_attach_files",
       "can_use_components_v2",
       "can_use_weao_exploits",
