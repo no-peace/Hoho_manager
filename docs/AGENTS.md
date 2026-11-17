@@ -378,3 +378,13 @@ The report's branch counts were stale and must not be used as current status. Pr
 - Part C backend/API/migration integration does not complete Part C. Studio runtime integration remains pending explicit Head Agent authorization and an exact file list.
 - Part D remains blocked. Part A and Part B have separate approved source batches and have not been included in this integration branch.
 - Next action: Head Agent to review the clean integration diff, then create/merge a PR to `main` only after confirming the seven-file diff and control-document preservation.
+
+
+## 22. Head Agent integration result — PR #47 (2026-11-17)
+
+- **Merged:** PR #47, `Integrate approved Part C backend and Part E UI batches`.
+- **Merge commit:** `25c139ca30e91047c98c2f5a60036d2d7ccf608d`.
+- The seven approved source files and this control-center update are now on `main`.
+- Agent 3 Part C backend/API/migration work is integrated, but Part C remains incomplete until Studio runtime integration is separately authorized, implemented and reviewed.
+- Agent 4 Part E's two-file batch is integrated. Part D remains blocked/not authorized.
+- No automated checks were run. Final npm verification remains deferred until the implementation program is complete.
