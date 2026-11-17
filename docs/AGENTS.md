@@ -154,21 +154,30 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** IN PROGRESS — Head Agent authorized verification correction batch  
+**Status:** REVIEW REQUIRED — review correction committed; verification blocked by unavailable execution environment  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Address review feedback and verify the submitted implementation; no Part C work.  
-**Current batch:** B2 — fix focused test expectation and run repository verification  
-**Files claimed / in progress:**
+**Scope:** Part B only. Corrected the reviewer-identified test expectation. No Part C work.  
+**Current batch:** B2 — validator message expectation correction and verification attempt  
+**Files claimed / in progress:** None — correction submitted for review  
+**Files changed in this batch:**
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
 - `docs/AGENTS.md` (this Agent 2 status section only)
 
-**Files changed in this batch:** None yet  
-**Review finding:** The missing-shell test expects `required application section`, but the validator's actual error is `required shell sections`. The assertion must match the validator's established message.  
-**Planned verification:** Focused `puckAppLayout.test.ts`, `npm run typecheck`, `npm test`, and `npm run build`. Record each exact result; do not infer pass status.  
+**Review finding fixed:** Changed the missing-shell assertion from `toThrow(/required application section/i)` to `toThrow(/required shell sections/i)`, matching the actual validator error. No production code changed in this batch.  
+**Focused test:** `npm run test --workspace client -- src/utils/__tests__/puckAppLayout.test.ts` — **NOT RUN**. The connected Terminal execution service returned `McpServerError: MCP SSE probe returned 404 from ngrok-free.dev` before a process could start.  
+**Typecheck:** `npm run typecheck` — **NOT RUN**, same Terminal service unavailable error.  
+**Full tests:** `npm test` — **NOT RUN**, same Terminal service unavailable error.  
+**Build:** `npm run build` — **NOT RUN**, same Terminal service unavailable error.  
+**Additional environment check:** Attempted `git clone --depth 1 --branch agent/responsive-design-lab https://github.com/no-peace/Hoho_manager.git`; failed because this runtime could not resolve `github.com` (`Could not resolve host`). GitHub reports no Actions workflow runs or commit status checks for correction commit `45ddeaf9ad67c87c874a89e40b085618fb7667a3`. These are environment limitations, not passing test results.  
+**Correction commit SHA:** `45ddeaf9ad67c87c874a89e40b085618fb7667a3`  
+**Status-report commit SHA:** Pending  
 **Previous implementation commit:** `7092445712b6bffe3f6535beec62a482bad14386`  
-**Schema handoff:** Provisionally acceptable; final batch remains pending verification and Head Agent approval.  
-**Restrictions:** Do not implement Part C; do not edit shared Studio runtime files; do not merge to `main`.
+**Schema handoff:** Provisionally acceptable; final Part B acceptance remains subject to successful verification and Head Agent approval.  
+**Remaining work:** Re-run the focused test, `npm run typecheck`, `npm test`, and `npm run build` in an available checkout/terminal environment. Fix any failures attributable to Part B, then resubmit.  
+**Risks / blockers:** Automated verification is outstanding. Do not treat this batch as technically verified.  
+**Next action:** Wait for Head Agent direction or an available execution environment; do not implement Part C, edit shared Studio runtime files, or merge to `main`.
 
+Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 
 ## 11. Agent 3 — Part C: Database and publishing
 
