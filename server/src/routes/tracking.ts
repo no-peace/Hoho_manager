@@ -234,17 +234,13 @@ router.post(
       }
     }
 
-    const token = await discord.resolveBotToken(null);
+    const token = await discord.resolveBotToken();
     const bot = await discord.getBotIdentity(token);
     if (!bot?.id) {
       throw new ApiError(503, "Configured server bot identity is unavailable");
     }
 
-    const existingMessage = await discord.getChannelMessage(
-      channelId,
-      messageId,
-      null,
-    );
+    const existingMessage = await discord.getChannelMessage(channelId, messageId);
 
     if (!existingMessage) {
       throw ApiError.notFound("Message not found");
