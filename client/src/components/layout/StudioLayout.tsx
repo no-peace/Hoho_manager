@@ -32,16 +32,17 @@ export const StudioLayout: React.FC = () => {
 
   const handlePreviewMessageSelect = (index: number) => {
     // On mobile, keep Preview visible and open a compact message-content inspector.
-    // On desktop, use the full editor and navigate directly to the selected message.
-    useMessageStore.getState().setActiveMessageIndex(index);
-    if (isMobileWorkspace()) {
-      useMessageStore.getState().select({ kind: "message", index });
-      return;
-    }
+    // On desktop, reveal the editor card before scrolling/focusing its first field.
+    const store = useMessageStore.getState();
+    store.setActiveMessageIndex(index);
+    store.select({ kind: "message", index });
+    if (isMobileWorkspace()) return;
 
-    useMessageStore.getState().select(null);
-    scrollToMessageEditor(index);
-    requestAnimationFrame(() => requestAnimationFrame(() => focusMessageEditor(index)));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      scrollToMessageEditor(index);
+      focusMessageEditor(index);
+      store.select(null);
+    }));
   };
 
   const handlePreviewComponentSelect = (index: number, componentId: string) => {
@@ -80,8 +81,10 @@ export const StudioLayout: React.FC = () => {
         : undefined;
 
     setMobileView("editor");
-    store.select(null);
-    requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, targetId)));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      scrollToMessageEditor(index, targetId);
+      store.select(null);
+    }));
   };
 
   const currentUser = useGlobalStore((state) => state.currentUser);
