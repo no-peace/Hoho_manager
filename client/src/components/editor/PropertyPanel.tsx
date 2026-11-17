@@ -4,14 +4,15 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";
 import { COMPONENT_FORMS } from "./ComponentForms";
+import { EmbedEditor } from "./EmbedEditor";
 import { componentLabel, isInteractiveComponent } from "../../utils/componentsV2";
 import { findComponent } from "../../utils/tree";
-import { useMessageStore } from "../../store/messageStore";
+import { useMessageStore, type Selection } from "../../store/messageStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 
 type PanelTab = "properties" | "flow";
 
-export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => void } = {}) => {
+export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (selection?: Selection) => void } = {}) => {
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
   const messages = useMessageStore((state) => state.messages);
@@ -78,7 +79,7 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => v
               <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={onOpenFullEditor} className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A]">Open Full Editor</button>
+              <button type="button" onClick={() => onOpenFullEditor?.(selection)} className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A]">Open Full Editor</button>
               <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
             </div>
           </div>
@@ -112,6 +113,54 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: () => v
               className="w-full min-h-32 resize-y rounded-lg border border-[#303746] bg-[#0F1219] p-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-[#687184] focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
             />
             <p className="mt-2 text-[0.6875rem] text-[#8D96A8]">Changes update the preview immediately. Use the Editor tab for embeds, components and advanced settings.</p>
+          </div>
+        </aside>
+      </>
+    );
+  }
+
+  if (selection?.kind === "embed") {
+    const embedIndex = (messageData.embeds ?? []).findIndex((embed) => embed._id === selection.id);
+    const embed = embedIndex >= 0 ? messageData.embeds?.[embedIndex] : undefined;
+    if (!embed) return null;
+
+    const partLabel = selection.part
+      ? selection.part.charAt(0).toUpperCase() + selection.part.slice(1)
+      : "Embed";
+
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-40 bg-[#0B0D12]/55 backdrop-blur-[1px] min-[1200px]:hidden"
+          onClick={() => select(null)}
+        />
+        <aside
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
+            <div className="h-1 w-10 rounded-full bg-[#252B3A]" />
+          </div>
+          <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Embed Inspector</span>
+              <h2 className="truncate text-base font-bold text-white">
+                {partLabel}{embed.title ? ` · ${embed.title}` : ` · Embed ${embedIndex + 1}`}
+              </h2>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => onOpenFullEditor?.(selection)}
+                className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A] min-[1200px]:hidden"
+              >
+                Open Full Editor
+              </button>
+              <IconButton icon={X} label="Close Embed Inspector" size={15} onClick={() => select(null)} />
+            </div>
+          </div>
+          <div data-embed-inspector-body className="min-h-0 overflow-y-auto p-3.5">
+            <EmbedEditor embed={embed} index={embedIndex} />
           </div>
         </aside>
       </>
