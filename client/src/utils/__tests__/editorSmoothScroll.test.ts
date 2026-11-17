@@ -82,4 +82,32 @@ describe("editorSmoothScroll", () => {
     expect(wrapper.scrollTop).toBe(80);
     expect(wrapper.scrollTo).not.toHaveBeenCalled();
   });
+  it("waits for a hidden mobile editor pane to become visible", async () => {
+    const pane = document.createElement("div");
+    pane.className = "invisible";
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("data-editor-scroll-container", "");
+    const message = document.createElement("section");
+    message.setAttribute("data-message-editor-index", "0");
+    const target = document.createElement("div");
+    target.setAttribute("data-editor-target-id", "nested-target");
+    message.append(target);
+    wrapper.append(message);
+    pane.append(wrapper);
+    document.body.append(pane);
+
+    wrapper.getBoundingClientRect = () => new DOMRect(0, 0, 420, 600);
+    target.getBoundingClientRect = () => new DOMRect(0, 140, 300, 50);
+    Object.defineProperty(wrapper, "scrollTo", { configurable: true, value: vi.fn() });
+
+    cleanup = initializeEditorLenis(wrapper);
+    scrollToMessageEditor(0, "nested-target");
+    expect(wrapper.scrollTo).not.toHaveBeenCalled();
+
+    pane.classList.remove("invisible");
+    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+
+    expect(wrapper.scrollTo).toHaveBeenCalledWith({ top: 124, behavior: "smooth" });
+  });
+
 });
