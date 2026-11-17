@@ -438,4 +438,15 @@ export const migrations: readonly Migration[] = [
       DROP TABLE IF EXISTS app_layout_publishers;
     `,
   },
+  {
+    id: "017_server_theme_publish_permissions",
+    sql: `
+      -- Design Lab access and server-theme publishing are separate capabilities.
+      -- Existing Design Lab users receive no publishing permission by default.
+      ALTER TABLE design_access_users
+        ADD COLUMN can_publish_server_theme INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_design_access_theme_publish
+        ON design_access_users(is_active, can_publish_server_theme);
+    `,
+  },
 ];
