@@ -273,8 +273,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                                       aria-hidden="true"
                                       className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-[background-color,border-color,color,box-shadow] ${
                                         checked
-                                          ? "border-[#818CF8] bg-[#818CF8] text-[#0B0D12]"
-                                          : "border-[#818CF8] bg-[#818CF8] text-[#0B0D12] peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
+                                          ? "border-[#818CF8] bg-[#818CF8] text-[#0B0D12] peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
+                                          : "border-[#465066] bg-[#10131A] text-transparent peer-focus-visible:ring-2 peer-focus-visible:ring-[#818CF8] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#10131A]"
                                       }`}
                                     >
                                       {checked ? <Check size={11} strokeWidth={3} /> : null}
