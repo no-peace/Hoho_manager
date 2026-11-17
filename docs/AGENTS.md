@@ -154,46 +154,19 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** REVIEW REQUIRED — Part B handoff and final CSS-variable consistency correction committed; awaiting Head Agent approval  
+**Status:** IN PROGRESS — authorized  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Completed the requested reconciliation between editable Puck properties, `ResolvedAppLayout`, and the Part C runtime contract. No Part C implementation.  
-**Current batch:** B5 — expose independent Mobile Editor/Preview padding CSS variables  
-**Files changed:**
-- `client/src/utils/puckAppLayout.ts`
-- `client/src/utils/__tests__/puckAppLayout.test.ts`
-- `docs/PUCK_DESIGN_LAB.md`
-- `docs/AGENTS.md` (this Agent 2 status section only)
-
-**Architecture decisions / property classification:**
-- **Production-facing motion:** Animation preset, duration and delay are resolved separately for Desktop and Mobile headers, workspaces, panels and Mobile navigation. Each region exposes typed `{ animation, duration, delay }`. Part C must use a fixed code-owned preset mapping, bounded timing values, and a `prefers-reduced-motion: reduce` override that suppresses animation and delay.
-- **Production-facing panel labels:** Editor, Preview and Inspector labels are resolved independently for Desktop and Mobile and must render as text in the real panel headings.
-- **Production-facing toolbar:** `EditorPanel.showToolbar` resolves to independent Desktop and Mobile booleans and controls only the real editor toolbar at that breakpoint.
-- **Production-facing Mobile panel geometry:** `editorPadding`, `previewPadding` and `inspectorPadding` now resolve independently from their corresponding panel nodes. They are not conflated with the workspace-level `panelPadding`.
-- **Other production-facing Mobile controls:** `defaultPane`, navigation sizing/order/colors, visual label visibility and Editor/Preview/Dispatch tab labels. Tab labels must be text; accessible names must remain when visual labels are hidden.
-- **Preview-only:** Mobile `showInspector` (preview bottom-sheet visibility) and `activeTab` (preview selected-tab highlight). Component IDs are document identity/validation keys only, not production DOM IDs.
-- `getAppLayoutCssVariables` remains scoped to CSS dimensions/colors/geometry. Part C applies motion through allowlisted code-owned classes/timing and labels through text content, never document-provided CSS/HTML.
-
-**Final CSS-variable correction:** `getAppLayoutCssVariables()` now exposes `--hoho-layout-mobile-editor-padding` and `--hoho-layout-mobile-preview-padding`, mapped directly to `layout.mobile.editorPadding` and `layout.mobile.previewPadding` with `px` units. Focused assertions verify both values (`17px` and `19px`) and preserve the existing Inspector padding assertion (`21px`). `docs/PUCK_DESIGN_LAB.md` explicitly lists all three independent Mobile panel padding variables and distinguishes them from workspace `panelPadding`.
-**Validation/resolution:** Existing strict validation checks every motion preset, duration and delay against fixed enums; validates panel labels (1–48 trimmed characters, no control characters); validates `showToolbar` as `show | hide` with legacy boolean normalization; and validates each panel padding value in the 0–32 range. The resolver now exposes all these validated values for both breakpoints.  
-**Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, Mobile navigation motion, independent Mobile Editor/Preview/Inspector padding, and the Mobile Editor/Preview CSS variables with pixel units.  
-**Tests executed:** None. Per the user/Head Agent instruction, npm checks are deferred to final verification; no test/typecheck/build result is claimed.  
-**Final correction commits:**
-- `dbe62ca4f2c0643ca0cb8b620a0da399212f1ff5` — expose Mobile Editor/Preview padding CSS variables.
-- `51c44b3579f5238d0fd8e73427516b7c3a2dc4e5` — assert both CSS variables use the independently resolved pixel values.
-- `98ff698d5fc88d52f840a63e74630d9bb666bdaf` — document the complete Mobile panel padding CSS-variable contract.
-
-**Implementation commits:**
-- `c6e3ab251f755f4f134e928e79068e1223dbbd2b` — resolved production motion, labels and toolbar values.
-- `9d647bf8d1ab5388821d7e2f656981f8e8e01c04` — regression assertions for resolved production controls.
-- `8c608557a3a659fa1fcc65b56787c338eb47ae7c` — documented production vs preview-only behavior and Part C requirements.
-- `6c4dd5e53ffce9e670fb7a05cddf4f61f2f2bc4a` — resolved Mobile Editor/Preview panel padding independently.
-- `2c02994bf3f9320bc5c566d9738ff563eeff78ac` — regression assertions for independent Mobile panel padding.
-- `ff0cd41437711900c513e06f681132a2c290223e` — documented independent Mobile panel padding and Part C application.
-**Remaining work:** Head Agent review/approval. Part C must implement the documented runtime application; Agent 2 has not edited production Studio runtime files.  
-**Risks / blockers:** npm checks are intentionally deferred to final verification. Production animation and toolbar application remain Part C work.  
-**Next action:** Wait for Head Agent approval. Do not implement Part C, edit Agent 1 files/shared Studio runtime, or merge to `main`.
+**Scope:** Part B only. Audit the existing Puck Responsive Design Lab, close verified gaps, and produce a precise Desktop/Mobile schema and runtime contract for Agent 3.  
+**Current batch:** Baseline and schema reconciliation  
+**Files claimed / in progress:** None reported yet  
+**Files changed:** None  
+**Tests executed:** None reported  
+**Commit SHA:** None  
+**Schema handoff:** Not submitted  
+**Next action:** Fetch latest main, create/use assigned branch only if Head Agent confirms it exists, inspect Puck source/docs/tests, then report file claims before edits.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
+
 ## 11. Agent 3 — Part C: Database and publishing
 
 **Status:** BLOCKED — inspection only  
@@ -244,3 +217,174 @@ Append a compact record for each reviewed batch:
 - Remaining work:
 
 Only the Head Agent may mark a part COMPLETED.
+
+
+## 16. Head Agent directives — current decisions (2026-11-17)
+
+These directives supersede earlier status labels and next-action text above where they conflict.
+
+### Directive 004 — Review queue and deferred verification
+- Agent 1 / Part A: **REVIEW REQUIRED** on `agent/ui-regressions`. The submitted branch is 27 commits ahead of main and 0 behind at the time of this directive. Head Agent review is pending; do not begin unrelated Part B work or merge.
+- Agent 2 / Part B: **REVIEW REQUIRED** on `agent/responsive-design-lab`. The submitted branch is 28 commits ahead of main and 0 behind at the time of this directive. The schema handoff is not yet approved because every editable Puck property must be reconciled with the resolved production runtime contract, including animation settings/reduced-motion, panel labels and `EditorPanel.showToolbar`.
+- Agent 3 / Part C: remains **BLOCKED** until the Head Agent explicitly approves Agent 2's schema/runtime handoff. Inspection only; no migrations, API/schema changes or runtime wiring.
+- Automated npm verification is deferred until the implementation program is complete at the user's direction. Agents may add or update focused tests, but must not spend time attempting to run npm checks. Record them as not run; do not claim they passed. The Head Agent will tell the user when to pull and run final checks.
+
+### Directive 005 — Server-theme publishing authorization model
+- **Decision: Yes, explicitly authorized Design Lab Discord user IDs may publish server themes, but Design Lab access alone does not grant publishing permission.**
+- Publishing permission must be granted through a server-side trusted allowlist/authorization check against the authenticated Discord user ID. Never trust a client-supplied ID, hidden UI control, local storage flag, or role claim that the server has not independently verified.
+- The authorization check must run on every server-theme publish/update/delete operation. Unauthorized users may preview and edit local/private drafts but must be denied server-theme mutations.
+- Keep server themes distinct from personal/private presets. A server-theme publish must not overwrite or delete a user's private preset.
+- Agent 4 must inspect the existing authentication, theme routes/services and ownership model, then propose the smallest compatible implementation. Do not invent a new role system or expose a public endpoint merely to implement this decision.
+- This decision applies to server themes only. It does not change Part C's owner-only application-layout publishing requirement.
+
+### Directive 006 — Agent 4 Parts D/E inspection and authorization
+- Agent 4 remains **INSPECTION ONLY**. Part D/E implementation is **not yet authorized** because no verified inspection report or proposed file ownership list has been submitted.
+- Agent 4 must submit: (1) confirmed current behavior with exact source paths, (2) verified gaps against Parts D/E, (3) proposed minimal changes, (4) exact files it wants to claim, (5) shared-file conflicts with Agents 1/2/3, and (6) security/compatibility risks.
+- No file may be claimed or edited until the Head Agent approves the file list. In particular, coordinate any proposed edits to `StudioLayout.tsx`, `Header.tsx`, `DocsPage.tsx`, `globals.css`, `uiThemeConfig.ts`, `DesignLabPage.tsx`, Puck files, theme routes/services and database migrations.
+- After the report is reviewed, the Head Agent will issue a narrow implementation authorization with exclusive file ownership and batch acceptance criteria. Until then, no commits on `agent/themes-ui`.
+
+### Directive 007 — Agent 1 callback regression
+- Agent 1's submitted branch remains under review. Head Agent review must verify that interactive preview controls are checked before `setActiveMessageIndex` is called, and that the actual `MessagePreview` click path is covered by regression tests.
+- Interactive controls must not change active message, selected component, inspector state or editor navigation. Non-interactive preview selection/navigation must remain unchanged.
+- Do not merge until this is verified in source.
+
+
+
+## 17. Head Agent review — 2026-11-17 (latest)
+
+### Part A / Agent 1 review
+- **Source review:** A5 interactive-preview callback correction is accepted. In `MessagePreview.tsx`, the interactive marker is checked before active-message synchronization; interactive controls return without changing active message or selection. The non-interactive path retains active-message synchronization and component selection.
+- **Regression coverage:** The submitted `MessagePreview.test.tsx` exercises the rendered click path for an interactive select in a non-active message and a non-interactive V2 TextDisplay in a non-active message.
+- **Decision:** Part A source implementation is accepted for integration review. Automated test/typecheck/build/browser verification remains deferred under the user's instruction and must be completed in the final verification stage. Do not mark Part A fully verified or claim tests passed.
+- **Branch integration:** `agent/ui-regressions` is one commit behind current `main` because it does not contain the Head Agent documentation directive commit. Preserve the current `main` version of `docs/AGENTS.md`; do not overwrite it with the branch copy. Head Agent controls integration.
+
+### Part B / Agent 2 review
+- **Schema/runtime handoff:** The Head Agent accepts the documented Desktop/Mobile schema and the reconciliation of production-facing motion, panel labels, toolbar visibility, Mobile panel geometry and explicitly preview-only settings.
+- **Small follow-up:** Agent 2 must add CSS variables for Mobile Editor and Preview padding to `getAppLayoutCssVariables()`, matching the already resolved `mobile.editorPadding` and `mobile.previewPadding`, and add focused assertions. This is a consistency correction; it does not reopen the schema design.
+- **Decision:** The Part B schema/runtime handoff is approved for Agent 3's backend/API/migration implementation. Agent 2 remains REVIEW REQUIRED until the CSS-variable correction is committed and reviewed. Agent 2 must not edit Part C or production Studio runtime files.
+
+### Part C / Agent 3 authorization
+- **Status:** IN PROGRESS — backend/API/migration implementation authorized.
+- Agent 3 may inspect and implement the database migration, server-side schema validation, atomic Desktop/Mobile persistence, authenticated owner/authorized-Discord-ID publishing authorization, and public/read endpoint within its assigned branch.
+- Before editing, Agent 3 must submit and record its exact file claims in its own section. Do not edit files claimed by Agent 2 or Agent 1.
+- **Runtime integration is not yet authorized.** Do not edit `StudioLayout.tsx`, `Header.tsx`, `SplitPane.tsx`, `PropertyPanel.tsx`, shared theme/CSS files, or other Part A/shared UI files until the Head Agent reviews a proposed runtime file list and grants exclusive ownership.
+- Agent 3 must use the approved Part B schema/runtime contract, validate both responsive documents server-side before any write, persist the pair atomically, and enforce publisher authorization server-side on every mutation. No client-supplied identity or UI-only permission check is trusted.
+- npm checks remain deferred. Add focused tests where practical, but do not spend time running npm checks.
+
+### Part D/E / Agent 4
+- Agent 4 remains INSPECTION ONLY until a verified report and exact proposed file list are submitted and reviewed. The server-theme publishing policy is governed by Directive 005 above.
+
+
+## 18. Head Agent review — Part B/Part C backend batch (2026-11-17)
+
+### Part B final approval
+- Agent 2's final Mobile Editor/Preview padding CSS variables, pixel-unit mappings, regression assertions and documentation were verified on `agent/responsive-design-lab`.
+- **Decision: Part B schema and Design Lab implementation are APPROVED for integration.** The branch is 32 commits ahead and 2 behind current `main`; preserve the latest `main` control document and integrate deliberately. Do not merge the stale branch copy of `docs/AGENTS.md`.
+- Agent 2 must not begin Part C or production Studio runtime work.
+
+### Part C backend review — changes required
+- Agent 3's backend batch is submitted on `agent/layout-publishing` (10 commits ahead, 0 behind at review time). The one-row responsive pair and transactional repository write are directionally acceptable, but the batch is **NOT APPROVED**.
+- **Critical authorization correction:** application-layout publishing remains owner-only. The separate authorized Design Lab Discord-ID policy applies to server-theme publication only. Do not create an application-layout publisher allowlist, non-owner publisher grants, or publisher management endpoints. Every application-layout publish must be authorized by the authenticated session's Discord ID matching `env.ownerDiscordIds` (with any existing development-only owner simulation remaining strictly non-production). Public read may remain unauthenticated.
+- Remove the Part C `app_layout_publishers` table, repository grant/revoke/list methods, publisher-management endpoints and allowlist-based publish authorization. Keep the single published responsive pair record.
+- **Server/client schema parity corrections required before approval:**
+  1. Server's 256 KiB per-document / 512 KiB pair limits conflict with Part B's 64 KiB combined Desktop+Mobile limit. Enforce the approved 64 KiB combined limit server-side.
+  2. Server currently accepts missing component properties because it validates only properties that happen to be present. Require all properties required by the approved Part B schema; preserve only explicitly documented optional version-1 fields.
+  3. Server ID validation currently permits leading underscores/hyphens and up to 80 characters. Match Part B's exact ID rule: first character alphanumeric, remaining characters alphanumeric/underscore/hyphen, maximum 64 characters.
+  4. Part B accepts an omitted empty `root.props` and normalizes it to `{}`; server must do the same.
+  5. Preserve Part B version-1 compatibility: normalize omitted Mobile navigation `activeTab` and labels to documented defaults, and normalize legacy boolean `EditorPanel.showToolbar` to `show | hide`.
+  6. Part B requires IDs to be unique within each responsive document. Do not impose cross-document uniqueness unless Part B's approved schema is explicitly amended; keep server and client behavior identical.
+- Add focused regression cases for every correction, including missing required fields, optional legacy fields, size boundary, invalid/overlong IDs, omitted root props, and authenticated owner-only publishing. Do not run npm checks; the user deferred them.
+- Agent 3 must re-fetch the latest `main` control document before its next batch and before committing, update only its own status section, and report the exact final diff. No runtime integration is authorized until this backend batch is approved.
+
+### Part A integration note
+- Agent 1's interactive-preview callback correction and rendered click-path regression coverage were accepted by source review. Its branch is 27 commits ahead and 2 behind current `main`. Preserve the current `main` control document during integration. Automated checks remain deferred.
+
+### Part D/E report status
+- Agent 4 reports `REPORT SUBMITTED / REVIEW REQUIRED`, but no report content or changed report file is present in the current Head Agent conversation or the `agent/themes-ui` branch (0 commits ahead, 2 behind). Do not authorize Parts D/E implementation until the actual inspection report and exact proposed file ownership list are available for review.
+
+## 19. Head Agent review — Agent 4 Parts D/E inspection report (2026-11-17)
+
+### Report review and decisions
+- Agent 4's inspection report was received in the Head Agent conversation. It reports no files changed, no commits and no automated checks run. The report is accepted as a useful source-level inventory, not as browser QA or runtime verification.
+- **Part D architecture:** Preserve the existing separation between server themes, per-user active-theme cache, community themes and private presets. The 14-day expiry applies only to active-theme cache; private preset libraries and portable exports must remain independent and durable.
+- **Server-theme authorization:** Approve a distinct server-side `canPublishServerTheme` capability for explicitly authorized Design Lab Discord IDs, in addition to existing owners. Design Lab access alone must not imply publishing permission. Check the authenticated session identity and trusted server-side permission on every server-theme mutation; never trust client-supplied IDs, local storage, UI visibility or unverified role claims. Return the capability separately from `isOwner`. Keep Part C application-layout publishing owner-only.
+- **Permission storage/UI:** The report's proposal to add a separate capability to `design_access_users` and manage it through the existing owner-only access UI is approved in principle, subject to implementation review and coordination with Agent 3. Do not modify the already-applied migration 013; use a new forward-only migration. Permission revocation must take effect on the next mutation request.
+- **Part D implementation is NOT YET AUTHORIZED.** Agent 3 currently has an active Part C branch touching `server/src/routes/design.ts` and `server/src/config/migrations.ts`; Agent 4 must not edit these or any other Part D files until Part C backend integration is resolved and the Head Agent grants exact exclusive file ownership. `DesignLabPage.tsx` also requires a fresh ownership check before assignment.
+- **Part E implementation is AUTHORIZED as a separate narrow batch** on `agent/themes-ui`, limited exclusively to:
+  1. `client/src/pages/DocsPage.tsx`: correct the outdated statement that bot membership is always required, while accurately limiting non-member access to discoverable servers with a public Guild Preview and its available fields.
+  2. `client/src/components/layout/SettingsModal.tsx`: remove the no-op General tab button/navigation interaction (use a static selected section label or a clear non-interactive layout) and ensure the checked custom checkbox indicator retains the keyboard-visible focus ring.
+- No other files are authorized in this Part E batch. In particular, no theme utilities/tests/routes/migrations, `DesignLabPage.tsx`, shared CSS/theme config, Studio runtime, Puck files or `docs/AGENTS.md` edits by Agent 4.
+- Agent 4 must re-fetch this latest main control document before editing and before committing, record its two-file claim in its own status section, implement only these fixes, add focused regression coverage only if it can do so without editing unapproved files (otherwise report the test gap), and commit only to `agent/themes-ui`. Do not run npm checks; the user deferred them. Report commit SHA and exact diff, then mark REVIEW REQUIRED. No self-merge.
+
+### Report corrections / current branch state
+Fresh compare against current `main` during review:
+- Agent 1: 27 commits ahead, 3 behind.
+- Agent 2: 32 commits ahead, 3 behind.
+- Agent 3: 10 commits ahead, 1 behind; Part C remains not approved pending the corrections in section 18.
+- Agent 4: 0 commits ahead, 3 behind; inspection only, no committed files.
+The report's branch counts were stale and must not be used as current status. Preserve current `main` control document during all integrations.
+- Source spot-checks on current `main` confirm the no-op General tab handler in `SettingsModal.tsx`, and the owner-only server-theme checks in `server/src/routes/design.ts`. The report's Docs membership inconsistency is consistent with the current Docs variable descriptions and the report's cited Guild Preview fallback; implementation must retain that limitation.
+- No browser QA, npm tests, typecheck, build or Lighthouse checks were run as part of this review. Do not claim they passed.
+
+## 20. Head Agent review — Agent 3 Part C backend and Agent 4 Part E (2026-11-17)
+
+### Agent 3 — Part C backend batch
+- Current branch comparison: `agent/layout-publishing` is 24 commits ahead and 2 behind `main`. The submitted diff includes the stale branch copy of `docs/AGENTS.md`; preserve the current `main` control document during integration.
+- Reviewed source files: `server/src/config/migrations.ts`, `server/src/repositories/appLayoutRepository.ts`, `server/src/routes/design.ts`, `server/src/utils/appLayoutValidation.ts`, and `server/tests/appLayoutPublishing.test.ts`.
+- **Source review decision: Part C backend/API/migration batch APPROVED for integration review.** The earlier blockers have been addressed:
+  - one authoritative row stores the complete Desktop/Mobile pair;
+  - repository publication uses a database transaction;
+  - both documents are validated and normalized before persistence;
+  - public GET and owner-only authenticated PUT endpoints are present;
+  - publisher identity is taken from the verified session, and the non-production admin simulation is explicitly gated by `!env.isProd`;
+  - no application-layout publisher allowlist or publisher-management endpoint remains;
+  - combined pair limit is 65,536 bytes;
+  - required component properties, exact ID format/length, omitted root props, v1 navigation defaults, boolean `showToolbar` compatibility, and per-document (not cross-document) ID uniqueness are handled;
+  - regression cases cover the corrected validation and authorization paths.
+- Migration 015 creates the single published-pair table. Migration 016 safely removes the abandoned `app_layout_publishers` table with `DROP TABLE IF EXISTS`; do not rewrite or remove already-numbered migrations.
+- **Important scope boundary:** This approval covers backend/API/migration source only. It does not approve Studio runtime integration, production UI wiring, or the overall Part C completion. Agent 3 must wait for an exact runtime file list and exclusive ownership authorization before touching `StudioLayout.tsx`, `Header.tsx`, `SplitPane.tsx`, `PropertyPanel.tsx` or shared UI/theme/CSS.
+- Automated checks were not run. The submitted tests are source-reviewed only; do not claim they passed.
+- Integration remains Head Agent-controlled. Do not merge the stale `docs/AGENTS.md` from the branch.
+
+### Agent 4 — Part E batch
+- Current branch comparison: `agent/themes-ui` is 5 commits ahead and 0 behind `main`.
+- Source review accepted the two authorized code changes:
+  - `client/src/pages/DocsPage.tsx`: accurately distinguishes full Guild access from discoverable-server public Guild Preview access.
+  - `client/src/components/layout/SettingsModal.tsx`: replaces the no-op General button with a static current-section label and applies the keyboard focus ring to both checked and unchecked custom checkbox states.
+- **Decision: Part E two-file source batch APPROVED for integration.** The branch also changes `docs/AGENTS.md` for its status record. Do not merge that branch copy; preserve the latest `main` control document.
+- Agent 4's Part D remains **BLOCKED / NOT AUTHORIZED**. It must not start theme permission routes, migrations, theme utility changes or Design Lab UI work until Part C integration is resolved and the Head Agent grants exact file ownership.
+- No npm tests, typecheck, build or browser QA were run. Do not claim verification beyond source review.
+
+### Branch state at this review
+- Agent 3: 24 ahead / 2 behind; backend source approved for integration review, runtime work not authorized.
+- Agent 4: 5 ahead / 0 behind; Part E two-file source batch approved for integration, Part D blocked.
+
+
+## 21. Head Agent integration — approved Agent 3 backend and Agent 4 Part E (2026-11-17)
+
+- A clean integration branch, `integration/approved-agent-batches-2026-11-17`, was created from the then-current `main` commit `6ff923859951e5a9794d1ba573cd6534c7d8344f`.
+- Selected source files were copied from the reviewed agent branches; stale agent copies of `docs/AGENTS.md` were deliberately excluded.
+- Agent 3 / Part C backend files integrated on the clean branch:
+  - `server/src/config/migrations.ts`
+  - `server/src/repositories/appLayoutRepository.ts`
+  - `server/src/routes/design.ts`
+  - `server/src/utils/appLayoutValidation.ts`
+  - `server/tests/appLayoutPublishing.test.ts`
+- Agent 4 / Part E files integrated on the clean branch:
+  - `client/src/components/layout/SettingsModal.tsx`
+  - `client/src/pages/DocsPage.tsx`
+- This is selective integration, not a merge of either agent branch. No other agent files are included.
+- Source-level review was previously accepted for these exact batches. No npm tests, typecheck, build, browser QA or deployment checks were run.
+- Part C backend/API/migration integration does not complete Part C. Studio runtime integration remains pending explicit Head Agent authorization and an exact file list.
+- Part D remains blocked. Part A and Part B have separate approved source batches and have not been included in this integration branch.
+- Next action: Head Agent to review the clean integration diff, then create/merge a PR to `main` only after confirming the seven-file diff and control-document preservation.
+
+
+## 22. Head Agent integration result — PR #47 (2026-11-17)
+
+- **Merged:** PR #47, `Integrate approved Part C backend and Part E UI batches`.
+- **Merge commit:** `25c139ca30e91047c98c2f5a60036d2d7ccf608d`.
+- The seven approved source files and this control-center update are now on `main`.
+- Agent 3 Part C backend/API/migration work is integrated, but Part C remains incomplete until Studio runtime integration is separately authorized, implemented and reviewed.
+- Agent 4 Part E's two-file batch is integrated. Part D remains blocked/not authorized.
+- No automated checks were run. Final npm verification remains deferred until the implementation program is complete.
