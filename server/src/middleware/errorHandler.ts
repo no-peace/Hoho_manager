@@ -21,7 +21,7 @@ interface ErrorBody {
 
 export const notFoundHandler: RequestHandler = (req, res) => {
   res.status(404).json({
-    error: `No route matches ${req.method} ${req.originalUrl}`,
+    error: `No route matches ${req.method} ${req.path}`,
     code: "not_found",
   });
 };
@@ -41,9 +41,9 @@ export const errorHandler = (
   // Only 5xx are worth a full stack trace; 4xx are routine client mistakes.
   if (status >= 500) {
     const stack = error instanceof Error ? error.stack : undefined;
-    logger.error(`${req.method} ${req.originalUrl} failed: ${message}`, stack);
+    logger.error(`${req.method} ${req.path} failed: ${message}`, stack);
   } else {
-    logger.debug(`${req.method} ${req.originalUrl} -> ${status}: ${message}`);
+    logger.debug(`${req.method} ${req.path} -> ${status}: ${message}`);
   }
 
   const body: ErrorBody = {
