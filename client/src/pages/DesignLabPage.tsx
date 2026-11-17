@@ -54,7 +54,7 @@ export const DesignLabPage: React.FC = () => {
   const [denied, setDenied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
-  const [allowedUsers, setAllowedUsers] = useState<Array<{ discord_user_id: string; created_at: string }>>([]);
+  const [allowedUsers, setAllowedUsers] = useState<Array<{ discord_user_id: string; created_at: string; can_publish_server_theme: number }>>([]);
   const [discordId, setDiscordId] = useState("");
   const [working, setWorking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -176,6 +176,23 @@ export const DesignLabPage: React.FC = () => {
     }
   };
 
+  const updateThemePublishAccess = async (id: string, allowed: boolean) => {
+    setWorking(true);
+    try {
+      await designApi.setServerThemePublishAccess(id, allowed);
+      const access = await designApi.access();
+      setAllowedUsers(access.allowedUsers);
+      showToast(
+        allowed ? "Server-theme publishing permission granted." : "Server-theme publishing permission revoked.",
+        "success",
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not update publishing permission.", "error");
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const revokeAccess = async (id: string) => {
     setWorking(true);
     try {
@@ -230,7 +247,7 @@ export const DesignLabPage: React.FC = () => {
 
       {accessOpen && isOwner ? (
         <section className="hoho-layout-lab__access" aria-label="Design Lab access management">
-          <div className="hoho-layout-lab__access-head"><div><strong>Design Lab access</strong><span>Allow another signed-in Discord account to edit layout drafts.</span></div><button type="button" onClick={() => setAccessOpen(false)} aria-label="Close access settings"><X size={15} /></button></div>
+          <div className="hoho-layout-lab__access-head"><div><strong>Design Lab access</strong><span>Grant layout editing access. Server-theme publishing is a separate permission.</span></div><button type="button" onClick={() => setAccessOpen(false)} aria-label="Close access settings"><X size={15} /></button></div>
           <div className="hoho-layout-lab__grant-row">
             <input value={discordId} onChange={(event) => setDiscordId(event.target.value)} inputMode="numeric" placeholder="Discord user ID (17–20 digits)" />
             <button type="button" onClick={grantAccess} disabled={working || !/^\d{17,20}$/.test(discordId.trim())}><UserPlus size={14} />Grant access</button>
@@ -238,6 +255,16 @@ export const DesignLabPage: React.FC = () => {
           {allowedUsers.length ? allowedUsers.map((user) => (
             <div className="hoho-layout-lab__allowed-user" key={user.discord_user_id}>
               <code>{user.discord_user_id}</code>
+              <label className="inline-flex min-w-0 items-center gap-2 text-[11px] text-[#b9c1d0]">
+                <input
+                  type="checkbox"
+                  checked={user.can_publish_server_theme === 1}
+                  onChange={(event) => void updateThemePublishAccess(user.discord_user_id, event.target.checked)}
+                  disabled={working}
+                  className="accent-[#818CF8]"
+                />
+                <span>Publish server theme</span>
+              </label>
               <button type="button" onClick={() => void revokeAccess(user.discord_user_id)} disabled={working}>Revoke</button>
             </div>
           )) : <p className="hoho-layout-lab__empty">No additional accounts have access.</p>}
