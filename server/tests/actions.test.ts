@@ -147,7 +147,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         token: "tok_structured_failure",
         version: 1,
         type: 3,
-        channel_id: "channel_1",
         data: { custom_id: "action:send_message", component_type: 2 },
       };
 
