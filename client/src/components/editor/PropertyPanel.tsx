@@ -1,5 +1,5 @@
 import { Copy, Trash2, X, Sliders, Workflow } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { IconButton } from "../ui/Button";
 import { FlowBuilder } from "../actions/FlowBuilder";
@@ -10,10 +10,28 @@ import { findComponent, findFirstComponentByType } from "../../utils/tree";
 import { EDITOR_MODES } from "../../utils/constants";
 import { useMessageStore, type Selection } from "../../store/messageStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
+import type { ResolvedAppLayout } from "../../utils/puckAppLayout";
+
+type InspectorRuntimeLayout = Pick<ResolvedAppLayout["desktop"],
+  "inspectorLabel" | "inspectorMotion"
+> & Partial<Pick<ResolvedAppLayout["desktop"], "inspectorPosition">>;
+
+const getInspectorRuntimeStyle = (layout?: InspectorRuntimeLayout): CSSProperties | undefined => layout ? ({
+  "--hoho-motion-duration": layout.inspectorMotion.duration,
+  "--hoho-motion-delay": layout.inspectorMotion.delay,
+} as CSSProperties) : undefined;
 
 type PanelTab = "properties" | "flow";
 
-export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (selection?: Selection) => void } = {}) => {
+export const PropertyPanel = ({
+  onOpenFullEditor,
+  runtimeLayout,
+}: {
+  onOpenFullEditor?: (selection?: Selection) => void;
+  runtimeLayout?: InspectorRuntimeLayout;
+} = {}) => {
+  const runtimeStyle = getInspectorRuntimeStyle(runtimeLayout);
+  const runtimeMotion = runtimeLayout?.inspectorMotion.animation ?? "none";
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
   const messages = useMessageStore((state) => state.messages);
@@ -70,7 +88,10 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
           onClick={() => select(null)}
         />
         <aside
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:hidden"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:hidden hoho-runtime-inspector"
+          data-hoho-motion={runtimeMotion}
+          data-hoho-inspector-position={runtimeLayout?.inspectorPosition ?? "right"}
+          style={runtimeStyle}
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex justify-center pt-2 pb-1">
@@ -78,6 +99,7 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
           </div>
           <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
             <div className="min-w-0 flex-1">
+              <span className="hoho-runtime-inspector-label">{runtimeLayout?.inspectorLabel ?? "Properties"}</span>
               <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Message Quick Edit</span>
               <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
             </div>
@@ -141,7 +163,10 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
           onClick={() => select(null)}
         />
         <aside
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl hoho-runtime-inspector"
+          data-hoho-motion={runtimeMotion}
+          data-hoho-inspector-position={runtimeLayout?.inspectorPosition ?? "right"}
+          style={runtimeStyle}
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex justify-center pt-2 pb-1 min-[1200px]:hidden">
@@ -149,6 +174,7 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
           </div>
           <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
             <div className="min-w-0 flex-1">
+              <span className="hoho-runtime-inspector-label">{runtimeLayout?.inspectorLabel ?? "Properties"}</span>
               <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Embed Inspector</span>
               <h2 className="truncate text-base font-bold text-white">
                 {partLabel}{embed.title ? ` · ${embed.title}` : ` · Embed ${embedIndex + 1}`}
@@ -197,7 +223,10 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
 
       {/* Floating desktop inspector; mobile bottom sheet overlay */}
       <aside
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:inset-y-14 min-[1200px]:bottom-0 min-[1200px]:left-auto min-[1200px]:right-0 min-[1200px]:z-[60] min-[1200px]:h-[calc(100%-3.5rem)] min-[1200px]:max-h-none min-[1200px]:w-[min(440px,42vw)] min-[1200px]:rounded-none min-[1200px]:rounded-l-xl min-[1200px]:border-l min-[1200px]:border-t-0 min-[1200px]:shadow-2xl hoho-runtime-inspector"
+        data-hoho-motion={runtimeMotion}
+        data-hoho-inspector-position={runtimeLayout?.inspectorPosition ?? "right"}
+        style={runtimeStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Pill */}
@@ -208,6 +237,7 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
         {/* Inspector Header */}
         <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
           <div className="min-w-0 flex-1">
+            <span className="hoho-runtime-inspector-label">{runtimeLayout?.inspectorLabel ?? "Properties"}</span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">
               Component Inspector
             </span>
