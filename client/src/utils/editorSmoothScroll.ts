@@ -83,12 +83,13 @@ export function scrollToMessageEditor(index: number, targetId?: string): void {
     // Mobile SplitPane keeps the editor mounted but marks the inactive pane hidden/inert.
     const hiddenPane = wrapper.closest('[aria-hidden="true"], .invisible');
     const target = findEditorTarget(wrapper, index, targetId);
-    if ((!target || hiddenPane) && attempts < 8) {
-      attempts += 1;
-      window.requestAnimationFrame(navigate);
+    if (hiddenPane || !target) {
+      if (attempts < 8) {
+        attempts += 1;
+        window.requestAnimationFrame(navigate);
+      }
       return;
     }
-    if (!target) return;
 
     const reducedMotion = prefersReducedMotion();
     if (editorLenis && editorScrollWrapper === wrapper) {
