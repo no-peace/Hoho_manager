@@ -168,7 +168,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(discordService.sendChannelMessage).toHaveBeenCalledWith(
         threadId,
         expect.objectContaining({ content: "Thread destination regression test" }),
-        expect.objectContaining({ profileId: null }),
+        expect.objectContaining({ files: expect.any(Array) }),
       );
     });
 
