@@ -68,6 +68,11 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
   // Preview navigation must reveal a selected target even when its message card
   // was previously collapsed by the user.
+  const selectedTargetId =
+    selection?.kind === "embed" || selection?.kind === "component"
+      ? selection.id
+      : undefined;
+
   useEffect(() => {
     if (
       activeMessageIndex === index &&
@@ -75,7 +80,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     ) {
       setIsOpen(true);
     }
-  }, [activeMessageIndex, index, selection?.kind, selection?.id]);
+  }, [activeMessageIndex, index, selection?.kind, selectedTargetId]);
 
   const [customName, setCustomName] = useState<string>("");
   const [isEditingName, setIsEditingName] = useState(false);
