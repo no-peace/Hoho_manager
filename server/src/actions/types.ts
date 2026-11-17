@@ -6,7 +6,6 @@ import type {
   DiscordMessagePayload,
   EmbedData,
 } from "@dmb/shared";
-import type { Repositories } from "../repositories/index.js";
 import type { DiscordMessage, GuildMember } from "../services/discordService.js";
 import type { Logger } from "../utils/logger.js";
 
