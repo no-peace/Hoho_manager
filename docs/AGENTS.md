@@ -248,3 +248,28 @@ These directives supersede earlier status labels and next-action text above wher
 - Interactive controls must not change active message, selected component, inspector state or editor navigation. Non-interactive preview selection/navigation must remain unchanged.
 - Do not merge until this is verified in source.
 
+
+
+## 17. Head Agent review — 2026-11-17 (latest)
+
+### Part A / Agent 1 review
+- **Source review:** A5 interactive-preview callback correction is accepted. In `MessagePreview.tsx`, the interactive marker is checked before active-message synchronization; interactive controls return without changing active message or selection. The non-interactive path retains active-message synchronization and component selection.
+- **Regression coverage:** The submitted `MessagePreview.test.tsx` exercises the rendered click path for an interactive select in a non-active message and a non-interactive V2 TextDisplay in a non-active message.
+- **Decision:** Part A source implementation is accepted for integration review. Automated test/typecheck/build/browser verification remains deferred under the user's instruction and must be completed in the final verification stage. Do not mark Part A fully verified or claim tests passed.
+- **Branch integration:** `agent/ui-regressions` is one commit behind current `main` because it does not contain the Head Agent documentation directive commit. Preserve the current `main` version of `docs/AGENTS.md`; do not overwrite it with the branch copy. Head Agent controls integration.
+
+### Part B / Agent 2 review
+- **Schema/runtime handoff:** The Head Agent accepts the documented Desktop/Mobile schema and the reconciliation of production-facing motion, panel labels, toolbar visibility, Mobile panel geometry and explicitly preview-only settings.
+- **Small follow-up:** Agent 2 must add CSS variables for Mobile Editor and Preview padding to `getAppLayoutCssVariables()`, matching the already resolved `mobile.editorPadding` and `mobile.previewPadding`, and add focused assertions. This is a consistency correction; it does not reopen the schema design.
+- **Decision:** The Part B schema/runtime handoff is approved for Agent 3's backend/API/migration implementation. Agent 2 remains REVIEW REQUIRED until the CSS-variable correction is committed and reviewed. Agent 2 must not edit Part C or production Studio runtime files.
+
+### Part C / Agent 3 authorization
+- **Status:** IN PROGRESS — backend/API/migration implementation authorized.
+- Agent 3 may inspect and implement the database migration, server-side schema validation, atomic Desktop/Mobile persistence, authenticated owner/authorized-Discord-ID publishing authorization, and public/read endpoint within its assigned branch.
+- Before editing, Agent 3 must submit and record its exact file claims in its own section. Do not edit files claimed by Agent 2 or Agent 1.
+- **Runtime integration is not yet authorized.** Do not edit `StudioLayout.tsx`, `Header.tsx`, `SplitPane.tsx`, `PropertyPanel.tsx`, shared theme/CSS files, or other Part A/shared UI files until the Head Agent reviews a proposed runtime file list and grants exclusive ownership.
+- Agent 3 must use the approved Part B schema/runtime contract, validate both responsive documents server-side before any write, persist the pair atomically, and enforce publisher authorization server-side on every mutation. No client-supplied identity or UI-only permission check is trusted.
+- npm checks remain deferred. Add focused tests where practical, but do not spend time running npm checks.
+
+### Part D/E / Agent 4
+- Agent 4 remains INSPECTION ONLY until a verified report and exact proposed file list are submitted and reviewed. The server-theme publishing policy is governed by Directive 005 above.
