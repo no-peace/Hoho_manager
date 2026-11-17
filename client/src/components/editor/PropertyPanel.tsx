@@ -211,6 +211,13 @@ export const PropertyPanel = ({ onOpenFullEditor }: { onOpenFullEditor?: (select
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => onOpenFullEditor?.(selection)}
+              className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-[0.6875rem] font-semibold text-[#F1F3F9] hover:border-[#818CF8]/60 hover:bg-[#252B3A] min-[1200px]:hidden"
+            >
+              Open Full Editor
+            </button>
             <IconButton
               icon={Copy}
               label="Duplicate Component"
