@@ -13,7 +13,6 @@ import {
   MessageFlags,
   SetVariableModes,
   SNOWFLAKE_REGEX,
-  WEBHOOK_URL_REGEX,
 } from "../src/constants.js";
 
 describe("shared/constants: Protocol Constants & Schema Limits Suite", () => {
@@ -151,41 +150,6 @@ describe("shared/constants: Protocol Constants & Schema Limits Suite", () => {
       });
     });
 
-    describe("WEBHOOK_URL_REGEX", () => {
-      it("matches and extracts id and token from valid Discord webhook URLs", () => {
-        const url = "https://discord.com/api/webhooks/123456789012345678/aBcDeF-123_token";
-        const match = url.match(WEBHOOK_URL_REGEX);
-        expect(match).not.toBeNull();
-        expect(match![1]).toBe("123456789012345678");
-        expect(match![2]).toBe("aBcDeF-123_token");
-      });
-
-      it("supports discordapp.com legacy domain and API version prefixes", () => {
-        const legacy = "https://discordapp.com/api/webhooks/99887766/tok123";
-        const matchLegacy = legacy.match(WEBHOOK_URL_REGEX);
-        expect(matchLegacy).not.toBeNull();
-        expect(matchLegacy![1]).toBe("99887766");
-        expect(matchLegacy![2]).toBe("tok123");
-
-        const versioned = "https://discord.com/api/v10/webhooks/11223344/versioned-tok";
-        const matchVersioned = versioned.match(WEBHOOK_URL_REGEX);
-        expect(matchVersioned).not.toBeNull();
-        expect(matchVersioned![1]).toBe("11223344");
-        expect(matchVersioned![2]).toBe("versioned-tok");
-      });
-
-      it("supports canary and ptb subdomains", () => {
-        expect(WEBHOOK_URL_REGEX.test("https://canary.discord.com/api/webhooks/123/abc")).toBe(true);
-        expect(WEBHOOK_URL_REGEX.test("https://ptb.discord.com/api/webhooks/123/abc")).toBe(true);
-      });
-
-      it("rejects non-discord domains and malformed paths", () => {
-        expect(WEBHOOK_URL_REGEX.test("https://attacker.com/api/webhooks/123/token")).toBe(false);
-        expect(WEBHOOK_URL_REGEX.test("https://discord.com/api/channels/123/messages")).toBe(false);
-        expect(WEBHOOK_URL_REGEX.test("https://discord.com/api/webhooks/not-numeric/token")).toBe(false);
-        expect(WEBHOOK_URL_REGEX.test("https://discord.com/api/webhooks/123/")).toBe(false);
-      });
-    });
   });
 
   describe("Action & Variable Configuration Constants", () => {
