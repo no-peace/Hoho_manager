@@ -100,4 +100,41 @@ describe("PERF-03: Deferred Interaction Memory Retention & Prompt Cleanup", () =
     cleanupDeferredInteraction(interactionId);
     expect(getPendingLateResponsesCount()).toBe(0);
   });
+  it("does not lose a fast result when a duplicate delivery races the first acknowledgement", async () => {
+    const interactionId = `int_duplicate_${Date.now()}`;
+    const interaction = makeInteraction(interactionId);
+    let resolveExecution: ((value: any) => void) | undefined;
+    const execution = new Promise<any>((resolve) => {
+      resolveExecution = resolve;
+    });
+    const executeSpy = vi.spyOn(actionExecutor, "executeCustomId").mockReturnValue(execution);
+    const followupSpy = vi.spyOn(discord, "createFollowupMessage").mockResolvedValue({ id: "msg_duplicate_followup" });
+
+    const firstPromise = handleInteraction(interaction);
+    await vi.waitFor(() => expect(executeSpy).toHaveBeenCalledTimes(1));
+
+    const duplicateAck = await handleInteraction(interaction);
+    expect(duplicateAck.type).toBe(InteractionResponseType.DeferredUpdateMessage);
+    expect(executeSpy).toHaveBeenCalledTimes(1);
+
+    resolveExecution?.({
+      handled: true,
+      response: {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: "The original action completed." },
+      },
+    });
+
+    const firstAck = await firstPromise;
+    expect(firstAck.type).toBe(InteractionResponseType.DeferredUpdateMessage);
+
+    await completeDeferredInteraction(interaction);
+    expect(followupSpy).toHaveBeenCalledWith(
+      interaction.application_id,
+      interaction.token,
+      { content: "The original action completed." },
+    );
+    expect(getPendingLateResponsesCount()).toBe(0);
+  });
+
 });
