@@ -169,15 +169,24 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Database and publishing
 
-**Status:** BLOCKED — inspection only  
+**Status:** IN PROGRESS — backend/API/migration implementation authorized  
 **Branch:** `agent/layout-publishing`  
-**Scope:** Part C only.  
-**Dependency:** Head Agent must review and approve Agent 2's schema/document handoff.  
-**Files claimed / in progress:** None  
-**Files changed:** None  
-**Tests executed:** None  
-**Commit SHA:** None  
-**Next action:** Wait. Do not implement migrations, routes, schemas or runtime wiring until explicitly unblocked.
+**Scope:** Part C backend only. Runtime integration remains unauthorized.  
+**Dependency:** Satisfied — Head Agent approved Agent 2's Desktop/Mobile schema and runtime contract on 2026-11-17.  
+**Current batch:** Batch 1 — backend architecture review and exclusive file claims  
+**Files claimed / in progress:**
+- `server/src/config/migrations.ts` — append an idempotent forward-only migration for the singleton published responsive-layout record and explicit layout-publisher allowlist.
+- `server/src/repositories/appLayoutRepository.ts` — new repository for atomic pair reads/writes and publisher allowlist operations using the existing database abstraction.
+- `server/src/utils/appLayoutValidation.ts` — new strict server-side validator for the approved Desktop/Mobile Puck document contract, component/property allowlists, bounds, motion values, IDs, schema version and payload limits.
+- `server/src/routes/design.ts` — extend the existing design API with public published-layout read, authenticated atomic publish, and owner-only publisher allowlist management; preserve all theme/preset routes.
+- `server/tests/appLayoutPublishing.test.ts` — focused regression coverage for schema validation, authorization, atomic pair persistence and read metadata.
+- `docs/AGENTS.md` — this Agent 3 section only.
+**Files changed:** `docs/AGENTS.md` (Agent 3 claims/status only).  
+**Architecture findings:** Existing persistence is SQLite/Turso via `db` in `server/src/config/database.ts`; migrations are ordered in `server/src/config/migrations.ts`; `db.transaction()` supports SQLite and Turso; `/api/design` is already mounted in `server/src/app.ts`; Discord identity must come from `getSessionUserFromRequest()`. Existing `design_access_users` is for Design Lab access and will not be treated as publishing permission. A separate explicit publisher allowlist is required; it is an allowlist, not a new role system. Existing theme data and private presets remain untouched.
+**Branch baseline:** Fast-forwarded `agent/layout-publishing` from `5381b21d751491c0bdd50030934d48c00293a860` to current main `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation.
+**Tests executed:** None. npm checks are explicitly deferred.
+**Commit SHA:** None.
+**Next action:** Implement only the claimed backend files; validate both documents fully before opening a transaction and commit only after refreshing this control file.
 
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
