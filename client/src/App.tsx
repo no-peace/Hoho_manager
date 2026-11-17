@@ -156,6 +156,13 @@ export const App: React.FC = () => {
   }
 
   if (route === "design") {
+    if (!currentUser?.isDesignAllowed) {
+      return (
+        <React.Suspense fallback={<AppLoadingScreen />}>
+          <NotFoundPage />
+        </React.Suspense>
+      );
+    }
     return (
       <React.Suspense fallback={<AppLoadingScreen label="Loading Design Lab…" />}>
         <DesignLabPage />
