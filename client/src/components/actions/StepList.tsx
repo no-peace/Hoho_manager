@@ -33,10 +33,6 @@ const CONFIG_FIELDS: Record<string, readonly ConfigField[]> = {
     { key: "channelId", label: "Channel or Thread ID (defaults to current channel)", placeholder: "123456789012345678" },
     { key: "content", label: "Message", textarea: true },
   ],
-  send_webhook_message: [
-    { key: "webhookProfileId", label: "Webhook profile ID", placeholder: "1" },
-    { key: "content", label: "Message", textarea: true },
-  ],
   delete_message: [],
   create_thread: [{ key: "name", label: "Thread name", placeholder: "Support ticket" }],
   wait: [{ key: "seconds", label: "Seconds", placeholder: "1", type: "number" }],
