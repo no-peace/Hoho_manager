@@ -76,18 +76,24 @@ export const ThreeHeroCanvas: React.FC = () => {
       frame=window.requestAnimationFrame(tick);
     };
     const start=()=>{if(!disposed&&!mediaQuery.matches&&!frame)frame=window.requestAnimationFrame(tick);};
+    const handleResize=()=>{
+      resize();
+      // Resizing a canvas clears its bitmap. Keep the static first frame visible
+      // on low-core devices where the animation loop is intentionally disabled.
+      draw(lastFrame ? lastFrame*.001 : 1.25);
+    };
     resize(); draw(1.25);
     const win=window as Window & {requestIdleCallback?:(cb:()=>void,opts?:{timeout:number})=>number;cancelIdleCallback?:(id:number)=>void};
     if(!mediaQuery.matches && window.innerWidth>=640 && (navigator.hardwareConcurrency||8)>4){
       if(typeof win.requestIdleCallback==="function") idleId=win.requestIdleCallback(start,{timeout:1200});
       else timeoutId=window.setTimeout(start,450);
     }
-    window.addEventListener("resize",resize);
+    window.addEventListener("resize",handleResize);
     return ()=>{
       disposed=true; window.cancelAnimationFrame(frame);
       if(idleId!==null&&typeof win.cancelIdleCallback==="function")win.cancelIdleCallback(idleId);
       if(timeoutId!==null)window.clearTimeout(timeoutId);
-      window.removeEventListener("resize",resize);
+      window.removeEventListener("resize",handleResize);
     };
   },[]);
   return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full opacity-90" />;
