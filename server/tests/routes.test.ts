@@ -102,6 +102,13 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
     expect(botProfileTable).toBeFalsy();
   });
 
+  it("does not expose retired webhook or custom bot profile endpoints", async () => {
+    for (const path of ["/api/profiles/webhooks", "/api/profiles/bots"]) {
+      const response = await fetch(`${baseUrl}${path}`);
+      expect(response.status).toBe(404);
+    }
+  });
+
   // 1. /api/health
   describe("GET /api/health", () => {
     it("returns HTTP 200 with status ok when database is healthy", async () => {
