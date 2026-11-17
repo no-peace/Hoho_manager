@@ -18,23 +18,42 @@ export interface AppLayoutDocuments {
 
 const DRAFT_PREFIX = "hoho:app-layout-draft:v1:";
 
+export type AppLayoutMotionPreset =
+  | "none" | "fade" | "fade-up" | "slide-left" | "slide-right" | "zoom-in" | "float" | "pulse";
+export type AppLayoutMotionDuration = "180ms" | "300ms" | "500ms" | "700ms" | "1200ms" | "2000ms" | "3000ms";
+export type AppLayoutMotionDelay = "0ms" | "100ms" | "200ms" | "350ms";
+
+export interface ResolvedAppLayoutMotion {
+  animation: AppLayoutMotionPreset;
+  duration: AppLayoutMotionDuration;
+  delay: AppLayoutMotionDelay;
+}
+
 export interface ResolvedAppLayout {
   desktop: {
     headerHeight: number; headerPadding: number; logoSize: number; headerBackground: string; headerBorder: string;
+    headerMotion: ResolvedAppLayoutMotion;
     editorRatio: number; inspectorWidth: number; workspaceGap: number; panelOrder: "editor-first" | "preview-first";
-    inspectorPosition: "left" | "right"; borderColor: string;
+    inspectorPosition: "left" | "right"; borderColor: string; workspaceMotion: ResolvedAppLayoutMotion;
     editorBackground: string; previewBackground: string; inspectorBackground: string;
     editorPadding: number; previewPadding: number; inspectorPadding: number;
     editorRadius: number; previewRadius: number; inspectorRadius: number;
+    editorLabel: string; previewLabel: string; inspectorLabel: string; showToolbar: boolean;
+    editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion; inspectorMotion: ResolvedAppLayoutMotion;
   };
   mobile: {
     headerHeight: number; headerPadding: number; logoSize: number; headerBackground: string; headerBorder: string;
+    headerMotion: ResolvedAppLayoutMotion;
     defaultPane: "editor" | "preview"; showInspector: boolean; inspectorHeight: number; workspaceGap: number; panelPadding: number; borderColor: string;
+    workspaceMotion: ResolvedAppLayoutMotion;
     editorBackground: string; previewBackground: string; inspectorBackground: string; editorRadius: number; previewRadius: number; inspectorRadius: number; inspectorPadding: number;
+    editorLabel: string; previewLabel: string; inspectorLabel: string; showToolbar: boolean;
+    editorMotion: ResolvedAppLayoutMotion; previewMotion: ResolvedAppLayoutMotion; inspectorMotion: ResolvedAppLayoutMotion;
     navHeight: number; navPadding: number; navBackground: string; navAccent: string;
     tabOrder: "editor-first" | "preview-first"; showLabels: boolean;
     activeTab: "editor" | "preview" | "dispatch";
     editorTabLabel: string; previewTabLabel: string; dispatchTabLabel: string;
+    navMotion: ResolvedAppLayoutMotion;
   };
 }
 
@@ -62,6 +81,12 @@ const safeChoice = <T extends string>(value: unknown, choices: readonly T[], fal
 const propsOf = (nodes: AppLayoutNode[], type: string): Record<string, any> =>
   findNode(nodes, type)?.props || {};
 
+const resolveMotion = (props: Record<string, any>): ResolvedAppLayoutMotion => ({
+  animation: props.animation as AppLayoutMotionPreset,
+  duration: props.animationDuration as AppLayoutMotionDuration,
+  delay: props.animationDelay as AppLayoutMotionDelay,
+});
+
 export const resolveAppLayoutData = (
   desktopValue: unknown,
   mobileValue: unknown,
@@ -87,12 +112,14 @@ export const resolveAppLayoutData = (
       logoSize: boundedNumber(desktopHeader.logoSize, 32, 20, 48),
       headerBackground: safeHex(desktopHeader.background, "#10131A"),
       headerBorder: safeHex(desktopHeader.borderColor, "#272D3A"),
+      headerMotion: resolveMotion(desktopHeader),
       editorRatio: boundedNumber(desktopWorkspace.editorRatio, 50, 28, 72) / 100,
       inspectorWidth: boundedNumber(desktopWorkspace.inspectorWidth, 440, 300, 520),
       workspaceGap: boundedNumber(desktopWorkspace.workspaceGap, 6, 0, 24),
       panelOrder: safeChoice(desktopWorkspace.panelOrder, ["editor-first", "preview-first"] as const, "editor-first"),
       inspectorPosition: safeChoice(desktopWorkspace.inspectorPosition, ["left", "right"] as const, "right"),
       borderColor: safeHex(desktopWorkspace.borderColor, "#272D3A"),
+      workspaceMotion: resolveMotion(desktopWorkspace),
       editorBackground: safeHex(desktopEditor.surface, "#2B2D31"),
       previewBackground: safeHex(desktopPreview.surface, "#313338"),
       inspectorBackground: safeHex(desktopInspector.surface, "#161A23"),
@@ -102,6 +129,13 @@ export const resolveAppLayoutData = (
       editorRadius: boundedNumber(desktopEditor.radius, 10, 0, 24),
       previewRadius: boundedNumber(desktopPreview.radius, 10, 0, 24),
       inspectorRadius: boundedNumber(desktopInspector.radius, 10, 0, 24),
+      editorLabel: safeLabel(desktopEditor.label, "Message Editor"),
+      previewLabel: safeLabel(desktopPreview.label, "Live Preview"),
+      inspectorLabel: safeLabel(desktopInspector.label, "Properties"),
+      showToolbar: desktopEditor.showToolbar === "show",
+      editorMotion: resolveMotion(desktopEditor),
+      previewMotion: resolveMotion(desktopPreview),
+      inspectorMotion: resolveMotion(desktopInspector),
     },
     mobile: {
       headerHeight: boundedNumber(mobileHeader.height, 56, 44, 72),
@@ -109,12 +143,14 @@ export const resolveAppLayoutData = (
       logoSize: boundedNumber(mobileHeader.logoSize, 28, 20, 40),
       headerBackground: safeHex(mobileHeader.background, "#10131A"),
       headerBorder: safeHex(mobileHeader.borderColor, "#272D3A"),
+      headerMotion: resolveMotion(mobileHeader),
       defaultPane: safeChoice(mobileWorkspace.defaultPane, ["editor", "preview"] as const, "editor"),
       showInspector: mobileWorkspace.showInspector === "show",
       inspectorHeight: boundedNumber(mobileWorkspace.inspectorHeight, 300, 180, 520),
       workspaceGap: boundedNumber(mobileWorkspace.workspaceGap, 8, 0, 20),
       panelPadding: boundedNumber(mobileWorkspace.panelPadding, 12, 8, 28),
       borderColor: safeHex(mobileWorkspace.borderColor, "#272D3A"),
+      workspaceMotion: resolveMotion(mobileWorkspace),
       editorBackground: safeHex(mobileEditor.surface, "#2B2D31"),
       previewBackground: safeHex(mobilePreview.surface, "#313338"),
       inspectorBackground: safeHex(mobileInspector.surface, "#161A23"),
@@ -122,6 +158,13 @@ export const resolveAppLayoutData = (
       previewRadius: boundedNumber(mobilePreview.radius, 10, 0, 24),
       inspectorRadius: boundedNumber(mobileInspector.radius, 10, 0, 24),
       inspectorPadding: boundedNumber(mobileInspector.padding, 14, 0, 32),
+      editorLabel: safeLabel(mobileEditor.label, "Message Editor"),
+      previewLabel: safeLabel(mobilePreview.label, "Live Preview"),
+      inspectorLabel: safeLabel(mobileInspector.label, "Properties"),
+      showToolbar: mobileEditor.showToolbar === "show",
+      editorMotion: resolveMotion(mobileEditor),
+      previewMotion: resolveMotion(mobilePreview),
+      inspectorMotion: resolveMotion(mobileInspector),
       navHeight: boundedNumber(mobileNav.height, 60, 48, 84),
       navPadding: boundedNumber(mobileNav.horizontalPadding, 12, 8, 28),
       navBackground: safeHex(mobileNav.background, "#10131A"),
@@ -132,6 +175,7 @@ export const resolveAppLayoutData = (
       editorTabLabel: safeLabel(mobileNav.editorLabel, "Editor"),
       previewTabLabel: safeLabel(mobileNav.previewLabel, "Preview"),
       dispatchTabLabel: safeLabel(mobileNav.dispatchLabel, "Dispatch"),
+      navMotion: resolveMotion(mobileNav),
     },
   };
 };
