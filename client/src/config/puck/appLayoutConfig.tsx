@@ -175,6 +175,10 @@ const mobileNavigationFields = {
   accent: { type: "text", label: "Active tab HEX" },
   tabOrder: { type: "radio", label: "Tab order", options: [{ label: "Editor first", value: "editor-first" }, { label: "Preview first", value: "preview-first" }] },
   showLabels: { type: "select", label: "Tab labels", options: [{ label: "Show labels", value: "show" }, { label: "Icons only", value: "hide" }] },
+  activeTab: { type: "radio", label: "Active preview tab", options: [{ label: "Editor", value: "editor" }, { label: "Preview", value: "preview" }, { label: "Dispatch", value: "dispatch" }] },
+  editorLabel: { type: "text", label: "Editor tab label" },
+  previewLabel: { type: "text", label: "Preview tab label" },
+  dispatchLabel: { type: "text", label: "Dispatch tab label" },
   ...motionFields,
 } as const;
 
@@ -301,18 +305,18 @@ export const appLayoutConfig = {
       fields: mobileNavigationFields,
       renderFields: ({ fields }: any) => (
         <>
-          <FieldTab label="Layout"><FieldGroup label="Navigation sizing" variant="card">{fields.height}{fields.horizontalPadding}{fields.tabOrder}{fields.showLabels}</FieldGroup></FieldTab>
+          <FieldTab label="Layout"><FieldGroup label="Navigation sizing" variant="card">{fields.height}{fields.horizontalPadding}{fields.tabOrder}{fields.showLabels}{fields.activeTab}{fields.editorLabel}{fields.previewLabel}{fields.dispatchLabel}</FieldGroup></FieldTab>
           <FieldTab label="Appearance"><FieldGroup label="Navigation colors" variant="card">{fields.background}{fields.accent}</FieldGroup></FieldTab>
           <FieldTab label="Motion"><FieldGroup label="Navigation motion" variant="card">{fields.animation}{fields.animationDuration}{fields.animationDelay}</FieldGroup></FieldTab>
         </>
       ),
-      defaultProps: { height: 60, horizontalPadding: 12, background: "#10131A", accent: "#818CF8", tabOrder: "editor-first", showLabels: "show", animation: "none", animationDuration: "300ms", animationDelay: "0ms" },
+      defaultProps: { height: 60, horizontalPadding: 12, background: "#10131A", accent: "#818CF8", tabOrder: "editor-first", showLabels: "show", activeTab: "editor", editorLabel: "Editor", previewLabel: "Preview", dispatchLabel: "Dispatch", animation: "none", animationDuration: "300ms", animationDelay: "0ms" },
       render: (props: any) => (
         <MotionFrame animation={props.animation} animationDuration={props.animationDuration} animationDelay={props.animationDelay} className="hoho-layout-mobile-nav">
           <nav aria-label="Mobile workspace navigation" className={`hoho-layout-mobile-nav__bar ${props.showLabels === "hide" ? "is-icons-only" : ""}`} style={{ minHeight: props.height, paddingInline: props.horizontalPadding, background: props.background, ["--hoho-layout-mobile-accent" as any]: props.accent }}>
-            <span style={{ order: props.tabOrder === "preview-first" ? 2 : 1 }}><b>▤</b><small>Editor</small></span>
-            <span style={{ order: props.tabOrder === "preview-first" ? 1 : 2 }}><b>◫</b><small>Preview</small></span>
-            <span><b>➤</b><small>Dispatch</small></span>
+            <span className={props.activeTab === "editor" ? "is-active" : ""} style={{ order: props.tabOrder === "preview-first" ? 2 : 1 }}><b>▤</b><small>{props.editorLabel || "Editor"}</small></span>
+            <span className={props.activeTab === "preview" ? "is-active" : ""} style={{ order: props.tabOrder === "preview-first" ? 1 : 2 }}><b>◫</b><small>{props.previewLabel || "Preview"}</small></span>
+            <span className={props.activeTab === "dispatch" ? "is-active" : ""}><b>➤</b><small>{props.dispatchLabel || "Dispatch"}</small></span>
           </nav>
         </MotionFrame>
       ),
@@ -334,7 +338,7 @@ export const appLayoutConfig = {
           <FieldTab label="Motion"><FieldGroup label="Entrance motion" variant="card">{fields.animation}{fields.animationDuration}{fields.animationDelay}</FieldGroup></FieldTab>
         </>
       ),
-      defaultProps: { label: "Message Editor", surface: "#2B2D31", padding: 16, radius: 10, showToolbar: true, animation: "none", animationDuration: "300ms", animationDelay: "0ms" },
+      defaultProps: { label: "Message Editor", surface: "#2B2D31", padding: 16, radius: 10, showToolbar: "show", animation: "none", animationDuration: "300ms", animationDelay: "0ms" },
       render: EditorPanel,
     },
     PreviewPanel: {
