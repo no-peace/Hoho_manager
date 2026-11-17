@@ -7,8 +7,11 @@
  */
 export const buildGuildVariables = (
   guildId: string,
-  guild: Record<string, unknown>,
+  guild: object,
 ): Record<string, string> => {
+  // Accept typed Discord guild summaries as well as the complete REST payload.
+  // Interfaces without an index signature are still valid object inputs.
+  const guildRecord = guild as Record<string, unknown>;
   const variables: Record<string, string> = {};
 
   const visit = (key: string, value: unknown): void => {
@@ -43,7 +46,7 @@ export const buildGuildVariables = (
     variables[key] = String(value);
   };
 
-  for (const [key, value] of Object.entries(guild)) {
+  for (const [key, value] of Object.entries(guildRecord)) {
     visit(`server.${key}`, value);
   }
 
@@ -55,13 +58,13 @@ export const buildGuildVariables = (
     return `https://cdn.discordapp.com/${route}/${guildId}/${asset}.${extension}`;
   };
 
-  const iconHash = guild.icon;
+  const iconHash = guildRecord.icon;
   variables["server.icon_hash"] = typeof iconHash === "string" ? iconHash : "";
   variables["server.icon"] = assetUrl(iconHash, "icons");
   variables["server.icon_url"] = variables["server.icon"];
 
   for (const asset of ["banner", "splash", "discovery_splash"] as const) {
-    const hash = guild[asset];
+    const hash = guildRecord[asset];
     variables[`server.${asset}_url`] = assetUrl(
       hash,
       asset === "banner" ? "banners" : asset === "splash" ? "splashes" : "discovery-splashes",
@@ -80,9 +83,10 @@ export const buildGuildVariables = (
  */
 export const buildGuildScopedVariables = (
   guildId: string,
-  guild: Record<string, unknown>,
+  guild: object,
 ): Record<string, string> => {
-  const base = buildGuildVariables(guildId, guild);
+  const guildRecord = guild as Record<string, unknown>;
+  const base = buildGuildVariables(guildId, guildRecord);
   const scoped = Object.fromEntries(
     Object.entries(base).map(([key, value]) => [
       `server.${guildId}.${key.slice("server.".length)}`,
@@ -90,7 +94,7 @@ export const buildGuildScopedVariables = (
     ]),
   );
 
-  const bannerHash = guild.banner;
+  const bannerHash = guildRecord.banner;
   const bannerUrl = base["server.banner_url"] ?? "";
   scoped[`server.${guildId}.banner_hash`] =
     typeof bannerHash === "string" ? bannerHash : "";
