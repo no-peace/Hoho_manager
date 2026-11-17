@@ -169,9 +169,9 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 ## 11. Agent 3 — Part C: Studio runtime integration
 
-**Status:** IN PROGRESS — implementation authorized by Directive 024  
+**Status:** REVIEW REQUIRED — runtime implementation submitted  
 **Branch:** `agent/layout-publishing`  
-**Scope:** Part C Studio runtime integration only; backend/API/migration batch is already integrated on main.  
+**Scope:** Part C Studio runtime integration only. Backend/API/migration implementation remains the previously reviewed batch integrated through PR #47.  
 **Current batch:** Published-layout API/hook, production Studio application, and owner-only Design Lab publishing UI.
 
 **Files claimed / in progress (exclusive ownership under Directive 024):**
@@ -180,17 +180,47 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 3. `client/src/components/layout/SplitPane.tsx`
 4. `client/src/components/editor/PropertyPanel.tsx`
 5. `client/src/pages/DesignLabPage.tsx`
-6. `client/src/hooks/usePublishedAppLayout.ts` (new; confirmed absent on main)
-7. `client/src/utils/appLayoutApi.ts` (new; confirmed absent on main)
-8. `client/src/components/design/PublishAppLayoutControl.tsx` (new; confirmed absent on main)
-9. `client/src/styles/appLayoutRuntime.css` (new; confirmed absent on main)
+6. `client/src/hooks/usePublishedAppLayout.ts` (new; confirmed absent before implementation)
+7. `client/src/utils/appLayoutApi.ts` (new; confirmed absent before implementation)
+8. `client/src/components/design/PublishAppLayoutControl.tsx` (new; confirmed absent before implementation)
+9. `client/src/styles/appLayoutRuntime.css` (new; confirmed absent before implementation)
 
-**Files changed:** None at claim time.  
-**Tests executed:** None; npm tests/typecheck/build are deferred. The Directive 024 ownership list does not include test paths, so focused test-file changes require separate Head Agent authorization.  
-**Commit SHA:** Claim-record commit pending.  
-**Implementation constraints:** Consume the approved Part B resolver and CSS variables; keep local drafts separate from published state; use owner-only server PUT; preserve production editor/preview/dispatch/auth/navigation state; no polling; no arbitrary CSS/HTML/JS; respect reduced motion.  
-**Next action:** Implement only the nine claimed files, review the complete diff, re-fetch this control document before every batch and before committing, then report REVIEW REQUIRED.
+**Files changed by this runtime batch:**
+- The nine authorized files listed above.
+- `docs/AGENTS.md` — this Agent 3 status section only.
 
+**Implementation delivered:**
+- Added credentialed GET/PUT client calls for `/api/design/app-layout`; PUT sends schema version 1 and both responsive documents after client validation.
+- Added a default-safe runtime hook that resolves both documents through `resolveAppLayoutData()`, applies `getAppLayoutCssVariables()`, selects Desktop/Mobile with a cleaned-up media-query listener, and refreshes on mount, focus, visibility, page show and navigation return with a cooldown/no polling. Failed refreshes preserve the last valid published configuration; initial failures/missing/invalid records retain built-in defaults.
+- Applied header dimensions/colors/motion, editor-preview ratio/order/gap, panel surfaces/padding/radii/labels/motion, inspector dimensions/position and Mobile navigation dimensions/colors/order/labels/visibility/motion to the production Studio shell. Mobile initial pane is applied once and is not reset after user interaction or later configuration refreshes.
+- Kept Discord message preview rendering and message/editor/dispatch/auth state untouched inside their existing components. Toolbar visibility targets only the MessageEditor footer action bar; it does not hide message content or message-card controls.
+- Kept preview-only Mobile `showInspector`, `inspectorHeight` and `activeTab` out of production behavior. All document-derived labels are rendered as text; motion values and styles use the approved resolver/allowlists and existing CSS variables. Reduced-motion preferences suppress configured CSS and mobile-tab motion.
+- Added a separate owner-only Design Lab publish control. It validates both documents, confirms the atomic pair publish, reports loading/errors and only shows success after the server response. It displays the server publisher/timestamp and whether the local draft differs from the published pair. Local draft autosave/import/export remains separate from server publishing.
+
+**Runtime commit series:**
+- Claim record: `479819705f3c6148716d79d2ec728f4425226dd4`
+- Runtime API/hook/publish control/CSS: `e0df70cd1e9036d395046915d5de3e7cdf760cb3`
+- Studio/Header/SplitPane/PropertyPanel wiring: `e05d80a2e8b47d394f8aa3974e7f7a08308cc8c0`
+- Design Lab publishing integration: `1c4e4787a79ff02fb80a1b281c7a8194ae7e5071`
+- Responsive motion/workspace spacing: `5d691ca9400630584414a3dd53bff5b8cb004603`
+- Inspector/lifecycle refinements: `0fdf52a34257da63faaf94fcaa7c1c28469f1dd0`
+- Navigation-return refresh: `55fe828b1cb5ce58df192775ffd22f1abece3ac5`
+- Resolved inspector CSS-variable mapping: `81d42fcafdf3d03c0bc717bb04e9fea0d8fd6b0e`
+- Published-status error handling: `3716d9a5711ee42656c569b8db4f37d0332fee07`
+- Local-vs-published draft state: `7ab60b1a9b98f5641d490ecdda674d6c06c00c77`
+- **Final status commit:** pending.
+
+**Tests executed:** None. npm tests, typecheck and build were not run, as deferred by the user. Focused regression test files were not added because Directive 024's exact authorized file list does not include test paths; separate Head Agent authorization is required before editing test files.
+
+**Branch/integration note:** Last comparison before this status update reported `agent/layout-publishing` as 31 commits ahead and 83 behind `main`. The branch was not merged, rebased, force-pushed or synchronized by rewriting history. It still contains the previously submitted backend batch and its history; this runtime batch did not modify backend routes, repositories, migrations or backend tests. Head Agent should selectively integrate the nine authorized runtime files and preserve the latest `main` control document.
+
+**Remaining work / risks:**
+- Head Agent source review of the runtime diff.
+- Authorize exact test paths if focused client regression tests are required before integration.
+- Run automated/browser verification only during the deferred final verification stage.
+- Resolve branch integration through the Head Agent's controlled selective integration process; do not merge/rebase this branch.
+
+**Next action:** Wait for Head Agent review. Do not start Part D or any theme-related work.
 ## 12. Agent 4 — Parts D/E: Themes and UI consistency
 
 **Status:** INSPECTION ONLY  
