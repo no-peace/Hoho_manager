@@ -116,8 +116,8 @@ router.post(
       throw ApiError.forbidden("Your staff account is not permitted to attach files.");
     }
 
-    // Defense-in-depth: never allow Default Bot (profileId === null) unless caller is Admin or has a verified Staff Record
-    if (mode === "bot" && profileId === null) {
+    // Every dispatch uses the configured server bot; require an authorized staff identity.
+    if (mode === "bot") {
       if (!staffCtx?.isAdmin && !staffCtx?.record) {
         throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
       }
@@ -492,7 +492,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const staffCtx = req.staffContext;
 
-    if (profileId === null && !staffCtx?.isAdmin && !staffCtx?.record) {
+    if (!staffCtx?.isAdmin && !staffCtx?.record) {
       throw ApiError.forbidden("Default bot requires an active staff record or Head Admin access");
     }
 
@@ -551,7 +551,6 @@ router.get(
   attachUser,
   requireStaffPermission("edit"),
   asyncHandler(async (req, res) => {
-    const profileId = parseProfileId(req.query.profileId);
     const channelId = req.params.channelId;
     if (typeof channelId !== "string") {
       throw ApiError.badRequest("`channelId` must be a string");
@@ -562,7 +561,7 @@ router.get(
     }
 
 
-    const token = await discord.resolveBotToken(profileId);
+    const token = await discord.resolveBotToken();
     const me = await discord.getBotIdentity(token);
     if (!me?.id) return res.json([]);
 
