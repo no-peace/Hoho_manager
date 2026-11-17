@@ -8,7 +8,7 @@ export interface MentionViolationCheck {
 export const checkUnauthorizedMentions = (payloads: unknown[]): MentionViolationCheck => {
   const currentUser = useGlobalStore.getState().currentUser;
 
-  // Unrestricted if Head Admin or using own Custom Bot profile
+  // Head Admins are unrestricted; all other users follow staff mention permissions.
   if (currentUser?.isAdmin) {
     return { valid: true, violations: [] };
   }
