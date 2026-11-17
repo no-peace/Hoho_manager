@@ -61,17 +61,11 @@ export interface DiscordApi {
   sendChannelMessage(
     channelId: string,
     payload: DiscordMessagePayload,
-    options?: { profileId?: number | null },
   ): Promise<DiscordMessage | null>;
   sendChannelMessageWithToken(
     channelId: string,
     payload: DiscordMessagePayload,
     token: string,
-  ): Promise<DiscordMessage | null>;
-  sendWebhook(
-    webhookUrl: string,
-    payload: DiscordMessagePayload,
-    options?: { wait?: boolean; threadId?: string | null },
   ): Promise<DiscordMessage | null>;
   deleteChannelMessage(
     channelId: string,
@@ -100,7 +94,6 @@ export interface ActionContext {
   botToken: string | null;
   discord: DiscordApi;
   /** Only the persistence a handler genuinely needs, so it stays testable. */
-  repositories: Pick<Repositories, "webhookProfiles">;
   logger: Logger;
 }
 
