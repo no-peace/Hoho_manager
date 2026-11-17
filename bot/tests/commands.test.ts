@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MessageFlags } from "discord.js";
+import { MessageFlags, PermissionFlagsBits } from "discord.js";
 import { container } from "@sapphire/framework";
 import { PingCommand } from "../src/commands/ping.js";
 import { StatusCommand } from "../src/commands/status.js";
@@ -310,7 +310,7 @@ describe("bot/commands: Slash Command Suite", () => {
       builderFn(mockBuilder);
 
       expect(mockBuilder.setDefaultMemberPermissions).toHaveBeenCalledWith(
-        expect.any(BigInt),
+        PermissionFlagsBits.Administrator,
       );
     });
 
