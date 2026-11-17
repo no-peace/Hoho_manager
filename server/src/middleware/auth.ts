@@ -60,7 +60,10 @@ export const attachUser: RequestHandler = asyncHandler(async (req, _res, next) =
   if (hasValidAdminKey && machineStaffId && /^\d{17,20}$/.test(machineStaffId)) {
     req.user = await userRepository.upsert({
       discordId: machineStaffId,
-      username: req.get("x-staff-username")?.trim() || `Discord ${machineStaffId}`,
+      username: (() => {
+        const supplied = req.get("x-staff-username")?.trim();
+        return supplied && supplied.length <= 80 ? supplied : `Discord ${machineStaffId}`;
+      })(),
       avatar: null,
       role: "editor",
     });
