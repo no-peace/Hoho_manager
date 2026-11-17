@@ -44,7 +44,7 @@ export interface ResolvedAppLayout {
   mobile: {
     headerHeight: number; headerPadding: number; logoSize: number; headerBackground: string; headerBorder: string;
     headerMotion: ResolvedAppLayoutMotion;
-    defaultPane: "editor" | "preview"; showInspector: boolean; inspectorHeight: number; workspaceGap: number; panelPadding: number; borderColor: string;
+    defaultPane: "editor" | "preview"; workspaceGap: number; panelPadding: number; borderColor: string;
     workspaceMotion: ResolvedAppLayoutMotion;
     editorBackground: string; previewBackground: string; inspectorBackground: string;
     editorPadding: number; previewPadding: number; inspectorPadding: number;
@@ -146,8 +146,6 @@ export const resolveAppLayoutData = (
       headerBorder: safeHex(mobileHeader.borderColor, "#272D3A"),
       headerMotion: resolveMotion(mobileHeader),
       defaultPane: safeChoice(mobileWorkspace.defaultPane, ["editor", "preview"] as const, "editor"),
-      showInspector: mobileWorkspace.showInspector === "show",
-      inspectorHeight: boundedNumber(mobileWorkspace.inspectorHeight, 300, 180, 520),
       workspaceGap: boundedNumber(mobileWorkspace.workspaceGap, 8, 0, 20),
       panelPadding: boundedNumber(mobileWorkspace.panelPadding, 12, 8, 28),
       borderColor: safeHex(mobileWorkspace.borderColor, "#272D3A"),
@@ -213,7 +211,6 @@ export const getAppLayoutCssVariables = (layout: ResolvedAppLayout): Record<stri
   "--hoho-layout-mobile-editor-background": layout.mobile.editorBackground,
   "--hoho-layout-mobile-preview-background": layout.mobile.previewBackground,
   "--hoho-layout-mobile-inspector-background": layout.mobile.inspectorBackground,
-  "--hoho-layout-mobile-inspector-height": `${layout.mobile.inspectorHeight}px`,
   "--hoho-layout-mobile-editor-padding": `${layout.mobile.editorPadding}px`,
   "--hoho-layout-mobile-preview-padding": `${layout.mobile.previewPadding}px`,
   "--hoho-layout-mobile-inspector-padding": `${layout.mobile.inspectorPadding}px`,
