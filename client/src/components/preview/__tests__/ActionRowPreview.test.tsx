@@ -132,7 +132,7 @@ describe("ActionRowPreview (UI-04 Interactive Controls Preview)", () => {
       fireEvent.click(screen.getByRole("button", { name: /Option 3/i }));
 
       const dropdown = screen.getByRole("listbox");
-      expect(dropdown.className).not.toMatch(/\\b(?:animate-in|fade-in|zoom-in-95)\\b/);
+      expect(dropdown.className).not.toMatch(/(?:animate-in|fade-in|zoom-in-95)/);
     });
 
     it("closes dropdown on Escape key or outside click", () => {
