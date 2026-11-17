@@ -4,7 +4,6 @@ import { db } from "../config/database.js";
 import { env } from "../config/env.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
-import { appLayoutRepository } from "../repositories/appLayoutRepository.js";
 import { validateAppLayoutPair } from "../utils/appLayoutValidation.js";
 
 const router = Router();
@@ -222,33 +221,6 @@ router.post("/themes/:id/publish", asyncHandler(async (req, res) => {
 }));
 
 
-interface LayoutIdentity {
-  discordId: string;
-  isOwner: boolean;
-}
-
-const resolveLayoutIdentity = async (
-  req: Parameters<typeof getSessionUserFromRequest>[0],
-): Promise<LayoutIdentity> => {
-  const session = await getSessionUserFromRequest(req);
-  if (!session) throw ApiError.unauthorized();
-  return {
-    discordId: session.id,
-    isOwner: env.ownerDiscordIds.includes(session.id) || (!env.isProd && session.role === "admin"),
-  };
-};
-
-const requireLayoutOwner = (identity: LayoutIdentity): void => {
-  if (!identity.isOwner) throw ApiError.forbidden("Only the HoHo Manager owner can manage layout publishers.");
-};
-
-const requireLayoutPublisher = async (identity: LayoutIdentity): Promise<void> => {
-  if (identity.isOwner) return;
-  if (!(await appLayoutRepository.isPublisher(identity.discordId))) {
-    throw ApiError.forbidden("This Discord account is not authorized to publish the Studio layout.");
-  }
-};
-
 const parsePublishedLayout = (row: Awaited<ReturnType<typeof appLayoutRepository.getPublished>>) => {
   if (!row) return null;
   try {
@@ -279,10 +251,10 @@ router.get("/app-layout", asyncHandler(async (_req, res) => {
   res.json({ layout, fallback: !layout });
 }));
 
-/** Validate the complete responsive pair before entering the atomic persistence transaction. */
+/** Application layout publication is owner-only; the Discord ID comes from the verified session. */
 router.put("/app-layout", asyncHandler(async (req, res) => {
-  const identity = await resolveLayoutIdentity(req);
-  await requireLayoutPublisher(identity);
+  const identity = await resolveIdentity(req);
+  requireOwner(identity);
   const pair = validateAppLayoutPair(req.body);
   const row = await appLayoutRepository.publish({
     schemaVersion: pair.schemaVersion,
@@ -294,39 +266,6 @@ router.put("/app-layout", asyncHandler(async (req, res) => {
   if (!layout) throw new Error("The published layout could not be validated after persistence.");
   res.setHeader("Cache-Control", "no-store");
   res.json({ ok: true, layout });
-}));
-
-/** Owner-managed allowlist; Design Lab access is intentionally independent. */
-router.get("/app-layout/publishers", asyncHandler(async (req, res) => {
-  const identity = await resolveLayoutIdentity(req);
-  requireLayoutOwner(identity);
-  res.setHeader("Cache-Control", "private, no-store");
-  res.json({ publishers: await appLayoutRepository.listPublishers() });
-}));
-
-router.post("/app-layout/publishers", asyncHandler(async (req, res) => {
-  const identity = await resolveLayoutIdentity(req);
-  requireLayoutOwner(identity);
-  const discordId = isRecord(req.body) && typeof req.body.discordId === "string"
-    ? req.body.discordId.trim()
-    : "";
-  if (!/^\d{17,20}$/.test(discordId)) {
-    throw ApiError.badRequest("Enter a valid 17–20 digit Discord user ID.");
-  }
-  if (env.ownerDiscordIds.includes(discordId)) {
-    throw ApiError.badRequest("That Discord ID is already an owner.");
-  }
-  await appLayoutRepository.grantPublisher(discordId, identity.discordId);
-  res.status(201).json({ ok: true, publishers: await appLayoutRepository.listPublishers() });
-}));
-
-router.delete("/app-layout/publishers/:discordId", asyncHandler(async (req, res) => {
-  const identity = await resolveLayoutIdentity(req);
-  requireLayoutOwner(identity);
-  const discordId = String(req.params.discordId ?? "");
-  if (!/^\d{17,20}$/.test(discordId)) throw ApiError.badRequest("Invalid Discord user ID.");
-  await appLayoutRepository.revokePublisher(discordId);
-  res.status(204).end();
 }));
 
 export default router;
