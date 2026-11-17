@@ -6,7 +6,7 @@ import { MessageEditor } from "../editor/MessageEditor";
 import { MessagePreview } from "../preview/MessagePreview";
 import { CultMorphSurface } from "../ui/CultSkiperPrimitives";
 import { CountUpNumber, MagneticButton } from "../reactbits/ReactBitsPrimitives";
-import { useMessageStore } from "../../store/messageStore";
+import { useMessageStore, type Selection, type EmbedPreviewPart } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useTemplateStore } from "../../store/templateStore";
 import { useGlobalStore } from "../../store/globalStore";
@@ -44,22 +44,44 @@ export const StudioLayout: React.FC = () => {
     requestAnimationFrame(() => requestAnimationFrame(() => focusMessageEditor(index)));
   };
 
-  const handlePreviewComponentSelect = (index: number, componentId: string, isInteractive: boolean) => {
-    if (isMobileWorkspace()) {
-      // Keep the Preview tab visible; every component can be quick-edited in its overlay inspector.
-      useMessageStore.getState().select({ kind: "component", id: componentId });
-      return;
-    }
+  const handlePreviewComponentSelect = (index: number, componentId: string) => {
+    const store = useMessageStore.getState();
+    store.setActiveMessageIndex(index);
+    store.select({ kind: "component", id: componentId });
 
-    if (isInteractive) {
-      // Buttons are configured in the inspector, which floats above the preview without resizing it.
-      useMessageStore.getState().select({ kind: "component", id: componentId });
-      return;
+    // Desktop keeps the inspector available while navigating the left editor to
+    // the exact component card. Mobile stays on Preview and opens the bottom sheet.
+    if (!isMobileWorkspace()) {
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, componentId)));
     }
+  };
 
-    // Ordinary content is edited in the left message editor, not a duplicate right-side inspector.
-    useMessageStore.getState().select(null);
-    handlePreviewMessageSelect(index);
+  const handlePreviewEmbedSelect = (
+    index: number,
+    embedId: string,
+    part?: EmbedPreviewPart,
+    fieldId?: string,
+  ) => {
+    const store = useMessageStore.getState();
+    store.setActiveMessageIndex(index);
+    store.select({ kind: "embed", id: embedId, part, fieldId });
+
+    if (!isMobileWorkspace()) {
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, embedId)));
+    }
+  };
+
+  const handleOpenFullEditor = (selection?: Selection) => {
+    const store = useMessageStore.getState();
+    const index = selection?.kind === "message" ? selection.index : store.activeMessageIndex;
+    const targetId =
+      selection?.kind === "embed" || selection?.kind === "component"
+        ? selection.id
+        : undefined;
+
+    setMobileView("editor");
+    store.select(null);
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToMessageEditor(index, targetId)));
   };
 
   const currentUser = useGlobalStore((state) => state.currentUser);
@@ -162,12 +184,12 @@ export const StudioLayout: React.FC = () => {
               </div>
             </div>
           }
-          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} /></div>}
+          right={<div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-5"><MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} /></div>}
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
           onMobilePaneChange={(pane) => setMobileView(pane === "left" ? "editor" : "preview")}
           className="min-h-0 min-w-0 flex-1"
         />
-        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={() => { setMobileView("editor"); useMessageStore.getState().select(null); }} /></React.Suspense>
+        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} /></React.Suspense>
       </main>
 
       {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
