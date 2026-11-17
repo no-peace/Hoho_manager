@@ -40,7 +40,7 @@ describe("PERF-03: Deferred Interaction Memory Retention & Prompt Cleanup", () =
     const interactionId = `int_test_${Date.now()}_1`;
     const interaction = makeInteraction(interactionId);
 
-    // Mock actionExecutor to take 2300ms (exceeding ACK_DEADLINE_MS = 2200ms)
+    // Mock actionExecutor to take 2300ms (exceeding ACK_DEADLINE_MS = 900ms)
     vi.spyOn(actionExecutor, "executeCustomId").mockImplementation(async () => {
       await new Promise((r) => setTimeout(r, 2300));
       return { handled: true, response: { type: InteractionResponseType.ChannelMessageWithSource } };
