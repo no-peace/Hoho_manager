@@ -4,6 +4,7 @@ import { db } from "../config/database.js";
 import { env } from "../config/env.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
+import { appLayoutRepository } from "../repositories/appLayoutRepository.js";
 import { validateAppLayoutPair } from "../utils/appLayoutValidation.js";
 
 const router = Router();
@@ -254,7 +255,9 @@ router.get("/app-layout", asyncHandler(async (_req, res) => {
 /** Application layout publication is owner-only; the Discord ID comes from the verified session. */
 router.put("/app-layout", asyncHandler(async (req, res) => {
   const identity = await resolveIdentity(req);
-  requireOwner(identity);
+  if (!identity.isOwner) {
+    throw ApiError.forbidden("Only the HoHo Manager owner can publish the application layout.");
+  }
   const pair = validateAppLayoutPair(req.body);
   const row = await appLayoutRepository.publish({
     schemaVersion: pair.schemaVersion,
