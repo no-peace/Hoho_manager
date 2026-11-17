@@ -39,7 +39,7 @@ vi.mock("../src/services/weaoService.js", async (importOriginal) => {
   return {
     ...actual,
     interpolateWeaoPlaceholders: vi.fn().mockImplementation((payload) => {
-      const serialized = JSON.stringify(payload).replace(/\{exploit(?:\.|:)[^}]+\}/gi, "Updated");
+      const serialized = JSON.stringify(payload).replace(/\{\s*exploit(?:\.|:)[^}]+\}/gi, "Updated");
       return Promise.resolve({ payload: JSON.parse(serialized), modified: true });
     }),
     getAllExploits: vi.fn().mockResolvedValue([
@@ -334,7 +334,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       });
 
       try {
-        for (const content of ["{exploit.Delta.status}", "{exploit:Delta:status}"]) {
+        for (const content of ["{exploit.Delta.status}", "{exploit:Delta:status}", "{ exploit:Delta:status}"]) {
           const res = await fetch(`${baseUrl}/api/send`, {
             method: "POST",
             headers: {
