@@ -239,9 +239,9 @@ export const api = {
   },
 
   discord: {
-    identity: (profileId?: number) =>
+    identity: () =>
       request<{ id: string; username: string; avatar: string | null } | null>(
-        `/api/discord/identity${profileId ? `?profileId=${profileId}` : ""}`
+        "/api/discord/identity"
       ),
     resolveUsers: (ids: string[], signal?: AbortSignal, guildId?: string) =>
       request<{
@@ -262,19 +262,19 @@ export const api = {
         `/api/discord/users/resolve?ids=${encodeURIComponent(ids.join(","))}${guildId ? `&guildId=${encodeURIComponent(guildId)}` : ""}`,
         { signal },
       ),
-    guilds: (profileId?: number) =>
+    guilds: () =>
       request<{ guilds: { id: string; name: string; icon: string | null }[] }>(
-        `/api/discord/guilds${profileId ? `?profileId=${profileId}` : ""}`
+        "/api/discord/guilds"
       ),
-    channels: (guildId: string, profileId?: number) =>
+    channels: (guildId: string) =>
       request<{ channels: { id: string; name: string; type: number; parent_id?: string | null }[] }>(
-        `/api/discord/guilds/${guildId}/channels${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${guildId}/channels`
       ),
-    roles: (guildId: string, profileId?: number) =>
+    roles: (guildId: string) =>
       request<{ roles: { id: string; name: string; color: number }[] }>(
-        `/api/discord/guilds/${guildId}/roles${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${guildId}/roles`
       ),
-    searchMembers: (guildId: string, query: string, profileId?: number) =>
+    searchMembers: (guildId: string, query: string) =>
       request<{
         members: Array<{
           id: string;
@@ -284,9 +284,9 @@ export const api = {
           avatar: string | null;
         }>;
       }>(
-        `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}`
       ),
-    emojis: (guildId: string, profileId?: number) =>
+    emojis: (guildId: string) =>
       request<{
         emojis: Array<{
           id: string;
@@ -295,7 +295,7 @@ export const api = {
           available?: boolean;
         }>;
       }>(
-        `/api/discord/guilds/${guildId}/emojis${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${guildId}/emojis`
       ),
     auditLogs: (guildId: string, params?: { limit?: number; page?: number; action?: string; channelId?: string; webhookId?: string; userId?: string }) => {
       const sp = new URLSearchParams();
