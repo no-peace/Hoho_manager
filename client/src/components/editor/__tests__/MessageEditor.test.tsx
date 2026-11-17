@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { MessageEditor } from "../MessageEditor";
 import { useMessageStore } from "../../../store/messageStore";
 import { MessagePreview } from "../../preview/MessagePreview";
@@ -241,6 +241,36 @@ describe("MessageEditor", () => {
     expect(screen.getByText("Embed Inspector")).toBeTruthy();
     expect(screen.getByText(/Footer · Selected Embed/)).toBeTruthy();
     expect(screen.getByText("Footer & Timestamp")).toBeTruthy();
+  });
+
+  it("reopens a collapsed message card when a preview component is selected", () => {
+    const message = {
+      content: "",
+      embeds: [],
+      flags: 1 << 15,
+      components: [{
+        _id: "reveal-text-target",
+        type: ComponentType.TextDisplay,
+        content: "Reveal this editor card",
+      }],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+    render(<MessageEditor index={0} />);
+
+    fireEvent.click(screen.getByTitle("Collapse Message"));
+    expect(screen.queryByPlaceholderText(/Write markdown/)).toBeNull();
+
+    act(() => {
+      useMessageStore.getState().select({ kind: "component", id: "reveal-text-target" });
+    });
+
+    expect(screen.getByPlaceholderText(/Write markdown/)).toBeTruthy();
   });
 
 });
