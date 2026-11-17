@@ -478,3 +478,46 @@ The report's branch counts were stale and must not be used as current status. Pr
 - **Verification:** No npm tests, typecheck, build, browser QA, Lighthouse or deployment checks were run. Source review only; automated verification remains deferred to Part H.
 - Agent 3 Part C runtime/test source is accepted and staged for integration. Do not mark Part C fully verified until the integration is merged and final Part H verification is complete.
 - Agent 4 Part D remains blocked until this Part C integration is merged and the Head Agent issues a separate exact file authorization.
+
+## 28. Head Agent consolidated ownership — remaining implementation (2026-11-17)
+
+The repository owner explicitly instructed the Head Agent to complete all remaining work directly through the connected GitHub integration, including work previously assigned to other agents. This directive authorizes the Head Agent to take direct ownership of the remaining Parts D, F, G and H. No subagents are required. This supersedes prior agent-assignment restrictions for the Head Agent only; it does not authorize direct commits to `main`, bypassing required CI, or weakening repository protections.
+
+### Working branch and integration
+- **Working branch:** `integration/part-c-studio-runtime-2026-11-17`.
+- The branch contains the selectively integrated Part C Studio runtime and its three reviewed regression-test files, plus the Part D work in progress.
+- PR #52 remains the integration vehicle to `main`. Its required GitHub Actions checks have not yet run; do not bypass the required `build-and-typecheck (22)` and `build-and-typecheck (26)` contexts.
+- The current main branch remains unchanged by this work. All changes stay on the integration branch until final verification and normal protected integration.
+
+### Part D — delegated server-theme publishing (IN PROGRESS)
+**Architecture constraints**
+- Preserve the existing separation between server theme, personal active-theme cache, community themes and private presets.
+- The 14-day expiry applies only to the active-theme cache. Private preset libraries and portable `.hoho-theme.json` exports remain durable and independent.
+- Design Lab access does not imply server-theme publishing permission.
+- Owners retain publishing permission. An explicitly granted Design Lab user may publish the server theme only when the server-side `can_publish_server_theme` capability is active.
+- The authenticated session identity is authoritative. Never trust a client-supplied Discord ID, local storage, UI visibility or unverified role.
+- Check permission on every server-theme mutation. Revocation must block the next mutation request.
+- Only owners manage Design Lab access and delegated publishing grants.
+- Delegated publishers may promote community-visible themes and their own themes, but may not promote another user's private theme.
+- Part C application-layout publishing remains strictly owner-only and is not affected by this capability.
+
+**Files claimed by Head Agent**
+1. `server/src/config/migrations.ts` — append forward-only migration 017 adding `design_access_users.can_publish_server_theme`, defaulting to 0.
+2. `server/src/routes/design.ts` — server-side permission lookup/enforcement, owner-only grant management, immediate revocation, and theme visibility restrictions.
+3. `client/src/api/design.ts` — typed permission response and owner-only permission update API.
+4. `client/src/components/layout/ThemeSettingsModal.tsx` — show server-theme publishing controls only when the API reports the capability.
+5. `client/src/pages/DesignLabPage.tsx` — owner-only UI to grant/revoke the separate publishing capability for Design Lab users.
+6. `client/src/App.tsx` — enforce the server-derived `isDesignAllowed` flag when directly navigating to `/design`; this is a confirmed Part F access-control audit finding.
+7. `server/tests/serverThemePublishing.test.ts` — regression coverage for deny-by-default, owner grants, non-owner publishing, revocation, re-grant reset, private-theme protection and owner fallback.
+
+**Current implementation record**
+- Migration 017 and the route/API/UI changes have been committed on the integration branch.
+- Server regression tests have been added but not executed.
+- Source review, typecheck, build, full test suite, browser QA and Lighthouse remain pending.
+- Do not mark Part D complete until the final diff is reviewed and Part H verification is complete.
+
+### Parts F, G and H — Head Agent ownership
+- Head Agent directly owns the systematic repository audit, audit ledger, confirmed defect fixes, performance/accessibility/security review, final automated verification, browser verification and delivery handoff.
+- Preserve working behavior; do not perform cosmetic rewrites without a verified defect or measurable benefit.
+- Do not run npm checks before implementation is complete. At Part H, execute the repository's required CI commands and record the exact outcomes.
+- Do not claim browser, Lighthouse, deployment or production behavior as verified unless evidence is obtained.
