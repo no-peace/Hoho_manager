@@ -136,6 +136,28 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       );
     });
 
+    it("logs structured action failures and strips internal metadata from Discord responses", async () => {
+      const logSpy = vi.spyOn(actionRepository, "log").mockResolvedValue(undefined);
+      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([
+        { id: 99, action_type: "send_message", config: {} } as any,
+      ]);
+      const interaction: DiscordInteraction = {
+        id: "int_structured_failure",
+        application_id: "app_1",
+        token: "tok_structured_failure",
+        version: 1,
+        type: 3,
+        channel_id: "channel_1",
+        data: { custom_id: "action:send_message", component_type: 2 },
+      };
+
+      const result = await executeCustomId("action:send_message", interaction);
+
+      expect(result.response?.data?.content).toContain("No target channel");
+      expect(result.response).not.toHaveProperty("outcome");
+      expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
+    });
+
     it("does not execute an unregistered action custom ID from a component message", async () => {
       vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([]);
       const interaction: DiscordInteraction = {
