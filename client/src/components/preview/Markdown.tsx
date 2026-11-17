@@ -380,7 +380,7 @@ const SpoilerText: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       aria-describedby={revealed ? contentId : undefined}
       onClick={() => setRevealed((value) => !value)}
       title={revealed ? "Click to hide spoiler" : "Click to reveal spoiler"}
-      className={`inline-block appearance-none border-0 px-1 py-0.5 rounded font-[inherit] text-left transition-colors ${
+      className={`inline-block appearance-none border border-transparent px-1 py-0.5 rounded font-[inherit] text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a5adff] ${
         revealed
           ? "bg-[#2b2d31] text-[#dbdee1] border border-[#3f4147]"
           : "bg-[#202225] text-transparent hover:bg-[#25282c] select-none"
