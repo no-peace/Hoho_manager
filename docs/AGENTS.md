@@ -358,3 +358,23 @@ The report's branch counts were stale and must not be used as current status. Pr
 ### Branch state at this review
 - Agent 3: 24 ahead / 2 behind; backend source approved for integration review, runtime work not authorized.
 - Agent 4: 5 ahead / 0 behind; Part E two-file source batch approved for integration, Part D blocked.
+
+
+## 21. Head Agent integration — approved Agent 3 backend and Agent 4 Part E (2026-11-17)
+
+- A clean integration branch, `integration/approved-agent-batches-2026-11-17`, was created from the then-current `main` commit `6ff923859951e5a9794d1ba573cd6534c7d8344f`.
+- Selected source files were copied from the reviewed agent branches; stale agent copies of `docs/AGENTS.md` were deliberately excluded.
+- Agent 3 / Part C backend files integrated on the clean branch:
+  - `server/src/config/migrations.ts`
+  - `server/src/repositories/appLayoutRepository.ts`
+  - `server/src/routes/design.ts`
+  - `server/src/utils/appLayoutValidation.ts`
+  - `server/tests/appLayoutPublishing.test.ts`
+- Agent 4 / Part E files integrated on the clean branch:
+  - `client/src/components/layout/SettingsModal.tsx`
+  - `client/src/pages/DocsPage.tsx`
+- This is selective integration, not a merge of either agent branch. No other agent files are included.
+- Source-level review was previously accepted for these exact batches. No npm tests, typecheck, build, browser QA or deployment checks were run.
+- Part C backend/API/migration integration does not complete Part C. Studio runtime integration remains pending explicit Head Agent authorization and an exact file list.
+- Part D remains blocked. Part A and Part B have separate approved source batches and have not been included in this integration branch.
+- Next action: Head Agent to review the clean integration diff, then create/merge a PR to `main` only after confirming the seven-file diff and control-document preservation.
