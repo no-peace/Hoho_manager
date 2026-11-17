@@ -146,7 +146,6 @@ router.get("/guilds/:guildId/roles", requireStaffPermission("send"),requireAllow
     throw ApiError.badRequest("`guildId` is required");
   }
 
-  const profileId = parseProfileId(req.query.profileId);
   const roles = await discord.getGuildRoles(guildId);
   return res.json({ roles });
 }));
