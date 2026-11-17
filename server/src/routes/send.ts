@@ -276,7 +276,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         // 4. WEAO Exploits permission check
         if (
           staffCtx.record.can_use_weao_exploits === 0 &&
-          (Boolean(exploitHint) || /\\{exploit(?:\\.|:)/i.test(JSON.stringify(authorResolved)))
+          (Boolean(exploitHint) || /\{exploit(?:\.|:)/i.test(JSON.stringify(authorResolved)))
         ) {
           throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
         }
