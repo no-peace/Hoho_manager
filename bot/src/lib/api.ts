@@ -44,10 +44,11 @@ interface RequestOptions {
   body?: unknown;
   anonymous?: boolean;
   signal?: AbortSignal;
+  actor?: { id: string; username?: string };
 }
 
 const request = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
-  const { method = "GET", body, anonymous = false, signal } = options;
+  const { method = "GET", body, anonymous = false, signal, actor } = options;
 
   let response: Response;
   try {
@@ -60,6 +61,7 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
       headers: {
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
         ...(anonymous ? {} : { "x-admin-key": env.adminApiKey }),
+        ...(actor ? { "x-staff-id": actor.id, ...(actor.username ? { "x-staff-username": actor.username } : {}) } : {}),
       },
       body:
         body === undefined
@@ -88,14 +90,15 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 };
 
-export const listWeaoExploits = async (query = ""): Promise<WeaoExploitChoice[]> => {
+export const listWeaoExploits = async (query = "", actor?: { id: string; username?: string }): Promise<WeaoExploitChoice[]> => {
   const qs = query ? `?q=${encodeURIComponent(query)}` : "";
-  const data = await request<{ exploits: WeaoExploitChoice[] }>(`/api/weao/exploits${qs}`);
+  const data = await request<{ exploits: WeaoExploitChoice[] }>(`/api/weao/exploits${qs}`, { actor });
   return data?.exploits ?? [];
 };
 
 export const resolveWeaoExploit = async (
   exploitName: string,
+  actor?: { id: string; username?: string },
 ): Promise<{
   source: "backup_template" | "custom_executor";
   templateName: string | null;
@@ -106,6 +109,7 @@ export const resolveWeaoExploit = async (
   return request("/api/weao/resolve-exploit", {
     method: "POST",
     body: { exploit: exploitName },
+    actor,
   });
 };
 
@@ -140,6 +144,7 @@ export const api = {
     templateId?: number | null;
     exploitName?: string | null;
     authorUserId?: string | null;
+    authorUsername?: string | null;
   }) =>
     request<SendSuccessResponse>("/api/send", {
       method: "POST",
@@ -154,6 +159,7 @@ export const api = {
         ...(body.exploitName ? { exploitName: body.exploitName } : {}),
         ...(body.authorUserId ? { authorUserId: body.authorUserId } : {}),
       },
+      actor: body.authorUserId ? { id: body.authorUserId, username: body.authorUsername ?? undefined } : undefined,
     }),
 
   listWeaoExploits,
