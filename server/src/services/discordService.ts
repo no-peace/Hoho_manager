@@ -3,7 +3,6 @@ import type { DiscordMessagePayload, DiscordUser, InteractionResponse } from "@d
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
-import { parseWebhookUrl } from "../utils/validation.js";
 
 const log = logger.child("discord");
 
@@ -265,71 +264,6 @@ const apiRequest = async <T>(
       true,
     );
   }
-};
-
-/* ── Webhooks (no bot token required) ─────────────────────────────────────── */
-
-export interface DiscordAttachmentFile {
-  file: File | Blob;
-  filename: string;
-  key?: string;
-}
-
-export interface WebhookSendOptions {
-  wait?: boolean;
-  threadId?: string | null;
-  files?: DiscordAttachmentFile[];
-}
-
-const buildMultipartPayload = (
-  payload: DiscordMessagePayload,
-  files: DiscordAttachmentFile[],
-): FormData => {
-  const fd = new FormData();
-  const finalPayload: DiscordMessagePayload = {
-    ...payload,
-    allowed_mentions: payload.allowed_mentions ?? { parse: [] },
-  };
-
-  if (!finalPayload.attachments || finalPayload.attachments.length === 0) {
-    finalPayload.attachments = files.map((f, idx) => ({
-      id: idx,
-      filename: f.filename,
-    }));
-  }
-
-  fd.append("payload_json", JSON.stringify(finalPayload));
-  for (let i = 0; i < files.length; i++) {
-    const f = files[i];
-    const key = f.key || `files[${i}]`;
-    fd.append(key, f.file, f.filename);
-  }
-  return fd;
-};
-
-/**
- * Legacy compatibility stub. Arbitrary webhook-URL message sending is disabled.
- * Keep this export so old callers fail explicitly instead of sending externally.
- */
-export const sendWebhook = async (
-  _webhookUrl: string,
-  _payload: DiscordMessagePayload,
-  _options: WebhookSendOptions = {},
-): Promise<DiscordMessage | null> => {
-  throw ApiError.forbidden(
-    "Webhook URL message sending is disabled. Use the configured server bot.",
-  );
-};
-
-
-/** Inspect a webhook without sending (used to validate a URL before saving). */
-export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
-  const parsed = parseWebhookUrl(webhookUrl);
-  if (!parsed) throw ApiError.badRequest("Not a valid Discord webhook URL");
-
-  return apiRequest<unknown>("GET", null, {
-    absoluteUrl: `${DISCORD_API_BASE}/webhooks/${parsed.id}/${parsed.token}`,
-  });
 };
 
 /* ── Bot (token required, server-side only) ───────────────────────────────── */
