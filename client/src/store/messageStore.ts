@@ -21,8 +21,18 @@ import {
   updateComponent as updateInTree,
 } from "../utils/tree";
 
+export type EmbedPreviewPart =
+  | "author"
+  | "title"
+  | "description"
+  | "field"
+  | "thumbnail"
+  | "image"
+  | "footer"
+  | "timestamp";
+
 export type Selection =
-  | { kind: "embed"; id: string }
+  | { kind: "embed"; id: string; part?: EmbedPreviewPart; fieldId?: string }
   | { kind: "component"; id: string }
   | { kind: "message"; index: number }
   | null;
