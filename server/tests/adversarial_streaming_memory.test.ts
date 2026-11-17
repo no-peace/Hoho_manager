@@ -322,7 +322,9 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(err).toBeInstanceOf(ApiError);
       expect(err.status).toBe(504);
       expect(err.code).toBe("gateway_timeout");
-      expect(err.message).toContain("Discord request timed out after 2500ms");
+      expect(err.message).toContain("Discord request timed out after 1000ms");
+      expect(err.message).not.toContain("tok_456");
+      expect(JSON.stringify(err.details)).not.toContain("tok_456");
       // retries: 1 means 1 initial attempt + 1 retry = 2 calls
       expect(callCount).toBe(2);
     });
