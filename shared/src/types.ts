@@ -350,31 +350,6 @@ export interface UserRecord {
   updated_at: string;
 }
 
-export interface WebhookProfileRecord {
-  id: number;
-  user_id: number;
-  name: string;
-  url: string;
-  guild_id: string | null;
-  channel_id: string | null;
-  avatar_url: string | null;
-  is_default: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BotProfileRecord {
-  id: number;
-  user_id: number;
-  name: string;
-  public_key: string;
-  application_id: string;
-  default_guild_id: string | null;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface TemplateRecord {
   id: number;
   user_id: number;
