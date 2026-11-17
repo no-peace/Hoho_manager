@@ -38,6 +38,28 @@ export const findComponent = (
   return null;
 };
 
+/** Return the first depth-first component matching a Discord component type. */
+export const findFirstComponentByType = (
+  components: ComponentNode[] | undefined,
+  type: number,
+): ComponentNode | null => {
+  for (const component of components ?? []) {
+    if (component.type === type) return component;
+    if (component.accessory) {
+      if (component.accessory.type === type) return component.accessory;
+      if (Array.isArray(component.accessory.components)) {
+        const nested = findFirstComponentByType(component.accessory.components, type);
+        if (nested) return nested;
+      }
+    }
+    if (Array.isArray(component.components)) {
+      const nested = findFirstComponentByType(component.components, type);
+      if (nested) return nested;
+    }
+  }
+  return null;
+};
+
 /** Replace a component in place via `updater`. */
 export const updateComponent = (
   components: ComponentNode[] | undefined,

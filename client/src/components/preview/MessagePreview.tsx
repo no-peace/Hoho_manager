@@ -277,10 +277,15 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
                       const componentElement = target.closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
                       if (componentId) {
-                        setActiveMessageIndex?.(index);
                         const isInteractive = componentElement.dataset.previewInteractive === "true";
+                        if (isInteractive) {
+                          onSelectPreviewComponent?.(index, componentId, true);
+                          return;
+                        }
+
+                        setActiveMessageIndex?.(index);
                         if (onSelectPreviewComponent) {
-                          onSelectPreviewComponent(index, componentId, isInteractive);
+                          onSelectPreviewComponent(index, componentId, false);
                         } else {
                           selectComponent({ kind: "component", id: componentId });
                         }

@@ -127,6 +127,14 @@ describe("ActionRowPreview (UI-04 Interactive Controls Preview)", () => {
       fireEvent.click(screen.getByText("Option 1"));
     });
 
+    it("does not rely on plugin-only animation utilities", () => {
+      render(<SelectPreview select={stringSelect as any} />);
+      fireEvent.click(screen.getByRole("button", { name: /Option 3/i }));
+
+      const dropdown = screen.getByRole("listbox");
+      expect(dropdown.className).not.toMatch(/(?:animate-in|fade-in|zoom-in-95)/);
+    });
+
     it("closes dropdown on Escape key or outside click", () => {
       render(
         <div>

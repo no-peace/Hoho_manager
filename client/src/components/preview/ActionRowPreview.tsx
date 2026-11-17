@@ -328,7 +328,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         <div
           role="listbox"
           aria-multiselectable={isMulti}
-          className={`absolute left-0 w-full rounded-md bg-[#2b2d31] border border-[#1e1f22] shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 ${
+          className={`absolute left-0 w-full rounded-md bg-[#2b2d31] border border-[#1e1f22] shadow-2xl py-1.5 z-50 ${
             openUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"
           }`}
           style={{ maxHeight: "250px" }}
