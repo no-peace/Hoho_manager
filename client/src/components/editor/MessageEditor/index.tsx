@@ -72,15 +72,17 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
     selection?.kind === "embed" || selection?.kind === "component"
       ? selection.id
       : undefined;
+  const selectedMessageIndex =
+    selection?.kind === "message" ? selection.index : undefined;
 
   useEffect(() => {
-    const selectedMessage = selection?.kind === "message" && selection.index === index;
+    const selectedMessage = selectedMessageIndex === index;
     const selectedNestedTarget =
       activeMessageIndex === index &&
       (selection?.kind === "embed" || selection?.kind === "component");
 
     if (selectedMessage || selectedNestedTarget) setIsOpen(true);
-  }, [activeMessageIndex, index, selection?.kind, selectedTargetId, selection?.kind === "message" ? selection.index : undefined]);
+  }, [activeMessageIndex, index, selection?.kind, selectedTargetId, selectedMessageIndex]);
 
   const [customName, setCustomName] = useState<string>("");
   const [isEditingName, setIsEditingName] = useState(false);
