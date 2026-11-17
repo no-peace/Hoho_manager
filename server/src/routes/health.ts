@@ -5,10 +5,6 @@ import { asyncHandler } from "../utils/errors.js";
 
 const router = Router();
 
-interface CountRow {
-  count: number;
-}
-
 /**
  * GET /api/health
  *
@@ -18,11 +14,9 @@ interface CountRow {
 router.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const users = await db
-      .get<CountRow>("SELECT COUNT(*) AS count FROM users")
-      .catch(() => undefined);
+    const readiness = await db.get<{ ready: number }>("SELECT 1 AS ready").catch(() => undefined);
 
-    const isConnected = users !== undefined;
+    const isConnected = readiness !== undefined;
     const statusCode = isConnected ? 200 : 503;
 
     res.status(statusCode).json({
@@ -30,7 +24,7 @@ router.get(
       environment: env.nodeEnv,
       uptimeSeconds: Math.round(process.uptime()),
       time: new Date().toISOString(),
-      database: { connected: isConnected, users: users?.count ?? null },
+      database: { connected: isConnected },
       discord: {
         publicKeyConfigured: Boolean(env.discord.publicKey),
         botTokenConfigured: Boolean(env.discord.botToken),
