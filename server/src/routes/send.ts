@@ -380,6 +380,14 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     };
     
     const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
+    if (
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_attach_files === 0 &&
+      (uploadedFiles.length > 0 || (Array.isArray(body.attachments) && body.attachments.length > 0))
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to attach files.");
+    }
     const urlFiles = await fetchUrlAttachments(body.attachments);
     if (uploadedFiles.length + urlFiles.length > 10) {
       throw ApiError.badRequest("Too many attachments: maximum 10 allowed per message");
@@ -392,12 +400,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     }
     const files = [...uploadedFiles, ...urlFiles];
 
-
-    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-      if (staffCtx.record.can_attach_files === 0 && files.length > 0) {
-        throw ApiError.forbidden("Your staff account is not permitted to attach files.");
-      }
-    }
 
     if (!destinationChannelId) {
       throw ApiError.badRequest('A `channelId` or `threadId` is required when mode is "bot"');
