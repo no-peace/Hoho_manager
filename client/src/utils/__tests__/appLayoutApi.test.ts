@@ -63,7 +63,7 @@ describe("appLayoutApi", () => {
 
   it("validates both documents before making a publish request", async () => {
     const docs = documents();
-    docs.mobile.content[1].props.defaultPane = "tablet";
+    docs.mobile.content[0].props.defaultPane = "tablet";
     expect(() => appLayoutApi.publish(docs as any)).toThrow(/defaultPane/i);
     expect(fetchMock).not.toHaveBeenCalled();
   });
