@@ -27,7 +27,7 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.tabOrder).toBe("editor-first");
     expect(layout.mobile.showInspector).toBe(false);
     expect(layout.mobile.inspectorHeight).toBe(300);
-    expect(layout.mobile.activeTab).toBe("editor");
+    expect(layout.mobile.previewActiveTab).toBe("editor");
     expect(layout.mobile.editorTabLabel).toBe("Editor");
     expect(layout.mobile.previewTabLabel).toBe("Preview");
     expect(layout.mobile.dispatchTabLabel).toBe("Dispatch");
@@ -139,7 +139,7 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.editorTabLabel).toBe("Write");
     expect(layout.mobile.previewTabLabel).toBe("Inspect");
     expect(layout.mobile.dispatchTabLabel).toBe("Send");
-    expect(layout.mobile.activeTab).toBe("preview");
+    expect(layout.mobile.previewActiveTab).toBe("preview");
   });
 
   it("resolves production panel labels, toolbar visibility and motion for both breakpoints", () => {
