@@ -145,6 +145,10 @@ router.post(
       if (message.flags === 0) delete message.flags;
 
       const sanitizedMessage = cleanseIds(message);
+      // Inspect the original payload before interpolation consumes the tokens.
+      // Both modern dot syntax and legacy colon syntax grant access to WEAO data.
+      const usesWeaoVariables =
+        Boolean(exploitHint) || /\\{exploit(?:\\.|:)/i.test(JSON.stringify(sanitizedMessage));
       // Legacy editor fields are not Discord message-sender overrides. Keep them
       // in old backups/imports, but never forward them to Discord.
       delete sanitizedMessage.username;
@@ -276,7 +280,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         // 4. WEAO Exploits permission check
         if (
           staffCtx.record.can_use_weao_exploits === 0 &&
-          (Boolean(exploitHint) || /\{exploit(?:\.|:)/i.test(JSON.stringify(authorResolved)))
+          usesWeaoVariables
         ) {
           throw ApiError.forbidden("Your staff account is not permitted to use WEAO exploit variables.");
         }
