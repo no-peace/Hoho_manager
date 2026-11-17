@@ -154,19 +154,21 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** IN PROGRESS — authorized  
-**Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Audit the existing Puck Responsive Design Lab, close verified gaps, and produce a precise Desktop/Mobile schema and runtime contract for Agent 3.  
-**Current batch:** Baseline and schema reconciliation  
-**Files claimed / in progress:** None reported yet  
-**Files changed:** None  
-**Tests executed:** None reported  
-**Commit SHA:** None  
-**Schema handoff:** Not submitted  
-**Next action:** Fetch latest main, create/use assigned branch only if Head Agent confirms it exists, inspect Puck source/docs/tests, then report file claims before edits.
+**Status:** REVIEW REQUIRED — schema/runtime handoff approved; branch synchronization prepared for integration  \
+**Branch:** `agent/responsive-design-lab`  \
+**Scope:** Part B only. Approved Puck Responsive Design Lab schema, validation, editor configuration, defaults, tests and Desktop/Mobile runtime handoff. No Part C implementation or production Studio runtime edits.  \
+**Current batch:** Controlled integration preparation — merge latest `main` into this branch  \
+**Files changed by Part B:**
+- `client/src/config/puck/appLayoutConfig.tsx`
+- `client/src/config/puck/defaultAppLayouts.ts`
+- `client/src/utils/puckAppLayout.ts`
+- `client/src/utils/__tests__/puckAppLayout.test.ts`
+- `docs/PUCK_DESIGN_LAB.md`
 
-Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
+**Schema/runtime handoff:** Desktop and Mobile documents remain independent. Production-facing motion settings, labels, toolbar visibility, navigation values and independent panel geometry are validated and resolved into the documented runtime contract. Mobile Editor/Preview/Inspector padding CSS variables are independently exposed in pixel units. Mobile `showInspector` and `activeTab` remain preview-only. Reduced-motion handling remains a Part C runtime requirement.
 
+**Tests executed:** None. npm tests, typecheck and build remain deferred by user instruction.  \
+**Next action:** Complete the main-to-branch synchronization, verify Agent 3 backend and Agent 4 Part E files remain present, then wait for Head Agent integration review. Do not merge this branch to `main`, edit Part C backend/Studio runtime files, or run npm checks.
 ## 11. Agent 3 — Part C: Database and publishing
 
 **Status:** BLOCKED — inspection only  
