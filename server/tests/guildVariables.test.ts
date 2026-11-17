@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildGuildVariables } from "../src/services/guildVariables.js";
+import {
+  buildGuildScopedVariables,
+  buildGuildVariables,
+  extractReferencedGuildIds,
+} from "../src/services/guildVariables.js";
 
 describe("buildGuildVariables", () => {
   it("exposes scalar Guild fields and preserves the existing icon URL placeholder", () => {
@@ -57,5 +61,62 @@ describe("buildGuildVariables", () => {
     expect(variables["server.icon"]).toBe("");
     expect(variables["server.icon_url"]).toBe("");
     expect(variables["server.splash_url"]).toBe("");
+  });
+});
+
+
+describe("buildGuildScopedVariables", () => {
+  it("namespaces fields by guild ID and exposes target icon/banner URLs", () => {
+    const variables = buildGuildScopedVariables("123456789012345678", {
+      id: "123456789012345678",
+      name: "Other Server",
+      icon: "a_iconHash",
+      banner: "bannerHash",
+    });
+
+    expect(variables["server.123456789012345678.id"]).toBe("123456789012345678");
+    expect(variables["server.123456789012345678.name"]).toBe("Other Server");
+    expect(variables["server.123456789012345678.icon"]).toBe(
+      "https://cdn.discordapp.com/icons/123456789012345678/a_iconHash.gif",
+    );
+    expect(variables["server.123456789012345678.banner"]).toBe(
+      "https://cdn.discordapp.com/banners/123456789012345678/bannerHash.png",
+    );
+    expect(variables["server.123456789012345678.banner_url"]).toBe(
+      variables["server.123456789012345678.banner"],
+    );
+    expect(variables["server.123456789012345678.banner_hash"]).toBe("bannerHash");
+  });
+
+  it("returns an empty banner URL when the target server has no banner", () => {
+    const variables = buildGuildScopedVariables("123456789012345678", {
+      id: "123456789012345678",
+      icon: null,
+      banner: null,
+    });
+
+    expect(variables["server.123456789012345678.icon"]).toBe("");
+    expect(variables["server.123456789012345678.banner"]).toBe("");
+  });
+});
+
+describe("extractReferencedGuildIds", () => {
+  it("finds unique explicit server IDs in nested action configuration", () => {
+    expect(
+      extractReferencedGuildIds({
+        content: "{server.123456789012345678.icon}",
+        embeds: [{ image: "{server.234567890123456789.banner_url}" }],
+        duplicate: "{server.123456789012345678.name}",
+      }),
+    ).toEqual(["123456789012345678", "234567890123456789"]);
+  });
+
+  it("ignores malformed IDs and caps the lookup fan-out at ten guilds", () => {
+    const placeholders = Array.from(
+      { length: 12 },
+      (_, index) => `{server.${String(10000000000000000n + BigInt(index))}.icon}`,
+    ).join(" ");
+
+    expect(extractReferencedGuildIds(`{server.not-a-snowflake.icon} ${placeholders}`)).toHaveLength(10);
   });
 });
