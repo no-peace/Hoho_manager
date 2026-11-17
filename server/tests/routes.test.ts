@@ -38,7 +38,10 @@ vi.mock("../src/services/weaoService.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/services/weaoService.js")>();
   return {
     ...actual,
-    interpolateWeaoPlaceholders: vi.fn().mockImplementation((payload) => Promise.resolve({ payload, modified: false })),
+    interpolateWeaoPlaceholders: vi.fn().mockImplementation((payload) => {
+      const serialized = JSON.stringify(payload).replace(/\\{exploit(?:\\.|:)[^}]+\\}/gi, "Updated");
+      return Promise.resolve({ payload: JSON.parse(serialized), modified: true });
+    }),
     getAllExploits: vi.fn().mockResolvedValue([
       { title: "Delta", version: "1.0.0", updated: "2026-01-01" },
     ]),
