@@ -92,6 +92,8 @@ let inFlightExploitsPromise: Promise<WeaoExploitRecord[]> | null = null;
 const suncCache = new Map<string, { data: WeaoSuncData; fetchedAt: number }>();
 const inFlightSuncPromises = new Map<string, Promise<WeaoSuncData | null>>();
 const CHANGELOG_CACHE_TTL_MS = 15_000;
+const MAX_CHANGELOG_CACHE_ENTRIES = 250;
+const MAX_IN_FLIGHT_CHANGELOGS = 50;
 const changelogCache = new Map<string, { data: unknown[]; fetchedAt: number }>();
 const inFlightChangelogs = new Map<string, Promise<unknown[]>>();
 export const getExploitChangelogComparison = (exploitName: string) =>
@@ -281,9 +283,18 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
   const key = exploitName.trim().toLowerCase();
   if (!key) return [];
   const cached = changelogCache.get(key);
-  if (cached && Date.now() - cached.fetchedAt < CHANGELOG_CACHE_TTL_MS) return cached.data;
+  if (cached && Date.now() - cached.fetchedAt < CHANGELOG_CACHE_TTL_MS) {
+    changelogCache.delete(key);
+    changelogCache.set(key, cached);
+    return cached.data;
+  }
+  if (cached) changelogCache.delete(key);
   const existing = inFlightChangelogs.get(key);
   if (existing) return existing;
+  if (inFlightChangelogs.size >= MAX_IN_FLIGHT_CHANGELOGS) {
+    log.warn("WEAO changelog concurrency limit reached; skipping an uncached lookup");
+    return [];
+  }
 
   const request = (async () => {
     try {
@@ -299,6 +310,15 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
       } : { added: [], removed: [] });
       // Advance the baseline after each successful fetch so comparisons are incremental.
       changelogBaselines.set(key, entries);
+      if (!changelogCache.has(key) && changelogCache.size >= MAX_CHANGELOG_CACHE_ENTRIES) {
+        const oldestKey = changelogCache.keys().next().value;
+        if (oldestKey !== undefined) {
+          changelogCache.delete(oldestKey);
+          changelogBaselines.delete(oldestKey);
+          changelogComparisons.delete(oldestKey);
+        }
+      }
+      changelogCache.delete(key);
       changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
       return entries;
     } catch (error) {
