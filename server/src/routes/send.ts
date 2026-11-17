@@ -630,7 +630,6 @@ router.get(
   attachUser,
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
-    const profileId = parseProfileId(req.query.profileId);
     const token = await discord.resolveBotToken();
     const data = await discord.getBotIdentity(token);
     if (!data || !data.id) return res.json(null);
