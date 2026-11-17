@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -50,7 +50,18 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   const id = embed._id ?? "";
   const active = selection?.kind === "embed" && selection.id === id;
+  const selectedPart = selection?.kind === "embed" && selection.id === id ? selection.part : undefined;
   const used = embedCharCount(embed);
+
+  useEffect(() => {
+    if (!active) return;
+    setIsOpen(true);
+    if (selectedPart === "author") setAuthorOpen(true);
+    if (selectedPart === "title" || selectedPart === "description") setBodyOpen(true);
+    if (selectedPart === "field") setFieldsOpen(true);
+    if (selectedPart === "thumbnail" || selectedPart === "image") setImagesOpen(true);
+    if (selectedPart === "footer" || selectedPart === "timestamp") setFooterOpen(true);
+  }, [active, selectedPart]);
 
   const accentColorHex = embed.color
     ? decimalToHex(embed.color)
@@ -58,6 +69,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
 
   return (
     <div
+      data-editor-target-id={id}
       className={`rounded-[10px] overflow-hidden bg-[#161A23] border transition-[border-color,box-shadow] duration-150 ${
         active ? "border-[#818CF8] shadow-[0_0_0_1px_#818CF8]" : "border-[#1D2230]"
       }`}
