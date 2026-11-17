@@ -196,8 +196,9 @@ Restrictions: Do not implement database/API publishing. Do not edit Part A previ
 
 **Tests added:** Six focused Vitest cases cover accepted schema/normalization, unsupported component/property/motion/ID/version values, dimensions/colors/size limits, unauthorized publishing and spoofed publisher fields, successful publish/read metadata, invalid-pair preservation of the previous published pair, and owner-only publisher grant/revoke. Tests were authored but **not run**, as instructed. No npm checks were run.
 
-**Branch baseline:** `agent/layout-publishing` was fast-forwarded to `main` at `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation. It is currently 8 commits ahead and 0 behind `main`; no push or merge to `main` was performed.
-**Implementation/test head before this status update:** `ecde6c02852bfc5b485175dea857d9c954986b84`.
+**Branch baseline:** `agent/layout-publishing` was fast-forwarded to `main` at `8bcbf952df4598ef14f5aab1e0b1d8e7f8198560` before implementation. The branch diff against `main` contains only the six files listed above. `main` was not modified or merged.
+**Implementation/test head:** `ecde6c02852bfc5b485175dea857d9c954986b84`.
+**Review-status commit:** `ba86e8cc081608ac1dd76859169c69de2cbdea8e`.
 **Remaining work:** Head Agent source review and deferred final verification. Runtime integration requires a separate explicit file-list approval and start signal.
 **Tests executed:** None.
 **Commit SHA:** See implementation/test head above; the current control-file update is a separate commit.
