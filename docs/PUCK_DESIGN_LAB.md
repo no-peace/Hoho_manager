@@ -1,5 +1,7 @@
 # HoHo Manager Studio Layout Designer
 
+> **Current implementation status — 2026-11-18:** The Puck editor, atomic Desktop/Mobile publishing, server validation, owner authorization, client publishing workflow and live Studio runtime are integrated. The Part C wording below is the schema/acceptance contract, not an outstanding implementation task. Source tests exist but have not been executed in this work session. See `docs/GEMINI_HANDOFF_CURRENT.md` and `docs/REPOSITORY_AUDIT_LEDGER.md` for current status.
+
 ## Purpose
 
 The Design Lab at `/design` edits the existing HoHo Manager Studio shell. It is not a blank website builder and does not ask the owner to recreate the product from scratch.
@@ -55,7 +57,7 @@ Official references:
 - Motion settings.
 
 ### Motion
-Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and pulse. Duration and delay are bounded options. These are production-facing settings, not preview-only decoration: Part C must apply them to the corresponding real Studio header, workspace, navigation and panel surfaces. The Design Lab preview and production shell must both respect `prefers-reduced-motion`; when reduction is requested, suppress preset animation and its delay (do not merely shorten it).
+Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and pulse. Duration and delay are bounded options. These are production-facing settings, not preview-only decoration: the live Studio runtime applies them to the corresponding header, workspace, navigation and panel surfaces. The Design Lab preview and production shell must both respect `prefers-reduced-motion`; when reduction is requested, suppress preset animation and its delay (do not merely shorten it).
 
 ## Draft and export behavior
 
@@ -93,7 +95,7 @@ interface AppLayoutNode {
 
 No other keys are allowed at the document, root, node, or component-props level. The root props object must be empty. Every component node has exactly `type` and `props`. Every component props object includes an `id`; IDs match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`, are at most 64 characters, and are globally unique within that responsive document.
 
-The document is JSON-only. Arbitrary HTML, JavaScript, event handlers, CSS strings, selectors, URLs, custom components and unknown properties are rejected. Component `id` values are editor/document identity and validation keys only; Part C must not treat them as caller-controlled production DOM IDs or selectors.
+The document is JSON-only. Arbitrary HTML, JavaScript, event handlers, CSS strings, selectors, URLs, custom components and unknown properties are rejected. Component `id` values are editor/document identity and validation keys only; The production runtime must not treat them as caller-controlled production DOM IDs or selectors.
 
 ### Desktop document
 
@@ -192,11 +194,11 @@ All panels require:
 - Export remains the portable backup. Import/export always carries both responsive documents so an older half-pair cannot silently overwrite one mode.
 - Do not clear this draft namespace as part of theme cache cleanup.
 
-## Runtime contract for Part C
+## Runtime contract for the production Studio
 
 Part C must treat the Desktop/Mobile pair as one atomic published configuration, with a schema version of `1`. Server validation must independently implement the same allowlists and constraints above; client validation is not an authorization or security boundary.
 
-The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object. The resolved object is the explicit production contract; Part C must consume these resolved fields rather than reading arbitrary Puck props at runtime.
+The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It validates both documents before returning a resolved object. The resolved object is the explicit production contract; The production runtime consumes these resolved fields rather than reading arbitrary Puck props at runtime.
 
 - `desktop`: header dimensions/colors plus `headerMotion`; workbench split, inspector geometry, order, gap, border and `workspaceMotion`; each panel's background, padding, radius and label (`editorLabel`, `previewLabel`, `inspectorLabel`); `showToolbar` for the Desktop Editor; and `editorMotion`, `previewMotion`, `inspectorMotion`.
 - `mobile`: header dimensions/colors plus `headerMotion`; default pane, inspector-preview visibility/height, workspace spacing and `workspaceMotion`; each panel's background, independent `editorPadding`/`previewPadding`/`inspectorPadding`, radius and label; Mobile Editor `showToolbar`; `editorMotion`, `previewMotion`, `inspectorMotion`; navigation dimensions/colors/order/label visibility/active state and resolved tab labels; and `navMotion`.
@@ -204,9 +206,9 @@ The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It valid
 - `showToolbar` is a boolean resolved independently for Desktop and Mobile from the corresponding `EditorPanel`.
 - Panel labels are trimmed, validated text (1–48 characters, no control characters) and are resolved independently for Desktop and Mobile.
 
-`getAppLayoutCssVariables(resolved)` maps the CSS-supported dimensions, colors, panel geometry and positioning to the existing `--hoho-layout-*` custom properties. Mobile Editor, Preview and Inspector padding are exposed independently as `--hoho-layout-mobile-editor-padding`, `--hoho-layout-mobile-preview-padding` and `--hoho-layout-mobile-inspector-padding`, each with pixel units; the workspace-level `--hoho-layout-mobile-panel-padding` remains a separate setting. Motion is intentionally exposed as typed values rather than arbitrary CSS. Part C must map each preset through a fixed, code-owned animation/class allowlist and apply the validated duration and delay as bounded timing values; never pass a document-provided CSS string or selector to the DOM. Panel and navigation labels must be assigned as text content, and selected-tab state as a fixed class/state. Do not interpolate labels into CSS or HTML.
+`getAppLayoutCssVariables(resolved)` maps the CSS-supported dimensions, colors, panel geometry and positioning to the existing `--hoho-layout-*` custom properties. Desktop `editorRatio` is passed directly to `SplitPane.initialRatio`, not represented as a CSS variable. Mobile Editor, Preview and Inspector padding are exposed independently as `--hoho-layout-mobile-editor-padding`, `--hoho-layout-mobile-preview-padding` and `--hoho-layout-mobile-inspector-padding`, each with pixel units; the workspace-level `--hoho-layout-mobile-panel-padding` remains a separate setting. Motion is intentionally exposed as typed values rather than arbitrary CSS. The production runtime maps each preset through a fixed, code-owned animation/class allowlist and apply the validated duration and delay as bounded timing values; never pass a document-provided CSS string or selector to the DOM. Panel and navigation labels must be assigned as text content, and selected-tab state as a fixed class/state. Do not interpolate labels into CSS or HTML.
 
-### Required production application by Part C
+### Required production application in the live Studio
 
 | Resolved setting | Required real Studio behavior |
 |---|---|
@@ -223,7 +225,7 @@ The current client resolver is `resolveAppLayoutData(desktop, mobile)`. It valid
 
 For reduced motion, Part C must detect `prefers-reduced-motion: reduce` in the production shell and disable the configured entrance/loop animation and delay for every motion-bearing region. This override takes precedence over the published motion values. The preview must use the same reduced-motion policy.
 
-Part C must:
+The production implementation must:
 1. Validate Desktop and Mobile fully before any write.
 2. Persist both documents in one versioned record, with publisher identity and timestamps as required by Part C.
 3. Commit both or neither; never publish a partial responsive pair.
@@ -231,19 +233,22 @@ Part C must:
 5. Apply only the resolved allowlisted values to the real Studio shell as specified above. Never render Puck documents as arbitrary production markup and never mount a second Studio instance for preview.
 6. Keep local drafts distinct from published server state. The local draft namespace is not a publish store.
 
-The following settings are explicitly Design Lab preview-only and are not part of the production behavior contract: Mobile `showInspector` (whether the preview draws the inspector bottom sheet) and Mobile `activeTab` (which navigation item is highlighted in the preview). They must not remove the production inspector or force the live app's currently selected pane/tab. Component `id` values are also not production DOM IDs. Preview-only settings must not dispatch messages, mutate message state, or trigger Discord operations. Mobile tab labels, tab order, navigation sizing/colors, and label visibility are production settings and must be applied to the real navigation.
+The following settings are explicitly Design Lab preview-only and are not part of the production behavior contract: Mobile `showInspector` and `inspectorHeight` (whether the preview draws an inspector bottom sheet and how tall it is), and Mobile `activeTab` (which navigation item is highlighted in the preview). They are validated and persisted in the Puck document for preview fidelity, but are deliberately excluded from the production `ResolvedAppLayout` object and runtime CSS variables. They must not remove the production inspector or force the live app's selected pane or navigation state. Component `id` values are also not production DOM IDs. Preview-only settings must not dispatch messages, mutate message state, or trigger Discord operations. Mobile tab labels, tab order, navigation sizing/colors, and label visibility are production settings and are applied to the real navigation.
 
 ## Publishing and runtime integration status
 
-The current editor batch provides the two responsive Puck documents, starter values, local draft recovery, import/export and preview. The next implementation batch connects these documents to the production layout API and the actual Studio runtime:
+The following implementation is present in the current branch:
 
-1. Add an atomic database record for Desktop and Mobile.
-2. Validate both documents server-side before writing.
-3. Add owner-only publish and public read endpoints.
-4. Apply resolved layout values to the actual Header, SplitPane, mobile navigation and PropertyPanel.
-5. Keep built-in current-layout defaults as fallback if the database record is missing or invalid.
+1. Forward-only migration 015 stores the complete Desktop/Mobile pair in one authoritative row.
+2. Server validation independently enforces document/component/property allowlists, bounded dimensions/colors/motion, unique IDs and the combined size limit before persistence.
+3. The publish endpoint checks the authorized publisher identity from the verified session and writes both documents atomically.
+4. The public read endpoint and client API expose the published pair; missing or invalid data falls back to built-in defaults.
+5. The Studio runtime consumes resolved values for header, split ratio, workspace/panel sizing and surfaces, labels, toolbar visibility, inspector positioning, mobile default pane/navigation and motion.
+6. Local drafts remain distinct from server-published state. Publishing requires explicit confirmation and reports the server result.
 
-Do not treat a local draft as a published server layout. Publishing is complete only after the database write and the live app consumes the returned configuration.
+Preview-only settings (`showInspector`, `inspectorHeight`, and `activeTab`) remain in the editor document for preview rendering but are excluded from the production resolved runtime contract.
+
+**Verification status:** source tests are present, but typecheck, test suite, build, browser QA, Lighthouse, live database migration and production deployment have not been executed/verified in this work session.
 
 ## Verification
 
