@@ -23,7 +23,7 @@ export interface BotEnv {
 
 export const env: BotEnv = Object.freeze({
   nodeEnv,
-  isProd: nodeEnv === "production",
+  isProd: nodeEnv !== "development" && nodeEnv !== "test",
   token: str("DISCORD_BOT_TOKEN"),
   apiBaseUrl: str("API_BASE_URL", `http://127.0.0.1:${activePort}`).replace(/\/$/, ""),
   adminApiKey: str("ADMIN_API_KEY", "dev-admin-key"),
