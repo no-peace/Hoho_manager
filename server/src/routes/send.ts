@@ -10,7 +10,7 @@ import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
 import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
-import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
+import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const router = Router();
 const log = logger.child("send");
@@ -98,8 +98,7 @@ router.post(
     ) {
       throw ApiError.badRequest("Custom bot profiles are disabled. Use the configured server bot.");
     }
-    const profileId: number | null = null;
-    const staffCtx = req.staffContext;
+        const staffCtx = req.staffContext;
     const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
     const requestedAuthorId =
       typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
@@ -205,7 +204,7 @@ router.post(
       let senderMember: any = null;
       if (targetGuildId && senderDiscordId) {
         try {
-          const botToken = await discord.resolveBotToken(profileId);
+          const botToken = await discord.resolveBotToken();
           senderMember = await discord.getGuildMember(targetGuildId, senderDiscordId, botToken);
         } catch {
           senderMember = null;
@@ -265,7 +264,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         const aRes = await resolveAuthorPlaceholders(
           weaoInterpolated,
           null,
-          profileId,
           targetGuildId,
         );
         authorResolved = aRes.payload;
@@ -442,7 +440,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         throw ApiError.forbidden("You do not have permission to perform: edit");
       }
       const sent = await discord.editChannelMessage(destinationChannelId, editMessageId, firstMessage, {
-        profileId,
         files,
       });
       await registerMessageFlows(sent);
@@ -455,7 +452,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       for (let i = 0; i < finalMessages.length; i++) {
         const msg = finalMessages[i];
         const sent = await discord.sendChannelMessage(destinationChannelId, msg, {
-          profileId,
           files: i === 0 ? files : [],
         });
         await registerMessageFlows(sent);
@@ -494,7 +490,6 @@ router.get(
   attachUser,
   requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
-    const profileId = parseProfileId(req.query.profileId);
     const staffCtx = req.staffContext;
 
     if (profileId === null && !staffCtx?.isAdmin && !staffCtx?.record) {
@@ -506,7 +501,7 @@ router.get(
         ? req.query.guildId.trim()
         : undefined;
 
-    const botGuilds = await discord.getBotGuilds(profileId);
+    const botGuilds = await discord.getBotGuilds();
     let availableGuilds = botGuilds;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
       let allowedGuilds: string[] = [];
@@ -528,7 +523,7 @@ router.get(
     const targetGuildId = queryGuildId ?? availableGuilds[0]?.id;
     if (!targetGuildId) return res.json([]);
 
-    const channels = await discord.getGuildChannels(targetGuildId, profileId);
+    const channels = await discord.getGuildChannels(targetGuildId);
 
     let filteredChannels = channels;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
@@ -571,7 +566,7 @@ router.get(
     const me = await discord.getBotIdentity(token);
     if (!me?.id) return res.json([]);
 
-    const messages = await discord.getChannelMessages(channelId, profileId);
+    const messages = await discord.getChannelMessages(channelId);
 
     const botMessages = messages
       .filter(
@@ -614,7 +609,7 @@ router.get(
 
     let found: discord.DiscordMessageRecord | null = null;
     try {
-      found = await discord.getChannelMessage(channelId, messageId, profileId);
+      found = await discord.getChannelMessage(channelId, messageId);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         throw ApiError.notFound("Message not found in that channel (check bot permissions)");
