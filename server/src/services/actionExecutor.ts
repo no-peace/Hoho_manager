@@ -206,9 +206,12 @@ export const executeCustomId = async (
     const referencedGuildIds = extractReferencedGuildIds(steps);
     await Promise.all(
       referencedGuildIds.map(async (referencedGuildId) => {
-        const referencedGuild = await discord
-          .getGuild(referencedGuildId, botToken)
-          .catch(() => null);
+        // Prefer the full Guild resource for bot-member servers. If the bot
+        // is not a member, Discord may still expose a public Preview for
+        // discoverable guilds; non-discoverable guilds remain inaccessible.
+        const referencedGuild =
+          (await discord.getGuild(referencedGuildId, botToken).catch(() => null)) ??
+          (await discord.getGuildPreview(referencedGuildId, botToken).catch(() => null));
         if (referencedGuild) {
           Object.assign(
             variables,
