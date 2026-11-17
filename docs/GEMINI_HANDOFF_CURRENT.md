@@ -4,7 +4,8 @@
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Current HEAD: `65878192c036ae8a35d1e1c03d37b5ce92173d85` — `feat(studio): integrate responsive runtime and security hardening`.
+- Implementation source head audited: `65878192c036ae8a35d1e1c03d37b5ce92173d85` — `feat(studio): integrate responsive runtime and security hardening`.
+- Documentation-only reconciliation commits were then added for this handoff, `docs/AGENTS.md` and this master plan; the latest repository HEAD is the newest documentation commit in `git log` (the handoff update itself creates a new documentation commit).
 - Recursive Git tree: 418 entries, 356 files and 62 directories (not truncated): client 159, server 133, bot 23, shared 10, docs 7, remainder root/infrastructure.
 - Last checked: only `main` branch remains and no PRs are open. The owner manually deleted the former working branches.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a code defect.
