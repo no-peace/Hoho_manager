@@ -154,23 +154,34 @@ Restrictions: Do not edit Puck Design Lab files or Part C publishing files. Coor
 
 ## 10. Agent 2 — Part B: Responsive Design Lab
 
-**Status:** IN PROGRESS — architecture correction authorized; implementation underway  
+**Status:** REVIEW REQUIRED — production contract correction committed; awaiting Head Agent review  
 **Branch:** `agent/responsive-design-lab`  
-**Scope:** Part B only. Reconcile every editable Puck property with the resolved production contract and Part C runtime handoff.  
+**Scope:** Part B only. Completed the requested reconciliation between editable Puck properties, `ResolvedAppLayout`, and the Part C runtime contract. No Part C implementation.  
 **Current batch:** B3 — production contract completeness for motion, panel labels and editor toolbar visibility  
-**Files claimed / in progress:**
+**Files changed:**
 - `client/src/utils/puckAppLayout.ts`
 - `client/src/utils/__tests__/puckAppLayout.test.ts`
 - `docs/PUCK_DESIGN_LAB.md`
 - `docs/AGENTS.md` (this Agent 2 status section only)
 
-**Architecture decision:** Motion presets/timing, Editor/Preview/Inspector panel labels, and `EditorPanel.showToolbar` are production-facing settings. The resolver will expose them separately for Desktop and Mobile. Part C must apply them to the real shell and preserve reduced-motion behavior. The Mobile inspector visibility and active navigation tab remain preview-only settings.
-**Files changed:** None yet in this batch.  
-**Tests executed:** None. The user explicitly deferred npm checks to final verification.  
-**Commit SHA:** Pending.  
-**Remaining work:** Complete the typed resolved contract, resolution, regression assertions and exact Part C application documentation; commit and submit for review.  
-**Risks / blockers:** No npm checks are to be run in this batch.  
-**Next action:** Complete B3, mark REVIEW REQUIRED and wait for Head Agent approval. Do not implement Part C, edit Agent 1 files or shared Studio runtime files, or merge to `main`.
+**Architecture decisions:**
+- **Production-facing:** Animation preset/duration/delay for Desktop and Mobile headers, workspaces, panels and Mobile navigation. `ResolvedAppLayout` exposes typed `{ animation, duration, delay }` objects for each region. The Part C contract requires a fixed code-owned preset mapping and a `prefers-reduced-motion: reduce` override that suppresses animation and delay.
+- **Production-facing:** Editor, Preview and Inspector panel labels are resolved independently for Desktop and Mobile and must be rendered as text in the real panel headings.
+- **Production-facing:** `EditorPanel.showToolbar` resolves to a separate Desktop and Mobile boolean and controls only the real editor toolbar at that breakpoint.
+- **Production-facing:** Mobile `defaultPane`, navigation sizing/order/colors, label visibility and Editor/Preview/Dispatch tab labels. Tab labels must be text; accessible names must remain when visual labels are hidden.
+- **Preview-only:** Mobile `showInspector` (preview bottom-sheet visibility) and `activeTab` (preview selected-tab highlight). Component IDs are validation/document identity only, not production DOM IDs.
+- `getAppLayoutCssVariables` remains scoped to CSS dimensions/colors/geometry; Part C applies motion through allowlisted code-owned classes/timing and labels through text content, not document-provided CSS/HTML.
+
+**Validation/resolution:** Existing strict validation already checks every motion preset, duration and delay against fixed enums, validates all panel labels (1–48 trimmed characters, no control characters), and validates `showToolbar` as `show | hide` (with legacy boolean normalization). Resolver now exposes each validated value for both breakpoints.  
+**Regression coverage added:** Focused assertions cover all resolved motion regions, all three panel labels at both breakpoints, independent toolbar visibility, and mobile navigation motion.  
+**Tests executed:** None. Per the Head Agent/user instruction, npm checks are deferred to final verification; no test/typecheck/build result is claimed.  
+**Commit SHA:** Pending this status update; implementation commits in this batch:
+- `c6e3ab251f755f4f134e928e79068e1223dbbd2b` — resolved production motion, labels and toolbar values.
+- `9d647bf8d1ab5388821d7e2f656981f8e8e01c04` — expanded resolved-contract regression assertions.
+- `8c608557a3a659fa1fcc65b56787c338eb47ae7c` — reconciled production vs preview-only documentation and Part C application requirements.
+**Remaining work:** Head Agent review/approval. Part C must implement the documented runtime application; Agent 2 has not edited production Studio runtime files.  
+**Risks / blockers:** npm checks are intentionally deferred to final verification. Runtime animation and toolbar application remain Part C work.  
+**Next action:** Wait for Head Agent review. Do not implement Part C, edit Agent 1 files/shared Studio runtime, or merge to `main`.
 
 Restrictions: Do not implement database/API publishing. Do not edit Part A preview/editor regression files or shared Studio runtime files without Head Agent approval.
 ## 11. Agent 3 — Part C: Database and publishing
