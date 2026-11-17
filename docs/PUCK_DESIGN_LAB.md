@@ -1,80 +1,90 @@
-# HoHo Manager Design Lab and Theme System
+# HoHo Manager Studio Layout Designer
 
-HoHo Manager has two separate appearance layers: the **server theme** and each signed-in user's **personal theme**.
+## Purpose
 
-## Theme settings
+The Design Lab at `/design` edits the existing HoHo Manager Studio shell. It is not a blank website builder and does not ask the owner to recreate the product from scratch.
 
-Appearance & Themes remains available to signed-in users. The owner-only Design Lab link is inside the authenticated profile dropdown (not the top bar); /design remains protected by the existing server-side access check.
+The editor starts with values mapped from the current Studio implementation:
 
-### Server theme (owner only)
+- Desktop header: 56 px, 16 px horizontal inset, 32 px logo.
+- Desktop workbench: editor first, live preview second, 50/50 initial split, 6 px splitter gap, 440 px inspector overlay on the right.
+- Mobile header: 56 px, compact 12 px inset, 28 px logo.
+- Mobile workbench: editor is the default pane; Editor and Preview are separate tabs.
+- Mobile bottom navigation: 60 px, editor tab first, preview tab second, Dispatch remains present.
+- Current editor, preview and inspector surfaces use the existing HoHo Manager dark palette.
 
-- The server theme is stored in the production database table server_theme_settings.
-- Only Discord IDs listed in OWNER_DISCORD_IDS can publish or edit it. Local Developer admin access is retained in non-production.
-- Publishing from the Theme Settings modal writes the validated token set directly to the database. It does not require a Git commit, redeploy, or local file export.
-- All website visitors receive the current server theme from GET /api/design/default.
-- Open tabs refresh the server theme when they regain focus or become visible. The endpoint uses a short 30-second public cache.
-- The owner can publish their current editor values or copy any published community theme to the server.
-- Existing checked-in CSS/theme tokens remain the safe initial fallback if the database/API is unavailable.
+Desktop and Mobile are separate Puck documents. Changing the Desktop document does not overwrite Mobile, and vice versa.
 
-### Personal themes
+## Puck 0.24 integration
 
-- Every authenticated user can open Theme Settings, edit colors/radius/font, preview the result, and apply it privately.
-- Save privately stores named private theme presets in browser localStorage and immediately downloads a portable `.hoho-theme.json` file. Presets are not database writes and are not visible to other users. Each preset can be exported again or imported from its file.
-- The private theme library is keyed by Discord user ID and does not expire. The active theme selection remains a separate 14-day session cache. Older private-library records with an expiry field are migrated without deleting the saved presets. Downloaded `.hoho-theme.json` files remain available even if browser storage is cleared.
-- Personal cache is not refreshed merely by changing browser tabs.
-- The selected personal theme overrides the server theme only in that user's browser. Reset to server removes the local override.
+The repository installs `@puckeditor/core@0.24.x`. The Design Lab uses the Puck 0.24 APIs:
 
-### Community theme gallery
+- `renderFields` with `FieldTab` and card-style `FieldGroup` for a readable inspector.
+- Slot fields with explicit `allow` lists for the fixed Editor, Preview and Inspector panels.
+- Number, text, radio and select fields with bounded options.
+- Global permissions disable insertion, deletion, duplication and drag. The shell structure remains protected; owners customize layout using explicit fields such as split ratio, inspector width/side, panel order, spacing, surfaces and navigation order.
+- `dnd.behavior = "static"`, `disableAutoScroll`, and `disableOutlineDrag` avoid unnecessary layout movement in this fixed-structure editor.
+- Dedicated 1440 px Desktop and 390 px Mobile viewports. The Puck iframe waits for and synchronizes the host styles so the preview uses the same scoped layout CSS.
+- The editor and Puck stylesheet remain lazy-loaded with the `/design` route.
 
-- Share with community publishes a validated theme definition to design_themes. This shared registry is required for other users to discover and copy a theme.
-- The gallery is available to all signed-in users. Regular users see published themes plus their own private legacy themes. The owner can inspect all users' themes, including older private Design Lab themes.
-- A user can edit/delete only their own published theme. Copy/edit creates a new draft owned by the current user.
-- The owner can inspect all users' themes and choose Make server theme to copy a selected theme's token set into server_theme_settings.
-- The registry stores reusable theme definitions, not each user's active selection or private draft cache.
+Official references:
 
-## Validation and safety
+- Puck 0.24 release: https://puckeditor.com/blog/puck-024
+- Puck component configuration: https://puckeditor.com/docs/api-reference/configuration/component-config
+- Field grouping and tabs: https://puckeditor.com/docs/integrating-puck/field-grouping
+- Slot fields and allowlists: https://puckeditor.com/docs/api-reference/fields/slot
+- Puck permissions: https://puckeditor.com/docs/api-reference/permissions
+- Puck viewport and iframe options: https://puckeditor.com/docs/api-reference/components/puck
+- Puck global theming tokens: https://puckeditor.com/docs/extending-puck/theming
 
-Themes are restricted to a fixed token schema: eight six-digit HEX colors, a supported radius, and one of the supported font families. Server-side validation is authoritative and client-side validation provides immediate feedback.
+## Editable regions
 
-- Primary text must meet WCAG AA 4.5:1 contrast against the app background and panel.
-- Muted text must meet at least 3:1 contrast against the app background and panel.
-- No arbitrary CSS, selectors, HTML, scripts, layout definitions, or component structure are accepted by the theme API.
-- Theme tokens only change visual CSS variables (colors, font family and radius). They cannot remove, hide, replace, or reorder application controls such as the Send button.
-- The Puck document remains a separate owner-only design artifact and is not used as a theme payload for the community gallery. Design Lab now loads the current server theme as its starter palette, exposes page-level brand controls and per-block entrance animation/duration/delay fields, and uses Puck's documented CSS design tokens to style the editor panels and fields.
-- Server endpoints never return process.env, .env files, OAuth credentials, bot tokens, database credentials, or server configuration.
+### Desktop
+- Header height, horizontal inset, logo size, background, border and motion.
+- Editor/Preview width ratio, order and gap.
+- Inspector overlay width and side.
+- Editor, Preview and Inspector surface, padding, radius and label.
+- Entrance motion and timing for the header, workspace and panels.
 
-## Persistence and deployment
+### Mobile
+- Header height, horizontal inset, logo size, background and border.
+- Default Editor or Preview pane.
+- Workspace spacing and panel padding.
+- Inspector bottom-sheet preview visibility and height. This only controls the Design Lab preview; it does not remove the production inspector from the live application.
+- Editor/Preview bottom-tab order, navigation height, horizontal inset, background, active accent and labels.
+- Motion settings.
 
-Migration 014_community_and_server_themes adds the public registry flag and server_theme_settings table. The existing migration runner applies it automatically on server startup. Existing Design Lab themes remain private by default; newly shared themes are public.
+### Motion
+Safe presets: none, fade, fade-up, slide-left, slide-right, zoom-in, float and pulse. Duration and delay are bounded options. The preview and production shell must respect `prefers-reduced-motion`.
 
-For Render, configure OWNER_DISCORD_IDS in the server environment. After the code is deployed and the migration has run, the owner can change the server theme directly from the hosted website. No redeploy is needed for later theme changes.
+## Draft and export behavior
 
-## Performance
+- Changes are saved to a user-specific local draft after a 450 ms debounce; no server write occurs per field change.
+- Import/export uses a versioned `hoho-app-layout.json` file containing both Desktop and Mobile documents.
+- Imported documents are checked for the expected shell sections, unique component IDs, and the allowed component types before they are accepted.
+- Error recovery must preserve `hoho:app-layout-draft:v1:*` and `hoho:user-theme-library:v1:*` local records.
+- A portable JSON export is the backup if browser storage is unavailable or cleared.
 
-- The gallery is loaded only when the user opens Theme Settings; it is not part of the initial page render.
-- The Theme Settings component is lazy-loaded from the header.
-- The server default endpoint is small and cacheable for 30 seconds.
-- Personal theme application is local and does not add a database request to normal app navigation beyond the existing default-theme fetch.
-- The app refreshes the server theme on tab focus/visibility, not through a continuously running polling loop.
+## Publishing and runtime integration status
 
-## Logo alternative text
+The current editor batch provides the two responsive Puck documents, starter values, local draft recovery, import/export and preview. The next implementation batch connects these documents to the production layout API and the actual Studio runtime:
 
-The HoHo Manager logo image uses descriptive alternative text in the shared logo component, header, and not-found page. The loading-screen logo is also labelled as the HoHo Manager logo.
+1. Add an atomic database record for Desktop and Mobile.
+2. Validate both documents server-side before writing.
+3. Add owner-only publish and public read endpoints.
+4. Apply resolved layout values to the actual Header, SplitPane, mobile navigation and PropertyPanel.
+5. Keep built-in current-layout defaults as fallback if the database record is missing or invalid.
+
+Do not treat a local draft as a published server layout. Publishing is complete only after the database write and the live app consumes the returned configuration.
 
 ## Verification
 
-Run from the repository root:
-- npm run typecheck
-- npm test
-- npm run build
+After implementation, run:
 
-Then run the existing mobile and desktop Lighthouse configurations. Do not treat the change as verified until these checks have been run against the deployed/current environment.
+```bash
+npm run typecheck
+npm test
+npm run build
+```
 
-
-## Design Lab editor experience
-
-- The Design Lab entry is located in the profile dropdown for accounts with Design Lab permission; it is removed from the top navigation row.
-- The Puck editor chrome uses the documented `--puck-*` theme tokens for dark surfaces, high-contrast text, readable fields, focus rings, responsive sidebars, and selection states.
-- The starter page is HoHo Manager-branded (Message Studio, Live Preview, and Interaction Builder) and uses HoHo Manager's current dark palette and the current server theme is loaded when the editor opens. The page root exposes background, content width, base text, accent, card surface, font family, and global corner radius. Heading and paragraph blocks expose type scale, weight, line-height, alignment, and readable width; buttons expose custom colors/radius; feature cards expose surface, border, radius, padding, and shadow controls.
-- Every visual block exposes entrance animation, duration, and delay controls. Supported motion presets are fade, fade-up, slide-left/right, zoom, float, and pulse; reduced-motion preferences disable those animations.
-- The editor retains Puck's drag-and-drop, outline, inspector, and desktop/tablet/mobile viewport tools. No application control tree or live production dashboard controls are modified by this page builder.
+Then verify owner and allowed-user access, Desktop and Mobile editing, local draft recovery, import/export, server publication, live runtime refresh, and desktop/mobile browser layouts. Run Lighthouse after the runtime work is complete. Record only checks actually executed against the final commit.

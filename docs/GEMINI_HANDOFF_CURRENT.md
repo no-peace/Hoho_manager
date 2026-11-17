@@ -1,3 +1,19 @@
+## Batch C — responsive Studio layout editor (implementation prepared for commit)
+
+- Replaced the old generic marketing-page Puck starter with two independent Puck documents: Desktop and Mobile. Each mode has its own editor viewport and local draft.
+- Starter values are mapped from the existing Studio source: 56 px header, desktop 50/50 editor/preview split, 440 px inspector overlay, mobile Editor default pane, 60 px bottom navigation, and the existing editor/preview/inspector surfaces.
+- The preview models the real Studio shell and its Editor, Live Preview, Inspector and navigation regions. It intentionally uses representative panel content rather than mounting a second live Studio instance inside Puck; duplicating the message editor, preview, store subscriptions and event handlers would increase CPU/memory use and risk changing the user's live message state while editing. Batch D connects the same layout values to the real application shell.
+- Puck 0.24 integration uses `renderFields`, `FieldTab`, `FieldGroup variant="card"`, allowlisted slot fields, fixed component permissions, static DnD, a 1440 px Desktop viewport, a 390 px Mobile viewport, and explicit iframe style synchronization.
+- Desktop controls include header sizing/colors, editor ratio, panel order, inspector width/side, workspace gap, per-panel surfaces/padding/radius, and safe motion presets. Mobile controls include header sizing/colors, default pane, workspace spacing, optional inspector bottom-sheet preview, tab order, bottom-nav dimensions/colors/labels, and motion.
+- The fixed shell cannot be deleted, duplicated, inserted or dragged. The panel order and dimensions are controlled through fields so critical message/editor/preview/dispatch controls are not accidentally removed.
+- Local draft writes are debounced by 450 ms and keyed per signed-in user. Export/import uses a versioned `hoho-app-layout.json` file containing both responsive documents. Client validation checks the required shell regions, panel set, component allowlist and unique IDs.
+- Error recovery now preserves both private theme-library records and the new app-layout draft keys.
+- The editor page uses Puck's documented `iframe.syncHostStyles` and `waitForStyles` options so the canvas receives the same layout styles without an unstyled flash.
+- Added `puckAppLayout.test.ts` for current defaults, independent desktop/mobile state, safe value clamping, malformed/duplicate document rejection, optional Puck root props, and per-user draft persistence. Tests are authored but not executed in this environment.
+- **Not yet complete:** no production layout API or database migration exists in this batch; the editor saves local drafts and exports files. Batch D must add owner-only atomic publishing and wire the resolved values into the real Studio header, split pane, inspector and mobile navigation.
+- Files in this batch: `DesignLabPage.tsx`, `appLayoutConfig.tsx`, `defaultAppLayouts.ts`, `puckAppLayout.ts`, `app-layout-preview.css`, `layout-lab.css`, `ErrorBoundary.tsx`, `puckAppLayout.test.ts`, and `PUCK_DESIGN_LAB.md`.
+- Verification remains source/static review only. The local Terminal MCP endpoint is still unavailable (404); do not claim npm or browser checks passed on these changes.
+
 ## Current repair program — batch ledger (2026-11-17)
 
 - **Verified baseline:** `c3cd6ad78ab7275bf786431b64db76ffe3c72903`.
