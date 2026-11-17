@@ -17,7 +17,6 @@ const getGlobalFallback = (): SettingsRecord => ({
   guild_id: "__global__",
   log_channel_id: env.logChannelId ?? null,
   head_admin_ids: [...env.ownerDiscordIds],
-  bot_profile_id: null,
   extra_settings: {},
   created_at: 0,
   updated_at: 0,
