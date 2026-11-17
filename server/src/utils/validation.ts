@@ -6,7 +6,6 @@ import {
   Limits,
   MessageFlags,
   SNOWFLAKE_REGEX,
-  WEBHOOK_URL_REGEX,
 } from "@dmb/shared";
 import type { DiscordMessagePayload, FlowRegistration } from "@dmb/shared";
 import { ApiError } from "./errors.js";
@@ -33,18 +32,6 @@ export const isHttpUrl = (value: unknown): boolean => {
   } catch {
     return false;
   }
-};
-
-export interface ParsedWebhookUrl {
-  id: string;
-  token: string;
-}
-
-/** Extract `{ id, token }` from a valid Discord webhook URL, else `null`. */
-export const parseWebhookUrl = (value: unknown): ParsedWebhookUrl | null => {
-  const match = typeof value === "string" ? value.match(WEBHOOK_URL_REGEX) : null;
-  const [, id, token] = match ?? [];
-  return id && token ? { id, token } : null;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
