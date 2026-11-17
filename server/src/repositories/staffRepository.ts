@@ -67,8 +67,6 @@ export const staffRepository = {
     can_mention_roles?: number;
     allowed_role_mention_ids?: string;
     max_messages_per_hour?: number;
-    can_use_webhooks?: number;
-    can_override_profile?: number;
     can_attach_files?: number;
     can_use_components_v2?: number;
     can_use_weao_exploits?: number;
