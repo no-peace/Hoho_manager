@@ -51,11 +51,13 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const effectiveGuildId = propGuildId || selectedGuildId;
 
-  // Cache store with direct 1:1 state property selectors
-  const channels = useDiscordCacheStore((state) => state.channels);
-  const roles = useDiscordCacheStore((state) => state.roles);
-  const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
-  const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
+  // Scope cache subscriptions to the guild displayed by this picker.
+  const guildChannels = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.channels[effectiveGuildId] ?? EMPTY_CHANNELS : EMPTY_CHANNELS,
+  );
+  const guildRoles = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.roles[effectiveGuildId] ?? EMPTY_ROLES : EMPTY_ROLES,
+  );
   const currentUser = useGlobalStore((state) => state.currentUser);
 
   const isUnrestrictedMentions = Boolean(currentUser?.isAdmin);
@@ -77,8 +79,9 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
   const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
   const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
-  const emojisMap = useDiscordCacheStore((state) => state.emojis);
-  const serverEmojis: CustomEmoji[] = (effectiveGuildId && emojisMap[effectiveGuildId]) || [];
+  const serverEmojis: CustomEmoji[] = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.emojis[effectiveGuildId] : undefined,
+  ) ?? [];
 
   const [customSavedEmojis, setCustomSavedEmojis] = useState<CustomEmoji[]>(() => {
     try {
