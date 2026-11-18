@@ -1808,3 +1808,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed `server/tests/variableInterpolation.test.ts` and `server/tests/interactionMemory.test.ts`. Other server test inventory items remain pending in `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - Audit ledger updated in `449134f`. Client source/test review count is 46/162; server source/test review count is 120/142. These are source-inspection counts, not execution/verification results.
 - **Verification not performed:** no tests, typecheck, build, browser profiler capture, benchmark, Lighthouse, database query plan, deployment or live service verification. GitHub Actions remain disabled by owner instruction.
+
+
+## Additional editor cache-subscription audit — Batch F21 (2026-11-18)
+
+- **Implementation commits:** `e3ce40f` scopes DiscohookComponentsEditor to `componentsOverride` when supplied; `5a7a5a0` scopes LayersPanel to `data.components`; `acd7edf`, `b329db7`, and `a5140e3` scope MentionInput channel/role/emoji subscriptions to the active guild; `58a7676` does the same for RichPicker. Follow-up commits `543bea0`, `5630935`, and `65a1288` keep empty fallback arrays stable.
+- **Regression tests added:** `client/src/components/editor/__tests__/DiscohookComponentsEditor.test.tsx`, `LayersPanel.test.tsx`, and `RichPicker.test.tsx`; `DiscordMentionInput.test.tsx` now also checks that unrelated-guild cache updates do not rerender the mention input.
+- Important missed edge found after F20: `DiscohookComponentsEditor` was still subscribing to `state.data` even when its parent supplied a message-specific `componentsOverride`. This meant an inactive message's nested component editor could rerender on edits to the active message. The selector now returns the supplied override and only reads active message components when no override is passed.
+- LayersPanel now avoids rerenders for content-only edits when its component tree is unchanged. MentionInput and RichPicker now avoid rerenders when another guild's channel, role or emoji cache changes.
+- No request cancellation, list virtualization, broad memoization, or algorithm rewrites were made; no profiling evidence justified them. Existing debounce and bounded suggestion rendering remain intact.
+- Audit ledger updated in `1b4aed2`. Client source/test review count is 57/165 (source inspection; tests not executed). Server count remains 120/142.
+- **Verification not performed:** no tests, typecheck, build, React Profiler browser capture, benchmark, browser QA, Lighthouse, or live API profiling. GitHub Actions remain disabled by owner instruction.
