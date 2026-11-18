@@ -42,27 +42,6 @@ export const StudioLayout: React.FC = () => {
     if (!wrapper) return;
     return initializeEditorLenis(wrapper);
   }, []);
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      const state = useMessageStore.getState();
-      const messages = [state.data, ...state.messages];
-      const hasUnsavedWork =
-        state.attachedFiles.length > 0 ||
-        messages.some(
-          (message) =>
-            Boolean(message.content?.trim()) ||
-            (message.embeds?.length ?? 0) > 0 ||
-            (message.components?.length ?? 0) > 0,
-        );
-
-      if (!hasUnsavedWork) return;
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   const isMobileWorkspace = () => window.matchMedia("(max-width: 1199px)").matches;
 
@@ -235,11 +214,11 @@ export const StudioLayout: React.FC = () => {
                     className="mt-2 pb-4"
                   >
                     <div className="space-y-2">
-                      <button type="button" onClick={() => addMessage({ flags: 0 })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#1D2230] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
-                        <div className="shrink-0 rounded bg-[#10131A] border border-[#272D3A] p-2 font-mono text-xs font-bold text-[#F1F3F9]">TXT</div>
+                      <button type="button" onClick={() => addMessage({ flags: 0 })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
+                        <div className="shrink-0 rounded bg-[#272D3A] p-2 font-mono text-xs font-bold text-[#F1F3F9]">TXT</div>
                         <div><p className="text-sm font-bold text-white">Standard Message (Classic)</p><p className="mt-0.5 text-xs text-[#A1A8B8]">Classic message with content, embeds, attachments, and action rows.</p></div>
                       </button>
-                      <button type="button" onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#1D2230] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
+                      <button type="button" onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
                         <div className="shrink-0 rounded bg-[#818CF8]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
                         <div><p className="text-sm font-bold text-white">Components V2 Message</p><p className="mt-0.5 text-xs text-[#A1A8B8]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p></div>
                       </button>
