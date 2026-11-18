@@ -6,7 +6,7 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Latest source change: `326988a865ac12cfca75820822c08c9acff4da34` (removed the final orphaned webhook URL matcher). The latest action regression-test change is `39c8d06db686e8c8686276e8cd5744313815b75a`.
+- Latest source change: `326988a865ac12cfca75820822c08c9acff4da34` (removed the final orphaned webhook URL matcher). The latest action regression-test change is `a841a787ab6ef079d9545cc82c283e31f0e338e9`.
 - Recursive Git tree: **354 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - `main` has not been changed by this implementation batch. Do not assume the changes are deployed or merged.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a defect.
