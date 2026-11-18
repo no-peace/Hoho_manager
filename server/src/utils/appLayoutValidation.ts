@@ -103,9 +103,9 @@ const OPTIONAL_PROPERTIES: Record<string, Record<string, PropertyRule>> = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-const fail = (message: string): never => {
+function fail(message: string): never {
   throw ApiError.badRequest(message);
-};
+}
 
 const exactKeys = (value: Record<string, unknown>, allowed: readonly string[], label: string): void => {
   const unexpected = Object.keys(value).filter((key) => !allowed.includes(key));
