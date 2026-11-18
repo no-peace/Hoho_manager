@@ -16,8 +16,8 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 166 | In progress (65/166) |
-| Server | 142 | In progress (120/142) |
+| Client | 166 | In progress (66/166) |
+| Server | 142 | In progress (123/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -429,7 +429,7 @@ Verification:
 - [x] `client/src/components/editor/MentionInput/AutocompletePopover.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/MentionInput/MarkdownToolbar.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/MentionInput/index.tsx` — inspected; render-isolation coverage added where applicable; not executed
-- [ ] `client/src/components/editor/MessageEditor.tsx`
+- [x] `client/src/components/editor/MessageEditor.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/ComponentsTab.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/ContentTab.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/EmbedsTab.tsx` — inspected; runtime verification not performed
@@ -705,9 +705,9 @@ Verification:
 - [x] `server/tests/variableInterpolation.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/weaoService.test.ts` — inspected and regression coverage added; test not executed
 - [x] `server/tests/settingsService.test.ts` — added; test not executed
-- [ ] `server/tsconfig.build.json`
-- [ ] `server/tsconfig.json`
-- [ ] `server/vitest.config.ts`
+- [x] `server/tsconfig.build.json` — inspected; runtime verification not performed
+- [x] `server/tsconfig.json` — inspected; runtime verification not performed
+- [x] `server/vitest.config.ts` — inspected; runtime verification not performed
 
 ### Bot (24)
 - [x] `bot/src/lib/commandPermissions.ts` — inspected; runtime verification not performed
@@ -822,3 +822,10 @@ Verification:
 - **Fixed a closed-modal subscription leak:** StudioModals keeps the lazy JsonModal mounted after it has loaded. JsonModal previously subscribed to messages, data and targets even when `open` was false, so every editor change could rerender the hidden modal. Those subscriptions now return `undefined` while closed and attach to the current document only when opened. Added a React Profiler regression test for the closed state.
 - No editor preview behavior, JSON import/export format, or modal open workflow was changed. No broad memoization was added.
 - **Verification:** new regression test added but not executed; no typecheck/build/browser profiling performed.
+
+
+## Remaining editor entry point and server build configuration — Batch F23 (2026-11-18)
+
+- Reviewed the public MessageEditor re-export and the server TypeScript/Vitest configuration files. They are thin configuration/entry-point files; no runtime performance change was justified.
+- The server runtime source review is complete. The remaining server audit backlog is test files and build/test configuration provenance, not unreviewed request handlers or services. Server source/test inventory now records 123/142 files reviewed.
+- **Verification:** source inspection only; no test, typecheck or build command was run.
