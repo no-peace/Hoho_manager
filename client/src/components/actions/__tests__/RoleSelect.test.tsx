@@ -13,6 +13,7 @@ vi.mock("../../../api/client", () => ({
       roles: rolesRequest,
     },
   },
+  request: vi.fn(),
 }));
 
 describe("RoleSelect shared Discord role cache", () => {
