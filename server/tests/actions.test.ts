@@ -28,7 +28,7 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
   };
 });
 
-describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
+describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
   let mockDiscordApi: DiscordApi;
   let mockContext: ActionContext;
 
@@ -153,6 +153,27 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       const result = await executeCustomId("action:send_message", interaction);
 
       expect(result.response?.data?.content).toContain("No target channel");
+      expect(result.response).not.toHaveProperty("outcome");
+      expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
+    });
+
+    it("fails closed for a legacy webhook action without invoking a sender", async () => {
+      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([]);
+      const logSpy = vi.spyOn(actionRepository, "log").mockResolvedValue(undefined);
+      const interaction: DiscordInteraction = {
+        id: "int_retired_webhook",
+        application_id: "app_1",
+        token: "tok_retired_webhook",
+        version: 1,
+        type: 3,
+        data: { custom_id: "action:send_webhook_message", component_type: 2 },
+      };
+
+      expect(getActionHandler("send_webhook_message")).toBeNull();
+      const result = await executeCustomId("action:send_webhook_message", interaction);
+
+      expect(result.handled).toBe(true);
+      expect(result.response?.data?.content).toContain("no longer supported");
       expect(result.response).not.toHaveProperty("outcome");
       expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
     });
@@ -402,19 +423,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         const res = await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
         expect(mockDiscordApi.sendDirectMessage).toHaveBeenCalledWith("user_789", expect.anything(), "Bot.FakeToken");
         expect((res?.data as any)?.content).toBe("📬 **Direct Message Sent** — Sent you a direct message.");
-      });
-    });
-
-    // 9. sendWebhookMessage
-    describe("actions/sendWebhookMessage.ts", () => {
-      it("returns an explicit disabled response without calling webhook delivery", async () => {
-        const handler = getActionHandler("send_webhook_message");
-        const response = await handler?.run({
-          ...mockContext,
-          config: { webhookUrl: "https://discord.com/api/webhooks/1/tok", content: "Hook msg" },
-        });
-        expect(response?.data?.content).toContain("disabled");
-        expect(response?.outcome).toBe("failure");
       });
     });
 
