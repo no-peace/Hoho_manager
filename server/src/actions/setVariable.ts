@@ -1,5 +1,6 @@
 import { AdaptiveFields } from "@dmb/shared";
 import type { ActionType, SetVariableMode } from "@dmb/shared";
+import { actionFailed } from "./responses.js";
 import { configString, type ActionContext, type ActionResponse } from "./types.js";
 
 export const type: ActionType = "set_variable";
@@ -62,7 +63,7 @@ export const run = async (
 ): Promise<ActionResponse | undefined> => {
   const { config, variables } = context;
   const name = configString(config, "name");
-  if (!name) return undefined;
+  if (!name) return actionFailed("This variable step is missing a variable name.");
 
   const mode = (configString(config, "varType") ?? "static") as SetVariableMode;
 
