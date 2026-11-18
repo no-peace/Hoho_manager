@@ -26,13 +26,6 @@ const start = async (): Promise<void> => {
   await initializeDatabase();
   log.info("Database ready");
 
-  // Immediate maintenance sweep on startup
-  runDatabaseMaintenance().catch((err: unknown) => {
-    log.warn(
-      `Initial maintenance sweep error: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  });
-
   // Start background message tracker for dynamic auto-updates
   startMessageTrackerPolling();
 
@@ -43,14 +36,24 @@ const start = async (): Promise<void> => {
     log.info(`Health check: http://localhost:${env.port}/api/health`);
   });
 
-  // Periodic maintenance sweep every 10 minutes
+  // Let the HTTP server warm up before background maintenance consumes CPU or Turso quota.
+  const initialMaintenance = setTimeout(() => {
+    runDatabaseMaintenance().catch((err: unknown) => {
+      log.warn(
+        `Initial maintenance sweep error: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
+  }, 45_000);
+  initialMaintenance.unref();
+
+  // Periodic maintenance sweep every 60 minutes
   const cleanup = setInterval(() => {
     runDatabaseMaintenance().catch((error: unknown) => {
       log.warn(
         `Cleanup sweep error: ${error instanceof Error ? error.message : String(error)}`,
       );
     });
-  }, 10 * 60 * 1000);
+  }, 60 * 60 * 1000);
   cleanup.unref();
 
   let isShuttingDown = false;
@@ -58,6 +61,7 @@ const start = async (): Promise<void> => {
     if (isShuttingDown) return;
     isShuttingDown = true;
     log.info(`Received ${signal}. Starting graceful shutdown...`);
+    clearTimeout(initialMaintenance);
     clearInterval(cleanup);
     stopMessageTrackerPolling();
 
