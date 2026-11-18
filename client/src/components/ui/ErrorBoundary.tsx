@@ -31,11 +31,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   private resetDraft = (): void => {
     try {
       for (const key of Object.keys(localStorage)) {
-        const mustPreserve =
-          /^hoho:user-theme-library:v1:/i.test(key) ||
-          /^hoho:app-layout-draft:v1:/i.test(key) ||
-          /^hoho-manager:puck-design:v1:/i.test(key);
-        if (!mustPreserve && /draft|workspace|message-store|hoho.*state/i.test(key)) {
+        if (/draft|workspace|message-store|hoho.*state/i.test(key)) {
           localStorage.removeItem(key);
         }
       }
