@@ -277,10 +277,18 @@ export const executeCustomId = async (
     let lastResponse: ActionResponse | undefined;
 
     for (const step of list) {
-      const handler = getActionHandler(step.type);
-      if (!handler) continue;
-
       const started = Date.now();
+      const handler = getActionHandler(step.type);
+      if (!handler) {
+        const message =
+          step.type === "send_webhook_message"
+            ? "This saved action is no longer supported. Replace it with Send Message to use the configured server bot."
+            : `The "${step.type}" action is no longer available.`;
+        const response = actionFailed(message);
+        await logStep(step, response, started, true);
+        halted = true;
+        return response;
+      }
 
       if (step.type === "check" && hasBranches(step.config)) {
         const { pass, fail, then: thenBranch, else: elseBranch, ...condOnly } = step.config;
