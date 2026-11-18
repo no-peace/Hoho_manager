@@ -11,10 +11,11 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY package.json package-lock.json* tsconfig.base.json ./
+COPY vendor/picomatch ./vendor/picomatch
 COPY shared/package.json shared/tsconfig.json ./shared/
 COPY server/package.json server/tsconfig.json ./server/
 COPY client/package.json client/tsconfig.json ./client/
-RUN npm install --workspace server --include-workspace-root
+RUN npm ci --workspace server --include-workspace-root
 
 COPY shared ./shared
 COPY server ./server

@@ -16,8 +16,8 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 159 | Not started |
-| Server | 133 | Not started |
+| Client | 159 | In progress (1/159) |
+| Server | 133 | In progress (25/133) |
 | Bot | 23 | Not started |
 | Shared | 10 | Source review complete |
 | Documentation | 7 | Not started |
@@ -52,6 +52,22 @@ Findings:
 
 No shared-package functional defect was confirmed in this source-only pass.
 
+## Batch F3 — Server core, authentication and data layer (2026-11-18)
+
+**Status:** Source inspection of 25 server files plus the client Dockerfile. No server tests, database migrations, Docker builds, live Discord calls or Turso integration were executed.
+
+Findings:
+1. **Fixed:** `runMigrations` previously executed each multi-statement migration and inserted its ledger row outside a transaction. A mid-migration failure could leave partial schema changes with no migration record; concurrent server starts could also read the same stale migration list. Pending migrations now run as one database transaction, and the migration ledger is read after acquiring the transaction lock.
+2. **Open security hardening:** Production may omit `SESSION_SECRET`; sessions then use `ADMIN_API_KEY` as the signing secret. Verification also accepts `ADMIN_API_KEY` as a legacy signature key even when a dedicated session secret exists. This is an intentional key-separation migration fallback, but it means the admin key can still forge sessions. Do not remove the fallback blindly: coordinate a separate secret in deployment and a bounded transition that accounts for the 24-hour session TTL.
+3. `verifyDiscordSignature` checks timestamp freshness (five-minute window), key/signature hex lengths, raw request bytes and Ed25519 verification before accepting Discord interactions.
+4. The interaction gateway relay requires the admin key and validates interaction IDs, tokens, application ID, type and custom ID before dispatch.
+5. Staff permission middleware is designed to fail closed: production rejects raw `x-staff-id`, checks live staff records, channel/guild allowlists, role mentions, cooldowns and hourly limits.
+6. URL attachment fetching resolves all DNS answers, rejects private/reserved IPv4/IPv6 ranges, pins the chosen address for the request and does not follow redirects. This is a source inspection, not an SSRF penetration test.
+7. The send route explicitly rejects webhook-URL sending and custom bot profiles; its payload and staff-policy checks are present, but the full route remains pending deeper review.
+8. Both Dockerfiles now copy the local picomatch fork before `npm ci`, preventing the new local root dependency from breaking image builds. Docker builds remain unverified.
+
+The session-secret migration is the highest-priority unresolved security item from this batch. It is recorded for a coordinated deployment change rather than silently invalidating active sessions.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -83,7 +99,7 @@ No shared-package functional defect was confirmed in this source-only pass.
 
 ### Client (159)
 - [ ] `client/.env.example`
-- [ ] `client/Dockerfile`
+- [x] `client/Dockerfile` — inspected; runtime verification not performed
 - [ ] `client/index.html`
 - [ ] `client/package.json`
 - [ ] `client/public/hoho_logo.svg`
@@ -243,8 +259,8 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `client/vitest.config.ts`
 
 ### Server (133)
-- [ ] `server/.env.example`
-- [ ] `server/Dockerfile`
+- [x] `server/.env.example` — inspected; runtime verification not performed
+- [x] `server/Dockerfile` — inspected; runtime verification not performed
 - [ ] `server/benchmarks/runner.ts`
 - [ ] `server/benchmarks/suites/suite1_flow_latency.ts`
 - [ ] `server/benchmarks/suites/suite2_mention_scrubber.ts`
@@ -253,7 +269,7 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/benchmarks/types.ts`
 - [ ] `server/benchmarks/utils/reporter.ts`
 - [ ] `server/benchmarks/utils/stats.ts`
-- [ ] `server/package.json`
+- [x] `server/package.json` — inspected; runtime verification not performed
 - [ ] `server/src/actions/addRole.ts`
 - [ ] `server/src/actions/check.ts`
 - [ ] `server/src/actions/createThread.ts`
@@ -274,19 +290,19 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/src/actions/toggleRole.ts`
 - [ ] `server/src/actions/types.ts`
 - [ ] `server/src/actions/wait.ts`
-- [ ] `server/src/app.ts`
-- [ ] `server/src/config/database.ts`
-- [ ] `server/src/config/env.ts`
-- [ ] `server/src/config/migrate.ts`
+- [x] `server/src/app.ts` — inspected; runtime verification not performed
+- [x] `server/src/config/database.ts` — inspected; runtime verification not performed
+- [x] `server/src/config/env.ts` — inspected; runtime verification not performed
+- [x] `server/src/config/migrate.ts` — inspected; runtime verification not performed
 - [ ] `server/src/config/migrations.ts`
-- [ ] `server/src/config/tursoPipeline.ts`
-- [ ] `server/src/index.ts`
-- [ ] `server/src/middleware/auth.ts`
+- [x] `server/src/config/tursoPipeline.ts` — inspected; runtime verification not performed
+- [x] `server/src/index.ts` — inspected; runtime verification not performed
+- [x] `server/src/middleware/auth.ts` — inspected; runtime verification not performed
 - [ ] `server/src/middleware/errorHandler.ts`
 - [ ] `server/src/middleware/multipart.ts`
-- [ ] `server/src/middleware/rateLimit.ts`
+- [x] `server/src/middleware/rateLimit.ts` — inspected; runtime verification not performed
 - [ ] `server/src/middleware/staffPermissions.ts`
-- [ ] `server/src/middleware/verifyDiscordSignature.ts`
+- [x] `server/src/middleware/verifyDiscordSignature.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/actionRepository.ts`
 - [ ] `server/src/repositories/appLayoutRepository.ts`
 - [ ] `server/src/repositories/auditLogRepository.ts`
@@ -303,16 +319,16 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/src/repositories/templateRepository.ts`
 - [ ] `server/src/repositories/trackedMessageRepository.ts`
 - [ ] `server/src/repositories/userRepository.ts`
-- [ ] `server/src/routes/access.ts`
-- [ ] `server/src/routes/auth.ts`
+- [x] `server/src/routes/access.ts` — inspected; runtime verification not performed
+- [x] `server/src/routes/auth.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/config.ts`
 - [ ] `server/src/routes/design.ts`
 - [ ] `server/src/routes/discord.ts`
 - [ ] `server/src/routes/executors.ts`
 - [ ] `server/src/routes/health.ts`
-- [ ] `server/src/routes/interactions.ts`
+- [x] `server/src/routes/interactions.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/send.ts`
-- [ ] `server/src/routes/settings.ts`
+- [x] `server/src/routes/settings.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/templates.ts`
 - [ ] `server/src/routes/tracking.ts`
 - [ ] `server/src/routes/weao.ts`
@@ -331,15 +347,15 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/src/services/weaoService.ts`
 - [ ] `server/src/types/express.d.ts`
 - [ ] `server/src/utils/appLayoutValidation.ts`
-- [ ] `server/src/utils/crypto.ts`
+- [x] `server/src/utils/crypto.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/errors.ts`
 - [ ] `server/src/utils/logger.ts`
 - [ ] `server/src/utils/mentionScrubber.ts`
 - [ ] `server/src/utils/requestParsing.ts`
-- [ ] `server/src/utils/session.ts`
-- [ ] `server/src/utils/urlAttachments.ts`
+- [x] `server/src/utils/session.ts` — inspected; runtime verification not performed
+- [x] `server/src/utils/urlAttachments.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/validation.ts`
-- [ ] `server/tests/accessSecurity.test.ts`
+- [x] `server/tests/accessSecurity.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/actions.test.ts`
 - [ ] `server/tests/adversarial_streaming_memory.test.ts`
 - [ ] `server/tests/appLayoutPublishing.test.ts`
@@ -349,11 +365,11 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/tests/challenger_member_cache.test.ts`
 - [ ] `server/tests/challenger_multipart.test.ts`
 - [ ] `server/tests/challenger_perf_indexes.test.ts`
-- [ ] `server/tests/challenger_retention_maintenance.test.ts`
+- [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/challenger_staffRepository.test.ts`
 - [ ] `server/tests/crypto.test.ts`
 - [ ] `server/tests/discordService.timeout.test.ts`
-- [ ] `server/tests/environmentMode.test.ts`
+- [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/errorHandler.security.test.ts`
 - [ ] `server/tests/flowRepository.test.ts`
 - [ ] `server/tests/guildVariables.test.ts`
@@ -364,11 +380,11 @@ No shared-package functional defect was confirmed in this source-only pass.
 - [ ] `server/tests/requestParsing.test.ts`
 - [ ] `server/tests/routes.test.ts`
 - [ ] `server/tests/serverThemePublishing.test.ts`
-- [ ] `server/tests/session.test.ts`
-- [ ] `server/tests/sqlSplitter.stress.test.ts`
+- [x] `server/tests/session.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/sqlSplitter.stress.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/staff_logging_enhancements.test.ts`
 - [ ] `server/tests/staff_security_regression.test.ts`
-- [ ] `server/tests/tursoPipeline.test.ts`
+- [x] `server/tests/tursoPipeline.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/urlAttachments.security.test.ts`
 - [ ] `server/tests/validation.test.ts`
 - [ ] `server/tests/variableInterpolation.test.ts`

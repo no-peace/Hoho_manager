@@ -1598,3 +1598,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Confirmed `send_webhook_message` remains in the shared persisted action type for compatibility while runtime dispatch is disabled. Do not restore execution merely by retaining the type.
 - Found a duplicate identical `LoggingConfig` interface declaration in `shared/src/types.ts`. It is harmless interface merging and was left unchanged rather than making an unrelated cleanup.
 - No functional defect was confirmed. Tests/build/typecheck were not executed.
+
+
+## Server core audit — Batch F3 (2026-11-18)
+
+- Reviewed 25 server files covering startup, app middleware, environment, database/Turso pipeline, session/authentication, Discord signature verification, staff access routes, core API routes, crypto, URL attachments, and representative tests.
+- Fixed migration atomicity: pending migrations now run under one transaction, and the migration ledger is read after acquiring the transaction lock to prevent partial application and stale concurrent startup reads.
+- Confirmed the production session-signing key still falls back to `ADMIN_API_KEY`, and verification continues accepting that key for legacy sessions even when `SESSION_SECRET` is configured. This is an open security-hardening item; coordinate a separate production secret and the 24-hour session transition before removing compatibility.
+- Source review found strong controls in Discord signature verification, interaction relay validation, staff authorization and URL-attachment SSRF protections. No live security test was performed.
+- Updated both client/server Dockerfiles to copy `vendor/picomatch` and use `npm ci`; Docker builds remain unverified.

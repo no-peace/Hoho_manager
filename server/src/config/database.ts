@@ -277,18 +277,28 @@ export const runMigrations = async (): Promise<{ applied: number }> => {
      );`,
   );
 
-  const rows = await db.query<MigrationRow>("SELECT id FROM schema_migrations");
-  const applied = new Set(rows.map((row) => row.id));
+  // Read the migration ledger and apply every pending migration under one
+  // transaction. This prevents a failed multi-statement migration from leaving
+  // half-created schema objects without a matching ledger row. The read occurs
+  // inside the write transaction so a second server process rechecks after it
+  // acquires the database lock instead of replaying a migration applied by the
+  // first process.
+  const appliedCount = await db.transaction(async () => {
+    const rows = await db.query<MigrationRow>("SELECT id FROM schema_migrations");
+    const applied = new Set(rows.map((row) => row.id));
+    let count = 0;
 
-  let appliedCount = 0;
-  for (const migration of migrations) {
-    if (applied.has(migration.id)) continue;
+    for (const migration of migrations) {
+      if (applied.has(migration.id)) continue;
 
-    log.info(`Applying migration ${migration.id}`);
-    await db.exec(migration.sql);
-    await db.run("INSERT INTO schema_migrations (id) VALUES (?)", [migration.id]);
-    appliedCount += 1;
-  }
+      log.info(`Applying migration ${migration.id}`);
+      await db.exec(migration.sql);
+      await db.run("INSERT INTO schema_migrations (id) VALUES (?)", [migration.id]);
+      count += 1;
+    }
+
+    return count;
+  });
 
   return { applied: appliedCount };
 };

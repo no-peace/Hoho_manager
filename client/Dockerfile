@@ -10,10 +10,11 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 WORKDIR /app
 
 COPY package.json package-lock.json* tsconfig.base.json ./
+COPY vendor/picomatch ./vendor/picomatch
 COPY shared/package.json shared/tsconfig.json ./shared/
 COPY client/package.json client/tsconfig.json ./client/
 COPY server/package.json ./server/
-RUN npm install --workspace client --include-workspace-root
+RUN npm ci --workspace client --include-workspace-root
 
 COPY shared ./shared
 COPY client ./client
