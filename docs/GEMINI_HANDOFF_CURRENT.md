@@ -1819,3 +1819,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - No request cancellation, list virtualization, broad memoization, or algorithm rewrites were made; no profiling evidence justified them. Existing debounce and bounded suggestion rendering remain intact.
 - Audit ledger updated in `1b4aed2`. Client source/test review count is 57/165 (source inspection; tests not executed). Server count remains 120/142.
 - **Verification not performed:** no tests, typecheck, build, React Profiler browser capture, benchmark, browser QA, Lighthouse, or live API profiling. GitHub Actions remain disabled by owner instruction.
+
+
+## Editor modal and form audit — Batch F22 (2026-11-18)
+
+- Reviewed AllowedMentionsModal, ComponentForms, EmbedEditor, FileAttachmentsSection, FlagsModal, JsonModal and MessageLinkModal. Existing list sizes are bounded by Discord/editor limits (notably 25 embed fields and 10 attachments); no extra list optimization was warranted.
+- **Implementation:** `a0ae7f8` gates JsonModal's message/document subscriptions on its `open` prop. The modal is rendered under StudioModals' Suspense boundary and remains mounted once loaded, so previously it continued receiving editor-store updates while hidden. While closed, its document selectors now return `undefined`; opening it attaches to the current messages/data/targets and preserves the existing JSON export refresh behavior.
+- **Regression test:** `client/src/components/editor/__tests__/JsonModal.test.tsx` asserts that a closed modal has zero Profiler commits when the message store changes. Test not executed.
+- Audit ledger updated in `246fdd7`; client source/test review count is 65/166. Server review remains 120/142.
+- **Verification not performed:** no tests, typecheck, build, React Profiler browser capture, benchmark, browser QA, Lighthouse or live API profiling. GitHub Actions remain disabled by owner instruction.
