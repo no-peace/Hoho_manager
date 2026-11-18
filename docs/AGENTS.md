@@ -3,16 +3,16 @@
 > This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current source/audit baseline before this implementation commit: `24a9f22fbdd5489f411bad8686c9e83f7d56c8e5`.
+- Current source/audit baseline before this documentation update: `27eb856b889ee1f0b9553c0558ddfbd15a53266a`.
 - Owner instruction: work directly on `main`; do not create a new branch or pull request.
-- Current tracked tree: 378 files across 66 directories.
+- Current tracked tree: 379 files across 66 directories.
 - Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Their source presence is not proof of runtime verification.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
 - Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; tests may be inspected/updated but must be reported as not executed.
 - Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
 - CVE-2026-112366 is mitigated in source by the temporary private fork at `vendor/picomatch`, based on upstream PR #262 commit `3222059ac27492d9c0147fee5c65f751bbd851ab`. This is not an official upstream release; replace it when an official patched release is published.
-- Upstream PR #262 remains open and npm still lists 4.0.7 as latest in the 2026-11-18 check. The vendored `lib/parse.js` blob matches the reviewed PR commit; regression checks are wired into `npm test`. The tests and `npm audit` have not been executed in this session.
+- Upstream PR #262 remains open and npm still lists 4.0.7 as latest in the 2026-11-18 check. The vendored `lib/parse.js` blob matches the reviewed PR commit; regression checks are wired into `npm test`. The user reports `npm audit --omit=dev` returned 0 vulnerabilities on the current dependency tree. The full `npm audit` output was not supplied; tests/typecheck/build remain unexecuted in this session.
 - Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. Source-only review batches F1–F14 cover root/infrastructure (25), shared (10), server (101/141), bot (24/24), client (27/161), and documentation (3/8); 10 vendored files have provenance/metadata review only. Remaining client/server/docs files are pending.
 - Sender identity is now derived server-side from authenticated session/staff context; the tracking route rejects caller-supplied `authorUserId`. Some client/shared API type surfaces still retain legacy optional fields and should be reconciled after caller tracing; no server-side override path was confirmed in the reviewed routes.
 - Puck `MobileBottomNavigation.activeTab` is intentionally preview-only; the real mobile initial pane is controlled by `MobileWorkspace.defaultPane`. Do not add runtime behavior unless the product contract changes.

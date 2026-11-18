@@ -1729,3 +1729,19 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added `server/tests/settingsService.test.ts` for cache hits, negative caching, TTL expiry, LRU eviction and update write-through.
 - Reviewed benchmark methodology, recursive Guild variable expansion, chunked retention sweeps and fire-and-forget audit logging. No further optimization was applied without baseline measurements or evidence of a production bottleneck.
 - Verification: tests added but not executed; no typecheck, build, benchmark, database query plan, browser QA or live Discord request was run.
+
+
+## Owner-reported dependency audit result (2026-11-18)
+
+- The user ran `npm audit --omit=dev` locally and reported: `found 0 vulnerabilities`.
+- This establishes a clean npm audit result for the production dependency tree as checked by the user's local environment. The full development-inclusive `npm audit` output was not provided.
+- No dependency files were changed in Batch F14.
+
+## Server performance audit — Batch F14 (2026-11-18)
+
+- Reviewed all server benchmark harness files and the guild-variable, maintenance, settings, audit-log and settings-repository paths.
+- Found that the settings cache had no entry limit and did not cache missing-guild defaults. Requests spanning many distinct guild IDs could retain an unbounded number of cache entries; repeated lookups for unconfigured guilds repeatedly hit SQLite/Turso.
+- Implemented a 500-entry LRU cache, recency refresh on hits, and 30-second negative caching for missing guild settings. Settings updates write through to the same cache.
+- Added `server/tests/settingsService.test.ts` for cache hits, negative caching, TTL expiry, LRU eviction and update write-through.
+- Reviewed benchmark methodology, recursive Guild variable expansion, chunked retention sweeps and fire-and-forget audit logging. No further optimization was applied without baseline measurements or evidence of a production bottleneck.
+- Verification: tests added but not executed; no typecheck, build, benchmark, database query plan, browser QA or live Discord request was run.

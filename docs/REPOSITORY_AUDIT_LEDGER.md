@@ -1,8 +1,8 @@
 # Repository Audit Ledger
 
 **Repository:** `no-peace/Hoho_manager`
-**Audit baseline:** `36469393669764e9c8e938c2af3dbb8b95fb75f2` (main, before Batch F9 documentation update)
-**Tree:** 378 tracked files across 66 directories
+**Audit baseline:** `27eb856b889ee1f0b9553c0558ddfbd15a53266a` (main, after Batch F14 settings-cache implementation)
+**Tree:** 379 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -22,7 +22,7 @@
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **378** | **378 accounted for** |
+| **Total** | **379** | **379 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -594,6 +594,7 @@ Verification:
 - [x] `server/tests/validation.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/variableInterpolation.test.ts`
 - [x] `server/tests/weaoService.test.ts` — inspected and regression coverage added; test not executed
+- [x] `server/tests/settingsService.test.ts` — added; test not executed
 - [ ] `server/tsconfig.build.json`
 - [ ] `server/tsconfig.json`
 - [ ] `server/vitest.config.ts`
@@ -660,7 +661,7 @@ Verification:
 
 ## Verification record
 
-- `npm audit`: not run in this audit session.
+- `npm audit --omit=dev`: owner reports 0 vulnerabilities on the current dependency tree; full `npm audit` output was not supplied.
 - `npm test`: not run in this audit session.
 - `npm run typecheck`: not run in this audit session.
 - `npm run build`: not run in this audit session.
@@ -668,9 +669,8 @@ Verification:
 
 ## Next audit batches
 
-1. Shared package: types, validators, schemas, constants, utilities and callers.
-2. Server: entrypoint, middleware, auth/session, routes, services, repositories, database/migrations, Discord integration, logging and external requests.
-3. Bot: startup, commands, events, interaction relay, API auth and error handling.
-4. Client: entry/routing, auth, stores, API clients, editor, preview, inspector, Design Lab, themes, Docs, Settings, styles, responsive behavior and accessibility.
-5. Tests/fixtures: map each test to the behavior and identify untested security boundaries.
-6. Reconcile remaining plan/handoff claims against current source; update this ledger after each batch.
+1. Server: continue the remaining repositories, routes, services, request-boundary tests and database query/index review.
+2. Client: audit remaining editor, preview, Puck, theme, Docs, Settings and shared UI files; prioritize render-heavy paths and large input handlers.
+3. Benchmark: collect reproducible baselines before changing hot paths; add scenarios only when they model real production workloads.
+4. Tests/fixtures: map each test to the behavior and identify untested security boundaries.
+5. Reconcile remaining plan/handoff claims against current source; update this ledger after each batch.
