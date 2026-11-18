@@ -8,9 +8,11 @@ export interface JsonModalProps {
 }
 
 export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
-  const messages = useMessageStore((state) => state.messages);
-  const data = useMessageStore((state) => state.data);
-  const targets = useMessageStore((state) => state.targets);
+  // The modal stays mounted while closed. Avoid subscribing to the live
+  // document until it is opened, otherwise every editor keystroke rerenders it.
+  const messages = useMessageStore((state) => open ? state.messages : undefined);
+  const data = useMessageStore((state) => open ? state.data : undefined);
+  const targets = useMessageStore((state) => open ? state.targets : undefined);
   const load = useMessageStore((state) => state.load);
 
   const [jsonText, setJsonText] = useState("");
