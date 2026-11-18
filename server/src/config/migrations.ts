@@ -373,89 +373,21 @@ export const migrations: readonly Migration[] = [
     `,
   },
   {
-    id: "013_design_lab_themes_and_access",
-    sql: `
-      CREATE TABLE IF NOT EXISTS design_themes (
-        id TEXT PRIMARY KEY,
-        owner_discord_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        description TEXT,
-        data TEXT NOT NULL,
-        is_default INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE INDEX IF NOT EXISTS idx_design_themes_owner
-        ON design_themes(owner_discord_id, updated_at);
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_design_themes_single_default
-        ON design_themes(is_default) WHERE is_default = 1;
-
-      CREATE TABLE IF NOT EXISTS design_access_users (
-        discord_user_id TEXT PRIMARY KEY,
-        granted_by_discord_id TEXT NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 1,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE INDEX IF NOT EXISTS idx_design_access_active
-        ON design_access_users(is_active);
-    `,
-  },
-  {
-    id: "014_community_and_server_themes",
-    sql: `
-      ALTER TABLE design_themes ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0;
-      CREATE INDEX IF NOT EXISTS idx_design_themes_public_updated
-        ON design_themes(is_public, updated_at);
-
-      CREATE TABLE IF NOT EXISTS server_theme_settings (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        theme_data TEXT NOT NULL,
-        updated_by TEXT NOT NULL,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `,
-  },
-  {
-    id: "015_published_responsive_app_layout",
-    sql: `
-      -- One authoritative row stores the complete Desktop/Mobile pair.
-      -- Keeping both documents in one row prevents partial responsive publishes.
-      CREATE TABLE IF NOT EXISTS published_app_layouts (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        schema_version INTEGER NOT NULL,
-        desktop_document TEXT NOT NULL,
-        mobile_document TEXT NOT NULL,
-        published_by_discord_id TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `,
-  },
-  {
-    id: "016_remove_legacy_app_layout_publishers",
-    sql: `
-      -- Remove the temporary allowlist table created by the unapproved Part C draft.
-      DROP TABLE IF EXISTS app_layout_publishers;
-    `,
-  },
-  {
-    id: "017_server_theme_publish_permissions",
-    sql: `
-      -- Design Lab access and server-theme publishing are separate capabilities.
-      -- Existing Design Lab users receive no publishing permission by default.
-      ALTER TABLE design_access_users
-        ADD COLUMN can_publish_server_theme INTEGER NOT NULL DEFAULT 0;
-      CREATE INDEX IF NOT EXISTS idx_design_access_theme_publish
-        ON design_access_users(is_active, can_publish_server_theme);
-    `,
-  },
-  {
     id: "018_tracked_template_access_verification",
     sql: `
       -- Existing tracked records are unverified. Public templates remain usable,
       -- but private templates require a successful access check at track time.
       ALTER TABLE tracked_messages
         ADD COLUMN template_access_verified INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
+  {
+    id: "019_remove_design_customization",
+    sql: `
+      DROP TABLE IF EXISTS published_app_layouts;
+      DROP TABLE IF EXISTS server_theme_settings;
+      DROP TABLE IF EXISTS design_themes;
+      DROP TABLE IF EXISTS design_access_users;
     `,
   },
 ];
