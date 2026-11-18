@@ -36,9 +36,8 @@ export const run = async ({
 
   try {
     const thread = await discord.createThreadFromMessage(channelId, messageId, name, botToken);
-    return ephemeral(
-      thread?.id ? `🧵 **Thread Created** — Started <#${thread.id}>.` : "🧵 **Thread Created** — Thread started.",
-    );
+    if (!thread?.id) return actionFailed("Discord did not confirm that the thread was created.");
+    return ephemeral(`🧵 **Thread Created** — Started <#${thread.id}>.`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.warn(`create_thread failed in ${channelId}: ${reason}`);
