@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { ACTION_PREFIX, ACTION_SEPARATOR } from "@dmb/shared";
 import {
   isHttpUrl,
   isSnowflake,
+  parseStoredActionDefinitions,
   parseWebhookUrl,
   requireId,
   validateMessagePayload,
@@ -45,6 +47,47 @@ describe("validation utils", () => {
         expect(() => requireId(value)).toThrow(/positive integer/i);
       },
     );
+  });
+
+  describe("parseStoredActionDefinitions", () => {
+    const customId = `${ACTION_PREFIX}${ACTION_SEPARATOR}template-action`;
+
+    it("normalizes valid steps and assigns per-flow execution order", () => {
+      expect(parseStoredActionDefinitions([
+        { customId, actionType: "send_message", config: { channelId: "123" } },
+        { customId, actionType: "wait", config: { milliseconds: 10 } },
+      ])).toEqual([
+        { customId, actionType: "send_message", config: { channelId: "123" }, executionOrder: 0 },
+        { customId, actionType: "wait", config: { milliseconds: 10 }, executionOrder: 1 },
+      ]);
+    });
+
+    it("rejects non-array action collections and malformed entries", () => {
+      expect(() => parseStoredActionDefinitions({})).toThrow(/must be an array/i);
+      expect(() => parseStoredActionDefinitions([null])).toThrow(/must be an object/i);
+      expect(() => parseStoredActionDefinitions([{ customId: "bad", actionType: "wait" }])).toThrow(/customId is invalid/i);
+      expect(() => parseStoredActionDefinitions([{ customId, actionType: "wait", config: [] }])).toThrow(/config must be an object/i);
+    });
+
+    it("limits the number of flows and steps per flow", () => {
+      const flows = Array.from({ length: 26 }, (_, index) => ({
+        customId: `${ACTION_PREFIX}${ACTION_SEPARATOR}flow-${index}`,
+        actionType: "wait",
+      }));
+      expect(() => parseStoredActionDefinitions(flows)).toThrow(/25 action flows/i);
+
+      const steps = Array.from({ length: 21 }, () => ({ customId, actionType: "wait" }));
+      expect(() => parseStoredActionDefinitions(steps)).toThrow(/20 steps/i);
+    });
+
+    it("limits aggregate action configuration size and execution order", () => {
+      expect(() => parseStoredActionDefinitions([
+        { customId, actionType: "wait", config: { value: "x".repeat(128 * 1024 + 1) } },
+      ])).toThrow(/128 KiB/i);
+      expect(() => parseStoredActionDefinitions([
+        { customId, actionType: "wait", executionOrder: 20 },
+      ])).toThrow(/integer from 0 to 19/i);
+    });
   });
 
   describe("parseWebhookUrl", () => {

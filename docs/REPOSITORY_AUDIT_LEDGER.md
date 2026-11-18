@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 159 | In progress (1/159) |
-| Server | 133 | In progress (25/133) |
+| Server | 133 | In progress (40/133) |
 | Bot | 23 | Not started |
 | Shared | 10 | Source review complete |
 | Documentation | 7 | Not started |
@@ -67,6 +67,20 @@ Findings:
 8. Both Dockerfiles now copy the local picomatch fork before `npm ci`, preventing the new local root dependency from breaking image builds. Docker builds remain unverified.
 
 The session-secret migration is the highest-priority unresolved security item from this batch. It is recorded for a coordinated deployment change rather than silently invalidating active sessions.
+
+## Batch F4 — Server routes, templates and action boundaries (2026-11-18)
+
+**Status:** Additional source inspection across routes, repositories, action registry, template services and tests. No test suite or live Discord integration was executed.
+
+Findings and changes:
+1. **Fixed:** Template updates previously converted an omitted `description` into `null`, unintentionally clearing existing descriptions during partial updates. The route now distinguishes omitted, explicit null/empty and invalid values.
+2. **Fixed:** Template creation and updates previously wrote template documents, metadata and action definitions in separate operations. These writes now share one database transaction; nested action replacement joins the active transaction.
+3. **Fixed:** Template action definitions were accepted as an unchecked TypeScript cast. A runtime parser now enforces object shape, valid action custom-ID prefix/length, action type string bounds, object config, 25-flow maximum, 20 steps per flow, execution order 0–19, 500 total steps and 128 KiB aggregate config.
+4. Added focused validation tests for valid normalization, malformed records, flow/step limits, configuration size and execution-order bounds. Tests were not run.
+5. **Open product gap:** `actionExecutor.ts` still classifies failed actions by checking whether response content starts with a warning emoji. Replace this with structured failure metadata; this remains a known planned item.
+6. **Open compatibility question:** `actions/index.ts` still registers `send_webhook_message`, while the public action picker hides it and the send route rejects direct `webhookUrl` sending. Trace existing persisted flows and the current handler before removing or restoring anything.
+7. **Open compatibility question:** Discord routes still parse and pass optional profile IDs. Confirm the current `resolveBotToken` behavior before declaring custom bot-profile dispatch disabled.
+8. Template ownership checks remain in the service/repository path. Action lookups for template-backed messages are constrained by the tracked message's template ID.
 
 ## File-by-file inventory
 
@@ -275,7 +289,7 @@ The session-secret migration is the highest-priority unresolved security item fr
 - [ ] `server/src/actions/createThread.ts`
 - [ ] `server/src/actions/deleteMessage.ts`
 - [ ] `server/src/actions/dud.ts`
-- [ ] `server/src/actions/index.ts`
+- [x] `server/src/actions/index.ts` — inspected; runtime verification not performed
 - [ ] `server/src/actions/modalSubmit.ts`
 - [ ] `server/src/actions/openModal.ts`
 - [ ] `server/src/actions/removeRole.ts`
@@ -303,7 +317,7 @@ The session-secret migration is the highest-priority unresolved security item fr
 - [x] `server/src/middleware/rateLimit.ts` — inspected; runtime verification not performed
 - [ ] `server/src/middleware/staffPermissions.ts`
 - [x] `server/src/middleware/verifyDiscordSignature.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/actionRepository.ts`
+- [x] `server/src/repositories/actionRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/appLayoutRepository.ts`
 - [ ] `server/src/repositories/auditLogRepository.ts`
 - [ ] `server/src/repositories/baseRepository.ts`
@@ -316,34 +330,34 @@ The session-secret migration is the highest-priority unresolved security item fr
 - [ ] `server/src/repositories/sessionRevocationRepository.ts`
 - [ ] `server/src/repositories/settingsRepository.ts`
 - [ ] `server/src/repositories/staffRepository.ts`
-- [ ] `server/src/repositories/templateRepository.ts`
+- [x] `server/src/repositories/templateRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/trackedMessageRepository.ts`
 - [ ] `server/src/repositories/userRepository.ts`
 - [x] `server/src/routes/access.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/auth.ts` — inspected; runtime verification not performed
-- [ ] `server/src/routes/config.ts`
-- [ ] `server/src/routes/design.ts`
-- [ ] `server/src/routes/discord.ts`
-- [ ] `server/src/routes/executors.ts`
+- [x] `server/src/routes/config.ts` — inspected; runtime verification not performed
+- [x] `server/src/routes/design.ts` — inspected; runtime verification not performed
+- [x] `server/src/routes/discord.ts` — inspected; runtime verification not performed
+- [x] `server/src/routes/executors.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/health.ts`
 - [x] `server/src/routes/interactions.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/send.ts`
 - [x] `server/src/routes/settings.ts` — inspected; runtime verification not performed
-- [ ] `server/src/routes/templates.ts`
+- [x] `server/src/routes/templates.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/tracking.ts`
-- [ ] `server/src/routes/weao.ts`
+- [x] `server/src/routes/weao.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/actionExecutor.ts`
 - [ ] `server/src/services/auditLog.ts`
-- [ ] `server/src/services/authorService.ts`
-- [ ] `server/src/services/branches.ts`
+- [x] `server/src/services/authorService.ts` — inspected; runtime verification not performed
+- [x] `server/src/services/branches.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/discordService.ts`
 - [ ] `server/src/services/guildVariables.ts`
-- [ ] `server/src/services/interactionHandler.ts`
+- [x] `server/src/services/interactionHandler.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/maintenanceService.ts`
 - [ ] `server/src/services/messageTrackerService.ts`
 - [ ] `server/src/services/settingsService.ts`
-- [ ] `server/src/services/templateService.ts`
-- [ ] `server/src/services/variableInterpolation.ts`
+- [x] `server/src/services/templateService.ts` — inspected; runtime verification not performed
+- [x] `server/src/services/variableInterpolation.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/weaoService.ts`
 - [ ] `server/src/types/express.d.ts`
 - [ ] `server/src/utils/appLayoutValidation.ts`
@@ -386,7 +400,7 @@ The session-secret migration is the highest-priority unresolved security item fr
 - [ ] `server/tests/staff_security_regression.test.ts`
 - [x] `server/tests/tursoPipeline.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/urlAttachments.security.test.ts`
-- [ ] `server/tests/validation.test.ts`
+- [x] `server/tests/validation.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/variableInterpolation.test.ts`
 - [ ] `server/tests/weaoService.test.ts`
 - [ ] `server/tsconfig.build.json`

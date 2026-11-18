@@ -1,3 +1,4 @@
+import { db } from "../config/database.js";
 import type {
   ActionDefinitionRecord,
   ActionType,
@@ -79,25 +80,28 @@ export const templateService = {
     userId: number,
     { name, description = null, data, actions = [], isPublic = 0, expiresAt, isTracked = 0 }: CreateTemplateServiceInput,
   ): Promise<TemplateWithActions> {
-    const existing = await templateRepository.findByUser(userId);
-    if (existing.length >= MAX_TEMPLATES_PER_USER) {
-      throw ApiError.badRequest(`You've reached the ${MAX_TEMPLATES_PER_USER} template limit`);
-    }
+    const template = await db.transaction(async () => {
+      const existing = await templateRepository.findByUser(userId);
+      if (existing.length >= MAX_TEMPLATES_PER_USER) {
+        throw ApiError.badRequest(`You've reached the ${MAX_TEMPLATES_PER_USER} template limit`);
+      }
 
-    const template = await templateRepository.create({
-      userId,
-      name,
-      description,
-      data,
-      isPublic,
-      expiresAt,
-      isTracked,
+      const created = await templateRepository.create({
+        userId,
+        name,
+        description,
+        data,
+        isPublic,
+        expiresAt,
+        isTracked,
+      });
+      if (!created) throw ApiError.upstream("Template could not be created");
+
+      if (actions.length > 0) {
+        await actionRepository.replaceForTemplate(created.id, actions);
+      }
+      return created;
     });
-    if (!template) throw ApiError.upstream("Template could not be created");
-
-    if (actions.length > 0) {
-      await actionRepository.replaceForTemplate(template.id, actions);
-    }
 
     return this.get(template.id, userId);
   },
@@ -110,23 +114,26 @@ export const templateService = {
     // Ownership check happens inside get().
     await this.get(id, userId);
 
-    if (data !== undefined) {
-      // `data` is the whole message document, so an update always replaces it.
-      await templateRepository.updateData(id, data);
-    }
+    const updated = await db.transaction(async () => {
+      if (data !== undefined) {
+        // `data` is the whole message document, so an update always replaces it.
+        await templateRepository.updateData(id, data);
+      }
 
-    const updated = await templateRepository.update(id, {
-      name,
-      description,
-      is_public: isPublic,
-      ...(isTracked !== undefined ? { is_tracked: isTracked ? 1 : 0 } : {}),
-      ...(expiresAt !== undefined ? { expires_at: expiresAt } : {}),
+      const saved = await templateRepository.update(id, {
+        name,
+        description,
+        is_public: isPublic,
+        ...(isTracked !== undefined ? { is_tracked: isTracked ? 1 : 0 } : {}),
+        ...(expiresAt !== undefined ? { expires_at: expiresAt } : {}),
+      });
+      if (!saved) throw ApiError.notFound("Template not found");
+
+      if (actions !== undefined) {
+        await actionRepository.replaceForTemplate(id, actions);
+      }
+      return saved;
     });
-    if (!updated) throw ApiError.notFound("Template not found");
-
-    if (actions !== undefined) {
-      await actionRepository.replaceForTemplate(id, actions);
-    }
 
     return { ...updated, actions: toStoredActions(await actionRepository.listByTemplate(id)) };
   },

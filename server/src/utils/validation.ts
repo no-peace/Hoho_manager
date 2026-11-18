@@ -8,7 +8,7 @@ import {
   SNOWFLAKE_REGEX,
   WEBHOOK_URL_REGEX,
 } from "@dmb/shared";
-import type { DiscordMessagePayload, FlowRegistration } from "@dmb/shared";
+import type { ActionType, DiscordMessagePayload, FlowRegistration, StoredActionDefinition } from "@dmb/shared";
 import { ApiError } from "./errors.js";
 
 /**
@@ -479,6 +479,84 @@ export const containsWeaoPlaceholder = (value: unknown): boolean => {
   } catch {
     return false;
   }
+};
+
+/**
+ * Validate template action definitions before they are persisted.
+ *
+ * The flattened template format is bounded by the same limits as send-time
+ * flow registration: 25 component flows, 20 steps per component, and 128 KiB
+ * of total JSON configuration.
+ */
+export const parseStoredActionDefinitions = (value: unknown): StoredActionDefinition[] => {
+  if (!Array.isArray(value)) {
+    throw ApiError.badRequest("`actions` must be an array.");
+  }
+  if (value.length > 500) {
+    throw ApiError.badRequest("A template can contain at most 500 action steps.");
+  }
+
+  const stepsPerCustomId = new Map<string, number>();
+  const actions: StoredActionDefinition[] = [];
+  let totalConfigBytes = 0;
+
+  for (const [index, entry] of value.entries()) {
+    if (!isRecord(entry)) {
+      throw ApiError.badRequest(`actions[${index}] must be an object.`);
+    }
+
+    const customId = entry.customId;
+    if (
+      typeof customId !== "string" ||
+      !customId.startsWith(`${ACTION_PREFIX}${ACTION_SEPARATOR}`) ||
+      customId.length > Limits.components.customId
+    ) {
+      throw ApiError.badRequest(`actions[${index}].customId is invalid.`);
+    }
+
+    const actionType = entry.actionType;
+    if (typeof actionType !== "string" || !actionType.trim() || actionType.length > 64) {
+      throw ApiError.badRequest(`actions[${index}].actionType must be a non-empty action type.`);
+    }
+
+    const config = entry.config === undefined ? {} : entry.config;
+    if (!isRecord(config)) {
+      throw ApiError.badRequest(`actions[${index}].config must be an object.`);
+    }
+
+    totalConfigBytes += JSON.stringify(config).length;
+    if (totalConfigBytes > 128 * 1024) {
+      throw ApiError.badRequest("Template action configuration exceeds the 128 KiB limit.");
+    }
+
+    const flowCount = stepsPerCustomId.get(customId) ?? 0;
+    if (flowCount >= 20) {
+      throw ApiError.badRequest("Each template action flow can contain at most 20 steps.");
+    }
+    if (flowCount === 0 && stepsPerCustomId.size >= 25) {
+      throw ApiError.badRequest("A template can contain at most 25 action flows.");
+    }
+
+    const executionOrder = entry.executionOrder === undefined ? flowCount : entry.executionOrder;
+    if (
+      typeof executionOrder !== "number" ||
+      !Number.isSafeInteger(executionOrder) ||
+      executionOrder < 0 ||
+      executionOrder > 19
+    ) {
+      throw ApiError.badRequest(`actions[${index}].executionOrder must be an integer from 0 to 19.`);
+    }
+
+    stepsPerCustomId.set(customId, flowCount + 1);
+    actions.push({
+      customId,
+      actionType: actionType as ActionType,
+      config,
+      executionOrder,
+    });
+  }
+
+  return actions;
 };
 
 export const parseFlowRegistrations = (value: unknown): FlowRegistration[] => {

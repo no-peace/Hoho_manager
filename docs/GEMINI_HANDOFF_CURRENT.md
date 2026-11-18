@@ -1607,3 +1607,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Confirmed the production session-signing key still falls back to `ADMIN_API_KEY`, and verification continues accepting that key for legacy sessions even when `SESSION_SECRET` is configured. This is an open security-hardening item; coordinate a separate production secret and the 24-hour session transition before removing compatibility.
 - Source review found strong controls in Discord signature verification, interaction relay validation, staff authorization and URL-attachment SSRF protections. No live security test was performed.
 - Updated both client/server Dockerfiles to copy `vendor/picomatch` and use `npm ci`; Docker builds remain unverified.
+
+
+## Server routes/templates audit — Batch F4 (2026-11-18)
+
+- Inspected template routes/service/repositories, action repository and registry, interaction handler, branch execution helpers, variable interpolation, author resolution, Discord/design/executor/WEAO routes and validation tests.
+- Fixed template partial-update semantics: omitted descriptions no longer clear stored descriptions; explicit null/empty values clear them.
+- Wrapped template creation and updates in one database transaction so template rows/documents and action definitions cannot be left partially updated.
+- Added runtime validation for template action definitions (25 flows, 20 steps per flow, 500 total steps, 128 KiB config, custom-ID and execution-order checks) and regression tests.
+- Remaining planned items: structured action-failure metadata; reconcile the still-registered `send_webhook_message` handler with persisted-flow compatibility; verify whether optional profile IDs are truly disabled in `resolveBotToken`.
+- No tests, typecheck, build, browser QA or live Discord calls were executed.

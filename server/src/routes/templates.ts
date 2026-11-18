@@ -1,18 +1,31 @@
 import { Router } from "express";
-import type { QueryData, StoredActionDefinition } from "@dmb/shared";
+import type { QueryData } from "@dmb/shared";
 import { attachUser, requireUser } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { templateService } from "../services/templateService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
-import { containsWeaoPlaceholder, optionalFlag, optionalString, requireId, requireStrings } from "../utils/validation.js";
+import { containsWeaoPlaceholder, optionalFlag, optionalString, parseStoredActionDefinitions, requireId, requireStrings } from "../utils/validation.js";
 
 const router = Router();
 
 // Every template route acts on behalf of a user.
 router.use(attachUser);
 
-const readBody = (body: unknown): Record<string, unknown> =>
-  (body ?? {}) as Record<string, unknown>;
+const readBody = (body: unknown): Record<string, unknown> => {
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw ApiError.badRequest("Request body must be a JSON object.");
+  }
+  return body as Record<string, unknown>;
+};
+
+const parseDescription = (value: unknown): string | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") {
+    throw ApiError.badRequest("`description` must be a string or null.");
+  }
+  return value.trim() || null;
+};
 
 const parseExpiresAt = (raw: unknown): string | null | undefined => {
   if (raw === undefined) return undefined;
@@ -60,7 +73,7 @@ router.post(
     requireStrings(body, ["name"]);
     if (body.data === undefined) throw ApiError.badRequest("`data` is required");
 
-    const actions = Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : [];
+    const actions = body.actions === undefined ? [] : parseStoredActionDefinitions(body.actions);
     if (
       req.staffContext &&
       !req.staffContext.isAdmin &&
@@ -71,7 +84,7 @@ router.post(
     }
     const template = await templateService.create(requireUser(req).id, {
       name: String(body.name),
-      description: optionalString(body.description) ?? null,
+      description: parseDescription(body.description) ?? null,
       data: body.data as QueryData,
       actions,
       isPublic: optionalFlag(body.isPublic) ?? 0,
@@ -87,7 +100,7 @@ router.put(
   requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     const body = readBody(req.body);
-    const actions = Array.isArray(body.actions) ? (body.actions as StoredActionDefinition[]) : undefined;
+    const actions = body.actions === undefined ? undefined : parseStoredActionDefinitions(body.actions);
     if (
       actions &&
       req.staffContext &&
@@ -102,7 +115,7 @@ router.put(
       requireUser(req).id,
       {
         name: optionalString(body.name),
-        description: optionalString(body.description) ?? null,
+        description: parseDescription(body.description),
         data: body.data as QueryData | undefined,
         actions,
         isPublic: optionalFlag(body.isPublic),
