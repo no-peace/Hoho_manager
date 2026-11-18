@@ -88,9 +88,9 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
 };
 
 export const LayersPanel = () => {
-  const components = useMessageStore((state) => state.data.components ?? []);
+  const components = useMessageStore((state) => state.data.components);
 
-  if (components.length === 0) {
+  if (!components || components.length === 0) {
     return (
       <p className="rounded border border-dashed border-[#272D3A] px-2.5 py-3 text-[11px] text-[#6F788A]">
         No components yet. Add one from the Component Palette in the editor.
