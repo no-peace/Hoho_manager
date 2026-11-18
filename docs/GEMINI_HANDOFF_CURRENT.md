@@ -1858,3 +1858,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed `server/tests/adversarial_streaming_memory.test.ts`: covers 55 MiB declared request rejection, streamed per-file and aggregate limits, field-size limits, abrupt client disconnect, outbound Discord REST timeout behavior, deferred interaction cleanup, and concurrent deferred interactions.
 - These tests confirm existing source-level safeguards and test coverage; they do not establish production throughput, heap usage, or latency. No speculative multipart, cache, timeout, or interaction rewrite was made.
 - Audit ledger server test review count: 128/142. Tests were not executed; GitHub Actions remain disabled by owner instruction.
+
+
+## Remaining editor, preview and server inventory — Batch F26 (2026-11-18)
+
+- Reviewed all 13 remaining server test files: application layout publishing, author resolution, bot interaction relay, flow expiration pruning, AES-GCM crypto, error disclosure, middleware security, request parsing, REST routes, server-theme publishing, staff mention logging, staff security regressions, and URL attachment SSRF protections.
+- Reviewed editor implementation and regression-test coverage: per-message subscriptions, cross-guild store isolation, closed-modal subscription isolation, layer-panel stability, preview selection routing, keyboard shortcuts/autocomplete, and V2 component editing. These existing guards address the identified UI update patterns. No additional broad memoization or virtualization was added without a reproducible render-cost finding.
+- Reviewed preview components and tests for markdown rendering, embeds, interactive components, message selection routing, and placeholder resolution. No additional optimization was justified by source review alone.
+- Server inventory reconciliation: repository tree contains 142 server files. The audit ledger now lists all 142, including `server/tests/messageTrackerService.performance.test.ts`, which was previously reviewed but absent from the checklist. Ledger status is now 142/142 source inventory reviewed.
+- **No runtime changes in F26.** Source audit completion does not imply test execution or runtime verification. The local Terminal connection previously returned HTTP 404; GitHub Actions remain disabled by owner instruction. No typecheck, build, browser profiling, or full test suite was run.
