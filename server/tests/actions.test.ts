@@ -25,6 +25,7 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     sendWebhook: vi.fn().mockResolvedValue({ id: "hook_msg_1" } as any),
     deleteChannelMessage: vi.fn().mockResolvedValue(true),
     createThreadFromMessage: vi.fn().mockResolvedValue({ id: "thread_1" }),
+    getGuild: vi.fn().mockResolvedValue({ id: "998877665544332211", name: "Test Guild", icon: null }),
     resolveBotToken: vi.fn().mockResolvedValue("Bot.FakeToken"),
   };
 });
