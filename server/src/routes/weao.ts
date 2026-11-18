@@ -29,13 +29,13 @@ const log = logger.child("weaoRoute");
 const router = Router();
 
 /** Only expose templates owned by the caller or explicitly marked public. */
-const listVisibleTemplateSummaries = async (userId: number): Promise<TemplateSummary[]> =>
+const listVisibleTemplateSummaries = async (userId: number | undefined): Promise<TemplateSummary[]> =>
   db.query<TemplateSummary>(
     `SELECT id, user_id, name, description, preview_image_url, is_public, created_at, updated_at
        FROM templates
-      WHERE is_public = 1 OR user_id = @userId
+      WHERE is_public = 1 OR (@userId IS NOT NULL AND user_id = @userId)
       ORDER BY updated_at DESC`,
-    { userId },
+    { userId: userId ?? null },
   );
 
 router.use(attachUser);
