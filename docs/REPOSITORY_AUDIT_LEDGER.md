@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `99414d89dfef65b8bc4054771788150ac88f072d` (main, after temporary picomatch mitigation)
-**Tree:** 373 tracked files across 66 directories
+**Tree:** 375 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -17,12 +17,12 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 135 | In progress (52/135) |
+| Server | 137 | In progress (54/137) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **373** | **373 accounted for** |
+| **Total** | **375** | **375 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -122,6 +122,17 @@ Findings and changes:
 3. Added `actorIdentity.ts` to centralize trusted actor-ID resolution and regression tests for session/staff identity, machine admin-key calls and rejected overrides.
 4. Confirmed the tracking route checks channel/guild allowlists, verifies the existing message was authored by the configured server bot, and enforces template visibility before creating a tracking record.
 5. The bot's global `/sync` operation remains machine-authenticated; only configured bot operators can invoke its slash command after Batch F6.
+
+## Batch F8 — Private-template authorization on dispatch (2026-11-18)
+
+**Status:** Source fix and focused tests added; no test suite or build was executed.
+
+Findings and changes:
+1. **Fixed:** The send route accepted a caller-supplied `templateId` and attached it to tracked messages without checking whether the caller could access that template. A staff member with send permission could therefore bind a message to another user's private template, which background synchronization could later use to update the message.
+2. The send route now validates `templateId` as a positive safe integer, confirms the template exists, and permits use only when it is public, owned by the authenticated user, or the caller is Head Admin.
+3. Extracted the owner/public/admin policy into `templateAccess.ts` and reused it in the manual tracking route to keep both entry points consistent.
+4. Added tests for owner access, public-template access, Head Admin access and denial for another user.
+5. Machine-authenticated bot operations remain authorized through the configured bot operator allowlist from Batch F6.
 
 ## File-by-file inventory
 
@@ -316,7 +327,9 @@ Findings and changes:
 - [x] `client/src/utils/dispatchValidation.ts` — inspected; runtime verification not performed
 - [x] `client/src/utils/__tests__/dispatchValidation.test.ts` — inspected; runtime verification not performed
 
-### Server (135)
+### Server (137)
+- [x] `server/src/utils/templateAccess.ts` — inspected; runtime verification not performed
+- [x] `server/tests/templateAccess.test.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/actorIdentity.ts` — inspected; runtime verification not performed
 - [x] `server/tests/actorIdentity.test.ts` — inspected; runtime verification not performed
 - [x] `server/.env.example` — inspected; runtime verification not performed

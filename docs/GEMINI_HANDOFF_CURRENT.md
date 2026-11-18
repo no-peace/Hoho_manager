@@ -1655,3 +1655,11 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added `actorIdentity.ts` and regression tests for authenticated actor resolution and override rejection.
 - Reviewed tracking allowlists, configured-bot message ownership checks, template visibility checks and mention scrubbing.
 - No tests, typecheck, build or live Discord calls were executed.
+
+
+## Private-template dispatch audit — Batch F8 (2026-11-18)
+
+- Found that the send route accepted a caller-provided `templateId` and persisted it on tracked messages without checking template visibility/ownership. A staff caller could bind a message to another user's private template and cause background sync to use that private template.
+- Fixed by validating the template ID, confirming the record exists, and allowing only public templates, templates owned by the authenticated user, or Head Admin access.
+- Extracted the access policy into `templateAccess.ts` and reused it in the manual tracking route. Added focused access-policy tests.
+- No tests, typecheck, build or live Discord calls were executed.

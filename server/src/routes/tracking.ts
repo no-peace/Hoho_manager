@@ -8,6 +8,7 @@ import * as discord from "../services/discordService.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
 import { assertNoAuthorUserIdOverride, resolveAuthenticatedActorDiscordId } from "../utils/actorIdentity.js";
+import { canAccessTemplate } from "../utils/templateAccess.js";
 
 const router = Router();
 
@@ -222,9 +223,7 @@ router.post(
         throw ApiError.notFound("Template not found");
       }
 
-      const isAdmin = Boolean(req.staffContext?.isAdmin);
-      const isOwner = template.user_id === req.user?.id;
-      if (!isAdmin && !isOwner && !template.is_public) {
+      if (!canAccessTemplate(template, req.user?.id, Boolean(req.staffContext?.isAdmin))) {
         throw ApiError.forbidden("You cannot track a private template owned by another user");
       }
     }

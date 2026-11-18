@@ -4,11 +4,13 @@ import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { sendLimiter } from "../middleware/rateLimit.js";
 import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
 import { actionRepository } from "../repositories/actionRepository.js";
+import { templateRepository } from "../repositories/templateRepository.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
 import { resolveAuthenticatedActorDiscordId } from "../utils/actorIdentity.js";
+import { canAccessTemplate } from "../utils/templateAccess.js";
 import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
@@ -109,6 +111,26 @@ router.post(
       staffCtx?.isAdmin ? undefined : dbUser?.discord_id,
     );
     const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
+    const rawTemplateId = body.templateId;
+    let trackingTemplateId: number | null = null;
+    if (rawTemplateId !== undefined && rawTemplateId !== null && rawTemplateId !== "") {
+      const parsedTemplateId =
+        typeof rawTemplateId === "number"
+          ? rawTemplateId
+          : typeof rawTemplateId === "string" && /^\d+$/.test(rawTemplateId.trim())
+            ? Number(rawTemplateId.trim())
+            : NaN;
+      if (!Number.isSafeInteger(parsedTemplateId) || parsedTemplateId <= 0) {
+        throw ApiError.badRequest("`templateId` must be a positive integer.");
+      }
+      const template = await templateRepository.findById(parsedTemplateId);
+      if (!template) throw ApiError.notFound("Template not found.");
+      if (!canAccessTemplate(template, req.user?.id, Boolean(staffCtx?.isAdmin))) {
+        throw ApiError.forbidden("You cannot use a private template owned by another user.");
+      }
+      trackingTemplateId = parsedTemplateId;
+    }
+
     const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
     if (
       staffCtx &&
@@ -402,13 +424,13 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       const rawStr = JSON.stringify(uninterpolatedCleanMsg);
       const hasDynamic = /\{user\.\d{17,20}\./i.test(rawStr) ||
         containsWeaoPlaceholder(uninterpolatedCleanMsg) || rawStr.includes("discord.com/users/");
-      if (!(hasDynamic || req.body?.track === true || Boolean(req.body?.templateId) || Boolean(req.body?.exploitName))) return;
+      if (!(hasDynamic || req.body?.track === true || Boolean(trackingTemplateId) || Boolean(req.body?.exploitName))) return;
       try {
         const { trackMessage } = await import("../services/messageTrackerService.js");
         await trackMessage({
           channelId: destinationChannelId,
           messageId: sentId,
-          templateId: req.body?.templateId ? Number(req.body.templateId) : null,
+          templateId: trackingTemplateId,
           exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
           authorUserId: senderDiscordId || null,
           rawPayload: uninterpolatedCleanMsg,
