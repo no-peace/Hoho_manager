@@ -1891,3 +1891,68 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed package scripts and Node engine, Vite/Vitest aliases/chunking/environment, strict TypeScript configuration, global CSS theme/overflow/reduced-motion/loading styles, test environment shims, robots/sitemap and both long adversarial suites plus LoginScreen tests.
 - The milestone suites include deterministic geometry/state simulations and source-string assertions; they do not all exercise mounted production components. Treat them as regression checks, not proof of browser behavior or performance.
 - No npm tests, typecheck, build, browser profiling, Lighthouse or benchmarks were run. The user plans to run npm checks and tests after the audit. Do not report checks as passing until their output is reviewed.
+
+
+# HoHo V13 implementation handoff — 2026-11-18
+
+This section records the V13 audit/optimization plan implementation on `main`. It supplements the existing audit history above; it does not replace earlier project findings or claim runtime verification that was not performed.
+
+## Implementation history
+
+### Batch 1 — Turso pipeline stream closure and batching
+- `d9e9a6574974b989b5d901ef60483ec91b7840d4` — `server/src/config/tursoPipeline.ts`: close stateless pipeline streams after standalone execute requests.
+- `f3236472ecf4a8cef7edebc9f82c76e7ac00a7e0` — `server/src/config/database.ts`: use one batched Turso pipeline request for multi-statement `db.exec()`.
+- `5b26df7b2554ee99bf1ac3f9b11a9bfb7cc7b441` — `server/tests/tursoPipeline.test.ts`: regression coverage for transaction stream behavior, stateless execute closure, and stateless multi-statement batching.
+- The existing Turso regression suite asserts standalone `execute("SELECT 1")` sends an execute request followed by close, and `executeBatch(["SELECT 1", "SELECT 2"])` sends both statements and close in one HTTP request.
+
+### Batch 2 — Turso row-read/write and Render runtime optimization
+- `e6a5e8b07826a3bde05a2912460e44856f1c2330` — `server/src/repositories/trackedMessageRepository.ts`: cache empty-table state and in-memory last-checked timestamps.
+- `e35e6586b2c03b8d252d4a5661ff0d79cc2aa4c7` — `server/src/services/messageTrackerService.ts`: avoid redundant tracked-message timestamp writes when payload hashes are unchanged.
+- `d43172c6fb020ab4471fce8ec211f7de06d6a251` — `server/src/routes/health.ts`: cache production health database probes.
+- `45d6c997d63d42f51a9abc1c8f84b69b3e8a9de5` — `server/src/services/maintenanceService.ts`: remove a no-op audit-log maintenance operation.
+- `882d59aeee83df27436ea9ae0fca88eee3e9f048` — `server/src/index.ts`: defer startup maintenance and reduce periodic maintenance frequency; clear the initial timeout during shutdown.
+- `60fc431da33affe83076d222ed9a6c491f8eddae` — `server/src/repositories/trackedMessageRepository.ts`: keep in-memory last-checked updates independent of database writes.
+
+### Batch 3 — Theme and layout read caching
+- `efc59f2c8afaff1343fc2496aa04c874b80d4e85` — `server/src/routes/design.ts`: cache published server-theme and app-layout reads with publication invalidation and test-mode bypass.
+- `0624f7ed2f3f613f3242bc2fb201cfc044e40d52` — `client/src/App.tsx`: throttle focus-triggered theme refreshes and deduplicate concurrent refreshes.
+
+### Batch 4 — Global web-interface guidelines
+- `563d7fe4f25407ad544238c554aff82b8f8e4c42` — `client/index.html`: set the document color scheme explicitly to dark.
+- `9ba080865a0a00baa1633a53cebefdf9bf00405a` — `client/src/styles/globals.css`: apply mobile input sizing, touch behavior, dark native-select contrast, and overscroll containment.
+- `55777ec6ee0e0c19a2c3f784bd0881be4655ebca` — `client/src/components/ui/Field.tsx`: disable spellcheck for identifier/URL fields by default and use tabular character-counter numerals.
+
+### Batch 5 — Studio surface token alignment and Puck defaults
+- `025ea18` — `client/src/config/puck/defaultAppLayouts.ts`: set desktop/mobile default editor surfaces to `#10131A`.
+- `c3422b6` — `client/src/utils/puckAppLayout.ts`: align editor-surface fallback tokens to `#10131A`.
+- `e45bbd2` — `client/src/components/layout/StudioLayout.tsx`: align message-mode surfaces and badge treatment.
+- `da7e286` — `client/src/components/editor/MessageEditor/ContentTab.tsx`: align thread editor field styling and identifier input behavior.
+- `715a4e5` — `client/src/components/editor/MessageEditor/ComponentsTab.tsx`: align thumbnail URL input styling and spellcheck behavior.
+- `6711e21` — `client/src/components/send/BotDispatchModal.tsx`: align dispatch target-message ID input styling and autocomplete behavior.
+- `04ae49b` — `client/src/components/layout/Sidebar.tsx`: align Studio sidebar header and tab-bar surfaces.
+- Existing Discord preview colors and the Golden Layout structure were intentionally preserved.
+
+### Batch 6 — Studio UX polish and accessible controls
+- `9f06143` — `client/src/components/layout/Header.tsx`: add the active template/scratch-draft status pill with a Backups shortcut.
+- `0a5424c` — `client/src/components/layout/StudioLayout.tsx`: warn before unloading when the editor contains message content, embeds, components, or attachments.
+- `50c62d3` — `client/src/components/editor/MessageEditor/index.tsx`: add a card character summary, accessible labels, and visible keyboard-focus rings to controls.
+- `6cbdffe` — `client/src/components/layout/LoginScreen.tsx`: allow normal text selection in the login screen.
+
+### Batch 7 — Regression test updates and handoff
+- `77a13f752df6b18f21eac677438379ee73404134` — `server/tests/messageTrackerService.performance.test.ts`: assert unchanged payloads record both check timestamps in memory and do not call the repository method that performs the tracked-message SQL `UPDATE`.
+- `3422c9d54961c3cb215a70a769147d656c6796b3` — `client/src/utils/__tests__/puckAppLayout.test.ts`: assert desktop and mobile editor defaults use `#10131A`, while Discord preview defaults remain `#313338`.
+- `server/tests/tursoPipeline.test.ts` already contains the two required stateless pipeline regression cases from Batch 1; no duplicate test was added in Batch 7.
+- This handoff update records the complete V13 implementation history, target files, and verification limits.
+
+## Verification status and limits
+
+- **Source-level verification:** modified files were fetched again from the repository after their commits during the implementation batches. The Batch 7 test edits were committed using the latest fetched blob SHAs.
+- **Tests not executed:** no claim is made that `npm test` or the focused Vitest suites pass.
+- **Typecheck/build not executed:** no claim is made that `npm run typecheck` or `npm run build` pass.
+- **CI/deployment not verified:** no GitHub Actions run, Render deployment, live Turso request/usage measurement, browser QA, Lighthouse run, or production profiling is represented as completed.
+- The repository's existing handoff history records that GitHub Actions were disabled by owner instruction and local Terminal access had previously returned HTTP 404. Those constraints explain why this implementation was source-reviewed and committed without reporting runtime checks as passing.
+- Before deployment, run the focused tests and then the repository-wide checks from the repository root: `npm test`, `npm run typecheck`, and `npm run build`. Review their actual output before treating V13 as runtime-verified.
+
+## V13 implementation status
+
+All seven planned batches have been committed to `main`. This means the planned source and regression-test changes have been committed; it does **not** mean the test suite, typecheck, build, deployment, or production behavior has been verified.
