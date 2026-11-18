@@ -60,7 +60,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       channel_id: "channel_456",
       member: {
         user: {
-          id: "user_789",
+          id: "123456789012345678",
           username: "Commander",
           discriminator: "0001",
         },
