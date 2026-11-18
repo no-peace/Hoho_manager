@@ -229,7 +229,7 @@ Verification:
 
 Findings and changes:
 1. **Fixed:** The self-assignable role safety mask used incorrect permission bits for `MUTE_MEMBERS` and `DEAFEN_MEMBERS` (it checked bits 25/26 instead of 22/23). Roles carrying those moderation permissions could pass the check. The mask now uses the correct bits and also blocks `CREATE_EVENTS`.
-2. Removed the unused `DiscordApi.sendWebhook` capability and webhook-profile repository access from `ActionContext`. Action handlers can no longer access direct webhook delivery through their execution context.
+2. Removed the unused `DiscordApi.sendWebhook`, profile-aware `sendChannelMessage(profileId)` capability and webhook-profile repository access from `ActionContext`. Action handlers can no longer access direct webhook or custom-profile delivery through their execution context.
 3. The legacy `send_webhook_message` action remains registered as a disabled failure stub so persisted flows fail clearly; it remains hidden from the action picker. It cannot send a webhook.
 4. Reviewed component/modal interaction execution: message-component actions require a stored message-bound flow, duplicate interactions are claimed idempotently, and the interaction handler defers before the 2.2-second acknowledgement deadline.
 5. Added regression tests for dangerous role permission bits, managed roles and unverifiable permissions. No tests were run.

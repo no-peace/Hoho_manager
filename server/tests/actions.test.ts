@@ -45,7 +45,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         { id: "role_toggle", permissions: "0", managed: false },
       ]),
       sendDirectMessage: vi.fn().mockResolvedValue({ id: "dm_1" } as any),
-      sendChannelMessage: vi.fn().mockResolvedValue({ id: "chan_msg_1" } as any),
       sendChannelMessageWithToken: vi.fn().mockResolvedValue({ id: "token_msg_1" } as any),
       deleteChannelMessage: vi.fn().mockResolvedValue(true),
       createThreadFromMessage: vi.fn().mockResolvedValue({ id: "thread_1" }),
