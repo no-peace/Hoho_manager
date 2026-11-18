@@ -2,7 +2,7 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import express from "express";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { errorHandler } from "../src/middleware/errorHandler.js";
+import { errorHandler, notFoundHandler } from "../src/middleware/errorHandler.js";
 import { ApiError } from "../src/utils/errors.js";
 
 describe("API error detail disclosure", () => {
@@ -21,7 +21,7 @@ describe("API error detail disclosure", () => {
     app.get("/safe-error", () => {
       throw ApiError.gatewayTimeout("A safe timeout occurred", { timeoutMs: 1000 });
     });
-    app.use(errorHandler);
+    app.use(notFoundHandler, errorHandler);
     await new Promise<void>((resolve) => {
       server = app.listen(0, "127.0.0.1", () => {
         baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
