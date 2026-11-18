@@ -178,7 +178,7 @@ export const trackedMessageRepository = {
   },
 
   async updateLastChecked(id: number): Promise<void> {
-    this.recordCheckInMemory(id);
+    lastCheckedById.set(id, Date.now());
   },
 
   async delete(channelId: string, messageId: string): Promise<void> {
