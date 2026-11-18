@@ -9,13 +9,14 @@ const log = logger.child("discord");
 /**
  * Everything that talks to Discord's REST API lives here.
  *
- * Two things are kept strictly separate:
- *   - **Webhook calls** need no bot token and may be made with a URL supplied by
- *     the browser (they can only ever post to that one webhook).
- *   - **Bot calls** need the token, which is resolved server-side only.
+ * - Bot API calls use the single configured bot token, resolved server-side.
+ * - Interaction callbacks and follow-up responses use the short-lived
+ *   interaction token supplied by Discord. Discord exposes those operations
+ *   under its /webhooks/{applicationId}/{interactionToken} routes; this is
+ *   required interaction protocol handling, not arbitrary webhook URL sending.
  *
- * The token is *never* accepted from a request body  callers pass a profile id
- * or fall back to the environment variable.
+ * Browser-supplied webhook URLs and custom bot-profile credentials are not
+ * accepted by this service.
  */
 
 /** A guild member, as far as this app cares. */
