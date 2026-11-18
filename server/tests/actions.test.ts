@@ -414,6 +414,17 @@ describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
         await handler?.run({ ...mockContext, config: { channelId: "target_chan", content: "Public announcement" } });
         expect(mockDiscordApi.sendChannelMessageWithToken).toHaveBeenCalled();
       });
+
+      it("marks the action failed when Discord returns no sent message", async () => {
+        vi.mocked(mockDiscordApi.sendChannelMessageWithToken).mockResolvedValueOnce(null);
+        const handler = getActionHandler("send_message");
+        const response = await handler?.run({
+          ...mockContext,
+          config: { channelId: "target_chan", content: "Public announcement" },
+        });
+        expect(response?.outcome).toBe("failure");
+        expect(response?.data?.content).toContain("did not confirm");
+      });
     });
 
     // 8. sendDm
@@ -423,6 +434,14 @@ describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
         const res = await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
         expect(mockDiscordApi.sendDirectMessage).toHaveBeenCalledWith("user_789", expect.anything(), "Bot.FakeToken");
         expect((res?.data as any)?.content).toBe("📬 **Direct Message Sent** — Sent you a direct message.");
+      });
+
+      it("marks the action failed when Discord returns no sent DM", async () => {
+        vi.mocked(mockDiscordApi.sendDirectMessage).mockResolvedValueOnce(null);
+        const handler = getActionHandler("send_dm");
+        const response = await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
+        expect(response?.outcome).toBe("failure");
+        expect(response?.data?.content).toContain("did not confirm");
       });
     });
 
@@ -468,6 +487,18 @@ describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
         });
         expect(mockDiscordApi.createThreadFromMessage).toHaveBeenCalled();
         expect((res?.data as any)?.content).toBe("🧵 **Thread Created** — Started <#thread_1>.");
+      });
+
+      it("marks the action failed when Discord returns no created thread", async () => {
+        vi.mocked(mockDiscordApi.createThreadFromMessage).mockResolvedValueOnce(null);
+        const handler = getActionHandler("create_thread");
+        const response = await handler?.run({
+          ...mockContext,
+          interaction: { ...mockContext.interaction, message: { id: "msg_anchor" } as any },
+          config: { name: "Discussion Thread" },
+        });
+        expect(response?.outcome).toBe("failure");
+        expect(response?.data?.content).toContain("did not confirm");
       });
     });
 
