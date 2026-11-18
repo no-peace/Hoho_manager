@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 166 | In progress (69/166) |
+| Client | 166 | In progress (85/166) |
 | Server | 142 | Complete (142/142 source inventory) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -443,23 +443,23 @@ Verification:
 - [x] `client/src/components/editor/__tests__/LayersPanel.test.tsx` — added; render-isolation regression coverage; not executed
 - [x] `client/src/components/editor/__tests__/RichPicker.test.tsx` — added; render-isolation regression coverage; not executed
 - [x] `client/src/components/editor/__tests__/JsonModal.test.tsx` — added; closed-modal render-isolation regression; not executed
-- [ ] `client/src/components/layout/AccessPanel.tsx`
-- [ ] `client/src/components/layout/AuditLogsModal.tsx`
-- [ ] `client/src/components/layout/BackupsModal.tsx`
+- [x] `client/src/components/layout/AccessPanel.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/AuditLogsModal.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/BackupsModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/ErrorBoundary.tsx`
-- [ ] `client/src/components/layout/Header.tsx`
+- [x] `client/src/components/layout/Header.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/HoHoLogoMark.tsx`
-- [ ] `client/src/components/layout/LoginScreen.tsx`
+- [x] `client/src/components/layout/LoginScreen.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/PublicPageHeader.tsx`
 - [x] `client/src/components/layout/ServerBotAccessModal.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/SessionsModal.tsx`
-- [ ] `client/src/components/layout/SettingsModal.tsx`
-- [ ] `client/src/components/layout/Sidebar.tsx`
+- [x] `client/src/components/layout/SessionsModal.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/SettingsModal.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/Sidebar.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/SplitPane.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/StudioLayout.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/StudioModals.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/StudioRouter.tsx`
-- [ ] `client/src/components/layout/ThemeSettingsModal.tsx`
+- [x] `client/src/components/layout/StudioRouter.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/ThemeSettingsModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/__tests__/LoginScreen.test.tsx`
 - [x] `client/src/components/preview/ActionRowPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/ComponentPreview.tsx` — inspected; runtime verification not performed
@@ -478,15 +478,15 @@ Verification:
 - [x] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/send/BotDispatchModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/Button.tsx`
-- [ ] `client/src/components/ui/ColorPicker.tsx`
+- [x] `client/src/components/ui/ColorPicker.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/CultSkiperPrimitives.tsx`
 - [ ] `client/src/components/ui/DateTimePickerPopover.tsx`
-- [ ] `client/src/components/ui/EmojiPickerField.tsx`
+- [x] `client/src/components/ui/EmojiPickerField.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/ErrorBoundary.tsx`
 - [ ] `client/src/components/ui/Field.tsx`
-- [ ] `client/src/components/ui/Modal.tsx`
+- [x] `client/src/components/ui/Modal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/SearchableDiscordSelect.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/ui/Tabs.tsx`
+- [x] `client/src/components/ui/Tabs.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/__tests__/ColorPicker.test.tsx`
 - [ ] `client/src/components/ui/__tests__/FieldAutocomplete.test.tsx`
 - [ ] `client/src/components/ui/__tests__/Modal.test.tsx`
@@ -503,9 +503,9 @@ Verification:
 - [ ] `client/src/hooks/useAutocompleteMenu.ts`
 - [ ] `client/src/hooks/useMessage.ts`
 - [x] `client/src/hooks/usePublishedAppLayout.ts` — inspected; runtime verification not performed
-- [ ] `client/src/hooks/useSend.ts`
+- [x] `client/src/hooks/useSend.ts` — inspected; runtime verification not performed
 - [ ] `client/src/hooks/useStaffAccess.ts`
-- [ ] `client/src/hooks/useTemplates.ts`
+- [x] `client/src/hooks/useTemplates.ts` — inspected; runtime verification not performed
 - [x] `client/src/main.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/pages/DesignLabPage.tsx`
 - [ ] `client/src/pages/DocsPage.tsx`
@@ -857,3 +857,12 @@ Verification:
 - Reviewed the editor implementation and regression-test inventory. Existing targeted tests cover per-message render isolation, cross-guild cache isolation, closed JSON modal subscription isolation, LayersPanel stability, selection routing, editor keyboard shortcuts/autocomplete, and V2 component editing. No additional broad memoization, list virtualization, or data-structure change was justified from source review alone.
 - Reviewed preview components and tests. Existing preview coverage includes message/component selection routing, embed rendering/link safety, markdown rendering, and placeholder resolution. No new preview optimization was justified without browser profiling or a repeatable render-cost regression.
 - No runtime changes in F26. The source-level audit inventory is now 141/142 server items; the remaining one item is tracked separately in the ledger. Runtime verification was not performed.
+
+
+## Client layout, modal and hook review — Batch F27 (2026-11-18)
+
+- Reviewed 16 client files: Header, Sidebar, StudioRouter, SettingsModal, AccessPanel, AuditLogsModal, BackupsModal, SessionsModal, ThemeSettingsModal, LoginScreen, Modal, Tabs, ColorPicker, EmojiPickerField, useTemplates, and useSend.
+- LoginScreen already avoids automatic showcase rotation and its decorative canvas on narrow screens/reduced-motion sessions. Modal already clears its focus timer and per-instance keyboard handler on cleanup. EmojiPickerField and ThemeSettingsModal already memoize their filtered lists/validation.
+- BackupsModal computes dirty-state by serializing the current document and action list during render, and rebuilds the merged template/tracking display list during render. These are candidate hotspots only; no edit was made because this source pass did not measure their cost or establish that the modal is rendered frequently enough for the work to matter.
+- Header and SessionsModal contain short-lived timeout-driven UI state; no persistent timer leak was identified in the inspected paths. useSend and useTemplates use store snapshots at action time rather than subscribing to broad state for the send/save operation.
+- No runtime changes in F27. Client audit ledger count advanced from 69/166 to 85/166. Tests/build/profile were not executed.
