@@ -137,9 +137,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
     return guildRoles.filter((r) => allowedIds.includes(r.id));
   }, [guildRoles, isUnrestrictedMentions, staffPerms]);
 
-  const emojisMap = useDiscordCacheStore((state) => state.emojis);
+  const serverEmojis = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.emojis[effectiveGuildId] : undefined,
+  ) ?? [];
   const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
-  const serverEmojis = (effectiveGuildId && emojisMap[effectiveGuildId]) || [];
 
   const [memberResults, setMemberResults] = useState<
     Array<{
