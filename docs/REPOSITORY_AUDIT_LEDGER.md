@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 166 | In progress (69/166) |
-| Server | 142 | In progress (141/142) |
+| Server | 142 | Complete (142/142 source inventory) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -690,6 +690,7 @@ Verification:
 - [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/interactionMemory.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/m3_challenger2_retention_cache.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/messageTrackerService.performance.test.ts` — implementation and request-count regression reviewed; test not executed
 - [x] `server/tests/middleware.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/repositories.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/requestParsing.test.ts` — inspected; runtime verification not performed
