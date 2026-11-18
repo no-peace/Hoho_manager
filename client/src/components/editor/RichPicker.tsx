@@ -38,6 +38,7 @@ interface CustomEmoji {
 
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
+const EMPTY_EMOJIS: CustomEmoji[] = [];
 const CUSTOM_EMOJI_STORAGE_KEY = "hoho_custom_external_emojis";
 
 const RichPickerComponent: React.FC<RichPickerProps> = ({
@@ -81,7 +82,7 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
   const serverEmojis: CustomEmoji[] = useDiscordCacheStore((state) =>
     effectiveGuildId ? state.emojis[effectiveGuildId] : undefined,
-  ) ?? [];
+  ) ?? EMPTY_EMOJIS;
 
   const [customSavedEmojis, setCustomSavedEmojis] = useState<CustomEmoji[]>(() => {
     try {
