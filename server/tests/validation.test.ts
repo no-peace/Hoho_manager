@@ -137,10 +137,18 @@ describe("validation utils", () => {
     });
 
     it("rejects malformed component entries instead of silently skipping them", () => {
-      expect(() => validateMessagePayload({
-        flags: MessageFlags.IsComponentsV2,
-        components: [null],
-      })).toThrow(/must be a component object/i);
+      try {
+        validateMessagePayload({
+          flags: MessageFlags.IsComponentsV2,
+          components: [null],
+        });
+        expect.unreachable("Should have thrown");
+      } catch (err: any) {
+        expect(err.message).toBe("Message payload failed validation");
+        expect(err.details).toEqual(
+          expect.arrayContaining([expect.stringMatching(/must be a component object/i)]),
+        );
+      }
     });
 
     it("rejects component trees deeper than the supported validation limit", () => {
@@ -152,10 +160,18 @@ describe("validation utils", () => {
         node = { type: ComponentType.Container, components: [node] };
       }
 
-      expect(() => validateMessagePayload({
-        flags: MessageFlags.IsComponentsV2,
-        components: [node],
-      })).toThrow(/nesting depth exceeds 25 levels/i);
+      try {
+        validateMessagePayload({
+          flags: MessageFlags.IsComponentsV2,
+          components: [node],
+        });
+        expect.unreachable("Should have thrown");
+      } catch (err: any) {
+        expect(err.message).toBe("Message payload failed validation");
+        expect(err.details).toEqual(
+          expect.arrayContaining([expect.stringMatching(/nesting depth exceeds 25 levels/i)]),
+        );
+      }
     });
 
     it("rejects content exceeding 2000 characters", () => {
