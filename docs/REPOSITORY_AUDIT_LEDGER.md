@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 162 | In progress (46/162) |
+| Client | 165 | In progress (57/165) |
 | Server | 142 | In progress (120/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -398,7 +398,7 @@ Verification:
 - [x] `tsconfig.base.json` — inspected; runtime verification not performed
 - [x] `tunnel/config.yml.example` — inspected; runtime verification not performed
 
-### Client (161)
+### Client (164)
 - [ ] `client/.env.example`
 - [x] `client/Dockerfile` — inspected; runtime verification not performed
 - [ ] `client/index.html`
@@ -419,16 +419,16 @@ Verification:
 - [ ] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 - [ ] `client/src/components/editor/AllowedMentionsModal.tsx`
 - [ ] `client/src/components/editor/ComponentForms.tsx`
-- [ ] `client/src/components/editor/DiscohookComponentsEditor.tsx`
-- [ ] `client/src/components/editor/DiscordMentionInput.tsx`
+- [x] `client/src/components/editor/DiscohookComponentsEditor.tsx` — inspected; render-isolation coverage added where applicable; not executed
+- [x] `client/src/components/editor/DiscordMentionInput.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [ ] `client/src/components/editor/EmbedEditor.tsx`
 - [ ] `client/src/components/editor/FileAttachmentsSection.tsx`
 - [ ] `client/src/components/editor/FlagsModal.tsx`
 - [ ] `client/src/components/editor/JsonModal.tsx`
-- [ ] `client/src/components/editor/LayersPanel.tsx`
-- [ ] `client/src/components/editor/MentionInput/AutocompletePopover.tsx`
-- [ ] `client/src/components/editor/MentionInput/MarkdownToolbar.tsx`
-- [ ] `client/src/components/editor/MentionInput/index.tsx`
+- [x] `client/src/components/editor/LayersPanel.tsx` — inspected; render-isolation coverage added where applicable; not executed
+- [x] `client/src/components/editor/MentionInput/AutocompletePopover.tsx` — inspected; render-isolation coverage added where applicable; not executed
+- [x] `client/src/components/editor/MentionInput/MarkdownToolbar.tsx` — inspected; render-isolation coverage added where applicable; not executed
+- [x] `client/src/components/editor/MentionInput/index.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [ ] `client/src/components/editor/MessageEditor.tsx`
 - [x] `client/src/components/editor/MessageEditor/ComponentsTab.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/ContentTab.tsx` — inspected; runtime verification not performed
@@ -436,9 +436,12 @@ Verification:
 - [ ] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx`
 - [x] `client/src/components/editor/MessageEditor/index.tsx` — inspected; per-message selector optimization and regression test added; not executed
 - [x] `client/src/components/editor/PropertyPanel.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/editor/RichPicker.tsx`
-- [ ] `client/src/components/editor/__tests__/DiscordMentionInput.test.tsx`
+- [x] `client/src/components/editor/RichPicker.tsx` — inspected; render-isolation coverage added where applicable; not executed
+- [x] `client/src/components/editor/__tests__/DiscordMentionInput.test.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/__tests__/MessageEditor.test.tsx` — inspected; render-isolation regression coverage added; not executed
+- [x] `client/src/components/editor/__tests__/DiscohookComponentsEditor.test.tsx` — added; render-isolation regression coverage; not executed
+- [x] `client/src/components/editor/__tests__/LayersPanel.test.tsx` — added; render-isolation regression coverage; not executed
+- [x] `client/src/components/editor/__tests__/RichPicker.test.tsx` — added; render-isolation regression coverage; not executed
 - [ ] `client/src/components/layout/AccessPanel.tsx`
 - [ ] `client/src/components/layout/AuditLogsModal.tsx`
 - [ ] `client/src/components/layout/BackupsModal.tsx`
@@ -800,3 +803,13 @@ Verification:
 - Reviewed the remaining server runtime source files: routes/health.ts, types/express.d.ts, and utils/appLayoutValidation.ts. No safe, evidence-backed performance change was identified. In particular, the health route's user count query and the layout validator's bounded-payload serialization were left unchanged because no measured bottleneck or compatible behavior-preserving replacement was established.
 - Reviewed server/tests/variableInterpolation.test.ts and server/tests/interactionMemory.test.ts as part of the server test inventory.
 - **Verification:** regression tests were added but not executed. No React Profiler browser capture, benchmark, test suite, typecheck, build, browser QA, Lighthouse, database query plan, or deployment verification was run.
+
+
+## Additional editor cache-subscription audit — Batch F21 (2026-11-18)
+
+- Reviewed DiscohookComponentsEditor, LayersPanel, DiscordMentionInput/MentionInput, RichPicker, AutocompletePopover and MarkdownToolbar, plus the existing DiscordMentionInput regression suite.
+- **Fixed a missed editor subscription leak:** DiscohookComponentsEditor received a message-specific componentsOverride but still subscribed to the active message's entire data object. Inactive message editors therefore rerendered when the active message changed. The selector now returns the provided override when present and falls back to active message components only when no override is supplied. Added a Profiler regression test.
+- LayersPanel now selects only `data.components`, rather than the entire message object. Ordinary content/metadata edits do not invalidate the layer tree when the component array is unchanged. Added a Profiler regression test.
+- MentionInput and RichPicker now subscribe to only the selected guild's channel, role and emoji arrays. Cache changes for unrelated guilds no longer invalidate every mounted mention editor/picker. Stable empty-array fallbacks avoid creating new selector dependencies when no guild is selected. Added Profiler regression tests for MentionInput and RichPicker.
+- No request cancellation, autocomplete algorithm rewrite, list virtualization, or broad memoization was introduced; no trace established a need for those changes. Existing debounce and bounded suggestion rendering were retained.
+- **Verification:** tests added but not executed. No browser React Profiler capture, test suite, typecheck, build, browser QA, Lighthouse, or API/network profiling was run.
