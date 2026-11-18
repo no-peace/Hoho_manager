@@ -113,4 +113,54 @@ describe("WEAO changelog formatting", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("bounds comparison baselines when expired cache refreshes fail", async () => {
+    const calls = new Map<string, number>();
+    const fetchMock = vi.fn(async (input: any) => {
+      const url = new URL(String(input));
+      const name = decodeURIComponent(url.pathname.split("/").pop() ?? "");
+      const call = (calls.get(name) ?? 0) + 1;
+      calls.set(name, call);
+
+      const baselineIndex = /^Baseline-(\d+)$/.exec(name);
+      if (baselineIndex && Number(baselineIndex[1]) < 100 && (call === 2 || call === 3)) {
+        return new Response("upstream unavailable", { status: 503 });
+      }
+
+      return new Response(JSON.stringify({
+        changelogs: [{ title: call > 1 ? `new ${name}` : `old ${name}` }],
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-16T00:00:00.000Z"));
+    try {
+      for (let index = 0; index < 250; index += 1) {
+        await getExploitChangelogs(`Baseline-${index}`);
+      }
+
+      vi.setSystemTime(Date.now() + 16_000);
+      for (let index = 0; index < 100; index += 1) {
+        await getExploitChangelogs(`Baseline-${index}`);
+      }
+
+      for (let index = 0; index < 100; index += 1) {
+        await getExploitChangelogs(`Fresh-${index}`);
+      }
+
+      await getExploitChangelogs("Baseline-99");
+      expect(getExploitChangelogComparison("Baseline-99")).toEqual({
+        added: [],
+        removed: [],
+      });
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
 });

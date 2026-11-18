@@ -308,16 +308,21 @@ export const getExploitChangelogs = async (exploitName: string): Promise<unknown
         added: entries.filter((entry) => !previous.some((old) => same(old, entry))),
         removed: previous.filter((old) => !entries.some((current) => same(current, old))),
       } : { added: [], removed: [] });
-      // Advance the baseline after each successful fetch so comparisons are incremental.
-      changelogBaselines.set(key, entries);
-      if (!changelogCache.has(key) && changelogCache.size >= MAX_CHANGELOG_CACHE_ENTRIES) {
-        const oldestKey = changelogCache.keys().next().value;
+      // Keep comparison baselines bounded independently of cache entries.
+      // Failed refreshes remove expired cache entries but intentionally retain
+      // their last successful baseline; using cache.size here could therefore
+      // allow the baseline/comparison maps to grow without a bound.
+      if (changelogBaselines.has(key)) {
+        changelogBaselines.delete(key);
+      } else if (changelogBaselines.size >= MAX_CHANGELOG_CACHE_ENTRIES) {
+        const oldestKey = changelogBaselines.keys().next().value;
         if (oldestKey !== undefined) {
-          changelogCache.delete(oldestKey);
           changelogBaselines.delete(oldestKey);
           changelogComparisons.delete(oldestKey);
+          changelogCache.delete(oldestKey);
         }
       }
+      changelogBaselines.set(key, entries);
       changelogCache.delete(key);
       changelogCache.set(key, { data: entries, fetchedAt: Date.now() });
       return entries;

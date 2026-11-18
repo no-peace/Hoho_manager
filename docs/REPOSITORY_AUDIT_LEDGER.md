@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 137 | In progress (63/137) |
+| Server | 139 | In progress (69/139) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -177,7 +177,7 @@ Verification:
 - Tests were added but not executed, per the current owner instruction.
 - No typecheck, build, browser QA or live Discord request was executed.
 
-## Batch F10 — Custom-executor enablement and bot resolution (2026-11-18)
+## Batch F11 — Custom-executor enablement and bot resolution (2026-11-18)
 
 **Status:** Source fixes and focused tests prepared; no tests, typecheck, build or live bot calls were executed.
 
@@ -186,6 +186,42 @@ Findings and changes:
 2. Added one shared `isCustomExecutorEnabled` guard and applied it to `/resolve-exploit`, send, manual tracking and background sync.
 3. The `/resolve-exploit` endpoint now recognizes authenticated machine-admin context without requiring a browser user session, while still requiring a user session for non-admin staff and enforcing private-template access.
 4. Added tests for enabled/disabled custom-executor values.
+
+## Batch F12 — Discord REST boundary and credential handling (2026-11-18)
+
+**Status:** Source inspection of two additional server files. No tests, typecheck, build or live Discord requests were executed.
+
+Files reviewed:
+- `server/src/services/discordService.ts`
+- `server/tests/discordService.timeout.test.ts`
+
+Findings:
+1. The only bot token resolver returns the configured server bot token. Legacy profile IDs are ignored; custom stored bot tokens cannot be selected through these helpers.
+2. Arbitrary webhook-URL message sending remains a forbidden compatibility stub. Webhook inspection parses the URL and performs only a read request.
+3. Discord REST attempts have bounded timeouts (10 seconds by default, 30 seconds for multipart, and 1 second for interaction callbacks) and bounded retry counts. Interaction callback timeout errors do not include the interaction token or request URL; the existing test asserts this.
+4. Guild/user/member caches have TTL and entry bounds, with in-flight request coalescing for the high-volume lookup paths.
+5. No new credential disclosure, token-selection bypass or confirmed functional defect was found in this source-only review.
+
+Verification:
+- Existing timeout regression tests were inspected but not executed.
+- No live Discord API behavior was tested.
+
+## Batch F13 — WEAO upstream cache bounds (2026-11-18)
+
+**Status:** Source defect fixed and focused regression test added. Test suite was not executed.
+
+Files reviewed and changed:
+- `server/src/services/weaoService.ts`
+- `server/tests/weaoService.test.ts`
+
+Finding and fix:
+1. **Fixed:** Changelog comparison baselines and comparison results were intended to be bounded at 250 entries, but eviction was driven by the separate response-cache size. When expired cache entries were removed after failed upstream refreshes, the baseline/comparison maps could retain those entries while the response cache shrank; subsequent new keys could grow the retained maps beyond their limit.
+2. Eviction now uses the baseline map's own size and removes the corresponding comparison and response-cache entries together. Successful refreshes move the baseline to the newest position.
+3. Added a regression test that fills the baseline cache, forces expired refresh failures, adds new keys and checks that an old comparison baseline was evicted.
+
+Verification:
+- Regression test added but not executed.
+- No typecheck, build or live WEAO API request was executed.
 
 ## File-by-file inventory
 
@@ -464,7 +500,7 @@ Findings and changes:
 - [ ] `server/src/services/auditLog.ts`
 - [x] `server/src/services/authorService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/branches.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/discordService.ts`
+- [x] `server/src/services/discordService.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/guildVariables.ts`
 - [x] `server/src/services/interactionHandler.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/maintenanceService.ts`
@@ -472,7 +508,7 @@ Findings and changes:
 - [ ] `server/src/services/settingsService.ts`
 - [x] `server/src/services/templateService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/variableInterpolation.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/weaoService.ts`
+- [x] `server/src/services/weaoService.ts` — inspected and fixed; runtime verification not performed
 - [ ] `server/src/types/express.d.ts`
 - [ ] `server/src/utils/appLayoutValidation.ts`
 - [x] `server/src/utils/crypto.ts` — inspected; runtime verification not performed
@@ -496,7 +532,7 @@ Findings and changes:
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/challenger_staffRepository.test.ts`
 - [ ] `server/tests/crypto.test.ts`
-- [ ] `server/tests/discordService.timeout.test.ts`
+- [x] `server/tests/discordService.timeout.test.ts` — inspected; test not executed
 - [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/errorHandler.security.test.ts`
 - [ ] `server/tests/flowRepository.test.ts`
@@ -516,7 +552,7 @@ Findings and changes:
 - [ ] `server/tests/urlAttachments.security.test.ts`
 - [x] `server/tests/validation.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/variableInterpolation.test.ts`
-- [ ] `server/tests/weaoService.test.ts`
+- [x] `server/tests/weaoService.test.ts` — inspected and regression coverage added; test not executed
 - [ ] `server/tsconfig.build.json`
 - [ ] `server/tsconfig.json`
 - [ ] `server/vitest.config.ts`

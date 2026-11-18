@@ -1692,3 +1692,22 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added shared enablement validation across the WEAO resolve route, send route, manual tracking route and background synchronization.
 - Adjusted `/resolve-exploit` to support the authenticated machine-admin context used by the bot without requiring a browser session; non-admin requests still require an authenticated staff user and template access checks.
 - Added focused tests for enabled/disabled values. No tests, typecheck, build or live Discord calls were run.
+
+
+## Discord REST boundary audit — Batch F12 (2026-11-18)
+
+- Reviewed the complete `server/src/services/discordService.ts` and `server/tests/discordService.timeout.test.ts`.
+- Confirmed all bot REST helpers use the configured server token; legacy profile IDs are ignored. The arbitrary webhook-send export remains a forbidden stub, while webhook inspection is read-only.
+- Confirmed bounded REST/multipart/interaction timeouts and bounded retry counts. Interaction callback timeout errors omit the interaction token and URL; existing regression coverage asserts this.
+- Confirmed TTL/entry bounds and in-flight request coalescing on guild, user and member lookup caches.
+- No new credential disclosure, token-selection bypass or confirmed functional defect was found.
+- Verification: source inspection only. The existing timeout tests and live Discord API behavior were not executed.
+
+
+## WEAO upstream cache audit — Batch F13 (2026-11-18)
+
+- Reviewed the complete `server/src/services/weaoService.ts` and `server/tests/weaoService.test.ts`.
+- Found that changelog comparison baselines/comparison maps were bounded indirectly through the response-cache size. Expired cache entries removed after failed refreshes could leave successful baselines resident while the cache shrank, allowing later unique keys to push the baseline/comparison maps beyond the intended 250-entry bound.
+- Fixed eviction to use the baseline map's own size, deleting the corresponding baseline, comparison and response-cache entries together. Successful refreshes now move their baseline to the newest position.
+- Added a regression test for failed expired-cache refreshes followed by new-key insertion and baseline eviction.
+- Verification: source changes and test additions only. Tests, typecheck, build and live WEAO API calls were not executed.
