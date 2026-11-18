@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 166 | In progress (85/166) |
+| Client | 166 | In progress (106/166) |
 | Server | 142 | Complete (142/142 source inventory) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -477,34 +477,34 @@ Verification:
 - [x] `client/src/components/reactbits/ThreeHeroCanvas.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/send/BotDispatchModal.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/ui/Button.tsx`
+- [x] `client/src/components/ui/Button.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/ColorPicker.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/ui/CultSkiperPrimitives.tsx`
-- [ ] `client/src/components/ui/DateTimePickerPopover.tsx`
+- [x] `client/src/components/ui/CultSkiperPrimitives.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/ui/DateTimePickerPopover.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/EmojiPickerField.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/ui/ErrorBoundary.tsx`
-- [ ] `client/src/components/ui/Field.tsx`
+- [x] `client/src/components/ui/ErrorBoundary.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/ui/Field.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/Modal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/SearchableDiscordSelect.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/Tabs.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/ui/__tests__/ColorPicker.test.tsx`
-- [ ] `client/src/components/ui/__tests__/FieldAutocomplete.test.tsx`
-- [ ] `client/src/components/ui/__tests__/Modal.test.tsx`
+- [x] `client/src/components/ui/__tests__/ColorPicker.test.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/ui/__tests__/FieldAutocomplete.test.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/ui/__tests__/Modal.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx` — inspected and regression coverage added; runtime verification not performed
-- [ ] `client/src/components/ui/icon.ts`
-- [ ] `client/src/config/puck/appLayoutConfig.tsx`
-- [ ] `client/src/config/puck/defaultAppLayouts.ts`
-- [ ] `client/src/config/puck/designConfig.tsx`
-- [ ] `client/src/config/puck/publishedDesign.ts`
-- [ ] `client/src/config/puck/publishedTheme.css`
-- [ ] `client/src/config/puck/publishedTheme.ts`
-- [ ] `client/src/config/uiThemeConfig.ts`
-- [ ] `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`
-- [ ] `client/src/hooks/useAutocompleteMenu.ts`
-- [ ] `client/src/hooks/useMessage.ts`
+- [x] `client/src/components/ui/icon.ts` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/appLayoutConfig.tsx` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/defaultAppLayouts.ts` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/designConfig.tsx` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/publishedDesign.ts` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/publishedTheme.css` — inspected; runtime verification not performed
+- [x] `client/src/config/puck/publishedTheme.ts` — inspected; runtime verification not performed
+- [x] `client/src/config/uiThemeConfig.ts` — inspected; runtime verification not performed
+- [x] `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx` — inspected; runtime verification not performed
+- [x] `client/src/hooks/useAutocompleteMenu.ts` — inspected; runtime verification not performed
+- [x] `client/src/hooks/useMessage.ts` — inspected; runtime verification not performed
 - [x] `client/src/hooks/usePublishedAppLayout.ts` — inspected; runtime verification not performed
 - [x] `client/src/hooks/useSend.ts` — inspected; runtime verification not performed
-- [ ] `client/src/hooks/useStaffAccess.ts`
+- [x] `client/src/hooks/useStaffAccess.ts` — inspected; runtime verification not performed
 - [x] `client/src/hooks/useTemplates.ts` — inspected; runtime verification not performed
 - [x] `client/src/main.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/pages/DesignLabPage.tsx`
@@ -522,7 +522,7 @@ Verification:
 - [x] `client/src/store/messageStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/store/settingsStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/store/templateStore.ts` — inspected; runtime verification not performed
-- [ ] `client/src/styles/appLayoutRuntime.css`
+- [x] `client/src/styles/appLayoutRuntime.css` — inspected; runtime verification not performed
 - [ ] `client/src/styles/globals.css`
 - [ ] `client/src/test/setup.ts`
 - [ ] `client/src/utils/__tests__/appLayoutApi.test.ts`
@@ -866,3 +866,13 @@ Verification:
 - BackupsModal computes dirty-state by serializing the current document and action list during render, and rebuilds the merged template/tracking display list during render. These are candidate hotspots only; no edit was made because this source pass did not measure their cost or establish that the modal is rendered frequently enough for the work to matter.
 - Header and SessionsModal contain short-lived timeout-driven UI state; no persistent timer leak was identified in the inspected paths. useSend and useTemplates use store snapshots at action time rather than subscribing to broad state for the send/save operation.
 - No runtime changes in F27. Client audit ledger count advanced from 69/166 to 85/166. Tests/build/profile were not executed.
+
+
+## Client UI primitives, design configuration and hooks — Batch F28 (2026-11-18)
+
+- Reviewed 21 additional client files: shared Button/IconButton, CultSkiper motion primitives, DateTimePickerPopover, UI ErrorBoundary, Field/TextField/TextArea autocomplete, icon type, ColorPicker/FieldAutocomplete/Modal tests, Puck desktop/mobile layout configuration and defaults, Design Lab component configuration, published design/theme defaults, UI theme tokens, useAutocompleteMenu, useMessage, useStaffAccess, usePublishedAppLayout tests, and app-layout runtime CSS.
+- Existing controls are bounded: Field autocomplete filters a static variable catalogue and caps visible suggestions at 50; DateTimePickerPopover builds a fixed 42-cell month grid; Puck layouts have fixed component slots. These are not credible performance bottlenecks without profiling.
+- useMessage derives payload and validation from the active message document and mode; attached-file state is used separately for its empty-state flag. The dependencies inspected match those inputs. useStaffAccess refreshes the access list after successful mutations; overlapping fetches could theoretically resolve out of order, but no concurrent-call evidence or regression test establishes a user-facing defect, so no request/race rewrite was made.
+- DateTimePickerPopover, CultMorphSurface, ErrorBoundary cleanup/reset behavior, and the Puck render wrappers were inspected. No reproducible correctness or performance defect justified a code change. Existing reduced-motion styling and bounded layout rendering remain in place.
+- No runtime code changes in F28. Client source/test audit count advanced from 85/166 to 106/166. Reviewed test files were inspected only; no tests were executed.
+- **Verification not performed:** no tests, typecheck, build, browser profiling, Lighthouse, or runtime benchmark. GitHub Actions remain disabled by owner instruction, and the local Terminal service was previously unavailable.
