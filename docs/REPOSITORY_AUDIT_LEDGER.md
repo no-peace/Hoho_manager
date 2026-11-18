@@ -915,7 +915,7 @@ Verification:
 
 - The file counts and checklist entries above describe the pre-removal audit inventory and are historical; they are not the current tracked-file count.
 - The owner subsequently requested full removal of Puck, the Design Lab, custom themes and published responsive app-layout customization. Their client/server source files, tests, API routes, runtime CSS and direct/transitive npm dependencies have been removed from main.
-- The former design tables are removed by migration 019 on existing databases. Migration 018 and unrelated application migrations remain.
+- The former design/layout tables, including the abandoned app_layout_publishers table, are removed by migration 019 on existing databases. Migration 018 and unrelated application migrations remain.
 - The fixed Studio layout and built-in UI design tokens remain. The static tokens in client/src/config/uiThemeConfig.ts are not a custom theme system.
 - See docs/GEMINI_HANDOFF_CURRENT.md, section “Puck, Design Lab, custom themes and app-layout removal”, for the exact deletion scope, rollback baseline, commits and verification limits.
 - Typecheck, Vitest and production build have not been run after removal. Source re-fetch and package-lock JSON checks are not substitutes for executing them.
