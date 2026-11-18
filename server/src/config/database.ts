@@ -225,9 +225,8 @@ export const db: DatabaseClient = {
   async exec(sql: string): Promise<void> {
     if (useTurso) {
       const statements = splitSqlStatements(sql);
-      for (const stmt of statements) {
-        await executeTursoStatement(stmt);
-      }
+      if (statements.length === 0) return;
+      await tursoClient.executeBatch(statements.map((stmt) => ({ sql: stmt })));
       return;
     }
     open().exec(sql);
