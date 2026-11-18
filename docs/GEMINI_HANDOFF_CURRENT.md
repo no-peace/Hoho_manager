@@ -1956,3 +1956,12 @@ This section records the V13 audit/optimization plan implementation on `main`. I
 ## V13 implementation status
 
 All seven planned batches have been committed to `main`. This means the planned source and regression-test changes have been committed; it does **not** mean the test suite, typecheck, build, deployment, or production behavior has been verified.
+
+
+## Post-V13 typecheck correction — 2026-11-18
+
+- The user ran the client TypeScript check (tsc -p tsconfig.json --noEmit) and reported TS2657 in client/src/components/layout/Header.tsx at the conditional Backups controls (around line 165): the {onOpenBackups && (...)} expression contained two adjacent <button> elements without a single JSX parent.
+- Fixed the conditional by wrapping the two existing Backups buttons in a React fragment (<>...</>). Both controls retain their existing handlers, labels, visibility classes and styling.
+- Fix commit on main: 2462cd81b498daa946a6df8562be158dd93fd5c1 — client/src/components/layout/Header.tsx.
+- The updated Header file was fetched again from main; source inspection confirms the fragment now wraps both buttons.
+- The TypeScript check has not yet been rerun after this correction. This addresses the reported TS2657 JSX-parent error at source level, but does not establish that the project has no further type errors. Run tsc -p tsconfig.json --noEmit again and share any remaining output.
