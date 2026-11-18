@@ -20,6 +20,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
+import { useTemplateStore } from "../../store/templateStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import type { ResolvedAppLayoutMotion } from "../../utils/puckAppLayout";
 
@@ -61,6 +62,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const currentTemplateName = useTemplateStore((state) => state.currentName);
+  const currentTemplateId = useTemplateStore((state) => state.currentId);
 
   const {
     selectedGuildId,
@@ -160,6 +164,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
             {onOpenBackups && (
               <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1 sm:px-2 py-1 text-xs font-semibold text-[#F1F3F9] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#252B3A] active:scale-[0.97]">
                 <Archive size={14} /><span className="hidden xl:inline">Backups</span>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenBackups}
+                title={`Open backups · ${currentTemplateName || "Scratch Draft"}`}
+                aria-label={`Workspace draft: ${currentTemplateName || "Scratch Draft"}. Open backups`}
+                className="hidden md:inline-flex min-w-0 max-w-[170px] items-center gap-2 rounded-md border border-[#272D3A] bg-[#161A23] px-2.5 py-1 text-[0.6875rem] font-medium text-[#A1A8B8] transition-colors hover:border-[#818CF8]/50 hover:bg-[#252B3A] hover:text-[#F1F3F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+              >
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${currentTemplateId !== null ? "bg-[#34D399]" : "bg-[#818CF8]"}`} aria-hidden="true" />
+                <span className="truncate">{currentTemplateName || "Scratch Draft"}</span>
               </button>
             )}
             {onOpenJson && (
