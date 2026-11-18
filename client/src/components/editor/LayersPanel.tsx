@@ -88,8 +88,7 @@ const LayerRow = ({ component, depth, parentId }: LayerRowProps) => {
 };
 
 export const LayersPanel = () => {
-  const data = useMessageStore((state) => state.data);
-  const components = data.components || [];
+  const components = useMessageStore((state) => state.data.components ?? []);
 
   if (components.length === 0) {
     return (
