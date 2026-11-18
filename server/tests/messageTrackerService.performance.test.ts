@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   listAll: vi.fn(),
-  updateLastChecked: vi.fn(),
+  recordCheckInMemory: vi.fn(),
   deleteById: vi.fn(),
   updateHashAndCheck: vi.fn(),
   findByTitle: vi.fn(),
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/repositories/trackedMessageRepository.js", () => ({
   trackedMessageRepository: {
     listAll: mocks.listAll,
-    updateLastChecked: mocks.updateLastChecked,
+    recordCheckInMemory: mocks.recordCheckInMemory,
     deleteById: mocks.deleteById,
     updateHashAndCheck: mocks.updateHashAndCheck,
   },
@@ -57,7 +57,7 @@ describe("message tracker performance safeguards", () => {
     mocks.interpolate.mockImplementation(async (payload: unknown) => ({ payload }));
     mocks.resolveAuthor.mockImplementation(async (payload: unknown) => ({ payload }));
     mocks.getChannelGuildId.mockResolvedValue(null);
-    mocks.updateLastChecked.mockResolvedValue(undefined);
+    mocks.recordCheckInMemory.mockReturnValue(undefined);
     mocks.deleteById.mockResolvedValue(undefined);
     mocks.updateHashAndCheck.mockResolvedValue(undefined);
   });
@@ -97,7 +97,12 @@ describe("message tracker performance safeguards", () => {
     // Two tracked messages in the same channel require only one Discord channel lookup.
     expect(mocks.getChannelGuildId).toHaveBeenCalledTimes(1);
     expect(mocks.getChannelGuildId).toHaveBeenCalledWith("channel-1");
-    expect(mocks.updateLastChecked).toHaveBeenCalledTimes(2);
+    // An unchanged payload must only advance the in-memory check timestamp.
+    // updateHashAndCheck is the repository path that issues SQL UPDATE.
+    expect(mocks.recordCheckInMemory).toHaveBeenCalledTimes(2);
+    expect(mocks.recordCheckInMemory).toHaveBeenNthCalledWith(1, 1);
+    expect(mocks.recordCheckInMemory).toHaveBeenNthCalledWith(2, 2);
+    expect(mocks.updateHashAndCheck).not.toHaveBeenCalled();
   });
 
   it("shares an in-flight sweep instead of starting overlapping polling work", async () => {
