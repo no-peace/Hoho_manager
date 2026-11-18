@@ -1,6 +1,6 @@
 import { Profiler } from "react";
 import { describe, expect, it } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { ButtonPreview, SelectPreview } from "../ActionRowPreview";
 import { useDiscordCacheStore } from "../../../store/discordCacheStore";
 import { useGlobalStore } from "../../../store/globalStore";
