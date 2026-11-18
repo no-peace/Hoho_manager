@@ -1849,3 +1849,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed `server/tests/challenger_perf_indexes.test.ts` and `server/tests/m3_challenger2_retention_cache.test.ts`. Existing coverage includes indexed SQLite query plans, bounded LRU/TTL behavior, 50-concurrent-request member-search coalescing, retry coalescing, and chunked retention pruning alongside concurrent reads. No schema/index/cache changes were justified without current workload/query-plan evidence.
 - Audit ledger updates: client review count 69/166; server review count 125/142. Source review and runtime verification remain separate.
 - **Verification not performed:** the new regression test and other checks were not executed. The connected local Terminal service returned HTTP 404; GitHub Actions remain disabled by owner instruction. No typecheck, build, browser profiling, Lighthouse run, database query plan execution, Discord API trace, production benchmark, deployment, or live service verification was performed.
+
+
+## Server stress and memory-test review — Batch F25 (2026-11-18)
+
+- Reviewed `server/tests/challenger_member_cache.test.ts`: LRU/TTL bounds, cache statistics and duplicate member-search coalescing are covered. The test uses short real-time sleeps; no observed failure justified changing the timing strategy.
+- Reviewed `server/tests/challenger_multipart.test.ts`: multipart fallback behavior, malformed payloads, file count, Content-Length rejection and streamed 25 MiB file rejection are covered. No memory benchmark is present, so no memory/performance claim is inferred from these functional assertions.
+- Reviewed `server/tests/adversarial_streaming_memory.test.ts`: covers 55 MiB declared request rejection, streamed per-file and aggregate limits, field-size limits, abrupt client disconnect, outbound Discord REST timeout behavior, deferred interaction cleanup, and concurrent deferred interactions.
+- These tests confirm existing source-level safeguards and test coverage; they do not establish production throughput, heap usage, or latency. No speculative multipart, cache, timeout, or interaction rewrite was made.
+- Audit ledger server test review count: 128/142. Tests were not executed; GitHub Actions remain disabled by owner instruction.
