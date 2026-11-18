@@ -1,4 +1,6 @@
-> **Current status update — 2026-11-18:** This plan remains the scope/acceptance reference, but its earlier baseline and gating text are historical. Parts A (UI/preview regressions), B (responsive Puck Design Lab) and C (database publishing/live Studio runtime) are integrated into `main`. Parts D/E (theme, Docs and Settings work) are also integrated. Their source presence is not equivalent to executed verification. Current implementation head before this documentation update: `65878192c036ae8a35d1e1c03d37b5ce92173d85`. Only `main` remains and no PRs are open. GitHub Actions are intentionally disabled by the owner. The full 356-file audit is not complete; verification commands are deferred until the owner runs them. See `docs/GEMINI_HANDOFF_CURRENT.md` for the authoritative implementation snapshot, confirmed limitations, audit ledger and pending work.
+> **Security status update — 2026-11-18:** The root lockfile's sole picomatch copy was 4.0.7 and development-only. Until upstream publishes a fix, main carries a temporary local fork based on reviewed upstream PR #262, added as a root development dependency so all transitive consumers resolve to the patched copy. A regression script is wired into `npm test`. This is not an official upstream release; see `docs/GEMINI_HANDOFF_CURRENT.md` for provenance and verification status.
+
+
 
 # HoHo Manager — Master Implementation Plan
 

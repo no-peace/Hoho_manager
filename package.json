@@ -10,7 +10,7 @@
     "client",
     "bot"
   ],
-"scripts": {
+  "scripts": {
     "dev": "npm run build:shared && concurrently -n server,client,bot -c blue,magenta,green \"npm:dev:server\" \"npm:dev:client\" \"npm:dev:bot\"",
     "dev:web": "npm run build:shared && concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "npm run dev --workspace server",
@@ -22,7 +22,7 @@
     "build:bot": "npm run build --workspace bot",
     "build": "npm run build:shared && npm run build:client && npm run build:server && npm run build:bot",
     "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "node scripts/security/picomatch-redos.test.mjs && npm run test --workspaces --if-present",
     "benchmark": "node --expose-gc --import tsx server/benchmarks/runner.ts",
     "benchmark:json": "node --expose-gc --import tsx server/benchmarks/runner.ts --json",
     "verify:acceptance": "node --import tsx scripts/verify-acceptance.ts",
@@ -35,7 +35,8 @@
     "pm2:save": "pm2 save"
   },
   "devDependencies": {
-    "concurrently": "^10.0.7"
+    "concurrently": "^10.0.7",
+    "picomatch": "file:vendor/picomatch"
   },
   "engines": {
     "node": ">=22 <27"

@@ -1567,3 +1567,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Saving a private preset downloads a portable `.hoho-theme.json` file. Users can import those files and export any saved preset again. This file is independent of localStorage and browser-cache cleanup.
 - Files updated: `Header.tsx`, `puckTheme.ts`, `ThemeSettingsModal.tsx`, `DesignLabPage.tsx`, `designConfig.tsx`, `design-lab.css`, `PUCK_DESIGN_LAB.md`, and this handoff.
 - Verification: GitHub source updates only. `npm run typecheck`, `npm test`, `npm run build`, browser interaction/responsive checks, and Lighthouse have NOT been run in this session. Do not report them as passing until executed against this commit.
+
+
+## Security remediation — picomatch ReDoS (2026-11-18)
+
+- Confirmed the lockfile contained one deduplicated `picomatch@4.0.7` package entry, marked development-only. Its consumers are the Vite/Vitest/tinyglobby build and test toolchain; no production dependency path was present in the lockfile.
+- The npm registry still published 4.0.7 as latest when checked. Upstream PR #262 remains open, so there is no official patched npm release to consume yet.
+- Added a temporary, private vendored fork at `vendor/picomatch`, based on upstream 4.0.7 and applying the parser mitigation from upstream PR #262 at commit `3222059ac27492d9c0147fee5c65f751bbd851ab`.
+- The local package version is `4.0.8+hoho.0` to identify this patched downstream build while satisfying the existing `^4.0.7` transitive dependency ranges. The root manifest uses it as a local development dependency so npm hoists the patched implementation for transitive consumers. The MIT license and upstream patch provenance are retained in the vendor directory.
+- Added a standalone ReDoS/compatibility regression script and wired it into `npm test`.
+- This is a temporary downstream mitigation, not an official upstream release or maintainer-approved security release. It must be replaced with the official patched npm version when published. The upstream PR's independent reviewer reported 1,329,660 bounded matching comparisons with no differences and 35 adversarial subprocess checks under a two-second deadline; those are finite tests, not a formal proof.
+- Verification: source/lockfile edits only in this session. The repository's `npm test`, `npm run typecheck`, `npm run build`, and `npm audit` have not been executed. GitHub Actions are disabled per owner instruction.
