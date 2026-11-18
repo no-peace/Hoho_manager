@@ -55,7 +55,7 @@ describe("message tracker performance safeguards", () => {
     mocks.findByTitle.mockResolvedValue(undefined);
     mocks.findTemplateById.mockResolvedValue(undefined);
     mocks.interpolate.mockImplementation(async (payload: unknown) => ({ payload }));
-    mocks.resolveAuthor.mockImplementation(async (payload: unknown) => ({ payload });
+    mocks.resolveAuthor.mockImplementation(async (payload: unknown) => ({ payload }));
     mocks.getChannelGuildId.mockResolvedValue(null);
     mocks.updateLastChecked.mockResolvedValue(undefined);
     mocks.deleteById.mockResolvedValue(undefined);
