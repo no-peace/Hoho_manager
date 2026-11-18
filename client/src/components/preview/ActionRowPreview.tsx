@@ -135,8 +135,14 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
 
   // Cache store for real server entities if available
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
-  const cachedChannels = useDiscordCacheStore((state) => state.channels);
-  const cachedRoles = useDiscordCacheStore((state) => state.roles);
+  // Select only this guild's arrays. Cache updates for other guilds should not
+  // rerender every select menu in the current preview.
+  const cachedChannels = useDiscordCacheStore((state) =>
+    selectedGuildId ? state.channels[selectedGuildId] : undefined,
+  );
+  const cachedRoles = useDiscordCacheStore((state) =>
+    selectedGuildId ? state.roles[selectedGuildId] : undefined,
+  );
 
   const maxValues = select.max_values ?? 1;
   const isMulti = maxValues > 1;
