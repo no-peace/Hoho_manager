@@ -3,9 +3,9 @@
 > This is the only active control section. All agent assignments, branch names, blockers and directives in the historical sections below are archival records and must not be followed as current instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current main baseline before this documentation-only reconciliation: `94a6c99a5c1b7d580b82d89ba09db5557dccde5e`.
-- Current recursive Git tree: **386 files across 67 directories** (not truncated).
-- Parts A–E are implemented in source on main: the V12/editor-preview work, responsive Puck Design Lab, atomic Desktop/Mobile publishing and live Studio runtime, theme permissions/presets, Docs and Settings. This is source status, not proof of runtime verification.
+- Current main includes a rollback of the V13 UI changes and a full removal of Puck, the Design Lab, custom themes, and published app-layout customization (2026-11-18). See the latest section in `docs/GEMINI_HANDOFF_CURRENT.md` for exact commits.
+- The tracked-file inventory changed after removing the Design Lab/theme/layout feature. The previous 386-file audit count is historical and must not be presented as the current tree count.
+- The core message Studio, login, Discord bot access, editor, preview, dispatch, Docs and Settings remain. Puck, Design Lab, personal/community/server custom themes, responsive app-layout publishing and their APIs/database tables have been removed. The Studio now uses a fixed built-in layout.
 - Part A caveat: the requested Guest Sandbox login is not implemented; Local Developer login remains development-only. Do not invent a production guest-auth path.
 - Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. After this reconciliation, 376/386 tracked files are marked source-reviewed; the 10 vendored picomatch files remain provenance/metadata-reviewed only. No non-vendored file remains unchecked.
 - Part G follow-ups: production session signing still has an `ADMIN_API_KEY` compatibility fallback; stale optional `authorUserId` fields remain in some client/shared/bot type surfaces and need caller-traced cleanup; the temporary picomatch fork must be replaced when an official patched release is available.
@@ -14,7 +14,8 @@
 - Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks. Report them as not executed unless actually run.
 - Do not claim browser QA, Lighthouse, security certification, production deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
-- Current priority: finish the explicit security follow-ups only when separately authorized, then complete Part H verification when the owner requests it. Do not rebuild Parts A–E.
+- Do not reintroduce Puck, Design Lab, custom-theme management, app-layout publishing, or their packages/routes/migrations unless the owner explicitly requests them. Keep `client/src/config/uiThemeConfig.ts`: it is the static built-in UI design-token configuration, not a user-customizable theme feature.
+- Current priority: verify the removal for broken imports/type errors when the owner requests checks. Do not treat the historical Puck/theme directives below as active.
 
 ---
 
