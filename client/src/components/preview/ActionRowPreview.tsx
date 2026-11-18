@@ -154,7 +154,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
     }
 
     if (select.type === ComponentType.ChannelSelect) {
-      const guildChannels = (selectedGuildId && cachedChannels[selectedGuildId]) || [];
+      const guildChannels = cachedChannels ?? [];
       if (guildChannels.length > 0) {
         return guildChannels.slice(0, 10).map((c) => ({
           label: c.name,
@@ -171,7 +171,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
     }
 
     if (select.type === ComponentType.RoleSelect) {
-      const guildRoles = (selectedGuildId && cachedRoles[selectedGuildId]) || [];
+      const guildRoles = cachedRoles ?? [];
       if (guildRoles.length > 0) {
         return guildRoles.slice(0, 10).map((r) => ({
           label: r.name,
