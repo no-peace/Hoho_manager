@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { ComponentType, MessageFlags, type ComponentNode } from "@dmb/shared";
+import { ComponentType, MessageFlags } from "@dmb/shared";
 import { ShinyText } from "../../reactbits/ReactBitsPrimitives";
 import { useGlobalStore } from "../../../store/globalStore";
 import { useMessageStore } from "../../../store/messageStore";
@@ -23,29 +23,6 @@ import { ContentTab } from "./ContentTab";
 import { EmbedsTab } from "./EmbedsTab";
 import { ComponentsTab, V2_ADD_OPTIONS } from "./ComponentsTab";
 import { MessageLinkModal } from "./MessageLinkModal";
-
-const countComponentCharacters = (component: ComponentNode): number =>
-  (component.content?.length ?? 0) +
-  (component.label?.length ?? 0) +
-  (component.placeholder?.length ?? 0) +
-  (component.options?.reduce((total, option) => total + option.label.length + (option.description?.length ?? 0), 0) ?? 0) +
-  (component.items?.reduce((total, item) => total + (item.description?.length ?? 0), 0) ?? 0) +
-  (component.accessory ? countComponentCharacters(component.accessory) : 0) +
-  (component.components?.reduce((total, child) => total + countComponentCharacters(child), 0) ?? 0);
-
-const countMessageCharacters = (message: ExtendedMessageData): number =>
-  (message.content?.length ?? 0) +
-  (message.embeds?.reduce(
-    (total, embed) =>
-      total +
-      (embed.title?.length ?? 0) +
-      (embed.description?.length ?? 0) +
-      (embed.author?.name?.length ?? 0) +
-      (embed.footer?.text?.length ?? 0) +
-      (embed.fields?.reduce((fieldTotal, field) => fieldTotal + field.name.length + field.value.length, 0) ?? 0),
-    0,
-  ) ?? 0) +
-  (message.components?.reduce((total, component) => total + countComponentCharacters(component), 0) ?? 0);
 
 export interface MessageEditorProps {
   index: number;
@@ -99,7 +76,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const isV2 =
     Boolean((message.flags ?? 0) & MessageFlags.IsComponentsV2) ||
     (message as any).mode === EDITOR_MODES.V2;
-  const characterCount = countMessageCharacters(message);
 
   const [isOpen, setIsOpen] = useState(true);
 
@@ -261,7 +237,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           >
             {isV2 ? <ShinyText text="Components V2" /> : "Classic"}
           </span>
-          <span className="font-mono text-[0.625rem] tabular-nums text-[#6F788A]">{characterCount} chars</span>
         </div>
 
         <div
@@ -272,8 +247,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             <button
               type="button"
               onClick={() => moveMessage?.(index, -1)}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
-              title="Move Message Up" aria-label="Move Message Up"
+              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
+              title="Move Message Up"
             >
               <ChevronUp size={14} />
             </button>
@@ -283,8 +258,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             <button
               type="button"
               onClick={() => moveMessage?.(index, 1)}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
-              title="Move Message Down" aria-label="Move Message Down"
+              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
+              title="Move Message Down"
             >
               <ChevronDown size={14} />
             </button>
@@ -296,8 +271,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
               setCustomName(customName || `Message ${index + 1}`);
               setIsEditingName(true);
             }}
-            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
-            title="Rename Message" aria-label="Rename Message"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
+            title="Rename Message"
           >
             <Edit2 size={13} />
           </button>
@@ -306,8 +281,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             type="button"
             onClick={() => duplicateMessage?.(index)}
             disabled={messageCount >= 10}
-            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
-            title="Duplicate Message" aria-label="Duplicate Message"
+            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 transition-colors"
+            title="Duplicate Message"
           >
             <Copy size={13} />
           </button>
@@ -316,8 +291,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             type="button"
             onClick={() => removeMessage?.(index)}
             disabled={messageCount <= 1}
-            className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
-            title="Delete Message" aria-label="Delete Message"
+            className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20 disabled:opacity-30 transition-colors"
+            title="Delete Message"
           >
             <Trash2 size={13} />
           </button>
@@ -350,7 +325,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addEmbed();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Embed ({message.embeds?.length ?? 0}/10)
                 </button>
@@ -361,7 +336,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addComponent(ComponentType.ActionRow, null);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+                  className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Action Row
                 </button>
@@ -374,7 +349,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     e.stopPropagation();
                     setAddMenuOpen(!addMenuOpen);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add <ChevronDown size={13} />
                 </button>
@@ -421,7 +396,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                 message.message_link
                   ? "bg-[#818CF8]/20 text-[#dee0fc] border border-[#818CF8]/50 hover:bg-[#818CF8]/30"
                   : "bg-[#252B3A] hover:bg-[#4e5058] text-[#F1F3F9] hover:text-white"
-              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]` }
+              }`}
             >
               <Link size={13} /> {message.message_link ? "Edit Link" : "Set Link"}
             </button>
@@ -433,7 +408,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                   e.stopPropagation();
                   setOptionsMenuOpen(!optionsMenuOpen);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+                className="px-3 py-1.5 rounded-lg bg-[#252B3A] hover:bg-[#4e5058] active:scale-[0.97] text-[#F1F3F9] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
               >
                 <SlidersHorizontal size={13} /> Options <ChevronDown size={13} />
               </button>
