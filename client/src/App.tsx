@@ -62,7 +62,14 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    let lastThemeFetchAt = 0;
+    let themeRequest: Promise<void> | null = null;
     const refreshTheme = async (refreshUserCacheExpiry = false) => {
+      const now = Date.now();
+      if (!refreshUserCacheExpiry && now - lastThemeFetchAt < 60_000) return;
+      if (themeRequest) return themeRequest;
+      lastThemeFetchAt = now;
+      const request = (async () => {
       try {
         const response = await designApi.defaultTheme();
         if (!active) return;
@@ -79,6 +86,13 @@ export const App: React.FC = () => {
           if (cached) applyUiTheme(cached.theme);
           if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(themeCacheId);
         }
+      }
+      })();
+      themeRequest = request;
+      try {
+        await request;
+      } finally {
+        if (themeRequest === request) themeRequest = null;
       }
     };
     applyUiTheme(publishedThemeTokens);
