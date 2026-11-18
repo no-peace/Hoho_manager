@@ -36,7 +36,7 @@ export const defaultDesktopLayoutData: AppLayoutDocument = {
             props: {
               id: "desktop-editor",
               label: "Message Editor",
-              surface: "#2B2D31",
+              surface: "#10131A",
               padding: 16,
               radius: 10,
               showToolbar: "show",
@@ -113,7 +113,7 @@ export const defaultMobileLayoutData: AppLayoutDocument = {
             props: {
               id: "mobile-editor",
               label: "Message Editor",
-              surface: "#2B2D31",
+              surface: "#10131A",
               padding: 12,
               radius: 10,
               showToolbar: "show",
