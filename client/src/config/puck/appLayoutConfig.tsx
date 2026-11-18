@@ -69,7 +69,7 @@ const PanelHeader = ({ eyebrow, title, detail }: { eyebrow: string; title: strin
 const EditorPanel = ({
   surface = "#2B2D31", padding = 16, radius = 12, label = "Message Editor",
   showToolbar = true, animation, animationDuration, animationDelay,
-}): React.ReactElement => (
+}: any): React.ReactElement => (
   <MotionFrame animation={animation} animationDuration={animationDuration} animationDelay={animationDelay} className="hoho-layout-panel hoho-layout-panel--editor" style={{ gridArea: "editor" }}>
     <section className="hoho-layout-panel__surface" style={{ background: surface, padding, borderRadius: radius }}>
       <PanelHeader eyebrow="WORKSPACE / EDITOR" title={label} detail="Compose messages, embeds and Components V2" />
@@ -93,7 +93,7 @@ const EditorPanel = ({
 const PreviewPanel = ({
   surface = "#313338", padding = 16, radius = 12, label = "Live Preview",
   animation, animationDuration, animationDelay,
-}): React.ReactElement => (
+}: any): React.ReactElement => (
   <MotionFrame animation={animation} animationDuration={animationDuration} animationDelay={animationDelay} className="hoho-layout-panel hoho-layout-panel--preview" style={{ gridArea: "preview" }}>
     <section className="hoho-layout-panel__surface" style={{ background: surface, padding, borderRadius: radius }}>
       <PanelHeader eyebrow="WORKSPACE / PREVIEW" title={label} detail="Discord-style message rendering" />
@@ -117,7 +117,7 @@ const PreviewPanel = ({
 const InspectorPanel = ({
   surface = "#161A23", padding = 14, radius = 12, label = "Properties",
   animation, animationDuration, animationDelay,
-}): React.ReactElement => (
+}: any): React.ReactElement => (
   <MotionFrame animation={animation} animationDuration={animationDuration} animationDelay={animationDelay} className="hoho-layout-panel hoho-layout-panel--inspector" style={{ gridArea: "inspector" }}>
     <section className="hoho-layout-panel__surface hoho-layout-inspector" style={{ background: surface, padding, borderRadius: radius }}>
       <PanelHeader eyebrow="RIGHT SIDEBAR" title={label} detail="Selection and component settings" />
