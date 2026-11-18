@@ -334,6 +334,13 @@ describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
         await handler?.run({ ...mockContext, variables: vars, config: { name: "k3", varType: "get", value: "source_var" } });
         expect(vars.k3).toBe("copy_me");
       });
+
+      it("fails when the target variable name is missing", async () => {
+        const handler = getActionHandler("set_variable");
+        const response = await handler?.run({ ...mockContext, config: { value: "unused" } });
+        expect(response?.outcome).toBe("failure");
+        expect(response?.data?.content).toContain("missing a variable name");
+      });
     });
 
     // 3. addRole
@@ -464,6 +471,13 @@ describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
         });
         expect(res?.type).toBe(InteractionResponseType.Modal);
         expect(res?.data?.title).toBe("Support Ticket");
+      });
+
+      it("fails when the modal has no input components", async () => {
+        const handler = getActionHandler("open_modal");
+        const response = await handler?.run({ ...mockContext, config: { components: [] } });
+        expect(response?.outcome).toBe("failure");
+        expect(response?.data?.content).toContain("no input fields configured");
       });
     });
 
