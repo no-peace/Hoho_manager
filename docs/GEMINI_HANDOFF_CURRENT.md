@@ -41,7 +41,7 @@
 - The executor classifies and logs failed steps from the metadata instead of parsing the warning emoji from user-facing content.
 - The internal `outcome` property is stripped before a response is returned to Discord.
 - Added a regression test for failure logging and callback sanitization.
-- The initial failure-path pass is complete across the 19 current action modules. Additional fail-closed handling now covers unavailable saved actions, null Discord message/DM/thread results, empty modal definitions and variable steps missing a target name. Full caller/dependency review remains open.
+- The initial failure-path pass is complete across all 15 registered action handlers and their supporting registry/types/response/safety modules. Additional fail-closed handling now covers unavailable saved actions, null Discord message/DM/thread results, empty modal definitions and variable steps missing a target name. Full caller/dependency review remains open.
 
 ### 4. Puck runtime contract
 
@@ -73,7 +73,7 @@
 
 - The audit ledger inventories all **354** current tracked files.
 - The complete 23-file Bot package has been read. Findings include command authorization, gateway relay timing, startup validation and documentation corrections; fixes/tests are recorded above.
-- The 19 current server action modules have received an initial failure-path pass. Failure branches use `actionFailed()`; full caller/dependency review remains open.
+- All 15 registered server action handlers and their supporting modules have received an initial failure-path pass. Failure branches use `actionFailed()`; full caller/dependency review remains open.
 - The 13 server routes have begun a focused review. Access, authentication, configuration, design publishing, executors, health and templates were inspected; complete validation and caller tracing remains open.
 - The public health endpoint no longer queries or exposes the total user count.
 - Puck production CSS variable mapping was compared against the runtime stylesheet: every emitted layout variable is consumed by the live runtime; Desktop split ratio is passed directly to `SplitPane`.
