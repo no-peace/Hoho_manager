@@ -42,6 +42,27 @@ export const StudioLayout: React.FC = () => {
     if (!wrapper) return;
     return initializeEditorLenis(wrapper);
   }, []);
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      const state = useMessageStore.getState();
+      const messages = [state.data, ...state.messages];
+      const hasUnsavedWork =
+        state.attachedFiles.length > 0 ||
+        messages.some(
+          (message) =>
+            Boolean(message.content?.trim()) ||
+            (message.embeds?.length ?? 0) > 0 ||
+            (message.components?.length ?? 0) > 0,
+        );
+
+      if (!hasUnsavedWork) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const isMobileWorkspace = () => window.matchMedia("(max-width: 1199px)").matches;
 
