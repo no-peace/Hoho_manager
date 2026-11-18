@@ -295,20 +295,41 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("maximum 10 allowed");
     });
 
-    it("rejects webhook URL message sending and never calls Discord webhook delivery", async () => {
-        const res = await fetch(`${baseUrl}/api/send`, {
+    it("rejects webhook URL input in bot mode before dispatching", async () => {
+      const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-admin-key": env.adminApiKey,
         },
         body: JSON.stringify({
-          mode: "webhook",
+          mode: "bot",
+          channelId: "123456789012345678",
           webhookUrl: "https://discord.com/api/webhooks/111222333/valid_token",
-          payload: { content: "Automated test message" },
+          payload: { content: "Must never be sent" },
         }),
       });
       expect(res.status).toBe(400);
+      expect((await res.json()).error).toContain("Webhook URL message sending is disabled");
+      expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
+    });
+
+    it("rejects custom bot profile selection in bot mode before dispatching", async () => {
+      const res = await fetch(`${baseUrl}/api/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": env.adminApiKey,
+        },
+        body: JSON.stringify({
+          mode: "bot",
+          channelId: "123456789012345678",
+          profileId: "legacy-profile",
+          payload: { content: "Must use the configured bot" },
+        }),
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toContain("Custom bot profiles are disabled");
       expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
     });
 
