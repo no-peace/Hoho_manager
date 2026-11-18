@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `27eb856b889ee1f0b9553c0558ddfbd15a53266a` (main, after Batch F14 settings-cache implementation)
-**Tree:** 381 tracked files across 66 directories
+**Tree:** 386 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -16,13 +16,13 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 166 | In progress (106/166) |
+| Client | 167 | Complete (167/167 source inventory) |
 | Server | 142 | Complete (142/142 source inventory) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **381** | **381 accounted for** |
+| **Total** | **386** | **386 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -399,16 +399,16 @@ Verification:
 - [x] `tunnel/config.yml.example` — inspected; runtime verification not performed
 
 ### Client (165)
-- [ ] `client/.env.example`
+- [x] `client/.env.example`
 - [x] `client/Dockerfile` — inspected; runtime verification not performed
-- [ ] `client/index.html`
-- [ ] `client/package.json`
-- [ ] `client/public/hoho_logo.svg`
-- [ ] `client/public/hoho_og_banner.svg`
-- [ ] `client/public/robots.txt`
-- [ ] `client/public/sitemap.xml`
+- [x] `client/index.html`
+- [x] `client/package.json`
+- [x] `client/public/hoho_logo.svg`
+- [x] `client/public/hoho_og_banner.svg`
+- [x] `client/public/robots.txt`
+- [x] `client/public/sitemap.xml`
 - [x] `client/src/App.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
+- [x] `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
 - [x] `client/src/api/__tests__/design.test.ts`
 - [x] `client/src/api/client.ts` — inspected; runtime verification not performed
 - [x] `client/src/api/design.ts` — inspected; runtime verification not performed
@@ -460,7 +460,7 @@ Verification:
 - [x] `client/src/components/layout/StudioModals.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/StudioRouter.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/ThemeSettingsModal.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/__tests__/LoginScreen.test.tsx`
+- [x] `client/src/components/layout/__tests__/LoginScreen.test.tsx`
 - [x] `client/src/components/preview/ActionRowPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/ComponentPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/ContainerPreview.tsx` — inspected; runtime verification not performed
@@ -523,13 +523,13 @@ Verification:
 - [x] `client/src/store/settingsStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/store/templateStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/styles/appLayoutRuntime.css` — inspected; runtime verification not performed
-- [ ] `client/src/styles/globals.css`
-- [ ] `client/src/test/setup.ts`
+- [x] `client/src/styles/globals.css`
+- [x] `client/src/test/setup.ts`
 - [x] `client/src/utils/__tests__/appLayoutApi.test.ts`
 - [x] `client/src/utils/__tests__/discord.test.ts`
 - [x] `client/src/utils/__tests__/editorSmoothScroll.test.ts`
 - [x] `client/src/utils/__tests__/floatingPosition.test.ts`
-- [ ] `client/src/utils/__tests__/m4_challenger_adversarial.test.ts`
+- [x] `client/src/utils/__tests__/m4_challenger_adversarial.test.ts`
 - [x] `client/src/utils/__tests__/mentionParser.test.ts`
 - [x] `client/src/utils/__tests__/mentionParserAutocomplete.test.ts`
 - [x] `client/src/utils/__tests__/previewSelection.test.ts`
@@ -558,10 +558,10 @@ Verification:
 - [x] `client/src/utils/tree.ts`
 - [x] `client/src/utils/unicodeEmojis.ts`
 - [x] `client/src/utils/userPlaceholderAutocomplete.ts`
-- [ ] `client/src/vite-env.d.ts`
-- [ ] `client/tsconfig.json`
-- [ ] `client/vite.config.ts`
-- [ ] `client/vitest.config.ts`
+- [x] `client/src/vite-env.d.ts`
+- [x] `client/tsconfig.json`
+- [x] `client/vite.config.ts`
+- [x] `client/vitest.config.ts`
 
 - [x] `client/src/utils/dispatchValidation.ts` — inspected; runtime verification not performed
 - [x] `client/src/utils/__tests__/dispatchValidation.test.ts` — inspected; runtime verification not performed
@@ -895,3 +895,15 @@ Verification:
 
 - Reconciled two client regression tests that existed in the repository tree but were absent from the checklist: `RoleSelect.test.tsx` and `Markdown.mentions.test.tsx`. Reviewed each test and the corresponding RoleSelect/member-mention implementation. RoleSelect relies on the guild-scoped shared role cache and its regression test asserts one request for two controls; Markdown user mentions use a guild/user-keyed bounded 500-entry, five-minute LRU cache with in-flight request coalescing and a focused lookup test.
 - These tests confirm existing coalescing and cache bounds at source level; no runtime changes were justified. Tests were not executed.
+
+
+## Client configuration, global styles, SEO assets and stress-test review — Batch F30 (2026-11-18)
+
+- Reviewed the final 16 client inventory entries: environment template, HTML entry point, package scripts/dependencies/Node engine, logo and Open Graph SVG assets, robots/sitemap, two milestone adversarial/stress suites, LoginScreen regression tests, global CSS, test setup, Vite environment declarations, TypeScript config, Vite config and Vitest config.
+- **Fixed:** `client/index.html` declared the Open Graph banner as 1200×630 while the referenced SVG canvas is 1271×559. Updated `og:image:width` and `og:image:height` to the actual asset dimensions (1271×559). This aligns metadata with the source asset; it does not change the banner artwork or guarantee how individual social crawlers render SVG previews.
+- The stress suites cover deterministic viewport-boundary calculations, 1,000 seeded dropdown-position cases, embed wrapping/source assertions, ColorPicker state-machine simulations, modal-stack simulations, Discord payload/username/URL validation, Markdown selection simulations and select-state simulations. Several checks reproduce logic or assert source strings rather than mounting the real component, so they are useful regression guards but are not substitutes for browser-level interaction tests.
+- LoginScreen tests cover the scrollable viewport, single Discord CTA, OAuth error, showcase interaction and navigation. Test setup supplies Happy DOM shims for animation, media queries, resize observation, geometry, local/session storage and cleanup. Global CSS includes dark-theme tokens, overflow containment, reduced-motion handling and loading/login visuals.
+- Vite config keeps route-only dependencies out of a forced shared chunk and groups picker/date dependencies; Vitest aliases shared/client source and uses Happy DOM. The client package declares Node >=22 <27 and exposes build, test and typecheck scripts. The environment template clearly warns that VITE_* values are public and the admin key is local-development-only.
+- Static SEO assets point to the same canonical host and list the public home/docs/privacy pages; robots disallows /api/. SVG assets are vector source with intrinsic dimensions; no artwork rewrite was justified.
+- **Client source inventory is now complete: 167/167 files reviewed.** Repository tree count reconciled to 386 tracked files across 66 directories. No further runtime changes were justified in this batch beyond the Open Graph dimension correction.
+- **Not executed:** npm test, npm run typecheck, npm run build, browser interaction tests, Lighthouse, or performance benchmarks. The user will run npm checks/tests after the audit. Source review does not imply these checks pass.
