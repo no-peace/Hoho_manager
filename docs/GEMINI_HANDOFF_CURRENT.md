@@ -1885,3 +1885,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - useMessage's derived payload and validation depend on active message data and mode; attachment state is used separately for the empty-state flag. useStaffAccess refreshes records after successful mutations. An out-of-order overlapping fetch is theoretically possible, but no concurrent-call evidence or regression test demonstrated a practical defect, so no request-coordination rewrite was made.
 - Inspected date-picker lifecycle/repositioning, animated surface event cleanup, ErrorBoundary retry/reset behavior, Puck render wrappers, and reduced-motion CSS. No reproducible correctness or performance defect was established.
 - Client source/test review count is now 106/166. The four relevant test files in this batch were source-reviewed but not executed. No tests, typecheck, build, browser profiling, Lighthouse or benchmark was run. GitHub Actions remain disabled by owner instruction; local Terminal access was previously unavailable.
+
+
+## Client public pages, Design Lab, utilities and regression tests — Batch F29 (2026-11-18)
+
+- Reviewed 43 additional client files covering public pages and shared layout wrappers, the Design Lab and its styles, the documentation catalogue, client utility modules, and their focused regression tests.
+- Design Lab's user-scoped load effect ignores stale completions after cleanup; local draft writes are debounced with timer cleanup. Import/publish flows validate layout documents, and publish-control coverage checks owner gating, validation, confirmation, server-confirmed success and error handling.
+- Utility and test review covered Discord payload sanitization/validation, import/export hydration, scoped editor smooth scrolling and reduced-motion behavior, visual-viewport-aware floating positioning, autocomplete token parsing, nested component-tree updates, Puck layout/theme validation and persistence, and user-placeholder suggestions. The documentation catalogue is static and its search/category filtering is memoized. No demonstrated runtime defect or measured hotspot justified a code change.
+- No runtime code changes in F29. Client review progress is 149/166. Test files were inspected but not executed.
+- No tests, typecheck, build, browser profiling, Lighthouse or benchmark was run. GitHub Actions remain disabled by owner instruction; local Terminal access was previously unavailable.
