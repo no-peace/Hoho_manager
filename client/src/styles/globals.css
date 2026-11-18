@@ -385,3 +385,49 @@ details summary::-webkit-details-marker {
   mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
   -webkit-mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
 }
+
+
+/* Web Interface Guidelines: consistent mobile input and scroll behavior */
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+button,
+[role="button"],
+a,
+input,
+select,
+textarea,
+label,
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+select {
+  background-color: #1D2230;
+  color: #F1F3F9;
+}
+
+select option,
+select optgroup {
+  background-color: #161A23;
+  color: #F1F3F9;
+}
+
+.custom-scrollbar,
+[role="dialog"],
+[role="listbox"],
+.hoho-runtime-editor-scroll,
+.hoho-runtime-preview-scroll {
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 1rem !important;
+  }
+}
