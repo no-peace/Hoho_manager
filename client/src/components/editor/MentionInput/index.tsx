@@ -43,6 +43,7 @@ export interface DiscordMentionInputProps {
 
 const EMPTY_CHANNELS: { id: string; name: string; type: number; parent_id?: string | null }[] = [];
 const EMPTY_ROLES: { id: string; name: string; color: number }[] = [];
+const EMPTY_EMOJIS: { id: string; name: string; animated?: boolean; available?: boolean }[] = [];
 
 const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   value,
@@ -139,7 +140,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
   const serverEmojis = useDiscordCacheStore((state) =>
     effectiveGuildId ? state.emojis[effectiveGuildId] : undefined,
-  ) ?? [];
+  ) ?? EMPTY_EMOJIS;
   const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
 
   const [memberResults, setMemberResults] = useState<
