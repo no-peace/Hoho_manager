@@ -49,8 +49,12 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
   rowId: targetRowId,
   componentsOverride,
 }) => {
-  const data = useMessageStore((state) => state.data);
-  const components = componentsOverride ?? data.components ?? [];
+  // When a caller supplies a message-specific component tree, subscribe to
+  // that stable tree rather than the active message's entire data object.
+  // This keeps inactive message editors isolated from edits to the active one.
+  const components = useMessageStore(
+    (state) => componentsOverride ?? state.data.components ?? [],
+  );
   const addActionRowChild = useMessageStore((state) => state.addActionRowChild);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
   const moveComponentById = useMessageStore((state) => state.moveComponentById);
