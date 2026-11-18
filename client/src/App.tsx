@@ -51,6 +51,23 @@ export const App: React.FC = () => {
   const fetchCurrentUser = useGlobalStore((state) => state.fetchCurrentUser);
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
 
+  useEffect(() => {
+    try {
+      const legacyDesignKeys = [
+        /^hoho:user-theme-library:v1:/i,
+        /^hoho:app-layout-draft:v1:/i,
+        /^hoho-manager:puck-design:v1:/i,
+      ];
+      for (const key of Object.keys(window.localStorage)) {
+        if (legacyDesignKeys.some((pattern) => pattern.test(key))) {
+          window.localStorage.removeItem(key);
+        }
+      }
+    } catch {
+      // Storage may be unavailable in restricted browser contexts.
+    }
+  }, []);
+
 
   useEffect(() => {
     void (async () => {
