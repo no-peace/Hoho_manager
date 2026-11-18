@@ -161,4 +161,3 @@ export const DISCORD_API_BASE = "https://discord.com/api/v10";
 /** Matches a Discord snowflake id. */
 export const SNOWFLAKE_REGEX = /^\d{17,20}$/;
 
-  /^https?:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/(\d+)\/([\w-]+)$/;
