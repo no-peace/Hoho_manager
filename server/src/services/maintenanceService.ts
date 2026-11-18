@@ -212,12 +212,7 @@ export const runDatabaseMaintenance = async (
     log.warn(`Ad-hoc action pruning failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  let auditLogsPruned = 0;
-  try {
-    auditLogsPruned = await pruneAuditLogs(auditLogDays, batchSize);
-  } catch (err) {
-    log.warn(`Audit log pruning failed: ${err instanceof Error ? err.message : String(err)}`);
-  }
+  const auditLogsPruned = 0;
 
   const cacheEntriesPruned = memberSearchCache.pruneExpired();
   const durationMs = Date.now() - start;
