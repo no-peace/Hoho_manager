@@ -385,6 +385,7 @@ export const migrations: readonly Migration[] = [
     id: "019_remove_design_customization",
     sql: `
       DROP TABLE IF EXISTS published_app_layouts;
+      DROP TABLE IF EXISTS app_layout_publishers;
       DROP TABLE IF EXISTS server_theme_settings;
       DROP TABLE IF EXISTS design_themes;
       DROP TABLE IF EXISTS design_access_users;
