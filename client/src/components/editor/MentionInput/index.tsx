@@ -106,8 +106,12 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const effectiveGuildId = propGuildId || selectedGuildId;
 
-  const channels = useDiscordCacheStore((state) => state.channels);
-  const roles = useDiscordCacheStore((state) => state.roles);
+  const guildChannels = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.channels[effectiveGuildId] ?? EMPTY_CHANNELS : EMPTY_CHANNELS,
+  );
+  const guildRoles = useDiscordCacheStore((state) =>
+    effectiveGuildId ? state.roles[effectiveGuildId] ?? EMPTY_ROLES : EMPTY_ROLES,
+  );
   const weaoExploits = useDiscordCacheStore((state) => state.weaoExploits);
   const weaoMeta = useDiscordCacheStore((state) => state.weaoMeta);
   const weaoError = useDiscordCacheStore((state) => state.weaoError);
