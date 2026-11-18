@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
@@ -34,7 +34,15 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   placeholder = "Select...",
   className = "",
 }) => {
-  const { guilds, channels, roles, fetchGuilds, fetchChannels, fetchRoles } = useDiscordCacheStore();
+  // Subscribe to only the data this selector displays. The previous whole-store
+  // subscription caused every open selector to rerender for unrelated cache
+  // updates (for example WEAO refreshes or another guild's channel fetch).
+  const guilds = useDiscordCacheStore((state) => state.guilds);
+  const channels = useDiscordCacheStore((state) => guildId ? state.channels[guildId] : undefined);
+  const roles = useDiscordCacheStore((state) => guildId ? state.roles[guildId] : undefined);
+  const fetchGuilds = useDiscordCacheStore((state) => state.fetchGuilds);
+  const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
+  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [memberResults, setMemberResults] = useState<SelectOption[]>([]);
@@ -121,21 +129,27 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
     };
   }, [search, type, open, guildId]);
 
-  let options: SelectOption[] = [];
-  if (type === "guild" && guilds) {
-    options = guilds.map((g) => ({ id: g.id, name: g.name }));
-  } else if (type === "channel" && guildId && channels[guildId]) {
-    options = channels[guildId].map((c) => ({ id: c.id, name: c.name }));
-  } else if (type === "role" && guildId && roles[guildId]) {
-    options = roles[guildId].map((r) => ({ id: r.id, name: r.name }));
-  } else if (type === "member") {
-    options = memberResults;
-  }
+  const options = useMemo<SelectOption[]>(() => {
+    if (type === "guild" && guilds) {
+      return guilds.map((g) => ({ id: g.id, name: g.name }));
+    }
+    if (type === "channel" && channels) {
+      return channels.map((channel) => ({ id: channel.id, name: channel.name }));
+    }
+    if (type === "role" && roles) {
+      return roles.map((role) => ({ id: role.id, name: role.name }));
+    }
+    return type === "member" ? memberResults : [];
+  }, [type, guilds, channels, roles, memberResults]);
 
-  const filteredOptions = options.filter(
-    (o) =>
-      o.name.toLowerCase().includes(search.toLowerCase()) ||
-      o.id.includes(search)
+  const normalizedSearch = search.toLowerCase();
+  const filteredOptions = useMemo(
+    () => options.filter(
+      (option) =>
+        option.name.toLowerCase().includes(normalizedSearch) ||
+        option.id.includes(search),
+    ),
+    [options, normalizedSearch, search],
   );
 
   const isSnowflake = /^\d{17,20}$/.test(search.trim());

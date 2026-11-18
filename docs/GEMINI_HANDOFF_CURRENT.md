@@ -1745,3 +1745,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added `server/tests/settingsService.test.ts` for cache hits, negative caching, TTL expiry, LRU eviction and update write-through.
 - Reviewed benchmark methodology, recursive Guild variable expansion, chunked retention sweeps and fire-and-forget audit logging. No further optimization was applied without baseline measurements or evidence of a production bottleneck.
 - Verification: tests added but not executed; no typecheck, build, benchmark, database query plan, browser QA or live Discord request was run.
+
+
+## Client performance audit — Batch F15 (2026-11-18)
+
+- Reviewed `SearchableDiscordSelect.tsx`, `discordCacheStore.ts` and the selector's existing tests.
+- Found a broad Zustand subscription: every SearchableDiscordSelect instance rerendered for any Discord cache state update, including unrelated WEAO metadata or another guild's channel/role data.
+- Replaced it with narrow field-level subscriptions, selecting only the active guild's channel/role arrays and stable fetch actions.
+- Memoized option projection and search filtering to avoid repeating list mapping/filtering on dropdown-only state changes.
+- Added a regression test that updates unrelated `weaoMeta` state and asserts the selector does not rerender.
+- Confirmed that guild/channel/role/emoji fetches already coalesce concurrent requests. Member search is debounced and stale writes are suppressed, but the API helper currently lacks AbortSignal support; this remains a possible follow-up for cancellation.
+- Verification: regression test added but not executed. No browser profiling, React Profiler capture, tests, typecheck or build was run.

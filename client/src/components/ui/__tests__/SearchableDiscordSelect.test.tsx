@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { SearchableDiscordSelect } from "../SearchableDiscordSelect";
 import { useDiscordCacheStore } from "../../../store/discordCacheStore";
 
@@ -126,6 +126,38 @@ describe("SearchableDiscordSelect (OF-01 Coordinate Containment & Clamping)", ()
     fireEvent.click(removeButton);
 
     expect(handleChange).toHaveBeenCalledWith([]);
+  });
+
+
+  it("does not rerender when unrelated Discord cache state changes", () => {
+    const renderCount = vi.fn();
+    const Probe = () => {
+      renderCount();
+      return (
+        <SearchableDiscordSelect
+          type="channel"
+          guildId="guild_1"
+          value=""
+          onChange={vi.fn()}
+        />
+      );
+    };
+
+    render(<Probe />);
+    expect(renderCount).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      useDiscordCacheStore.setState({
+        weaoMeta: {
+          rateLimited: false,
+          rateLimitedUntilMs: 0,
+          cachedCount: 1,
+          cacheAgeMs: 0,
+        },
+      });
+    });
+
+    expect(renderCount).toHaveBeenCalledTimes(1);
   });
 
   it("displays manual snowflake option when entering a 17-20 digit ID", () => {

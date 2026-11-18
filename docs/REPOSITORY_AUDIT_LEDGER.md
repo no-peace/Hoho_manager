@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 161 | In progress (27/161) |
+| Client | 161 | In progress (30/161) |
 | Server | 141 | In progress (101/141) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -263,6 +263,29 @@ Verification:
 - Source review and regression test additions only.
 - No tests, typecheck, build, benchmark run, database query plan, browser QA or live Discord API call was executed.
 
+## Batch F15 — Client Discord selector render isolation (2026-11-18)
+
+**Status:** Three existing client files source-reviewed; one render-isolation improvement and regression test added. Tests/typecheck/build were not executed.
+
+Files reviewed:
+- `client/src/components/ui/SearchableDiscordSelect.tsx`
+- `client/src/store/discordCacheStore.ts`
+- `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx`
+
+Finding and fix:
+1. **Fixed:** `SearchableDiscordSelect` subscribed to the entire Zustand Discord cache store. Any update to unrelated state (including WEAO cache metadata or another guild's channel list) rerendered every mounted selector.
+2. Replaced the broad subscription with field-level selectors. Channel and role subscriptions now select only the current guild's arrays; fetch actions are selected independently.
+3. Memoized option projection and search filtering so dropdown position/open-state updates do not repeat list mapping/filtering when the underlying options and query are unchanged.
+4. Added a regression test asserting that an unrelated `weaoMeta` update does not rerender the selector.
+
+Additional review:
+- The Discord cache store already coalesces in-flight guild/channel/role/emoji fetches and stores guild-specific channel/role data separately.
+- Member search is debounced and suppresses stale state writes after cleanup. The current API helper does not accept an AbortSignal, so obsolete network requests cannot yet be actively cancelled; review this with the member-search request path before changing its contract.
+
+Verification:
+- Test added but not executed.
+- No browser profiling, React Profiler capture, tests, typecheck or build was run.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -375,12 +398,12 @@ Verification:
 - [ ] `client/src/components/ui/ErrorBoundary.tsx`
 - [ ] `client/src/components/ui/Field.tsx`
 - [ ] `client/src/components/ui/Modal.tsx`
-- [ ] `client/src/components/ui/SearchableDiscordSelect.tsx`
+- [x] `client/src/components/ui/SearchableDiscordSelect.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/Tabs.tsx`
 - [ ] `client/src/components/ui/__tests__/ColorPicker.test.tsx`
 - [ ] `client/src/components/ui/__tests__/FieldAutocomplete.test.tsx`
 - [ ] `client/src/components/ui/__tests__/Modal.test.tsx`
-- [ ] `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx`
+- [x] `client/src/components/ui/__tests__/SearchableDiscordSelect.test.tsx` — inspected and regression coverage added; runtime verification not performed
 - [ ] `client/src/components/ui/icon.ts`
 - [ ] `client/src/config/puck/appLayoutConfig.tsx`
 - [ ] `client/src/config/puck/defaultAppLayouts.ts`
