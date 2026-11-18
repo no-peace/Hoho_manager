@@ -27,7 +27,7 @@
 - client/src/config/uiThemeConfig.ts remains. It defines the application's built-in static design tokens and component styles; it does not provide user-customizable themes.
 - No Puck package, Puck editor, Design Lab route, theme manager, app-layout editor/publisher, or corresponding client/server API should remain.
 - The fixed Studio shell preserves the normal editor, preview, inspector, mobile pane switching and dispatch flows. It no longer fetches or applies server-published layouts or custom theme tokens.
-- Database migration 019_remove_design_customization drops legacy published_app_layouts, server_theme_settings, design_themes, and design_access_users tables on existing installations.
+- Database migration 019_remove_design_customization drops legacy published_app_layouts, app_layout_publishers, server_theme_settings, design_themes, and design_access_users tables on existing installations.
 
 ## Repository audit findings and limits
 
@@ -2025,14 +2025,15 @@ The following files were restored to their exact contents at pre-UI baseline com
 - 5be64053a5d5ae85005e45d2913a29ba0161a6ba — remove client Design Lab permission state.
 - ee3baa93c9c8e1bddccbcdfd3328668d9087a636 and 69944a5ed964418b67a266f5caa162e21448b226 — remove server design route and auth permission wiring.
 - 7bd2fbdc3610ff4b5bba5fae0f7e5cd32ccfd86a — remove @puckeditor/core from client dependencies.
-- 83baf966a474b7274fec958359b375fc015c4696 — remove theme/layout migrations and add safe legacy-table cleanup migration.
-- e6b82cb1cb4257bc3d66b3c63ca658f6cf497ed2, 000523430c6ff5853f907a18afa681fdda0cf0ec, 855e030e3ef0a8a64bb89867f765707cc536a481, 902245fc97349fd5c3bb192fb0024ded15b354cb — replace live Puck runtime layout integration with fixed Studio layout and remove dependent component props.
+- 83baf966a474b7274fec958359b375fc015c4696 and f6bca422a399be0ecc3c535c39fc02689526f5ec — remove theme/layout migrations and add safe cleanup for all legacy design/layout tables, including the abandoned publisher table.
+- e6b82cb1cb4257bc3d66b3c63ca658f6cf497ed2, 000523430c6ff5853f907a18afa681fdda0cf0ec, 855e030e3ef0a8a64bb89867f765707cc536a481, 902245fc97349fd5c3bb192fb0024ded15b354cb, 8a8d8e8b4ce4506dc50cbb573551aaace086ffed — replace live Puck runtime layout integration with fixed Studio layout and remove dependent component props.
 - fbc5a04d79a591ee770dd7226469fed60eaac2c3 — prune Puck and unused transitive dependencies from package-lock.json.
+- e1376547f0979b6de3c921836c9b16b2ccbd1599 — clear legacy Puck/theme/layout draft keys from browser local storage on app startup.
 - 8a8664ae2d6670bd2e38937ca92917a0dafaac5b — update current agent control state.
 
 ## Verification status
 
-- GitHub source re-fetch confirmed the updated App, StudioRouter, Header, StudioLayout, SplitPane, PropertyPanel, auth route and migration files no longer import/use the removed Puck/theme runtime.
+- GitHub source re-fetch confirmed the updated App, StudioRouter, Header, StudioLayout, SplitPane, PropertyPanel, auth route and migration files no longer import/use the removed Puck/theme runtime. App startup also removes legacy user-theme, app-layout draft and Puck design local-storage keys.
 - The lockfile was parsed as JSON after pruning; @puckeditor/core and every package path containing puck are absent.
 - TypeScript, Vitest, and production build have not been run after this removal. The Desktop Commander local-terminal connection returned HTTP 404, so local commands could not be executed from this session. Do not treat the UI as runtime-verified until the owner runs npm run typecheck, npm test, and npm run build and shares the results.
 - The built-in UI style tokens remain. All user-facing custom theme and Puck layout customization features are removed from the source/API/dependency surface.
