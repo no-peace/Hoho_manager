@@ -909,3 +909,13 @@ Verification:
 - Static SEO assets point to the same canonical host and list the public home/docs/privacy pages; robots disallows /api/. SVG assets are vector source with intrinsic dimensions; no artwork rewrite was justified.
 - **Client source inventory is now complete: 167/167 files reviewed.** Repository tree count reconciled to 386 tracked files across 66 directories. No further runtime changes were justified in this batch beyond the Open Graph dimension correction.
 - **Not executed:** npm test, npm run typecheck, npm run build, browser interaction tests, Lighthouse, or performance benchmarks. The user will run npm checks/tests after the audit. Source review does not imply these checks pass.
+
+
+## Current-state addendum — Puck and custom-theme removal (2026-11-18)
+
+- The file counts and checklist entries above describe the pre-removal audit inventory and are historical; they are not the current tracked-file count.
+- The owner subsequently requested full removal of Puck, the Design Lab, custom themes and published responsive app-layout customization. Their client/server source files, tests, API routes, runtime CSS and direct/transitive npm dependencies have been removed from main.
+- The former design tables are removed by migration 019 on existing databases. Migration 018 and unrelated application migrations remain.
+- The fixed Studio layout and built-in UI design tokens remain. The static tokens in client/src/config/uiThemeConfig.ts are not a custom theme system.
+- See docs/GEMINI_HANDOFF_CURRENT.md, section “Puck, Design Lab, custom themes and app-layout removal”, for the exact deletion scope, rollback baseline, commits and verification limits.
+- Typecheck, Vitest and production build have not been run after removal. Source re-fetch and package-lock JSON checks are not substitutes for executing them.
