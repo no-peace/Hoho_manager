@@ -37,7 +37,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
       (index === 0 ? state.data : state.messages[0]) ||
       state.data,
   ) as ExtendedMessageData;
-  const messageCount = useMessageStore((state) => state.messageCount);
+  const messageCount = useMessageStore((state) => state.messages.length);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
   const selectedTargetId = useMessageStore((state) => {
     if ((state.activeMessageIndex ?? 0) !== index) return undefined;
