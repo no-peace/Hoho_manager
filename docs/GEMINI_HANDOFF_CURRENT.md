@@ -1684,3 +1684,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added focused regression tests for null component entries and a component tree exceeding the 25-level limit.
 - Preserved the existing Discord component count, action-row, select, text and action-flow bounds.
 - Verification: source changes and test additions only. Tests, typecheck, build, browser QA and live Discord requests were not executed.
+
+
+## Discord REST boundary audit — Batch F11 (2026-11-18)
+
+- Reviewed the complete `server/src/services/discordService.ts` and `server/tests/discordService.timeout.test.ts`.
+- Confirmed all bot REST helpers use the configured server token; legacy profile IDs are ignored. The arbitrary webhook-send export remains a forbidden stub, while webhook inspection is read-only.
+- Confirmed bounded REST/multipart/interaction timeouts and bounded retry counts. Interaction callback timeout errors omit the interaction token and URL; existing regression coverage asserts this.
+- Confirmed TTL/entry bounds and in-flight request coalescing on guild, user and member lookup caches.
+- No new credential disclosure, token-selection bypass or confirmed functional defect was found.
+- Verification: source inspection only. The existing timeout tests and live Discord API behavior were not executed.

@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 137 | In progress (63/137) |
+| Server | 137 | In progress (65/137) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -176,6 +176,25 @@ Finding and fix:
 Verification:
 - Tests were added but not executed, per the current owner instruction.
 - No typecheck, build, browser QA or live Discord request was executed.
+
+## Batch F11 — Discord REST boundary and credential handling (2026-11-18)
+
+**Status:** Source inspection of two additional server files. No tests, typecheck, build or live Discord requests were executed.
+
+Files reviewed:
+- `server/src/services/discordService.ts`
+- `server/tests/discordService.timeout.test.ts`
+
+Findings:
+1. **Confirmed:** The only bot token resolver returns the configured server bot token. Legacy profile IDs are ignored; custom stored bot tokens cannot be selected through these helpers.
+2. Arbitrary webhook-URL message sending remains a forbidden compatibility stub. Webhook inspection parses the URL and performs only a read request.
+3. Discord REST attempts have bounded timeouts (10 seconds by default, 30 seconds for multipart, and 1 second for interaction callbacks) and bounded retry counts. Interaction callback timeout errors do not include the interaction token or request URL; the existing test asserts this.
+4. Guild/user/member caches have TTL and entry bounds, with in-flight request coalescing for the high-volume lookup paths.
+5. No new credential disclosure, token-selection bypass or confirmed functional defect was found in this source-only review.
+
+Verification:
+- Existing timeout regression tests were inspected but not executed.
+- No live Discord API behavior was tested.
 
 ## File-by-file inventory
 
@@ -452,7 +471,7 @@ Verification:
 - [ ] `server/src/services/auditLog.ts`
 - [x] `server/src/services/authorService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/branches.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/discordService.ts`
+- [x] `server/src/services/discordService.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/guildVariables.ts`
 - [x] `server/src/services/interactionHandler.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/maintenanceService.ts`
@@ -484,7 +503,7 @@ Verification:
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/challenger_staffRepository.test.ts`
 - [ ] `server/tests/crypto.test.ts`
-- [ ] `server/tests/discordService.timeout.test.ts`
+- [x] `server/tests/discordService.timeout.test.ts` — inspected; test not executed
 - [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/errorHandler.security.test.ts`
 - [ ] `server/tests/flowRepository.test.ts`
