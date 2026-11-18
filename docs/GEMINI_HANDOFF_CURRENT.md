@@ -1894,3 +1894,9 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Utility and test review covered Discord payload sanitization/validation, import/export hydration, scoped editor smooth scrolling and reduced-motion behavior, visual-viewport-aware floating positioning, autocomplete token parsing, nested component-tree updates, Puck layout/theme validation and persistence, and user-placeholder suggestions. The documentation catalogue is static and its search/category filtering is memoized. No demonstrated runtime defect or measured hotspot justified a code change.
 - No runtime code changes in F29. Client review progress is 149/166. Test files were inspected but not executed.
 - No tests, typecheck, build, browser profiling, Lighthouse or benchmark was run. GitHub Actions remain disabled by owner instruction; local Terminal access was previously unavailable.
+
+
+### F29 inventory reconciliation addendum
+
+- Added two previously unlisted client regression tests to the audit checklist and reviewed their corresponding implementations: RoleSelect's shared guild-role request coalescing and Markdown's guild/user-scoped bounded TTL/LRU mention cache with in-flight request deduplication. Existing focused tests cover one request for multiple role controls and guild-scoped member resolution.
+- No runtime changes. Tests were inspected but not run. The checklist now includes these two repository-tree files; runtime verification remains outstanding.
