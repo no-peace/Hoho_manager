@@ -8,6 +8,19 @@ import { appLayoutRepository } from "../repositories/appLayoutRepository.js";
 import { validateAppLayoutPair } from "../utils/appLayoutValidation.js";
 
 const router = Router();
+const SERVER_DESIGN_CACHE_TTL_MS = 5 * 60_000;
+type TimedCache<T> = { value: T; expiresAt: number };
+let defaultThemeCache: TimedCache<{ theme: { theme: typeof DEFAULT_THEME; updatedAt: string | null } }> | null = null;
+let appLayoutCache: TimedCache<{ layout: ReturnType<typeof parsePublishedLayout>; fallback: boolean }> | null = null;
+
+const readDesignCache = <T,>(cache: TimedCache<T> | null): T | null => {
+  if (env.nodeEnv === "test" || !cache || cache.expiresAt <= Date.now()) return null;
+  return cache.value;
+};
+const writeDesignCache = <T,>(value: T): TimedCache<T> | null =>
+  env.nodeEnv === "test" ? null : { value, expiresAt: Date.now() + SERVER_DESIGN_CACHE_TTL_MS };
+const invalidateDefaultThemeCache = () => { defaultThemeCache = null; };
+const invalidateAppLayoutCache = () => { appLayoutCache = null; };
 interface Identity { discordId: string; isOwner: boolean; }
 interface ThemeRow {
   id: string; owner_discord_id: string; name: string; description: string | null;
@@ -98,21 +111,35 @@ const readThemeBody = (body: unknown) => {
 };
 
 router.get("/default", asyncHandler(async (_req, res) => {
+  const cached = readDesignCache(defaultThemeCache);
+  if (cached) {
+    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
+    return res.json(cached);
+  }
+
+  let response: { theme: { theme: typeof DEFAULT_THEME; updatedAt: string | null } };
   const row = await db.get<{ theme_data: string; updated_at: string; updated_by: string }>(
     "SELECT theme_data, updated_at, updated_by FROM server_theme_settings WHERE id = 1",
   );
   if (row) {
     let theme = DEFAULT_THEME;
     try { theme = validateTheme(JSON.parse(row.theme_data)); } catch { /* safe built-in fallback */ }
-    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
-    return res.json({ theme: { theme, updatedAt: row.updated_at } });
+    response = { theme: { theme, updatedAt: row.updated_at } };
+  } else {
+    const legacy = await db.get<ThemeRow>("SELECT * FROM design_themes WHERE is_default = 1 LIMIT 1");
+    if (!legacy) {
+      response = { theme: { theme: DEFAULT_THEME, updatedAt: null } };
+    } else {
+      const parsed = parseTheme(legacy);
+      let legacyTheme = DEFAULT_THEME;
+      try { legacyTheme = validateTheme(parsed.theme); } catch { /* reject unsafe legacy theme and use the safe default */ }
+      response = { theme: { theme: legacyTheme, updatedAt: parsed.updatedAt } };
+    }
   }
-  const legacy = await db.get<ThemeRow>("SELECT * FROM design_themes WHERE is_default = 1 LIMIT 1");
-  if (!legacy) return res.json({ theme: { theme: DEFAULT_THEME, updatedAt: null } });
-  const parsed = parseTheme(legacy);
-  let legacyTheme = DEFAULT_THEME;
-  try { legacyTheme = validateTheme(parsed.theme); } catch { /* reject unsafe legacy theme and use the safe default */ }
-  res.json({ theme: { theme: legacyTheme, updatedAt: parsed.updatedAt } });
+
+  defaultThemeCache = writeDesignCache(response);
+  res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
+  return res.json(response);
 }));
 
 router.get("/themes", asyncHandler(async (req, res) => {
@@ -171,6 +198,7 @@ router.delete("/themes/:id", asyncHandler(async (req, res) => {
 const publishServerTheme = async (identity: Identity, theme: unknown) => {
   await requireServerThemePublisher(identity);
   const safeTheme = validateTheme(theme);
+  invalidateDefaultThemeCache();
   await db.run(
     "INSERT INTO server_theme_settings (id, theme_data, updated_by, updated_at) VALUES (1, @data, @owner, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET theme_data = excluded.theme_data, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP",
     { data: JSON.stringify(safeTheme), owner: identity.discordId },
@@ -287,10 +315,15 @@ const parsePublishedLayout = (row: Awaited<ReturnType<typeof appLayoutRepository
 
 /** Public read endpoint; published data contains only allowlisted layout settings. */
 router.get("/app-layout", asyncHandler(async (_req, res) => {
-  const row = await appLayoutRepository.getPublished();
-  const layout = parsePublishedLayout(row);
+  let response = readDesignCache(appLayoutCache);
+  if (!response) {
+    const row = await appLayoutRepository.getPublished();
+    const layout = parsePublishedLayout(row);
+    response = { layout, fallback: !layout };
+    appLayoutCache = writeDesignCache(response);
+  }
   res.setHeader("Cache-Control", "no-store");
-  res.json({ layout, fallback: !layout });
+  res.json(response);
 }));
 
 /** Application layout publication is owner-only; the Discord ID comes from the verified session. */
@@ -302,6 +335,7 @@ router.put("/app-layout", asyncHandler(async (req, res) => {
     throw ApiError.forbidden("Only the HoHo Manager owner can publish the application layout.");
   }
   const pair = validateAppLayoutPair(req.body);
+  invalidateAppLayoutCache();
   const row = await appLayoutRepository.publish({
     schemaVersion: pair.schemaVersion,
     desktop: pair.desktop,
