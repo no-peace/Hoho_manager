@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 166 | In progress (69/166) |
-| Server | 142 | In progress (125/142) |
+| Server | 142 | In progress (128/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -672,13 +672,13 @@ Verification:
 - [x] `server/src/utils/validation.ts` — inspected and fixed; runtime verification not performed
 - [x] `server/tests/accessSecurity.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/actions.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/adversarial_streaming_memory.test.ts`
+- [x] `server/tests/adversarial_streaming_memory.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/appLayoutPublishing.test.ts`
 - [ ] `server/tests/authorService.test.ts`
 - [ ] `server/tests/challenger_bot_relay.test.ts`
 - [ ] `server/tests/challenger_flowRepository.test.ts`
-- [ ] `server/tests/challenger_member_cache.test.ts`
-- [ ] `server/tests/challenger_multipart.test.ts`
+- [x] `server/tests/challenger_member_cache.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/challenger_multipart.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_perf_indexes.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_staffRepository.test.ts` — inspected; runtime verification not performed
@@ -839,3 +839,11 @@ Verification:
 - Extended `messageTrackerService.performance.test.ts` so two tracked records in the same channel assert exactly one channel-to-guild lookup. The deterministic regression target is one lookup per unique channel per sweep (for example, 10 records in one channel: 10 lookups before, 1 after).
 - **Commits:** `73d2d27` — implementation; `d2122bc` — regression test.
 - **Verification not performed:** the test was authored but not executed. The connected local Terminal service returned HTTP 404; GitHub Actions remain disabled by owner instruction. No production workload benchmark, Discord API trace, typecheck, build, or full test run was performed. Treat the request-count reduction as a deterministic testable improvement, not a measured production latency claim.
+
+
+## Server stress and memory-test review — Batch F25 (2026-11-18)
+
+- Reviewed `server/tests/challenger_member_cache.test.ts`: verifies cache hit/miss accounting, bounded LRU eviction, TTL expiry, and concurrent member-search coalescing. Its short real-time sleeps (30–60 ms) are test timing assumptions; no flaky failure evidence was available, so they were not rewritten speculatively.
+- Reviewed `server/tests/challenger_multipart.test.ts`: covers absent/empty multipart fields, malformed JSON/boundaries, file-count limits, declared content-length rejection, and streamed per-file limits. The test does not provide a memory benchmark; no parser changes were justified by source/test evidence.
+- Reviewed `server/tests/adversarial_streaming_memory.test.ts`: covers oversized request rejection, aggregate/file/field limits, client disconnect handling, outbound REST timeout bounds, deferred interaction cleanup, and concurrent deferred interactions. Existing safeguards are bounded and cleanup paths are explicitly asserted; no further runtime change was justified.
+- Server test source-review count is now 128/142. Tests remain unexecuted; these checks represent source inspection only.
