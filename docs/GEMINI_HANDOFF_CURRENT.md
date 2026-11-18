@@ -2030,6 +2030,7 @@ The following files were restored to their exact contents at pre-UI baseline com
 - fbc5a04d79a591ee770dd7226469fed60eaac2c3 — prune Puck and unused transitive dependencies from package-lock.json.
 - e1376547f0979b6de3c921836c9b16b2ccbd1599 — clear legacy Puck/theme/layout draft keys from browser local storage on app startup.
 - 8a8664ae2d6670bd2e38937ca92917a0dafaac5b — update current agent control state.
+- 2b2c5a45c37cf5904a7e49109e244ed5fb937a92 — update the Gemini handoff with the removal inventory and verification limits; eeccb67921a39da7b8bb486c7eaec71dabec2c58 — update the audit ledger.
 
 ## Verification status
 
