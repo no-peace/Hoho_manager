@@ -62,7 +62,7 @@ describe("message tracker performance safeguards", () => {
     mocks.updateHashAndCheck.mockResolvedValue(undefined);
   });
 
-  it("memoizes repeated executor lookups within one sync sweep", async () => {
+  it("memoizes repeated executor and channel-guild lookups within one sync sweep", async () => {
     const payload = { content: "same tracked payload" };
     const hash = computePayloadHash(payload);
     mocks.listAll.mockResolvedValue([
@@ -94,6 +94,9 @@ describe("message tracker performance safeguards", () => {
 
     expect(result).toEqual({ checked: 2, updated: 0, removed: 0, errors: 0 });
     expect(mocks.findByTitle).toHaveBeenCalledTimes(1);
+    // Two tracked messages in the same channel require only one Discord channel lookup.
+    expect(mocks.getChannelGuildId).toHaveBeenCalledTimes(1);
+    expect(mocks.getChannelGuildId).toHaveBeenCalledWith("channel-1");
     expect(mocks.updateLastChecked).toHaveBeenCalledTimes(2);
   });
 
