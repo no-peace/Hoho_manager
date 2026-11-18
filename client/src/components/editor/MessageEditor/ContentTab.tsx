@@ -34,7 +34,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
           <button
             type="button"
             onClick={() => setThreadOpen(!threadOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#F1F3F9] hover:bg-[#252B3A] transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-bold text-[#F1F3F9] hover:bg-[#282a2e] transition-colors"
           >
             <span className="flex items-center gap-1.5 uppercase tracking-wider text-[0.6875rem] text-[#A1A8B8]">
               {threadOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Thread
@@ -55,10 +55,8 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 <input
                   type="text"
                   inputMode="numeric"
-                  spellCheck={false}
-                  autoComplete="off"
                   value={message.thread_id || ""}
-                  placeholder="Paste an existing Discord thread ID…"
+                  placeholder="Paste an existing Discord thread ID"
                   onChange={(event) => {
                     ensureActive();
                     setExtendedField("thread_id", event.target.value);
@@ -87,7 +85,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     ensureActive();
                     setField("thread_name", e.target.value);
                   }}
-                  className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#272D3A] focus:border-[#818CF8] focus:outline-none"
+                  className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#272D3A] focus:border-[#818CF8] focus:outline-none"
                 />
               </div>
             </div>
