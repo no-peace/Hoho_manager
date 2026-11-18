@@ -1,5 +1,5 @@
 // client/src/components/preview/Markdown.tsx
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect, useId, useCallback, useSyncExternalStore } from "react";
 import { Hash, Volume2, Megaphone, Clock } from "lucide-react";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useGlobalStore } from "../../store/globalStore";
@@ -23,37 +23,93 @@ interface CachedMember {
   roles?: string[];
 }
 
-// Module-level cache & in-flight deduplication for resolved user mentions
-const resolvedMembersCache = new Map<string, CachedMember | null>();
-const inflightMemberRequests = new Map<string, Promise<CachedMember | null>>();
-const memberListeners = new Set<() => void>();
+// Module-level cache & in-flight deduplication for resolved user mentions.
+// A bounded TTL cache prevents previews of many different guilds/users from
+// retaining stale member records for the lifetime of the browser tab.
+interface CachedMemberEntry {
+  member: CachedMember | null;
+  cachedAt: number;
+}
 
-const notifyMemberListeners = () => {
-  memberListeners.forEach((cb) => cb());
+const resolvedMembersCache = new Map<string, CachedMemberEntry>();
+const inflightMemberRequests = new Map<string, Promise<CachedMember | null>>();
+const memberListeners = new Map<string, Set<() => void>>();
+const MAX_RESOLVED_MEMBER_CACHE_ENTRIES = 500;
+const RESOLVED_MEMBER_CACHE_TTL_MS = 5 * 60_000;
+
+const getCachedMember = (key: string): CachedMember | null | undefined => {
+  const entry = resolvedMembersCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.cachedAt >= RESOLVED_MEMBER_CACHE_TTL_MS) {
+    resolvedMembersCache.delete(key);
+    return undefined;
+  }
+
+  // Refresh insertion order for LRU eviction.
+  resolvedMembersCache.delete(key);
+  resolvedMembersCache.set(key, entry);
+  return entry.member;
+};
+
+const getMemberSnapshot = (key: string): CachedMember | null | undefined => {
+  const entry = resolvedMembersCache.get(key);
+  if (!entry || Date.now() - entry.cachedAt >= RESOLVED_MEMBER_CACHE_TTL_MS) {
+    return undefined;
+  }
+  return entry.member;
+};
+
+const subscribeToMember = (key: string, listener: () => void): (() => void) => {
+  let listeners = memberListeners.get(key);
+  if (!listeners) {
+    listeners = new Set();
+    memberListeners.set(key, listeners);
+  }
+  listeners.add(listener);
+
+  return () => {
+    const current = memberListeners.get(key);
+    if (!current) return;
+    current.delete(listener);
+    if (current.size === 0) memberListeners.delete(key);
+  };
+};
+
+const cacheResolvedMember = (key: string, member: CachedMember | null): void => {
+  resolvedMembersCache.delete(key);
+  resolvedMembersCache.set(key, { member, cachedAt: Date.now() });
+
+  while (resolvedMembersCache.size > MAX_RESOLVED_MEMBER_CACHE_ENTRIES) {
+    const oldestKey = resolvedMembersCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    resolvedMembersCache.delete(oldestKey);
+  }
+
+  // Only mentions for this exact guild/user pair need to update.
+  memberListeners.get(key)?.forEach((listener) => listener());
 };
 
 const fetchMemberById = (guildId: string, userId: string): Promise<CachedMember | null> => {
   const key = `${guildId}:${userId}`;
-  if (resolvedMembersCache.has(key)) {
-    return Promise.resolve(resolvedMembersCache.get(key) ?? null);
-  }
+  const cached = getCachedMember(key);
+  if (cached !== undefined) return Promise.resolve(cached);
+
   const existing = inflightMemberRequests.get(key);
   if (existing) return existing;
 
   const promise = api.discord
     .searchMembers(guildId, userId)
     .then((res) => {
-      const found = (res.members || []).find((m) => m.id === userId) ?? res.members?.[0] ?? null;
-      resolvedMembersCache.set(key, found);
-      inflightMemberRequests.delete(key);
-      notifyMemberListeners();
+      const found = (res.members || []).find((member) => member.id === userId) ?? res.members?.[0] ?? null;
+      cacheResolvedMember(key, found);
       return found;
     })
     .catch(() => {
-      resolvedMembersCache.set(key, null);
-      inflightMemberRequests.delete(key);
-      notifyMemberListeners();
+      cacheResolvedMember(key, null);
       return null;
+    })
+    .finally(() => {
+      inflightMemberRequests.delete(key);
     });
 
   inflightMemberRequests.set(key, promise);
@@ -89,15 +145,12 @@ const UserMention: React.FC<{ id: string }> = ({ id }) => {
   const effectiveGuildId = selectedGuildId || guilds?.[0]?.id || "";
   const cacheKey = `${effectiveGuildId}:${id}`;
 
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const listener = () => setTick((t) => t + 1);
-    memberListeners.add(listener);
-    return () => {
-      memberListeners.delete(listener);
-    };
-  }, []);
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeToMember(cacheKey, listener),
+    [cacheKey],
+  );
+  const getSnapshot = useCallback(() => getMemberSnapshot(cacheKey), [cacheKey]);
+  const member = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
     if (!selectedGuildId && !guilds) {
@@ -108,13 +161,11 @@ const UserMention: React.FC<{ id: string }> = ({ id }) => {
   useEffect(() => {
     if (effectiveGuildId) {
       fetchRoles(effectiveGuildId);
-      if (!resolvedMembersCache.has(cacheKey)) {
+      if (getCachedMember(cacheKey) === undefined) {
         void fetchMemberById(effectiveGuildId, id);
       }
     }
   }, [effectiveGuildId, id, cacheKey, fetchRoles]);
-
-  const member = resolvedMembersCache.get(cacheKey);
   const guildRoles = (effectiveGuildId && rolesMap[effectiveGuildId]) || [];
 
   // Find highest colored role if member roles are available

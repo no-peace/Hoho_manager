@@ -1756,3 +1756,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added a regression test that updates unrelated `weaoMeta` state and asserts the selector does not rerender.
 - Confirmed that guild/channel/role/emoji fetches already coalesce concurrent requests. Member search is debounced and stale writes are suppressed, but the API helper currently lacks AbortSignal support; this remains a possible follow-up for cancellation.
 - Verification: regression test added but not executed. No browser profiling, React Profiler capture, tests, typecheck or build was run.
+
+
+## Client preview performance audit — Batch F16 (2026-11-18)
+
+- Reviewed Markdown, EmbedPreview, user-placeholder resolution and ReactBits canvas/primitive components with their existing tests.
+- Found that resolving any one Markdown user mention notified every mounted UserMention component through a global listener set, producing unnecessary rerenders as mention count grew.
+- Replaced the global listener set with per-guild/user subscriptions using `useSyncExternalStore`.
+- The resolved-member cache was unbounded and had no expiry. Added a 500-entry LRU limit and five-minute TTL, including short-lived cached misses.
+- Added a focused test for guild-scoped mention resolution.
+- Confirmed EmbedPreview is memoized and its field grouping is linear; user-placeholder lookup already batches, debounces and aborts stale work; the hero canvas bounds scene complexity/DPR and cleans up animation resources; GSAP primitives clean up animations and respect reduced-motion. No further optimizations were made without profiling evidence.
+- Verification: test added but not executed. No React Profiler, browser performance trace, tests, typecheck or build was run.

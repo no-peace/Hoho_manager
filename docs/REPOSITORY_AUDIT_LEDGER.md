@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 161 | In progress (30/161) |
+| Client | 161 | In progress (37/161) |
 | Server | 141 | In progress (101/141) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -286,6 +286,35 @@ Verification:
 - Test added but not executed.
 - No browser profiling, React Profiler capture, tests, typecheck or build was run.
 
+## Batch F16 — Markdown mention cache and subscription performance (2026-11-18)
+
+**Status:** Seven existing preview/ReactBits files inspected; Markdown mention cache fixed and a focused lookup test added. Tests/typecheck/build were not executed.
+
+Files reviewed:
+- `client/src/components/preview/Markdown.tsx`
+- `client/src/components/preview/EmbedPreview.tsx`
+- `client/src/components/preview/UserPlaceholderPreviewContent.tsx`
+- `client/src/components/preview/__tests__/Markdown.test.tsx`
+- `client/src/components/reactbits/ThreeHeroCanvas.tsx`
+- `client/src/components/reactbits/ReactBitsPrimitives.tsx`
+- `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx`
+
+Finding and fix:
+1. **Fixed:** Markdown user mentions used one global listener set. Resolving any one member triggered a state update in every mounted user mention, creating avoidable fan-out in messages with many mentions.
+2. The member cache had no size or expiry bound. It now uses a 500-entry LRU cache with a five-minute TTL, including cached misses.
+3. Replaced the global listener fan-out with keyed subscriptions through `useSyncExternalStore`; only components for the resolved guild/user pair are notified.
+4. Added a focused test for guild-scoped mention resolution.
+
+Performance review notes:
+- `EmbedPreview` is already wrapped in `React.memo`; field grouping is linear in the number of embed fields. No additional memoization was justified without render profiling.
+- `UserPlaceholderPreviewContent` batches ID resolution in groups of ten, debounces requests and aborts stale batches; its JSON snapshot traversal may be expensive for very large message documents, but no production profile was available.
+- `ThreeHeroCanvas` draws a bounded node/edge/grid scene, caps device pixel ratio at 1.5, disables animation for reduced-motion and low-core/mobile cases, and cancels animation/idle work on unmount. No speculative canvas rewrite was made.
+- `ReactBitsPrimitives` cleans up GSAP contexts/tweens and respects reduced-motion for animated text/counts.
+
+Verification:
+- Test added but not executed.
+- No React Profiler, browser performance trace, tests, typecheck or build was run.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -377,18 +406,18 @@ Verification:
 - [ ] `client/src/components/preview/ActionRowPreview.tsx`
 - [ ] `client/src/components/preview/ComponentPreview.tsx`
 - [x] `client/src/components/preview/ContainerPreview.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/preview/EmbedPreview.tsx`
-- [ ] `client/src/components/preview/Markdown.tsx`
+- [x] `client/src/components/preview/EmbedPreview.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/preview/Markdown.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/MessagePreview.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/preview/UserPlaceholderPreviewContent.tsx`
+- [x] `client/src/components/preview/UserPlaceholderPreviewContent.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/__tests__/ActionRowPreview.test.tsx`
 - [ ] `client/src/components/preview/__tests__/EmbedPreview.test.tsx`
-- [ ] `client/src/components/preview/__tests__/Markdown.test.tsx`
+- [x] `client/src/components/preview/__tests__/Markdown.test.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/__tests__/MessagePreview.test.tsx`
 - [ ] `client/src/components/preview/__tests__/UserPlaceholderPreviewContext.test.tsx`
-- [ ] `client/src/components/reactbits/ReactBitsPrimitives.tsx`
-- [ ] `client/src/components/reactbits/ThreeHeroCanvas.tsx`
-- [ ] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx`
+- [x] `client/src/components/reactbits/ReactBitsPrimitives.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/reactbits/ThreeHeroCanvas.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/send/BotDispatchModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/Button.tsx`
 - [ ] `client/src/components/ui/ColorPicker.tsx`
