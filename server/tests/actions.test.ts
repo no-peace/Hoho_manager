@@ -308,7 +308,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
 
         // adaptive
         await handler?.run({ ...mockContext, variables: vars, config: { name: "k2", varType: "adaptive", value: "user.id" } });
-        expect(vars.k2).toBe("user_789");
+        expect(vars.k2).toBe("123456789012345678");
 
         // get
         await handler?.run({ ...mockContext, variables: vars, config: { name: "k3", varType: "get", value: "source_var" } });
@@ -339,7 +339,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       it("calls discord.addGuildMemberRole and replies", async () => {
         const handler = getActionHandler("add_role");
         const res = await handler?.run({ ...mockContext, config: { roleId: "role_new" } });
-        expect(mockDiscordApi.addGuildMemberRole).toHaveBeenCalledWith("guild_123", "user_789", "role_new", "Bot.FakeToken");
+        expect(mockDiscordApi.addGuildMemberRole).toHaveBeenCalledWith("guild_123", "123456789012345678", "role_new", "Bot.FakeToken");
         expect((res?.data as any)?.content).toContain("role_new");
         expect((res?.data as any)?.content).toContain("**Role Added**");
         expect((res?.data as any)?.content).toContain("Gave you <@&role_new>.");
@@ -351,7 +351,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       it("calls discord.removeGuildMemberRole", async () => {
         const handler = getActionHandler("remove_role");
         const res = await handler?.run({ ...mockContext, config: { roleId: "role_old" } });
-        expect(mockDiscordApi.removeGuildMemberRole).toHaveBeenCalledWith("guild_123", "user_789", "role_old", "Bot.FakeToken");
+        expect(mockDiscordApi.removeGuildMemberRole).toHaveBeenCalledWith("guild_123", "123456789012345678", "role_old", "Bot.FakeToken");
         expect((res?.data as any)?.content).toContain("**Role Removed**");
       });
     });
@@ -401,7 +401,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       it("dispatches DM to interacting user", async () => {
         const handler = getActionHandler("send_dm");
         const res = await handler?.run({ ...mockContext, config: { content: "Direct ping" } });
-        expect(mockDiscordApi.sendDirectMessage).toHaveBeenCalledWith("user_789", expect.anything(), "Bot.FakeToken");
+        expect(mockDiscordApi.sendDirectMessage).toHaveBeenCalledWith("123456789012345678", expect.anything(), "Bot.FakeToken");
         expect((res?.data as any)?.content).toBe("📬 **Direct Message Sent** — Sent you a direct message.");
       });
     });
