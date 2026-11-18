@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   return (
     <div className="h-full bg-[#161A23] w-full flex flex-col font-sans select-none z-10 shadow-lg">
       {/* Header with Title and Close Button */}
-      <div className="p-3 border-b border-[#272D3A] bg-[#272D3A] shrink-0 flex items-center justify-between">
+      <div className="p-3 border-b border-[#272D3A] bg-[#10131A] shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Blocks size={16} className="text-[#818CF8]" />
           <span className="text-xs font-bold uppercase tracking-wider text-[#F1F3F9]">
@@ -53,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex p-2 gap-1 bg-[#272D3A] border-b border-[#272D3A] shrink-0">
+      <div className="flex p-2 gap-1 bg-[#10131A] border-b border-[#272D3A] shrink-0">
         <button
           type="button"
           onClick={() => setActiveTab("elements")}
