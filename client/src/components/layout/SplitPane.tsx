@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ErrorBoundary } from "../ui/ErrorBoundary";
-import type { ResolvedAppLayoutMotion } from "../../utils/puckAppLayout";
 
 export interface SplitPaneProps {
   left: ReactNode;
@@ -9,8 +8,6 @@ export interface SplitPaneProps {
   initialRatio?: number;
   minRatio?: number;
   maxRatio?: number;
-  panelOrder?: "editor-first" | "preview-first";
-  workspaceMotion?: ResolvedAppLayoutMotion;
   mobileActivePane?: "left" | "right";
   onMobilePaneChange?: (pane: "left" | "right") => void;
   className?: string;
@@ -22,8 +19,6 @@ export const SplitPane = ({
   initialRatio = 0.5,
   minRatio = 0.28,
   maxRatio = 0.72,
-  panelOrder = "editor-first",
-  workspaceMotion,
   mobileActivePane = "left",
   onMobilePaneChange,
   className = "",
@@ -41,11 +36,6 @@ export const SplitPane = ({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  const workspaceMotionStyle = workspaceMotion ? ({
-    "--hoho-motion-duration": workspaceMotion.duration,
-    "--hoho-motion-delay": workspaceMotion.delay,
-  } as CSSProperties) : undefined;
-
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 1200);
     window.addEventListener("resize", onResize);
@@ -130,15 +120,12 @@ export const SplitPane = ({
           touchStartXRef.current = null;
           touchStartYRef.current = null;
         }}
-        className={`relative flex min-h-0 min-w-0 flex-1 overflow-hidden hoho-runtime-workspace hoho-runtime-workspace--mobile ${className}`}
-        data-hoho-motion={workspaceMotion?.animation ?? "none"}
-        data-hoho-panel-order={panelOrder}
-        style={workspaceMotionStyle}
+        className={`relative flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}
       >
         <motion.div
           aria-hidden={mobileActivePane !== "left"}
           inert={mobileActivePane !== "left"}
-          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col hoho-runtime-mobile-pane hoho-runtime-mobile-pane--editor ${mobileActivePane === "left" ? "z-10" : "invisible pointer-events-none z-0"}`}
+          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "left" ? "z-10" : "invisible pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "left" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "left" ? 0 : -8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "left" ? "auto" : "none" }}
@@ -150,7 +137,7 @@ export const SplitPane = ({
         <motion.div
           aria-hidden={mobileActivePane !== "right"}
           inert={mobileActivePane !== "right"}
-          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col hoho-runtime-mobile-pane hoho-runtime-mobile-pane--preview ${mobileActivePane === "right" ? "z-10" : "invisible pointer-events-none z-0"}`}
+          className={`absolute inset-0 flex min-h-0 min-w-0 flex-col ${mobileActivePane === "right" ? "z-10" : "invisible pointer-events-none z-0"}`}
           animate={{ opacity: mobileActivePane === "right" ? 1 : 0, x: prefersReducedMotion ? 0 : mobileActivePane === "right" ? 0 : 8 }}
           transition={{ duration: prefersReducedMotion ? 0.12 : 0.16, ease: [0.16, 1, 0.3, 1] }}
           style={{ pointerEvents: mobileActivePane === "right" ? "auto" : "none" }}
@@ -167,12 +154,9 @@ export const SplitPane = ({
   return (
     <div
       ref={containerRef}
-      className={`flex min-h-0 min-w-0 flex-1 overflow-hidden hoho-runtime-workspace hoho-runtime-workspace--desktop ${className}`}
-      data-hoho-motion={workspaceMotion?.animation ?? "none"}
-      data-hoho-panel-order={panelOrder}
-      style={workspaceMotionStyle}
+      className={`flex min-h-0 min-w-0 flex-1 overflow-hidden ${className}`}
     >
-      <div className="hoho-runtime-editor-pane flex min-h-0 min-w-0 flex-col shrink-0" style={{ width: `${ratio * 100}%` }}>
+      <div className="flex min-h-0 min-w-0 flex-col shrink-0" style={{ width: `${ratio * 100}%` }}>
         <ErrorBoundary level="pane" fallbackTitle="Editor Pane Error">
           {left}
         </ErrorBoundary>
@@ -192,7 +176,7 @@ export const SplitPane = ({
           if (event.key === "ArrowLeft") setRatio((r) => Math.max(minRatio, r - 0.02));
           if (event.key === "ArrowRight") setRatio((r) => Math.min(maxRatio, r + 0.02));
         }}
-        className={`hoho-runtime-splitter group relative w-1.5 shrink-0 cursor-col-resize transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:bg-[#818CF8]/60 ${isDragging ? "bg-[#818CF8]" : "bg-[#202531] hover:bg-[#818CF8]/60"}`}
+        className={`group relative w-1.5 shrink-0 cursor-col-resize transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:bg-[#818CF8]/60 ${isDragging ? "bg-[#818CF8]" : "bg-[#202531] hover:bg-[#818CF8]/60"}`}
       >
         <div className={`w-0.5 h-8 rounded-full transition-[transform,background-color,box-shadow] duration-150 ${isDragging ? "scale-y-150 bg-[#F1F3F9]" : "bg-[#343C4E] group-hover:scale-y-125 group-hover:bg-[#F1F3F9]"}`} />
         {isDragging && (
@@ -203,7 +187,7 @@ export const SplitPane = ({
         <span className="absolute inset-y-0 -left-2 -right-2 block" />
       </div>
 
-      <div className="hoho-runtime-preview-pane flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <ErrorBoundary level="pane" fallbackTitle="Live Preview Error">
           {right}
         </ErrorBoundary>
