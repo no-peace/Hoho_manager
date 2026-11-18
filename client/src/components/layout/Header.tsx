@@ -275,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                           ? "Head Admin"
                           : hasDefaultBotAccess
                             ? "Authorized Staff"
-                            : "Custom Bot Mode"}
+                            : "Access Required"}
                       </span>
                     </div>
                   </div>

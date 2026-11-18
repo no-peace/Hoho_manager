@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `99414d89dfef65b8bc4054771788150ac88f072d` (main, after temporary picomatch mitigation)
-**Tree:** 367 tracked files across 66 directories
+**Tree:** 369 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -16,13 +16,13 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 159 | In progress (1/159) |
+| Client | 161 | In progress (27/161) |
 | Server | 133 | In progress (44/133) |
 | Bot | 23 | Not started |
 | Shared | 10 | Source review complete |
 | Documentation | 7 | Not started |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **367** | **367 accounted for** |
+| **Total** | **369** | **369 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -82,6 +82,20 @@ Findings and changes:
 7. **Verified disabled:** `resolveBotToken` intentionally ignores legacy profile IDs and returns only the configured server bot token. Route parameters are retained for compatibility but cannot select a custom token.
 8. Template ownership checks remain in the service/repository path. Action lookups for template-backed messages are constrained by the tracked message's template ID.
 
+## Batch F5 — Client state, preview and dispatch review (2026-11-18)
+
+**Status:** Source inspection across 27 client files covering API/session state, stores, layout runtime, preview selection, mobile quick-edit, dispatch, mention checks and the local dependency build context. No browser tests, UI tests, typecheck or build were executed.
+
+Findings and changes:
+1. **Fixed:** Edit mode previously reused the first target message ID for every selected channel when fewer IDs than channels were entered. It now requires exactly one distinct 17–20 digit Discord snowflake per selected channel, in selection order. Added pure parser tests.
+2. **Fixed:** Users without server-bot access were labelled `Custom Bot Mode` and shown a banner claiming they could use their own Bot Profile. The active send workflow only supports the configured server bot. The UI now says `Access Required` / `Server Bot Access Required` and links to the accurate access modal.
+3. **Fixed:** Updated the legacy direct-webhook client module comment; the exported function is a disabled stub and does not send requests.
+4. **Fixed:** Updated the mention-validation comment. The actual bypass is Head Admin only; custom bot profiles are not a supported send path.
+5. `MobileBottomNavigation.activeTab` is intentionally preview-only and is documented as such in `docs/PUCK_DESIGN_LAB.md`. The real initial mobile pane is controlled by `MobileWorkspace.defaultPane`; no runtime change is required for this preview-only field.
+6. The reviewed Markdown link parser only creates HTTP/HTTPS links; embed author/title links also explicitly restrict protocols to HTTP/HTTPS. No raw-HTML rendering path was observed in the reviewed preview components. This is not a complete security audit of the Markdown renderer.
+7. The API client includes `VITE_ADMIN_API_KEY` only in development builds. Production requests rely on the HttpOnly session cookie; the client-supplied staff ID header is not an authorization source in production.
+8. Mobile quick-edit and preview selection route through the shared message store; no confirmed state-desynchronization issue was found in the reviewed files.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -111,7 +125,7 @@ Findings and changes:
 - [x] `tsconfig.base.json` — inspected; runtime verification not performed
 - [x] `tunnel/config.yml.example` — inspected; runtime verification not performed
 
-### Client (159)
+### Client (161)
 - [ ] `client/.env.example`
 - [x] `client/Dockerfile` — inspected; runtime verification not performed
 - [ ] `client/index.html`
@@ -120,15 +134,15 @@ Findings and changes:
 - [ ] `client/public/hoho_og_banner.svg`
 - [ ] `client/public/robots.txt`
 - [ ] `client/public/sitemap.xml`
-- [ ] `client/src/App.tsx`
+- [x] `client/src/App.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
 - [ ] `client/src/api/__tests__/design.test.ts`
-- [ ] `client/src/api/client.ts`
-- [ ] `client/src/api/design.ts`
-- [ ] `client/src/api/discord.ts`
+- [x] `client/src/api/client.ts` — inspected; runtime verification not performed
+- [x] `client/src/api/design.ts` — inspected; runtime verification not performed
+- [x] `client/src/api/discord.ts` — inspected; runtime verification not performed
 - [ ] `client/src/components/actions/FlowBuilder.tsx`
 - [ ] `client/src/components/actions/StepList.tsx`
-- [ ] `client/src/components/design/PublishAppLayoutControl.tsx`
+- [x] `client/src/components/design/PublishAppLayoutControl.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 - [ ] `client/src/components/editor/AllowedMentionsModal.tsx`
 - [ ] `client/src/components/editor/ComponentForms.tsx`
@@ -148,7 +162,7 @@ Findings and changes:
 - [ ] `client/src/components/editor/MessageEditor/EmbedsTab.tsx`
 - [ ] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx`
 - [ ] `client/src/components/editor/MessageEditor/index.tsx`
-- [ ] `client/src/components/editor/PropertyPanel.tsx`
+- [x] `client/src/components/editor/PropertyPanel.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/editor/RichPicker.tsx`
 - [ ] `client/src/components/editor/__tests__/DiscordMentionInput.test.tsx`
 - [ ] `client/src/components/editor/__tests__/MessageEditor.test.tsx`
@@ -160,22 +174,22 @@ Findings and changes:
 - [ ] `client/src/components/layout/HoHoLogoMark.tsx`
 - [ ] `client/src/components/layout/LoginScreen.tsx`
 - [ ] `client/src/components/layout/PublicPageHeader.tsx`
-- [ ] `client/src/components/layout/ServerBotAccessModal.tsx`
+- [x] `client/src/components/layout/ServerBotAccessModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/SessionsModal.tsx`
 - [ ] `client/src/components/layout/SettingsModal.tsx`
 - [ ] `client/src/components/layout/Sidebar.tsx`
-- [ ] `client/src/components/layout/SplitPane.tsx`
-- [ ] `client/src/components/layout/StudioLayout.tsx`
-- [ ] `client/src/components/layout/StudioModals.tsx`
+- [x] `client/src/components/layout/SplitPane.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/StudioLayout.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/layout/StudioModals.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/layout/StudioRouter.tsx`
 - [ ] `client/src/components/layout/ThemeSettingsModal.tsx`
 - [ ] `client/src/components/layout/__tests__/LoginScreen.test.tsx`
 - [ ] `client/src/components/preview/ActionRowPreview.tsx`
 - [ ] `client/src/components/preview/ComponentPreview.tsx`
-- [ ] `client/src/components/preview/ContainerPreview.tsx`
+- [x] `client/src/components/preview/ContainerPreview.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/EmbedPreview.tsx`
 - [ ] `client/src/components/preview/Markdown.tsx`
-- [ ] `client/src/components/preview/MessagePreview.tsx`
+- [x] `client/src/components/preview/MessagePreview.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/UserPlaceholderPreviewContent.tsx`
 - [ ] `client/src/components/preview/__tests__/ActionRowPreview.test.tsx`
 - [ ] `client/src/components/preview/__tests__/EmbedPreview.test.tsx`
@@ -185,7 +199,7 @@ Findings and changes:
 - [ ] `client/src/components/reactbits/ReactBitsPrimitives.tsx`
 - [ ] `client/src/components/reactbits/ThreeHeroCanvas.tsx`
 - [ ] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx`
-- [ ] `client/src/components/send/BotDispatchModal.tsx`
+- [x] `client/src/components/send/BotDispatchModal.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/ui/Button.tsx`
 - [ ] `client/src/components/ui/ColorPicker.tsx`
 - [ ] `client/src/components/ui/CultSkiperPrimitives.tsx`
@@ -211,11 +225,11 @@ Findings and changes:
 - [ ] `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`
 - [ ] `client/src/hooks/useAutocompleteMenu.ts`
 - [ ] `client/src/hooks/useMessage.ts`
-- [ ] `client/src/hooks/usePublishedAppLayout.ts`
+- [x] `client/src/hooks/usePublishedAppLayout.ts` — inspected; runtime verification not performed
 - [ ] `client/src/hooks/useSend.ts`
 - [ ] `client/src/hooks/useStaffAccess.ts`
 - [ ] `client/src/hooks/useTemplates.ts`
-- [ ] `client/src/main.tsx`
+- [x] `client/src/main.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/pages/DesignLabPage.tsx`
 - [ ] `client/src/pages/DocsPage.tsx`
 - [ ] `client/src/pages/NotFoundPage.tsx`
@@ -225,12 +239,12 @@ Findings and changes:
 - [ ] `client/src/pages/docs-page.css`
 - [ ] `client/src/pages/layout-lab.css`
 - [ ] `client/src/store/__tests__/exportImport.test.ts`
-- [ ] `client/src/store/actionStore.ts`
-- [ ] `client/src/store/discordCacheStore.ts`
-- [ ] `client/src/store/globalStore.ts`
-- [ ] `client/src/store/messageStore.ts`
-- [ ] `client/src/store/settingsStore.ts`
-- [ ] `client/src/store/templateStore.ts`
+- [x] `client/src/store/actionStore.ts` — inspected; runtime verification not performed
+- [x] `client/src/store/discordCacheStore.ts` — inspected; runtime verification not performed
+- [x] `client/src/store/globalStore.ts` — inspected; runtime verification not performed
+- [x] `client/src/store/messageStore.ts` — inspected; runtime verification not performed
+- [x] `client/src/store/settingsStore.ts` — inspected; runtime verification not performed
+- [x] `client/src/store/templateStore.ts` — inspected; runtime verification not performed
 - [ ] `client/src/styles/appLayoutRuntime.css`
 - [ ] `client/src/styles/globals.css`
 - [ ] `client/src/test/setup.ts`
@@ -250,15 +264,15 @@ Findings and changes:
 - [ ] `client/src/utils/appLayoutApi.ts`
 - [ ] `client/src/utils/clipboard.ts`
 - [ ] `client/src/utils/cn.ts`
-- [ ] `client/src/utils/componentsV2.ts`
+- [x] `client/src/utils/componentsV2.ts` — inspected; runtime verification not performed
 - [ ] `client/src/utils/constants.ts`
 - [ ] `client/src/utils/discord.ts`
 - [ ] `client/src/utils/editorSmoothScroll.ts`
 - [ ] `client/src/utils/exportImport.ts`
 - [ ] `client/src/utils/floatingPosition.ts`
 - [ ] `client/src/utils/mentionParser.ts`
-- [ ] `client/src/utils/mentionValidation.ts`
-- [ ] `client/src/utils/previewSelection.ts`
+- [x] `client/src/utils/mentionValidation.ts` — inspected; runtime verification not performed
+- [x] `client/src/utils/previewSelection.ts` — inspected; runtime verification not performed
 - [ ] `client/src/utils/puckAppLayout.ts`
 - [ ] `client/src/utils/puckDesignStorage.ts`
 - [ ] `client/src/utils/puckSourceExport.ts`
@@ -271,6 +285,9 @@ Findings and changes:
 - [ ] `client/tsconfig.json`
 - [ ] `client/vite.config.ts`
 - [ ] `client/vitest.config.ts`
+
+- [x] `client/src/utils/dispatchValidation.ts` — inspected; runtime verification not performed
+- [x] `client/src/utils/__tests__/dispatchValidation.test.ts` — inspected; runtime verification not performed
 
 ### Server (133)
 - [x] `server/.env.example` — inspected; runtime verification not performed

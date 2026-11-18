@@ -1,17 +1,10 @@
 import type { DiscordMessagePayload } from "@dmb/shared";
 
 /**
- * Direct Discord webhook sending from the browser.
- *
- * Webhook URLs are designed to be used client-side  anyone holding the URL can
- * post, which is exactly why the bot-token path instead goes through the backend
- * proxy. Sending directly here avoids a round trip through our server.
- *
- * Trade-off: Discord's CORS policy allows this, but it does expose the webhook to
- * the network tab, so only ever do it with URLs the user themselves supplied.
+ * Legacy direct-webhook API stub retained for backwards-compatible imports.
+ * Arbitrary webhook URL delivery is disabled; messages must use the configured
+ * server bot through the authenticated backend.
  */
-
-/** Error carrying Discord's own message plus retry guidance. */
 export class WebhookError extends Error {
   readonly status: number | undefined;
   readonly retryAfterMs: number | undefined;
@@ -43,6 +36,5 @@ export const sendWebhookDirect = async (
     "Arbitrary Discord webhook URL sending is disabled. Use the configured server bot.",
   );
 };
-
 
 export default { sendWebhookDirect };

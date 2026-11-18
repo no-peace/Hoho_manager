@@ -1626,3 +1626,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added regression coverage that a disabled legacy webhook action is logged as failed while the internal marker is not exposed in the Discord response.
 - Verified that `send_webhook_message` is retained only as a disabled compatibility handler (no webhook delivery call), and that `resolveBotToken` ignores legacy profile IDs and always selects the configured server bot token.
 - No tests were executed.
+
+
+## Client audit — Batch F5 (2026-11-18)
+
+- Reviewed client session/API state, stores, published-layout refresh, Puck preview/runtime boundary, StudioLayout, SplitPane, PropertyPanel, mobile quick-edit, message preview, dispatch modal, mention checks and related helpers.
+- Fixed multi-channel edit target mapping: every selected channel now requires its own distinct Discord message snowflake; the previous fallback that reused the first ID has been removed. Added parser regression tests.
+- Corrected no-access UI copy from `Custom Bot Mode` to `Access Required` / `Server Bot Access Required`; the only active dispatch path uses the configured server bot.
+- Corrected stale direct-webhook and custom-profile comments. Direct webhook sending remains a disabled stub; custom profile IDs are ignored by the server token resolver.
+- Confirmed Puck `MobileBottomNavigation.activeTab` is deliberately preview-only; production pane default comes from `MobileWorkspace.defaultPane`.
+- Preview link construction reviewed: Markdown and embed links are restricted to HTTP/HTTPS. The full Markdown renderer and remaining preview components still need review.
+- No browser QA, tests, typecheck or build were executed.

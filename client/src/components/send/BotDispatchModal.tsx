@@ -17,6 +17,7 @@ import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 import { checkUnauthorizedMentions } from "../../utils/mentionValidation";
+import { parseEditTargetMessageIds } from "../../utils/dispatchValidation";
 
 export interface DispatchModalProps {
   open: boolean;
@@ -197,7 +198,16 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
     }
 
     if (selectedChannels.length === 0) return;
-    if (mode === "edit" && !targetMessageId.trim()) return;
+
+    let targetMessageIds: string[] = [];
+    if (mode === "edit") {
+      const parsedTargets = parseEditTargetMessageIds(targetMessageId, selectedChannels.length);
+      if (!parsedTargets.valid) {
+        setSendResult(parsedTargets.message);
+        return;
+      }
+      targetMessageIds = parsedTargets.ids;
+    }
 
     setIsSending(true);
     setSendResult(null);
@@ -235,11 +245,6 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           ...(file.description ? { description: file.description } : {}),
         }));
 
-      const targetMessageIds = targetMessageId
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-
       let successCount = 0;
       let firstFailure: string | null = null;
 
@@ -264,7 +269,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
 
       for (let channelIndex = 0; channelIndex < selectedChannels.length; channelIndex++) {
         const channelId = selectedChannels[channelIndex];
-        const editMessageId = targetMessageIds[channelIndex] || targetMessageIds[0];
+        const editMessageId = mode === "edit" ? targetMessageIds[channelIndex] : undefined;
 
         try {
           if (mode === "send") {

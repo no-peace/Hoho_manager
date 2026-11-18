@@ -175,14 +175,14 @@ export const StudioLayout: React.FC = () => {
       {currentUser && !currentUser.hasDefaultBotAccess && !currentUser.isAdmin && (
         <div className="bg-[#f0b232]/15 border-b border-[#f0b232]/30 px-3 py-1 flex items-center justify-between text-[0.6875rem] shrink-0">
           <span className="text-[#F1F3F9] truncate">
-            <strong className="text-[#f0b232]">Custom Bot Mode:</strong> Use your own Bot Profile to dispatch messages.
+            <strong className="text-[#f0b232]">Server Bot Access Required:</strong> Ask a Head Admin to grant access to the configured server bot.
           </span>
           <button
             type="button"
             onClick={() => setConfigModalOpen(true)}
             className="px-2 py-0.5 rounded bg-[#f0b232] text-[#111214] font-bold hover:bg-[#f0b232]/90 transition-colors shrink-0 ml-2"
           >
-            Configure Bot
+            View Bot Access
           </button>
         </div>
       )}
