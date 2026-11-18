@@ -409,14 +409,14 @@ Verification:
 - [ ] `client/public/sitemap.xml`
 - [x] `client/src/App.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/__tests__/m4_challenger2_layout_stress.test.ts`
-- [ ] `client/src/api/__tests__/design.test.ts`
+- [x] `client/src/api/__tests__/design.test.ts`
 - [x] `client/src/api/client.ts` — inspected; runtime verification not performed
 - [x] `client/src/api/design.ts` — inspected; runtime verification not performed
 - [x] `client/src/api/discord.ts` — inspected; runtime verification not performed
 - [x] `client/src/components/actions/FlowBuilder.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/actions/StepList.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/design/PublishAppLayoutControl.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
+- [x] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 - [x] `client/src/components/editor/AllowedMentionsModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/ComponentForms.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/DiscohookComponentsEditor.tsx` — inspected; render-isolation coverage added where applicable; not executed
@@ -446,11 +446,11 @@ Verification:
 - [x] `client/src/components/layout/AccessPanel.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/AuditLogsModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/BackupsModal.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/ErrorBoundary.tsx`
+- [x] `client/src/components/layout/ErrorBoundary.tsx`
 - [x] `client/src/components/layout/Header.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/HoHoLogoMark.tsx`
+- [x] `client/src/components/layout/HoHoLogoMark.tsx`
 - [x] `client/src/components/layout/LoginScreen.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/layout/PublicPageHeader.tsx`
+- [x] `client/src/components/layout/PublicPageHeader.tsx`
 - [x] `client/src/components/layout/ServerBotAccessModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/SessionsModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/layout/SettingsModal.tsx` — inspected; runtime verification not performed
@@ -507,15 +507,15 @@ Verification:
 - [x] `client/src/hooks/useStaffAccess.ts` — inspected; runtime verification not performed
 - [x] `client/src/hooks/useTemplates.ts` — inspected; runtime verification not performed
 - [x] `client/src/main.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/pages/DesignLabPage.tsx`
-- [ ] `client/src/pages/DocsPage.tsx`
-- [ ] `client/src/pages/NotFoundPage.tsx`
-- [ ] `client/src/pages/PrivacyPage.tsx`
-- [ ] `client/src/pages/app-layout-preview.css`
-- [ ] `client/src/pages/design-lab.css`
-- [ ] `client/src/pages/docs-page.css`
-- [ ] `client/src/pages/layout-lab.css`
-- [ ] `client/src/store/__tests__/exportImport.test.ts`
+- [x] `client/src/pages/DesignLabPage.tsx`
+- [x] `client/src/pages/DocsPage.tsx`
+- [x] `client/src/pages/NotFoundPage.tsx`
+- [x] `client/src/pages/PrivacyPage.tsx`
+- [x] `client/src/pages/app-layout-preview.css`
+- [x] `client/src/pages/design-lab.css`
+- [x] `client/src/pages/docs-page.css`
+- [x] `client/src/pages/layout-lab.css`
+- [x] `client/src/store/__tests__/exportImport.test.ts`
 - [x] `client/src/store/actionStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/store/discordCacheStore.ts` — inspected; runtime verification not performed
 - [x] `client/src/store/globalStore.ts` — inspected; runtime verification not performed
@@ -525,39 +525,39 @@ Verification:
 - [x] `client/src/styles/appLayoutRuntime.css` — inspected; runtime verification not performed
 - [ ] `client/src/styles/globals.css`
 - [ ] `client/src/test/setup.ts`
-- [ ] `client/src/utils/__tests__/appLayoutApi.test.ts`
-- [ ] `client/src/utils/__tests__/discord.test.ts`
-- [ ] `client/src/utils/__tests__/editorSmoothScroll.test.ts`
-- [ ] `client/src/utils/__tests__/floatingPosition.test.ts`
+- [x] `client/src/utils/__tests__/appLayoutApi.test.ts`
+- [x] `client/src/utils/__tests__/discord.test.ts`
+- [x] `client/src/utils/__tests__/editorSmoothScroll.test.ts`
+- [x] `client/src/utils/__tests__/floatingPosition.test.ts`
 - [ ] `client/src/utils/__tests__/m4_challenger_adversarial.test.ts`
-- [ ] `client/src/utils/__tests__/mentionParser.test.ts`
-- [ ] `client/src/utils/__tests__/mentionParserAutocomplete.test.ts`
-- [ ] `client/src/utils/__tests__/previewSelection.test.ts`
-- [ ] `client/src/utils/__tests__/puckAppLayout.test.ts`
-- [ ] `client/src/utils/__tests__/puckTheme.test.ts`
-- [ ] `client/src/utils/__tests__/stress_m2.test.ts`
-- [ ] `client/src/utils/__tests__/tree.test.ts`
-- [ ] `client/src/utils/__tests__/userPlaceholderAutocomplete.test.ts`
-- [ ] `client/src/utils/appLayoutApi.ts`
-- [ ] `client/src/utils/clipboard.ts`
-- [ ] `client/src/utils/cn.ts`
+- [x] `client/src/utils/__tests__/mentionParser.test.ts`
+- [x] `client/src/utils/__tests__/mentionParserAutocomplete.test.ts`
+- [x] `client/src/utils/__tests__/previewSelection.test.ts`
+- [x] `client/src/utils/__tests__/puckAppLayout.test.ts`
+- [x] `client/src/utils/__tests__/puckTheme.test.ts`
+- [x] `client/src/utils/__tests__/stress_m2.test.ts`
+- [x] `client/src/utils/__tests__/tree.test.ts`
+- [x] `client/src/utils/__tests__/userPlaceholderAutocomplete.test.ts`
+- [x] `client/src/utils/appLayoutApi.ts`
+- [x] `client/src/utils/clipboard.ts`
+- [x] `client/src/utils/cn.ts`
 - [x] `client/src/utils/componentsV2.ts` — inspected; runtime verification not performed
-- [ ] `client/src/utils/constants.ts`
-- [ ] `client/src/utils/discord.ts`
-- [ ] `client/src/utils/editorSmoothScroll.ts`
-- [ ] `client/src/utils/exportImport.ts`
-- [ ] `client/src/utils/floatingPosition.ts`
-- [ ] `client/src/utils/mentionParser.ts`
+- [x] `client/src/utils/constants.ts`
+- [x] `client/src/utils/discord.ts`
+- [x] `client/src/utils/editorSmoothScroll.ts`
+- [x] `client/src/utils/exportImport.ts`
+- [x] `client/src/utils/floatingPosition.ts`
+- [x] `client/src/utils/mentionParser.ts`
 - [x] `client/src/utils/mentionValidation.ts` — inspected; runtime verification not performed
 - [x] `client/src/utils/previewSelection.ts` — inspected; runtime verification not performed
-- [ ] `client/src/utils/puckAppLayout.ts`
-- [ ] `client/src/utils/puckDesignStorage.ts`
-- [ ] `client/src/utils/puckSourceExport.ts`
-- [ ] `client/src/utils/puckTheme.ts`
-- [ ] `client/src/utils/seo.ts`
-- [ ] `client/src/utils/tree.ts`
-- [ ] `client/src/utils/unicodeEmojis.ts`
-- [ ] `client/src/utils/userPlaceholderAutocomplete.ts`
+- [x] `client/src/utils/puckAppLayout.ts`
+- [x] `client/src/utils/puckDesignStorage.ts`
+- [x] `client/src/utils/puckSourceExport.ts`
+- [x] `client/src/utils/puckTheme.ts`
+- [x] `client/src/utils/seo.ts`
+- [x] `client/src/utils/tree.ts`
+- [x] `client/src/utils/unicodeEmojis.ts`
+- [x] `client/src/utils/userPlaceholderAutocomplete.ts`
 - [ ] `client/src/vite-env.d.ts`
 - [ ] `client/tsconfig.json`
 - [ ] `client/vite.config.ts`
@@ -876,3 +876,13 @@ Verification:
 - DateTimePickerPopover, CultMorphSurface, ErrorBoundary cleanup/reset behavior, and the Puck render wrappers were inspected. No reproducible correctness or performance defect justified a code change. Existing reduced-motion styling and bounded layout rendering remain in place.
 - No runtime code changes in F28. Client source/test audit count advanced from 85/166 to 106/166. Reviewed test files were inspected only; no tests were executed.
 - **Verification not performed:** no tests, typecheck, build, browser profiling, Lighthouse, or runtime benchmark. GitHub Actions remain disabled by owner instruction, and the local Terminal service was previously unavailable.
+
+
+## Client public pages, Design Lab, utilities and regression tests — Batch F29 (2026-11-18)
+
+- Reviewed 43 additional client files: public-page header/logo/error boundary; Design Lab, documentation, not-found and privacy pages; four Design Lab/page stylesheets; app-layout API, clipboard, class-name/constants, Discord payload/validation, editor smooth-scroll, import/export, floating-position, mention/autocomplete, Puck layout/theme/storage/source-export, SEO, component-tree and Unicode emoji utilities; and the related app-layout, Discord, scroll, positioning, mention/autocomplete, preview-selection, Puck layout/theme, stress, tree, user-placeholder, export/import, design API and publish-control tests.
+- Design Lab access loading uses effect cleanup to ignore stale results after unmount/user change; draft persistence is debounced and timer-cleaned; import/export and publishing validate layout data, and the publish control's tests cover owner gating, validation, confirmation, server-confirmed success and errors. No proven race or persistence defect was established.
+- Utility paths use bounded or input-sized work where appropriate: floating-position calculations are constant-time; editor target lookup is scoped to the message and scroll wrapper; autocomplete catalogues are static; payload validation traverses the submitted component tree; import hydration creates fresh editor IDs. Existing tests cover viewport clamping, reduced-motion/native scrolling, hidden mobile panes, nested token parsing, payload limits/sanitization, nested tree edits, and backup round-tripping.
+- Public documentation uses a static catalogue with memoized category/search filtering; page styles constrain horizontal overflow on narrow screens. The reviewed logo/header/error-boundary components are small wrappers. No repeatable correctness or performance defect justified a runtime edit; no speculative memoization, virtualization, or cache was introduced.
+- **No runtime code changes in F29.** Client source/test review count advanced from 106/166 to 149/166; combined repository inventory review count advanced by 43. Test files were source-reviewed only and were not executed.
+- **Verification not performed:** no tests, typecheck, build, browser profiling, Lighthouse, or runtime benchmark. GitHub Actions remain disabled by owner instruction; the local Terminal service was previously unavailable. No production latency or rendering-performance claim is made.
