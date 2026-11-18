@@ -1,8 +1,8 @@
 # HoHo Manager — Repository Audit Ledger
 
-**Code/inventory snapshot:** `63475935acb5b547f5df92897b53b959816469ff`  
+**Code/inventory snapshot:** `326988a865ac12cfca75820822c08c9acff4da34`  
 **Branch:** `feat/remove-legacy-dispatch-and-hardening`  
-**Tracked files:** 355  
+**Tracked files:** 354  
 **Status:** Audit in progress; not complete.
 
 ## Status definitions
@@ -16,10 +16,10 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 
 ## Confirmed findings and fixes in this branch
 
-1. **Webhook URL sender removal:** Removed server webhook URL delivery/inspection APIs, direct client sender, parser/regex, Action Builder configuration and webhook profile API/repository wiring. Legacy `send_webhook_message` remains only as a failure-only compatibility tombstone; saved flows show a deprecation warning and cannot send. The send route rejects legacy `webhookUrl` input.
+1. **Webhook URL sender removal:** Removed server webhook URL delivery/inspection APIs, direct client sender, parser/regex (including the final orphaned shared matcher), Action Builder configuration and webhook profile API/repository wiring. The `send_webhook_message` handler and source file are deleted; its identifier remains only in the persisted-flow type so old records can be represented. The executor fails old steps safely, the editor tells users to replace them, and the send route rejects legacy `webhookUrl` input. Discord interaction follow-ups still use Discord's interaction-token endpoints; those are not arbitrary webhook URL dispatch.
 2. **Custom bot-profile removal:** Removed `profileId` selection from client/server Discord APIs, routes, services and author enrichment; removed bot profile settings/API/types. Migration 011 drops profile tables; migration 018 drops `settings.bot_profile_id` and retired staff permission columns. Client profile CRUD APIs are removed.
 3. **Staff permissions:** Removed `can_use_webhooks` and `can_override_profile` from access responses, repository types and client/shared types. Bot `/send` and `/exploit` now forward the invoking Discord actor and require live staff permission checks; `/sync` is Discord-administrator-only.
-4. **Structured action failures:** Failure state is internal `ActionResponse.outcome` metadata from `actionFailed()`; the executor logs the metadata and strips it before Discord delivery. All 20 server action handler files received an initial failure-path pass; full dependency/caller review remains open.
+4. **Structured action failures:** Failure state is internal `ActionResponse.outcome` metadata from `actionFailed()`; the executor logs the metadata and strips it before Discord delivery. The 19 current action modules received an initial failure-path pass. Additional fail-closed cases cover unavailable saved actions, null Discord message/DM/thread results, empty modal definitions and variable steps missing a target name. Full dependency/caller review remains open.
 5. **Puck contract:** Preview-only Mobile `activeTab`, `showInspector` and `inspectorHeight` remain in Puck data but are excluded from the production resolved runtime model. Desktop `editorRatio` is passed directly to `SplitPane`. Every emitted CSS variable was compared against the live runtime stylesheet and is consumed.
 6. **Discord interaction reliability:** ACK budget is 900 ms, initial callback is one bounded 1,500 ms attempt with no retry, and gateway relay fallback is 2,700 ms. Migration 019 adds database-backed duplicate delivery state; the original worker atomically switches to deferred ACK and sends the late result as a follow-up. Gateway relay attempts late-result delivery even if the initial callback reports a duplicate ACK.
 7. **Startup and infrastructure hardening:** Bot startup fails closed on any environment validation error. Server production startup requires a dedicated 32+ character `SESSION_SECRET` distinct from `ADMIN_API_KEY`. Public health no longer exposes user count. Docker builds use lockfile-exact workspace installs and copy all workspace manifests. CI tests use synthetic Discord credentials, not repository secrets. Mobile Lighthouse threshold now warns below 0.97.
@@ -30,7 +30,7 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - All 23 files in `bot/` have been read, including commands, listeners, API client, environment, tests, package configuration and README.
 - Root project configuration, Dockerfiles, environment examples, workflow source and core documentation have been reviewed. Docker builds and workflows were not run. The full lockfile and deployment dashboard configuration remain pending.
 - Server access/config/executor/health/template routes and core staff middleware/repositories have been reviewed.
-- The 20 server action handlers received an initial failure-path pass.
+- The 19 current server action modules received an initial failure-path pass.
 - Puck schema/runtime mapping, interaction receipt state, send/Discord routes and selected tests have been partially reviewed.
 - Remaining client, server, shared, migrations, cross-package callers and test coverage still need systematic review.
 
@@ -299,7 +299,6 @@ A search result, excerpt or successful source edit is not enough to mark a file 
 - [IN PROGRESS] `server/src/actions/sendDm.ts`
 - [IN PROGRESS] `server/src/actions/sendEphemeralReply.ts`
 - [REVIEWED] `server/src/actions/sendMessage.ts`
-- [REVIEWED] `server/src/actions/sendWebhookMessage.ts`
 - [IN PROGRESS] `server/src/actions/setVariable.ts`
 - [IN PROGRESS] `server/src/actions/stop.ts`
 - [IN PROGRESS] `server/src/actions/toggleRole.ts`
