@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 165 | In progress (57/165) |
+| Client | 166 | In progress (65/166) |
 | Server | 142 | In progress (120/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -398,7 +398,7 @@ Verification:
 - [x] `tsconfig.base.json` — inspected; runtime verification not performed
 - [x] `tunnel/config.yml.example` — inspected; runtime verification not performed
 
-### Client (164)
+### Client (165)
 - [ ] `client/.env.example`
 - [x] `client/Dockerfile` — inspected; runtime verification not performed
 - [ ] `client/index.html`
@@ -417,14 +417,14 @@ Verification:
 - [x] `client/src/components/actions/StepList.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/design/PublishAppLayoutControl.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
-- [ ] `client/src/components/editor/AllowedMentionsModal.tsx`
-- [ ] `client/src/components/editor/ComponentForms.tsx`
+- [x] `client/src/components/editor/AllowedMentionsModal.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/ComponentForms.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/DiscohookComponentsEditor.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/DiscordMentionInput.tsx` — inspected; render-isolation coverage added where applicable; not executed
-- [ ] `client/src/components/editor/EmbedEditor.tsx`
-- [ ] `client/src/components/editor/FileAttachmentsSection.tsx`
-- [ ] `client/src/components/editor/FlagsModal.tsx`
-- [ ] `client/src/components/editor/JsonModal.tsx`
+- [x] `client/src/components/editor/EmbedEditor.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/FileAttachmentsSection.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/FlagsModal.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/JsonModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/LayersPanel.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/MentionInput/AutocompletePopover.tsx` — inspected; render-isolation coverage added where applicable; not executed
 - [x] `client/src/components/editor/MentionInput/MarkdownToolbar.tsx` — inspected; render-isolation coverage added where applicable; not executed
@@ -433,7 +433,7 @@ Verification:
 - [x] `client/src/components/editor/MessageEditor/ComponentsTab.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/ContentTab.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/EmbedsTab.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx`
+- [x] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/MessageEditor/index.tsx` — inspected; per-message selector optimization and regression test added; not executed
 - [x] `client/src/components/editor/PropertyPanel.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/editor/RichPicker.tsx` — inspected; render-isolation coverage added where applicable; not executed
@@ -442,6 +442,7 @@ Verification:
 - [x] `client/src/components/editor/__tests__/DiscohookComponentsEditor.test.tsx` — added; render-isolation regression coverage; not executed
 - [x] `client/src/components/editor/__tests__/LayersPanel.test.tsx` — added; render-isolation regression coverage; not executed
 - [x] `client/src/components/editor/__tests__/RichPicker.test.tsx` — added; render-isolation regression coverage; not executed
+- [x] `client/src/components/editor/__tests__/JsonModal.test.tsx` — added; closed-modal render-isolation regression; not executed
 - [ ] `client/src/components/layout/AccessPanel.tsx`
 - [ ] `client/src/components/layout/AuditLogsModal.tsx`
 - [ ] `client/src/components/layout/BackupsModal.tsx`
@@ -813,3 +814,11 @@ Verification:
 - MentionInput and RichPicker now subscribe to only the selected guild's channel, role and emoji arrays. Cache changes for unrelated guilds no longer invalidate every mounted mention editor/picker. Stable empty-array fallbacks avoid creating new selector dependencies when no guild is selected. Added Profiler regression tests for MentionInput and RichPicker.
 - No request cancellation, autocomplete algorithm rewrite, list virtualization, or broad memoization was introduced; no trace established a need for those changes. Existing debounce and bounded suggestion rendering were retained.
 - **Verification:** tests added but not executed. No browser React Profiler capture, test suite, typecheck, build, browser QA, Lighthouse, or API/network profiling was run.
+
+
+## Editor modal and form audit — Batch F22 (2026-11-18)
+
+- Reviewed AllowedMentionsModal, ComponentForms, EmbedEditor, FileAttachmentsSection, FlagsModal, JsonModal and MessageLinkModal. The component forms and file attachment list have explicit bounded Discord limits (including 25 embed fields and 10 attachments); no additional algorithmic optimization was justified.
+- **Fixed a closed-modal subscription leak:** StudioModals keeps the lazy JsonModal mounted after it has loaded. JsonModal previously subscribed to messages, data and targets even when `open` was false, so every editor change could rerender the hidden modal. Those subscriptions now return `undefined` while closed and attach to the current document only when opened. Added a React Profiler regression test for the closed state.
+- No editor preview behavior, JSON import/export format, or modal open workflow was changed. No broad memoization was added.
+- **Verification:** new regression test added but not executed; no typecheck/build/browser profiling performed.
