@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { Profiler, useState } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, within } from "@testing-library/react";
 import { DiscordMentionInput } from "../DiscordMentionInput";
 import { useGlobalStore } from "../../../store/globalStore";
+import { useDiscordCacheStore } from "../../../store/discordCacheStore";
 
 const ControlledMentionInput = () => {
   const [value, setValue] = useState("");
@@ -129,4 +130,40 @@ describe("DiscordMentionInput (UI-03 Markdown Ribbon & Shortcuts)", () => {
     // Autocomplete popup appears
     expect(screen.getByText("Matching Users & Roles")).toBeDefined();
   });
+  it("does not rerender for Discord cache updates from another guild", () => {
+    useGlobalStore.setState({ selectedGuildId: "guild-a" });
+    useDiscordCacheStore.setState({
+      channels: {
+        "guild-a": [{ id: "channel-a", name: "general", type: 0 }],
+        "guild-b": [],
+      },
+      roles: {
+        "guild-a": [{ id: "role-a", name: "Member", color: 0 }],
+        "guild-b": [],
+      },
+      emojis: {
+        "guild-a": [{ id: "emoji-a", name: "wave" }],
+        "guild-b": [],
+      },
+    });
+
+    let renders = 0;
+    render(
+      <Profiler id="mention-input" onRender={() => { renders += 1; }}>
+        <DiscordMentionInput value="" onChange={vi.fn()} showToolbar={false} />
+      </Profiler>,
+    );
+
+    renders = 0;
+    act(() => {
+      useDiscordCacheStore.setState((state) => ({
+        channels: { ...state.channels, "guild-b": [{ id: "channel-b", name: "other", type: 0 }] },
+        roles: { ...state.roles, "guild-b": [{ id: "role-b", name: "Other", color: 0 }] },
+        emojis: { ...state.emojis, "guild-b": [{ id: "emoji-b", name: "other" }] },
+      }));
+    });
+
+    expect(renders).toBe(0);
+  });
+
 });
