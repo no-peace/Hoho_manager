@@ -1,10 +1,10 @@
 # GitHub Actions workflow guide
 
-This repository uses separate workflows for application verification, performance checks, security checks, release publishing, and validation of the automation itself.
+This repository defines separate workflows for application verification, performance checks, security checks, release publishing, and validation of the automation itself. GitHub Actions are currently disabled by the repository owner, so these workflows do not execute until the owner re-enables Actions.
 
 ## Workflow map
 
-| Workflow | File | When it runs | What it protects |
+| Workflow | File | Configured trigger (when enabled) | What it protects |
 | --- | --- | --- | --- |
 | CI | [ci.yml](workflows/ci.yml) | Every push, pull request, or manual run | Builds every workspace, typechecks, runs tests on Node.js 22/24/26, and records a server benchmark on Node.js 26 |
 | Lighthouse | [lighthouse.yml](workflows/lighthouse.yml) | Pull requests, pushes to main, or manual run | Measures the production client in mobile and desktop profiles |
@@ -14,11 +14,11 @@ This repository uses separate workflows for application verification, performanc
 
 ## How the checks fit together
 
-1. **CI is the required application gate.** A change should build, typecheck, and pass tests on all supported Node.js lines.
+1. **CI is the required application gate when Actions are enabled.** A change should build, typecheck, and pass tests on all supported Node.js lines.
 2. **Lighthouse is a performance regression signal.** Review both mobile and desktop artifacts; a successful workflow means Lighthouse completed, not that every metric is perfect unless the configured assertions passed.
 3. **Security checks are independent.** A clean npm audit does not replace secret scanning or static analysis.
 4. **Workflow validation protects the automation.** Changes to GitHub Actions configuration are checked by actionlint so workflow errors are caught before relying on them.
-5. **Release verification is tag-specific.** The release job checks out and tests the exact tag that will be published. A failed verification prevents the publish job from running.
+5. **Release verification is tag-specific.** When Actions are enabled, the release job checks out and tests the exact tag that will be published. A failed verification prevents the publish job from running.
 
 ## Creating a release
 
@@ -50,7 +50,7 @@ Do not use a branch name or commit SHA in the manual tag field. The input must b
 
 ## Deliberately not enabled
 
-This repository is currently private. CodeQL code scanning and dependency-review features can depend on GitHub Code Security / Advanced Security entitlement for private repositories. They should only be enabled after confirming the repository has the required feature access; adding a workflow that will fail because the feature is unavailable would make the checks less reliable. Semgrep, npm audit, and Gitleaks remain active in the meantime.
+This repository is currently private. CodeQL code scanning and dependency-review features can depend on GitHub Code Security / Advanced Security entitlement for private repositories. They should only be enabled after confirming the repository has the required feature access; adding a workflow that will fail because the feature is unavailable would make the checks less reliable. The Semgrep, npm audit, and Gitleaks jobs are configured in the workflow files but are not executing while GitHub Actions are disabled.
 
 ## Troubleshooting
 

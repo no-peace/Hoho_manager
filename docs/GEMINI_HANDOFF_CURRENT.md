@@ -1578,3 +1578,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added a standalone ReDoS/compatibility regression script and wired it into `npm test`.
 - This is a temporary downstream mitigation, not an official upstream release or maintainer-approved security release. It must be replaced with the official patched npm version when published. The upstream PR's independent reviewer reported 1,329,660 bounded matching comparisons with no differences and 35 adversarial subprocess checks under a two-second deadline; those are finite tests, not a formal proof.
 - Verification: source/lockfile edits only in this session. The repository's `npm test`, `npm run typecheck`, `npm run build`, and `npm audit` have not been executed. GitHub Actions are disabled per owner instruction.
+
+
+## Root and infrastructure audit — Batch F1 (2026-11-18)
+
+- Reconciled the tracked tree to 367 files across 66 directories; the older 356-file count was stale.
+- Added `docs/REPOSITORY_AUDIT_LEDGER.md` with a per-file inventory and explicit review states. Root/infrastructure source review covers 25 files; the 10 vendored picomatch files have provenance/metadata review only; application files remain pending.
+- Removed the CI test job's fallback to repository Discord secrets/variables. CI now uses synthetic bot token, public key and application ID values only.
+- Updated `.github/WORKFLOWS.md` to state that Actions are currently disabled by owner instruction; workflow definitions remain configured but are not executing.
+- Updated local setup instructions to use `npm ci` against the committed lockfile.
+- Remaining source-review findings: local Docker Compose still uses the documented development-only `dev-admin-key` fallback; the optional Cloudflare Tunnel overlay uses a mutable `latest` image; Semgrep is installed without a version pin. These are recorded for a later controlled decision, not silently changed.
+- No commands were executed. Automated checks, Docker validation, workflow validation, browser QA and deployment remain unverified.

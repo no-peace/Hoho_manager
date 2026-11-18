@@ -3,16 +3,17 @@
 > This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current implementation HEAD before this documentation update: `65878192c036ae8a35d1e1c03d37b5ce92173d85`.
-- Current tree has only `main`; no open PRs. The owner manually deleted the old agent branches.
-- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Do not treat the old Agent 1/2/3/4 statuses below as live assignments.
-- There are no currently assigned subagents and no implementation branch ownership claims. The Head Agent is conducting a repository-wide audit and maintaining `docs/GEMINI_HANDOFF_CURRENT.md`.
+- Audit baseline after the direct-main security commit: `99414d89dfef65b8bc4054771788150ac88f072d`.
+- Owner instruction for this continuation: work directly on `main`; do not create a new branch or pull request. This current instruction supersedes the historical branch/PR workflow directives below for this work.
+- The current tracked tree contains 367 files across 66 directories. Older 356-file counts are stale.
+- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Do not treat their source presence as executed verification.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
 - Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; the owner intends to run them locally. Tests may be inspected/updated, but must be reported as not executed.
 - Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
-- Current priorities: (1) complete the 356-file repository audit ledger, (2) reconcile historical plan/handoff claims with current source, (3) resolve explicitly documented product gaps (disabled webhook URL sender, disabled custom bot-profile dispatch, unsupported sender identity overrides, preview-only Puck activeTab, string-prefix action failure classification), and (4) perform verification only when authorized.
-- Read `docs/GEMINI_HANDOFF_CURRENT.md` for the latest source-backed implementation snapshot and remaining work. Current source on `main` always outranks historical agent reports.
+- A temporary private picomatch fork based on upstream PR #262 is vendored at `vendor/picomatch` to mitigate CVE-2026-112366. It is not an official upstream release and must be replaced when a patched official release is available.
+- The repository audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`. Batch F1 (root/infrastructure, 25 files) has source-only review; 10 vendor files have provenance/metadata review only. Remaining application files are not yet reviewed.
+- Current priorities: (1) complete the file-by-file audit ledger, (2) reconcile historical plan/handoff claims with current source, (3) resolve explicitly documented product gaps (disabled webhook URL sender, disabled custom bot-profile dispatch, unsupported sender identity overrides, preview-only Puck activeTab, string-prefix action failure classification), (4) review and later replace the temporary picomatch fork, and (5) perform verification only when authorized.
 
 ---
 

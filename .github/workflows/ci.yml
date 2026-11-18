@@ -49,9 +49,10 @@ jobs:
           ADMIN_API_KEY: ci-test-admin-key-0123456789abcdef
           ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           DATABASE_PATH: ":memory:"
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN || vars.DISCORD_BOT_TOKEN || 'ci-test-bot-token' }}
-          DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY || vars.DISCORD_PUBLIC_KEY }}
-          DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID || vars.DISCORD_APPLICATION_ID }}
+          # Tests must never receive real Discord credentials.
+          DISCORD_BOT_TOKEN: ci-test-bot-token
+          DISCORD_PUBLIC_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+          DISCORD_APPLICATION_ID: "000000000000000000"
         run: npm test
 
       - name: Run server performance benchmark (Node 26 only)

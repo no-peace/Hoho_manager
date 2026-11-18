@@ -21,7 +21,7 @@ npm -v
 Open PowerShell in the repository root (the folder containing the root package.json):
 
 ```powershell
-npm install
+npm ci
 ```
 
 ### 2. Create local environment files
