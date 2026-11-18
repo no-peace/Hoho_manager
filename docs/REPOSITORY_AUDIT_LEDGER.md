@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 166 | In progress (69/166) |
-| Server | 142 | In progress (128/142) |
+| Server | 142 | In progress (141/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -673,34 +673,34 @@ Verification:
 - [x] `server/tests/accessSecurity.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/actions.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/adversarial_streaming_memory.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/appLayoutPublishing.test.ts`
-- [ ] `server/tests/authorService.test.ts`
-- [ ] `server/tests/challenger_bot_relay.test.ts`
-- [ ] `server/tests/challenger_flowRepository.test.ts`
+- [x] `server/tests/appLayoutPublishing.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/authorService.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/challenger_bot_relay.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/challenger_flowRepository.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_member_cache.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_multipart.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_perf_indexes.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_staffRepository.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/crypto.test.ts`
+- [x] `server/tests/crypto.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/discordService.timeout.test.ts` — inspected; test not executed
 - [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/errorHandler.security.test.ts`
+- [x] `server/tests/errorHandler.security.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/flowRepository.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/interactionMemory.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/m3_challenger2_retention_cache.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/middleware.test.ts`
+- [x] `server/tests/middleware.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/repositories.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/requestParsing.test.ts`
-- [ ] `server/tests/routes.test.ts`
-- [ ] `server/tests/serverThemePublishing.test.ts`
+- [x] `server/tests/requestParsing.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/routes.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/serverThemePublishing.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/session.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/sqlSplitter.stress.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/staff_logging_enhancements.test.ts`
-- [ ] `server/tests/staff_security_regression.test.ts`
+- [x] `server/tests/staff_logging_enhancements.test.ts` — inspected; runtime verification not performed
+- [x] `server/tests/staff_security_regression.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/tursoPipeline.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/urlAttachments.security.test.ts`
+- [x] `server/tests/urlAttachments.security.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/validation.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/variableInterpolation.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/weaoService.test.ts` — inspected and regression coverage added; test not executed
@@ -847,3 +847,12 @@ Verification:
 - Reviewed `server/tests/challenger_multipart.test.ts`: covers absent/empty multipart fields, malformed JSON/boundaries, file-count limits, declared content-length rejection, and streamed per-file limits. The test does not provide a memory benchmark; no parser changes were justified by source/test evidence.
 - Reviewed `server/tests/adversarial_streaming_memory.test.ts`: covers oversized request rejection, aggregate/file/field limits, client disconnect handling, outbound REST timeout bounds, deferred interaction cleanup, and concurrent deferred interactions. Existing safeguards are bounded and cleanup paths are explicitly asserted; no further runtime change was justified.
 - Server test source-review count is now 128/142. Tests remain unexecuted; these checks represent source inspection only.
+
+
+## Remaining server test inventory and editor/preview closeout — Batch F26 (2026-11-18)
+
+- Reviewed the final 13 unchecked server test files: `appLayoutPublishing.test.ts`, `authorService.test.ts`, `challenger_bot_relay.test.ts`, `challenger_flowRepository.test.ts`, `crypto.test.ts`, `errorHandler.security.test.ts`, `middleware.test.ts`, `requestParsing.test.ts`, `routes.test.ts`, `serverThemePublishing.test.ts`, `staff_logging_enhancements.test.ts`, `staff_security_regression.test.ts`, and `urlAttachments.security.test.ts`.
+- Coverage includes application-layout validation and owner-only publishing, author/placeholder resolution and deduplication, relay timeout fallback and scoped BigInt serialization, SQLite expiration pruning, AES-256-GCM integrity checks, error detail redaction, staff anti-spoofing and Ed25519 request verification, strict ID parsing, API route permission checks and payload limits, delegated theme publishing, mention permission enforcement, tracking/session/audit-log authorization, and SSRF/DNS-rebinding protections.
+- Reviewed the editor implementation and regression-test inventory. Existing targeted tests cover per-message render isolation, cross-guild cache isolation, closed JSON modal subscription isolation, LayersPanel stability, selection routing, editor keyboard shortcuts/autocomplete, and V2 component editing. No additional broad memoization, list virtualization, or data-structure change was justified from source review alone.
+- Reviewed preview components and tests. Existing preview coverage includes message/component selection routing, embed rendering/link safety, markdown rendering, and placeholder resolution. No new preview optimization was justified without browser profiling or a repeatable render-cost regression.
+- No runtime changes in F26. The source-level audit inventory is now 141/142 server items; the remaining one item is tracked separately in the ledger. Runtime verification was not performed.
