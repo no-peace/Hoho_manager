@@ -1,6 +1,9 @@
+import { Profiler } from "react";
 import { describe, expect, it } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ButtonPreview, SelectPreview } from "../ActionRowPreview";
+import { useDiscordCacheStore } from "../../../store/discordCacheStore";
+import { useGlobalStore } from "../../../store/globalStore";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
 
 describe("ActionRowPreview (UI-04 Interactive Controls Preview)", () => {
@@ -167,5 +170,38 @@ describe("ActionRowPreview (UI-04 Interactive Controls Preview)", () => {
 
       expect(screen.getByRole("listbox")).toBeDefined();
     });
+    it("does not rerender a select menu when another guild's cache changes", () => {
+      useGlobalStore.setState({ selectedGuildId: "guild-a" });
+      useDiscordCacheStore.setState({
+        channels: {
+          "guild-a": [{ id: "channel-a", name: "general", type: 0 }],
+          "guild-b": [],
+        },
+        roles: {
+          "guild-a": [{ id: "role-a", name: "Member", color: 0 }],
+          "guild-b": [],
+        },
+      });
+
+      let renders = 0;
+      render(
+        <Profiler id="select-preview" onRender={() => { renders += 1; }}>
+          <SelectPreview select={{ type: ComponentType.ChannelSelect, placeholder: "Choose channel" } as any} />
+        </Profiler>,
+      );
+
+      renders = 0;
+      act(() => {
+        useDiscordCacheStore.setState((state) => ({
+          channels: {
+            ...state.channels,
+            "guild-b": [{ id: "channel-b", name: "other", type: 0 }],
+          },
+        }));
+      });
+
+      expect(renders).toBe(0);
+    });
+
   });
 });
