@@ -414,7 +414,7 @@ const validateDocument = (value: unknown, mode: AppLayoutMode): AppLayoutDocumen
       if (panelTypes.some((type) => panels.filter((panel) => panel.type === type).length !== 1)) {
         throw new Error("Each workspace must contain exactly one Editor, Preview and Inspector panel.");
       }
-      return { ...node, props: { ...normalizedProps, content: panels } } as AppLayoutNode;
+      return { type: node.type, props: { ...normalizedProps, content: panels } };
     }
     if (Object.prototype.hasOwnProperty.call(normalizedProps, "content")) {
       throw new Error("Only workspace components may contain panel slots.");
