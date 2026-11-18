@@ -1,3 +1,5 @@
+> **Historical execution plan — superseded for current status (2026-11-18).** This document records the original 321-file baseline and the pre-implementation findings below. Current main has 386 tracked files across 67 directories; Parts A–E are implemented in source, and the current audit disposition is recorded in `docs/REPOSITORY_AUDIT_LEDGER.md`. Do not treat the old baseline findings (for example, no layout API/migration) as current. Use `docs/GEMINI_HANDOFF_CURRENT.md` for current implementation and verification status. The remaining work is the documented security follow-ups and Part H verification; do not rerun this plan from its original starting point.
+
 # HoHo Manager — Full-stack repair and Design Lab implementation plan
 
 Baseline branch: `main`

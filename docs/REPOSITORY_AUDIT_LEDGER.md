@@ -1,15 +1,15 @@
 # Repository Audit Ledger
 
 **Repository:** `no-peace/Hoho_manager`
-**Audit baseline:** `27eb856b889ee1f0b9553c0558ddfbd15a53266a` (main, after Batch F14 settings-cache implementation)
-**Tree:** 386 tracked files across 66 directories
+**Current inventory baseline:** `94a6c99a5c1b7d580b82d89ba09db5557dccde5e` (main, before documentation-only reconciliation)
+**Tree:** **386 tracked files across 67 directories** (current recursive Git tree; not truncated)
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
 
 - `[ ]` Not reviewed.
 - `[~]` Provenance/metadata checked; implementation not fully audited.
-- `[x]` Source inspected in this audit batch; no runtime verification implied.
+- `[x]` Source inspected; no runtime verification implied.
 
 ## Progress summary
 
@@ -18,11 +18,13 @@
 | Root / infrastructure | 25 | Source review complete |
 | Client | 167 | Complete (167/167 source inventory) |
 | Server | 142 | Complete (142/142 source inventory) |
-| Bot | 24 | Reviewed (24/24) |
-| Shared | 10 | Source review complete |
-| Documentation | 8 | In progress (3/8) |
-| Vendored security patch | 10 | Provenance only |
-| **Total** | **386** | **386 accounted for** |
+| Bot | 24 | Complete (24/24 source inventory) |
+| Shared | 10 | Source review complete (10/10) |
+| Documentation | 8 | Reviewed for current-status reconciliation (8/8) |
+| Vendored security patch | 10 | Provenance/metadata only; implementation audit partial |
+| **Total** | **386** | **376 source-reviewed; 10 partial; 0 unchecked** |
+
+All non-vendored tracked files now have a source-review disposition. The ten vendored picomatch files remain `[~]` by design; do not describe their implementation as fully audited. Source review does not imply tests, builds, browser checks, Lighthouse or production verification.
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -752,11 +754,11 @@ Verification:
 - [x] `docs/REPOSITORY_AUDIT_LEDGER.md` — maintained and reviewed
 - [x] `docs/AGENTS.md` — maintained and reviewed
 - [x] `docs/GEMINI_HANDOFF_CURRENT.md` — maintained and reviewed
-- [ ] `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md`
-- [ ] `docs/PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md`
-- [ ] `docs/PUCK_DESIGN_LAB.md`
-- [ ] `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md`
-- [ ] `docs/hoho_v12_ultimate_ux_login_and_optimization_master_plan.md`
+- [x] `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md` — reviewed for current-status reconciliation; historical implementation detail retained
+- [x] `docs/PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md` — reviewed for current-status reconciliation; historical implementation detail retained
+- [x] `docs/PUCK_DESIGN_LAB.md` — reviewed for current-status reconciliation; historical implementation detail retained
+- [x] `docs/REPOSITORY_AUDIT_EXECUTION_PLAN.md` — reviewed for current-status reconciliation; historical implementation detail retained
+- [x] `docs/hoho_v12_ultimate_ux_login_and_optimization_master_plan.md` — reviewed for current-status reconciliation; historical implementation detail retained
 
 ### Vendored security patch (10)
 - [~] `vendor/picomatch/LICENSE` — upstream provenance/metadata checked; implementation not fully audited
@@ -772,7 +774,7 @@ Verification:
 
 ## Verification record
 
-- `npm audit --omit=dev`: owner reports 0 vulnerabilities on the current dependency tree; full `npm audit` output was not supplied.
+- `npm audit --omit=dev`: owner reports 0 vulnerabilities on the current dependency tree; full `npm audit` output was not supplied. The owner also confirmed all 13 Dependabot alerts are closed.
 - `npm test`: not run in this audit session.
 - `npm run typecheck`: not run in this audit session.
 - `npm run build`: not run in this audit session.
@@ -780,11 +782,11 @@ Verification:
 
 ## Next audit batches
 
-1. Server: continue the remaining repositories, routes, services, request-boundary tests and database query/index review.
-2. Client: audit remaining editor, preview, Puck, theme, Docs, Settings and shared UI files; prioritize render-heavy paths and large input handlers.
-3. Benchmark: collect reproducible baselines before changing hot paths; add scenarios only when they model real production workloads.
-4. Tests/fixtures: map each test to the behavior and identify untested security boundaries.
-5. Reconcile remaining plan/handoff claims against current source; update this ledger after each batch.
+1. No non-vendored tracked files remain unchecked in the current inventory. Do not repeat completed client/server/bot/shared source-review batches without a new reason.
+2. The 10 vendored picomatch files remain provenance/metadata-reviewed only; a full implementation audit is intentionally deferred while the temporary fork is tracked against upstream PR #262.
+3. Trace the remaining `authorUserId` client/shared/bot type fields before removing any stale API surface.
+4. Design the production `SESSION_SECRET` separation and bounded session transition before removing the `ADMIN_API_KEY` compatibility fallback.
+5. Complete Part H verification when the owner authorizes it: tests, typecheck, build, browser QA, Lighthouse and deployment/migration checks.
 
 
 ## Client editor performance audit — Batch F19 (2026-11-18)

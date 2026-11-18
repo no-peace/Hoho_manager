@@ -235,15 +235,14 @@ The following settings are explicitly Design Lab preview-only and are not part o
 
 ## Publishing and runtime integration status
 
-The current editor batch provides the two responsive Puck documents, starter values, local draft recovery, import/export and preview. The next implementation batch connects these documents to the production layout API and the actual Studio runtime:
+**Current status (2026-11-18): integrated on `main`.** The original editor-only status below has been superseded by the completed Part C implementation.
 
-1. Add an atomic database record for Desktop and Mobile.
-2. Validate both documents server-side before writing.
-3. Add owner-only publish and public read endpoints.
-4. Apply resolved layout values to the actual Header, SplitPane, mobile navigation and PropertyPanel.
-5. Keep built-in current-layout defaults as fallback if the database record is missing or invalid.
-
-Do not treat a local draft as a published server layout. Publishing is complete only after the database write and the live app consumes the returned configuration.
+- A forward-only database migration and repository persist one responsive Desktop/Mobile layout pair with publisher identity and update metadata.
+- The server exposes a public read endpoint and an owner-only publish endpoint. Both documents are validated before writing and saved atomically in one database transaction.
+- The client API, publish control and published-layout hook connect the Design Lab to the real Studio runtime. Supported settings are applied to the actual header, split pane, panel order/sizing/surfaces/spacing, labels, toolbar, inspector and mobile navigation/pane.
+- Missing or invalid published data falls back to built-in defaults. Local drafts remain distinct from server-published state; subsequent publishes do not require a redeploy.
+- Mobile `activeTab` and `showInspector` remain preview-only; they must not override the live selected pane or remove the production inspector.
+- Relevant server/client regression tests exist, but they have **not been executed** against the current main baseline. Production migration and deployment are also unverified.
 
 ## Verification
 

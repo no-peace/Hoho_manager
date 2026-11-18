@@ -1,5 +1,7 @@
 # HoHo Manager — V12 Ultimate UX, Atmospheric Login, Preview Interactivity & Core Web Vitals Master Plan
 
+**Implementation status (2026-11-18):** The core V12 login atmosphere, preview/editor selection, mobile inspector/quick-edit, FlowBuilder and styling work is integrated on current `main`. The requested Guest Sandbox is **not** implemented; Local Developer login remains development-only. Automated tests, browser QA and Lighthouse verification are pending. The root-cause descriptions and line references below belong to the historical audited snapshot and must be rechecked against current source before acting on them. See `docs/GEMINI_HANDOFF_CURRENT.md` for current status.
+
 - **Repository**: [`no-peace/Hoho_manager`](https://github.com/no-peace/Hoho_manager) (`main` branch)
 - **Audited Snapshot Commit**: `a04f66ae5acaf97227052ef4807bb697d3409b28` ([HoHo Manager NotebookLM](https://gemini.google.com/notebook/e8f024b3-7812-4f1f-97cd-afa0966538fd))
 - **Golden Layout Reference Commit**: [`2b1f77b81e23380202a991276eb71600e81250e6`](https://github.com/no-peace/Hoho_manager/commit/2b1f77b81e23380202a991276eb71600e81250e6)

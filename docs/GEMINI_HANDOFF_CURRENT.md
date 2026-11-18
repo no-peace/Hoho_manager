@@ -1,104 +1,86 @@
 # CURRENT AUTHORITATIVE SNAPSHOT — 2026-11-18
 
-> This snapshot supersedes conflicting status statements in the historical handoff below. Historical entries are retained for decision/commit context; current `main` and this snapshot take precedence.
+> This snapshot describes current `main`. Older entries below are retained as implementation history only; their baselines, branch assignments, blockers and status claims are not current instructions.
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Implementation source head audited: `d2122bc3903ec0e48f467e7538bb9913fa83f2ed` — includes the F24 per-sweep channel-guild lookup coalescing and its regression assertion.
-- Documentation-only reconciliation commits were then added for this handoff, `docs/AGENTS.md` and this master plan; the latest repository HEAD is the newest documentation commit in `git log` (the handoff update itself creates a new documentation commit).
-- Recursive Git tree: 418 entries, 356 files and 62 directories (not truncated): client 159, server 133, bot 23, shared 10, docs 7, remainder root/infrastructure.
-- Last checked: only `main` branch remains and no PRs are open. The owner manually deleted the former working branches.
-- GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a code defect.
-- No npm checks, browser QA, Lighthouse run, or deployment verification was performed for this snapshot.
+- Current main baseline before this documentation-only reconciliation: `94a6c99a5c1b7d580b82d89ba09db5557dccde5e` (`updated package-lock`). The latest feature/source implementation batch is F24 at `d2122bc3903ec0e48f467e7538bb9913fa83f2ed`; later commits in this baseline concern tests/dependency metadata/lockfile.
+- Recursive Git tree: **386 files across 67 directories**, not truncated: client 167, server 142, bot 24, shared 10, docs 8, vendored files 10, and 25 root/infrastructure files.
+- GitHub Actions are intentionally disabled by the owner. Do not enable them or treat missing workflow runs as a code defect.
+- No npm checks, browser QA, Lighthouse run, production deployment or live database migration verification was performed against this current baseline.
 
-## Current implementation status (verified against current source)
+## Current implementation status (source inspection; runtime verification separate)
 
-### Part A — UI and preview/editor
-- V12 login atmosphere/public header and reduced-motion canvas behavior are present.
-- Preview/editor routing covers classic messages, embeds, action rows and nested Components V2; mobile message quick-edit and component inspector flows are present.
-- FlowBuilder labels and Server Bot terminology are updated.
-- Classic/Components V2 conversion uses conservative compatibility checks; it is not a universal lossless converter for future component types.
-- Discord button labels intentionally do not support variable insertion.
-- Guest Sandbox is not implemented. Local Developer login is development-only; do not invent a production guest login.
+| Part | Current status | Evidence / limitation |
+|---|---|---|
+| A — UI and preview/editor | Core implementation integrated | Login atmosphere, preview selection, embed/V2 navigation, mobile inspector/quick-edit and FlowBuilder changes are present. Guest Sandbox remains unimplemented; Local Developer login is development-only. |
+| B — Responsive Design Lab | Implemented | Puck 0.24 with independent Desktop/Mobile documents, protected shell, local drafts, validation, import/export and representative preview. |
+| C — Publishing and live runtime | Integrated on main | Migration, repository, pair validation, public read/owner-only publish API, atomic transaction and actual Studio runtime integration exist. |
+| D — Theme management | Implemented in source | Personal/server/community themes, delegated server-theme permission, active-cache isolation and durable private presets are present. |
+| E — Docs and Settings | Implemented in source | Responsive Docs and Settings checkbox/focus behavior are present. |
+| F — Repository audit | Inventory review reconciled | 376/386 files marked source-reviewed. The 10 vendored picomatch files remain provenance/metadata-reviewed only, not implementation-audited. |
+| G — Performance/accessibility/security | Source review plus open follow-ups | Batches F1–F30 record source findings and bounded fixes. This is not a security certification or browser performance measurement. |
+| H — Final verification | Pending | Automated checks, browser QA, Lighthouse and production migration/deployment checks remain unverified. |
 
-### Part B — Responsive Design Lab
-- Puck has independent Desktop and Mobile documents, separate drafts, protected shell components, versioned `hoho-app-layout.json` import/export, validation and a representative preview.
-- The preview intentionally does not mount a second live Studio instance.
-- Controls cover supported header, workspace/panel, sizing, labels, surfaces, padding, radius, toolbar, motion, mobile pane and navigation settings.
-- Local draft state is distinct from server-published state.
-
-### Part C — Publishing and live runtime (integrated on main)
+### Part C implementation evidence
 - Migration/table, repository, server-side responsive-pair validation, public read endpoint and owner-only publish endpoint exist.
-- Desktop and Mobile are validated together and persisted as one pair in a database transaction. Publisher identity comes from the verified session, not the request body.
+- Desktop and Mobile documents are validated together and persisted as one pair in a database transaction. Publisher identity comes from the verified session, not the request body.
 - Client API, publish control, published-layout hook and runtime CSS are integrated into the actual Studio.
-- Runtime consumes supported values for header, split pane, panel order/size/surfaces/padding/radius, labels, toolbar visibility, inspector, mobile default pane/navigation and motion; missing/invalid published data falls back to built-in defaults.
-- Source tests exist: `server/tests/appLayoutPublishing.test.ts`, `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`, `client/src/utils/__tests__/puckAppLayout.test.ts`, `client/src/utils/__tests__/appLayoutApi.test.ts`, `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`.
-- **Correction:** the dedicated server publishing test file exists on current main. The previous pre-check claim that it was missing was incorrect.
-- Tests are authored but were not executed for this snapshot.
+- Missing/invalid published data falls back to built-in defaults. Local Design Lab drafts remain separate from server-published state.
+- Source tests exist: `server/tests/appLayoutPublishing.test.ts`, `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`, `client/src/utils/__tests__/puckAppLayout.test.ts`, `client/src/utils/__tests__/appLayoutApi.test.ts`, and `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`.
+- These tests are authored but have not been executed against the current baseline.
 
-### Parts D/E — Themes, Docs and Settings
-- Guest/authenticated active-theme cache paths, per-user isolation, theme editor error handling, scoped theme CSS, responsive Docs, Settings focus/checkbox behavior and server-theme publishing permissions exist.
-- Server-theme publish permission is distinct from app-layout publish permission: owner and explicitly delegated `can_publish_server_theme` users may publish themes; Design Lab access alone is insufficient. The server enforces this on mutation.
-- Private presets are separate from active-theme cache expiry; portable `.hoho-theme.json` import/export exists.
+## Repository audit findings and limits
 
-## Repository-wide audit findings and limits
-
-The recursive repository inventory, project plans/control docs, root/workspace manifests, and representative critical source/test paths across client, server, bot and shared were inspected. **A literal line-by-line audit of all 356 files is not complete.** Do not claim the whole repository has passed a complete audit. Continue with a file ledger and mark each tracked file reviewed, not applicable, or pending.
+- The current ledger accounts for all 386 tracked files: 376 marked source-reviewed and 10 vendored picomatch files marked provenance/metadata-only. The latter are intentionally not described as implementation-audited.
+- The five historical plan documents have now been reviewed for status reconciliation. Their original findings and step-by-step history remain in place; current status banners and this snapshot supersede stale claims.
+- The source inventory review is not a literal claim that every line has been runtime-executed. No tests, typecheck, build, browser QA or Lighthouse run was performed for this snapshot.
 
 ### Confirmed limitations / incomplete product scope
-1. **Webhook URL sending is deliberately disabled.** `server/src/actions/sendWebhookMessage.ts` is retained only to fail old saved flows clearly; `server/src/routes/send.ts` rejects a non-empty `webhookUrl`. This is an explicit deprecation, not an active half-built sender. Do not re-enable without a separate approved secure design.
-2. **Custom bot-profile dispatch is disabled end-to-end in the main send route.** `server/src/routes/send.ts` rejects `profileId` and uses the configured server bot. Profile storage/resolution elsewhere does not mean multi-profile dispatch is available.
-3. **Sender username/avatar overrides are unsupported.** The send route strips legacy `username` and `avatar_url` fields before dispatch.
-4. **Puck `MobileBottomNavigation.activeTab` is preview state, not live selected-pane state.** Puck's sample uses it to illustrate the highlighted tab. The actual Studio selected tab is interactive state in `StudioLayout.mobileView`; the resolved `activeTab` value has no live runtime consumer. Keep it explicitly preview-only or remove it from the production resolved model in a dedicated cleanup. Do not force the user's selected pane during layout refresh.
-5. **Action failure classification is coupled to presentation text.** `server/src/services/actionExecutor.ts` detects failures by checking whether response content starts with the warning emoji. Consider structured outcomes in a separate compatibility-safe batch.
-6. **Interaction ACK/defer logic needs executed integration verification.** `interactionHandler.ts` uses a 2,200 ms deadline, deferred response handling and a 30-second safeguard. This is designed around Discord's 3-second deadline, but duplicate-delivery, timeout races, webhook delivery and gateway relay still need executed integration tests.
+1. **Webhook URL sending is deliberately disabled.** The legacy action remains a failure stub; the send route rejects a non-empty `webhookUrl`. Do not re-enable without a separately approved secure design.
+2. **Custom bot-profile dispatch is disabled in the main send route.** It uses the configured server bot; profile storage/resolution elsewhere does not imply multi-profile dispatch.
+3. **Sender username/avatar overrides are unsupported.** The send route strips legacy `username` and `avatar_url` fields.
+4. **Puck Mobile `activeTab` and `showInspector` are preview-only settings.** They must not override the real mobile selected pane or remove the production inspector.
+5. **Action failure classification remains coupled to presentation text** in `server/src/services/actionExecutor.ts`; structured outcomes are a separate compatibility-safe improvement.
+6. **Interaction ACK/defer behavior needs executed integration verification**, including duplicate delivery, timeout races, webhook delivery and gateway relay.
 
-### Security controls observed (source review only; not certification)
-- URL attachments reject private/reserved IPv4/IPv6, resolve DNS and pin the validated address to avoid DNS-rebinding, and enforce 25 MiB/file, 50 MiB aggregate and 10-file limits.
-- Send route checks staff permissions, channel/guild restrictions, attachment permissions, WEAO/Components V2 permissions and revalidates payloads after interpolation.
-- Webhook interactions verify Discord signatures; gateway relay uses the admin key and validates required fields.
-- Guild placeholders use Guild/Preview resources and approximate counts; they do not imply access to separate full member lists, bans or audit logs.
-- No penetration test or production-configuration audit was performed.
+### Security and dependency follow-ups
+- Production session signing/verification still accepts `ADMIN_API_KEY` as a compatibility fallback. A dedicated `SESSION_SECRET` separation and bounded session transition need a separately designed migration; do not remove compatibility blindly.
+- Optional legacy `authorUserId` fields remain in some client/shared/bot API types. Server-side send/tracking identity is derived from authenticated context and explicit tracking overrides are rejected; remove stale type fields only after tracing all callers.
+- The temporary private picomatch fork is based on reviewed upstream PR #262. It is not an official upstream release; replace it when an official patched release is published.
+- The owner confirmed all 13 Dependabot alerts are closed. The owner reports `npm audit --omit=dev` returned 0 vulnerabilities; the full `npm audit` output was not supplied.
+- Source inspection is not penetration testing or production configuration certification.
 
 ## Remaining work — ordered
 
-### P0: complete the actual repository audit
-- Build the 356-file audit ledger across root/infrastructure, client (159), server (133), bot (23), shared (10), docs (7), tests and assets.
-- Trace routes, action handlers, bot commands/listeners, migrations/repositories, auth/session, external requests and cross-package types/callers.
-- Reconcile `docs/AGENTS.md`: its older agent statuses/directives still say Part C is blocked and describe branches that have since been merged/deleted. Those directives are historical, not current.
-- Reconcile master-plan status and all old handoff claims with current main.
+### P1: security follow-ups (separate implementation decisions)
+1. Design a production `SESSION_SECRET` migration with a bounded 24-hour session transition and explicit compatibility behavior.
+2. Trace and remove stale `authorUserId` client/shared/bot type fields only where no active caller requires them.
+3. Replace the temporary picomatch fork when upstream publishes an official patched release. Keep the provenance record until then.
 
-### P1: resolve remaining feature questions
-- Decide whether `activeTab` remains explicitly preview-only or is removed from the production resolved model.
-- Decide whether custom bot-profile dispatch and sender identity overrides are intentionally out of scope or should be restored through separately designed features.
-- Keep webhook URL sending disabled unless explicitly re-authorized.
-- Consider structured action execution outcomes and add/execute timeout/deferred/duplicate interaction tests.
-
-### P2: verification
-- The owner will run checks locally; do not run them as part of this documentation update.
-- When requested, run separately from repository root: `npm run typecheck`, `npm test`, `npm run build`.
+### P2: final verification (Part H)
+- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks.
+- When authorized, run the repository's actual checks and record exact results against the then-current commit.
 - Browser QA remains pending at 1440, 1200, 768, 390 and 320 px for login/auth, Studio editor/preview/inspector, dispatch, themes, Design Lab, import/export, publishing, Docs and Settings.
-- Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
+- Preserve the owner-reported mobile Lighthouse Performance baseline of 97. Run Lighthouse only when authorized and the environment is available.
 - Production deployment and live database migration status are unconfirmed.
 
 ## Audit ledger status
 | Area | Inventory | Source review | Status |
 |---|---:|---|---|
-| Root manifests/scripts/README | Enumerated | Selected files reviewed | Partial |
-| Docs/control files | 7 files | Master plan, handoff, AGENTS reviewed | Reconciliation needed |
-| Client | 159 files | Critical runtime, Design Lab, API and selected UI/tests reviewed | Partial |
-| Server | 133 files | Design, layout validation/repository/tests, auth, send, interaction, attachment/action paths reviewed | Partial |
-| Bot | 23 files | Startup/relay/API representative files reviewed | Partial |
-| Shared | 10 files | Inventory only | Pending |
-| Assets/deployment/CI | Enumerated | Inventory only | Pending |
-| Full caller/cross-reference audit | Not complete | Not complete | Pending |
-| npm/browser/Lighthouse/deployment verification | Not run | Not run | Pending |
-
-**Do not mark the overall repository audit complete until every tracked file has a ledger disposition and every confirmed finding is fixed or explicitly accepted/deferred.**
+| Root / infrastructure | 25 | Source reviewed | Complete |
+| Client | 167 | 167/167 source reviewed | Complete |
+| Server | 142 | 142/142 source reviewed | Complete |
+| Bot | 24 | 24/24 source reviewed | Complete |
+| Shared | 10 | 10/10 source reviewed | Complete |
+| Documentation | 8 | 8/8 reviewed for current-status reconciliation | Complete |
+| Vendored picomatch | 10 | Provenance/metadata only | Partial |
+| **Total** | **386** | **376 source-reviewed; 10 partial** | **Accounted for** |
 
 ---
 
 ## Historical handoff (retained below)
+
 Older entries preserve implementation history and owner decisions. If any historical status conflicts with this snapshot or current main, this snapshot/current source wins.
 
 ---

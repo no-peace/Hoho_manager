@@ -1,31 +1,20 @@
 # CURRENT CONTROL STATE — 2026-11-18
 
-> This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
+> This is the only active control section. All agent assignments, branch names, blockers and directives in the historical sections below are archival records and must not be followed as current instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current source/audit baseline before this implementation commit: `3dc7ab69d1e26f2439fb6acd24544f0f0fe8f900`.
-- Owner instruction: work directly on `main`; do not create a new branch or pull request.
-- Current tracked tree: 381 files across 66 directories.
-- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Their source presence is not proof of runtime verification.
-- GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
-- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; tests may be inspected/updated but must be reported as not executed.
-- Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
+- Current main baseline before this documentation-only reconciliation: `94a6c99a5c1b7d580b82d89ba09db5557dccde5e`.
+- Current recursive Git tree: **386 files across 67 directories** (not truncated).
+- Parts A–E are implemented in source on main: the V12/editor-preview work, responsive Puck Design Lab, atomic Desktop/Mobile publishing and live Studio runtime, theme permissions/presets, Docs and Settings. This is source status, not proof of runtime verification.
+- Part A caveat: the requested Guest Sandbox login is not implemented; Local Developer login remains development-only. Do not invent a production guest-auth path.
+- Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. After this reconciliation, 376/386 tracked files are marked source-reviewed; the 10 vendored picomatch files remain provenance/metadata-reviewed only. No non-vendored file remains unchecked.
+- Part G follow-ups: production session signing still has an `ADMIN_API_KEY` compatibility fallback; stale optional `authorUserId` fields remain in some client/shared/bot type surfaces and need caller-traced cleanup; the temporary picomatch fork must be replaced when an official patched release is available.
+- The owner confirmed all 13 Dependabot alerts are closed. The owner reports `npm audit --omit=dev` returned 0 vulnerabilities; the full `npm audit` output was not supplied.
+- GitHub Actions are intentionally disabled by the owner. Do not enable Actions or treat absent workflow runs as a blocker.
+- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks. Report them as not executed unless actually run.
+- Do not claim browser QA, Lighthouse, security certification, production deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
-- CVE-2026-112366 is mitigated in source by the temporary private fork at `vendor/picomatch`, based on upstream PR #262 commit `3222059ac27492d9c0147fee5c65f751bbd851ab`. This is not an official upstream release; replace it when an official patched release is published.
-- Upstream PR #262 remains open and npm still lists 4.0.7 as latest in the 2026-11-18 check. The vendored `lib/parse.js` blob matches the reviewed PR commit; regression checks are wired into `npm test`. The user reports `npm audit --omit=dev` returned 0 vulnerabilities on the current dependency tree. The full `npm audit` output was not supplied; tests/typecheck/build remain unexecuted in this session.
-- Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. Source-only review batches F1–F19 cover root/infrastructure (25), shared (10), server (113/142), bot (24/24), client (40/162), and documentation (3/8); 10 vendored files have provenance/metadata review only. Remaining client/server/docs files are pending.
-- Sender identity is now derived server-side from authenticated session/staff context; the tracking route rejects caller-supplied `authorUserId`. Some client/shared API type surfaces still retain legacy optional fields and should be reconciled after caller tracing; no server-side override path was confirmed in the reviewed routes.
-- Puck `MobileBottomNavigation.activeTab` is intentionally preview-only; the real mobile initial pane is controlled by `MobileWorkspace.defaultPane`. Do not add runtime behavior unless the product contract changes.
-- Batch F10 fixed a Components V2 validation gap: malformed array entries and nesting deeper than 25 levels now produce explicit validation errors; focused tests were added but not run.
-- Batch F11 added shared custom-executor enabled-state enforcement across resolve, send, tracking and background synchronization; focused tests were added but not run.
-- Batch F12 reviewed Discord REST credential boundaries and bounded request timeouts/retries; no new defect was confirmed.
-- Batch F13 fixed an unbounded WEAO changelog comparison-baseline cache edge case; a regression test was added but not run.
-- Batch F14 bounded the settings cache to 500 LRU entries and added negative caching for missing guild settings; focused tests were added but not run. Reviewed the server benchmark harness and maintenance/guild-variable/audit-log paths; no speculative optimization was applied.
-- Batch F15 isolated SearchableDiscordSelect from unrelated Zustand cache updates and memoized option filtering; a rerender regression test was added but not run.
-- Batch F16 bounded the Markdown member cache and replaced global mention-listener fan-out with guild/user-keyed subscriptions; a mention lookup test was added but not run.
-- Batch F17 moved nested flow RoleSelect controls onto the shared per-guild Discord role cache, preventing duplicate role API requests; a concurrency regression test was added but not run.
-- Batch F18 memoized repeated executor/template lookups within tracked-message sync sweeps and added a single-flight guard to prevent overlapping 30-second polling sweeps; regression tests were added but not run. Repository/index review identified a LOWER(title) index candidate pending query-plan evidence and a legacy repository targeting a dropped table.
-- Current priorities: (1) continue the file-by-file audit and reconcile historical plan/handoff claims, (2) trace and remove stale external `authorUserId` API/type fields if no active caller depends on them, (3) plan a safe production `SESSION_SECRET` separation with a bounded 24-hour session transition, (4) replace the temporary picomatch fork when an official patched release is available, and (5) perform verification only when authorized.
+- Current priority: finish the explicit security follow-ups only when separately authorized, then complete Part H verification when the owner requests it. Do not rebuild Parts A–E.
 
 ---
 

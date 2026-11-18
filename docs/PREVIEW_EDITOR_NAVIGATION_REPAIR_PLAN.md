@@ -1,6 +1,7 @@
 # Preview-to-Editor Navigation and Mobile Inspector Repair Plan
 
-**Status:** Implementation committed to `main`; automated verification pending  
+**Status:** Implementation integrated on current `main`; automated verification and browser QA pending  
+**Current source baseline:** `94a6c99a5c1b7d580b82d89ba09db5557dccde5e` (before documentation-only reconciliation)  
 **Target branch:** `main`  
 **Scope:** Client preview interactions, editor target navigation, mobile inspector, regression coverage.
 

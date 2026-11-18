@@ -6,8 +6,8 @@
 
 **Repository:** https://github.com/no-peace/Hoho_manager  
 **Branch:** main  
-**Baseline commit:** 73b344a7316851211339a55e7f98d54b83a38a2e  
-**Status:** Active implementation plan. This document is the source of truth for the coordinated agent program.
+**Historical planning baseline:** 73b344a7316851211339a55e7f98d54b83a38a2e (the plan's original baseline; not current main).  
+**Current status (2026-11-18):** Parts A–E are implemented in source on main. Part F's non-vendored inventory is source-reviewed; 10 vendored picomatch files remain provenance-only. Part G has explicit security follow-ups. Part H automated/browser/Lighthouse/production verification is pending. The current source of truth for status is `docs/GEMINI_HANDOFF_CURRENT.md` and the file-level record is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 
 ## 1. Objective
 
@@ -188,11 +188,12 @@ Final handoff must state latest commit, completed batches, changed files, archit
 2. B — Responsive Design Lab reconciliation and completion.
 3. C — publishing/runtime integration, only after Head Agent approves B's schema.
 4. D/E — theme and consistency work, coordinated around shared files.
-5. F — complete repository audit.
-6. G — performance/accessibility/security review.
-7. H — final verification and delivery.
+5. A–E — implementation is integrated on main; do not rebuild these parts without a newly confirmed defect.
+6. F — source-review inventory reconciled: 376/386 files reviewed, with 10 vendored files remaining provenance-only.
+7. G — address the documented session-secret and legacy API-type follow-ups when separately authorized; retain the picomatch upstream-replacement watch.
+8. H — run automated checks, browser QA and Lighthouse only when the owner authorizes final verification.
 
-Parts A and B may proceed in parallel only on non-overlapping files. Part D/E may begin with inspection; implementation is gated by the Head Agent's shared-file coordination decision. Part C is blocked until Part B is approved.
+The original branch assignments, agent blockers and Part C dependency above were planning-time coordination rules. They are historical and superseded by the current main implementation and handoff.
 
 ## 13. Definition of done
 
