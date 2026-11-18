@@ -7,6 +7,7 @@ import { syncTrackedMessages, trackMessage } from "../services/messageTrackerSer
 import * as discord from "../services/discordService.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
+import { assertNoAuthorUserIdOverride, resolveAuthenticatedActorDiscordId } from "../utils/actorIdentity.js";
 
 const router = Router();
 
@@ -159,7 +160,7 @@ router.post(
       messageId,
       templateId: rawTemplateId,
       exploitName,
-      authorUserId,
+      authorUserId: requestedAuthorUserId,
       rawPayload,
     } = req.body ?? {};
 
@@ -198,13 +199,7 @@ router.post(
       throw ApiError.badRequest("`exploitName` must be a string of at most 100 characters");
     }
 
-    if (
-      authorUserId !== undefined &&
-      authorUserId !== null &&
-      (typeof authorUserId !== "string" || !/^\d{17,20}$/.test(authorUserId))
-    ) {
-      throw ApiError.badRequest("`authorUserId` must be a valid Discord user ID");
-    }
+    assertNoAuthorUserIdOverride(requestedAuthorUserId);
 
     if (
       rawPayload !== undefined &&
@@ -261,7 +256,10 @@ router.post(
       messageId,
       templateId,
       exploitName: typeof exploitName === "string" ? exploitName : null,
-      authorUserId: typeof authorUserId === "string" ? authorUserId : null,
+      authorUserId: resolveAuthenticatedActorDiscordId(
+        staffCtx?.staffId,
+        staffCtx?.isAdmin ? undefined : (req.user as { discord_id?: string } | undefined)?.discord_id,
+      ) || null,
       rawPayload: rawPayload ?? null,
     });
 

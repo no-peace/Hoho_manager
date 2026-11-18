@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `99414d89dfef65b8bc4054771788150ac88f072d` (main, after temporary picomatch mitigation)
-**Tree:** 371 tracked files across 66 directories
+**Tree:** 373 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -17,12 +17,12 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 133 | In progress (44/133) |
+| Server | 135 | In progress (52/135) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **371** | **371 accounted for** |
+| **Total** | **373** | **373 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -111,6 +111,17 @@ Findings and changes:
 6. `/status`, `/server` and `/ping` remain public/read-only. No other bot command calling privileged API operations was found in the reviewed command set.
 
 **Deployment requirement:** Set `BOT_COMMAND_ADMIN_IDS` in the bot service to the trusted Discord user IDs, or provide `OWNER_DISCORD_IDS`. Until then, `/send`, `/exploit` and `/sync` will be disabled by design.
+
+## Batch F7 — Sender identity and tracked-message authorization (2026-11-18)
+
+**Status:** Source inspection of the send/tracking routes, staff permission middleware, message tracker, tracking repository and mention scrubber. No route tests, integration tests or Discord calls were executed.
+
+Findings and changes:
+1. **Fixed:** The send route had a fallback to request-body `authorUserId` if authenticated actor context was absent. Sender identity now comes only from the verified staff/session context; legacy body values are ignored.
+2. **Fixed:** The tracking route accepted arbitrary `authorUserId` values from callers with edit permission. That value is later used as the fallback identity for author and `{user.name}` placeholders during background message synchronization. The route now rejects explicit overrides and derives the stored identity from the authenticated actor.
+3. Added `actorIdentity.ts` to centralize trusted actor-ID resolution and regression tests for session/staff identity, machine admin-key calls and rejected overrides.
+4. Confirmed the tracking route checks channel/guild allowlists, verifies the existing message was authored by the configured server bot, and enforces template visibility before creating a tracking record.
+5. The bot's global `/sync` operation remains machine-authenticated; only configured bot operators can invoke its slash command after Batch F6.
 
 ## File-by-file inventory
 
@@ -305,7 +316,9 @@ Findings and changes:
 - [x] `client/src/utils/dispatchValidation.ts` — inspected; runtime verification not performed
 - [x] `client/src/utils/__tests__/dispatchValidation.test.ts` — inspected; runtime verification not performed
 
-### Server (133)
+### Server (135)
+- [x] `server/src/utils/actorIdentity.ts` — inspected; runtime verification not performed
+- [x] `server/tests/actorIdentity.test.ts` — inspected; runtime verification not performed
 - [x] `server/.env.example` — inspected; runtime verification not performed
 - [x] `server/Dockerfile` — inspected; runtime verification not performed
 - [ ] `server/benchmarks/runner.ts`
@@ -348,7 +361,7 @@ Findings and changes:
 - [ ] `server/src/middleware/errorHandler.ts`
 - [ ] `server/src/middleware/multipart.ts`
 - [x] `server/src/middleware/rateLimit.ts` — inspected; runtime verification not performed
-- [ ] `server/src/middleware/staffPermissions.ts`
+- [x] `server/src/middleware/staffPermissions.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/verifyDiscordSignature.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/actionRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/appLayoutRepository.ts`
@@ -364,7 +377,7 @@ Findings and changes:
 - [ ] `server/src/repositories/settingsRepository.ts`
 - [ ] `server/src/repositories/staffRepository.ts`
 - [x] `server/src/repositories/templateRepository.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/trackedMessageRepository.ts`
+- [x] `server/src/repositories/trackedMessageRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/userRepository.ts`
 - [x] `server/src/routes/access.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/auth.ts` — inspected; runtime verification not performed
@@ -374,10 +387,10 @@ Findings and changes:
 - [x] `server/src/routes/executors.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/health.ts`
 - [x] `server/src/routes/interactions.ts` — inspected; runtime verification not performed
-- [ ] `server/src/routes/send.ts`
+- [x] `server/src/routes/send.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/settings.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/templates.ts` — inspected; runtime verification not performed
-- [ ] `server/src/routes/tracking.ts`
+- [x] `server/src/routes/tracking.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/weao.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/actionExecutor.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/auditLog.ts`
@@ -387,7 +400,7 @@ Findings and changes:
 - [ ] `server/src/services/guildVariables.ts`
 - [x] `server/src/services/interactionHandler.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/maintenanceService.ts`
-- [ ] `server/src/services/messageTrackerService.ts`
+- [x] `server/src/services/messageTrackerService.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/settingsService.ts`
 - [x] `server/src/services/templateService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/variableInterpolation.ts` — inspected; runtime verification not performed
@@ -397,7 +410,7 @@ Findings and changes:
 - [x] `server/src/utils/crypto.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/errors.ts`
 - [ ] `server/src/utils/logger.ts`
-- [ ] `server/src/utils/mentionScrubber.ts`
+- [x] `server/src/utils/mentionScrubber.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/requestParsing.ts`
 - [x] `server/src/utils/session.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/urlAttachments.ts` — inspected; runtime verification not performed

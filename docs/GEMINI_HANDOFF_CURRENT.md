@@ -1646,3 +1646,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Fixed fail-open startup: the gateway worker now exits on any environment validation error, including an insecure production API URL or weak/default admin key.
 - Added tests for command denial, operator-ID parsing and unsafe production configuration. No tests/typecheck/build/live Discord QA were run.
 - Deployment action required: set `BOT_COMMAND_ADMIN_IDS` or `OWNER_DISCORD_IDS` in the bot service environment before using the privileged slash commands.
+
+
+## Sender identity audit — Batch F7 (2026-11-18)
+
+- Removed the send route's request-body `authorUserId` fallback. Sender identity now comes from the verified staff/session context only; legacy request-body values are ignored.
+- The manual tracking route previously accepted an arbitrary `authorUserId` from a staff caller. Because tracked-message sync later uses that ID for author and `{user.name}` placeholders, this enabled content to be personalized as a different user. The route now rejects supplied overrides and stores the authenticated actor ID.
+- Added `actorIdentity.ts` and regression tests for authenticated actor resolution and override rejection.
+- Reviewed tracking allowlists, configured-bot message ownership checks, template visibility checks and mention scrubbing.
+- No tests, typecheck, build or live Discord calls were executed.

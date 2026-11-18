@@ -8,6 +8,7 @@ import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { fetchUrlAttachments } from "../utils/urlAttachments.js";
+import { resolveAuthenticatedActorDiscordId } from "../utils/actorIdentity.js";
 import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
@@ -101,11 +102,12 @@ router.post(
     const profileId: number | null = null;
     const staffCtx = req.staffContext;
     const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
-    const requestedAuthorId =
-      typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
-        ? req.body.authorUserId
-        : "";
-    const senderDiscordId = staffCtx?.staffId ?? (staffCtx?.isAdmin ? "" : dbUser?.discord_id ?? requestedAuthorId);
+    // Sender identity is derived only from the authenticated session/staff context.
+    // Legacy request-body authorUserId values are ignored and cannot impersonate users.
+    const senderDiscordId = resolveAuthenticatedActorDiscordId(
+      staffCtx?.staffId,
+      staffCtx?.isAdmin ? undefined : dbUser?.discord_id,
+    );
     const senderName = dbUser?.username ?? staffCtx?.record?.discord_username ?? "";
     const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
     if (
