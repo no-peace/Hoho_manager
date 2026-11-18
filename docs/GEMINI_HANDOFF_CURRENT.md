@@ -1876,3 +1876,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - BackupsModal serializes the current document and actions for dirty-state comparison and rebuilds its merged template/tracking list on render. These remain unmeasured candidates; no optimization was committed without a reproducible profile or evidence of user-visible cost.
 - No timer leak was identified in the inspected Header/SessionsModal paths. Send/template actions read store snapshots at action time rather than subscribing to broad state for those operations.
 - No runtime changes in F27. Client source audit count is 85/166. No client test, typecheck, build, browser profile, or Lighthouse run was performed.
+
+
+## Client UI primitives, design configuration and hooks — Batch F28 (2026-11-18)
+
+- Reviewed 21 additional client files covering shared UI primitives (Button/IconButton, animated surfaces, date/time picker, ErrorBoundary, Field/TextField/TextArea autocomplete, icon type), their ColorPicker/FieldAutocomplete/Modal tests, Puck app-layout configuration and desktop/mobile defaults, Design Lab component configuration, published design/theme defaults, UI theme tokens, app-layout runtime CSS, and the useAutocompleteMenu/useMessage/useStaffAccess hooks plus usePublishedAppLayout tests.
+- No runtime change was justified. The autocomplete catalogue is static and its visible result list is capped at 50; the date picker renders a fixed 42-day grid; Puck layout documents have fixed component slots. These bounded operations are not evidence of a bottleneck.
+- useMessage's derived payload and validation depend on active message data and mode; attachment state is used separately for the empty-state flag. useStaffAccess refreshes records after successful mutations. An out-of-order overlapping fetch is theoretically possible, but no concurrent-call evidence or regression test demonstrated a practical defect, so no request-coordination rewrite was made.
+- Inspected date-picker lifecycle/repositioning, animated surface event cleanup, ErrorBoundary retry/reset behavior, Puck render wrappers, and reduced-motion CSS. No reproducible correctness or performance defect was established.
+- Client source/test review count is now 106/166. The four relevant test files in this batch were source-reviewed but not executed. No tests, typecheck, build, browser profiling, Lighthouse or benchmark was run. GitHub Actions remain disabled by owner instruction; local Terminal access was previously unavailable.
