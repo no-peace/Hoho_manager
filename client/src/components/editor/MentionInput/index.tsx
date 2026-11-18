@@ -119,8 +119,6 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
   const fetchWeaoExploits = useDiscordCacheStore((state) => state.fetchWeaoExploits);
 
-  const guildChannels = (effectiveGuildId && channels[effectiveGuildId]) || EMPTY_CHANNELS;
-  const guildRoles = (effectiveGuildId && roles[effectiveGuildId]) || EMPTY_ROLES;
   const currentUser = useGlobalStore((state) => state.currentUser);
 
   // Unrestricted if Head Admin or using a Custom Bot profile
