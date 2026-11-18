@@ -98,6 +98,7 @@ export const parseTursoRows = <T>(result: TursoExecuteResult): T[] => {
 
 export interface TursoPipelineClient {
   execute(sql: string, params?: TursoQueryParams): Promise<TursoExecuteResult>;
+  executeBatch(statements: readonly { sql: string; params?: TursoQueryParams }[]): Promise<TursoExecuteResult[]>;
   transaction<T>(fn: () => Promise<T> | T): Promise<T>;
 }
 
@@ -155,9 +156,33 @@ export const createTursoPipelineClient = (
   const execute = async (sql: string, params?: TursoQueryParams): Promise<TursoExecuteResult> => {
     const context = transactions.getStore();
     const activeContext = context ?? { baton: null, baseUrl: pipelineUrl, queue: Promise.resolve() };
+    const requests: Record<string, unknown>[] = [
+      { type: "execute", stmt: buildStatement(sql, params) },
+      ...(!context ? [{ type: "close" }] : []),
+    ];
     const operation = () =>
-      send(activeContext, [{ type: "execute", stmt: buildStatement(sql, params) }])
-        .then((results) => results[0]?.response?.result ?? EMPTY_RESULT);
+      send(activeContext, requests).then((results) => results[0]?.response?.result ?? EMPTY_RESULT);
+
+    return context ? enqueue(context, operation) : operation();
+  };
+
+  const executeBatch = async (
+    statements: readonly { sql: string; params?: TursoQueryParams }[],
+  ): Promise<TursoExecuteResult[]> => {
+    if (statements.length === 0) return [];
+    const context = transactions.getStore();
+    const activeContext = context ?? { baton: null, baseUrl: pipelineUrl, queue: Promise.resolve() };
+    const executeRequests = statements.map((item) => ({
+      type: "execute",
+      stmt: buildStatement(item.sql, item.params),
+    }));
+    const requests: Record<string, unknown>[] = context
+      ? executeRequests
+      : [...executeRequests, { type: "close" }];
+    const operation = () =>
+      send(activeContext, requests).then((results) =>
+        statements.map((_, index) => results[index]?.response?.result ?? EMPTY_RESULT),
+      );
 
     return context ? enqueue(context, operation) : operation();
   };
@@ -208,5 +233,5 @@ export const createTursoPipelineClient = (
     });
   };
 
-  return { execute, transaction };
+  return { execute, executeBatch, transaction };
 };
