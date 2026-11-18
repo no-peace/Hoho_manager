@@ -4,4 +4,4 @@ export interface CustomExecutorEnabledRecord {
 
 export const isCustomExecutorEnabled = (
   executor: CustomExecutorEnabledRecord | null | undefined,
-): boolean => Boolean(executor) && Number(executor.enabled) === 1;
+): boolean => executor != null && Number(executor.enabled) === 1;
