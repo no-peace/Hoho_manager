@@ -110,4 +110,23 @@ describe("Turso pipeline transactions", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(calls.slice(1, 3).every((call) => call.baton === "transaction-baton")).toBe(true);
   });
+
+  it("closes stateless execute requests", async () => {
+    const { calls, fetchMock } = makeFetch();
+    const client = createTursoPipelineClient("https://db.example.test/v2/pipeline", "token", fetchMock as typeof fetch);
+    await client.execute("SELECT 1");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.requests.map((request) => request.type)).toEqual(["execute", "close"]);
+    expect(calls[0]?.requests[0]?.stmt).toEqual({ sql: "SELECT 1" });
+  });
+
+  it("batches stateless statements into one request and closes the stream", async () => {
+    const { calls, fetchMock } = makeFetch();
+    const client = createTursoPipelineClient("https://db.example.test/v2/pipeline", "token", fetchMock as typeof fetch);
+    const results = await client.executeBatch([{ sql: "SELECT 1" }, { sql: "SELECT 2" }]);
+    expect(results).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(calls[0]?.requests.map((request) => request.type)).toEqual(["execute", "execute", "close"]);
+    expect(calls[0]?.requests.slice(0, 2).map((request) => request.stmt?.sql)).toEqual(["SELECT 1", "SELECT 2"]);
+  });
 });
