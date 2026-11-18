@@ -101,7 +101,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div data-testid="login-screen-scroll-root" className="hoho-studio-backdrop relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar text-[#F1F3F9] flex flex-col justify-between select-none">
+    <div data-testid="login-screen-scroll-root" className="hoho-studio-backdrop relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar text-[#F1F3F9] flex flex-col justify-between">
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true"><div className="hoho-studio-grid-overlay absolute inset-0" /><div className="absolute -top-28 left-1/4 h-[26rem] w-[38rem] -translate-x-1/2 rounded-full bg-[#818CF8]/14 blur-[64px] sm:blur-[110px]" /><div className="absolute top-1/3 right-[-6rem] h-[24rem] w-[32rem] rounded-full bg-[#A78BFA]/10 blur-[72px] sm:blur-[120px]" /><div className="absolute -bottom-24 left-1/2 h-[22rem] w-[36rem] -translate-x-1/2 rounded-full bg-[#34D399]/8 blur-[72px] sm:blur-[120px]" />{showHeroCanvas && <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>}</div>
       <PublicPageHeader activePage="studio" />
 
