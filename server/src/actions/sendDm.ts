@@ -24,7 +24,8 @@ export const run = async ({
   if (embeds.length > 0) payload.embeds = embeds as EmbedData[];
 
   try {
-    await discord.sendDirectMessage(userId, payload, botToken);
+    const sent = await discord.sendDirectMessage(userId, payload, botToken);
+    if (!sent?.id) return actionFailed("Discord did not confirm that your direct message was sent.");
     return ephemeral("📬 **Direct Message Sent** — Sent you a direct message.");
   } catch (error) {
     // The most common cause is the user's privacy settings blocking DMs.
