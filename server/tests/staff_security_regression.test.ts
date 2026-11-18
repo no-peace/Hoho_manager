@@ -31,6 +31,10 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
       id: "message_123",
       author: { id: "bot_123456789012345678" },
     }),
+    getGuildMember: vi.fn().mockResolvedValue({
+      user: { id: "123456789012345686", username: "phase2_test", global_name: null },
+      nick: "phase2_test",
+    }),
     getChannelMessages: vi.fn().mockResolvedValue([]),
     sendChannelMessage: vi.fn().mockResolvedValue({ id: "sent_123" }),
     editChannelMessage: vi.fn().mockResolvedValue({ id: "edited_123" }),
