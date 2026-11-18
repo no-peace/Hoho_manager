@@ -213,7 +213,7 @@ const runTrackedMessageSync = async (): Promise<SyncResult> => {
           }
         }
       } else {
-        await trackedMessageRepository.updateLastChecked(record.id);
+        trackedMessageRepository.recordCheckInMemory(record.id);
       }
     } catch (itemErr) {
       log.warn(`Error syncing tracked message ${record.message_id}:`, itemErr);
