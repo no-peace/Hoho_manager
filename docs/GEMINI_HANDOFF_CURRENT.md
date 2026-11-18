@@ -4,8 +4,8 @@
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Current main baseline before this documentation-only reconciliation: `94a6c99a5c1b7d580b82d89ba09db5557dccde5e` (`updated package-lock`). The latest feature/source implementation batch is F24 at `d2122bc3903ec0e48f467e7538bb9913fa83f2ed`; later commits in this baseline concern tests/dependency metadata/lockfile.
-- Recursive Git tree: **386 files across 67 directories**, not truncated: client 167, server 142, bot 24, shared 10, docs 8, vendored files 10, and 25 root/infrastructure files.
+- Current main has reverted the V13 UI edits to the pre-UI baseline and removed Puck, Design Lab, custom themes, and published app-layout customization. See the removal handoff appended at the end of this file.
+- The previous 386-file inventory predates this removal. The current recursive tree count has not yet been refreshed.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat missing workflow runs as a code defect.
 - No npm checks, browser QA, Lighthouse run, production deployment or live database migration verification was performed against this current baseline.
 
@@ -13,22 +13,21 @@
 
 | Part | Current status | Evidence / limitation |
 |---|---|---|
-| A — UI and preview/editor | Core implementation integrated | Login atmosphere, preview selection, embed/V2 navigation, mobile inspector/quick-edit and FlowBuilder changes are present. Guest Sandbox remains unimplemented; Local Developer login is development-only. |
-| B — Responsive Design Lab | Implemented | Puck 0.24 with independent Desktop/Mobile documents, protected shell, local drafts, validation, import/export and representative preview. |
-| C — Publishing and live runtime | Integrated on main | Migration, repository, pair validation, public read/owner-only publish API, atomic transaction and actual Studio runtime integration exist. |
-| D — Theme management | Implemented in source | Personal/server/community themes, delegated server-theme permission, active-cache isolation and durable private presets are present. |
-| E — Docs and Settings | Implemented in source | Responsive Docs and Settings checkbox/focus behavior are present. |
-| F — Repository audit | Inventory review reconciled | 376/386 files marked source-reviewed. The 10 vendored picomatch files remain provenance/metadata-reviewed only, not implementation-audited. |
-| G — Performance/accessibility/security | Source review plus open follow-ups | Batches F1–F30 record source findings and bounded fixes. This is not a security certification or browser performance measurement. |
-| H — Final verification | Pending | Automated checks, browser QA, Lighthouse and production migration/deployment checks remain unverified. |
+| A — Core Studio and preview/editor | Retained | Login, editor, preview, message selection, dispatch, Docs, Settings and bot-access flows remain. |
+| B — Puck Responsive Design Lab | **Removed 2026-11-18** | Design Lab page, Puck editor, config, draft storage, import/export and tests deleted. |
+| C — App-layout publishing/runtime | **Removed 2026-11-18** | Published Desktop/Mobile layout API, repository, validation, hook, runtime CSS, tests and tables removed. Studio now uses a fixed built-in layout. |
+| D — Custom theme management | **Removed 2026-11-18** | Personal/community/server theme management, permissions, theme application/cache, theme API/UI and database tables removed. |
+| E — Docs and Settings | Retained | Existing Docs and bot/admin Settings flows remain. |
+| F — Repository audit | Historical inventory | The earlier 386-file inventory predates this removal; refresh the recursive tree before quoting current counts. |
+| G — Performance/accessibility/security | Historical source review | Prior source review and non-UI server optimizations remain unless explicitly reverted below. |
+| H — Final verification | Pending | Typecheck, tests and production build have not been run after the removal. |
 
-### Part C implementation evidence
-- Migration/table, repository, server-side responsive-pair validation, public read endpoint and owner-only publish endpoint exist.
-- Desktop and Mobile documents are validated together and persisted as one pair in a database transaction. Publisher identity comes from the verified session, not the request body.
-- Client API, publish control, published-layout hook and runtime CSS are integrated into the actual Studio.
-- Missing/invalid published data falls back to built-in defaults. Local Design Lab drafts remain separate from server-published state.
-- Source tests exist: `server/tests/appLayoutPublishing.test.ts`, `client/src/hooks/__tests__/usePublishedAppLayout.test.tsx`, `client/src/utils/__tests__/puckAppLayout.test.ts`, `client/src/utils/__tests__/appLayoutApi.test.ts`, and `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`.
-- These tests are authored but have not been executed against the current baseline.
+### Removal boundary
+
+- client/src/config/uiThemeConfig.ts remains. It defines the application's built-in static design tokens and component styles; it does not provide user-customizable themes.
+- No Puck package, Puck editor, Design Lab route, theme manager, app-layout editor/publisher, or corresponding client/server API should remain.
+- The fixed Studio shell preserves the normal editor, preview, inspector, mobile pane switching and dispatch flows. It no longer fetches or applies server-published layouts or custom theme tokens.
+- Database migration 019_remove_design_customization drops legacy published_app_layouts, server_theme_settings, design_themes, and design_access_users tables on existing installations.
 
 ## Repository audit findings and limits
 
@@ -40,7 +39,6 @@
 1. **Webhook URL sending is deliberately disabled.** The legacy action remains a failure stub; the send route rejects a non-empty `webhookUrl`. Do not re-enable without a separately approved secure design.
 2. **Custom bot-profile dispatch is disabled in the main send route.** It uses the configured server bot; profile storage/resolution elsewhere does not imply multi-profile dispatch.
 3. **Sender username/avatar overrides are unsupported.** The send route strips legacy `username` and `avatar_url` fields.
-4. **Puck Mobile `activeTab` and `showInspector` are preview-only settings.** They must not override the real mobile selected pane or remove the production inspector.
 5. **Action failure classification remains coupled to presentation text** in `server/src/services/actionExecutor.ts`; structured outcomes are a separate compatibility-safe improvement.
 6. **Interaction ACK/defer behavior needs executed integration verification**, including duplicate delivery, timeout races, webhook delivery and gateway relay.
 
@@ -61,7 +59,7 @@
 ### P2: final verification (Part H)
 - Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks.
 - When authorized, run the repository's actual checks and record exact results against the then-current commit.
-- Browser QA remains pending at 1440, 1200, 768, 390 and 320 px for login/auth, Studio editor/preview/inspector, dispatch, themes, Design Lab, import/export, publishing, Docs and Settings.
+- Browser QA remains pending at 1440, 1200, 768, 390 and 320 px for login/auth, Studio editor/preview/inspector, dispatch, Docs and Settings.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97. Run Lighthouse only when authorized and the environment is available.
 - Production deployment and live database migration status are unconfirmed.
 
@@ -1965,3 +1963,76 @@ All seven planned batches have been committed to `main`. This means the planned 
 - Fix commit on main: 2462cd81b498daa946a6df8562be158dd93fd5c1 — client/src/components/layout/Header.tsx.
 - The updated Header file was fetched again from main; source inspection confirms the fragment now wraps both buttons.
 - The TypeScript check has not yet been rerun after this correction. This addresses the reported TS2657 JSX-parent error at source level, but does not establish that the project has no further type errors. Run tsc -p tsconfig.json --noEmit again and share any remaining output.
+
+
+# Puck, Design Lab, custom themes and app-layout removal — 2026-11-18
+
+The owner reported that the UI was broken and explicitly requested rollback of the UI changes introduced in the V13 batches, plus complete removal of Puck and custom theme functionality. The changes below were committed directly to main.
+
+## UI rollback
+
+The following files were restored to their exact contents at pre-UI baseline commit 0624f7ed2f3f613f3242bc2fb201cfc044e40d52, reverting the assistant's V13 UI edits while retaining unrelated server/database work:
+
+- client/index.html — 94d304cf1b2ec787d98651df512dab46bee878c9
+- client/src/components/editor/MessageEditor/ComponentsTab.tsx — 470fe607f7bd0d59ad921f3616dd2fec60b461cc
+- client/src/components/editor/MessageEditor/ContentTab.tsx — 032c547c954cb0cf487127986eb51ca6299c7554
+- client/src/components/editor/MessageEditor/index.tsx — 172eed65779adb8b7a1510d1c7a0c23d1247ea9d
+- client/src/components/layout/Header.tsx — 2249d9894dfa7e8bb7c310251af570a3be3083a2
+- client/src/components/layout/LoginScreen.tsx — d11839e0e4c94492491a72df7e9bf4fbf8273f2a
+- client/src/components/layout/Sidebar.tsx — bd92ab5113a000948ff9c122c083973c69e86be4
+- client/src/components/layout/StudioLayout.tsx — 5eb0f03b53a7c28a792f754050b12d97921fffd8
+- client/src/components/send/BotDispatchModal.tsx — 7a4a9edd5c707beb5e75c6d64d1dc4304ba8873f
+- client/src/components/ui/Field.tsx — 6c01ded6a05c9ca918b60ef1e31e2bc29af3e56a
+- client/src/config/puck/defaultAppLayouts.ts — 48fab83e7a300838b0a4318f30eb2fa3c748fed3
+- client/src/styles/globals.css — b4edaaabb0cb24ba24ed58de8550f15f5c1eef7a
+- client/src/utils/__tests__/puckAppLayout.test.ts — e94ee126a8e829df55e6f00f533a1bf6ffbd1fda
+- client/src/utils/puckAppLayout.ts — a5c9c022930c73d7048ec24b841b8df181817847
+
+## Puck and custom-theme removal
+
+### Client runtime and entry points
+
+- Removed the /design route, Design Lab lazy import, custom-theme bootstrap/focus refresh, theme settings modal/button, profile menu Design Lab link, and isDesignAllowed client state.
+- Removed Puck-dependent runtime layout props from StudioLayout, SplitPane, PropertyPanel, and Header. Replaced published layout values with fixed built-in Studio defaults and explicit static panel/navigation styling.
+- Removed obsolete runtime CSS classes from the Studio header/logo and deleted the app-layout runtime stylesheet.
+- Removed Puck editor, design configuration, published theme/design artifacts, local draft storage, import/export, source-export utility, theme cache/validation/file utilities, app-layout API and hooks.
+- Removed the client dependency @puckeditor/core from client/package.json and removed its package-lock entry plus 86 Puck-only transitive package entries. The lockfile now contains no package path containing puck.
+- Kept client/src/config/uiThemeConfig.ts as the static built-in design-token/component-style configuration. This is not user theme customization.
+
+### Server and database
+
+- Removed /api/design route registration and deleted the design router, app-layout repository, app-layout validator, theme/design tests and app-layout publishing tests.
+- Removed Design Lab permission lookup and isDesignAllowed response field from server/src/routes/auth.ts.
+- Removed historical migration definitions 013–017 from the active migration list and added migration 019_remove_design_customization. It safely drops the legacy published_app_layouts, server_theme_settings, design_themes and design_access_users tables with DROP TABLE IF EXISTS.
+- Migration 018 for tracked-template access verification remains intact. Existing unrelated auth, bot, message, tracking and database functionality was not intentionally removed.
+
+### Deleted files
+
+- Design Lab: client/src/pages/DesignLabPage.tsx, design-lab.css, app-layout-preview.css, layout-lab.css.
+- Theme UI/API: client/src/components/layout/ThemeSettingsModal.tsx, client/src/api/design.ts, client/src/api/__tests__/design.test.ts.
+- Puck config: all files under client/src/config/puck/.
+- Puck/layout/theme utilities: puckAppLayout.ts, puckTheme.ts, puckSourceExport.ts, puckDesignStorage.ts, appLayoutApi.ts.
+- Puck/layout hooks and tests: usePublishedAppLayout.ts, its hook tests, Puck/theme/app-layout utility tests.
+- Design publishing component and tests: client/src/components/design/PublishAppLayoutControl.tsx and its test.
+- Runtime CSS: client/src/styles/appLayoutRuntime.css.
+- Server: server/src/routes/design.ts, server/src/repositories/appLayoutRepository.ts, server/src/utils/appLayoutValidation.ts, server/tests/appLayoutPublishing.test.ts, server/tests/serverThemePublishing.test.ts.
+- Design Lab documentation: docs/PUCK_DESIGN_LAB.md.
+
+### Key removal commits
+
+- 1402158ec3ead4f87fa73c22634af228f6f78176 — remove client Puck/theme bootstrap and Design Lab route.
+- 7e981e2e4ba0c852832a2c73702eb305e80068be — remove Header theme/Design Lab entry points.
+- 5be64053a5d5ae85005e45d2913a29ba0161a6ba — remove client Design Lab permission state.
+- ee3baa93c9c8e1bddccbcdfd3328668d9087a636 and 69944a5ed964418b67a266f5caa162e21448b226 — remove server design route and auth permission wiring.
+- 7bd2fbdc3610ff4b5bba5fae0f7e5cd32ccfd86a — remove @puckeditor/core from client dependencies.
+- 83baf966a474b7274fec958359b375fc015c4696 — remove theme/layout migrations and add safe legacy-table cleanup migration.
+- e6b82cb1cb4257bc3d66b3c63ca658f6cf497ed2, 000523430c6ff5853f907a18afa681fdda0cf0ec, 855e030e3ef0a8a64bb89867f765707cc536a481, 902245fc97349fd5c3bb192fb0024ded15b354cb — replace live Puck runtime layout integration with fixed Studio layout and remove dependent component props.
+- fbc5a04d79a591ee770dd7226469fed60eaac2c3 — prune Puck and unused transitive dependencies from package-lock.json.
+- 8a8664ae2d6670bd2e38937ca92917a0dafaac5b — update current agent control state.
+
+## Verification status
+
+- GitHub source re-fetch confirmed the updated App, StudioRouter, Header, StudioLayout, SplitPane, PropertyPanel, auth route and migration files no longer import/use the removed Puck/theme runtime.
+- The lockfile was parsed as JSON after pruning; @puckeditor/core and every package path containing puck are absent.
+- TypeScript, Vitest, and production build have not been run after this removal. The Desktop Commander local-terminal connection returned HTTP 404, so local commands could not be executed from this session. Do not treat the UI as runtime-verified until the owner runs npm run typecheck, npm test, and npm run build and shares the results.
+- The built-in UI style tokens remain. All user-facing custom theme and Puck layout customization features are removed from the source/API/dependency surface.
