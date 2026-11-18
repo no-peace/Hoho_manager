@@ -14,7 +14,7 @@ import { StepList } from "./StepList";
  * places:
  *
  *   1. The component's `custom_id`, which carries only the **first** step's
- *      params. keeps a simple single-step action self-describing when
+ *      params. This keeps a simple single-step action self-describing when
  *      the flow is imported without its saved server-side registration.
  *   2. The action store, keyed by `custom_id`, which is saved with a template or
  *      registered with `/api/send` so longer chains can run server-side.
