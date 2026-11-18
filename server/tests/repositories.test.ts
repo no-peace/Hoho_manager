@@ -143,10 +143,9 @@ describe("server/repositories: SQLite Repositories & Transactions Suite", () => 
       expect(list).toHaveLength(1);
       expect(list[0].action_type).toBe("dud");
 
-      // Fallback resolution: template flow matches when messageId is null
-      const resolved = await actionRepo.findByCustomId("action:btn_1");
-      expect(resolved).toHaveLength(1);
-      expect((resolved[0] as any).template_id).toBe(template.id);
+      // Template actions must never resolve without a tracked source message.
+      const unresolved = await actionRepo.findByCustomId("action:btn_1");
+      expect(unresolved).toHaveLength(0);
     });
 
     it("logs action execution and prunes logs older than TTL", async () => {

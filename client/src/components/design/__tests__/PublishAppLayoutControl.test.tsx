@@ -47,10 +47,10 @@ describe("PublishAppLayoutControl", () => {
 
   it("validates both Desktop and Mobile documents before confirmation or publishing", async () => {
     const docs = makeDocuments();
-    docs.mobile.content[0].props.panelPadding = 999;
+    docs.mobile.content[1].props.panelPadding = 999;
 
     render(<PublishAppLayoutControl isOwner documents={docs as any} />);
-    fireEvent.click(screen.getByRole("button", { name: /Publish Desktop + Mobile/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Publish Desktop + Mobile" }));
 
     await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/panelPadding/i));
     expect(window.confirm).not.toHaveBeenCalled();
@@ -63,7 +63,7 @@ describe("PublishAppLayoutControl", () => {
 
     render(<PublishAppLayoutControl isOwner documents={makeDocuments() as any} />);
     await waitFor(() => expect(getPublished).toHaveBeenCalledTimes(1));
-    fireEvent.click(screen.getByRole("button", { name: /Publish Desktop + Mobile/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Publish Desktop + Mobile" }));
 
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Publish both Desktop and Mobile"));
     expect(screen.getByRole("button", { name: /Publishing both layouts/i })).toBeTruthy();
@@ -79,7 +79,7 @@ describe("PublishAppLayoutControl", () => {
   it("shows server errors without reporting a successful publish", async () => {
     publish.mockRejectedValue(new Error("Owner access required."));
     render(<PublishAppLayoutControl isOwner documents={makeDocuments() as any} />);
-    fireEvent.click(screen.getByRole("button", { name: /Publish Desktop + Mobile/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Publish Desktop + Mobile" }));
 
     await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Owner access required."));
     expect(screen.queryByRole("status")).toBeNull();
@@ -88,7 +88,7 @@ describe("PublishAppLayoutControl", () => {
   it("does not publish when the owner cancels confirmation", async () => {
     vi.stubGlobal("confirm", vi.fn(() => false));
     render(<PublishAppLayoutControl isOwner documents={makeDocuments() as any} />);
-    fireEvent.click(screen.getByRole("button", { name: /Publish Desktop + Mobile/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Publish Desktop + Mobile" }));
 
     expect(window.confirm).toHaveBeenCalledTimes(1);
     expect(publish).not.toHaveBeenCalled();

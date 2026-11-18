@@ -20,7 +20,6 @@ interface SettingsData {
 
 export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const { selectedGuildId } = useGlobalStore();
-  const tab = "general" as const;
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SettingsData>({ log_channel_id: null, head_admin_ids: [] });
   const [saving, setSaving] = useState(false);
@@ -152,8 +151,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
         </div>
 
         <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-[#10131A] border border-[#272D3A] rounded-xl p-4">
-          {tab === "general" && (
-            <div className="space-y-5">
+          <div className="space-y-5">
               <div className="border-b border-[#252B3A] pb-2">
                 <h3 className="font-bold text-[#F1F3F9] uppercase text-xs tracking-wider">
                   General Settings {selectedGuildId ? `(Guild: ${selectedGuildId})` : "(Global)"}
