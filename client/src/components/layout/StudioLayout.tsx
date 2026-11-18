@@ -174,7 +174,7 @@ export const StudioLayout: React.FC = () => {
           left={
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#2B2D31]">
               <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Message Editor</h2></div>
-              <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#2B2D31] p-3 custom-scrollbar sm:p-4>
+              <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#2B2D31] p-3 custom-scrollbar sm:p-4">
                 <div data-editor-scroll-content className="space-y-3">
                   {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
                   <CultMorphSurface
@@ -202,14 +202,14 @@ export const StudioLayout: React.FC = () => {
           right={
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#313338]">
               <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Live Preview</h2></div>
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-4>
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-4">
                 <MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} />
               </div>
             </section>
           }
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
           onMobilePaneChange={(pane) => {
-                        setMobileView(pane === "left" ? "editor" : "preview");
+            setMobileView(pane === "left" ? "editor" : "preview");
             if (pane === "left") scrollSelectedTargetIntoEditor(useMessageStore.getState().selection ?? undefined);
           }}
           className="min-h-0 min-w-0 flex-1"
@@ -256,7 +256,7 @@ export const StudioLayout: React.FC = () => {
           {mobileView === "preview" && (
             <motion.span
               layoutId="mobileWorkspaceTab"
-              className="hoho-runtime-nav-active absolute inset-0 rounded-lg"
+              className="absolute inset-0 rounded-lg bg-[#818CF8]"
               transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
             />
           )}
