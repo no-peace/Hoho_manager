@@ -36,7 +36,6 @@ export interface CurrentUser {
   avatarUrl?: string;
   role?: string;
   isAdmin?: boolean;
-  isDesignAllowed?: boolean;
   hasDefaultBotAccess?: boolean;
   isFirstLogin?: boolean;
   mutualGuilds?: MutualGuildInfo[];
