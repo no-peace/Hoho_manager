@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 137 | In progress (62/137) |
+| Server | 137 | In progress (63/137) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -159,6 +159,23 @@ Findings:
 8. **Open, unchanged:** production session signing and verification still accept `ADMIN_API_KEY` as a legacy fallback alongside `SESSION_SECRET`. Removing that fallback requires a coordinated production secret configuration and a bounded transition for the 24-hour session lifetime; no deployment secret was changed.
 
 No code changes were needed from this batch. The remaining audit is still source-only until separately verified.
+
+## Batch F10 — Components V2 malformed-tree validation (2026-11-18)
+
+**Status:** One additional server source file reviewed; validation defect fixed and focused regression tests added. Tests/typecheck/build were not executed.
+
+Files reviewed:
+- `server/src/utils/validation.ts` (newly reviewed)
+- `server/tests/validation.test.ts` (previously reviewed; regression coverage extended)
+
+Finding and fix:
+1. **Fixed:** The recursive Components V2 walker silently returned when nesting exceeded 25 levels and silently skipped null, primitive and array entries. Those malformed trees could pass this application's validation and fail only after reaching Discord.
+2. The walker now reports an explicit validation error for excessive nesting and malformed component entries. Existing component limits and traversal behavior are otherwise preserved.
+3. Added regression tests for a null component entry and a tree deeper than the supported 25-level limit.
+
+Verification:
+- Tests were added but not executed, per the current owner instruction.
+- No typecheck, build, browser QA or live Discord request was executed.
 
 ## File-by-file inventory
 
@@ -453,7 +470,7 @@ No code changes were needed from this batch. The remaining audit is still source
 - [x] `server/src/utils/requestParsing.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/session.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/urlAttachments.ts` — inspected; runtime verification not performed
-- [ ] `server/src/utils/validation.ts`
+- [x] `server/src/utils/validation.ts` — inspected and fixed; runtime verification not performed
 - [x] `server/tests/accessSecurity.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/actions.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/adversarial_streaming_memory.test.ts`

@@ -1674,3 +1674,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - No new confirmed defect or code change resulted from this batch.
 - The production `SESSION_SECRET` / `ADMIN_API_KEY` compatibility fallback remains an open security-hardening item. Do not remove it until a dedicated production secret is configured and the 24-hour session transition is planned.
 - Verification: source review only. No tests, typecheck, build, database migration, browser QA, Lighthouse or live service calls were executed.
+
+
+## Components V2 validation audit — Batch F10 (2026-11-18)
+
+- Reviewed the complete 642-line `server/src/utils/validation.ts` and its existing `server/tests/validation.test.ts`.
+- Found that the recursive component walker silently stopped at depth greater than 25 and ignored null, primitive and array entries. Malformed component trees could therefore pass local validation and be rejected only by Discord.
+- Fixed the walker to report malformed component entries and excessive nesting as validation errors.
+- Added focused regression tests for null component entries and a component tree exceeding the 25-level limit.
+- Preserved the existing Discord component count, action-row, select, text and action-flow bounds.
+- Verification: source changes and test additions only. Tests, typecheck, build, browser QA and live Discord requests were not executed.

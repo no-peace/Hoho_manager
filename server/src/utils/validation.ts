@@ -120,15 +120,22 @@ const describeType = (type: unknown): string =>
 const walkComponents = (
   components: unknown,
   visit: (node: Record<string, unknown>, path: string, depth: number) => boolean | void,
+  fail: (path: string, message: string) => void,
 ): void => {
   if (!Array.isArray(components)) return;
 
   const recurse = (list: unknown[], path: string, depth: number): boolean => {
-    if (depth > 25) return false; // Hard limit on nesting depth
+    if (depth > 25) {
+      fail(path, "component nesting depth exceeds 25 levels");
+      return false;
+    }
     for (const [index, entry] of list.entries()) {
-      if (entry === null || typeof entry !== "object" || Array.isArray(entry)) continue;
-      const node = entry as Record<string, unknown>;
       const where = `${path}[${index}]`;
+      if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+        fail(where, "must be a component object");
+        continue;
+      }
+      const node = entry as Record<string, unknown>;
       
       const shouldContinue = visit(node, where, depth);
       if (shouldContinue === false) return false;
@@ -356,7 +363,7 @@ export const validateComponentsV2 = (components: unknown): string[] => {
         fail(where, "Separator `spacing` must be 1 (small) or 2 (large)");
       }
     }
-  });
+  }, fail);
 
   // Every interactive component must sit inside an ActionRow.
   if (sawInteractive) {

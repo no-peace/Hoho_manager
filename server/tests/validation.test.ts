@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_PREFIX, ACTION_SEPARATOR } from "@dmb/shared";
+import { ACTION_PREFIX, ACTION_SEPARATOR, ComponentType, MessageFlags } from "@dmb/shared";
 import {
   isHttpUrl,
   isSnowflake,
@@ -134,6 +134,28 @@ describe("validation utils", () => {
     it("rejects non-object payloads", () => {
       expect(() => validateMessagePayload("invalid")).toThrow(/must be a message object/i);
       expect(() => validateMessagePayload(null)).toThrow(/must be a message object/i);
+    });
+
+    it("rejects malformed component entries instead of silently skipping them", () => {
+      expect(() => validateMessagePayload({
+        flags: MessageFlags.IsComponentsV2,
+        components: [null],
+      })).toThrow(/must be a component object/i);
+    });
+
+    it("rejects component trees deeper than the supported validation limit", () => {
+      let node: Record<string, unknown> = {
+        type: ComponentType.TextDisplay,
+        content: "Nested text",
+      };
+      for (let depth = 0; depth < 26; depth += 1) {
+        node = { type: ComponentType.Container, components: [node] };
+      }
+
+      expect(() => validateMessagePayload({
+        flags: MessageFlags.IsComponentsV2,
+        components: [node],
+      })).toThrow(/nesting depth exceeds 25 levels/i);
     });
 
     it("rejects content exceeding 2000 characters", () => {
