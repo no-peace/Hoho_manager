@@ -1796,3 +1796,15 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Replaced whole-array and whole-selection Zustand subscriptions with selectors scoped to each message card. Editing one message should no longer rerender unrelated MessageEditor instances; selected-target reveal behavior remains scoped to the owning card.
 - Added a React Profiler regression test for unrelated-card render isolation.
 - No tests, typecheck, build, browser profiling or benchmark was executed.
+
+
+## Client editor/preview and remaining server source review — Batch F20 (2026-11-18)
+
+- **Implementation commits:** `ccf4a0a` scopes `PropertyPanel` to the message currently represented by the inspector; `ac1da01` adds a React Profiler regression test. `82a5b67` scopes `SelectPreview` channel/role cache subscriptions to the selected guild; `acaad60` adds a React Profiler regression test; `10cdd7e` adds the missing `act` import required by that test.
+- `PropertyPanel` no longer subscribes to the whole messages array. A change to a different message leaves the pinned inspector's selected message object unchanged, so the panel should not commit a render for that update.
+- `SelectPreview` no longer subscribes to whole `channels` and `roles` cache maps. Updates for another guild leave the selected guild's arrays unchanged and should not rerender the menu.
+- Reviewed remaining editor tabs and preview components. No broad memoization, component-tree caching or other preview/editor optimization was applied without profiling evidence. MessagePreview intentionally renders all messages, and its clock refresh is once per minute; Discord cached channel/role option lists are capped at ten.
+- Reviewed remaining server runtime files `server/src/routes/health.ts`, `server/src/types/express.d.ts`, and `server/src/utils/appLayoutValidation.ts`. No performance fix was justified by source evidence alone. The health query and 64 KiB layout payload validation remain unchanged pending measurements.
+- Reviewed `server/tests/variableInterpolation.test.ts` and `server/tests/interactionMemory.test.ts`. Other server test inventory items remain pending in `docs/REPOSITORY_AUDIT_LEDGER.md`.
+- Audit ledger updated in `449134f`. Client source/test review count is 46/162; server source/test review count is 120/142. These are source-inspection counts, not execution/verification results.
+- **Verification not performed:** no tests, typecheck, build, browser profiler capture, benchmark, Lighthouse, database query plan, deployment or live service verification. GitHub Actions remain disabled by owner instruction.
