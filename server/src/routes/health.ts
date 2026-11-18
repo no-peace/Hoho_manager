@@ -4,6 +4,12 @@ import { env } from "../config/env.js";
 import { asyncHandler } from "../utils/errors.js";
 
 const router = Router();
+const HEALTH_CACHE_TTL_MS = 60_000;
+let cachedHealth: { users: number; checkedAt: number } | null = null;
+
+export const clearHealthCache = (): void => {
+  cachedHealth = null;
+};
 
 interface CountRow {
   count: number;
@@ -18,9 +24,20 @@ interface CountRow {
 router.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const users = await db
-      .get<CountRow>("SELECT COUNT(*) AS count FROM users")
-      .catch(() => undefined);
+    const now = Date.now();
+    const canUseCache = env.isProd;
+    const cached = canUseCache && cachedHealth && now - cachedHealth.checkedAt < HEALTH_CACHE_TTL_MS
+      ? cachedHealth
+      : null;
+    const users = cached
+      ? { count: cached.users }
+      : await db
+          .get<CountRow>("SELECT COUNT(*) AS count FROM users")
+          .catch(() => undefined);
+
+    if (!cached && canUseCache && users !== undefined) {
+      cachedHealth = { users: users.count, checkedAt: now };
+    }
 
     const isConnected = users !== undefined;
     const statusCode = isConnected ? 200 : 503;
