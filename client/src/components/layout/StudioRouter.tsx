@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { updatePageSeo } from "../../utils/seo";
 
-export type StudioRouteKind = "studio" | "design" | "docs" | "privacy" | "not_found";
+export type StudioRouteKind = "studio" | "docs" | "privacy" | "not_found";
 
 export const resolveStudioRoute = (pathname: string): StudioRouteKind => {
-  if (pathname === "/design") return "design";
   if (pathname === "/docs") return "docs";
   if (pathname === "/privacy") return "privacy";
   if (
@@ -38,14 +37,7 @@ export const useStudioRoute = () => {
 
   useEffect(() => {
     const route = resolveStudioRoute(pathname);
-    if (route === "design") {
-      updatePageSeo({
-        title: "Design Lab — HoHo Manager",
-        description: "Build responsive website layouts and reusable UI with the HoHo Manager visual design editor.",
-        path: "/design",
-        schemaType: "SoftwareApplication",
-      });
-    } else if (route === "docs") {
+    if (route === "docs") {
       updatePageSeo({
         title: "HoHo Manager Docs — Variables & Dynamic Tracking",
         description:
