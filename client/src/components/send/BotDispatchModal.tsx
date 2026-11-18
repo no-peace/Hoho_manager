@@ -559,12 +559,10 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               <input
                 id="dispatch-target-message-id"
                 type="text"
-                spellCheck={false}
-                autoComplete="off"
                 value={targetMessageId}
                 onChange={(event) => setTargetMessageId(event.target.value)}
                 placeholder="Enter a message ID or select a recent bot message below..."
-                className="w-full bg-[#1D2230] text-[#F1F3F9] border border-[#272D3A] rounded-lg px-3 py-1.5 text-xs font-mono outline-none focus:border-[#818CF8]"
+                className="w-full bg-[#161A23] text-[#F1F3F9] border border-[#10131A] rounded px-3 py-1.5 text-xs font-mono outline-none focus:border-[#818CF8]"
               />
             </div>
 
