@@ -202,8 +202,9 @@ export interface QueryData {
 /* ── Action system ────────────────────────────────────────────────────────── */
 
 /**
- * Every action the server can execute.
- * Kept as a union so a typo in a `custom_id` or a config file is a compile error.
+ * Action identifiers used by the editor, API and persisted flow records.
+ * Retired identifiers may remain here so old saved flows can be recognized and
+ * failed safely; the server action registry defines what is currently executable.
  */
 export type ActionType =
   | "dud"
