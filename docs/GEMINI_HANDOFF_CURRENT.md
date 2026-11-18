@@ -4,7 +4,7 @@
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Implementation source head audited: `65878192c036ae8a35d1e1c03d37b5ce92173d85` — `feat(studio): integrate responsive runtime and security hardening`.
+- Implementation source head audited: `d2122bc3903ec0e48f467e7538bb9913fa83f2ed` — includes the F24 per-sweep channel-guild lookup coalescing and its regression assertion.
 - Documentation-only reconciliation commits were then added for this handoff, `docs/AGENTS.md` and this master plan; the latest repository HEAD is the newest documentation commit in `git log` (the handoff update itself creates a new documentation commit).
 - Recursive Git tree: 418 entries, 356 files and 62 directories (not truncated): client 159, server 133, bot 23, shared 10, docs 7, remainder root/infrastructure.
 - Last checked: only `main` branch remains and no PRs are open. The owner manually deleted the former working branches.
@@ -1836,3 +1836,16 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Server runtime source files have all been reviewed. The remaining server audit backlog is predominantly test files; it does not include unreviewed request handlers or services. Server source/test ledger count is 123/142.
 - Client source/test ledger count is 66/166. The repository audit ledger records source inspection separately from runtime verification.
 - **Verification not performed:** tests, typecheck, build, browser checks, Profiler captures, benchmarks and Lighthouse were not run. GitHub Actions remain disabled by owner instruction.
+
+
+
+## Client preview and server performance follow-up — Batch F24 (2026-11-18)
+
+- **Server implementation commit:** `73d2d27d1c98e4ecba494a82d4c6c9cb7ff175e4` — `perf(server): coalesce channel guild lookups per sync sweep`.
+- **Regression test commit:** `d2122bc3903ec0e48f467e7538bb9913fa83f2ed` — `test(server): guard per-sweep channel lookup coalescing`.
+- In `server/src/services/messageTrackerService.ts`, tracked-message sync now memoizes the promise returned by `discord.getChannelGuildId(channelId)` for each distinct channel ID during a single sweep. If 10 tracked messages share one channel, the sync performs one channel lookup rather than 10. The map is local to the sweep, so it cannot retain stale mappings across later syncs. A failed lookup is normalized to `null` and shared for that sweep.
+- Extended `server/tests/messageTrackerService.performance.test.ts`: the existing two-record/same-channel scenario now asserts exactly one `getChannelGuildId` call with the expected channel ID. This is a deterministic request-count regression guard; it is not a production latency benchmark.
+- Reviewed the remaining preview test files: `MessagePreview.test.tsx`, `EmbedPreview.test.tsx`, and `UserPlaceholderPreviewContext.test.tsx`. They cover interactive-select isolation, correct message/component selection, HTTP/HTTPS-only embed links, placeholder field handling, and deduplicated user resolution. No additional rendering optimization was justified; no list virtualization or broad memoization was added.
+- Reviewed `server/tests/challenger_perf_indexes.test.ts` and `server/tests/m3_challenger2_retention_cache.test.ts`. Existing coverage includes indexed SQLite query plans, bounded LRU/TTL behavior, 50-concurrent-request member-search coalescing, retry coalescing, and chunked retention pruning alongside concurrent reads. No schema/index/cache changes were justified without current workload/query-plan evidence.
+- Audit ledger updates: client review count 69/166; server review count 125/142. Source review and runtime verification remain separate.
+- **Verification not performed:** the new regression test and other checks were not executed. The connected local Terminal service returned HTTP 404; GitHub Actions remain disabled by owner instruction. No typecheck, build, browser profiling, Lighthouse run, database query plan execution, Discord API trace, production benchmark, deployment, or live service verification was performed.
