@@ -26,7 +26,12 @@ const baseUserDirectory = fileURLToPath(new URL(".", import.meta.url));
 const errors = validateEnv();
 if (errors.length > 0) {
   for (const error of errors) console.error(`[config] ${error}`);
-  if (!env.token) process.exit(1);
+  // The worker holds ADMIN_API_KEY. Any invalid API origin or weak production
+  // key must stop startup rather than merely warn and continue.
+  process.exit(1);
+}
+if (env.commandAdminIds.length === 0) {
+  console.warn("[config] BOT_COMMAND_ADMIN_IDS is empty; privileged slash commands (/send, /exploit, /sync) are disabled.");
 }
 
 const client = new SapphireClient({

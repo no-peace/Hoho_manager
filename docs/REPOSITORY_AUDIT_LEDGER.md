@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `99414d89dfef65b8bc4054771788150ac88f072d` (main, after temporary picomatch mitigation)
-**Tree:** 369 tracked files across 66 directories
+**Tree:** 371 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -18,11 +18,11 @@
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
 | Server | 133 | In progress (44/133) |
-| Bot | 23 | Not started |
+| Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
-| Documentation | 7 | Not started |
+| Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **369** | **369 accounted for** |
+| **Total** | **371** | **371 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -95,6 +95,22 @@ Findings and changes:
 6. The reviewed Markdown link parser only creates HTTP/HTTPS links; embed author/title links also explicitly restrict protocols to HTTP/HTTPS. No raw-HTML rendering path was observed in the reviewed preview components. This is not a complete security audit of the Markdown renderer.
 7. The API client includes `VITE_ADMIN_API_KEY` only in development builds. Production requests rely on the HttpOnly session cookie; the client-supplied staff ID header is not an authorization source in production.
 8. Mobile quick-edit and preview selection route through the shared message store; no confirmed state-desynchronization issue was found in the reviewed files.
+
+## Batch F6 — Bot command authorization and startup security (2026-11-18)
+
+**Status:** Source fixes prepared for direct-main commit.
+
+**Status:** All 24 bot files reviewed. No bot tests, typecheck, build, live Discord command or gateway integration were executed.
+
+Findings and changes:
+1. **Critical, fixed:** `/send`, `/exploit` and `/sync` called privileged API endpoints using the bot's `x-admin-key`, while their command handlers did not authorize the invoking Discord user. The API treats that key as an administrator, so any user able to invoke those commands could bypass app staff permissions.
+2. The three privileged commands now require the invoking user's Discord ID to be in `BOT_COMMAND_ADMIN_IDS`; if that variable is empty, the worker falls back to `OWNER_DISCORD_IDS`. If both are empty, the commands are denied to everyone. `/exploit` autocomplete is also blocked for unauthorized users.
+3. **High, fixed:** The bot previously logged environment validation errors but continued starting whenever a Discord token existed. It now exits on any validation error, preventing production startup with an insecure HTTP API origin or weak/default admin key.
+4. Added validation and tests for configured Discord ID lists, denied command execution/autocomplete, and unsafe production environment settings.
+5. The interaction relay remains machine-authenticated with the admin key and is separate from slash-command authorization; it only forwards component/modal interactions from the authenticated Discord gateway connection.
+6. `/status`, `/server` and `/ping` remain public/read-only. No other bot command calling privileged API operations was found in the reviewed command set.
+
+**Deployment requirement:** Set `BOT_COMMAND_ADMIN_IDS` in the bot service to the trusted Discord user IDs, or provide `OWNER_DISCORD_IDS`. Until then, `/send`, `/exploit` and `/sync` will be disabled by design.
 
 ## File-by-file inventory
 
@@ -424,30 +440,31 @@ Findings and changes:
 - [ ] `server/tsconfig.json`
 - [ ] `server/vitest.config.ts`
 
-### Bot (23)
-- [ ] `bot/.env.example`
-- [ ] `bot/README.md`
-- [ ] `bot/package.json`
-- [ ] `bot/src/commands/exploit.ts`
-- [ ] `bot/src/commands/ping.ts`
-- [ ] `bot/src/commands/send.ts`
-- [ ] `bot/src/commands/server.ts`
-- [ ] `bot/src/commands/status.ts`
-- [ ] `bot/src/commands/sync.ts`
-- [ ] `bot/src/index.ts`
-- [ ] `bot/src/lib/api.ts`
-- [ ] `bot/src/lib/commandCooldown.ts`
-- [ ] `bot/src/lib/env.ts`
-- [ ] `bot/src/lib/registration.ts`
-- [ ] `bot/src/listeners/interactionRelay.ts`
-- [ ] `bot/src/listeners/ready.ts`
-- [ ] `bot/tests/api.test.ts`
-- [ ] `bot/tests/commands.test.ts`
-- [ ] `bot/tests/env.test.ts`
-- [ ] `bot/tests/relay.test.ts`
-- [ ] `bot/tsconfig.build.json`
-- [ ] `bot/tsconfig.json`
-- [ ] `bot/vitest.config.ts`
+### Bot (24)
+- [x] `bot/src/lib/commandPermissions.ts` — inspected; runtime verification not performed
+- [x] `bot/.env.example` — inspected; runtime verification not performed
+- [x] `bot/README.md` — inspected; runtime verification not performed
+- [x] `bot/package.json` — inspected; runtime verification not performed
+- [x] `bot/src/commands/exploit.ts` — inspected; runtime verification not performed
+- [x] `bot/src/commands/ping.ts` — inspected; runtime verification not performed
+- [x] `bot/src/commands/send.ts` — inspected; runtime verification not performed
+- [x] `bot/src/commands/server.ts` — inspected; runtime verification not performed
+- [x] `bot/src/commands/status.ts` — inspected; runtime verification not performed
+- [x] `bot/src/commands/sync.ts` — inspected; runtime verification not performed
+- [x] `bot/src/index.ts` — inspected; runtime verification not performed
+- [x] `bot/src/lib/api.ts` — inspected; runtime verification not performed
+- [x] `bot/src/lib/commandCooldown.ts` — inspected; runtime verification not performed
+- [x] `bot/src/lib/env.ts` — inspected; runtime verification not performed
+- [x] `bot/src/lib/registration.ts` — inspected; runtime verification not performed
+- [x] `bot/src/listeners/interactionRelay.ts` — inspected; runtime verification not performed
+- [x] `bot/src/listeners/ready.ts` — inspected; runtime verification not performed
+- [x] `bot/tests/api.test.ts` — inspected; runtime verification not performed
+- [x] `bot/tests/commands.test.ts` — inspected; runtime verification not performed
+- [x] `bot/tests/env.test.ts` — inspected; runtime verification not performed
+- [x] `bot/tests/relay.test.ts` — inspected; runtime verification not performed
+- [x] `bot/tsconfig.build.json` — inspected; runtime verification not performed
+- [x] `bot/tsconfig.json` — inspected; runtime verification not performed
+- [x] `bot/vitest.config.ts` — inspected; runtime verification not performed
 
 ### Shared (10)
 - [x] `shared/package.json` — inspected; runtime verification not performed
@@ -461,9 +478,10 @@ Findings and changes:
 - [x] `shared/tsconfig.json` — inspected; runtime verification not performed
 - [x] `shared/vitest.config.ts` — inspected; runtime verification not performed
 
-### Documentation (7)
-- [ ] `docs/AGENTS.md`
-- [ ] `docs/GEMINI_HANDOFF_CURRENT.md`
+### Documentation (8)
+- [x] `docs/REPOSITORY_AUDIT_LEDGER.md` — maintained and reviewed
+- [x] `docs/AGENTS.md` — maintained and reviewed
+- [x] `docs/GEMINI_HANDOFF_CURRENT.md` — maintained and reviewed
 - [ ] `docs/HOHO_MASTER_IMPLEMENTATION_PLAN.md`
 - [ ] `docs/PREVIEW_EDITOR_NAVIGATION_REPAIR_PLAN.md`
 - [ ] `docs/PUCK_DESIGN_LAB.md`

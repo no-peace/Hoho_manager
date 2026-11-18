@@ -1637,3 +1637,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Confirmed Puck `MobileBottomNavigation.activeTab` is deliberately preview-only; production pane default comes from `MobileWorkspace.defaultPane`.
 - Preview link construction reviewed: Markdown and embed links are restricted to HTTP/HTTPS. The full Markdown renderer and remaining preview components still need review.
 - No browser QA, tests, typecheck or build were executed.
+
+
+## Bot security audit — Batch F6 (2026-11-18)
+
+- Found a critical authorization gap: `/send`, `/exploit` and `/sync` invoked admin-key-protected API operations without checking the invoking Discord user. Since the server treats the admin key as an administrator, these commands bypassed normal staff authorization.
+- Fixed by requiring the invoking Discord user ID to be configured in `BOT_COMMAND_ADMIN_IDS` (fallback: `OWNER_DISCORD_IDS`). Unauthorized `/exploit` autocomplete returns no choices. Empty allowlist disables all three commands.
+- Fixed fail-open startup: the gateway worker now exits on any environment validation error, including an insecure production API URL or weak/default admin key.
+- Added tests for command denial, operator-ID parsing and unsafe production configuration. No tests/typecheck/build/live Discord QA were run.
+- Deployment action required: set `BOT_COMMAND_ADMIN_IDS` or `OWNER_DISCORD_IDS` in the bot service environment before using the privileged slash commands.

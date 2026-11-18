@@ -2,6 +2,7 @@ import { Command } from "@sapphire/framework";
 import { ChannelType, MessageFlags } from "discord.js";
 import api from "../lib/api.js";
 import { commandRegistration } from "../lib/registration.js";
+import { BOT_COMMAND_ADMIN_DENIED_MESSAGE, isBotCommandAdmin } from "../lib/commandPermissions.js";
 
 /**
  * `/send`  post a message as the bot, through the builder's own API.
@@ -42,6 +43,14 @@ export class SendCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
+    if (!isBotCommandAdmin(interaction.user.id)) {
+      await interaction.reply({
+        content: BOT_COMMAND_ADMIN_DENIED_MESSAGE,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     const { checkCommandCooldown } = await import("../lib/commandCooldown.js");
     const waitSec = checkCommandCooldown("send", interaction.user.id, 3);
     if (waitSec > 0) {

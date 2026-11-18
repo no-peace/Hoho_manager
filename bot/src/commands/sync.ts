@@ -2,6 +2,7 @@ import { Command } from "@sapphire/framework";
 import { MessageFlags } from "discord.js";
 import { api } from "../lib/api.js";
 import { commandRegistration } from "../lib/registration.js";
+import { BOT_COMMAND_ADMIN_DENIED_MESSAGE, isBotCommandAdmin } from "../lib/commandPermissions.js";
 
 export class SyncCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -25,6 +26,14 @@ export class SyncCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
+    if (!isBotCommandAdmin(interaction.user.id)) {
+      await interaction.reply({
+        content: BOT_COMMAND_ADMIN_DENIED_MESSAGE,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     const { checkCommandCooldown } = await import("../lib/commandCooldown.js");
     const waitSec = checkCommandCooldown("sync", interaction.user.id, 10);
     if (waitSec > 0) {

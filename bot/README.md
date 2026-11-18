@@ -9,8 +9,8 @@ It has two jobs, and the second one is the reason it is not optional everywhere.
 
 ### 1. Slash commands
 
-`/ping`, `/status`, `/server`, `/send`  things only a persistent gateway connection can do, plus
-presence and (with the privileged intents enabled) member/reaction events.
+`/ping`, `/status`, `/server`, `/send`, `/exploit`, `/sync`  things only a persistent gateway connection can do, plus
+presence and (with the privileged intents enabled) member/reaction events. The `/send`, `/exploit` and `/sync` commands are restricted to Discord user IDs configured in `BOT_COMMAND_ADMIN_IDS` (or `OWNER_DISCORD_IDS`); if no IDs are configured, those commands are disabled.
 
 ### 2. The interaction relay  for hosts with no public address
 
@@ -65,8 +65,9 @@ Fill in:
 | `DISCORD_BOT_TOKEN` | Same token the API uses |
 | `API_BASE_URL` | Origin of the Express API (default `http://localhost:3001`) |
 | `ADMIN_API_KEY` | Must match `server/.env`  sent as `x-admin-key` |
+| `BOT_COMMAND_ADMIN_IDS` | Comma-separated Discord user IDs allowed to run `/send`, `/exploit` and `/sync`. Falls back to `OWNER_DISCORD_IDS`; if empty, privileged commands are disabled. |
 | `DEV_GUILD_ID` | Optional. Scopes command registration to one guild so changes appear instantly |
-| `NODE_ENV` | `production` in production (warns about the default admin key otherwise) |
+| `NODE_ENV` | `production` in production (the worker exits if the admin key or API URL is unsafe) |
 
 Start the API first (`npm run dev` from the repo root), then:
 

@@ -10,6 +10,18 @@ import { SyncCommand } from "../src/commands/sync.js";
 import api from "../src/lib/api.js";
 
 // Mock api methods
+vi.mock("../src/lib/env.js", () => ({
+  env: {
+    apiBaseUrl: "http://127.0.0.1:3001",
+    commandAdminIds: [
+      "111111111111111111",
+      "222222222222222222",
+      "333333333333333333",
+      "444444444444444444",
+    ],
+  },
+}));
+
 vi.mock("../src/lib/api.js", () => ({
   default: {
     health: vi.fn(),
@@ -193,7 +205,7 @@ describe("bot/commands: Slash Command Suite", () => {
       } as any);
 
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "111111111111111111" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Hello from bot!"),
@@ -212,12 +224,28 @@ describe("bot/commands: Slash Command Suite", () => {
       expect(interaction.editReply).toHaveBeenCalledWith("✅ Sent to <#chan_99>.");
     });
 
+    it("denies users who are not configured bot operators", async () => {
+      const command = new SendCommand(mockContext, {});
+      const interaction: any = {
+        user: { id: "999999999999999999" },
+        reply: vi.fn().mockResolvedValue(undefined),
+      };
+
+      await command.chatInputRun(interaction);
+
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: expect.stringContaining("configured bot operators"),
+        flags: MessageFlags.Ephemeral,
+      });
+      expect(api.sendMessage).not.toHaveBeenCalled();
+    });
+
     it("catches api error and informs user", async () => {
       const command = new SendCommand(mockContext, {});
       vi.mocked(api.sendMessage).mockRejectedValueOnce(new Error("Rate limited"));
 
       const interaction: any = {
-        user: { id: "test-user-send-error" },
+        user: { id: "222222222222222222" },
         options: {
           getChannel: vi.fn().mockReturnValue({ id: "chan_99" }),
           getString: vi.fn().mockReturnValue("Test"),
@@ -255,7 +283,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       const command = new ExploitCommand(mockContext, {});
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "111111111111111111" },
         options: {
           getFocused: vi.fn().mockReturnValue({ name: "exploit", value: "del" }),
         },
@@ -271,12 +299,36 @@ describe("bot/commands: Slash Command Suite", () => {
       ]);
     });
 
+    it("denies exploit autocomplete and execution to non-operators", async () => {
+      const { listWeaoExploits, resolveWeaoExploit } = await import("../src/lib/api.js");
+      const command = new ExploitCommand(mockContext, {});
+      const autocompleteInteraction: any = {
+        user: { id: "999999999999999999" },
+        options: { getFocused: vi.fn().mockReturnValue({ name: "exploit", value: "x" }) },
+        respond: vi.fn().mockResolvedValue(undefined),
+      };
+      await command.autocompleteRun(autocompleteInteraction);
+      expect(autocompleteInteraction.respond).toHaveBeenCalledWith([]);
+      expect(listWeaoExploits).not.toHaveBeenCalled();
+
+      const interaction: any = {
+        user: { id: "999999999999999999" },
+        reply: vi.fn().mockResolvedValue(undefined),
+      };
+      await command.chatInputRun(interaction);
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: expect.stringContaining("configured bot operators"),
+        flags: MessageFlags.Ephemeral,
+      });
+      expect(resolveWeaoExploit).not.toHaveBeenCalled();
+    });
+
     it("rejects chat input if channel is not text-based", async () => {
       const { resolveWeaoExploit } = await import("../src/lib/api.js");
       const command = new ExploitCommand(mockContext, {});
 
       const interaction: any = {
-        user: { id: "test-user-123" },
+        user: { id: "111111111111111111" },
         options: { getString: vi.fn().mockReturnValue("Delta") },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
@@ -293,6 +345,23 @@ describe("bot/commands: Slash Command Suite", () => {
   });
 
   describe("SyncCommand", () => {
+    it("denies synchronization to non-operators", async () => {
+      const { api: apiClient } = await import("../src/lib/api.js");
+      const command = new SyncCommand(mockContext, {});
+      const interaction: any = {
+        user: { id: "999999999999999999" },
+        reply: vi.fn().mockResolvedValue(undefined),
+      };
+
+      await command.chatInputRun(interaction);
+
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: expect.stringContaining("configured bot operators"),
+        flags: MessageFlags.Ephemeral,
+      });
+      expect(apiClient.syncTrackedMessages).not.toHaveBeenCalled();
+    });
+
     it("reports checked, updated, and pruned message counts", async () => {
       const { api: apiClient } = await import("../src/lib/api.js");
       vi.mocked(apiClient.syncTrackedMessages).mockResolvedValueOnce({
@@ -304,7 +373,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       const command = new SyncCommand(mockContext, {});
       const interaction: any = {
-        user: { id: "sync-success-user" },
+        user: { id: "333333333333333333" },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
       };
@@ -328,7 +397,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       const command = new SyncCommand(mockContext, {});
       const interaction: any = {
-        user: { id: "sync-error-user" },
+        user: { id: "444444444444444444" },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
       };

@@ -18,8 +18,14 @@ export interface BotEnv {
   readonly token: string;
   readonly apiBaseUrl: string;
   readonly adminApiKey: string;
+  readonly commandAdminIds: readonly string[];
   readonly devGuildId: string | undefined;
 }
+
+export const parseDiscordIdList = (value: string): string[] =>
+  [...new Set(value.split(",").map((id) => id.trim()).filter((id) => /^\d{17,20}$/.test(id)))];
+
+const rawCommandAdminIds = str("BOT_COMMAND_ADMIN_IDS", str("OWNER_DISCORD_IDS", ""));
 
 export const env: BotEnv = Object.freeze({
   nodeEnv,
@@ -27,6 +33,7 @@ export const env: BotEnv = Object.freeze({
   token: str("DISCORD_BOT_TOKEN"),
   apiBaseUrl: str("API_BASE_URL", `http://127.0.0.1:${activePort}`).replace(/\/$/, ""),
   adminApiKey: str("ADMIN_API_KEY", "dev-admin-key"),
+  commandAdminIds: Object.freeze(parseDiscordIdList(rawCommandAdminIds)),
   devGuildId: str("DEV_GUILD_ID") || undefined,
 });
 
@@ -63,6 +70,13 @@ export const validateEnv = (): string[] => {
   }
   if (env.isProd && env.adminApiKey.length < 32) {
     errors.push("ADMIN_API_KEY must contain at least 32 characters outside local development and tests.");
+  }
+  const invalidCommandAdminIds = rawCommandAdminIds
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id && !/^\d{17,20}$/.test(id));
+  if (invalidCommandAdminIds.length > 0) {
+    errors.push("BOT_COMMAND_ADMIN_IDS must contain only valid 17–20 digit Discord user IDs.");
   }
 
   return errors;
