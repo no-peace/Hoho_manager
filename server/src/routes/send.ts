@@ -98,7 +98,7 @@ router.post(
     ) {
       throw ApiError.badRequest("Custom bot profiles are disabled. Use the configured server bot.");
     }
-        const staffCtx = req.staffContext;
+    const staffCtx = req.staffContext;
     const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
     const requestedAuthorId =
       typeof req.body?.authorUserId === "string" && /^\d{17,20}$/.test(req.body.authorUserId)
