@@ -1867,3 +1867,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed preview components and tests for markdown rendering, embeds, interactive components, message selection routing, and placeholder resolution. No additional optimization was justified by source review alone.
 - Server inventory reconciliation: repository tree contains 142 server files. The audit ledger now lists all 142, including `server/tests/messageTrackerService.performance.test.ts`, which was previously reviewed but absent from the checklist. Ledger status is now 142/142 source inventory reviewed.
 - **No runtime changes in F26.** Source audit completion does not imply test execution or runtime verification. The local Terminal connection previously returned HTTP 404; GitHub Actions remain disabled by owner instruction. No typecheck, build, browser profiling, or full test suite was run.
+
+
+## Client layout, modal and hook review — Batch F27 (2026-11-18)
+
+- Reviewed 16 client files: Header, Sidebar, StudioRouter, SettingsModal, AccessPanel, AuditLogsModal, BackupsModal, SessionsModal, ThemeSettingsModal, LoginScreen, Modal, Tabs, ColorPicker, EmojiPickerField, useTemplates, and useSend.
+- Existing mobile/reduced-motion gating in LoginScreen avoids starting the automatic showcase timer and decorative canvas for those sessions. Modal clears its focus timer and per-instance key handler on cleanup. EmojiPickerField and ThemeSettingsModal already memoize filtered data/validation.
+- BackupsModal serializes the current document and actions for dirty-state comparison and rebuilds its merged template/tracking list on render. These remain unmeasured candidates; no optimization was committed without a reproducible profile or evidence of user-visible cost.
+- No timer leak was identified in the inspected Header/SessionsModal paths. Send/template actions read store snapshots at action time rather than subscribing to broad state for those operations.
+- No runtime changes in F27. Client source audit count is 85/166. No client test, typecheck, build, browser profile, or Lighthouse run was performed.
