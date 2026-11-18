@@ -13,19 +13,15 @@ import {
   FileJson,
   Trash2,
   Send,
-  LayoutTemplate,
-  Palette,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
-import type { ResolvedAppLayoutMotion } from "../../utils/puckAppLayout";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
-const ThemeSettingsModal = React.lazy(() => import("./ThemeSettingsModal").then((module) => ({ default: module.ThemeSettingsModal })));
 
 import { HOHO_LOGO_URL } from "./HoHoLogoMark";
 export { HOHO_LOGO_URL } from "./HoHoLogoMark";
@@ -51,13 +47,11 @@ export interface HeaderProps {
   onOpenJson?: () => void;
   onClearAll?: () => void;
   onOpenSend?: (mode: "send" | "edit") => void;
-  runtimeMotion?: ResolvedAppLayoutMotion;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend, runtimeMotion }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onClearAll, onOpenSend }) => {
   const [accessOpen, setAccessOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [themeSettingsOpen, setThemeSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -104,12 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
   return (
     <>
       <header
-        className={UI_THEME_CONFIG.surfaces.studioHeaderBar + " hoho-runtime-header"}
-        data-hoho-motion={runtimeMotion?.animation ?? "none"}
-        style={runtimeMotion ? ({
-          "--hoho-motion-duration": runtimeMotion.duration,
-          "--hoho-motion-delay": runtimeMotion.delay,
-        } as React.CSSProperties) : undefined}
+        className={UI_THEME_CONFIG.surfaces.studioHeaderBar}
       >
         {/* Left: Dashboard Back link + HoHo Emblem + HoHo Manager title */}
         <div className="flex items-center gap-2.5">
@@ -204,9 +193,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
         {/* Right: Staff Access + Authenticated User Profile + Docs */}
         <div className="flex items-center justify-self-end gap-2 min-w-0">
-          <button type="button" onClick={() => setThemeSettingsOpen(true)} aria-haspopup="dialog" aria-expanded={themeSettingsOpen} aria-controls="theme-settings-title" className="flex text-xs items-center gap-1.5 font-semibold text-[#F1F3F9] hover:text-white border border-[#818CF8]/30 bg-[#818CF8]/10 hover:bg-[#818CF8]/20 active:scale-[0.98] px-2.5 py-1.5 rounded-lg transition-colors" title="Appearance and themes">
-            <Palette size={14} className="text-[#a5adff]" /><span className="hidden md:inline">Theme</span>
-          </button>
 
           {isAdmin && (
             <button
@@ -308,12 +294,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
-                    {currentUser.isDesignAllowed ? (
-                      <a href="/design" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
-                        <LayoutTemplate size={14} className="text-[#a5adff]" />
-                        <span>Design Lab</span>
-                      </a>
-                    ) : null}
                     <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <BookOpen size={14} className="text-[#949cf7]" />
                       <span>Documentation</span>
@@ -380,9 +360,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
         </div>
       </header>
       
-      <React.Suspense fallback={themeSettingsOpen ? <div role="status" className="fixed inset-0 z-[100] grid place-items-center bg-black/70 text-sm text-white">Loading appearance settings…</div> : null}>
-        <ThemeSettingsModal open={themeSettingsOpen} onClose={() => setThemeSettingsOpen(false)} />
-      </React.Suspense>
 
       {isAdmin && (
         <React.Suspense fallback={null}>
