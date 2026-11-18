@@ -1777,3 +1777,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added a test that mounts two RoleSelect controls for the same guild and asserts that only one API request is made.
 - Confirmed FlowBuilder memoizes decoded steps and StepList memoizes action type options. Deep branch recursion and large-flow render cost remain candidates for profiling; no arbitrary UI limit or broad memoization was added.
 - Verification: test added but not executed. No React Profiler, browser trace, tests, typecheck or build was run.
+
+
+## Server repository and polling performance audit — Batch F18 (2026-11-18)
+
+- Reviewed nine repository implementations, three repository test files and the migration/index catalog. Cross-checked the tracked-message sync service.
+- Found repeated `customExecutorRepository.findByTitle` calls for tracked messages sharing the same exploit name, and repeated template reads for shared template IDs. Added per-sweep promise memoization by normalized executor title and template ID.
+- Found that the 30-second interval could launch overlapping async sync sweeps. Added a single-flight guard so concurrent callers share one in-progress sweep.
+- Added `server/tests/messageTrackerService.performance.test.ts` for repeated lookup reuse and overlapping sweep suppression.
+- Query/index review: a `LOWER(title)` expression index may help custom executor title lookups, but it is deferred until query-plan and workload evidence are available. The existing migrations already index flow/interaction receipt expiry and staff cooldown keys; staff cooldown updates use atomic upsert.
+- Found `profileRepository` still targets the `webhook_profiles` table dropped by migration 011. Current references are legacy exports; action execution no longer injects this repository into action context. Do not re-enable it without restoring its storage contract.
+- Verification: tests added but not executed. No SQLite query plan, benchmark, tests, typecheck, build or production database access was run.

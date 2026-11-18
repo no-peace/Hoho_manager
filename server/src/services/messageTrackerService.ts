@@ -64,9 +64,40 @@ export interface SyncResult {
   errors: number;
 }
 
-export const syncTrackedMessages = async (): Promise<SyncResult> => {
+const runTrackedMessageSync = async (): Promise<SyncResult> => {
   const records = await trackedMessageRepository.listAll();
   const result: SyncResult = { checked: records.length, updated: 0, removed: 0, errors: 0 };
+
+  // A polling sweep often sees many messages backed by the same executor or
+  // template. Reuse each lookup for this sweep instead of issuing N identical
+  // database reads.
+  const customExecutorLookups = new Map<
+    string,
+    ReturnType<typeof customExecutorRepository.findByTitle>
+  >();
+  const templateLookups = new Map<
+    number,
+    ReturnType<typeof templateRepository.findById>
+  >();
+
+  const getCustomExecutor = (title: string) => {
+    const key = title.trim().toLowerCase();
+    let lookup = customExecutorLookups.get(key);
+    if (!lookup) {
+      lookup = customExecutorRepository.findByTitle(title);
+      customExecutorLookups.set(key, lookup);
+    }
+    return lookup;
+  };
+
+  const getTemplate = (templateId: number) => {
+    let lookup = templateLookups.get(templateId);
+    if (!lookup) {
+      lookup = templateRepository.findById(templateId);
+      templateLookups.set(templateId, lookup);
+    }
+    return lookup;
+  };
 
   for (const record of records) {
     try {
@@ -79,12 +110,12 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
 
       // 1. Resolve base payload from a verified template, enabled custom executor, or stored raw_payload
       const customExec = record.exploit_name
-        ? await customExecutorRepository.findByTitle(record.exploit_name)
+        ? await getCustomExecutor(record.exploit_name)
         : undefined;
       const customExecutorDisabled = Boolean(customExec) && !isCustomExecutorEnabled(customExec);
 
       if (record.template_id && !customExecutorDisabled) {
-        const tpl = await templateRepository.findById(record.template_id);
+        const tpl = await getTemplate(record.template_id);
         if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
           const rawDoc = tpl.data as any;
           basePayload =
@@ -98,7 +129,7 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
       } else if (record.template_id && customExecutorDisabled) {
         log.warn(`Skipping disabled custom executor on tracked message ${record.message_id}`);
       } else if (customExec && isCustomExecutorEnabled(customExec) && customExec.template_id) {
-        const tpl = await templateRepository.findById(customExec.template_id);
+        const tpl = await getTemplate(customExec.template_id);
         if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
           const rawDoc = tpl.data as any;
           basePayload =
@@ -178,6 +209,22 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
   }
 
   return result;
+};
+
+// setInterval does not wait for an async callback. If a sweep takes longer
+// than the polling interval, share the in-flight promise rather than launching
+// another full database/Discord pass over the same tracked messages.
+let syncInFlight: Promise<SyncResult> | null = null;
+
+export const syncTrackedMessages = (): Promise<SyncResult> => {
+  if (syncInFlight) return syncInFlight;
+
+  const run = runTrackedMessageSync();
+  const shared = run.finally(() => {
+    if (syncInFlight === shared) syncInFlight = null;
+  });
+  syncInFlight = shared;
+  return shared;
 };
 
 let pollingTimer: NodeJS.Timeout | null = null;

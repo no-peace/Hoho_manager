@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `27eb856b889ee1f0b9553c0558ddfbd15a53266a` (main, after Batch F14 settings-cache implementation)
-**Tree:** 380 tracked files across 66 directories
+**Tree:** 381 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -17,12 +17,12 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 162 | In progress (39/162) |
-| Server | 141 | In progress (101/141) |
+| Server | 142 | In progress (113/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **380** | **380 accounted for** |
+| **Total** | **381** | **381 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -337,6 +337,38 @@ Verification:
 - Test added but not executed.
 - No React Profiler, browser trace, tests, typecheck or build was run.
 
+## Batch F18 — Repository query reuse and tracked-message polling (2026-11-18)
+
+**Status:** Nine repository files and three repository tests inspected; repeated tracked-message lookups memoized per sweep and overlapping sweeps prevented. Focused tests added; not executed.
+
+Files reviewed:
+- `server/src/repositories/appLayoutRepository.ts`
+- `server/src/repositories/auditLogRepository.ts`
+- `server/src/repositories/baseRepository.ts`
+- `server/src/repositories/customExecutorRepository.ts`
+- `server/src/repositories/flowRepository.ts`
+- `server/src/repositories/interactionReceiptRepository.ts`
+- `server/src/repositories/profileRepository.ts`
+- `server/src/repositories/staffRepository.ts`
+- `server/src/repositories/userRepository.ts`
+- `server/tests/challenger_staffRepository.test.ts`
+- `server/tests/flowRepository.test.ts`
+- `server/tests/repositories.test.ts`
+- `server/src/config/migrations.ts` (cross-check of query/index coverage; already counted in an earlier batch)
+- `server/src/services/messageTrackerService.ts` (implementation file already counted in an earlier batch)
+
+Findings and changes:
+1. **Fixed:** A tracked-message sync sweep queried the same custom executor once per tracked message and could query the same template repeatedly. Added per-sweep promise memoization keyed by normalized executor title and template ID.
+2. **Fixed:** The 30-second `setInterval` could start another full sweep while the previous async sweep was still running. Added a single-flight promise guard; concurrent callers now share the current sweep, and the next sweep can start after it finishes.
+3. Added regression tests for repeated executor lookup reuse and overlapping sweep suppression.
+4. Query/index review: `customExecutorRepository.findByTitle` uses `LOWER(title)` while the current migration only indexes `enabled`. An expression index on `LOWER(title)` is a candidate, but it is deferred until `EXPLAIN QUERY PLAN` confirms a table scan and the custom-executor table's real size/workload justifies the write/storage cost.
+5. Repository methods using primary-key/unique-key predicates are already indexed by their table constraints. The flow and interaction-receipt expiry columns have explicit cleanup indexes. Staff cooldown upsert uses a single atomic `ON CONFLICT` statement.
+6. `profileRepository` still targets `webhook_profiles`, which migration 011 drops. Current source references are legacy exports; action execution no longer injects this repository into ActionContext. Do not restore calls to it without restoring the table/feature contract.
+
+Verification:
+- Tests added but not executed.
+- No SQLite query plan, benchmark, tests, typecheck, build or production database access was run.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -583,21 +615,21 @@ Verification:
 - [x] `server/src/middleware/staffPermissions.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/verifyDiscordSignature.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/actionRepository.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/appLayoutRepository.ts`
-- [ ] `server/src/repositories/auditLogRepository.ts`
-- [ ] `server/src/repositories/baseRepository.ts`
-- [ ] `server/src/repositories/customExecutorRepository.ts`
-- [ ] `server/src/repositories/flowRepository.ts`
+- [x] `server/src/repositories/appLayoutRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/auditLogRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/baseRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/customExecutorRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/flowRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/index.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/interactionReceiptRepository.ts`
-- [ ] `server/src/repositories/profileRepository.ts`
+- [x] `server/src/repositories/interactionReceiptRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/profileRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/sessionRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/sessionRevocationRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/settingsRepository.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/staffRepository.ts`
+- [x] `server/src/repositories/staffRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/templateRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/trackedMessageRepository.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/userRepository.ts`
+- [x] `server/src/repositories/userRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/access.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/auth.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/config.ts` — inspected; runtime verification not performed
@@ -645,17 +677,17 @@ Verification:
 - [ ] `server/tests/challenger_multipart.test.ts`
 - [ ] `server/tests/challenger_perf_indexes.test.ts`
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/challenger_staffRepository.test.ts`
+- [x] `server/tests/challenger_staffRepository.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/crypto.test.ts`
 - [x] `server/tests/discordService.timeout.test.ts` — inspected; test not executed
 - [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/errorHandler.security.test.ts`
-- [ ] `server/tests/flowRepository.test.ts`
+- [x] `server/tests/flowRepository.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/interactionMemory.test.ts`
 - [ ] `server/tests/m3_challenger2_retention_cache.test.ts`
 - [ ] `server/tests/middleware.test.ts`
-- [ ] `server/tests/repositories.test.ts`
+- [x] `server/tests/repositories.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/requestParsing.test.ts`
 - [ ] `server/tests/routes.test.ts`
 - [ ] `server/tests/serverThemePublishing.test.ts`
