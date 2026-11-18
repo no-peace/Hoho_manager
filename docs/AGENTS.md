@@ -12,7 +12,7 @@
 - Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
 - A temporary private picomatch fork based on upstream PR #262 is vendored at `vendor/picomatch` to mitigate CVE-2026-112366. It is not an official upstream release and must be replaced when a patched official release is available.
-- The repository audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`. Batch F1 (root/infrastructure, 25 files) has source-only review; 10 vendor files have provenance/metadata review only. Remaining application files are not yet reviewed.
+- The repository audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`. Batches F1 (root/infrastructure, 25 files) and F2 (shared, 10 files) have source-only review; 10 vendor files have provenance/metadata review only. Client/server/bot/docs application files remain pending.
 - Current priorities: (1) complete the file-by-file audit ledger, (2) reconcile historical plan/handoff claims with current source, (3) resolve explicitly documented product gaps (disabled webhook URL sender, disabled custom bot-profile dispatch, unsupported sender identity overrides, preview-only Puck activeTab, string-prefix action failure classification), (4) review and later replace the temporary picomatch fork, and (5) perform verification only when authorized.
 
 ---

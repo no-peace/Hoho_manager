@@ -1589,3 +1589,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Updated local setup instructions to use `npm ci` against the committed lockfile.
 - Remaining source-review findings: local Docker Compose still uses the documented development-only `dev-admin-key` fallback; the optional Cloudflare Tunnel overlay uses a mutable `latest` image; Semgrep is installed without a version pin. These are recorded for a later controlled decision, not silently changed.
 - No commands were executed. Automated checks, Docker validation, workflow validation, browser QA and deployment remain unverified.
+
+
+## Shared package audit — Batch F2 (2026-11-18)
+
+- Inspected all 10 files under `shared/`: package manifest, constants, custom-ID codec, exports, domain types, both test files, and TypeScript/Vitest configuration.
+- Confirmed `WEBHOOK_URL_REGEX` is still used by `server/src/utils/validation.ts` and `discordService.getWebhookInfo`; it is not an orphaned constant.
+- Confirmed `send_webhook_message` remains in the shared persisted action type for compatibility while runtime dispatch is disabled. Do not restore execution merely by retaining the type.
+- Found a duplicate identical `LoggingConfig` interface declaration in `shared/src/types.ts`. It is harmless interface merging and was left unchanged rather than making an unrelated cleanup.
+- No functional defect was confirmed. Tests/build/typecheck were not executed.

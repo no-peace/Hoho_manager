@@ -19,7 +19,7 @@
 | Client | 159 | Not started |
 | Server | 133 | Not started |
 | Bot | 23 | Not started |
-| Shared | 10 | Not started |
+| Shared | 10 | Source review complete |
 | Documentation | 7 | Not started |
 | Vendored security patch | 10 | Provenance only |
 | **Total** | **367** | **367 accounted for** |
@@ -39,6 +39,18 @@ Findings:
 8. CI actions are pinned to full commit SHAs. Release publishing is gated on verification of the exact tag. Workflow files exist, but execution is disabled by owner instruction.
 
 No finding above has been runtime-tested. The Docker and CI concerns are configuration/source-review findings, not evidence of a current production compromise.
+
+## Batch F2 — Shared package source review (2026-11-18)
+
+**Status:** All 10 shared package files inspected, including types, constants, custom-ID codec, package exports, Vitest and TypeScript configuration, and both test files. No tests or builds were executed.
+
+Findings:
+1. `LoggingConfig` is declared twice identically in `shared/src/types.ts`. This is harmless TypeScript interface merging but redundant; left unchanged to avoid an unnecessary type-only cleanup during the audit.
+2. `WEBHOOK_URL_REGEX` is not orphaned: `server/src/utils/validation.ts` uses it in `parseWebhookUrl`, and `server/src/services/discordService.ts` calls that parser from `getWebhookInfo`. Keep it unless that API feature is separately removed.
+3. `ActionType` still includes `send_webhook_message`. This is a persisted-flow compatibility identifier; runtime dispatch remains disabled and should not be re-enabled by changing the shared union alone.
+4. The shared package has no runtime dependencies; it exports protocol constants, custom-ID codec and domain types used across client/server boundaries. Payload boundary validation remains the security control for the deliberately generic `ComponentNode` and `ActionConfig` shapes.
+
+No shared-package functional defect was confirmed in this source-only pass.
 
 ## File-by-file inventory
 
@@ -391,16 +403,16 @@ No finding above has been runtime-tested. The Docker and CI concerns are configu
 - [ ] `bot/vitest.config.ts`
 
 ### Shared (10)
-- [ ] `shared/package.json`
-- [ ] `shared/src/constants.ts`
-- [ ] `shared/src/customId.ts`
-- [ ] `shared/src/index.ts`
-- [ ] `shared/src/types.ts`
-- [ ] `shared/tests/constants.test.ts`
-- [ ] `shared/tests/customId.test.ts`
-- [ ] `shared/tsconfig.build.json`
-- [ ] `shared/tsconfig.json`
-- [ ] `shared/vitest.config.ts`
+- [x] `shared/package.json` — inspected; runtime verification not performed
+- [x] `shared/src/constants.ts` — inspected; runtime verification not performed
+- [x] `shared/src/customId.ts` — inspected; runtime verification not performed
+- [x] `shared/src/index.ts` — inspected; runtime verification not performed
+- [x] `shared/src/types.ts` — inspected; runtime verification not performed
+- [x] `shared/tests/constants.test.ts` — inspected; runtime verification not performed
+- [x] `shared/tests/customId.test.ts` — inspected; runtime verification not performed
+- [x] `shared/tsconfig.build.json` — inspected; runtime verification not performed
+- [x] `shared/tsconfig.json` — inspected; runtime verification not performed
+- [x] `shared/vitest.config.ts` — inspected; runtime verification not performed
 
 ### Documentation (7)
 - [ ] `docs/AGENTS.md`
