@@ -34,11 +34,17 @@ export const PropertyPanel = ({
   const runtimeMotion = runtimeLayout?.inspectorMotion.animation ?? "none";
   const [activeTab, setActiveTab] = useState<PanelTab>("properties");
   const selection = useMessageStore((state) => state.selection);
-  const messages = useMessageStore((state) => state.messages);
-  const data = useMessageStore((state) => state.data);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
-  const targetMessageIndex = selection?.kind === "message" ? selection.index : activeMessageIndex;
-  const messageData = (messages && messages[targetMessageIndex]) || data;
+  // Subscribe only to the message currently represented by the inspector.
+  // Editing another message no longer rerenders this panel just because the
+  // messages array received a new reference.
+  const messageData = useMessageStore((state) => {
+    const targetMessageIndex =
+      state.selection?.kind === "message"
+        ? state.selection.index
+        : state.activeMessageIndex ?? 0;
+    return state.messages?.[targetMessageIndex] ?? state.data;
+  });
   const isV2Message =
     Boolean((messageData.flags ?? 0) & (1 << 15)) ||
     (messageData as any).mode === EDITOR_MODES.V2;
