@@ -1892,7 +1892,7 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Reviewed 43 additional client files covering public pages and shared layout wrappers, the Design Lab and its styles, the documentation catalogue, client utility modules, and their focused regression tests.
 - Design Lab's user-scoped load effect ignores stale completions after cleanup; local draft writes are debounced with timer cleanup. Import/publish flows validate layout documents, and publish-control coverage checks owner gating, validation, confirmation, server-confirmed success and error handling.
 - Utility and test review covered Discord payload sanitization/validation, import/export hydration, scoped editor smooth scrolling and reduced-motion behavior, visual-viewport-aware floating positioning, autocomplete token parsing, nested component-tree updates, Puck layout/theme validation and persistence, and user-placeholder suggestions. The documentation catalogue is static and its search/category filtering is memoized. No demonstrated runtime defect or measured hotspot justified a code change.
-- No runtime code changes in F29. Client review progress is 149/166. Test files were inspected but not executed.
+- No runtime code changes in F29. Client review progress after inventory reconciliation is 151/167. Test files were inspected but not executed.
 - No tests, typecheck, build, browser profiling, Lighthouse or benchmark was run. GitHub Actions remain disabled by owner instruction; local Terminal access was previously unavailable.
 
 
@@ -1900,3 +1900,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 
 - Added two previously unlisted client regression tests to the audit checklist and reviewed their corresponding implementations: RoleSelect's shared guild-role request coalescing and Markdown's guild/user-scoped bounded TTL/LRU mention cache with in-flight request deduplication. Existing focused tests cover one request for multiple role controls and guild-scoped member resolution.
 - No runtime changes. Tests were inspected but not run. The checklist now includes these two repository-tree files; runtime verification remains outstanding.
+
+
+## Client configuration, global styles, SEO assets and stress-test review — Batch F30 (2026-11-18)
+
+- Completed the final 16 client checklist entries. Client source inventory is now 167/167, reconciled against the repository tree (386 tracked files total).
+- Fixed the Open Graph dimensions in `client/index.html`: the banner SVG canvas is 1271×559, but metadata declared 1200×630. Metadata now reflects the actual SVG dimensions. This does not alter artwork or guarantee crawler support/rendering for SVG social cards.
+- Reviewed package scripts and Node engine, Vite/Vitest aliases/chunking/environment, strict TypeScript configuration, global CSS theme/overflow/reduced-motion/loading styles, test environment shims, robots/sitemap and both long adversarial suites plus LoginScreen tests.
+- The milestone suites include deterministic geometry/state simulations and source-string assertions; they do not all exercise mounted production components. Treat them as regression checks, not proof of browser behavior or performance.
+- No npm tests, typecheck, build, browser profiling, Lighthouse or benchmarks were run. The user plans to run npm checks and tests after the audit. Do not report checks as passing until their output is reviewed.
