@@ -1,7 +1,7 @@
 # Repository Audit Ledger
 
 **Repository:** `no-peace/Hoho_manager`
-**Audit baseline:** `99414d89dfef65b8bc4054771788150ac88f072d` (main, after temporary picomatch mitigation)
+**Audit baseline:** `36469393669764e9c8e938c2af3dbb8b95fb75f2` (main, before Batch F9 documentation update)
 **Tree:** 375 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 137 | In progress (54/137) |
+| Server | 137 | In progress (62/137) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -133,6 +133,32 @@ Findings and changes:
 3. Extracted the owner/public/admin policy into `templateAccess.ts` and reused it in the manual tracking route to keep both entry points consistent.
 4. Added tests for owner access, public-template access, Head Admin access and denial for another user.
 5. Machine-authenticated bot operations remain authorized through the configured bot operator allowlist from Batch F6.
+
+## Batch F9 — Server persistence, request parsing and error boundaries (2026-11-18)
+
+**Status:** Source inspection of eight additional server files. No tests, typecheck, build, database migration, or live service checks were executed.
+
+Files reviewed:
+- `server/src/config/migrations.ts`
+- `server/src/middleware/errorHandler.ts`
+- `server/src/middleware/multipart.ts`
+- `server/src/repositories/sessionRepository.ts`
+- `server/src/repositories/sessionRevocationRepository.ts`
+- `server/src/utils/errors.ts`
+- `server/src/utils/logger.ts`
+- `server/src/utils/requestParsing.ts`
+
+Findings:
+1. The migration catalog is ordered and append-only by convention. The published responsive layout is represented as one row containing both documents; the earlier F3 review established that pending migrations execute transactionally. No new migration defect was confirmed in this source pass.
+2. Multipart uploads enforce limits of 10 files, 25 MiB per file, 50 MiB total file data, 2 MiB per field, 100 fields and 120 parts. File data is streamed and parser failures drain/close the request path. No new bypass was confirmed by source inspection.
+3. Session revocation uses persistent per-user and global timestamp floors. Repository queries are parameterized; guild-session revocation is scoped by guild ID.
+4. The session repository's synthetic default-session behavior is reachable through the Head Admin-protected Discord session routes. It is retained as existing Discohook/demo compatibility behavior, not treated as an unauthenticated session-creation path.
+5. The error handler only returns an ApiError message/details when that error explicitly has `expose` enabled; unexpected errors return a generic 500 response. Upstream callers that opt into exposure must continue to keep their messages/details safe.
+6. Request parsing fails closed on malformed allowlist JSON and non-string entries. Non-strict profile parsing returns null for invalid values; strict mode returns a 400.
+7. The logger's level is fixed at module load and child loggers preserve scope prefixes. No logging behavior change was warranted in this batch.
+8. **Open, unchanged:** production session signing and verification still accept `ADMIN_API_KEY` as a legacy fallback alongside `SESSION_SECRET`. Removing that fallback requires a coordinated production secret configuration and a bounded transition for the 24-hour session lifetime; no deployment secret was changed.
+
+No code changes were needed from this batch. The remaining audit is still source-only until separately verified.
 
 ## File-by-file inventory
 
@@ -367,12 +393,12 @@ Findings and changes:
 - [x] `server/src/config/database.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/env.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/migrate.ts` — inspected; runtime verification not performed
-- [ ] `server/src/config/migrations.ts`
+- [x] `server/src/config/migrations.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/tursoPipeline.ts` — inspected; runtime verification not performed
 - [x] `server/src/index.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/auth.ts` — inspected; runtime verification not performed
-- [ ] `server/src/middleware/errorHandler.ts`
-- [ ] `server/src/middleware/multipart.ts`
+- [x] `server/src/middleware/errorHandler.ts` — inspected; runtime verification not performed
+- [x] `server/src/middleware/multipart.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/rateLimit.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/staffPermissions.ts` — inspected; runtime verification not performed
 - [x] `server/src/middleware/verifyDiscordSignature.ts` — inspected; runtime verification not performed
@@ -385,8 +411,8 @@ Findings and changes:
 - [ ] `server/src/repositories/index.ts`
 - [ ] `server/src/repositories/interactionReceiptRepository.ts`
 - [ ] `server/src/repositories/profileRepository.ts`
-- [ ] `server/src/repositories/sessionRepository.ts`
-- [ ] `server/src/repositories/sessionRevocationRepository.ts`
+- [x] `server/src/repositories/sessionRepository.ts` — inspected; runtime verification not performed
+- [x] `server/src/repositories/sessionRevocationRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/settingsRepository.ts`
 - [ ] `server/src/repositories/staffRepository.ts`
 - [x] `server/src/repositories/templateRepository.ts` — inspected; runtime verification not performed
@@ -421,10 +447,10 @@ Findings and changes:
 - [ ] `server/src/types/express.d.ts`
 - [ ] `server/src/utils/appLayoutValidation.ts`
 - [x] `server/src/utils/crypto.ts` — inspected; runtime verification not performed
-- [ ] `server/src/utils/errors.ts`
-- [ ] `server/src/utils/logger.ts`
+- [x] `server/src/utils/errors.ts` — inspected; runtime verification not performed
+- [x] `server/src/utils/logger.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/mentionScrubber.ts` — inspected; runtime verification not performed
-- [ ] `server/src/utils/requestParsing.ts`
+- [x] `server/src/utils/requestParsing.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/session.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/urlAttachments.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/validation.ts`

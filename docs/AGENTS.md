@@ -3,17 +3,20 @@
 > This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Audit baseline after the direct-main security commit: `99414d89dfef65b8bc4054771788150ac88f072d`.
-- Owner instruction for this continuation: work directly on `main`; do not create a new branch or pull request. This current instruction supersedes the historical branch/PR workflow directives below for this work.
-- The current tracked tree contains 375 files across 66 directories. Older 356/367/369/371/373-file counts are stale.
-- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Do not treat their source presence as executed verification.
+- Current source/audit baseline before this documentation commit: `36469393669764e9c8e938c2af3dbb8b95fb75f2`.
+- Owner instruction: work directly on `main`; do not create a new branch or pull request.
+- Current tracked tree: 375 files across 66 directories.
+- Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Their source presence is not proof of runtime verification.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
-- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; the owner intends to run them locally. Tests may be inspected/updated, but must be reported as not executed.
+- Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; tests may be inspected/updated but must be reported as not executed.
 - Do not claim browser QA, Lighthouse, security certification, deployment or live migration verification without evidence.
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
-- A temporary private picomatch fork based on upstream PR #262 is vendored at `vendor/picomatch` to mitigate CVE-2026-112366. It is not an official upstream release and must be replaced when a patched official release is available.
-- The repository audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`. Batches F1 (root/infrastructure, 25 files), F2 (shared, 10 files), F3 (server core, 25 files plus client Dockerfile), F4 (19 additional server files), F5 (27 client files), F6 (all 24 bot files), F7 (8 additional server files) and F8 (2 new server authorization files) have source-only review; 10 vendor files have provenance/metadata review only. Remaining client/server/docs files are pending.
-- Current priorities: (1) complete the file-by-file audit ledger, (2) reconcile historical plan/handoff claims with current source, (3) resolve remaining confirmed gaps (unsupported sender identity overrides and preview-only Puck activeTab), (4) plan a safe production `SESSION_SECRET` separation and migration, (5) replace the temporary picomatch fork when an official patched release is available, and (6) perform verification only when authorized.
+- CVE-2026-112366 is mitigated in source by the temporary private fork at `vendor/picomatch`, based on upstream PR #262 commit `3222059ac27492d9c0147fee5c65f751bbd851ab`. This is not an official upstream release; replace it when an official patched release is published.
+- Upstream PR #262 remains open and npm still lists 4.0.7 as latest in the 2026-11-18 check. The vendored `lib/parse.js` blob matches the reviewed PR commit; regression checks are wired into `npm test`. The tests and `npm audit` have not been executed in this session.
+- Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. Source-only review batches F1–F9 cover root/infrastructure (25), shared (10), server (62/137), bot (24/24), client (27/161), and documentation (3/8); 10 vendored files have provenance/metadata review only. Remaining client/server/docs files are pending.
+- Sender identity is now derived server-side from authenticated session/staff context; the tracking route rejects caller-supplied `authorUserId`. Some client/shared API type surfaces still retain legacy optional fields and should be reconciled after caller tracing; no server-side override path was confirmed in the reviewed routes.
+- Puck `MobileBottomNavigation.activeTab` is intentionally preview-only; the real mobile initial pane is controlled by `MobileWorkspace.defaultPane`. Do not add runtime behavior unless the product contract changes.
+- Current priorities: (1) continue the file-by-file audit and reconcile historical plan/handoff claims, (2) trace and remove stale external `authorUserId` API/type fields if no active caller depends on them, (3) plan a safe production `SESSION_SECRET` separation with a bounded 24-hour session transition, (4) replace the temporary picomatch fork when an official patched release is available, and (5) perform verification only when authorized.
 
 ---
 

@@ -1663,3 +1663,14 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Fixed by validating the template ID, confirming the record exists, and allowing only public templates, templates owned by the authenticated user, or Head Admin access.
 - Extracted the access policy into `templateAccess.ts` and reused it in the manual tracking route. Added focused access-policy tests.
 - No tests, typecheck, build or live Discord calls were executed.
+
+
+
+## Server persistence and request-boundary audit — Batch F9 (2026-11-18)
+
+- Source-reviewed eight additional files: migration catalog, error middleware, multipart parser, active-session repository, persistent session-revocation repository, API error primitives, logger and request parsing helpers.
+- Confirmed multipart limits (10 files, 25 MiB per file, 50 MiB aggregate file data, 2 MiB per field, 100 fields, 120 parts), parameterized session repository queries, guild-scoped session revocation, persistent per-user/global JWT revocation floors, and fail-closed parsing of malformed allowlists.
+- Confirmed the synthetic default active-session behavior is reached through Head Admin-protected Discord session routes; it remains existing compatibility behavior.
+- No new confirmed defect or code change resulted from this batch.
+- The production `SESSION_SECRET` / `ADMIN_API_KEY` compatibility fallback remains an open security-hardening item. Do not remove it until a dedicated production secret is configured and the 24-hour session transition is planned.
+- Verification: source review only. No tests, typecheck, build, database migration, browser QA, Lighthouse or live service calls were executed.
