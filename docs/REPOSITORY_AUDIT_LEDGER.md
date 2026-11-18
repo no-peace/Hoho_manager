@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `27eb856b889ee1f0b9553c0558ddfbd15a53266a` (main, after Batch F14 settings-cache implementation)
-**Tree:** 379 tracked files across 66 directories
+**Tree:** 380 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -16,13 +16,13 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 161 | In progress (37/161) |
+| Client | 162 | In progress (39/162) |
 | Server | 141 | In progress (101/141) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **379** | **379 accounted for** |
+| **Total** | **380** | **380 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -315,6 +315,28 @@ Verification:
 - Test added but not executed.
 - No React Profiler, browser performance trace, tests, typecheck or build was run.
 
+## Batch F17 — Reuse cached Discord roles in nested flow editors (2026-11-18)
+
+**Status:** Two existing action-editor files source-reviewed; duplicate role fetching removed and a focused concurrency test added. Tests/typecheck/build were not executed.
+
+Files reviewed:
+- `client/src/components/actions/FlowBuilder.tsx`
+- `client/src/components/actions/StepList.tsx`
+
+Finding and fix:
+1. **Fixed:** Every static `member_has_role` RoleSelect mounted its own direct `api.discord.roles(guildId)` request and kept a separate local copy. A flow with several role checks could issue duplicate requests for the same guild, even though the shared Discord cache already provides per-guild caching and in-flight request coalescing.
+2. RoleSelect now selects the active guild's role list from `useDiscordCacheStore` and calls the store's shared `fetchRoles` action. Multiple controls reuse one request and one cached role list.
+3. Added a regression test mounting two RoleSelect controls for the same guild and asserting that only one API request is issued.
+
+Review notes:
+- FlowBuilder memoizes its decoded step list; StepList memoizes action type options and uses immutable list updates.
+- Nested branches are rendered recursively. Existing server-side validation caps branch depth/flow size; UI-side depth limits and large-flow render profiling remain follow-up items.
+- No broad component memoization was added without profiling evidence.
+
+Verification:
+- Test added but not executed.
+- No React Profiler, browser trace, tests, typecheck or build was run.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -359,8 +381,8 @@ Verification:
 - [x] `client/src/api/client.ts` — inspected; runtime verification not performed
 - [x] `client/src/api/design.ts` — inspected; runtime verification not performed
 - [x] `client/src/api/discord.ts` — inspected; runtime verification not performed
-- [ ] `client/src/components/actions/FlowBuilder.tsx`
-- [ ] `client/src/components/actions/StepList.tsx`
+- [x] `client/src/components/actions/FlowBuilder.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/actions/StepList.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/design/PublishAppLayoutControl.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/design/__tests__/PublishAppLayoutControl.test.tsx`
 - [ ] `client/src/components/editor/AllowedMentionsModal.tsx`

@@ -1767,3 +1767,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added a focused test for guild-scoped mention resolution.
 - Confirmed EmbedPreview is memoized and its field grouping is linear; user-placeholder lookup already batches, debounces and aborts stale work; the hero canvas bounds scene complexity/DPR and cleans up animation resources; GSAP primitives clean up animations and respect reduced-motion. No further optimizations were made without profiling evidence.
 - Verification: test added but not executed. No React Profiler, browser performance trace, tests, typecheck or build was run.
+
+
+## Client action-editor performance audit — Batch F17 (2026-11-18)
+
+- Reviewed `FlowBuilder.tsx` and the complete recursive `StepList.tsx`.
+- Found that each static `member_has_role` RoleSelect fetched guild roles directly and held a separate local copy. Multiple role checks in one flow could issue duplicate requests despite the shared Discord cache already implementing per-guild caching and in-flight request coalescing.
+- Updated RoleSelect to subscribe to the selected guild's cached roles and use the shared `fetchRoles` action.
+- Added a test that mounts two RoleSelect controls for the same guild and asserts that only one API request is made.
+- Confirmed FlowBuilder memoizes decoded steps and StepList memoizes action type options. Deep branch recursion and large-flow render cost remain candidates for profiling; no arbitrary UI limit or broad memoization was added.
+- Verification: test added but not executed. No React Profiler, browser trace, tests, typecheck or build was run.

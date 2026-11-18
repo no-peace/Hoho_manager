@@ -12,7 +12,7 @@ import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
-import { api } from "../../api/client";
+import { useDiscordCacheStore } from "../../store/discordCacheStore";
 
 interface ConfigField {
   key: string;
@@ -167,24 +167,26 @@ export const RoleSelect: React.FC<{
   value: string;
   onChange: (val: string) => void;
 }> = ({ guildId, value, onChange }) => {
-  const [roles, setRoles] = useState<Array<{ id: string; name: string; color: number }>>([]);
+  const roles = useDiscordCacheStore((state) => guildId ? state.roles[guildId] : undefined);
+  const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
+  const availableRoles = roles ?? [];
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!guildId) return;
+    if (!guildId || roles) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
-    api.discord
-      .roles(guildId)
-      .then((res) => {
-        if (!cancelled && res?.roles) setRoles(res.roles);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [guildId]);
+    void fetchRoles(guildId).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [guildId, roles, fetchRoles]);
 
   return (
     <div className="space-y-1.5">
@@ -192,19 +194,19 @@ export const RoleSelect: React.FC<{
         <label className="text-xs font-semibold text-[#F1F3F9]">Discord Role</label>
         {loading && <span className="text-[10px] text-[#818CF8] animate-pulse">Loading roles...</span>}
       </div>
-      {roles.length > 0 && (
+      {availableRoles.length > 0 && (
         <Select
           label="Server Role"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           options={[
             { value: "", label: "-- Select a role --" },
-            ...roles.map((r) => ({ value: r.id, label: `@${r.name}` })),
+            ...availableRoles.map((role) => ({ value: role.id, label: `@${role.name}` })),
           ]}
         />
       )}
       <TextField
-        label={roles.length > 0 ? "Or enter Role ID manually" : "Role ID"}
+        label={availableRoles.length > 0 ? "Or enter Role ID manually" : "Role ID"}
         value={value}
         placeholder="123456789012345678"
         onChange={(e) => onChange(e.target.value)}
