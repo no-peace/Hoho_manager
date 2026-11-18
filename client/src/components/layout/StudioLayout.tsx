@@ -14,28 +14,15 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
 import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 import { applyPreviewComponentSelection } from "../../utils/previewSelection";
-import { usePublishedAppLayout } from "../../hooks/usePublishedAppLayout";
-import "../../styles/appLayoutRuntime.css";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
 );
 
 export const StudioLayout: React.FC = () => {
-  const publishedLayout = usePublishedAppLayout();
-  const { layout, isDesktop, cssVariables } = publishedLayout;
-  const activeLayout = isDesktop ? layout.desktop : layout.mobile;
   const prefersReducedMotion = useReducedMotion();
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
-  const mobilePaneTouched = useRef(false);
-  const initialMobilePaneApplied = useRef(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!publishedLayout.isLoaded || initialMobilePaneApplied.current) return;
-    if (!mobilePaneTouched.current) setMobileView(layout.mobile.defaultPane);
-    initialMobilePaneApplied.current = true;
-  }, [publishedLayout.isLoaded, layout.mobile.defaultPane]);
 
   useEffect(() => {
     const wrapper = editorScrollRef.current;
@@ -106,8 +93,7 @@ export const StudioLayout: React.FC = () => {
   };
 
   const handleOpenFullEditor = (selection?: Selection) => {
-    mobilePaneTouched.current = true;
-    setMobileView("editor");
+        setMobileView("editor");
     scrollSelectedTargetIntoEditor(selection);
   };
 
@@ -159,17 +145,12 @@ export const StudioLayout: React.FC = () => {
   };
 
   return (
-    <div
-      className={UI_THEME_CONFIG.surfaces.appShell + " hoho-studio-shell"}
-      style={cssVariables as React.CSSProperties}
-      data-hoho-layout-fallback={publishedLayout.isFallback ? "true" : "false"}
-    >
+    <div className={UI_THEME_CONFIG.surfaces.appShell}>
       <Header
         onOpenBackups={() => setBackupsModalOpen(true)}
         onOpenJson={() => setJsonModalOpen(true)}
         onClearAll={handleClearAll}
         onOpenSend={openBotModal}
-        runtimeMotion={activeLayout.headerMotion}
       />
 
       {currentUser && !currentUser.hasDefaultBotAccess && !currentUser.isAdmin && (
@@ -189,21 +170,11 @@ export const StudioLayout: React.FC = () => {
 
       <main className="relative flex min-h-0 flex-1 overflow-hidden">
         <SplitPane
-          initialRatio={layout.desktop.editorRatio}
-          panelOrder={layout.desktop.panelOrder}
-          workspaceMotion={activeLayout.workspaceMotion}
+          initialRatio={0.5}
           left={
-            <section
-              className="hoho-runtime-panel hoho-runtime-panel--editor"
-              data-hoho-motion={activeLayout.editorMotion.animation}
-              data-hoho-show-toolbar={activeLayout.showToolbar ? "show" : "hide"}
-              style={{
-                "--hoho-motion-duration": activeLayout.editorMotion.duration,
-                "--hoho-motion-delay": activeLayout.editorMotion.delay,
-              } as React.CSSProperties}
-            >
-              <div className="hoho-runtime-panel__heading"><h2>{activeLayout.editorLabel}</h2></div>
-              <div ref={editorScrollRef} data-editor-scroll-container className="hoho-runtime-editor-scroll flex-1 overflow-y-auto custom-scrollbar">
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#2B2D31]">
+              <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Message Editor</h2></div>
+              <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#2B2D31] p-3 custom-scrollbar sm:p-4>
                 <div data-editor-scroll-content className="space-y-3">
                   {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
                   <CultMorphSurface
@@ -229,61 +200,45 @@ export const StudioLayout: React.FC = () => {
             </section>
           }
           right={
-            <section
-              className="hoho-runtime-panel hoho-runtime-panel--preview"
-              data-hoho-motion={activeLayout.previewMotion.animation}
-              style={{
-                "--hoho-motion-duration": activeLayout.previewMotion.duration,
-                "--hoho-motion-delay": activeLayout.previewMotion.delay,
-              } as React.CSSProperties}
-            >
-              <div className="hoho-runtime-panel__heading"><h2>{activeLayout.previewLabel}</h2></div>
-              <div className="hoho-runtime-preview-scroll flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#313338]">
+              <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Live Preview</h2></div>
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-4>
                 <MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} />
               </div>
             </section>
           }
           mobileActivePane={mobileView === "editor" ? "left" : "right"}
           onMobilePaneChange={(pane) => {
-            mobilePaneTouched.current = true;
-            setMobileView(pane === "left" ? "editor" : "preview");
+                        setMobileView(pane === "left" ? "editor" : "preview");
             if (pane === "left") scrollSelectedTargetIntoEditor(useMessageStore.getState().selection ?? undefined);
           }}
           className="min-h-0 min-w-0 flex-1"
         />
-        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} runtimeLayout={activeLayout} /></React.Suspense>
+        <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} /></React.Suspense>
       </main>
 
       {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
       <nav
         aria-label="Mobile workspace navigation"
-        className="hoho-runtime-nav min-[1200px]:hidden flex items-center backdrop-blur-md border-t shrink-0 gap-2 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-        data-hoho-motion={layout.mobile.navMotion.animation}
-        data-hoho-show-labels={layout.mobile.showLabels ? "show" : "hide"}
-        data-hoho-tab-order={layout.mobile.tabOrder}
-        style={{
-          "--hoho-motion-duration": layout.mobile.navMotion.duration,
-          "--hoho-motion-delay": layout.mobile.navMotion.delay,
-        } as React.CSSProperties}
+        className="min-[1200px]:hidden flex h-[60px] min-h-[60px] items-center gap-2 border-t border-[#272D3A] bg-[#10131A] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md shrink-0 z-30"
       >
         <button
           type="button"
-          onClick={() => { mobilePaneTouched.current = true; setMobileView("editor"); }}
-          aria-label={layout.mobile.editorTabLabel}
-          data-hoho-nav-item="editor"
+          onClick={() => setMobileView("editor")}
+          aria-label="Editor"
           aria-pressed={mobileView === "editor"}
           className="relative flex-1 min-h-[40px] flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.97] select-none"
         >
           {mobileView === "editor" && (
             <motion.span
               layoutId="mobileWorkspaceTab"
-              className="hoho-runtime-nav-active absolute inset-0 rounded-lg"
+              className="absolute inset-0 rounded-lg bg-[#818CF8]"
               transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
             />
           )}
           <Edit3 size={14} className="relative z-10" />
-          <span aria-hidden="true" className={`hoho-runtime-nav-label relative z-10 ${mobileView === "editor" ? "text-white" : ""}`}>
-            {layout.mobile.editorTabLabel}
+          <span aria-hidden="true" className={`relative z-10 ${mobileView === "editor" ? "text-white" : ""}`}>
+            Editor
           </span>
           <span
             className={`relative z-10 text-[0.625rem] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}
@@ -293,9 +248,8 @@ export const StudioLayout: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => { mobilePaneTouched.current = true; setMobileView("preview"); }}
-          aria-label={layout.mobile.previewTabLabel}
-          data-hoho-nav-item="preview"
+          onClick={() => setMobileView("preview")}
+          aria-label="Preview"
           aria-pressed={mobileView === "preview"}
           className="relative flex-1 min-h-[40px] flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.97] select-none"
         >
@@ -307,20 +261,19 @@ export const StudioLayout: React.FC = () => {
             />
           )}
           <Eye size={14} className="relative z-10" />
-          <span aria-hidden="true" className={`hoho-runtime-nav-label relative z-10 ${mobileView === "preview" ? "text-white" : ""}`}>
-            {layout.mobile.previewTabLabel}
+          <span aria-hidden="true" className={`relative z-10 ${mobileView === "preview" ? "text-white" : ""}`}>
+            Preview
           </span>
         </button>
         <MagneticButton className="shrink-0">
           <button
             type="button"
             onClick={() => openBotModal("send")}
-            aria-label={layout.mobile.dispatchTabLabel}
-            data-hoho-nav-item="dispatch"
+            aria-label="Dispatch"
             className="min-h-[40px] px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-[transform,background-color,color,box-shadow,opacity] duration-150 active:scale-[0.97] flex items-center gap-1.5 select-none shadow-md"
           >
             <Send size={13} />
-            <span aria-hidden="true" className="hoho-runtime-nav-label">{layout.mobile.dispatchTabLabel}</span>
+            <span aria-hidden="true">Dispatch</span>
           </button>
         </MagneticButton>
       </nav>
