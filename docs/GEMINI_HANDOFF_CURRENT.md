@@ -1828,3 +1828,11 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - **Regression test:** `client/src/components/editor/__tests__/JsonModal.test.tsx` asserts that a closed modal has zero Profiler commits when the message store changes. Test not executed.
 - Audit ledger updated in `246fdd7`; client source/test review count is 65/166. Server review remains 120/142.
 - **Verification not performed:** no tests, typecheck, build, React Profiler browser capture, benchmark, browser QA, Lighthouse or live API profiling. GitHub Actions remain disabled by owner instruction.
+
+
+## Remaining editor entry point and server build configuration — Batch F23 (2026-11-18)
+
+- Reviewed `client/src/components/editor/MessageEditor.tsx` (thin re-export) and `server/tsconfig.build.json`, `server/tsconfig.json`, and `server/vitest.config.ts`. No code changes were necessary.
+- Server runtime source files have all been reviewed. The remaining server audit backlog is predominantly test files; it does not include unreviewed request handlers or services. Server source/test ledger count is 123/142.
+- Client source/test ledger count is 66/166. The repository audit ledger records source inspection separately from runtime verification.
+- **Verification not performed:** tests, typecheck, build, browser checks, Profiler captures, benchmarks and Lighthouse were not run. GitHub Actions remain disabled by owner instruction.
