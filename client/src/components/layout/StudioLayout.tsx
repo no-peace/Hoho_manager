@@ -93,7 +93,7 @@ export const StudioLayout: React.FC = () => {
   };
 
   const handleOpenFullEditor = (selection?: Selection) => {
-        setMobileView("editor");
+    setMobileView("editor");
     scrollSelectedTargetIntoEditor(selection);
   };
 
