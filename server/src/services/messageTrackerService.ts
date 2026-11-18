@@ -4,6 +4,7 @@ import { trackedMessageRepository, type TrackedMessageRecord } from "../reposito
 import { templateRepository } from "../repositories/templateRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { canUseTrackedTemplate } from "../utils/templateAccess.js";
+import { isCustomExecutorEnabled } from "../utils/customExecutorAccess.js";
 import { interpolateWeaoPlaceholders } from "./weaoService.js";
 import { resolveAuthorPlaceholders } from "./authorService.js";
 import * as discord from "./discordService.js";
@@ -76,8 +77,13 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
       }
       let basePayload: DiscordMessagePayload | null = null;
 
-      // 1. Resolve base payload from template, custom executor, or stored raw_payload
-      if (record.template_id) {
+      // 1. Resolve base payload from a verified template, enabled custom executor, or stored raw_payload
+      const customExec = record.exploit_name
+        ? await customExecutorRepository.findByTitle(record.exploit_name)
+        : undefined;
+      const customExecutorDisabled = Boolean(customExec) && !isCustomExecutorEnabled(customExec);
+
+      if (record.template_id && !customExecutorDisabled) {
         const tpl = await templateRepository.findById(record.template_id);
         if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
           const rawDoc = tpl.data as any;
@@ -89,25 +95,24 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
         } else if (tpl) {
           log.warn(`Skipping unverified private template ${tpl.id} on legacy tracked message ${record.message_id}`);
         }
-      } else if (record.exploit_name) {
-        const customExec = await customExecutorRepository.findByTitle(record.exploit_name);
-        if (customExec?.template_id) {
-          const tpl = await templateRepository.findById(customExec.template_id);
-          if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
-            const rawDoc = tpl.data as any;
-            basePayload =
-              rawDoc?.messages?.[0]?.data?.data ??
-              rawDoc?.messages?.[0]?.data ??
-              rawDoc ??
-              null;
-          } else if (tpl) {
-            log.warn(`Skipping unverified private custom-executor template ${tpl.id} on tracked message ${record.message_id}`);
-          }
-        } else if (customExec?.custom_payload) {
-          try {
-            basePayload = JSON.parse(customExec.custom_payload);
-          } catch {}
+      } else if (record.template_id && customExecutorDisabled) {
+        log.warn(`Skipping disabled custom executor on tracked message ${record.message_id}`);
+      } else if (customExec && isCustomExecutorEnabled(customExec) && customExec.template_id) {
+        const tpl = await templateRepository.findById(customExec.template_id);
+        if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
+          const rawDoc = tpl.data as any;
+          basePayload =
+            rawDoc?.messages?.[0]?.data?.data ??
+            rawDoc?.messages?.[0]?.data ??
+            rawDoc ??
+            null;
+        } else if (tpl) {
+          log.warn(`Skipping unverified private custom-executor template ${tpl.id} on tracked message ${record.message_id}`);
         }
+      } else if (customExec && isCustomExecutorEnabled(customExec) && customExec.custom_payload) {
+        try {
+          basePayload = JSON.parse(customExec.custom_payload);
+        } catch {}
       }
 
       if (!basePayload && record.raw_payload) {

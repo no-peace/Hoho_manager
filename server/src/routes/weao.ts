@@ -19,6 +19,7 @@ import {
 } from "../repositories/templateRepository.js";
 import { actionRepository } from "../repositories/actionRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
+import { isCustomExecutorEnabled } from "../utils/customExecutorAccess.js";
 import { resolveAuthorPlaceholders } from "../services/authorService.js";
 import { logger } from "../utils/logger.js";
 import { attachUser, requireUser } from "../middleware/auth.js";
@@ -135,7 +136,11 @@ router.post(
   "/resolve-exploit",
   requireStaffPermission("weao"),
   asyncHandler(async (req, res) => {
-    const userId = requireUser(req).id;
+    const isAdmin = Boolean(req.staffContext?.isAdmin);
+    const userId = req.user?.id;
+    if (!isAdmin && !userId) {
+      throw ApiError.forbidden("An authenticated staff session is required.");
+    }
     const exploitQuery =
       typeof req.body?.exploit === "string" ? req.body.exploit.trim() : "";
     if (!exploitQuery) {
@@ -148,13 +153,16 @@ router.post(
       (await customExecutorRepository.findById(exploitQuery));
 
     if (customExec) {
+      if (!isCustomExecutorEnabled(customExec)) {
+        throw ApiError.notFound("Configured custom executor not found");
+      }
       let basePayload: DiscordMessagePayload | null = null;
 
       if (customExec.template_id) {
         const fullTemplate = await templateRepository.findById(customExec.template_id);
         if (
           !fullTemplate ||
-          (fullTemplate.user_id !== userId && !fullTemplate.is_public)
+          (!isAdmin && fullTemplate.user_id !== userId && !fullTemplate.is_public)
         ) {
           throw ApiError.notFound("Configured backup template not found");
         }

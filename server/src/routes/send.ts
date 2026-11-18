@@ -6,6 +6,7 @@ import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
 import { actionRepository } from "../repositories/actionRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
+import { isCustomExecutorEnabled } from "../utils/customExecutorAccess.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
@@ -138,6 +139,9 @@ router.post(
       const customExecutor =
         (await customExecutorRepository.findByTitle(requestedExploitName)) ??
         (await customExecutorRepository.findById(requestedExploitName));
+      if (customExecutor && !isCustomExecutorEnabled(customExecutor)) {
+        throw ApiError.notFound("Custom executor not found or disabled.");
+      }
       if (customExecutor?.template_id) {
         const customTemplate = await templateRepository.findById(customExecutor.template_id);
         if (!customTemplate) throw ApiError.notFound("Custom executor template not found.");

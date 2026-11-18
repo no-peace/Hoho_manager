@@ -4,6 +4,7 @@ import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { trackedMessageRepository } from "../repositories/trackedMessageRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
+import { isCustomExecutorEnabled } from "../utils/customExecutorAccess.js";
 import { syncTrackedMessages, trackMessage } from "../services/messageTrackerService.js";
 import * as discord from "../services/discordService.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -233,6 +234,9 @@ router.post(
       const customExecutor =
         (await customExecutorRepository.findByTitle(exploitName)) ??
         (await customExecutorRepository.findById(exploitName));
+      if (customExecutor && !isCustomExecutorEnabled(customExecutor)) {
+        throw ApiError.notFound("Custom executor not found or disabled");
+      }
       if (customExecutor?.template_id) {
         const customTemplate = await templateRepository.findById(customExecutor.template_id);
         if (!customTemplate) throw ApiError.notFound("Custom executor template not found");
