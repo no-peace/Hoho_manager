@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { ActionType } from "@dmb/shared";
 import { buildCustomId } from "@dmb/shared";
-import { modal } from "./responses.js";
+import { actionFailed, modal } from "./responses.js";
 import { configString, type ActionContext, type ActionResponse } from "./types.js";
 
 export const type: ActionType = "open_modal";
@@ -12,8 +12,10 @@ export const run = async ({
 }: ActionContext): Promise<ActionResponse | undefined> => {
   const components = Array.isArray(config.components) ? config.components : [];
 
-  // A modal with no inputs is rejected by Discord
-  if (components.length === 0) return undefined;
+  // A modal with no inputs is rejected by Discord; stop the flow visibly.
+  if (components.length === 0) {
+    return actionFailed("This modal has no input fields configured.");
+  }
 
   // Use the configured customId, or build a valid action: customId using buildCustomId
   const modalId =
