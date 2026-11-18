@@ -6,8 +6,8 @@
 
 - Repository: `no-peace/Hoho_manager`.
 - Active implementation branch: `feat/remove-legacy-dispatch-and-hardening`.
-- Latest code/test change: `63475935ac` (retired profile API regression coverage). Documentation-only synchronization commits have followed; use the active branch ref for the exact latest HEAD.
-- Recursive Git tree: **355 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
+- Latest source change: `326988a865ac12cfca75820822c08c9acff4da34` (removed the final orphaned webhook URL matcher). The latest action regression-test change is `39c8d06db686e8c8686276e8cd5744313815b75a`.
+- Recursive Git tree: **354 tracked files**. The audit ledger is `docs/REPOSITORY_AUDIT_LEDGER.md`.
 - `main` has not been changed by this implementation batch. Do not assume the changes are deployed or merged.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat absent workflow runs as a defect.
 - No npm commands, browser QA, Lighthouse, live Discord integration tests, migration execution or deployment verification were performed. The owner will run local npm checks after implementation is ready.
@@ -22,7 +22,7 @@
 - Removed webhook profile repository wiring, the repository file, shared webhook/bot profile record types, client profile CRUD APIs, and the obsolete staff permission flags `can_use_webhooks` and `can_override_profile` from the access API and client types.
 - Migration 011 already drops the `webhook_profiles` and `bot_profiles` tables. New migration 018 drops the remaining `settings.bot_profile_id`, `staff_access.can_use_webhooks` and `staff_access.can_override_profile` columns.
 - The send route explicitly rejects legacy `webhookUrl` input.
-- The legacy `send_webhook_message` action type/handler remains only as a compatibility tombstone: old saved flows receive a structured failure and cannot send. It is not exposed in the Action Builder.
+- The `send_webhook_message` runtime handler and source file have been deleted. Its identifier remains in the shared persisted-flow type only so old saved flows can still be represented; the executor now returns a structured failure for that unregistered legacy step. The editor shows a replacement instruction, and the action is absent from the server action picker.
 - Discord's interaction callback mechanism is still present. It uses the interaction token for required component/modal acknowledgements; it is not arbitrary webhook URL sending.
 
 ### 2. Remove custom bot-profile dispatch
@@ -31,7 +31,7 @@
 - Removed bot-profile selection from the settings API/repository/types and stopped initializing the legacy setting.
 - Removed the obsolete webhook/profile permission flags from staff records and API responses. Migration 018 drops the legacy setting/permission columns; migration 011 already drops the old profile tables.
 - All message, edit, channel lookup and author-enrichment paths now use the one configured server bot.
-- The legacy nullable settings schema column may remain for compatibility, but application code no longer reads or writes it.
+- Historical migrations retain the old column-creation history; migration 018 drops `settings.bot_profile_id` on upgraded databases, and current application code has no profile-selection path.
 - Sender username/avatar overrides remain unsupported and are not reintroduced.
 
 ### 3. Structured action failure handling
@@ -41,7 +41,7 @@
 - The executor classifies and logs failed steps from the metadata instead of parsing the warning emoji from user-facing content.
 - The internal `outcome` property is stripped before a response is returned to Discord.
 - Added a regression test for failure logging and callback sanitization.
-- Remaining audit item: inspect every action handler and ensure all failure branches use the structured helper rather than returning ad-hoc warning responses.
+- The initial failure-path pass is complete across the 19 current action modules. Additional fail-closed handling now covers unavailable saved actions, null Discord message/DM/thread results, empty modal definitions and variable steps missing a target name. Full caller/dependency review remains open.
 
 ### 4. Puck runtime contract
 
@@ -59,7 +59,7 @@
 - Gateway relay waits up to 2,700 ms before using its fallback callback, leaving time for the API's defer response and bounded Discord callback.
 - Migration 019 adds a shared receipt duplicate flag. Duplicate deliveries mark the database receipt before returning a defer; the original worker atomically chooses the deferred callback and later delivers the actual result as a follow-up. This coordination is database-backed rather than process-local.
 - Added a regression test for duplicate acknowledgement coordination and updated relay deadline coverage.
-- Remaining verification: execute webhook and gateway relay tests against real route/Discord callback boundaries, test process restart behavior, and verify the migration on the deployed libSQL/Turso version.
+- Remaining verification: execute interaction-callback and gateway-relay tests against real route/Discord callback boundaries, test process restart behavior, and verify the migration on the deployed libSQL/Turso version.
 
 ### 6. Gateway command authorization and startup safety
 
@@ -71,9 +71,9 @@
 
 ## Repository audit progress
 
-- The audit ledger inventories all **355** current tracked files.
+- The audit ledger inventories all **354** current tracked files.
 - The complete 23-file Bot package has been read. Findings include command authorization, gateway relay timing, startup validation and documentation corrections; fixes/tests are recorded above.
-- The 20-file server action-handler directory has received an initial failure-path pass. All explicit action error branches inspected use `actionFailed()`; full dependency/caller review remains open.
+- The 19 current server action modules have received an initial failure-path pass. Failure branches use `actionFailed()`; full caller/dependency review remains open.
 - The 13 server routes have begun a focused review. Access, authentication, configuration, design publishing, executors, health and templates were inspected; complete validation and caller tracing remains open.
 - The public health endpoint no longer queries or exposes the total user count.
 - Puck production CSS variable mapping was compared against the runtime stylesheet: every emitted layout variable is consumed by the live runtime; Desktop split ratio is passed directly to `SplitPane`.
