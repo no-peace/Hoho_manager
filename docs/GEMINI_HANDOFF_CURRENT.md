@@ -1923,20 +1923,20 @@ This section records the V13 audit/optimization plan implementation on `main`. I
 - `55777ec6ee0e0c19a2c3f784bd0881be4655ebca` — `client/src/components/ui/Field.tsx`: disable spellcheck for identifier/URL fields by default and use tabular character-counter numerals.
 
 ### Batch 5 — Studio surface token alignment and Puck defaults
-- `025ea18` — `client/src/config/puck/defaultAppLayouts.ts`: set desktop/mobile default editor surfaces to `#10131A`.
-- `c3422b6` — `client/src/utils/puckAppLayout.ts`: align editor-surface fallback tokens to `#10131A`.
-- `e45bbd2` — `client/src/components/layout/StudioLayout.tsx`: align message-mode surfaces and badge treatment.
-- `da7e286` — `client/src/components/editor/MessageEditor/ContentTab.tsx`: align thread editor field styling and identifier input behavior.
-- `715a4e5` — `client/src/components/editor/MessageEditor/ComponentsTab.tsx`: align thumbnail URL input styling and spellcheck behavior.
-- `6711e21` — `client/src/components/send/BotDispatchModal.tsx`: align dispatch target-message ID input styling and autocomplete behavior.
-- `04ae49b` — `client/src/components/layout/Sidebar.tsx`: align Studio sidebar header and tab-bar surfaces.
+- `025ea18f274e94e3ae5789bf1b49c86ceda6d701` — `client/src/config/puck/defaultAppLayouts.ts`: set desktop/mobile default editor surfaces to `#10131A`.
+- `c3422b6fc03e0a6b34434fd91fc348217a78752e` — `client/src/utils/puckAppLayout.ts`: align editor-surface fallback tokens to `#10131A`.
+- `e45bbd2ee7658c83b10f0cc8f1c1c3b59a8c96f8` — `client/src/components/layout/StudioLayout.tsx`: align message-mode surfaces and badge treatment.
+- `da7e2864e32ecc3fcfe937149ef42240463cecd7` — `client/src/components/editor/MessageEditor/ContentTab.tsx`: align thread editor field styling and identifier input behavior.
+- `715a4e5073c2c30f104dd780eef0a918e9e59eb8` — `client/src/components/editor/MessageEditor/ComponentsTab.tsx`: align thumbnail URL input styling and spellcheck behavior.
+- `6711e219b1ae985423c3cf43006e8403a7c4a319` — `client/src/components/send/BotDispatchModal.tsx`: align dispatch target-message ID input styling and autocomplete behavior.
+- `04ae49bf890063400e344328007311358a32d416` — `client/src/components/layout/Sidebar.tsx`: align Studio sidebar header and tab-bar surfaces.
 - Existing Discord preview colors and the Golden Layout structure were intentionally preserved.
 
 ### Batch 6 — Studio UX polish and accessible controls
-- `9f06143` — `client/src/components/layout/Header.tsx`: add the active template/scratch-draft status pill with a Backups shortcut.
-- `0a5424c` — `client/src/components/layout/StudioLayout.tsx`: warn before unloading when the editor contains message content, embeds, components, or attachments.
-- `50c62d3` — `client/src/components/editor/MessageEditor/index.tsx`: add a card character summary, accessible labels, and visible keyboard-focus rings to controls.
-- `6cbdffe` — `client/src/components/layout/LoginScreen.tsx`: allow normal text selection in the login screen.
+- `9f06143c5a0ba972c03e56f5229a81d9ca6c6454` — `client/src/components/layout/Header.tsx`: add the active template/scratch-draft status pill with a Backups shortcut.
+- `0a5424cadffc1e520c6f52fa83525e5b4f9ce829` — `client/src/components/layout/StudioLayout.tsx`: warn before unloading when the editor contains message content, embeds, components, or attachments.
+- `50c62d3e1ccc95722454145b5fe810cd13cd1981` — `client/src/components/editor/MessageEditor/index.tsx`: add a card character summary, accessible labels, and visible keyboard-focus rings to controls.
+- `6cbdffe0e417ec742da9fdfeb7dece440f095b66` — `client/src/components/layout/LoginScreen.tsx`: allow normal text selection in the login screen.
 
 ### Batch 7 — Regression test updates and handoff
 - `77a13f752df6b18f21eac677438379ee73404134` — `server/tests/messageTrackerService.performance.test.ts`: assert unchanged payloads record both check timestamps in memory and do not call the repository method that performs the tracked-message SQL `UPDATE`.
