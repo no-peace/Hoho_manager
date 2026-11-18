@@ -886,3 +886,12 @@ Verification:
 - Public documentation uses a static catalogue with memoized category/search filtering; page styles constrain horizontal overflow on narrow screens. The reviewed logo/header/error-boundary components are small wrappers. No repeatable correctness or performance defect justified a runtime edit; no speculative memoization, virtualization, or cache was introduced.
 - **No runtime code changes in F29.** Client source/test review count advanced from 106/166 to 149/166; combined repository inventory review count advanced by 43. Test files were source-reviewed only and were not executed.
 - **Verification not performed:** no tests, typecheck, build, browser profiling, Lighthouse, or runtime benchmark. GitHub Actions remain disabled by owner instruction; the local Terminal service was previously unavailable. No production latency or rendering-performance claim is made.
+
+- [x] `client/src/components/actions/__tests__/RoleSelect.test.tsx`
+- [x] `client/src/components/preview/__tests__/Markdown.mentions.test.tsx`
+
+
+### F29 inventory reconciliation addendum
+
+- Reconciled two client regression tests that existed in the repository tree but were absent from the checklist: `RoleSelect.test.tsx` and `Markdown.mentions.test.tsx`. Reviewed each test and the corresponding RoleSelect/member-mention implementation. RoleSelect relies on the guild-scoped shared role cache and its regression test asserts one request for two controls; Markdown user mentions use a guild/user-keyed bounded 500-entry, five-minute LRU cache with in-flight request coalescing and a focused lookup test.
+- These tests confirm existing coalescing and cache bounds at source level; no runtime changes were justified. Tests were not executed.
