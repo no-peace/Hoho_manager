@@ -309,4 +309,31 @@ describe("MessageEditor", () => {
     expect(screen.getByText("Text #1")).toBeTruthy();
   });
 
+  it("does not rerender the inspector when a different message is edited", () => {
+    const first = { content: "Pinned inspector message", embeds: [], components: [], flags: 0 } as any;
+    const second = { content: "Other message", embeds: [], components: [], flags: 0 } as any;
+    useMessageStore.setState({
+      data: second,
+      messages: [first, second],
+      activeMessageIndex: 1,
+      selection: { kind: "message", index: 0 },
+      attachedFiles: [],
+    });
+
+    let inspectorRenders = 0;
+    render(
+      <Profiler id="property-panel" onRender={() => { inspectorRenders += 1; }}>
+        <PropertyPanel />
+      </Profiler>,
+    );
+
+    inspectorRenders = 0;
+    act(() => {
+      useMessageStore.getState().setField("content", "Updated other message");
+    });
+
+    expect(inspectorRenders).toBe(0);
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("Pinned inspector message");
+  });
+
 });
