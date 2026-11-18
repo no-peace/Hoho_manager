@@ -5,6 +5,7 @@ import { sendLimiter } from "../middleware/rateLimit.js";
 import { multipartParser, type UploadedFile } from "../middleware/multipart.js";
 import { actionRepository } from "../repositories/actionRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
+import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
@@ -129,6 +130,25 @@ router.post(
         throw ApiError.forbidden("You cannot use a private template owned by another user.");
       }
       trackingTemplateId = parsedTemplateId;
+    }
+
+    const requestedExploitName =
+      typeof body.exploitName === "string" ? body.exploitName.trim() : "";
+    if (requestedExploitName) {
+      const customExecutor =
+        (await customExecutorRepository.findByTitle(requestedExploitName)) ??
+        (await customExecutorRepository.findById(requestedExploitName));
+      if (customExecutor?.template_id) {
+        const customTemplate = await templateRepository.findById(customExecutor.template_id);
+        if (!customTemplate) throw ApiError.notFound("Custom executor template not found.");
+        if (!canAccessTemplate(customTemplate, req.user?.id, Boolean(staffCtx?.isAdmin))) {
+          throw ApiError.forbidden("You cannot use a private custom-executor template owned by another user.");
+        }
+        if (trackingTemplateId !== null && trackingTemplateId !== customExecutor.template_id) {
+          throw ApiError.badRequest("The selected template does not match the configured custom executor.");
+        }
+        trackingTemplateId = customExecutor.template_id;
+      }
     }
 
     const uploadedFiles: UploadedFile[] = (req as any).uploadedFiles || [];
@@ -431,6 +451,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
           channelId: destinationChannelId,
           messageId: sentId,
           templateId: trackingTemplateId,
+          templateAccessVerified: trackingTemplateId !== null ? true : undefined,
           exploitName: typeof req.body?.exploitName === "string" ? req.body.exploitName : null,
           authorUserId: senderDiscordId || null,
           rawPayload: uninterpolatedCleanMsg,

@@ -5,6 +5,7 @@ export interface TrackedMessageRecord {
   channel_id: string;
   message_id: string;
   template_id: number | null;
+  template_access_verified: number;
   exploit_name: string | null;
   author_user_id: string | null;
   raw_payload: string | null;
@@ -20,6 +21,7 @@ export interface UpsertTrackedMessageInput {
   channel_id: string;
   message_id: string;
   template_id?: number | null;
+  template_access_verified?: number;
   exploit_name?: string | null;
   author_user_id?: string | null;
   raw_payload?: string | null;
@@ -40,6 +42,7 @@ export const trackedMessageRepository = {
       await db.run(
         `UPDATE tracked_messages
             SET template_id = @template_id,
+                template_access_verified = @template_access_verified,
                 exploit_name = @exploit_name,
                 author_user_id = @author_user_id,
                 raw_payload = @raw_payload,
@@ -52,6 +55,7 @@ export const trackedMessageRepository = {
         {
           id: existing.id,
           template_id: data.template_id ?? existing.template_id,
+          template_access_verified: data.template_access_verified ?? existing.template_access_verified ?? 0,
           exploit_name: data.exploit_name ?? existing.exploit_name,
           author_user_id: data.author_user_id ?? existing.author_user_id,
           raw_payload: data.raw_payload !== undefined ? data.raw_payload : existing.raw_payload,
@@ -64,6 +68,7 @@ export const trackedMessageRepository = {
       return {
         ...existing,
         template_id: data.template_id ?? existing.template_id,
+        template_access_verified: data.template_access_verified ?? existing.template_access_verified ?? 0,
         exploit_name: data.exploit_name ?? existing.exploit_name,
         author_user_id: data.author_user_id ?? existing.author_user_id,
         raw_payload: data.raw_payload !== undefined ? data.raw_payload : existing.raw_payload,
@@ -77,14 +82,15 @@ export const trackedMessageRepository = {
 
     const result = await db.run(
       `INSERT INTO tracked_messages (
-         channel_id, message_id, template_id, exploit_name, author_user_id, raw_payload, last_payload_hash, name, expires_at, created_at, updated_at, last_checked_at
+         channel_id, message_id, template_id, template_access_verified, exploit_name, author_user_id, raw_payload, last_payload_hash, name, expires_at, created_at, updated_at, last_checked_at
        ) VALUES (
-         @channel_id, @message_id, @template_id, @exploit_name, @author_user_id, @raw_payload, @last_payload_hash, @name, @expires_at, @now, @now, @now
+         @channel_id, @message_id, @template_id, @template_access_verified, @exploit_name, @author_user_id, @raw_payload, @last_payload_hash, @name, @expires_at, @now, @now, @now
        )`,
       {
         channel_id: data.channel_id,
         message_id: data.message_id,
         template_id: data.template_id ?? null,
+        template_access_verified: data.template_access_verified ?? 0,
         exploit_name: data.exploit_name ?? null,
         author_user_id: data.author_user_id ?? null,
         raw_payload: data.raw_payload ?? null,
@@ -100,6 +106,7 @@ export const trackedMessageRepository = {
       channel_id: data.channel_id,
       message_id: data.message_id,
       template_id: data.template_id ?? null,
+      template_access_verified: data.template_access_verified ?? 0,
       exploit_name: data.exploit_name ?? null,
       author_user_id: data.author_user_id ?? null,
       raw_payload: data.raw_payload ?? null,

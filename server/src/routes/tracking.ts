@@ -3,6 +3,7 @@ import { attachUser, requireAdminKey } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { trackedMessageRepository } from "../repositories/trackedMessageRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
+import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
 import { syncTrackedMessages, trackMessage } from "../services/messageTrackerService.js";
 import * as discord from "../services/discordService.js";
 import { asyncHandler, ApiError } from "../utils/errors.js";
@@ -228,6 +229,23 @@ router.post(
       }
     }
 
+    if (exploitName) {
+      const customExecutor =
+        (await customExecutorRepository.findByTitle(exploitName)) ??
+        (await customExecutorRepository.findById(exploitName));
+      if (customExecutor?.template_id) {
+        const customTemplate = await templateRepository.findById(customExecutor.template_id);
+        if (!customTemplate) throw ApiError.notFound("Custom executor template not found");
+        if (!canAccessTemplate(customTemplate, req.user?.id, Boolean(req.staffContext?.isAdmin))) {
+          throw ApiError.forbidden("You cannot track a private custom-executor template owned by another user");
+        }
+        if (templateId !== null && templateId !== customExecutor.template_id) {
+          throw ApiError.badRequest("The selected template does not match the configured custom executor");
+        }
+        templateId = customExecutor.template_id;
+      }
+    }
+
     const token = await discord.resolveBotToken(null);
     const bot = await discord.getBotIdentity(token);
     if (!bot?.id) {
@@ -254,6 +272,7 @@ router.post(
       channelId,
       messageId,
       templateId,
+      templateAccessVerified: templateId !== null ? true : undefined,
       exploitName: typeof exploitName === "string" ? exploitName : null,
       authorUserId: resolveAuthenticatedActorDiscordId(
         staffCtx?.staffId,

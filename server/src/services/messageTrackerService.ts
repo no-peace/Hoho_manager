@@ -3,6 +3,7 @@ import type { DiscordMessagePayload } from "@dmb/shared";
 import { trackedMessageRepository, type TrackedMessageRecord } from "../repositories/trackedMessageRepository.js";
 import { templateRepository } from "../repositories/templateRepository.js";
 import { customExecutorRepository } from "../repositories/customExecutorRepository.js";
+import { canUseTrackedTemplate } from "../utils/templateAccess.js";
 import { interpolateWeaoPlaceholders } from "./weaoService.js";
 import { resolveAuthorPlaceholders } from "./authorService.js";
 import * as discord from "./discordService.js";
@@ -18,6 +19,7 @@ export interface TrackMessageParams {
   channelId: string;
   messageId: string;
   templateId?: number | null;
+  templateAccessVerified?: boolean;
   exploitName?: string | null;
   authorUserId?: string | null;
   rawPayload?: DiscordMessagePayload | null;
@@ -39,6 +41,8 @@ export const trackMessage = async (
       channel_id: params.channelId,
       message_id: params.messageId,
       template_id: params.templateId ?? null,
+      template_access_verified:
+        params.templateAccessVerified === undefined ? undefined : params.templateAccessVerified ? 1 : 0,
       exploit_name: params.exploitName ?? null,
       author_user_id: params.authorUserId ?? null,
       raw_payload: rawToStore,
@@ -75,22 +79,30 @@ export const syncTrackedMessages = async (): Promise<SyncResult> => {
       // 1. Resolve base payload from template, custom executor, or stored raw_payload
       if (record.template_id) {
         const tpl = await templateRepository.findById(record.template_id);
-        const rawDoc = tpl?.data as any;
-        basePayload =
-          rawDoc?.messages?.[0]?.data?.data ??
-          rawDoc?.messages?.[0]?.data ??
-          rawDoc ??
-          null;
-      } else if (record.exploit_name) {
-        const customExec = await customExecutorRepository.findByTitle(record.exploit_name);
-        if (customExec?.template_id) {
-          const tpl = await templateRepository.findById(customExec.template_id);
-          const rawDoc = tpl?.data as any;
+        if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
+          const rawDoc = tpl.data as any;
           basePayload =
             rawDoc?.messages?.[0]?.data?.data ??
             rawDoc?.messages?.[0]?.data ??
             rawDoc ??
             null;
+        } else if (tpl) {
+          log.warn(`Skipping unverified private template ${tpl.id} on legacy tracked message ${record.message_id}`);
+        }
+      } else if (record.exploit_name) {
+        const customExec = await customExecutorRepository.findByTitle(record.exploit_name);
+        if (customExec?.template_id) {
+          const tpl = await templateRepository.findById(customExec.template_id);
+          if (tpl && canUseTrackedTemplate(tpl, record.template_access_verified)) {
+            const rawDoc = tpl.data as any;
+            basePayload =
+              rawDoc?.messages?.[0]?.data?.data ??
+              rawDoc?.messages?.[0]?.data ??
+              rawDoc ??
+              null;
+          } else if (tpl) {
+            log.warn(`Skipping unverified private custom-executor template ${tpl.id} on tracked message ${record.message_id}`);
+          }
         } else if (customExec?.custom_payload) {
           try {
             basePayload = JSON.parse(customExec.custom_payload);

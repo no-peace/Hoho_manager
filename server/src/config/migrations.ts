@@ -449,4 +449,13 @@ export const migrations: readonly Migration[] = [
         ON design_access_users(is_active, can_publish_server_theme);
     `,
   },
+  {
+    id: "018_tracked_template_access_verification",
+    sql: `
+      -- Existing tracked records are unverified. Public templates remain usable,
+      -- but private templates require a successful access check at track time.
+      ALTER TABLE tracked_messages
+        ADD COLUMN template_access_verified INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];
