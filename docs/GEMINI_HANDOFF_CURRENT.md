@@ -1617,3 +1617,12 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Added runtime validation for template action definitions (25 flows, 20 steps per flow, 500 total steps, 128 KiB config, custom-ID and execution-order checks) and regression tests.
 - Remaining planned items: structured action-failure metadata; reconcile the still-registered `send_webhook_message` handler with persisted-flow compatibility; verify whether optional profile IDs are truly disabled in `resolveBotToken`.
 - No tests, typecheck, build, browser QA or live Discord calls were executed.
+
+
+## Structured action-failure follow-up — 2026-11-18
+
+- Replaced string-prefix failure detection in `actionExecutor.ts` with an internal `failed: true` marker returned by `actionFailed()`.
+- The executor now records failed status from structured metadata and strips the internal marker before returning the Discord interaction response. The public response payload remains only `type` and `data`.
+- Added regression coverage that a disabled legacy webhook action is logged as failed while the internal marker is not exposed in the Discord response.
+- Verified that `send_webhook_message` is retained only as a disabled compatibility handler (no webhook delivery call), and that `resolveBotToken` ignores legacy profile IDs and always selects the configured server bot token.
+- No tests were executed.

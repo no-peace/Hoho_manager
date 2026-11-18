@@ -22,6 +22,8 @@ import type { Logger } from "../utils/logger.js";
 export interface ActionResponse {
   type: number;
   data?: Record<string, unknown>;
+  /** Internal execution metadata. Always stripped before sending to Discord. */
+  failed?: boolean;
 }
 
 /**

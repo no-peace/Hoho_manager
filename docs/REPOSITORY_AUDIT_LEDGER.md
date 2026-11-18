@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 159 | In progress (1/159) |
-| Server | 133 | In progress (40/133) |
+| Server | 133 | In progress (44/133) |
 | Bot | 23 | Not started |
 | Shared | 10 | Source review complete |
 | Documentation | 7 | Not started |
@@ -77,9 +77,9 @@ Findings and changes:
 2. **Fixed:** Template creation and updates previously wrote template documents, metadata and action definitions in separate operations. These writes now share one database transaction; nested action replacement joins the active transaction.
 3. **Fixed:** Template action definitions were accepted as an unchecked TypeScript cast. A runtime parser now enforces object shape, valid action custom-ID prefix/length, action type string bounds, object config, 25-flow maximum, 20 steps per flow, execution order 0–19, 500 total steps and 128 KiB aggregate config.
 4. Added focused validation tests for valid normalization, malformed records, flow/step limits, configuration size and execution-order bounds. Tests were not run.
-5. **Open product gap:** `actionExecutor.ts` still classifies failed actions by checking whether response content starts with a warning emoji. Replace this with structured failure metadata; this remains a known planned item.
-6. **Open compatibility question:** `actions/index.ts` still registers `send_webhook_message`, while the public action picker hides it and the send route rejects direct `webhookUrl` sending. Trace existing persisted flows and the current handler before removing or restoring anything.
-7. **Open compatibility question:** Discord routes still parse and pass optional profile IDs. Confirm the current `resolveBotToken` behavior before declaring custom bot-profile dispatch disabled.
+5. **Fixed:** `actionExecutor.ts` now uses an internal `failed` response flag instead of matching warning-emoji text. The flag is stripped before the response reaches Discord, and the action log records the structured failure state. Regression coverage was added.
+6. **Verified disabled:** `send_webhook_message` remains registered only so legacy persisted flows receive an explicit disabled response. The handler does not call webhook delivery, and the public action picker hides it. Keep the compatibility behavior unless the persisted-flow policy changes.
+7. **Verified disabled:** `resolveBotToken` intentionally ignores legacy profile IDs and returns only the configured server bot token. Route parameters are retained for compatibility but cannot select a custom token.
 8. Template ownership checks remain in the service/repository path. Action lookups for template-backed messages are constrained by the tracked message's template ID.
 
 ## File-by-file inventory
@@ -293,7 +293,7 @@ Findings and changes:
 - [ ] `server/src/actions/modalSubmit.ts`
 - [ ] `server/src/actions/openModal.ts`
 - [ ] `server/src/actions/removeRole.ts`
-- [ ] `server/src/actions/responses.ts`
+- [x] `server/src/actions/responses.ts` — inspected; runtime verification not performed
 - [ ] `server/src/actions/roleSafety.ts`
 - [ ] `server/src/actions/sendDm.ts`
 - [ ] `server/src/actions/sendEphemeralReply.ts`
@@ -302,7 +302,7 @@ Findings and changes:
 - [ ] `server/src/actions/setVariable.ts`
 - [ ] `server/src/actions/stop.ts`
 - [ ] `server/src/actions/toggleRole.ts`
-- [ ] `server/src/actions/types.ts`
+- [x] `server/src/actions/types.ts` — inspected; runtime verification not performed
 - [ ] `server/src/actions/wait.ts`
 - [x] `server/src/app.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/database.ts` — inspected; runtime verification not performed
@@ -346,7 +346,7 @@ Findings and changes:
 - [x] `server/src/routes/templates.ts` — inspected; runtime verification not performed
 - [ ] `server/src/routes/tracking.ts`
 - [x] `server/src/routes/weao.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/actionExecutor.ts`
+- [x] `server/src/services/actionExecutor.ts` — inspected; runtime verification not performed
 - [ ] `server/src/services/auditLog.ts`
 - [x] `server/src/services/authorService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/branches.ts` — inspected; runtime verification not performed
@@ -370,7 +370,7 @@ Findings and changes:
 - [x] `server/src/utils/urlAttachments.ts` — inspected; runtime verification not performed
 - [ ] `server/src/utils/validation.ts`
 - [x] `server/tests/accessSecurity.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/actions.test.ts`
+- [x] `server/tests/actions.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/adversarial_streaming_memory.test.ts`
 - [ ] `server/tests/appLayoutPublishing.test.ts`
 - [ ] `server/tests/authorService.test.ts`

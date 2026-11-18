@@ -20,7 +20,7 @@ const log = logger.child("actions");
 const MAX_BRANCH_DEPTH = 10;
 
 export interface ExecuteResult {
-  response: ActionResponse | undefined;
+  response: Omit<ActionResponse, "failed"> | undefined;
   handled: boolean;
   type: string | null;
 }
@@ -237,9 +237,7 @@ export const executeCustomId = async (
     logger: log,
   };
 
-  const isErrorResponse = (res: ActionResponse | undefined): boolean =>
-    typeof (res?.data as any)?.content === "string" &&
-    ((res?.data as any).content as string).startsWith("\u26a0\ufe0f");
+  const isFailedResponse = (res: ActionResponse | undefined): boolean => res?.failed === true;
 
   const logStep = async (
     step: ExecutableStep,
@@ -253,7 +251,7 @@ export const executeCustomId = async (
       userId,
       guildId: interaction.guild_id ?? null,
       channelId: interaction.channel_id ?? null,
-      status: failed || isErrorResponse(response) ? "failed" : "success",
+      status: failed || isFailedResponse(response) ? "failed" : "success",
       response: { type: step.type, ms: Date.now() - startedAt },
     });
   };
@@ -292,7 +290,7 @@ export const executeCustomId = async (
           variables,
         );
         const nested = await runSteps(branch, depth + 1);
-        await logStep(step, nested, started, isErrorResponse(nested));
+        await logStep(step, nested, started, isFailedResponse(nested));
         if (nested) lastResponse = nested;
         if (halted) return lastResponse;
         continue;
@@ -315,7 +313,7 @@ export const executeCustomId = async (
         response = actionFailed("Something went wrong running that action.");
       }
 
-      const failed = threw || isErrorResponse(response);
+      const failed = threw || isFailedResponse(response);
       await logStep(step, response, started, failed);
 
       if (step.type === "stop") {
@@ -337,7 +335,11 @@ export const executeCustomId = async (
   };
 
   const response = await runSteps(steps, 0);
-  return { response, handled: true, type: actionType };
+  if (!response) return { response: undefined, handled: true, type: actionType };
+
+  // Failure metadata is internal to the executor and must never reach Discord.
+  const { failed: _failed, ...discordResponse } = response;
+  return { response: discordResponse, handled: true, type: actionType };
 };
 
 export default { executeCustomId };

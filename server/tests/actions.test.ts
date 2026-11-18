@@ -144,6 +144,28 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       );
     });
 
+    it("classifies action failures with metadata and strips it from the Discord response", async () => {
+      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([
+        {
+          id: 7,
+          action_type: "send_webhook_message",
+          config: { webhookUrl: "https://discord.com/api/webhooks/1/token", content: "test" },
+        } as any,
+      ]);
+      const logSpy = vi.spyOn(actionRepository, "log").mockResolvedValue(undefined as any);
+      const interaction: DiscordInteraction = {
+        ...mockContext.interaction,
+        message: { id: "message_failure_test" },
+        data: { custom_id: "action:webhook_failure", component_type: 2 },
+      };
+
+      const result = await executeCustomId("action:webhook_failure", interaction);
+
+      expect(result.response?.data?.content).toContain("disabled");
+      expect(result.response).not.toHaveProperty("failed");
+      expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
+    });
+
     it("does not execute an unregistered action custom ID from a component message", async () => {
       vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([]);
       const interaction: DiscordInteraction = {
@@ -505,6 +527,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
         expect(fail.type).toBe(InteractionResponseType.ChannelMessageWithSource);
         expect(fail.data?.content).toContain("Something went wrong");
         expect(fail.data?.flags).toBe(64);
+        expect(fail.failed).toBe(true);
 
         const ack = acknowledge();
         expect(ack.type).toBe(InteractionResponseType.DeferredUpdateMessage);
