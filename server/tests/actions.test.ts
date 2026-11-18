@@ -28,7 +28,7 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
   };
 });
 
-describe("server/actions: Action Execution Engine & 16 Handlers Suite", () => {
+describe("server/actions: Action Execution Engine & Registered Handlers", () => {
   let mockDiscordApi: DiscordApi;
   let mockContext: ActionContext;
 
