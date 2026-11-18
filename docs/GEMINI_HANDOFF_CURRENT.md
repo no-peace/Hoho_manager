@@ -1719,3 +1719,13 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Removed direct webhook delivery, profile-aware `sendChannelMessage(profileId)` and webhook-profile repository access from the action handler context. The legacy `send_webhook_message` handler remains a disabled failure stub for old persisted flows and is hidden from the action picker.
 - Reviewed action execution, stored-flow binding, modal/component routing, duplicate interaction receipts and acknowledgement timing.
 - Added role-safety regression tests. No tests, typecheck, build or live Discord interactions were run.
+
+
+## Server performance audit — Batch F14 (2026-11-18)
+
+- Reviewed all server benchmark harness files and the guild-variable, maintenance, settings, audit-log and settings-repository paths.
+- Found that the settings cache had no entry limit and did not cache missing-guild defaults. Requests spanning many distinct guild IDs could retain an unbounded number of cache entries; repeated lookups for unconfigured guilds repeatedly hit SQLite/Turso.
+- Implemented a 500-entry LRU cache, recency refresh on hits, and 30-second negative caching for missing guild settings. Settings updates write through to the same cache.
+- Added `server/tests/settingsService.test.ts` for cache hits, negative caching, TTL expiry, LRU eviction and update write-through.
+- Reviewed benchmark methodology, recursive Guild variable expansion, chunked retention sweeps and fire-and-forget audit logging. No further optimization was applied without baseline measurements or evidence of a production bottleneck.
+- Verification: tests added but not executed; no typecheck, build, benchmark, database query plan, browser QA or live Discord request was run.

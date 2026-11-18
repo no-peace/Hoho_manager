@@ -8,6 +8,19 @@ const log = logger.child("settingsService");
 // In-memory cache for fast lookups with instant invalidation on update
 const settingsCache = new Map<string, { record: SettingsRecord; cachedAt: number }>();
 const CACHE_TTL_MS = 30_000;
+const MAX_SETTINGS_CACHE_ENTRIES = 500;
+
+const cacheSettings = (guildId: string, record: SettingsRecord): void => {
+  // Refresh insertion order so frequently used guilds stay in the bounded cache.
+  settingsCache.delete(guildId);
+  settingsCache.set(guildId, { record, cachedAt: Date.now() });
+
+  while (settingsCache.size > MAX_SETTINGS_CACHE_ENTRIES) {
+    const oldestGuildId = settingsCache.keys().next().value;
+    if (oldestGuildId === undefined) break;
+    settingsCache.delete(oldestGuildId);
+  }
+};
 
 export const clearSettingsCache = (): void => {
   settingsCache.clear();
@@ -31,30 +44,33 @@ export const settingsService = {
 
     const cached = settingsCache.get(targetGuildId);
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+      // Touch the entry so frequently accessed guilds are not evicted as stale LRU entries.
+      cacheSettings(targetGuildId, cached.record);
       return cached.record;
     }
+    if (cached) settingsCache.delete(targetGuildId);
 
     const row = await settingsRepository.findByGuildId(targetGuildId);
     if (row) {
-      settingsCache.set(targetGuildId, { record: row, cachedAt: Date.now() });
+      cacheSettings(targetGuildId, row);
       return row;
     }
 
-    if (targetGuildId === "__global__") {
-      const fallback = getGlobalFallback();
-      return fallback;
-    }
+    const fallback: SettingsRecord = targetGuildId === "__global__"
+      ? getGlobalFallback()
+      : {
+          guild_id: targetGuildId,
+          log_channel_id: null,
+          head_admin_ids: [],
+          bot_profile_id: null,
+          extra_settings: {},
+          created_at: 0,
+          updated_at: 0,
+        };
 
-    // Guild-specific row not found: return empty guild record initialized with defaults
-    const fallback: SettingsRecord = {
-      guild_id: targetGuildId,
-      log_channel_id: null,
-      head_admin_ids: [],
-      bot_profile_id: null,
-      extra_settings: {},
-      created_at: 0,
-      updated_at: 0,
-    };
+    // Cache misses too: repeated lookups for an unconfigured guild should not
+    // hit SQLite/Turso on every request. The short TTL bounds stale defaults.
+    cacheSettings(targetGuildId, fallback);
     return fallback;
   },
 
@@ -63,7 +79,7 @@ export const settingsService = {
     log.info(`Updating settings for target: ${targetGuildId}`);
 
     const updated = await settingsRepository.upsert(targetGuildId, data);
-    settingsCache.set(targetGuildId, { record: updated, cachedAt: Date.now() });
+    cacheSettings(targetGuildId, updated);
     return updated;
   },
 

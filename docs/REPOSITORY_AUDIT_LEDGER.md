@@ -17,7 +17,7 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 140 | In progress (87/140) |
+| Server | 141 | In progress (101/141) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -234,6 +234,35 @@ Findings and changes:
 4. Reviewed component/modal interaction execution: message-component actions require a stored message-bound flow, duplicate interactions are claimed idempotently, and the interaction handler defers before the 2.2-second acknowledgement deadline.
 5. Added regression tests for dangerous role permission bits, managed roles and unverifiable permissions. No tests were run.
 
+## Batch F14 — Server performance and settings-cache audit (2026-11-18)
+
+**Status:** Source inspection completed for 14 existing files; one bounded-cache improvement and focused tests added. Tests/typecheck/build were not executed.
+
+Files reviewed:
+- Benchmark harness: `server/benchmarks/runner.ts`, all four suites, `types.ts`, `reporter.ts`, `stats.ts`
+- `server/src/services/guildVariables.ts`
+- `server/src/services/maintenanceService.ts`
+- `server/src/services/settingsService.ts`
+- `server/src/services/auditLog.ts`
+- `server/src/repositories/settingsRepository.ts`
+- `server/src/routes/settings.ts`
+- `server/tests/guildVariables.test.ts`
+- `server/tests/challenger_retention_maintenance.test.ts`
+- `server/src/config/database.ts`
+
+Findings and decisions:
+1. **Fixed:** The settings cache had no entry limit and did not cache missing-guild defaults. Requests for many distinct guild IDs could retain an unbounded number of entries, while repeated lookups for unconfigured guilds repeatedly queried SQLite/Turso. The cache now uses a 500-entry LRU bound, refreshes recency on hits, and caches fallback records for the existing 30-second TTL.
+2. Added `server/tests/settingsService.test.ts` coverage for cache hits, negative caching, TTL expiry, LRU eviction and update write-through. Tests were not run.
+3. **Performance review:** The benchmark harness currently records one timer pair per sample and sorts a copy of all samples for percentiles. This is acceptable at its current 1k–10k iteration scale; avoid optimizing the benchmark itself before collecting baseline measurements.
+4. **Performance review:** `buildGuildVariables` serializes nested values and recursively exposes object/array paths. This is potentially expensive for very large arbitrary objects, but the production input is a Discord Guild payload with a bounded schema. No speculative traversal cap or lossy output change was made.
+5. **Performance/reliability review:** Maintenance deletes are chunked and yield between full batches; retain this to avoid monopolizing the event loop. Query performance still depends on indexes in the migration catalog and should be measured before changing SQL.
+6. **Audit-log observation:** Each audit event performs settings/config lookups before dispatching a Discord REST request. Settings caching now bounds memory and caches misses; delivery concurrency/rate-limit handling remains a separate item to review against actual event volume and Discord response semantics.
+7. The settings route is Head Admin protected; no public unauthenticated settings-cache amplification path was confirmed in the reviewed route.
+
+Verification:
+- Source review and regression test additions only.
+- No tests, typecheck, build, benchmark run, database query plan, browser QA or live Discord API call was executed.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -437,14 +466,14 @@ Findings and changes:
 - [x] `server/tests/actorIdentity.test.ts` — inspected; runtime verification not performed
 - [x] `server/.env.example` — inspected; runtime verification not performed
 - [x] `server/Dockerfile` — inspected; runtime verification not performed
-- [ ] `server/benchmarks/runner.ts`
-- [ ] `server/benchmarks/suites/suite1_flow_latency.ts`
-- [ ] `server/benchmarks/suites/suite2_mention_scrubber.ts`
-- [ ] `server/benchmarks/suites/suite3_interpolation.ts`
-- [ ] `server/benchmarks/suites/suite4_memory_retention.ts`
-- [ ] `server/benchmarks/types.ts`
-- [ ] `server/benchmarks/utils/reporter.ts`
-- [ ] `server/benchmarks/utils/stats.ts`
+- [x] `server/benchmarks/runner.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/suites/suite1_flow_latency.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/suites/suite2_mention_scrubber.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/suites/suite3_interpolation.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/suites/suite4_memory_retention.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/types.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/utils/reporter.ts` — inspected; runtime verification not performed
+- [x] `server/benchmarks/utils/stats.ts` — inspected; runtime verification not performed
 - [x] `server/package.json` — inspected; runtime verification not performed
 - [x] `server/src/actions/addRole.ts` — inspected; runtime verification not performed
 - [x] `server/src/actions/check.ts` — inspected; runtime verification not performed
@@ -490,7 +519,7 @@ Findings and changes:
 - [ ] `server/src/repositories/profileRepository.ts`
 - [x] `server/src/repositories/sessionRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/sessionRevocationRepository.ts` — inspected; runtime verification not performed
-- [ ] `server/src/repositories/settingsRepository.ts`
+- [x] `server/src/repositories/settingsRepository.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/staffRepository.ts`
 - [x] `server/src/repositories/templateRepository.ts` — inspected; runtime verification not performed
 - [x] `server/src/repositories/trackedMessageRepository.ts` — inspected; runtime verification not performed
@@ -509,15 +538,15 @@ Findings and changes:
 - [x] `server/src/routes/tracking.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/weao.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/actionExecutor.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/auditLog.ts`
+- [x] `server/src/services/auditLog.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/authorService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/branches.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/discordService.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/guildVariables.ts`
+- [x] `server/src/services/guildVariables.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/interactionHandler.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/maintenanceService.ts`
+- [x] `server/src/services/maintenanceService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/messageTrackerService.ts` — inspected; runtime verification not performed
-- [ ] `server/src/services/settingsService.ts`
+- [x] `server/src/services/settingsService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/templateService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/variableInterpolation.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/weaoService.ts` — inspected and fixed; runtime verification not performed
@@ -548,7 +577,7 @@ Findings and changes:
 - [x] `server/tests/environmentMode.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/errorHandler.security.test.ts`
 - [ ] `server/tests/flowRepository.test.ts`
-- [ ] `server/tests/guildVariables.test.ts`
+- [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/interactionMemory.test.ts`
 - [ ] `server/tests/m3_challenger2_retention_cache.test.ts`
 - [ ] `server/tests/middleware.test.ts`

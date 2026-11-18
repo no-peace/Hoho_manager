@@ -3,9 +3,9 @@
 > This section supersedes all historical agent statuses, branch assignments and directives below. The old sections are retained as audit history only; they are not active instructions.
 
 - Repository: `no-peace/Hoho_manager`; controlling branch: `main`.
-- Current source/audit baseline before this implementation commit: `6e8019723935ecf75450f1c5a6787a4985b8712e`.
+- Current source/audit baseline before this implementation commit: `24a9f22fbdd5489f411bad8686c9e83f7d56c8e5`.
 - Owner instruction: work directly on `main`; do not create a new branch or pull request.
-- Current tracked tree: 377 files across 66 directories.
+- Current tracked tree: 378 files across 66 directories.
 - Parts A, B and C are integrated into main. Part D/E theme, Docs and Settings changes are also integrated. Their source presence is not proof of runtime verification.
 - GitHub Actions are intentionally disabled by the owner. Do not enable Actions or use missing workflow runs as a blocker.
 - Do not run `npm run typecheck`, `npm test` or `npm run build` until the owner asks; tests may be inspected/updated but must be reported as not executed.
@@ -13,13 +13,14 @@
 - Preserve the owner-reported mobile Lighthouse Performance baseline of 97; no speculative optimization.
 - CVE-2026-112366 is mitigated in source by the temporary private fork at `vendor/picomatch`, based on upstream PR #262 commit `3222059ac27492d9c0147fee5c65f751bbd851ab`. This is not an official upstream release; replace it when an official patched release is published.
 - Upstream PR #262 remains open and npm still lists 4.0.7 as latest in the 2026-11-18 check. The vendored `lib/parse.js` blob matches the reviewed PR commit; regression checks are wired into `npm test`. The tests and `npm audit` have not been executed in this session.
-- Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. Source-only review batches F1–F13 cover root/infrastructure (25), shared (10), server (69/139), bot (24/24), client (27/161), and documentation (3/8); 10 vendored files have provenance/metadata review only. Remaining client/server/docs files are pending.
+- Audit ledger: `docs/REPOSITORY_AUDIT_LEDGER.md`. Source-only review batches F1–F14 cover root/infrastructure (25), shared (10), server (101/141), bot (24/24), client (27/161), and documentation (3/8); 10 vendored files have provenance/metadata review only. Remaining client/server/docs files are pending.
 - Sender identity is now derived server-side from authenticated session/staff context; the tracking route rejects caller-supplied `authorUserId`. Some client/shared API type surfaces still retain legacy optional fields and should be reconciled after caller tracing; no server-side override path was confirmed in the reviewed routes.
 - Puck `MobileBottomNavigation.activeTab` is intentionally preview-only; the real mobile initial pane is controlled by `MobileWorkspace.defaultPane`. Do not add runtime behavior unless the product contract changes.
 - Batch F10 fixed a Components V2 validation gap: malformed array entries and nesting deeper than 25 levels now produce explicit validation errors; focused tests were added but not run.
 - Batch F11 added shared custom-executor enabled-state enforcement across resolve, send, tracking and background synchronization; focused tests were added but not run.
 - Batch F12 reviewed Discord REST credential boundaries and bounded request timeouts/retries; no new defect was confirmed.
 - Batch F13 fixed an unbounded WEAO changelog comparison-baseline cache edge case; a regression test was added but not run.
+- Batch F14 bounded the settings cache to 500 LRU entries and added negative caching for missing guild settings; focused tests were added but not run. Reviewed the server benchmark harness and maintenance/guild-variable/audit-log paths; no speculative optimization was applied.
 - Current priorities: (1) continue the file-by-file audit and reconcile historical plan/handoff claims, (2) trace and remove stale external `authorUserId` API/type fields if no active caller depends on them, (3) plan a safe production `SESSION_SECRET` separation with a bounded 24-hour session transition, (4) replace the temporary picomatch fork when an official patched release is available, and (5) perform verification only when authorized.
 
 ---
