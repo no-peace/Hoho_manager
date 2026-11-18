@@ -14,8 +14,8 @@ import { StepList } from "./StepList";
  * places:
  *
  *   1. The component's `custom_id`, which carries only the **first** step's
- *      params. That keeps ad-hoc webhook sends (where the server is not
- *      involved) working for simple single-step actions.
+ *      params. keeps a simple single-step action self-describing when
+ *      the flow is imported without its saved server-side registration.
  *   2. The action store, keyed by `custom_id`, which is saved with a template or
  *      registered with `/api/send` so longer chains can run server-side.
  *
@@ -75,7 +75,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
       } catch {
         // The params alone overflow 100 chars. Drop them from the id  the full
         // config is still registered server-side, so the flow keeps working. A
-        // webhook-only send would lose them, so say so.
+        // inline-only action would lose them, so surface the requirement.
         try {
           nextCustomId = buildCustomId(first.type);
         } catch {
