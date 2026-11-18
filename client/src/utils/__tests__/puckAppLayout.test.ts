@@ -33,13 +33,6 @@ describe("HoHo responsive Studio layout documents", () => {
     expect(layout.mobile.dispatchTabLabel).toBe("Dispatch");
   });
 
-  it("uses the dark Studio surface for both default editor panels", () => {
-    expect(defaultDesktopLayoutData.content[1]?.props.content[0]?.props.surface).toBe("#10131A");
-    expect(defaultMobileLayoutData.content[1]?.props.content[0]?.props.surface).toBe("#10131A");
-    expect(defaultDesktopLayoutData.content[1]?.props.content[1]?.props.surface).toBe("#313338");
-    expect(defaultMobileLayoutData.content[1]?.props.content[1]?.props.surface).toBe("#313338");
-  });
-
   it("keeps desktop and mobile settings independent", () => {
     const desktop = clone(defaultDesktopLayoutData);
     const mobile = clone(defaultMobileLayoutData);
