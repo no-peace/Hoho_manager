@@ -7,15 +7,6 @@ import { HoHoLogoMark } from "./components/layout/HoHoLogoMark";
 import { useStudioRoute } from "./components/layout/StudioRouter";
 import { useGlobalStore } from "./store/globalStore";
 import api from "./api/client";
-import { designApi } from "./api/design";
-import { applyUiTheme, loadUserThemeCache, refreshUserThemeLibraryExpiry } from "./utils/puckTheme";
-import { publishedThemeTokens } from "./config/puck/publishedTheme";
-import "./config/puck/publishedTheme.css";
-
-const DesignLabPage = React.lazy(() =>
-  import("./pages/DesignLabPage").then((module) => ({ default: module.DesignLabPage })),
-);
-
 const DocsPage = React.lazy(() =>
   import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
 );
@@ -60,52 +51,6 @@ export const App: React.FC = () => {
   const fetchCurrentUser = useGlobalStore((state) => state.fetchCurrentUser);
   const setConfigModalOpen = useGlobalStore((state) => state.setConfigModalOpen);
 
-  useEffect(() => {
-    let active = true;
-    let lastThemeFetchAt = 0;
-    let themeRequest: Promise<void> | null = null;
-    const refreshTheme = async (refreshUserCacheExpiry = false) => {
-      const now = Date.now();
-      if (!refreshUserCacheExpiry && now - lastThemeFetchAt < 60_000) return;
-      if (themeRequest) return themeRequest;
-      lastThemeFetchAt = now;
-      const request = (async () => {
-      try {
-        const response = await designApi.defaultTheme();
-        if (!active) return;
-        const serverTheme = response.theme?.theme || publishedThemeTokens;
-        applyUiTheme(serverTheme);
-        const themeCacheId = currentUser?.id || "guest";
-        const cached = loadUserThemeCache(themeCacheId, refreshUserCacheExpiry);
-        if (cached) applyUiTheme(cached.theme);
-        if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(themeCacheId);
-      } catch {
-        if (active) {
-          const themeCacheId = currentUser?.id || "guest";
-          const cached = loadUserThemeCache(themeCacheId, refreshUserCacheExpiry);
-          if (cached) applyUiTheme(cached.theme);
-          if (refreshUserCacheExpiry) refreshUserThemeLibraryExpiry(themeCacheId);
-        }
-      }
-      })();
-      themeRequest = request;
-      try {
-        await request;
-      } finally {
-        if (themeRequest === request) themeRequest = null;
-      }
-    };
-    applyUiTheme(publishedThemeTokens);
-    void refreshTheme(true);
-    const handleFocus = () => { if (document.visibilityState === "visible") void refreshTheme(false); };
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleFocus);
-    return () => {
-      active = false;
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleFocus);
-    };
-  }, [currentUser?.id]);
 
   useEffect(() => {
     void (async () => {
@@ -169,20 +114,6 @@ export const App: React.FC = () => {
     return <SessionAuthLoader />;
   }
 
-  if (route === "design") {
-    if (!currentUser?.isDesignAllowed) {
-      return (
-        <React.Suspense fallback={<AppLoadingScreen />}>
-          <NotFoundPage />
-        </React.Suspense>
-      );
-    }
-    return (
-      <React.Suspense fallback={<AppLoadingScreen label="Loading Design Lab…" />}>
-        <DesignLabPage />
-      </React.Suspense>
-    );
-  }
 
   if (!currentUser) {
     const authError =
