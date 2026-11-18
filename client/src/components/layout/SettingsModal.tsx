@@ -314,7 +314,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                   </div>
                 </>
               )}
-            )}
           </div>
         </div>
       </div>
