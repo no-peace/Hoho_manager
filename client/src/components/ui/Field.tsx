@@ -114,7 +114,7 @@ const FieldShell = ({ label, hint, counterValue = "", limit, className = "", chi
     {(label !== undefined || limit !== undefined) && (
       <span className="mb-1 flex items-baseline justify-between gap-2">
         <span className="field-label !mb-0">{label}</span>
-        {limit !== undefined && <span className={`font-mono text-[0.6875rem] tabular-nums font-medium ${counterValue.length > limit ? "text-[#F87171]" : counterValue.length / limit >= 0.9 ? "text-[#FBBF24]" : "text-[#6F788A]"}`}>{counterValue.length}/{limit}</span>}
+        {limit !== undefined && <span className={`text-[11px] italic tabular-nums font-medium ${counterValue.length > limit ? "text-[#F87171]" : counterValue.length / limit >= 0.9 ? "text-[#FBBF24]" : "text-[#6F788A]"}`}>{counterValue.length}/{limit}</span>}
       </span>
     )}
     {children}
@@ -554,13 +554,7 @@ const useFieldAutocomplete = <T extends HTMLInputElement | HTMLTextAreaElement>(
   };
 };
 
-const isMachineValueField = (type: string | undefined, name: string | undefined, placeholder: string | undefined, label: string | undefined) =>
-  type === "url" || /discord\s*id|user\s*id|guild\s*id|channel\s*id|role\s*id|custom\s*id|\burl\b|https?:\/\//i.test(
-    [name, placeholder, label].filter(Boolean).join(" "),
-  );
-
 export const TextField = ({ label, hint, limit, variables = true, className, ...props }: TextFieldProps) => {
-  const disableSpellCheck = isMachineValueField(props.type, props.name, props.placeholder, label);
   const inputRef = useRef<HTMLInputElement>(null);
   const showVars = Boolean(variables) && !props.disabled && (!props.type || props.type === "text");
   const autocomplete = useFieldAutocomplete(
@@ -577,7 +571,6 @@ export const TextField = ({ label, hint, limit, variables = true, className, ...
           ref={inputRef}
           className={`field w-full ${showVars ? "pr-10" : "pr-3"}`}
           {...props}
-          spellCheck={disableSpellCheck ? (props.spellCheck ?? false) : props.spellCheck}
           onChange={(event) => {
             props.onChange?.(event);
             autocomplete.checkInlineAutocomplete(event.target.value, event.target.selectionEnd ?? event.target.value.length);
