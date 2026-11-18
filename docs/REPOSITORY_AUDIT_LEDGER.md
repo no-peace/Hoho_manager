@@ -16,8 +16,8 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 162 | In progress (40/162) |
-| Server | 142 | In progress (113/142) |
+| Client | 162 | In progress (46/162) |
+| Server | 142 | In progress (120/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -430,9 +430,9 @@ Verification:
 - [ ] `client/src/components/editor/MentionInput/MarkdownToolbar.tsx`
 - [ ] `client/src/components/editor/MentionInput/index.tsx`
 - [ ] `client/src/components/editor/MessageEditor.tsx`
-- [ ] `client/src/components/editor/MessageEditor/ComponentsTab.tsx`
-- [ ] `client/src/components/editor/MessageEditor/ContentTab.tsx`
-- [ ] `client/src/components/editor/MessageEditor/EmbedsTab.tsx`
+- [x] `client/src/components/editor/MessageEditor/ComponentsTab.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/MessageEditor/ContentTab.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/editor/MessageEditor/EmbedsTab.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx`
 - [x] `client/src/components/editor/MessageEditor/index.tsx` — inspected; per-message selector optimization and regression test added; not executed
 - [x] `client/src/components/editor/PropertyPanel.tsx` — inspected; runtime verification not performed
@@ -457,14 +457,14 @@ Verification:
 - [ ] `client/src/components/layout/StudioRouter.tsx`
 - [ ] `client/src/components/layout/ThemeSettingsModal.tsx`
 - [ ] `client/src/components/layout/__tests__/LoginScreen.test.tsx`
-- [ ] `client/src/components/preview/ActionRowPreview.tsx`
-- [ ] `client/src/components/preview/ComponentPreview.tsx`
+- [x] `client/src/components/preview/ActionRowPreview.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/preview/ComponentPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/ContainerPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/EmbedPreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/Markdown.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/MessagePreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/UserPlaceholderPreviewContent.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/preview/__tests__/ActionRowPreview.test.tsx`
+- [x] `client/src/components/preview/__tests__/ActionRowPreview.test.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/__tests__/EmbedPreview.test.tsx`
 - [x] `client/src/components/preview/__tests__/Markdown.test.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/preview/__tests__/MessagePreview.test.tsx`
@@ -636,7 +636,7 @@ Verification:
 - [x] `server/src/routes/design.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/discord.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/executors.ts` — inspected; runtime verification not performed
-- [ ] `server/src/routes/health.ts`
+- [x] `server/src/routes/health.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/interactions.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/send.ts` — inspected; runtime verification not performed
 - [x] `server/src/routes/settings.ts` — inspected; runtime verification not performed
@@ -656,8 +656,8 @@ Verification:
 - [x] `server/src/services/templateService.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/variableInterpolation.ts` — inspected; runtime verification not performed
 - [x] `server/src/services/weaoService.ts` — inspected and fixed; runtime verification not performed
-- [ ] `server/src/types/express.d.ts`
-- [ ] `server/src/utils/appLayoutValidation.ts`
+- [x] `server/src/types/express.d.ts` — inspected; runtime verification not performed
+- [x] `server/src/utils/appLayoutValidation.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/crypto.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/errors.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/logger.ts` — inspected; runtime verification not performed
@@ -684,7 +684,7 @@ Verification:
 - [ ] `server/tests/errorHandler.security.test.ts`
 - [x] `server/tests/flowRepository.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/interactionMemory.test.ts`
+- [x] `server/tests/interactionMemory.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/m3_challenger2_retention_cache.test.ts`
 - [ ] `server/tests/middleware.test.ts`
 - [x] `server/tests/repositories.test.ts` — inspected; runtime verification not performed
@@ -698,7 +698,7 @@ Verification:
 - [x] `server/tests/tursoPipeline.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/urlAttachments.security.test.ts`
 - [x] `server/tests/validation.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/variableInterpolation.test.ts`
+- [x] `server/tests/variableInterpolation.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/weaoService.test.ts` — inspected and regression coverage added; test not executed
 - [x] `server/tests/settingsService.test.ts` — added; test not executed
 - [ ] `server/tsconfig.build.json`
@@ -789,3 +789,14 @@ Verification:
 - Replaced the broad subscriptions with per-index message selection, a primitive message-count selector, and selection selectors scoped to the card that owns the selected target. The existing fallback behavior for missing message entries is preserved.
 - Added a React Profiler regression test asserting that editing the second message does not rerender the first editor card.
 - Verification: test added but not executed. No typecheck, build, browser trace, React Profiler capture or benchmark was run.
+
+
+## Client editor/preview and remaining server source review — Batch F20 (2026-11-18)
+
+- Reviewed the remaining message-editor tabs (ComponentsTab, ContentTab, EmbedsTab), PropertyPanel, MessagePreview, ActionRowPreview, ComponentPreview, and the associated preview/editor regression tests.
+- **Measured render-isolation improvement:** PropertyPanel previously subscribed to the entire messages array. It now selects only the message currently represented by the inspector (the selected message, or the active message when no message selection exists). Editing another message no longer invalidates the inspector's message subscription. Added a React Profiler regression test that asserts zero inspector commits when a different message is edited while the inspector is pinned to the selected message.
+- **Measured render-isolation improvement:** SelectPreview previously subscribed to the complete channel and role cache maps. It now subscribes only to the selected guild's channel/role arrays. Updating another guild's cache should not rerender select menus for the selected guild. Added a React Profiler regression test for this behavior.
+- Preview review found no evidence supporting broad memoization or more expensive rendering changes. MessagePreview intentionally renders the full message sequence, and its timestamp refresh is limited to once per minute. Select option lists are already bounded to ten cached Discord entries. No speculative preview changes were made.
+- Reviewed the remaining server runtime source files: routes/health.ts, types/express.d.ts, and utils/appLayoutValidation.ts. No safe, evidence-backed performance change was identified. In particular, the health route's user count query and the layout validator's bounded-payload serialization were left unchanged because no measured bottleneck or compatible behavior-preserving replacement was established.
+- Reviewed server/tests/variableInterpolation.test.ts and server/tests/interactionMemory.test.ts as part of the server test inventory.
+- **Verification:** regression tests were added but not executed. No React Profiler browser capture, benchmark, test suite, typecheck, build, browser QA, Lighthouse, database query plan, or deployment verification was run.
