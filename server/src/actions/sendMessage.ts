@@ -35,7 +35,8 @@ export const run = async ({
   if (!botToken) return actionFailed("The bot for this message isn't configured on the server.");
 
   try {
-    await discord.sendChannelMessageWithToken(destinationId, payload, botToken);
+    const sent = await discord.sendChannelMessageWithToken(destinationId, payload, botToken);
+    if (!sent?.id) return actionFailed("Discord did not confirm that the message was sent.");
     return undefined;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
