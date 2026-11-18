@@ -16,8 +16,8 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 166 | In progress (66/166) |
-| Server | 142 | In progress (123/142) |
+| Client | 166 | In progress (69/166) |
+| Server | 142 | In progress (125/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
@@ -469,10 +469,10 @@ Verification:
 - [x] `client/src/components/preview/MessagePreview.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/UserPlaceholderPreviewContent.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/__tests__/ActionRowPreview.test.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/preview/__tests__/EmbedPreview.test.tsx`
+- [x] `client/src/components/preview/__tests__/EmbedPreview.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/preview/__tests__/Markdown.test.tsx` — inspected; runtime verification not performed
-- [ ] `client/src/components/preview/__tests__/MessagePreview.test.tsx`
-- [ ] `client/src/components/preview/__tests__/UserPlaceholderPreviewContext.test.tsx`
+- [x] `client/src/components/preview/__tests__/MessagePreview.test.tsx` — inspected; runtime verification not performed
+- [x] `client/src/components/preview/__tests__/UserPlaceholderPreviewContext.test.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/reactbits/ReactBitsPrimitives.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/reactbits/ThreeHeroCanvas.tsx` — inspected; runtime verification not performed
 - [x] `client/src/components/reactbits/__tests__/ThreeHeroCanvas.test.tsx` — inspected; runtime verification not performed
@@ -679,7 +679,7 @@ Verification:
 - [ ] `server/tests/challenger_flowRepository.test.ts`
 - [ ] `server/tests/challenger_member_cache.test.ts`
 - [ ] `server/tests/challenger_multipart.test.ts`
-- [ ] `server/tests/challenger_perf_indexes.test.ts`
+- [x] `server/tests/challenger_perf_indexes.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_retention_maintenance.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/challenger_staffRepository.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/crypto.test.ts`
@@ -689,7 +689,7 @@ Verification:
 - [x] `server/tests/flowRepository.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/guildVariables.test.ts` — inspected; runtime verification not performed
 - [x] `server/tests/interactionMemory.test.ts` — inspected; runtime verification not performed
-- [ ] `server/tests/m3_challenger2_retention_cache.test.ts`
+- [x] `server/tests/m3_challenger2_retention_cache.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/middleware.test.ts`
 - [x] `server/tests/repositories.test.ts` — inspected; runtime verification not performed
 - [ ] `server/tests/requestParsing.test.ts`
@@ -829,3 +829,13 @@ Verification:
 - Reviewed the public MessageEditor re-export and the server TypeScript/Vitest configuration files. They are thin configuration/entry-point files; no runtime performance change was justified.
 - The server runtime source review is complete. The remaining server audit backlog is test files and build/test configuration provenance, not unreviewed request handlers or services. Server source/test inventory now records 123/142 files reviewed.
 - **Verification:** source inspection only; no test, typecheck or build command was run.
+
+
+## Client preview and server performance-test follow-up — Batch F24 (2026-11-18)
+
+- Reviewed the remaining preview tests: `MessagePreview.test.tsx`, `EmbedPreview.test.tsx`, and `UserPlaceholderPreviewContext.test.tsx`. Coverage checks interactive-select isolation, selection routing to the correct message/component, HTTP/HTTPS-only embed links, canonical placeholder resolution, unknown-field preservation, and one batched user lookup for repeated IDs. No additional rendering optimization was justified by these tests or source review.
+- Reviewed `server/tests/challenger_perf_indexes.test.ts` and `server/tests/m3_challenger2_retention_cache.test.ts`. Existing coverage already checks SQLite query plans for indexed searches, bounded LRU/TTL behavior, 50-way in-flight member-search coalescing, retry coalescing, and chunked retention pruning under concurrent reads. No index or cache changes were made without fresh query-plan/workload evidence.
+- **Implemented server request coalescing:** `messageTrackerService.ts` now memoizes `getChannelGuildId(channelId)` promises for the duration of one tracked-message sync sweep. Multiple records in one channel share a single Discord channel lookup; failures are also shared only within that sweep. This avoids an unbounded/stale cross-sweep cache.
+- Extended `messageTrackerService.performance.test.ts` so two tracked records in the same channel assert exactly one channel-to-guild lookup. The deterministic regression target is one lookup per unique channel per sweep (for example, 10 records in one channel: 10 lookups before, 1 after).
+- **Commits:** `73d2d27` — implementation; `d2122bc` — regression test.
+- **Verification not performed:** the test was authored but not executed. The connected local Terminal service returned HTTP 404; GitHub Actions remain disabled by owner instruction. No production workload benchmark, Discord API trace, typecheck, build, or full test run was performed. Treat the request-count reduction as a deterministic testable improvement, not a measured production latency claim.
