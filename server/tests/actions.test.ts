@@ -22,7 +22,6 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
     sendDirectMessage: vi.fn().mockResolvedValue({ id: "dm_1" } as any),
     sendChannelMessage: vi.fn().mockResolvedValue({ id: "chan_msg_1" } as any),
     sendChannelMessageWithToken: vi.fn().mockResolvedValue({ id: "token_msg_1" } as any),
-    sendWebhook: vi.fn().mockResolvedValue({ id: "hook_msg_1" } as any),
     deleteChannelMessage: vi.fn().mockResolvedValue(true),
     createThreadFromMessage: vi.fn().mockResolvedValue({ id: "thread_1" }),
     getGuild: vi.fn().mockResolvedValue({ id: "998877665544332211", name: "Test Guild", icon: null }),
@@ -48,7 +47,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       sendDirectMessage: vi.fn().mockResolvedValue({ id: "dm_1" } as any),
       sendChannelMessage: vi.fn().mockResolvedValue({ id: "chan_msg_1" } as any),
       sendChannelMessageWithToken: vi.fn().mockResolvedValue({ id: "token_msg_1" } as any),
-      sendWebhook: vi.fn().mockResolvedValue({ id: "hook_msg_1" } as any),
       deleteChannelMessage: vi.fn().mockResolvedValue(true),
       createThreadFromMessage: vi.fn().mockResolvedValue({ id: "thread_1" }),
     };
@@ -81,11 +79,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       variables: {},
       botToken: "Bot.FakeToken",
       discord: mockDiscordApi,
-      repositories: {
-        webhookProfiles: {
-          getWebhookUrl: vi.fn().mockResolvedValue("https://discord.com/api/webhooks/1/tok"),
-        } as any,
-      },
       logger: {
         debug: vi.fn(),
         info: vi.fn(),
@@ -423,7 +416,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
           config: { webhookUrl: "https://discord.com/api/webhooks/1/tok", content: "Hook msg" },
         });
         expect(response?.data?.content).toContain("disabled");
-        expect(mockDiscordApi.sendWebhook).not.toHaveBeenCalled();
+        expect(response?.failed).toBe(true);
       });
     });
 

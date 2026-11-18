@@ -2,7 +2,7 @@
 
 **Repository:** `no-peace/Hoho_manager`
 **Audit baseline:** `36469393669764e9c8e938c2af3dbb8b95fb75f2` (main, before Batch F9 documentation update)
-**Tree:** 377 tracked files across 66 directories
+**Tree:** 378 tracked files across 66 directories
 **Purpose:** Track source review by file. A checked file means inspected, not necessarily runtime-verified. Tests/build/browser checks are recorded separately.
 
 ## Status definitions
@@ -17,12 +17,12 @@
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
 | Client | 161 | In progress (27/161) |
-| Server | 139 | In progress (69/139) |
+| Server | 140 | In progress (87/140) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
 | Documentation | 8 | In progress (3/8) |
 | Vendored security patch | 10 | Provenance only |
-| **Total** | **377** | **377 accounted for** |
+| **Total** | **378** | **378 accounted for** |
 
 ## Batch F1 — Root and infrastructure source review (2026-11-18)
 
@@ -223,6 +223,17 @@ Verification:
 - Regression test added but not executed.
 - No typecheck, build or live WEAO API request was executed.
 
+## Batch F11 — Action execution and self-assignable role safety (2026-11-18)
+
+**Status:** Source review of all 20 action modules, the action executor, interaction handler, repository context and action tests. No tests or live Discord interactions were executed.
+
+Findings and changes:
+1. **Fixed:** The self-assignable role safety mask used incorrect permission bits for `MUTE_MEMBERS` and `DEAFEN_MEMBERS` (it checked bits 25/26 instead of 22/23). Roles carrying those moderation permissions could pass the check. The mask now uses the correct bits and also blocks `CREATE_EVENTS`.
+2. Removed the unused `DiscordApi.sendWebhook` capability and webhook-profile repository access from `ActionContext`. Action handlers can no longer access direct webhook delivery through their execution context.
+3. The legacy `send_webhook_message` action remains registered as a disabled failure stub so persisted flows fail clearly; it remains hidden from the action picker. It cannot send a webhook.
+4. Reviewed component/modal interaction execution: message-component actions require a stored message-bound flow, duplicate interactions are claimed idempotently, and the interaction handler defers before the 2.2-second acknowledgement deadline.
+5. Added regression tests for dangerous role permission bits, managed roles and unverifiable permissions. No tests were run.
+
 ## File-by-file inventory
 
 ### Root / infrastructure (25)
@@ -416,7 +427,8 @@ Verification:
 - [x] `client/src/utils/dispatchValidation.ts` — inspected; runtime verification not performed
 - [x] `client/src/utils/__tests__/dispatchValidation.test.ts` — inspected; runtime verification not performed
 
-### Server (139)
+### Server (140)
+- [x] `server/tests/roleSafety.test.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/customExecutorAccess.ts` — inspected; runtime verification not performed
 - [x] `server/tests/customExecutorAccess.test.ts` — inspected; runtime verification not performed
 - [x] `server/src/utils/templateAccess.ts` — inspected; runtime verification not performed
@@ -434,26 +446,26 @@ Verification:
 - [ ] `server/benchmarks/utils/reporter.ts`
 - [ ] `server/benchmarks/utils/stats.ts`
 - [x] `server/package.json` — inspected; runtime verification not performed
-- [ ] `server/src/actions/addRole.ts`
-- [ ] `server/src/actions/check.ts`
-- [ ] `server/src/actions/createThread.ts`
-- [ ] `server/src/actions/deleteMessage.ts`
-- [ ] `server/src/actions/dud.ts`
+- [x] `server/src/actions/addRole.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/check.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/createThread.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/deleteMessage.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/dud.ts` — inspected; runtime verification not performed
 - [x] `server/src/actions/index.ts` — inspected; runtime verification not performed
-- [ ] `server/src/actions/modalSubmit.ts`
-- [ ] `server/src/actions/openModal.ts`
-- [ ] `server/src/actions/removeRole.ts`
+- [x] `server/src/actions/modalSubmit.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/openModal.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/removeRole.ts` — inspected; runtime verification not performed
 - [x] `server/src/actions/responses.ts` — inspected; runtime verification not performed
-- [ ] `server/src/actions/roleSafety.ts`
-- [ ] `server/src/actions/sendDm.ts`
-- [ ] `server/src/actions/sendEphemeralReply.ts`
-- [ ] `server/src/actions/sendMessage.ts`
-- [ ] `server/src/actions/sendWebhookMessage.ts`
-- [ ] `server/src/actions/setVariable.ts`
-- [ ] `server/src/actions/stop.ts`
-- [ ] `server/src/actions/toggleRole.ts`
+- [x] `server/src/actions/roleSafety.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/sendDm.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/sendEphemeralReply.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/sendMessage.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/sendWebhookMessage.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/setVariable.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/stop.ts` — inspected; runtime verification not performed
+- [x] `server/src/actions/toggleRole.ts` — inspected; runtime verification not performed
 - [x] `server/src/actions/types.ts` — inspected; runtime verification not performed
-- [ ] `server/src/actions/wait.ts`
+- [x] `server/src/actions/wait.ts` — inspected; runtime verification not performed
 - [x] `server/src/app.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/database.ts` — inspected; runtime verification not performed
 - [x] `server/src/config/env.ts` — inspected; runtime verification not performed
@@ -473,7 +485,7 @@ Verification:
 - [ ] `server/src/repositories/baseRepository.ts`
 - [ ] `server/src/repositories/customExecutorRepository.ts`
 - [ ] `server/src/repositories/flowRepository.ts`
-- [ ] `server/src/repositories/index.ts`
+- [x] `server/src/repositories/index.ts` — inspected; runtime verification not performed
 - [ ] `server/src/repositories/interactionReceiptRepository.ts`
 - [ ] `server/src/repositories/profileRepository.ts`
 - [x] `server/src/repositories/sessionRepository.ts` — inspected; runtime verification not performed

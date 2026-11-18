@@ -1711,3 +1711,11 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Fixed eviction to use the baseline map's own size, deleting the corresponding baseline, comparison and response-cache entries together. Successful refreshes now move their baseline to the newest position.
 - Added a regression test for failed expired-cache refreshes followed by new-key insertion and baseline eviction.
 - Verification: source changes and test additions only. Tests, typecheck, build and live WEAO API calls were not executed.
+
+
+## Action execution audit — Batch F11 (2026-11-18)
+
+- Fixed the self-assignable role permission mask: `MUTE_MEMBERS` and `DEAFEN_MEMBERS` were checked against the wrong bits and could pass. Correct bits 22/23 are now blocked, alongside other moderation/administration permissions and `CREATE_EVENTS`.
+- Removed direct webhook delivery and webhook-profile repository access from the action handler context. The legacy `send_webhook_message` handler remains a disabled failure stub for old persisted flows and is hidden from the action picker.
+- Reviewed action execution, stored-flow binding, modal/component routing, duplicate interaction receipts and acknowledgement timing.
+- Added role-safety regression tests. No tests, typecheck, build or live Discord interactions were run.

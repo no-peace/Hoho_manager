@@ -6,7 +6,6 @@ import type {
   DiscordMessagePayload,
   EmbedData,
 } from "@dmb/shared";
-import type { Repositories } from "../repositories/index.js";
 import type { DiscordMessage, GuildMember } from "../services/discordService.js";
 import type { Logger } from "../utils/logger.js";
 
@@ -70,11 +69,6 @@ export interface DiscordApi {
     payload: DiscordMessagePayload,
     token: string,
   ): Promise<DiscordMessage | null>;
-  sendWebhook(
-    webhookUrl: string,
-    payload: DiscordMessagePayload,
-    options?: { wait?: boolean; threadId?: string | null },
-  ): Promise<DiscordMessage | null>;
   deleteChannelMessage(
     channelId: string,
     messageId: string,
@@ -101,8 +95,6 @@ export interface ActionContext {
   /** Null when no bot token is configured  handlers must cope. */
   botToken: string | null;
   discord: DiscordApi;
-  /** Only the persistence a handler genuinely needs, so it stays testable. */
-  repositories: Pick<Repositories, "webhookProfiles">;
   logger: Logger;
 }
 
