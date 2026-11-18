@@ -2,7 +2,6 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import type { UserRole } from "@dmb/shared";
 import { env } from "../config/env.js";
-import { db } from "../config/database.js";
 import { userRepository } from "../repositories/userRepository.js";
 import { staffRepository } from "../repositories/staffRepository.js";
 import { settingsService } from "../services/settingsService.js";
@@ -312,11 +311,6 @@ router.get(
     const isHead = await settingsService.isHeadAdmin(user.id);
     const isOwner = env.ownerDiscordIds.includes(user.id);
     const isAdmin = isHead || isOwner || (!env.isProd && user.role === "admin");
-    const designGrant = await db.get<{ is_active: number }>(
-      "SELECT is_active FROM design_access_users WHERE discord_user_id = @discordId",
-      { discordId: user.id },
-    );
-    const isDesignAllowed = isOwner || (!env.isProd && user.role === "admin") || designGrant?.is_active === 1;
 
     const staffRecord = await staffRepository.findByDiscordId(user.id);
     const hasActiveStaffRecord = Boolean(
@@ -365,7 +359,6 @@ router.get(
         avatarUrl,
         role: isAdmin ? "admin" : "editor",
         isAdmin,
-        isDesignAllowed,
         hasDefaultBotAccess,
         isFirstLogin: Boolean(user.isFirstLogin),
         mutualGuilds,
