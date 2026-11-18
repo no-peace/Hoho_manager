@@ -1788,3 +1788,11 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 - Query/index review: a `LOWER(title)` expression index may help custom executor title lookups, but it is deferred until query-plan and workload evidence are available. The existing migrations already index flow/interaction receipt expiry and staff cooldown keys; staff cooldown updates use atomic upsert.
 - Found `profileRepository` still targets the `webhook_profiles` table dropped by migration 011. Current references are legacy exports; action execution no longer injects this repository into action context. Do not re-enable it without restoring its storage contract.
 - Verification: tests added but not executed. No SQLite query plan, benchmark, tests, typecheck, build or production database access was run.
+
+
+## Client editor performance audit — Batch F19 (2026-11-18)
+
+- Inspected `client/src/components/editor/MessageEditor/index.tsx` and its existing regression suite.
+- Replaced whole-array and whole-selection Zustand subscriptions with selectors scoped to each message card. Editing one message should no longer rerender unrelated MessageEditor instances; selected-target reveal behavior remains scoped to the owning card.
+- Added a React Profiler regression test for unrelated-card render isolation.
+- No tests, typecheck, build, browser profiling or benchmark was executed.

@@ -16,7 +16,7 @@
 | Area | Files | Status |
 |---|---:|---|
 | Root / infrastructure | 25 | Source review complete |
-| Client | 162 | In progress (39/162) |
+| Client | 162 | In progress (40/162) |
 | Server | 142 | In progress (113/142) |
 | Bot | 24 | Reviewed (24/24) |
 | Shared | 10 | Source review complete |
@@ -434,11 +434,11 @@ Verification:
 - [ ] `client/src/components/editor/MessageEditor/ContentTab.tsx`
 - [ ] `client/src/components/editor/MessageEditor/EmbedsTab.tsx`
 - [ ] `client/src/components/editor/MessageEditor/MessageLinkModal.tsx`
-- [ ] `client/src/components/editor/MessageEditor/index.tsx`
+- [x] `client/src/components/editor/MessageEditor/index.tsx` — inspected; per-message selector optimization and regression test added; not executed
 - [x] `client/src/components/editor/PropertyPanel.tsx` — inspected; runtime verification not performed
 - [ ] `client/src/components/editor/RichPicker.tsx`
 - [ ] `client/src/components/editor/__tests__/DiscordMentionInput.test.tsx`
-- [ ] `client/src/components/editor/__tests__/MessageEditor.test.tsx`
+- [x] `client/src/components/editor/__tests__/MessageEditor.test.tsx` — inspected; render-isolation regression coverage added; not executed
 - [ ] `client/src/components/layout/AccessPanel.tsx`
 - [ ] `client/src/components/layout/AuditLogsModal.tsx`
 - [ ] `client/src/components/layout/BackupsModal.tsx`
@@ -780,3 +780,12 @@ Verification:
 3. Benchmark: collect reproducible baselines before changing hot paths; add scenarios only when they model real production workloads.
 4. Tests/fixtures: map each test to the behavior and identify untested security boundaries.
 5. Reconcile remaining plan/handoff claims against current source; update this ledger after each batch.
+
+
+## Client editor performance audit — Batch F19 (2026-11-18)
+
+- Reviewed `client/src/components/editor/MessageEditor/index.tsx` and its existing `MessageEditor.test.tsx` coverage.
+- Found that every MessageEditor instance subscribed to the complete `messages` array and the complete selection object. Any edit to one message replaced the array and caused all mounted message cards to rerender, even when their own message data was unchanged.
+- Replaced the broad subscriptions with per-index message selection, a primitive message-count selector, and selection selectors scoped to the card that owns the selected target. The existing fallback behavior for missing message entries is preserved.
+- Added a React Profiler regression test asserting that editing the second message does not rerender the first editor card.
+- Verification: test added but not executed. No typecheck, build, browser trace, React Profiler capture or benchmark was run.

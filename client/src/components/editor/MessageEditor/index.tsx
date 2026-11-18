@@ -29,10 +29,26 @@ export interface MessageEditorProps {
 }
 
 export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
-  const messages = useMessageStore((state) => state.messages);
-  const data = useMessageStore((state) => state.data);
+  // Subscribe to this card's message object, not the entire messages array.
+  // Editing one message therefore leaves every other MessageEditor instance stable.
+  const message = useMessageStore(
+    (state) =>
+      state.messages[index] ||
+      (index === 0 ? state.data : state.messages[0]) ||
+      state.data,
+  ) as ExtendedMessageData;
+  const messageCount = useMessageStore((state) => state.messageCount);
   const activeMessageIndex = useMessageStore((state) => state.activeMessageIndex ?? 0);
-  const selection = useMessageStore((state) => state.selection);
+  const selectedTargetId = useMessageStore((state) => {
+    if ((state.activeMessageIndex ?? 0) !== index) return undefined;
+    const selection = state.selection;
+    return selection?.kind === "embed" || selection?.kind === "component"
+      ? `${selection.kind}:${selection.id}`
+      : undefined;
+  });
+  const selectedMessage = useMessageStore(
+    (state) => state.selection?.kind === "message" && state.selection.index === index,
+  );
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
   const duplicateMessage = useMessageStore((state) => state.duplicateMessage);
   const removeMessage = useMessageStore((state) => state.removeMessage);
@@ -42,9 +58,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const addEmbed = useMessageStore((state) => state.addEmbed);
   const addComponent = useMessageStore((state) => state.addComponent);
 
-  const rawMessage =
-    (messages && messages[index]) || (index === 0 ? data : messages?.[0]) || data;
-  const message = rawMessage as ExtendedMessageData;
   const isActive = activeMessageIndex === index;
 
   const setExtendedField = <K extends keyof ExtendedMessageData>(
@@ -68,21 +81,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
   // Preview navigation must reveal a selected target even when its message card
   // was previously collapsed by the user.
-  const selectedTargetId =
-    selection?.kind === "embed" || selection?.kind === "component"
-      ? selection.id
-      : undefined;
-  const selectedMessageIndex =
-    selection?.kind === "message" ? selection.index : undefined;
-
   useEffect(() => {
-    const selectedMessage = selectedMessageIndex === index;
-    const selectedNestedTarget =
-      activeMessageIndex === index &&
-      (selection?.kind === "embed" || selection?.kind === "component");
-
-    if (selectedMessage || selectedNestedTarget) setIsOpen(true);
-  }, [activeMessageIndex, index, selection?.kind, selectedTargetId, selectedMessageIndex]);
+    if (selectedMessage || selectedTargetId !== undefined) setIsOpen(true);
+  }, [activeMessageIndex, index, selectedMessage, selectedTargetId]);
 
   const [customName, setCustomName] = useState<string>("");
   const [isEditingName, setIsEditingName] = useState(false);
@@ -253,7 +254,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             </button>
           )}
 
-          {index < messages.length - 1 && (
+          {index < messageCount - 1 && (
             <button
               type="button"
               onClick={() => moveMessage?.(index, 1)}
@@ -279,7 +280,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           <button
             type="button"
             onClick={() => duplicateMessage?.(index)}
-            disabled={messages.length >= 10}
+            disabled={messageCount >= 10}
             className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 transition-colors"
             title="Duplicate Message"
           >
@@ -289,7 +290,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           <button
             type="button"
             onClick={() => removeMessage?.(index)}
-            disabled={messages.length <= 1}
+            disabled={messageCount <= 1}
             className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20 disabled:opacity-30 transition-colors"
             title="Delete Message"
           >

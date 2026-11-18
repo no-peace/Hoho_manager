@@ -1,3 +1,4 @@
+import { Profiler } from "react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { act, render, screen, fireEvent } from "@testing-library/react";
 import { MessageEditor } from "../MessageEditor";
@@ -16,6 +17,41 @@ describe("MessageEditor", () => {
 
     expect(screen.getByText("Message 1")).toBeDefined();
     expect(screen.getByText("Classic")).toBeDefined();
+  });
+
+
+  it("does not rerender an unrelated message editor when another message is edited", () => {
+    const first = { content: "First message", embeds: [], components: [], flags: 0 } as any;
+    const second = { content: "Second message", embeds: [], components: [], flags: 0 } as any;
+    useMessageStore.setState({
+      data: second,
+      messages: [first, second],
+      activeMessageIndex: 1,
+      selection: null,
+      attachedFiles: [],
+    });
+
+    let firstEditorRenders = 0;
+    let secondEditorRenders = 0;
+    render(
+      <>
+        <Profiler id="first-editor" onRender={() => { firstEditorRenders += 1; }}>
+          <MessageEditor index={0} />
+        </Profiler>
+        <Profiler id="second-editor" onRender={() => { secondEditorRenders += 1; }}>
+          <MessageEditor index={1} />
+        </Profiler>
+      </>,
+    );
+
+    firstEditorRenders = 0;
+    secondEditorRenders = 0;
+    act(() => {
+      useMessageStore.getState().setField("content", "Updated second message");
+    });
+
+    expect(firstEditorRenders).toBe(0);
+    expect(secondEditorRenders).toBe(1);
   });
 
   it("renders Rename, Duplicate and Delete buttons in toolbar", () => {
