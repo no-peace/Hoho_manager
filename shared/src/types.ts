@@ -152,6 +152,7 @@ export interface DiscordMessageReference {
   fail_if_not_exists?: boolean;
 }
 export interface DiscordPollAnswer {
+  _id?: string;
   answer_id?: number;
   poll_media: {
     text: string;
@@ -169,6 +170,7 @@ export interface DiscordPoll {
 
 /** The editor's always-populated message document. */
 export interface MessageData {
+  _id?: string;
   content: string;
   embeds: EmbedData[];
   components: ComponentNode[];
