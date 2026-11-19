@@ -14,6 +14,7 @@ export interface ScheduledMessageRow {
   enabled: number;
   last_run_at: string | null;
   next_run_at: string | null;
+  retry_count?: number;
   created_by: string;
   created_at: string;
 }
@@ -79,7 +80,7 @@ export class AutomationRepository extends BaseRepository {
     return this.db.get<ScheduledMessageRow>("SELECT * FROM scheduled_messages WHERE id = @id", { id: result.lastInsertRowid });
   }
 
-  async updateSchedule(id: number, patch: Partial<Pick<ScheduledMessageRow, "enabled" | "next_run_at" | "last_run_at" | "payload_json" | "target_message_id">>): Promise<void> {
+  async updateSchedule(id: number, patch: Partial<Pick<ScheduledMessageRow, "enabled" | "next_run_at" | "last_run_at" | "payload_json" | "target_message_id" | "retry_count">>): Promise<void> {
     const entries = Object.entries(patch).filter(([, value]) => value !== undefined);
     if (!entries.length) return;
     const setSql = entries.map(([key]) => `${key} = @${key}`).join(", ");
@@ -90,6 +91,13 @@ export class AutomationRepository extends BaseRepository {
 
   async deleteSchedule(id: number): Promise<void> {
     await this.db.run("DELETE FROM scheduled_messages WHERE id = @id", { id });
+  }
+
+  async getNextScheduleAt(): Promise<string | null> {
+    const row = await this.db.get<{ next_run_at: string | null }>(
+      "SELECT MIN(next_run_at) AS next_run_at FROM scheduled_messages WHERE enabled = 1 AND next_run_at IS NOT NULL",
+    );
+    return row?.next_run_at ?? null;
   }
 
   async countSchedules(): Promise<number> {
