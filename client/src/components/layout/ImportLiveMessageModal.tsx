@@ -20,6 +20,14 @@ export const ImportLiveMessageModal: React.FC<{ open: boolean; onClose: () => vo
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setChannelId("");
+    setMessages([]);
+    setQuery("");
+    setError("");
+    setLoadingMessages(false);
+  }, [guildId]);
+
+  useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setLoadingChannels(true);
