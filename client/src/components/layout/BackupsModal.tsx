@@ -44,6 +44,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const currentUser = useGlobalStore((state) => state.currentUser);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const canManageAutomation = Boolean(currentUser?.isAdmin || currentUser?.staffPermissions?.can_manage_automation);
   const currentName = useTemplateStore((state) => state.currentName);
   const currentTemplateId = useTemplateStore((state) => state.currentId);
   const editorData = useMessageStore((state) => state.data) as any;
@@ -100,8 +101,12 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   };
 
   useEffect(() => {
-    if (open && filter === "schedules") void refreshSchedules();
-  }, [open, filter, selectedGuildId]);
+    if (open && filter === "schedules" && canManageAutomation) void refreshSchedules();
+  }, [open, filter, selectedGuildId, canManageAutomation]);
+
+  useEffect(() => {
+    if (!canManageAutomation && filter === "schedules") setFilter("all");
+  }, [canManageAutomation, filter]);
 
   useEffect(() => {
     if (!open || !currentTemplateId) {
@@ -466,7 +471,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             ["tracked", `Tracked Only · ${items.filter((item) => item.isTracked).length}`],
             ["templates", `Saved Templates · ${templates.length}`],
             ["schedules", "Schedules"],
-          ] as const).map(([value, label]) => (
+          ] as const).filter(([value]) => value !== "schedules" || canManageAutomation).map(([value, label]) => (
             <button
               key={value}
               type="button"
