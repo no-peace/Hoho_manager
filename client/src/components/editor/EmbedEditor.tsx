@@ -112,6 +112,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           <button
             type="button"
             title="Duplicate"
+            aria-label="Duplicate embed"
             onClick={(e) => {
               e.stopPropagation();
               if (id) duplicateEmbed(id);
@@ -123,6 +124,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           <button
             type="button"
             title="Delete"
+            aria-label="Delete embed"
             onClick={(e) => {
               e.stopPropagation();
               if (id) removeEmbed(id);
