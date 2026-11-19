@@ -2,6 +2,22 @@
 
 > This snapshot describes current `main`. Older entries below are retained as implementation history only; their baselines, branch assignments, blockers and status claims are not current instructions.
 
+## V15 implementation — 2026-11-19
+
+- **Plan:** [`docs/hoho_v15_plan.md`](hoho_v15_plan.md), introduced in commit `57907fb023a0e9d60c46397c52028fd2a0be69c5`.
+- **Implementation branch:** `main`; V15 source and regression-test changes are committed through `7a9367d195d642990408b2595632b82b6eba8091` before this handoff update.
+- **Batch 1 — preview layout and dropdowns:** Studio now has one full-height preview scroll owner; the preview toolbar remains outside the scroll body; Container previews no longer clip child menus; SelectPreview renders its listbox through `createPortal` into `document.body`, clamps its fixed position to the viewport, tracks window/ancestor scrolling and resize, and ignores scroll events originating inside the menu.
+- **Batch 2 — direct component inspection:** Preview buttons no longer identify as interactive-only controls, so clicking a button selects its own component ID. Disabled buttons remain inspectable. Select menus have a separate accessible Configure button, and Action Row inspector forms list existing child controls for direct selection.
+- **Batch 3 — Action Row cleanup:** Removed the per-control flow-step count pills and the floating hover toolbar. Button pills now use a dedicated touch drag handle, a selectable label area, and always-visible inline duplicate/delete controls. Action Row and select-menu step-count clutter was removed.
+- **Batch 4 — reorder architecture:** Added `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/utilities`; created `client/src/components/ui/SortableList.tsx` with pointer, touch and keyboard sensors, vertical/horizontal/grid strategies, sortable items and accessible drag handles. Added immutable `reorderComponent` and atomic message-store reorder actions for components, embeds, embed fields and messages.
+- **Batch 5 — editor wiring:** Drag sorting is wired for Action Row buttons and rows, V2 top-level components and Container children, flow steps (including recursive Then/Else branches), embeds, embed fields, multi-message cards and String Select options. Reorder arrows were replaced by drag handles on the relevant cards.
+- **Batch 6 — regression coverage:** Added tree-reorder tests for forward/backward top-level moves, Container children, Action Row buttons and no-op/missing IDs; added preview tests for direct button selection and the portaled select menu. Existing Escape/outside-click coverage remains in the ActionRowPreview tests.
+- **Dependencies:** Updated both `client/package.json` and the root `package-lock.json` for the DnD Kit packages.
+- **Preservation:** `client/src/utils/editorSmoothScroll.ts` and the Lenis integration were not changed.
+- **Verification boundary:** Per the V15 execution rules, no npm install, typecheck, test suite, production build, GitHub Actions, browser QA or deployment was run. Source files were re-fetched from GitHub after the writes and statically checked for the expected implementation markers. Runtime correctness remains unverified until the owner runs the requested local checks.
+
+---
+
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
 - Current main HEAD: `9cbca79624353b87218febeb75d5ab10d04a77e5` (`updated package-lock`, 2026-11-18). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
