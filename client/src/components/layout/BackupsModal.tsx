@@ -68,39 +68,56 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const { showToast, openConfirm } = useGlobalStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const refreshTracked = async () => {
-    setLoadingTracked(true);
+  const refreshTracked = async (isCurrent: () => boolean = () => true) => {
+    if (isCurrent()) setLoadingTracked(true);
     try {
       const response = await api.tracking.list();
-      setTrackedList(response.messages ?? []);
+      if (isCurrent()) setTrackedList(response.messages ?? []);
     } catch (error: any) {
-      showToast(error?.message || "Failed to load tracked messages", "error");
-      setTrackedList([]);
+      if (isCurrent()) {
+        showToast(error?.message || "Failed to load tracked messages", "error");
+        setTrackedList([]);
+      }
     } finally {
-      setLoadingTracked(false);
+      if (isCurrent()) setLoadingTracked(false);
     }
   };
 
   useEffect(() => {
-    if (open) void refreshTracked();
+    if (!open) return;
+    let cancelled = false;
+    void refreshTracked(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
-  const refreshSchedules = async () => {
-    if (!selectedGuildId) { setScheduleRows([]); return; }
-    setLoadingSchedules(true);
+  const refreshSchedules = async (isCurrent: () => boolean = () => true) => {
+    if (!selectedGuildId) {
+      if (isCurrent()) setScheduleRows([]);
+      return;
+    }
+    if (isCurrent()) setLoadingSchedules(true);
     try {
       const rows = await request<typeof scheduleRows>(`/api/automation/schedules?guildId=${encodeURIComponent(selectedGuildId)}`);
-      setScheduleRows(Array.isArray(rows) ? rows : []);
+      if (isCurrent()) setScheduleRows(Array.isArray(rows) ? rows : []);
     } catch (error: any) {
-      showToast(error?.message || "Failed to load schedules", "error");
-      setScheduleRows([]);
+      if (isCurrent()) {
+        showToast(error?.message || "Failed to load schedules", "error");
+        setScheduleRows([]);
+      }
     } finally {
-      setLoadingSchedules(false);
+      if (isCurrent()) setLoadingSchedules(false);
     }
   };
 
   useEffect(() => {
-    if (open && filter === "schedules" && canManageAutomation) void refreshSchedules();
+    if (!open || filter !== "schedules" || !canManageAutomation) return;
+    let cancelled = false;
+    void refreshSchedules(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [open, filter, selectedGuildId, canManageAutomation]);
 
   useEffect(() => {
