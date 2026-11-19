@@ -93,9 +93,6 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
       <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-stretch lg:items-stretch my-2 lg:my-auto py-2 sm:py-6">
         <SpotlightCard className="lg:col-span-5 min-w-0 rounded-2xl h-full"><div className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 p-5 shadow-[0_24px_64px_rgba(0,0,0,0.55)] sm:p-7 space-y-5 sm:space-y-6"><div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#818CF8]/60 to-transparent" aria-hidden="true" />
           <div className="space-y-2">
-            <span className="inline-block px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc] text-[0.6875rem] font-semibold uppercase tracking-wider">
-              COMPONENTS V2 & DYNAMIC TRACKING
-            </span>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               HoHo Manager Studio
             </h1>
@@ -152,30 +149,6 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               )}
             </div>
           )}
-
-          <div className="space-y-2.5 rounded-xl border border-[#1D2230] bg-[#0B0E14] divide-y divide-[#1D2230] px-3.5 py-1">
-            <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
-              <ShieldCheck size={15} className="text-[#57f287] shrink-0 mt-0.5" />
-              <span>
-                <strong className="text-white">Mutual-Guild & Role Check:</strong>{" "}
-                Verifies shared servers and active staff permissions on every request.
-              </span>
-            </div>
-            <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
-              <Clock size={15} className="text-[#818CF8] shrink-0 mt-0.5" />
-              <span>
-                <strong className="text-white">24-Hour Session Expiry:</strong>{" "}
-                Sessions automatically expire every 24 hours.
-              </span>
-            </div>
-            <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
-              <Lock size={15} className="text-[#f0b232] shrink-0 mt-0.5" />
-              <span>
-                <strong className="text-white">Workspace Backups:</strong>{" "}
-                Save, restore, import, and export message configurations from the studio.
-              </span>
-            </div>
-          </div>
         </div></SpotlightCard>
 
         <SpotlightCard className="lg:col-span-7 min-w-0 rounded-2xl h-full"><div className="relative flex h-full min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
