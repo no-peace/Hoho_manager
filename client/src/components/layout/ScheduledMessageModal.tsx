@@ -57,7 +57,12 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
   };
 
   useEffect(() => {
-    if (open) void refresh();
+    if (!open) return;
+    setRunAt(toLocalInput(new Date(Date.now() + 60 * 60_000)));
+    setChannelId("");
+    setTemplateId("");
+    setError("");
+    void refresh();
   }, [open, guildId]);
 
   const createSchedule = async () => {
