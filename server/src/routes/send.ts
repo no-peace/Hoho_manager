@@ -499,8 +499,8 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     const totalAttachmentBytes =
       uploadedFiles.reduce((total, file) => total + file.size, 0) +
       urlFiles.reduce((total, file) => total + file.file.size, 0);
-    if (totalAttachmentBytes > 50 * 1024 * 1024) {
-      throw ApiError.payloadTooLarge("Combined attachments exceed maximum allowed size of 50 MB");
+    if (totalAttachmentBytes > 25 * 1024 * 1024) {
+      throw ApiError.payloadTooLarge("Combined attachments exceed maximum allowed size of 25 MB");
     }
     const files = [...uploadedFiles, ...urlFiles];
 
