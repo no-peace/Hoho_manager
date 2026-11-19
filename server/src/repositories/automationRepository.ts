@@ -108,6 +108,11 @@ export class AutomationRepository extends BaseRepository {
     return this.db.query<ExpiringMessageRow>("SELECT * FROM expiring_messages ORDER BY delete_at ASC");
   }
 
+  async getNextExpiringAt(): Promise<string | null> {
+    const row = await this.db.get<{ next_delete_at: string | null }>("SELECT MIN(delete_at) AS next_delete_at FROM expiring_messages");
+    return row?.next_delete_at ?? null;
+  }
+
   async addExpiring(input: Omit<ExpiringMessageRow, "id" | "created_at">): Promise<void> {
     await this.db.run(
       `INSERT OR REPLACE INTO expiring_messages (guild_id, channel_id, message_id, delete_at, created_by)
