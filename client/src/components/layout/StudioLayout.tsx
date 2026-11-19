@@ -145,22 +145,7 @@ export const StudioLayout: React.FC = () => {
   const data = useMessageStore((state) => state.data);
   const addMessage = useMessageStore((state) => state.addMessage);
   const reorderMessages = useMessageStore((state) => state.reorderMessages);
-  const attachedFiles = useMessageStore((state) => state.attachedFiles);
-
-  const displayMessages = useMemo(
-    () => (messages && messages.length > 0 ? messages : [data]),
-    [messages, data],
-  );
-
-  const hasUnsavedWork = useMemo(
-    () => attachedFiles.length > 0 || displayMessages.some((message) =>
-      Boolean(message.content?.trim()) ||
-      (Array.isArray(message.embeds) && message.embeds.length > 0) ||
-      (Array.isArray(message.components) && message.components.length > 0) ||
-      Boolean(message.poll),
-    ),
-    [attachedFiles.length, displayMessages],
-  );
+  const hasUnsavedWork = useMessageStore((state) => state.isDirty);
 
   useEffect(() => {
     if (!hasUnsavedWork) return;
