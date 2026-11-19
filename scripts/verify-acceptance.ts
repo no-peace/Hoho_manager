@@ -72,7 +72,7 @@ const items: ChecklistItem[] = [
   {
     id: "8.4.1",
     category: "Invariants",
-    description: "INV-1: Components V2 flag is applied and component webhook requests include with_components=true",
+    description: "INV-1: Components V2 flag is applied and component interaction callbacks include with_components=true",
     verify: () => {
       const constants = fs.readFileSync(path.join("shared", "src", "constants.ts"), "utf8");
       const payloadBuilder = fs.readFileSync(path.join("client", "src", "utils", "discord.ts"), "utf8");
