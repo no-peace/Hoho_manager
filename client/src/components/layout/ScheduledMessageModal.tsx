@@ -6,7 +6,6 @@ import { useGlobalStore } from "../../store/globalStore";
 import { useMessageStore } from "../../store/messageStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 import { toDiscordPayload } from "../../utils/discord";
-import { EDITOR_MODES } from "../../utils/constants";
 
 interface Channel { id: string; name: string }
 interface ScheduleRow {
@@ -75,7 +74,10 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
         const document = fromQueryData(template.data);
         const firstMessage = document.messages[0];
         if (!firstMessage) throw new Error("The selected template has no message to schedule.");
-        payload = toDiscordPayload(firstMessage, getEditorModeForDiscordMessage(firstMessage));
+        payload = toDiscordPayload(
+          firstMessage,
+          document.mode ?? getEditorModeForDiscordMessage(firstMessage),
+        );
       }
       const recurrence = frequency === "once" ? null : {
         frequency: frequency === "custom" ? "custom" : frequency,
