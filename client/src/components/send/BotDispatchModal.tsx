@@ -650,11 +650,12 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Checkbox checked={expireAfterSeconds > 0} onChange={(checked) => setExpireAfterSeconds(checked ? 3600 : 0)} label="Auto-delete after sending" className="text-xs" />
               <select value={String(expireAfterSeconds)} onChange={(event) => setExpireAfterSeconds(Number(event.target.value))} disabled={expireAfterSeconds === 0} aria-label="Auto-delete duration" className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1 text-[11px] text-[#F1F3F9] disabled:opacity-40">
+                <option value="0">Never</option>
                 <option value="3600">1 hour</option>
                 <option value="21600">6 hours</option>
                 <option value="86400">24 hours</option>
+                <option value="259200">3 days</option>
                 <option value="604800">7 days</option>
-                <option value="2592000">30 days</option>
               </select>
             </div>
             <div className="space-y-2">
