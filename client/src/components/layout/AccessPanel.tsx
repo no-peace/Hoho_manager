@@ -13,6 +13,7 @@ export const AccessPanel = () => {
   const [formData, setFormData] = useState<Partial<StaffRecord>>({});
   const [isCreating, setIsCreating] = useState(false);
   const [allChannelsAllowed, setAllChannelsAllowed] = useState(false);
+  const [allGuildsAllowed, setAllGuildsAllowed] = useState(false);
 
   useEffect(() => {
     fetchRecords();
@@ -23,6 +24,7 @@ export const AccessPanel = () => {
     setFormData(record);
     setIsCreating(false);
     setAllChannelsAllowed(record.allowed_channel_ids.includes("*"));
+    setAllGuildsAllowed((record.allowed_guild_ids ?? []).includes("*"));
   };
 
   const handleCreate = () => {
@@ -37,13 +39,14 @@ export const AccessPanel = () => {
       can_edit_messages: 0,
       can_delete_messages: 0,
       can_manage_templates: 0,
+      can_manage_automation: 0,
       can_mention_everyone: 0,
       can_mention_here: 0,
       can_mention_roles: 0,
-      can_attach_files: 1,
-      can_use_components_v2: 1,
-      can_use_weao_exploits: 1,
-      allowed_guild_ids: ["*"],
+      can_attach_files: 0,
+      can_use_components_v2: 0,
+      can_use_weao_exploits: 0,
+      allowed_guild_ids: selectedGuildId ? [selectedGuildId] : [],
       cooldown_seconds: 30,
       max_messages_per_hour: 10,
       allowed_channel_ids: [],
@@ -52,14 +55,18 @@ export const AccessPanel = () => {
     });
     setIsCreating(true);
     setAllChannelsAllowed(false);
+    setAllGuildsAllowed(false);
   };
 
   const handleSave = async () => {
     try {
       const dataToSave = { ...formData };
-      if (allChannelsAllowed) {
-        dataToSave.allowed_channel_ids = ["*"];
-      }
+      dataToSave.allowed_channel_ids = allChannelsAllowed
+        ? ["*"]
+        : (formData.allowed_channel_ids ?? []).filter((id) => id !== "*");
+      dataToSave.allowed_guild_ids = allGuildsAllowed
+        ? ["*"]
+        : (formData.allowed_guild_ids ?? []).filter((id) => id !== "*");
       
       if (isCreating) {
         if (!dataToSave.discord_user_id) {
@@ -113,7 +120,7 @@ export const AccessPanel = () => {
         )}
       </div>
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3 text-[#F1F3F9] custom-scrollbar sm:p-5">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-3 text-[#F1F3F9] custom-scrollbar sm:p-5">
         {error && <div className="mb-4 p-3 bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] rounded">{error}</div>}
 
         {currentUser && !editingId && (
@@ -270,6 +277,11 @@ export const AccessPanel = () => {
                   onChange={(c) => updateForm({ can_manage_templates: c ? 1 : 0 })}
                 />
                 <Checkbox
+                  label="Can Manage Automations (Schedules / Sticky Messages)"
+                  checked={formData.can_manage_automation === 1}
+                  onChange={(c) => updateForm({ can_manage_automation: c ? 1 : 0 })}
+                />
+                <Checkbox
                   label="Can Attach / Upload Files"
                   checked={formData.can_attach_files !== 0}
                   onChange={(c) => updateForm({ can_attach_files: c ? 1 : 0 })}
@@ -323,6 +335,30 @@ export const AccessPanel = () => {
             </div>
 
             <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[#F1F3F9]">Server Allowlist</h4>
+              <div className="bg-[#161A23] p-3 rounded border border-[#10131A] space-y-3">
+                <Checkbox
+                  label="Allow ALL servers (*)"
+                  checked={allGuildsAllowed}
+                  onChange={setAllGuildsAllowed}
+                />
+                {!allGuildsAllowed && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#A1A8B8] mb-1">Allowed Servers</label>
+                    <SearchableDiscordSelect
+                      type="guild"
+                      multiple
+                      value={(formData.allowed_guild_ids || []).filter((id) => id !== "*")}
+                      onChange={(val) => updateForm({ allowed_guild_ids: val as string[] })}
+                      placeholder="Select allowed servers..."
+                    />
+                  </div>
+                )}
+                <p className="text-[10px] text-[#6F788A]">New staff accounts are restricted to the selected server by default. Server and channel allowlists are checked by the API.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
               <h4 className="text-sm font-semibold text-[#F1F3F9]">Channel Allowlist</h4>
               <div className="bg-[#161A23] p-3 rounded border border-[#10131A] space-y-3">
                 <Checkbox
@@ -344,6 +380,59 @@ export const AccessPanel = () => {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TextField
+                label="Access Expires At (Optional)"
+                type="datetime-local"
+                value={formData.expires_at ? (() => {
+                  const date = new Date(formData.expires_at);
+                  return Number.isNaN(date.getTime()) ? "" : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                })() : ""}
+                onChange={(e) => updateForm({ expires_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              />
+              <TextField
+                label="Admin Notes (Optional)"
+                value={formData.notes || ""}
+                onChange={(e) => updateForm({ notes: e.target.value })}
+                placeholder="Reason for granting access..."
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[#F1F3F9]">Per-Action Limits</h4>
+              <p className="text-[11px] text-[#A1A8B8]">Leave a field blank to use the global cooldown or hourly limit. Set 0 cooldown to disable the cooldown for that action.</p>
+              <div className="grid grid-cols-1 gap-3 rounded border border-[#10131A] bg-[#161A23] p-3 sm:grid-cols-2">
+                {(["send", "edit", "delete", "templates", "automation", "weao"] as const).map((action) => (
+                  <div key={action} className="grid grid-cols-2 gap-2">
+                    <TextField
+                      label={action + " cooldown (s)"}
+                      type="number"
+                      value={formData.granular_cooldowns?.[action] === undefined ? "" : String(formData.granular_cooldowns[action])}
+                      onChange={(e) => {
+                        const next = { ...(formData.granular_cooldowns || {}) };
+                        if (e.target.value.trim() === "") delete next[action];
+                        else if (Number.isFinite(Number(e.target.value)) && Number(e.target.value) >= 0) next[action] = Number(e.target.value);
+                        updateForm({ granular_cooldowns: next });
+                      }}
+                      placeholder="Default"
+                    />
+                    <TextField
+                      label={action + " max/hr"}
+                      type="number"
+                      value={formData.granular_rate_limits?.[action] === undefined ? "" : String(formData.granular_rate_limits[action])}
+                      onChange={(e) => {
+                        const next = { ...(formData.granular_rate_limits || {}) };
+                        if (e.target.value.trim() === "") delete next[action];
+                        else if (Number.isFinite(Number(e.target.value)) && Number(e.target.value) >= 0) next[action] = Number(e.target.value);
+                        updateForm({ granular_rate_limits: next });
+                      }}
+                      placeholder="Default"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
