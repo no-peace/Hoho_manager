@@ -172,18 +172,23 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
       setMemberResults([]);
       return;
     }
+    let cancelled = false;
     const timer = setTimeout(async () => {
+      if (cancelled) return;
       setIsSearchingMembers(true);
       try {
         const res = await api.discord.searchMembers(effectiveGuildId, searchQuery);
-        setMemberResults(res.members || []);
+        if (!cancelled) setMemberResults(res.members || []);
       } catch {
-        setMemberResults([]);
+        if (!cancelled) setMemberResults([]);
       } finally {
-        setIsSearchingMembers(false);
+        if (!cancelled) setIsSearchingMembers(false);
       }
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [effectiveGuildId, searchQuery, mentionFilter]);
 
   // Click outside listener
