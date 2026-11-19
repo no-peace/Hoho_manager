@@ -14,6 +14,7 @@ export interface StaffRecord {
   can_edit_messages: number;
   can_delete_messages: number;
   can_manage_templates: number;
+  can_manage_automation?: number;
   allowed_channel_ids: string; // JSON
   can_mention_everyone: number;
   can_mention_here: number;
@@ -63,6 +64,7 @@ export const staffRepository = {
     can_edit_messages?: number;
     can_delete_messages?: number;
     can_manage_templates?: number;
+    can_manage_automation?: number;
     allowed_channel_ids?: string;
     can_mention_everyone?: number;
     can_mention_here?: number;
@@ -83,7 +85,7 @@ export const staffRepository = {
       INSERT INTO staff_access (
         discord_user_id, discord_username, discord_global_name, discord_avatar, granted_by_discord_id,
         is_active, expires_at, cooldown_seconds,
-        can_send_messages, can_edit_messages, can_delete_messages, can_manage_templates,
+        can_send_messages, can_edit_messages, can_delete_messages, can_manage_templates, can_manage_automation,
         allowed_channel_ids,
         can_mention_everyone, can_mention_here, can_mention_roles, allowed_role_mention_ids,
         max_messages_per_hour, can_use_webhooks, can_override_profile, can_attach_files,
@@ -92,7 +94,7 @@ export const staffRepository = {
       ) VALUES (
         @discord_user_id, @discord_username, @discord_global_name, @discord_avatar, @granted_by_discord_id,
         @is_active, @expires_at, @cooldown_seconds,
-        @can_send_messages, @can_edit_messages, @can_delete_messages, @can_manage_templates,
+        @can_send_messages, @can_edit_messages, @can_delete_messages, @can_manage_templates, @can_manage_automation,
         @allowed_channel_ids,
         @can_mention_everyone, @can_mention_here, @can_mention_roles, @allowed_role_mention_ids,
         @max_messages_per_hour, @can_use_webhooks, @can_override_profile, @can_attach_files,
@@ -112,6 +114,7 @@ export const staffRepository = {
       can_edit_messages: data.can_edit_messages ?? 0,
       can_delete_messages: data.can_delete_messages ?? 0,
       can_manage_templates: data.can_manage_templates ?? 0,
+      can_manage_automation: data.can_manage_automation ?? 0,
       allowed_channel_ids: data.allowed_channel_ids ?? '[]',
       can_mention_everyone: data.can_mention_everyone ?? 0,
       can_mention_here: data.can_mention_here ?? 0,
@@ -120,10 +123,10 @@ export const staffRepository = {
       max_messages_per_hour: data.max_messages_per_hour ?? 10,
       can_use_webhooks: data.can_use_webhooks ?? 1,
       can_override_profile: data.can_override_profile ?? 1,
-      can_attach_files: data.can_attach_files ?? 1,
-      can_use_components_v2: data.can_use_components_v2 ?? 1,
-      can_use_weao_exploits: data.can_use_weao_exploits ?? 1,
-      allowed_guild_ids: data.allowed_guild_ids ?? '["*"]',
+      can_attach_files: data.can_attach_files ?? 0,
+      can_use_components_v2: data.can_use_components_v2 ?? 0,
+      can_use_weao_exploits: data.can_use_weao_exploits ?? 0,
+      allowed_guild_ids: data.allowed_guild_ids ?? '[]',
       granular_cooldowns: data.granular_cooldowns ?? '{}',
       granular_rate_limits: data.granular_rate_limits ?? '{}',
       notes: data.notes ?? null,
