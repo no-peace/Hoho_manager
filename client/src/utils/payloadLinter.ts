@@ -10,6 +10,7 @@ export interface PayloadLintIssue {
 
 export interface LintAttachment {
   name: string;
+  spoiler?: boolean;
 }
 
 const countComponents = (nodes: ComponentNode[]): number =>
@@ -71,7 +72,7 @@ export const lintPayloads = (
   activeMessageIndex = 0,
 ): PayloadLintIssue[] => {
   const issues: PayloadLintIssue[] = [];
-  const attachedNames = new Set(attachments.map((file) => file.name.toLowerCase()));
+  const attachedNames = new Set(attachments.flatMap((file) => [file.name, ...(file.spoiler ? [`SPOILER_${file.name}`] : [])].map((name) => name.toLowerCase())));
 
   messages.forEach((message, messageIndex) => {
     const components = message.components ?? [];
