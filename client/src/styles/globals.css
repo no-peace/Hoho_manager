@@ -374,14 +374,89 @@ details summary::-webkit-details-marker {
 }
 
 
-/* Studio atmospheric login backdrop — static gradients, no layout shift */
+/* Precision architectural login studio backdrop */
 .hoho-studio-backdrop {
-  background-color: #0B0D12;
-  background-image: radial-gradient(ellipse 75% 55% at 18% 14%, rgba(129,140,248,.16) 0%, rgba(99,102,241,.05) 45%, transparent 72%), radial-gradient(ellipse 65% 50% at 84% 22%, rgba(167,139,250,.12) 0%, rgba(129,140,248,.04) 48%, transparent 74%), radial-gradient(ellipse 70% 55% at 76% 88%, rgba(52,211,153,.09) 0%, rgba(59,130,246,.04) 50%, transparent 75%), linear-gradient(180deg,#0B0D12 0%,#10131A 52%,#0B0D12 100%);
+  background-color: #080A0F;
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(88, 101, 242, 0.14) 0%, rgba(129, 140, 248, 0.04) 42%, transparent 72%),
+    radial-gradient(ellipse 50% 35% at 85% 95%, rgba(52, 211, 153, 0.06) 0%, transparent 65%),
+    linear-gradient(180deg, #080A0F 0%, #0C0F17 55%, #080A0F 100%);
 }
 .hoho-studio-grid-overlay {
-  background-size: 44px 44px;
-  background-image: linear-gradient(to right,rgba(129,140,248,.065) 1px,transparent 1px),linear-gradient(to bottom,rgba(129,140,248,.065) 1px,transparent 1px);
-  mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
-  -webkit-mask-image: radial-gradient(ellipse 88% 78% at 50% 42%,#000 35%,transparent 88%);
+  background-size: 48px 48px;
+  background-image:
+    linear-gradient(to right, rgba(241, 243, 249, 0.042) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(241, 243, 249, 0.042) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 38%, #000 30%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 38%, #000 30%, transparent 90%);
+}
+@keyframes hoho-beam-x {
+  0% { transform: translate3d(-15%, 0, 0); opacity: 0; }
+  12% { opacity: 0.85; }
+  88% { opacity: 0.85; }
+  100% { transform: translate3d(115%, 0, 0); opacity: 0; }
+}
+@keyframes hoho-beam-y {
+  0% { transform: translate3d(0, -15%, 0); opacity: 0; }
+  15% { opacity: 0.7; }
+  85% { opacity: 0.7; }
+  100% { transform: translate3d(0, 115%, 0); opacity: 0; }
+}
+.hoho-grid-beam-x {
+  position: absolute;
+  height: 1px;
+  width: 240px;
+  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.75), rgba(241, 243, 249, 0.9), transparent);
+  animation: hoho-beam-x 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+.hoho-grid-beam-y {
+  position: absolute;
+  width: 1px;
+  height: 200px;
+  background: linear-gradient(180deg, transparent, rgba(52, 211, 153, 0.6), rgba(129, 140, 248, 0.75), transparent);
+  animation: hoho-beam-y 11s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hoho-grid-beam-x,
+  .hoho-grid-beam-y {
+    display: none;
+  }
+}
+
+
+/* Mobile and native-control interaction safeguards */
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+button,
+a,
+input,
+textarea,
+select,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+select,
+option {
+  background-color: #161A23;
+  color: #F1F3F9;
+}
+
+.custom-scrollbar,
+[role="dialog"] {
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
