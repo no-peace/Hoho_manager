@@ -245,8 +245,7 @@ router.post(
       ) {
         throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
       }
-      // Legacy editor fields are not Discord message-sender overrides. Keep them
-      // in old backups/imports, but never forward them to Discord.
+      // Strip legacy webhook identity overrides; bot messages always use the bot identity.
       delete sanitizedMessage.username;
       delete sanitizedMessage.avatar_url;
 
