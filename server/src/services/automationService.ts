@@ -29,7 +29,7 @@ interface ZonedDateParts {
 
 const getZonedParts = (date: Date, formatter: Intl.DateTimeFormat): ZonedDateParts => {
   const parts = formatter.formatToParts(date);
-  const values = new Map(parts.map((part) => [part.type, part.value]));
+  const values = new Map<string, string>(parts.map((part) => [part.type, part.value] as const));
   return {
     year: Number(values.get("year")),
     month: Number(values.get("month")),
