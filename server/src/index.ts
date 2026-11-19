@@ -3,6 +3,7 @@ import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
 import { runDatabaseMaintenance } from "./services/maintenanceService.js";
 import { startMessageTrackerPolling, stopMessageTrackerPolling } from "./services/messageTrackerService.js";
+import { initializeAutomationService, runAutomationTick } from "./services/automationService.js";
 import { logger } from "./utils/logger.js";
 import type { Server } from "node:http";
 
@@ -28,6 +29,7 @@ const start = async (): Promise<void> => {
 
   // Start background message tracker for dynamic auto-updates
   startMessageTrackerPolling();
+  await initializeAutomationService();
 
   const app = createApp();
 
@@ -56,6 +58,13 @@ const start = async (): Promise<void> => {
   }, 60 * 60 * 1000);
   cleanup.unref();
 
+  const automationInterval = setInterval(() => {
+    runAutomationTick().catch((error: unknown) => {
+      log.warn(`Automation tick error: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  }, 60_000);
+  automationInterval.unref();
+
   let isShuttingDown = false;
   const gracefulShutdown = (signal: string) => {
     if (isShuttingDown) return;
@@ -63,6 +72,7 @@ const start = async (): Promise<void> => {
     log.info(`Received ${signal}. Starting graceful shutdown...`);
     clearTimeout(initialMaintenance);
     clearInterval(cleanup);
+    clearInterval(automationInterval);
     stopMessageTrackerPolling();
 
     server.close(() => {
