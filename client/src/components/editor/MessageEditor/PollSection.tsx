@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import type { DiscordPoll } from "@dmb/shared";
 import { useMessageStore } from "../../../store/messageStore";
@@ -17,7 +17,11 @@ const createDefaultPoll = (): DiscordPoll => ({
 });
 
 export const PollSection: React.FC<{ poll?: DiscordPoll; ensureActive?: () => void }> = ({ poll, ensureActive }) => {
-  const [expanded, setExpanded] = useState(Boolean(poll));
+  const hasPoll = Boolean(poll);
+  const [expanded, setExpanded] = useState(hasPoll);
+  useEffect(() => {
+    setExpanded(hasPoll);
+  }, [hasPoll]);
   const update = (next: DiscordPoll | undefined) => {
     ensureActive?.();
     useMessageStore.getState().setField("poll", next);
