@@ -237,6 +237,22 @@ describe("Phase 2 staff security regressions", () => {
     }
   });
 
+  it("requires the dedicated automation permission to view schedules", async () => {
+    const staffId = "123456789012345690";
+    await createStaff(staffId, { can_manage_automation: 0 });
+
+    try {
+      const response = await fetch(
+        \`${baseUrl}/api/automation/schedules?guildId=guild_allowed\`,
+        { headers: { "x-staff-id": staffId } },
+      );
+
+      expect(response.status).toBe(403);
+    } finally {
+      await staffRepository.delete(staffId);
+    }
+  });
+
   it("requires send permission to enumerate bot guilds", async () => {
     const staffId = "123456789012345682";
     await createStaff(staffId, { can_send_messages: 0 });
