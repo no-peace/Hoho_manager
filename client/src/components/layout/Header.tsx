@@ -19,6 +19,7 @@ import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
+import { navigateTo } from "./StudioRouter";
 
 const AccessPanel = React.lazy(() => import("./AccessPanel").then((module) => ({ default: module.AccessPanel })));
 const SettingsModal = React.lazy(() => import("./SettingsModal").then((module) => ({ default: module.SettingsModal })));
@@ -92,6 +93,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
     }
   };
 
+  const handleInternalNavigation = (event: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return;
+    event.preventDefault();
+    setUserMenuOpen(false);
+    navigateTo(path);
+  };
+
   const isAdmin = Boolean(currentUser?.isAdmin);
   const hasDefaultBotAccess = Boolean(currentUser?.hasDefaultBotAccess || isAdmin);
 
@@ -105,6 +120,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           {isSubRoute && (
             <a
               href="/"
+              onClick={(event) => handleInternalNavigation(event, "/")}
               className="flex items-center gap-1 text-xs font-semibold text-[#A1A8B8] hover:text-white bg-[#161A23] hover:bg-[#252B3A] border border-[#252B3A] px-2 py-1 rounded transition-colors mr-1"
               title="Return to Dashboard"
             >
@@ -114,6 +130,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           )}
           <a
             href="/"
+            onClick={(event) => handleInternalNavigation(event, "/")}
             className="flex items-center gap-2.5 group focus:outline-none shrink-0"
             title="HoHo Manager"
           >
@@ -294,11 +311,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
                       <KeyRound size={14} className="text-[#f0b232]" />
                       <span>Bot Access</span>
                     </button>
-                    <a href="/docs" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/docs" onClick={(event) => handleInternalNavigation(event, "/docs")} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <BookOpen size={14} className="text-[#949cf7]" />
                       <span>Documentation</span>
                     </a>
-                    <a href="/privacy" onClick={() => setUserMenuOpen(false)} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
+                    <a href="/privacy" onClick={(event) => handleInternalNavigation(event, "/privacy")} className="w-full text-left text-xs font-semibold px-2 py-1.5 rounded hover:bg-[#161A23] flex items-center gap-2 text-[#F1F3F9] transition-colors">
                       <Shield size={14} className="text-[#A1A8B8]" />
                       <span>Privacy</span>
                     </a>
@@ -351,6 +368,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
 
           <a
             href="/docs"
+            onClick={(event) => handleInternalNavigation(event, "/docs")}
             className="text-xs font-semibold text-[#A1A8B8] hover:text-white border border-[#252B3A] bg-[#161A23] hover:bg-[#252B3A] px-2.5 py-1.5 rounded transition-colors hidden sm:flex items-center gap-1"
             title="Documentation"
           >
