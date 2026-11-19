@@ -52,8 +52,12 @@ export const validateApiBaseUrl = (value: string, production: boolean): string |
   if (parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== "/") {
     return "API_BASE_URL must be an origin without credentials, path, query or fragment.";
   }
-  if (production && parsed.protocol !== "https:") {
-    return "API_BASE_URL must use HTTPS outside local development and tests because the bot sends ADMIN_API_KEY.";
+  const isLoopback =
+    parsed.hostname === "127.0.0.1" ||
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "::1";
+  if (production && parsed.protocol !== "https:" && !(parsed.protocol === "http:" && isLoopback)) {
+    return "API_BASE_URL must use HTTPS for non-loopback production hosts because the bot sends ADMIN_API_KEY.";
   }
   return null;
 };
@@ -75,8 +79,12 @@ export const validateEnv = (): string[] => {
   }
   try {
     const clientOrigin = new URL(env.clientOrigin);
-    if (clientOrigin.protocol !== "https:" && env.isProd) {
-      errors.push("CLIENT_ORIGIN must use HTTPS outside local development and tests.");
+    const isLoopbackClientOrigin =
+      clientOrigin.hostname === "127.0.0.1" ||
+      clientOrigin.hostname === "localhost" ||
+      clientOrigin.hostname === "::1";
+    if (clientOrigin.protocol !== "https:" && env.isProd && !isLoopbackClientOrigin) {
+      errors.push("CLIENT_ORIGIN must use HTTPS for non-loopback production hosts.");
     }
     if (clientOrigin.username || clientOrigin.password || clientOrigin.search || clientOrigin.hash) {
       errors.push("CLIENT_ORIGIN must not contain credentials, query or fragment.");
