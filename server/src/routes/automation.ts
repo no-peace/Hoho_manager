@@ -93,6 +93,9 @@ router.post(
       recurrence: recurrence ?? null,
       createdBy,
     });
+    if (!row) {
+      throw new ApiError(500, "The scheduled message could not be created.");
+    }
     auditLog({
       event: "AUTOMATION_CREATED",
       guildId,
