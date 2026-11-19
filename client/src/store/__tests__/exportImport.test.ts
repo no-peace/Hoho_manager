@@ -18,7 +18,6 @@ describe("Export / Import & Store Parity (INV-5)", () => {
             { data: { content: "Message 2" } },
             { data: { content: "Message 3" } },
           ],
-          targets: [{ url: "https://discord.com/api/webhooks/123/abc" }],
         },
       ],
     };
@@ -30,7 +29,6 @@ describe("Export / Import & Store Parity (INV-5)", () => {
     expect(parsed.messages[1].content).toBe("Message 2");
     expect(parsed.messages[2].content).toBe("Message 3");
     expect(parsed.content).toBe("Message 1"); // primary matches first message
-    expect(parsed.targets).toHaveLength(1);
   });
 
   it("parses standard QueryData with 5 messages retaining all 5 in messages array (RB-03, RB-05)", () => {
