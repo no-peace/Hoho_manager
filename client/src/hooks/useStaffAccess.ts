@@ -16,6 +16,7 @@ export interface StaffRecord {
   can_edit_messages: number;
   can_delete_messages: number;
   can_manage_templates: number;
+  can_manage_automation?: number;
   allowed_channel_ids: string[];
   can_mention_everyone: number;
   can_mention_here: number;
@@ -28,6 +29,8 @@ export interface StaffRecord {
   can_use_components_v2?: number;
   can_use_weao_exploits?: number;
   allowed_guild_ids?: string[];
+  granular_cooldowns?: Record<string, number>;
+  granular_rate_limits?: Record<string, number>;
   notes: string | null;
   created_at: string;
   updated_at: string;
