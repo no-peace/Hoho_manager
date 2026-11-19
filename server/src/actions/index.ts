@@ -10,7 +10,6 @@ import * as removeRole from "./removeRole.js";
 import * as sendDm from "./sendDm.js";
 import * as sendEphemeralReply from "./sendEphemeralReply.js";
 import * as sendMessage from "./sendMessage.js";
-import * as sendWebhookMessage from "./sendWebhookMessage.js";
 import * as setVariable from "./setVariable.js";
 import * as stop from "./stop.js";
 import * as toggleRole from "./toggleRole.js";
@@ -33,7 +32,6 @@ const modules: readonly ActionHandlerModule[] = [
   sendDm,
   openModal,
   sendMessage,
-  sendWebhookMessage,
   deleteMessage,
   createThread,
   wait,
@@ -56,7 +54,6 @@ export const hasActionHandler = (actionType: string): boolean =>
 /** Metadata for the UI's action picker. */
 export const listActionTypes = (): ActionHandlerMeta[] =>
   modules
-    .filter((module) => module.type !== "send_webhook_message")
     .map((module) => ({
       type: module.type,
       description: module.description,
