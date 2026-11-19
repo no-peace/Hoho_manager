@@ -15,7 +15,7 @@ import { StepList } from "./StepList";
  * places:
  *
  *   1. The component's `custom_id`, which carries only the **first** step's
- *      params. That keeps ad-hoc webhook sends (where the server is not
+ *      params. That keeps bot dispatches (where the server is not
  *      involved) working for simple single-step actions.
  *   2. The action store, keyed by `custom_id`, which is saved with a template or
  *      registered with `/api/send` so longer chains can run server-side.
