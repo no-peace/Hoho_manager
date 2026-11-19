@@ -151,6 +151,21 @@ export interface DiscordMessageReference {
   guild_id?: string;
   fail_if_not_exists?: boolean;
 }
+export interface DiscordPollAnswer {
+  poll_media: {
+    text: string;
+    emoji?: { id?: string | null; name?: string | null };
+  };
+}
+
+export interface DiscordPoll {
+  question: { text: string };
+  answers: DiscordPollAnswer[];
+  duration: number;
+  allow_multiselect: boolean;
+  layout_type?: number;
+}
+
 /** The editor's always-populated message document. */
 export interface MessageData {
   content: string;
@@ -160,6 +175,7 @@ export interface MessageData {
   avatar_url: string;
   thread_name: string;
   flags?: number;
+  poll?: DiscordPoll;
   /**Discord message link for editing or replying. */
   message_link?: string;
   /** Whether the linked message should be edited in-place or replied to. */
@@ -213,6 +229,7 @@ export interface DiscordMessagePayload {
     replied_user?: boolean;
   };
   attachments?: DiscordAttachmentPayload[];
+  poll?: DiscordPoll;
 }
 
 export interface QueryDataMessage {
