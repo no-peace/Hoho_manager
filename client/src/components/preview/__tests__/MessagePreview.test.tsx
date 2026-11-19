@@ -55,6 +55,38 @@ describe("MessagePreview component click routing", () => {
     expect(useMessageStore.getState().selection).toEqual(originalSelection);
   });
 
+  it("selects a preview button itself rather than its parent Action Row", () => {
+    const message = {
+      content: "",
+      embeds: [],
+      flags: 0,
+      components: [{
+        _id: "button-row",
+        type: ComponentType.ActionRow,
+        components: [{
+          _id: "preview-button",
+          type: ComponentType.Button,
+          style: 1,
+          label: "Configure me",
+          custom_id: "configure_me",
+        }],
+      }],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+    const onSelectPreviewComponent = vi.fn();
+
+    render(<MessagePreview onSelectPreviewComponent={onSelectPreviewComponent} />);
+    fireEvent.click(screen.getByRole("button", { name: "Configure me" }));
+
+    expect(onSelectPreviewComponent).toHaveBeenCalledWith(0, "preview-button", false);
+  });
+
   it("selects the correct message and component for a non-interactive preview element", () => {
     const firstMessage = {
       content: "First message",
