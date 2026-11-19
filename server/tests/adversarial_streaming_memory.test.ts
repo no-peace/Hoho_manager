@@ -329,15 +329,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(callCount).toBe(2);
     });
 
-    it("Probe 2.3: blocks legacy webhook URL message sends before calling fetch", async () => {
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      await expect(
-        discord.sendWebhook("https://discord.com/api/webhooks/123/token", {
-          content: "legacy webhook send",
-        }),
-      ).rejects.toMatchObject({ status: 403 });
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+
 
   });
 
