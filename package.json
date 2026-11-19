@@ -20,7 +20,7 @@
     "build:client": "npm run build --workspace client",
     "build:server": "npm run build --workspace server",
     "build:bot": "npm run build --workspace bot",
-    "build": "npm run build:shared && npm run build:client && npm run build:server && npm run build:bot",
+    "build": "npm run build:shared && concurrently --kill-others-on-fail -n client,server,bot -c magenta,blue,green \"npm:build:client\" \"npm:build:server\" \"npm:build:bot\"",
     "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
     "test": "node scripts/security/picomatch-redos.test.mjs && npm run test --workspaces --if-present",
     "benchmark": "node --expose-gc --import tsx server/benchmarks/runner.ts",
