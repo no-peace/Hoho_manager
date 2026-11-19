@@ -19,7 +19,7 @@ router.get("/auth", asyncHandler(async (req, res) => {
   const adminKey = req.get("x-admin-key");
   const bufA = Buffer.from(String(adminKey ?? ""));
   const bufB = Buffer.from(String(env.adminApiKey ?? ""));
-  const isAdminKey = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+  const isAdminKey = bufA.length > 0 && bufB.length > 0 && bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 
   const sessionUser = await getSessionUserFromRequest(req);
   // A caller-supplied staff ID is only a local-development convenience, never
