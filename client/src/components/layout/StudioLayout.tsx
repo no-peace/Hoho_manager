@@ -14,6 +14,7 @@ import { SplitPane } from "./SplitPane";
 import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 import { applyPreviewComponentSelection } from "../../utils/previewSelection";
 import { STARTER_BLUEPRINTS } from "../../utils/starterBlueprints";
+import { request } from "../../api/client";
 import { SortableItem, SortableList } from "../ui/SortableList";
 
 const PropertyPanel = React.lazy(() =>
@@ -27,6 +28,37 @@ export const StudioLayout: React.FC = () => {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const channelId = params.get("importChannel");
+    const messageId = params.get("importMessage");
+    if (!channelId || !messageId) return;
+
+    params.delete("importChannel");
+    params.delete("importMessage");
+    const remainingQuery = params.toString();
+    const cleanUrl = `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    if (!/^\\d{17,20}$/.test(channelId) || !/^\\d{17,20}$/.test(messageId)) {
+      useGlobalStore.getState().showToast("The Discord import link contains an invalid ID.", "error");
+      return;
+    }
+
+    void request<{ data: any; mode: "classic" | "v2" }>(
+      `/api/discord/messages/${encodeURIComponent(channelId)}/${encodeURIComponent(messageId)}`,
+    ).then((result) => {
+      useMessageStore.getState().load({ data: result.data, mode: result.mode as any });
+      useGlobalStore.getState().showToast("Discord message restored into HoHo Studio.", "success");
+      setMobileView("editor");
+    }).catch((error) => {
+      useGlobalStore.getState().showToast(
+        error instanceof Error ? error.message : "Could not restore the Discord message.",
+        "error",
+      );
+    });
+  }, []);
 
   useEffect(() => {
     const wrapper = editorScrollRef.current;
