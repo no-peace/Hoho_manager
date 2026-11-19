@@ -179,6 +179,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
         </div></SpotlightCard>
 
         <SpotlightCard className="lg:col-span-7 min-w-0 rounded-2xl h-full"><div className="relative flex h-full min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#818CF8]/60 to-transparent" aria-hidden="true" />
           <div className="bg-[#0B0E14] px-4 py-2.5 border-b border-[#1D2230] flex items-center justify-between gap-3 min-w-0">
             <span className="shrink-0 whitespace-nowrap text-xs font-bold text-[#A1A8B8]">
               #announcements  Preview
