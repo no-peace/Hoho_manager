@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   Copy,
   Plus,
   Trash2,
@@ -16,6 +15,7 @@ import { getServerNow } from "../../store/globalStore";
 import { DiscordMentionInput } from "./DiscordMentionInput";
 import { embedCharCount, decimalToHex } from "../../utils/discord";
 import { useMessageStore } from "../../store/messageStore";
+import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 
 export interface EmbedEditorProps {
   embed: EmbedData;
@@ -26,11 +26,11 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
   const updateEmbed = useMessageStore((state) => state.updateEmbed);
   const removeEmbed = useMessageStore((state) => state.removeEmbed);
   const duplicateEmbed = useMessageStore((state) => state.duplicateEmbed);
-  const moveEmbed = useMessageStore((state) => state.moveEmbed);
+
   const addEmbedField = useMessageStore((state) => state.addEmbedField);
   const updateEmbedField = useMessageStore((state) => state.updateEmbedField);
   const removeEmbedField = useMessageStore((state) => state.removeEmbedField);
-  const moveEmbedField = useMessageStore((state) => state.moveEmbedField);
+  const reorderEmbedFields = useMessageStore((state) => state.reorderEmbedFields);
   const duplicateEmbedField = useMessageStore((state) => state.duplicateEmbedField);
   const selection = useMessageStore((state) => state.selection);
   const select = useMessageStore((state) => state.select);
@@ -108,29 +108,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            title="Move Up"
-            disabled={index === 0}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (id) moveEmbed(id, -1);
-            }}
-            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 disabled:hover:bg-transparent"
-          >
-            <ChevronUp size={14} />
-          </button>
-          <button
-            type="button"
-            title="Move Down"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (id) moveEmbed(id, 1);
-            }}
-            className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
-          >
-            <ChevronDown size={14} />
-          </button>
+          <DragHandle label="Drag to reorder embed" />
           <button
             type="button"
             title="Duplicate"
@@ -402,20 +380,30 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     No fields added yet. Embeds can hold up to 25 fields.
                   </p>
                 ) : (
-                  (embed.fields || []).map((field, fieldIdx) => {
-                    const fieldId = field._id || "";
+                  <SortableList
+                    items={(embed.fields || []).map((field, fieldIdx) => field._id || `field-${id}-${fieldIdx}`)}
+                    onReorder={(activeId, overId) => reorderEmbedFields(id, activeId, overId)}
+                    strategy="vertical"
+                    className="space-y-3"
+                  >
+                  {(embed.fields || []).map((field, fieldIdx) => {
+                    const fieldId = field._id || `field-${id}-${fieldIdx}`;
                     return (
+                      <SortableItem key={fieldId} id={fieldId}>
                       <div
-                        key={fieldId || fieldIdx}
+                        data-editor-target-id={id}
                         data-editor-target-id={id}
                         data-editor-target-part="field"
                         data-editor-target-field-id={fieldId}
                         className="p-2.5 rounded-lg bg-[#1D2230] border border-[#10131A] space-y-2 relative group"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-[#A1A8B8]">
-                            Field #{fieldIdx + 1}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <DragHandle label="Drag to reorder embed field" />
+                            <span className="text-[10px] font-medium text-[#A1A8B8]">
+                              Field #{fieldIdx + 1}
+                            </span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <label className="flex items-center gap-1.5 text-[11px] text-[#F1F3F9] cursor-pointer">
                               <input
@@ -428,26 +416,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                               />
                               Inline
                             </label>
-                            {fieldIdx > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => moveEmbedField(id, fieldId, -1)}
-                                className="text-[#A1A8B8] hover:text-white p-0.5 rounded hover:bg-[#252B3A] transition-colors"
-                                title="Move Field Up"
-                              >
-                                <ChevronUp size={12} />
-                              </button>
-                            )}
-                            {fieldIdx < (embed.fields?.length ?? 0) - 1 && (
-                              <button
-                                type="button"
-                                onClick={() => moveEmbedField(id, fieldId, 1)}
-                                className="text-[#A1A8B8] hover:text-white p-0.5 rounded hover:bg-[#252B3A] transition-colors"
-                                title="Move Field Down"
-                              >
-                                <ChevronDown size={12} />
-                              </button>
-                            )}
+
                             <button
                               type="button"
                               onClick={() => duplicateEmbedField(id, fieldId)}
@@ -490,8 +459,10 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                           />
                         </div>
                       </div>
+                      </SortableItem>
                     );
-                  })
+                  })}
+                  </SortableList>
                 )}
               </div>
             )}
