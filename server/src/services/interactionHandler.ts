@@ -91,6 +91,15 @@ const deliverLateResponse = async (
   }
 };
 
+export const cacheInteractionReceipt = (
+  interactionId: string,
+  response: InteractionResponse,
+): void => {
+  void interactionReceiptRepository.complete(interactionId, response).catch((error: unknown) => {
+    log.error(`Could not cache response for interaction ${interactionId}: ${String(error)}`);
+  });
+};
+
 export const completeDeferredInteraction = async (
   interaction: DiscordInteraction,
 ): Promise<void> => {
@@ -178,16 +187,10 @@ export const handleInteraction = async (
   if (timeout) clearTimeout(timeout);
 
   if (outcome.kind === "complete") {
-    void interactionReceiptRepository.complete(interaction.id, outcome.response).catch((error: unknown) => {
-      log.error(`Could not cache response for interaction ${interaction.id}: ${String(error)}`);
-    });
     return outcome.response;
   }
 
   const deferred = deferredResponse(interaction);
-  void interactionReceiptRepository.complete(interaction.id, deferred).catch((error: unknown) => {
-    log.error(`Could not cache deferred response for interaction ${interaction.id}: ${String(error)}`);
-  });
 
   const ttlTimer = setTimeout(() => {
     cleanupDeferredInteraction(interaction.id);
