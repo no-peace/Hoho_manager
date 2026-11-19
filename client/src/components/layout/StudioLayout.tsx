@@ -143,20 +143,6 @@ export const StudioLayout: React.FC = () => {
 
   const addMessage = useMessageStore((state) => state.addMessage);
   const reorderMessages = useMessageStore((state) => state.reorderMessages);
-  const hasUnsavedMessage = useMessageStore((state) => state.isDirty);
-  const hasUnsavedActions = useActionStore((state) => state.isDirty);
-  const hasUnsavedWork = hasUnsavedMessage || hasUnsavedActions;
-
-  useEffect(() => {
-    if (!hasUnsavedWork) return;
-    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warnBeforeUnload);
-    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [hasUnsavedWork]);
-
   // Jakob's Law: Familiar Studio Keyboard Shortcuts (Ctrl/Cmd+S -> Backups, Ctrl/Cmd+Enter -> Dispatch)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
