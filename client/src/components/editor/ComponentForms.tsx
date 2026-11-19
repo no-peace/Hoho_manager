@@ -343,6 +343,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
           update({ options: reordered });
         }}
         strategy="vertical"
+        renderOverlay={(activeId) => `Option ${options.findIndex((option, index) => (option._id ?? `option-${index}`) === activeId) + 1}`}
         className="space-y-2.5"
       >
         {options.map((option, index) => {
@@ -366,6 +367,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               </div>
             </div>
 
+            <div className="sortable-collapse-on-drag space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <TextField
                 label="Label"
@@ -402,6 +404,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
                   replaceOption(index, { emoji });
                 }}
               />
+            </div>
             </div>
           </div>
           </SortableItem>
