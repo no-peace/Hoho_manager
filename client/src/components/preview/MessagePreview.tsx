@@ -15,6 +15,7 @@ import { useMessageStore, type AttachedFile, type EmbedPreviewPart } from "../..
 import { EDITOR_MODES } from "../../utils/constants";
 import { scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 import { simulateFlow, type FlowSimulationResult } from "../../utils/flowSimulator";
+import { PollPreview } from "./PollPreview";
 
 const FlowSimulatorDrawer = React.lazy(() => import("./FlowSimulatorDrawer").then((module) => ({ default: module.FlowSimulatorDrawer })));
 
@@ -485,24 +486,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
                               message.embeds.map((embed) => (
                                 <EmbedPreview key={embed._id} embed={embed} />
                               ))}
-                            {message.poll && (
-                              <div className="max-w-[520px] rounded-xl border border-[#4e5058] bg-[#2b2d31] p-3">
-                                <div className="mb-2 flex items-center justify-between gap-2">
-                                  <span className="text-[9px] font-bold uppercase tracking-wider text-[#949ba4]">Poll preview</span>
-                                  <span className="text-[9px] text-[#949ba4]">{message.poll.duration}h · {message.poll.allow_multiselect ? "Multiple answers" : "One answer"}</span>
-                                </div>
-                                <p className="mb-3 text-sm font-semibold text-[#f2f3f5]">{message.poll.question.text}</p>
-                                <div className="space-y-1.5">
-                                  {message.poll.answers.map((answer, answerIndex) => (
-                                    <div key={answerIndex} className="flex items-center gap-2 rounded-md border border-[#4e5058] bg-[#1e1f22] px-2.5 py-2">
-                                      <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-[#949ba4]" />
-                                      <span className="min-w-0 flex-1 truncate text-xs text-[#dbdee1]">{answer.poll_media.text}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <p className="mt-2 text-[9px] text-[#949ba4]">Vote controls appear after dispatching to Discord.</p>
-                              </div>
-                            )}
+                            {message.poll && <PollPreview poll={message.poll} />}
 
                             {actionRows.length > 0 && (
                               <div className="space-y-1.5 pt-1">
