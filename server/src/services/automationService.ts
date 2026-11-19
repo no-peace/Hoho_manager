@@ -242,15 +242,15 @@ const runDueExpirations = async (now: Date): Promise<void> => {
       await automationRepository.removeExpiring(row.id);
     }
   }
-  if (due.length > 0) {
-    const remaining = await automationRepository.listExpiring();
-    hasExpiringMessages = remaining.length > 0;
-    nextDeleteAt = remaining.reduce((min, row) => Math.min(min, Date.parse(row.delete_at)), Number.POSITIVE_INFINITY);
-  } else {
-    // The cache said an item was due but the row was already removed elsewhere.
+  const nextDeleteAtValue = await automationRepository.getNextExpiringAt();
+  if (nextDeleteAtValue === null) {
+    hasExpiringMessages = false;
     nextDeleteAt = Number.POSITIVE_INFINITY;
-    hasExpiringMessages = (await automationRepository.countExpiring()) > 0;
+    return;
   }
+  const parsedNextDeleteAt = Date.parse(nextDeleteAtValue);
+  hasExpiringMessages = true;
+  nextDeleteAt = Number.isFinite(parsedNextDeleteAt) ? parsedNextDeleteAt : now.getTime();
 };
 
 export const runAutomationTick = async (): Promise<void> => {
