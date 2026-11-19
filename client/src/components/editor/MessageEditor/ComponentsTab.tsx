@@ -713,6 +713,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
               items={children.map((child, childIdx) => child._id ?? `container-${id}-child-${childIdx}`)}
               onReorder={(activeId, overId) => reorderComponentById(activeId, overId, id)}
               strategy="vertical"
+              renderOverlay={() => "Container child"}
               className="space-y-2.5 pl-2 border-l-2 border-[#272D3A]"
             >
               {children.map((child, childIdx) => {
@@ -788,6 +789,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           items={v2TopComponents.map((comp, compIdx) => comp._id ?? `v2-component-${compIdx}`)}
           onReorder={(activeId, overId) => reorderComponentById(activeId, overId, null)}
           strategy="vertical"
+          renderOverlay={() => "V2 component"}
           className="space-y-2.5"
         >
           {v2TopComponents.map((comp, compIdx) => {
