@@ -96,21 +96,71 @@ export function scrollToMessageEditor(index: number, targetId?: string, targetPa
     document.querySelector<HTMLElement>("[data-editor-scroll-container]");
   if (!wrapper) return;
 
-  let attempts = 0;
+  let observer: MutationObserver | null = null;
+  let timeoutId: number | undefined;
+  let retryFrame = 0;
+  let retryAttempts = 0;
+
+  const stopWaiting = () => {
+    observer?.disconnect();
+    observer = null;
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+    if (retryFrame) {
+      window.cancelAnimationFrame(retryFrame);
+      retryFrame = 0;
+    }
+  };
+
+  const waitForEditorChange = (hiddenPane: Element | null, targetMissing: boolean) => {
+    if (observer || retryFrame || timeoutId !== undefined) return;
+
+    if (typeof MutationObserver !== "undefined") {
+      observer = new MutationObserver(navigate);
+      if (targetMissing) {
+        observer.observe(wrapper, { childList: true, subtree: true });
+      }
+      if (hiddenPane) {
+        observer.observe(hiddenPane, {
+          attributes: true,
+          attributeFilter: ["aria-hidden", "inert", "class"],
+        });
+      }
+      // Avoid retaining an observer if a requested message/target never appears.
+      timeoutId = window.setTimeout(stopWaiting, 2000);
+      return;
+    }
+
+    // Older environments without MutationObserver get a bounded RAF fallback.
+    const retry = () => {
+      retryFrame = 0;
+      if (retryAttempts >= 60) return;
+      retryAttempts += 1;
+      navigate();
+      if (retryAttempts < 60 && (observer === null)) {
+        retryFrame = window.requestAnimationFrame(retry);
+      }
+    };
+    retryFrame = window.requestAnimationFrame(retry);
+  };
+
   const navigate = () => {
-    if (!wrapper.isConnected) return;
+    if (!wrapper.isConnected) {
+      stopWaiting();
+      return;
+    }
 
     // Mobile SplitPane keeps the editor mounted but marks the inactive pane hidden/inert.
     const hiddenPane = wrapper.closest('[aria-hidden="true"], [inert], .invisible');
     const target = findEditorTarget(wrapper, index, targetId, targetPart, fieldId);
     if (hiddenPane || !target) {
-      if (attempts < 8) {
-        attempts += 1;
-        window.requestAnimationFrame(navigate);
-      }
+      waitForEditorChange(hiddenPane, !target);
       return;
     }
 
+    stopWaiting();
     const reducedMotion = prefersReducedMotion();
     if (editorLenis && editorScrollWrapper === wrapper) {
       editorLenis.scrollTo(target, {
