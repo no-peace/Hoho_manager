@@ -174,8 +174,6 @@ export interface MessageData {
   content: string;
   embeds: EmbedData[];
   components: ComponentNode[];
-  username: string;
-  avatar_url: string;
   thread_name: string;
   flags?: number;
   poll?: DiscordPoll;
@@ -196,10 +194,6 @@ export interface MessageData {
   };
 }
 
-/** A destination a document can be sent to. */
-export interface TargetData {
-  url: string;
-}
 
 /* ── Wire format (Discohook-compatible `QueryData`) ───────────────────────── */
 
@@ -220,8 +214,6 @@ export interface DiscordMessagePayload {
   content?: string | null;
   embeds?: EmbedData[] | null;
   components?: ComponentNode[];
-  username?: string;
-  avatar_url?: string;
   thread_name?: string;
   flags?: number;
   message_reference?: DiscordMessageReference;
@@ -241,17 +233,12 @@ export interface QueryDataMessage {
   data: DiscordMessagePayload;
 }
 
-export interface QueryDataTarget {
-  type?: number;
-  url: string;
-}
 
 /** Discohook's second data format  what import/export reads and writes. */
 export interface QueryData {
   version?: QueryDataVersion;
   backup_id?: string;
   messages: QueryDataMessage[];
-  targets?: QueryDataTarget[];
 }
 
 /* ── Action system ────────────────────────────────────────────────────────── */
@@ -269,7 +256,6 @@ export type ActionType =
   | "send_dm"
   | "open_modal"
   | "send_message"
-  | "send_webhook_message"
   | "delete_message"
   | "create_thread"
   | "wait"
@@ -405,18 +391,6 @@ export interface UserRecord {
   updated_at: string;
 }
 
-export interface WebhookProfileRecord {
-  id: number;
-  user_id: number;
-  name: string;
-  url: string;
-  guild_id: string | null;
-  channel_id: string | null;
-  avatar_url: string | null;
-  is_default: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface BotProfileRecord {
   id: number;
@@ -580,7 +554,6 @@ export interface StaffRecord {
   can_mention_roles: number;
   allowed_role_mention_ids: string[];
   max_messages_per_hour: number;
-  can_use_webhooks?: number;
   can_override_profile?: number;
   can_attach_files?: number;
   can_use_components_v2?: number;
@@ -599,7 +572,6 @@ export interface StaffMentionPermissions {
   can_mention_here: boolean;
   can_mention_roles: boolean;
   allowed_role_mention_ids: string[];
-  can_use_webhooks?: boolean;
   can_override_profile?: boolean;
   can_attach_files?: boolean;
   can_use_components_v2?: boolean;
