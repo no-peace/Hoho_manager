@@ -592,6 +592,7 @@ export interface StaffRecord {
 }
 
 export interface StaffMentionPermissions {
+  can_manage_automation?: boolean;
   can_mention_everyone: boolean;
   can_mention_here: boolean;
   can_mention_roles: boolean;
