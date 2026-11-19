@@ -14,6 +14,7 @@ const DISCORD_USER_ID_REGEX = /^\d{17,20}$/;
 const USER_PLACEHOLDER_REGEX = /\{user\.(\d{17,20})\.([a-zA-Z0-9_.]+)\}/g;
 const MAX_USER_LOOKUPS_PER_PAYLOAD = 10;
 const MEMBER_CACHE_TTL_MS = 60_000;
+const MAX_MEMBER_CACHE_ENTRIES = 250;
 const memberCache = new Map<string, { member: any; expiresAt: number }>();
 
 type AuthorObject = Record<string, unknown>;
@@ -202,13 +203,20 @@ export const resolveAuthorPlaceholders = async (
         const cacheKey = `${guildId}:${id}`;
         const cached = memberCache.get(cacheKey);
         if (cached && cached.expiresAt > Date.now()) {
+          memberCache.delete(cacheKey);
+          memberCache.set(cacheKey, cached);
           memberMap.set(id, cached.member);
           continue;
         }
+        if (cached) memberCache.delete(cacheKey);
         try {
           const member = await getGuildMember(guildId, id, token);
           if (member) {
             memberMap.set(id, member);
+            if (memberCache.size >= MAX_MEMBER_CACHE_ENTRIES) {
+              const oldestKey = memberCache.keys().next().value;
+              if (oldestKey !== undefined) memberCache.delete(oldestKey);
+            }
             memberCache.set(cacheKey, { member, expiresAt: Date.now() + MEMBER_CACHE_TTL_MS });
           }
         } catch (error) {
