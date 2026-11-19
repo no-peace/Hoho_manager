@@ -87,7 +87,7 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
       for (let attempt = 0; attempt < 10; attempt += 1) {
         const suffix = attempt === 0 ? stableId : `${stableId}-${attempt}`;
         const candidate = buildCustomId(type, { ...config, _componentId: suffix });
-        if (candidate === customId || !usedCustomIds.has(candidate)) return candidate;
+        if (!usedCustomIds.has(candidate)) return candidate;
       }
       throw new Error("Could not create a unique component custom_id.");
     };
