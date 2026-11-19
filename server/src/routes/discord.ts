@@ -12,6 +12,7 @@ import { settingsService } from "../services/settingsService.js";
 import * as discord from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
+import type { MessageData } from "@dmb/shared";
 
 const router = Router();
 
@@ -430,3 +431,64 @@ router.delete("/guilds/:guildId/sessions/:tokenId", requireHeadAdmin, asyncHandl
 }));
 
 export default router;
+
+/**
+ * Fetch a live Discord message and convert it into an editor-safe document.
+ * Fresh local IDs prevent imported nested components from colliding with existing cards.
+ */
+router.get(
+  "/messages/:channelId/:messageId",
+  requireStaffPermission("edit"),
+  asyncHandler(async (req, res) => {
+    const { channelId, messageId } = req.params;
+    if (!channelId || !DISCORD_SNOWFLAKE_REGEX.test(channelId) ||
+        !messageId || !DISCORD_SNOWFLAKE_REGEX.test(messageId)) {
+      throw ApiError.badRequest("Valid channelId and messageId are required.");
+    }
+
+    const staffCtx = req.staffContext;
+    const guildId = await discord.getChannelGuildId(channelId);
+    if (!guildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
+    if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
+      const allowedChannels = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+      const allowedGuilds = parseAllowedIds(staffCtx.record.allowed_guild_ids);
+      if (!allowedChannels.includes("*") && !allowedChannels.includes(channelId)) {
+        throw ApiError.forbidden("You are not allowed to access this channel.");
+      }
+      if (!allowedGuilds.includes("*") && !allowedGuilds.includes(guildId)) {
+        throw ApiError.forbidden("You are not allowed to access this server.");
+      }
+    }
+
+    const profileId = parseProfileId(req.query.profileId);
+    const liveMessage = await discord.getChannelMessage(channelId, messageId, profileId);
+    if (!liveMessage) throw ApiError.notFound("Discord message not found.");
+
+    const freshId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+    const mapComponent = (component: any): any => ({
+      ...component,
+      _id: freshId(),
+      ...(Array.isArray(component.components) ? { components: component.components.map(mapComponent) } : {}),
+      ...(component.accessory ? { accessory: mapComponent(component.accessory) } : {}),
+      ...(Array.isArray(component.options) ? { options: component.options.map((option: any) => ({ ...option, _id: freshId() })) } : {}),
+      ...(Array.isArray(component.items) ? { items: component.items.map((item: any) => ({ ...item, _id: freshId() })) } : {}),
+    });
+    const data: MessageData = {
+      content: liveMessage.content ?? "",
+      embeds: (liveMessage.embeds ?? []).map((embed: any) => ({
+        ...embed,
+        _id: freshId(),
+        fields: Array.isArray(embed.fields) ? embed.fields.map((field: any) => ({ ...field, _id: freshId() })) : [],
+      })),
+      components: (liveMessage.components ?? []).map(mapComponent),
+      flags: liveMessage.flags ?? 0,
+      poll: (liveMessage as any).poll,
+      username: "",
+      avatar_url: "",
+      thread_name: "",
+    };
+    const mode = (data.flags & 32768) !== 0 ? "v2" : "classic";
+    return res.json({ data, mode });
+  }),
+);
+
