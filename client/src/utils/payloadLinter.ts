@@ -1,12 +1,14 @@
 import { ButtonStyle, ComponentType } from "@dmb/shared";
 import type { ComponentNode, EmbedData, MessageData } from "@dmb/shared";
 
-export interface PayloadLintIssue {
+export interface LintIssue {
   severity: "error" | "warning";
   messageIndex: number;
   componentId?: string;
   message: string;
 }
+
+export type PayloadLintIssue = LintIssue;
 
 export interface LintAttachment {
   name: string;
@@ -70,7 +72,7 @@ export const lintPayloads = (
   messages: MessageData[],
   attachments: LintAttachment[] = [],
   activeMessageIndex = 0,
-): PayloadLintIssue[] => {
+): LintIssue[] => {
   const issues: PayloadLintIssue[] = [];
   const attachedNames = new Set(attachments.flatMap((file) => [file.name, ...(file.spoiler ? [`SPOILER_${file.name}`] : [])].map((name) => name.toLowerCase())));
 
@@ -80,7 +82,7 @@ export const lintPayloads = (
     const isV2 = Boolean((message.flags ?? 0) & 32768) ||
       (message as MessageData & { mode?: string }).mode === "v2";
     const add = (
-      severity: PayloadLintIssue["severity"],
+      severity: LintIssue["severity"],
       messageText: string,
       componentId?: string,
     ) => issues.push({
