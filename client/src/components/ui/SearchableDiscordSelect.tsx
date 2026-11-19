@@ -46,6 +46,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [memberResults, setMemberResults] = useState<SelectOption[]>([]);
+  const [isLoadingGuilds, setIsLoadingGuilds] = useState(false);
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const updateRect = () => {
@@ -89,12 +90,25 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
 
   useEffect(() => {
     if (!open) return;
-    if (type === "guild") fetchGuilds();
-    else if (guildId) {
-      if (type === "channel") fetchChannels(guildId);
-      if (type === "role") fetchRoles(guildId);
+    if (type === "guild") {
+      let cancelled = false;
+      if (guilds === null) {
+        setIsLoadingGuilds(true);
+        void fetchGuilds().finally(() => {
+          if (!cancelled) setIsLoadingGuilds(false);
+        });
+      } else {
+        setIsLoadingGuilds(false);
+      }
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [open, type, guildId, fetchGuilds, fetchChannels, fetchRoles]);
+    if (guildId) {
+      if (type === "channel") void fetchChannels(guildId);
+      if (type === "role") void fetchRoles(guildId);
+    }
+  }, [open, type, guildId, guilds, fetchGuilds, fetchChannels, fetchRoles]);
 
   useEffect(() => {
     if (type !== "member" || !open || !guildId || search.trim().length < 2) {
@@ -179,9 +193,17 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   };
 
   const valArr = Array.isArray(value) ? value : (value ? [value] : []);
+  const selectedOption = valArr.length > 0
+    ? options.find((option) => option.id === valArr[0])
+    : undefined;
+  const unresolvedGuildId = type === "guild" && /^\\d{17,20}$/.test(String(valArr[0] ?? "")) && !selectedOption;
   const displayValue = valArr.length === 0
     ? placeholder
-    : (multiple ? `${valArr.length} selected` : (options.find((o) => o.id === valArr[0])?.name || valArr[0]));
+    : multiple
+      ? `${valArr.length} selected`
+      : selectedOption?.name || (unresolvedGuildId
+        ? isLoadingGuilds ? "Loading server…" : "Select Server…"
+        : valArr[0]);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
