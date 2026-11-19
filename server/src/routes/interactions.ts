@@ -56,9 +56,10 @@ router.post(
   express.raw({ type: "application/json", limit: "1mb" }),
   verifyDiscordSignature,
   asyncHandler(async (req, res) => {
+    const startedAt = Date.now();
     const interaction = requireInteraction(req);
     log.info(`Received verified interaction type ${interaction.type}`);
-    const response = await handleInteraction(interaction);
+    const response = await handleInteraction(interaction, startedAt);
     if (
       response.type === InteractionResponseType.DeferredUpdateMessage ||
       response.type === InteractionResponseType.DeferredChannelMessageWithSource
@@ -130,8 +131,9 @@ router.post(
       );
     }
 
+    const startedAt = Date.now();
     const interaction = req.body;
-    const response = await handleInteraction(interaction);
+    const response = await handleInteraction(interaction, startedAt);
 
     // A Ping never reaches this route (the worker only relays components and
     // modals), but posting a Pong to the callback endpoint would be nonsense.
@@ -145,6 +147,7 @@ router.post(
         interaction.id,
         interaction.token,
         response,
+        { timeoutMs: Math.max(400, 2_200 - (Date.now() - startedAt)) },
       );
       if (
         response.type === InteractionResponseType.DeferredUpdateMessage ||
