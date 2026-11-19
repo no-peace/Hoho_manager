@@ -13,7 +13,7 @@ const router = Router();
 const safeEqual = (left: unknown, right: unknown): boolean => {
   const a = Buffer.from(String(left ?? ""));
   const b = Buffer.from(String(right ?? ""));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return a.length > 0 && b.length > 0 && a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
 const parseGranular = (raw?: string | null): Record<string, number> => {
@@ -26,6 +26,18 @@ const parseGranular = (raw?: string | null): Record<string, number> => {
   }
 };
 
+const parseStringArray = (raw?: string | null, fallback: string[] = []): string[] => {
+  if (!raw) return fallback;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 const formatStaffRecord = (r: import("../repositories/staffRepository.js").StaffRecord) => {
   const defaultAvatarIndex = (BigInt(r.discord_user_id || "0") >> 22n) % 6n;
   return {
@@ -35,9 +47,9 @@ const formatStaffRecord = (r: import("../repositories/staffRepository.js").Staff
     avatarUrl: r.discord_avatar
       ? `https://cdn.discordapp.com/avatars/${r.discord_user_id}/${r.discord_avatar}.png`
       : `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`,
-    allowed_channel_ids: JSON.parse(r.allowed_channel_ids || "[]"),
-    allowed_role_mention_ids: JSON.parse(r.allowed_role_mention_ids || "[]"),
-    allowed_guild_ids: r.allowed_guild_ids ? JSON.parse(r.allowed_guild_ids) : ["*"],
+    allowed_channel_ids: parseStringArray(r.allowed_channel_ids),
+    allowed_role_mention_ids: parseStringArray(r.allowed_role_mention_ids),
+    allowed_guild_ids: parseStringArray(r.allowed_guild_ids, ["*"]),
     can_use_webhooks: r.can_use_webhooks ?? 1,
     can_override_profile: r.can_override_profile ?? 1,
     can_attach_files: r.can_attach_files ?? 1,
@@ -342,11 +354,11 @@ router.get(
         can_delete_messages: record.can_delete_messages === 1,
         can_manage_templates: record.can_manage_templates === 1,
         can_manage_automation: record.can_manage_automation === 1,
-        allowed_channel_ids: JSON.parse(record.allowed_channel_ids),
+        allowed_channel_ids: parseStringArray(record.allowed_channel_ids),
         can_mention_everyone: record.can_mention_everyone === 1,
         can_mention_here: record.can_mention_here === 1,
         can_mention_roles: record.can_mention_roles === 1,
-        allowed_role_mention_ids: JSON.parse(record.allowed_role_mention_ids),
+        allowed_role_mention_ids: parseStringArray(record.allowed_role_mention_ids),
         cooldown_seconds: record.cooldown_seconds,
         max_messages_per_hour: record.max_messages_per_hour,
         granular_cooldowns: parseGranular(record.granular_cooldowns),
