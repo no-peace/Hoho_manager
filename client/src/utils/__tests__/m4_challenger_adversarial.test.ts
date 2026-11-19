@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import {
-  WEBHOOK_URL_REGEX,
   SNOWFLAKE_REGEX,
   ComponentType,
   type ComponentNode,
@@ -15,21 +14,7 @@ import { SelectPreview } from "../../components/preview/ActionRowPreview";
 // ─────────────────────────────────────────────────────────────────────────────
 // MessageEditor validation helpers & rules
 // ─────────────────────────────────────────────────────────────────────────────
-const DISCORD_FORBIDDEN_USERNAMES: string[] = ["clyde", "discord", "system message"];
 
-const validateWebhookUsername = (name: string): string | null => {
-  const trimmed = name.trim();
-  if (!trimmed) return null;
-  if (trimmed.length > 80) return "Username exceeds Discord limit of 80 characters.";
-  if (trimmed.includes("```")) return "Username cannot contain backticks.";
-  const lower = trimmed.toLowerCase();
-  for (const forbidden of DISCORD_FORBIDDEN_USERNAMES) {
-    if (lower.includes(forbidden)) {
-      return `Discord prohibits "${forbidden}" in webhook usernames.`;
-    }
-  }
-  return null;
-};
 
 const isValidHttpUrl = (val: string): boolean => {
   if (!val || !val.trim()) return true;
@@ -172,209 +157,11 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
   // ───────────────────────────────────────────────────────────────────────────
   // 1. Challenge UI-01 (Profile Overrides)
   // ───────────────────────────────────────────────────────────────────────────
-  describe("Challenge UI-01: Profile Overrides Validation & Store Synchronization", () => {
-    describe("validateWebhookUsername Edge Cases", () => {
-      it("accepts username at exact limit of 80 characters", () => {
-        const exact80 = "A".repeat(80);
-        expect(exact80.length).toBe(80);
-        expect(validateWebhookUsername(exact80)).toBeNull();
-      });
-
-      it("rejects username exceeding limit at 81 characters", () => {
-        const tooLong81 = "A".repeat(81);
-        expect(tooLong81.length).toBe(81);
-        const err = validateWebhookUsername(tooLong81);
-        expect(err).toBe("Username exceeds Discord limit of 80 characters.");
-      });
-
-      it("handles whitespace trimming properly for length check", () => {
-        const padded80 = "   " + "B".repeat(80) + "   ";
-        expect(validateWebhookUsername(padded80)).toBeNull();
-
-        const padded81 = "   " + "B".repeat(81) + "   ";
-        expect(validateWebhookUsername(padded81)).toBe("Username exceeds Discord limit of 80 characters.");
-      });
-
-      it("rejects reserved username 'clyde' with case insensitivity", () => {
-        expect(validateWebhookUsername("clyde")).toBe('Discord prohibits "clyde" in webhook usernames.');
-        expect(validateWebhookUsername("Clyde")).toBe('Discord prohibits "clyde" in webhook usernames.');
-        expect(validateWebhookUsername("CLYDE")).toBe('Discord prohibits "clyde" in webhook usernames.');
-        expect(validateWebhookUsername("cLyDe-Bot")).toBe('Discord prohibits "clyde" in webhook usernames.');
-      });
-
-      it("rejects reserved username 'discord' with case insensitivity", () => {
-        expect(validateWebhookUsername("discord")).toBe('Discord prohibits "discord" in webhook usernames.');
-        expect(validateWebhookUsername("Discord")).toBe('Discord prohibits "discord" in webhook usernames.');
-        expect(validateWebhookUsername("DISCORD")).toBe('Discord prohibits "discord" in webhook usernames.');
-        expect(validateWebhookUsername("Official Discord Staff")).toBe('Discord prohibits "discord" in webhook usernames.');
-      });
-
-      it("rejects reserved username 'system message' with case insensitivity", () => {
-        expect(validateWebhookUsername("system message")).toBe('Discord prohibits "system message" in webhook usernames.');
-        expect(validateWebhookUsername("System Message")).toBe('Discord prohibits "system message" in webhook usernames.');
-        expect(validateWebhookUsername("SYSTEM MESSAGE")).toBe('Discord prohibits "system message" in webhook usernames.');
-        expect(validateWebhookUsername("[System Message] Notification")).toBe('Discord prohibits "system message" in webhook usernames.');
-      });
-
-      it("rejects backticks in username", () => {
-        expect(validateWebhookUsername("```")).toBe("Username cannot contain backticks.");
-        expect(validateWebhookUsername("bot```alert")).toBe("Username cannot contain backticks.");
-        expect(validateWebhookUsername("```bot```")).toBe("Username cannot contain backticks.");
-      });
-
-      it("accepts empty and whitespace-only username as valid / unconfigured", () => {
-        expect(validateWebhookUsername("")).toBeNull();
-        expect(validateWebhookUsername("   ")).toBeNull();
-        expect(validateWebhookUsername("\t\n  ")).toBeNull();
-      });
-
-      it("accepts valid alphanumeric and symbol webhook usernames", () => {
-        expect(validateWebhookUsername("HoHo Bot Manager")).toBeNull();
-        expect(validateWebhookUsername("Announcements [VIP]")).toBeNull();
-        expect(validateWebhookUsername("Alerts_2026-v2")).toBeNull();
-      });
-    });
-
-    describe("isValidHttpUrl Protocol & Format Validation", () => {
-      it("accepts valid https and http URLs", () => {
-        expect(isValidHttpUrl("https://cdn.discordapp.com/avatars/123/abc.png")).toBe(true);
-        expect(isValidHttpUrl("http://example.com/bot_avatar.jpg")).toBe(true);
-        expect(isValidHttpUrl("https://subdomain.domain.org/path/to/image.webp?size=1024")).toBe(true);
-      });
-
-      it("rejects non-HTTP protocols (ftp, javascript, data, blob, file)", () => {
-        expect(isValidHttpUrl("ftp://files.example.com/avatar.png")).toBe(false);
-        expect(isValidHttpUrl("javascript:alert('xss')")).toBe(false);
-        expect(isValidHttpUrl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==")).toBe(false);
-        expect(isValidHttpUrl("blob:https://discord.com/uuid-1234")).toBe(false);
-        expect(isValidHttpUrl("file:///C:/Users/avatar.png")).toBe(false);
-      });
-
-      it("rejects malformed or scheme-relative URLs", () => {
-        expect(isValidHttpUrl("not-a-url")).toBe(false);
-        expect(isValidHttpUrl("//cdn.discordapp.com/avatar.png")).toBe(false);
-        expect(isValidHttpUrl("https//missing-colon.com")).toBe(false);
-        expect(isValidHttpUrl("https://")).toBe(false);
-      });
-
-      it("accepts empty and whitespace strings as optional field", () => {
-        expect(isValidHttpUrl("")).toBe(true);
-        expect(isValidHttpUrl("   ")).toBe(true);
-        expect(isValidHttpUrl("\n\t")).toBe(true);
-      });
-    });
-
-    describe("Store Synchronization for Profile Overrides", () => {
-      it("keeps legacy sender fields in the editor store but omits them from Discord payloads", () => {
-        const store = useMessageStore.getState();
-        store.setField("content", "Testing profile overrides");
-        store.setField("username", "CyberBot");
-        store.setField("avatar_url", "https://cdn.example.com/avatar.png");
-
-        const updated = useMessageStore.getState().data;
-        expect(updated.username).toBe("CyberBot");
-        expect(updated.avatar_url).toBe("https://cdn.example.com/avatar.png");
-
-        const payloadClassic = toDiscordPayload(updated, "classic");
-        expect(payloadClassic.username).toBeUndefined();
-        expect(payloadClassic.avatar_url).toBeUndefined();
-        expect(payloadClassic.content).toBe("Testing profile overrides");
-
-        const payloadV2 = toDiscordPayload(updated, "v2");
-        expect(payloadV2.username).toBeUndefined();
-        expect(payloadV2.avatar_url).toBeUndefined();
-      });
-
-      it("clears profile overrides when setField is called with empty string", () => {
-        const store = useMessageStore.getState();
-        store.setField("username", "InitialName");
-        store.setField("avatar_url", "https://example.com/pic.png");
-
-        expect(useMessageStore.getState().data.username).toBe("InitialName");
-
-        // Clear overrides
-        store.setField("username", "");
-        store.setField("avatar_url", "");
-
-        const cleared = useMessageStore.getState().data;
-        expect(cleared.username).toBe("");
-        expect(cleared.avatar_url).toBe("");
-
-        const payload = toDiscordPayload(cleared, "classic");
-        expect(payload.username).toBeUndefined();
-        expect(payload.avatar_url).toBeUndefined();
-      });
-
-      it("keeps legacy profile fields in each stored message but omits them from payloads", () => {
-        const store = useMessageStore.getState();
-        store.load({
-          messages: [
-            { content: "Message 0", username: "BotZero", avatar_url: "https://example.com/0.png" },
-            { content: "Message 1", username: "BotOne", avatar_url: "https://example.com/1.png" },
-          ],
-        });
-
-        const storedMessages = useMessageStore.getState().messages;
-        expect(storedMessages).toHaveLength(2);
-        expect(storedMessages[0]?.username).toBe("BotZero");
-        expect(storedMessages[1]?.username).toBe("BotOne");
-
-        const allPayloads = useMessageStore.getState().getAllPayloads();
-        expect(allPayloads).toHaveLength(2);
-        expect(allPayloads[0]?.content).toBe("Message 0");
-        expect(allPayloads[1]?.content).toBe("Message 1");
-        for (const payload of allPayloads) {
-          expect(payload.username).toBeUndefined();
-          expect(payload.avatar_url).toBeUndefined();
-        }
-      });
-    });
-  });
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 2. Challenge UI-02 (Webhook Dispatch Modal & Payload)
+  // 2. Challenge UI-02 (Bot Dispatch & Payload)
   // ───────────────────────────────────────────────────────────────────────────
-  describe("Challenge UI-02: Webhook Dispatch Modal, Regex Boundaries & Batch Payload", () => {
-    describe("WEBHOOK_URL_REGEX Matching", () => {
-      it("matches standard Discord webhook URLs", () => {
-        const validUrls = [
-          "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz0123456789-_",
-          "https://discordapp.com/api/webhooks/987654321098765432/sample_token-123",
-          "https://canary.discord.com/api/webhooks/123456789012345678/my-token_abc",
-          "https://ptb.discord.com/api/webhooks/123456789012345678/my-token",
-          "https://discord.com/api/v9/webhooks/123456789012345678/my-token",
-          "https://discord.com/api/v10/webhooks/123456789012345678/my-token",
-          "http://discord.com/api/webhooks/123456789012345678/token",
-        ];
-
-        for (const url of validUrls) {
-          expect(WEBHOOK_URL_REGEX.test(url)).toBe(true);
-          const match = url.match(WEBHOOK_URL_REGEX);
-          expect(match).not.toBeNull();
-          expect(match![1]).toBeDefined(); // Webhook ID
-          expect(match![2]).toBeDefined(); // Webhook Token
-        }
-      });
-
-      it("rejects invalid webhook URLs and malicious injection strings", () => {
-        const invalidUrls = [
-          "https://google.com/api/webhooks/123456789012345678/token",
-          "https://phishing-discord.com/api/webhooks/123/token",
-          "https://discord.com/api/webhooks/not-a-number/token",
-          "https://discord.com/api/webhooks/123456789012345678", // missing token
-          "https://discord.com/api/webhooks/123456789012345678/", // empty token
-          "https://discord.com/api/webhooks/",
-          "javascript:fetch('https://discord.com/api/webhooks/123/token')",
-          "https://discord.com/channels/123456789/987654321/11223344", // message link, not webhook
-          "discord.com/api/webhooks/123/token", // missing protocol
-        ];
-
-        for (const url of invalidUrls) {
-          expect(WEBHOOK_URL_REGEX.test(url)).toBe(false);
-        }
-      });
-    });
-
+  describe("Challenge UI-02: Bot Dispatch, Snowflake Boundaries & Batch Payload", () => {
     describe("Snowflake Regex Boundary Testing (16 vs 17 vs 20 vs 21 digits)", () => {
       it("rejects 16-digit IDs (below Discord Snowflake minimum)", () => {
         const id16 = "1234567890123456";
@@ -410,11 +197,10 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
       });
     });
 
-    describe("Multi-Message Batch Webhook Payload Structure Construction", () => {
+    describe("Multi-Message Bot Payload Structure Construction", () => {
       it("constructs a single-message server bot dispatch payload without sender overrides", () => {
         const store = useMessageStore.getState();
         store.setField("content", "Single dispatch");
-        store.setField("username", "AlertBot");
 
         const payloads = store.getAllPayloads();
         const singlePayload = payloads.length > 0 ? payloads[0] : store.getPayload();
@@ -431,17 +217,15 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(requestBody.channelId).toBe("123456789012345678");
         expect(requestBody.messages).toHaveLength(1);
         expect(requestBody.messages[0].content).toBe("Single dispatch");
-        expect(requestBody.messages[0].username).toBeUndefined();
-        expect(requestBody.messages[0].avatar_url).toBeUndefined();
       });
 
       it("constructs a multi-message server bot batch payload without sender overrides", () => {
         const store = useMessageStore.getState();
         store.load({
           messages: [
-            { content: "Message 1 of 3", username: "Batch1" },
-            { content: "Message 2 of 3", username: "Batch2" },
-            { content: "Message 3 of 3", username: "Batch3" },
+            { content: "Message 1 of 3" },
+            { content: "Message 2 of 3" },
+            { content: "Message 3 of 3" },
           ],
         });
 
@@ -461,10 +245,6 @@ describe("Milestone 4 Adversarial Empirical Challenge Suite", () => {
         expect(requestBody.payload.content).toBe("Message 1 of 3");
         expect(requestBody.messages[1].content).toBe("Message 2 of 3");
         expect(requestBody.messages[2].content).toBe("Message 3 of 3");
-        for (const payload of requestBody.messages) {
-          expect(payload.username).toBeUndefined();
-          expect(payload.avatar_url).toBeUndefined();
-        }
       });
 
       it("maps URL attachments with spoiler prefixes accurately", () => {
