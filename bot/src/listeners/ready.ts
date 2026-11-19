@@ -1,6 +1,7 @@
 import { Listener } from "@sapphire/framework";
 import { Events, type Client } from "discord.js";
 import { env } from "../lib/env.js";
+import { refreshStickyCache } from "./stickyMessage.js";
 
 /**
  * Fires once when the gateway connection is established.
@@ -19,6 +20,22 @@ export class ReadyListener extends Listener {
     const client = args[0] as Client<true>;
 
     console.log(`[bot] ready as ${client.user.tag}  ${client.guilds.cache.size} guild(s)`);
+    void refreshStickyCache();
+
+    const automationInterval = setInterval(() => {
+      void fetch(`${env.apiBaseUrl}/api/automation/tick`, {
+        method: "POST",
+        headers: { "x-admin-key": env.adminApiKey },
+        signal: AbortSignal.timeout(8_000),
+      }).then((response) => {
+        if (!response.ok) throw new Error(`API returned ${response.status}`);
+      }).catch((error) => {
+        console.warn("[automation] Scheduled-message tick failed:", error);
+      });
+      void refreshStickyCache();
+    }, 60_000);
+    automationInterval.unref();
+
     console.log(
       env.devGuildId
         ? `[bot] application commands scoped to guild ${env.devGuildId}`
