@@ -191,9 +191,9 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
 
   const handleDispatch = async () => {
     if (!canUseServerBot) {
-      setSendResult(
-        "Server Bot Access Required. Ask a Head Admin to grant your account staff access.",
-      );
+      const message = "Server Bot Access Required. Ask a Head Admin to grant your account staff access.";
+      setSendResult(message);
+      useGlobalStore.getState().showToast(message, "error");
       return;
     }
 
@@ -204,6 +204,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       const parsedTargets = parseEditTargetMessageIds(targetMessageId, selectedChannels.length);
       if (!parsedTargets.valid) {
         setSendResult(parsedTargets.message);
+        useGlobalStore.getState().showToast(parsedTargets.message, "error");
         return;
       }
       targetMessageIds = parsedTargets.ids;
