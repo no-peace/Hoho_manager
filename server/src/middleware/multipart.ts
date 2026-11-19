@@ -13,7 +13,7 @@ export interface UploadedFile {
 
 const MAX_FILES = 10;
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB per file
-const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50 MB total attachments across all files
+const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25 MB total attachments across all files
 const MAX_FIELD_SIZE = 2 * 1024 * 1024; // 2 MB per field (e.g. payload_json)
 const MAX_FIELDS = 100;
 const MAX_PARTS = 120;
