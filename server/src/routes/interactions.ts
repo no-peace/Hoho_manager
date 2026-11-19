@@ -40,7 +40,7 @@ const markInteractionStart: RequestHandler = (req, _res, next) => {
  * whichever delivery is in play. Only the transport differs.
  */
 
-/* ── 1. Webhook delivery (public HTTPS) ────────────────────────────────────── */
+/* ── 1. Discord interaction delivery (public HTTPS) ────────────────────────────────────── */
 
 /**
  * POST /api/interactions
@@ -128,7 +128,7 @@ const isRelayable = (value: unknown): value is DiscordInteraction => {
  *
  * The reply is delivered by *this* process via
  * `POST /interactions/{id}/{token}/callback`. That endpoint is authenticated by
- * the interaction token itself, which is exactly how the webhook path replies 
+ * the interaction token itself, which is exactly how the interaction callback path replies 
  * a gateway connection is not needed to answer a gateway-delivered interaction.
  *
  * The worker therefore has nothing to send back to Discord; it only needs to
