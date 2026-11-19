@@ -526,6 +526,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       const guildId = await discord.getChannelGuildId(destinationChannelId);
       if (!guildId) throw ApiError.badRequest("Automation requires a guild text channel.");
       const createdBy = senderDiscordId || "unknown";
+      const automationWarnings: string[] = [];
       if (autoPublish) {
         for (const message of sentList) {
           if (!message?.id || typeof editMessageId === "string" && editMessageId.trim()) continue;
@@ -533,6 +534,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
             await discord.crosspostMessage(destinationChannelId, message.id);
           } catch (error) {
             log.warn(`Could not crosspost announcement ${message.id}: ${String(error)}`);
+            automationWarnings.push("Message sent, but Discord could not publish it. Check that this is an Announcement channel and the bot has permission to publish messages.");
           }
         }
       }
@@ -579,7 +581,15 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       });
     }
 
-    return res.json({ ok: true, mode, message: sentList[0], messages: sentList });
+    return res.json({
+      ok: true,
+      mode,
+      message: sentList[0],
+      messages: sentList,
+      ...(typeof automationWarnings !== "undefined" && automationWarnings.length > 0
+        ? { warnings: automationWarnings }
+        : {}),
+    });
   }),
 );
 
