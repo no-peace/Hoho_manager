@@ -64,6 +64,15 @@ export const FlowSimulatorDrawer: React.FC<FlowSimulatorDrawerProps> = ({
         </div>
       )}
 
+      {Object.keys(result.variables).length > 0 && (
+        <div>
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">Simulated variables</p>
+          <div className="space-y-1 rounded-lg border border-[#272D3A] bg-[#161A23] p-2">
+            {Object.entries(result.variables).map(([key, value]) => <div key={key} className="flex flex-wrap gap-2 text-[10px]"><span className="font-mono text-[#818CF8]">{key}</span><span className="break-all text-[#F1F3F9]">{value}</span></div>)}
+          </div>
+        </div>
+      )}
+
       <div>
         <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]"><GitBranch size={12} /> Execution trace</p>
         {result.trace.length ? (
