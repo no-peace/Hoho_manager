@@ -49,6 +49,7 @@ const normalizeMessageData = (raw: any): MessageData => {
     username: item.username || "",
     avatar_url: item.avatar_url || "",
     thread_name: item.thread_name || "",
+    ...(typeof item.flags === "number" ? { flags: item.flags } : {}),
     embeds: (item.embeds || []).map((e: any): EmbedData => ({
       ...e,
       _id: e._id || genId(),
@@ -61,6 +62,7 @@ const normalizeMessageData = (raw: any): MessageData => {
 export interface ParsedQueryData extends MessageData {
   messages: MessageData[];
   targets?: TargetData[];
+  mode?: EditorMode;
 }
 
 export const fromQueryData = (parsed: any): ParsedQueryData => {
@@ -97,6 +99,9 @@ export const fromQueryData = (parsed: any): ParsedQueryData => {
     ...primary,
     messages: allMessages,
     ...(targets ? { targets } : {}),
+    ...(rawData.mode === EDITOR_MODES.V2 || rawData.mode === EDITOR_MODES.CLASSIC
+      ? { mode: rawData.mode }
+      : {}),
   };
 };
 
