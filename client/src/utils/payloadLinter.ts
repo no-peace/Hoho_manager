@@ -75,6 +75,7 @@ export const lintPayloads = (
 ): LintIssue[] => {
   const issues: PayloadLintIssue[] = [];
   const attachedNames = new Set(attachments.flatMap((file) => [file.name, ...(file.spoiler ? [`SPOILER_${file.name}`] : [])].map((name) => name.toLowerCase())));
+  const spoilerNames = new Set(attachments.filter((file) => file.spoiler).map((file) => file.name.toLowerCase()));
 
   messages.forEach((message, messageIndex) => {
     const components = message.components ?? [];
@@ -143,7 +144,11 @@ export const lintPayloads = (
     collectAttachmentReferences(embeds, attachmentReferences);
     collectAttachmentReferences(components, attachmentReferences);
     for (const filename of attachmentReferences) {
-      if (!attachedNames.has(filename.toLowerCase())) {
+      const normalizedFilename = filename.toLowerCase();
+      if (spoilerNames.has(normalizedFilename) && !normalizedFilename.startsWith("spoiler_")) {
+        add("error", `Spoiler attachment references must use the SPOILER_ prefix (attachment://${filename}).`);
+      }
+      if (!attachedNames.has(normalizedFilename)) {
         add("error", `Attachment reference "attachment://${filename}" has no matching attached file.`);
       }
     }
@@ -158,8 +163,8 @@ export const lintPayloads = (
       if (message.poll.answers.some((answer) => !answer.poll_media.text.trim() || answer.poll_media.text.length > 55)) {
         add("error", "Each poll answer must contain 1–55 characters.");
       }
-      if (message.poll.duration < 1 || message.poll.duration > 168) {
-        add("error", "Poll duration must be between 1 and 168 hours.");
+      if (!Number.isInteger(message.poll.duration) || message.poll.duration < 1 || message.poll.duration > 768) {
+        add("error", "Poll duration must be a whole number between 1 and 768 hours.");
       }
       if (isV2) add("error", "Discord polls cannot be combined with Components V2.");
     }
