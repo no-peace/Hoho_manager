@@ -178,7 +178,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="px-5 py-4 overflow-y-auto text-[#F1F3F9] flex-1 text-sm leading-relaxed custom-scrollbar">
+        <div className="min-h-0 px-5 py-4 overflow-y-auto text-[#F1F3F9] flex-1 text-sm leading-relaxed custom-scrollbar">
           <ErrorBoundary level="modal" fallbackTitle="Dialog Content Error">
             {children}
           </ErrorBoundary>
