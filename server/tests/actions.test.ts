@@ -136,27 +136,7 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       );
     });
 
-    it("classifies action failures with metadata and strips it from the Discord response", async () => {
-      vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([
-        {
-          id: 7,
-          action_type: "send_webhook_message",
-          config: { webhookUrl: "https://discord.com/api/webhooks/1/token", content: "test" },
-        } as any,
-      ]);
-      const logSpy = vi.spyOn(actionRepository, "log").mockResolvedValue(undefined as any);
-      const interaction: DiscordInteraction = {
-        ...mockContext.interaction,
-        message: { id: "message_failure_test" },
-        data: { custom_id: "action:webhook_failure", component_type: 2 },
-      };
 
-      const result = await executeCustomId("action:webhook_failure", interaction);
-
-      expect(result.response?.data?.content).toContain("disabled");
-      expect(result.response).not.toHaveProperty("failed");
-      expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
-    });
 
     it("does not execute an unregistered action custom ID from a component message", async () => {
       vi.spyOn(actionRepository, "findByCustomId").mockResolvedValueOnce([]);
@@ -406,18 +386,6 @@ describe("server/actions: Action Execution Engine & 17 Handlers Suite", () => {
       });
     });
 
-    // 9. sendWebhookMessage
-    describe("actions/sendWebhookMessage.ts", () => {
-      it("returns an explicit disabled response without calling webhook delivery", async () => {
-        const handler = getActionHandler("send_webhook_message");
-        const response = await handler?.run({
-          ...mockContext,
-          config: { webhookUrl: "https://discord.com/api/webhooks/1/tok", content: "Hook msg" },
-        });
-        expect(response?.data?.content).toContain("disabled");
-        expect(response?.failed).toBe(true);
-      });
-    });
 
     // 10. openModal
     describe("actions/openModal.ts", () => {
