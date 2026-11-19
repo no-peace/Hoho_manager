@@ -94,7 +94,7 @@ router.post(
       throw ApiError.badRequest('Only mode "bot" is supported.');
     }
     if (typeof webhookUrl === "string" && webhookUrl.trim() !== "") {
-      throw ApiError.badRequest("Webhook URL message sending is disabled.");
+      throw ApiError.badRequest("Only bot-based message delivery is supported.");
     }
     if (
       rawProfileId !== undefined &&
