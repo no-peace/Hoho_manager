@@ -381,6 +381,8 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         <div
           ref={portalRef}
           role="listbox"
+          data-preview-component-id={select._id}
+          data-preview-interactive="true"
           aria-multiselectable={isMulti}
           className="flex flex-col overflow-hidden rounded-md border border-[#1e1f22] bg-[#2b2d31] py-1.5 shadow-2xl"
           style={{
