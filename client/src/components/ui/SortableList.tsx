@@ -91,9 +91,12 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children, classN
     <SortableHandleContext.Provider value={contextValue}>
       <div
         ref={sortable.setNodeRef}
-        style={{ transform: CSS.Transform.toString(sortable.transform) }}
+        style={{
+          transform: CSS.Transform.toString(sortable.transform),
+          transition: sortable.transition,
+        }}
         className={[
-          "transition-transform motion-reduce:transition-none",
+          "motion-reduce:!transition-none",
           sortable.isDragging ? "relative z-30 opacity-80 shadow-xl ring-2 ring-[#818CF8]/70" : "",
           className ?? "",
         ].join(" ")}
