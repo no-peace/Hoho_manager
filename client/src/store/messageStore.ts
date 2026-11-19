@@ -1018,7 +1018,6 @@ export const useMessageStore = create<MessageState>()(
           data: blank,
           messages: [blank],
           activeMessageIndex: 0,
-          targets: [{ url: "" }],
           selection: null,
           send: idleSendState(),
           isDirty: false,
