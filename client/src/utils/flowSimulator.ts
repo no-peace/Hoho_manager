@@ -37,7 +37,11 @@ const interpolate = (
   variables: Record<string, string>,
 ): string => {
   const input = asText(value);
-  return input.replace(/\{(user|server|modal)\.([^}]+)\}/g, (_match, scope: string, key: string) => {
+  return input.replace(/\{([^{}]+)\}/g, (match, token: string) => {
+    const separator = token.indexOf(".");
+    const scope = separator >= 0 ? token.slice(0, separator) : "";
+    const key = separator >= 0 ? token.slice(separator + 1) : token;
+
     if (scope === "user") {
       if (key === "username" || key === "name") return context.username ?? "DemoUser";
       if (key === "id") return context.userId ?? "123456789012345678";
@@ -46,8 +50,14 @@ const interpolate = (
       if (key === "name") return context.serverName ?? "Example Server";
       if (key === "id") return context.serverId ?? "987654321098765432";
     }
-    if (scope === "modal") return asText(context.modalInputs?.[key] ?? variables[`modal.${key}`]);
-    return variables[`${scope}.${key}`] ?? "";
+    if (scope === "modal") {
+      const value = context.modalInputs?.[key] ?? variables[`modal.${key}`];
+      return value == null ? "" : Array.isArray(value) ? value.join(", ") : String(value);
+    }
+
+    // Flow actions commonly reference plain variables as {variable_name}.
+    const variable = variables[token] ?? variables[key];
+    return variable == null ? match : variable;
   });
 };
 
@@ -76,7 +86,13 @@ export const simulateFlow = (
   context: FlowSimulationContext = {},
 ): FlowSimulationResult => {
   const trace: FlowSimulationTraceEntry[] = [];
-  const variables: Record<string, string> = {};
+  const selectedValues = context.selectedValues ?? [];
+  const variables: Record<string, string> = {
+    selected_values: selectedValues.join(", "),
+    selected_value: selectedValues[0] ?? "",
+    "selected.values": selectedValues.join(", "),
+    "selected.value": selectedValues[0] ?? "",
+  };
   const heldRoleIds = new Set(context.heldRoleIds ?? []);
   let stepIndex = 0;
   let stopped = false;
@@ -98,8 +114,12 @@ export const simulateFlow = (
         const roleCheck = config.checkType === "member_has_role" || config.function === "member_has_role";
         let passed: boolean;
         if (roleCheck) {
-          const roleId = text("roleId") || text("role") || text("value");
-          passed = heldRoleIds.has(roleId);
+          const roleMode = asText(config.roleMode ?? config.mode ?? "static");
+          const configuredRole = text("roleId") || text("role") || text("value");
+          const roleId = roleMode === "mirror"
+            ? variables[configuredRole] ?? ""
+            : configuredRole;
+          passed = Boolean(roleId) && heldRoleIds.has(roleId);
         } else {
           passed = compare(text("left"), asText(config.op ?? config.operator ?? "=="), text("right"));
         }
