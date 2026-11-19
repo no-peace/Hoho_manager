@@ -41,7 +41,7 @@ const client = new SapphireClient({
   // they must be switched on under "Privileged Gateway Intents" in the Developer
   // Portal first, and the bot will fail to log in if it asks for an intent that
   // is not enabled there.
-  intents: [GatewayIntentBits.Guilds],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
 /**
