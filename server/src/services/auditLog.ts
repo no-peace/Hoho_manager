@@ -41,7 +41,12 @@ export type AuditEvent =
   | "TEMPLATE_SAVED"
   | "TEMPLATE_DELETED"
   | "LOGIN_SUCCESS"
-  | "LOG_TEST";
+  | "LOG_TEST"
+  | "AUTOMATION_CREATED"
+  | "AUTOMATION_UPDATED"
+  | "AUTOMATION_DELETED"
+  | "STICKY_CREATED"
+  | "STICKY_DELETED";
 
 const EVENT_COLORS: Record<AuditEvent, number> = {
   SEND_MESSAGE:             0x23A55A,  // green
@@ -63,6 +68,11 @@ const EVENT_COLORS: Record<AuditEvent, number> = {
   TEMPLATE_DELETED:         0xFF6B35,  // orange
   LOGIN_SUCCESS:            0x23A55A,  // green
   LOG_TEST:                 0x5865F2,  // blurple
+  AUTOMATION_CREATED:       0x23A55A,
+  AUTOMATION_UPDATED:       0xFAA61A,
+  AUTOMATION_DELETED:       0xFF6B35,
+  STICKY_CREATED:           0x23A55A,
+  STICKY_DELETED:           0xFF6B35,
 };
 
 const EVENT_LABELS: Record<AuditEvent, string> = {
@@ -85,6 +95,11 @@ const EVENT_LABELS: Record<AuditEvent, string> = {
   TEMPLATE_DELETED:         "🗑️ Template Deleted",
   LOGIN_SUCCESS:            "🔐 Operator Logged In",
   LOG_TEST:                 "🧪 Audit Log Test",
+  AUTOMATION_CREATED:       "🗓️ Schedule Created",
+  AUTOMATION_UPDATED:       "🔄 Schedule Updated",
+  AUTOMATION_DELETED:       "🗑️ Schedule Deleted",
+  STICKY_CREATED:           "📌 Sticky Message Created",
+  STICKY_DELETED:           "🗑️ Sticky Message Deleted",
 };
 
 export interface AuditContext {
