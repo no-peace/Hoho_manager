@@ -5,6 +5,7 @@ import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
 import { getChannelGuildId } from "../services/discordService.js";
+import { auditLog } from "../services/auditLog.js";
 import {
   createScheduledMessage,
   createStickyMessage,
@@ -92,6 +93,14 @@ router.post(
       recurrence: recurrence ?? null,
       createdBy,
     });
+    auditLog({
+      event: "AUTOMATION_CREATED",
+      guildId,
+      actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
+      channelId,
+      reason: "Scheduled message created",
+      details: { schedule_id: row.id, recurring: Boolean(recurrence), template_id: templateId ?? "none" },
+    });
     res.status(201).json(row);
   }),
 );
@@ -104,6 +113,14 @@ router.patch("/schedules/:id", requireStaffPermission("automation"), asyncHandle
   assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
   if (typeof req.body?.enabled !== "boolean") throw ApiError.badRequest("enabled must be a boolean.");
   await updateScheduledMessage(id, req.body.enabled);
+  auditLog({
+    event: "AUTOMATION_UPDATED",
+    guildId: schedule.guild_id,
+    actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
+    channelId: schedule.channel_id,
+    reason: req.body.enabled ? "Schedule enabled" : "Schedule paused",
+    details: { schedule_id: id, enabled: req.body.enabled },
+  });
   res.json({ success: true });
 }));
 
@@ -114,6 +131,14 @@ router.delete("/schedules/:id", requireStaffPermission("automation"), asyncHandl
   if (!schedule) throw ApiError.notFound("Schedule not found.");
   assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
   await deleteScheduledMessage(id);
+  auditLog({
+    event: "AUTOMATION_DELETED",
+    guildId: schedule.guild_id,
+    actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
+    channelId: schedule.channel_id,
+    reason: "Scheduled message deleted",
+    details: { schedule_id: id },
+  });
   res.json({ success: true });
 }));
 
@@ -130,6 +155,14 @@ router.post("/sticky", requireStaffPermission("automation"), requireStaffPermiss
     payload,
     intervalMessages: interval,
     createdBy: req.user?.discord_id ?? req.staffContext?.staffId ?? "admin",
+  });
+  auditLog({
+    event: "STICKY_CREATED",
+    guildId,
+    actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
+    channelId,
+    reason: "Sticky message created",
+    details: { interval_messages: interval },
   });
   res.status(201).json({ success: true });
 }));
@@ -153,6 +186,13 @@ router.delete("/sticky/:channelId", requireStaffPermission("automation"), asyncH
   if (!guildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
   assertChannelAccess(req, guildId, req.params.channelId);
   await removeStickyMessage(req.params.channelId);
+  auditLog({
+    event: "STICKY_DELETED",
+    guildId,
+    actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
+    channelId: req.params.channelId,
+    reason: "Sticky message deleted",
+  });
   res.json({ success: true });
 }));
 
