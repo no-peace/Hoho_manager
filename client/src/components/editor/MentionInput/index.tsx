@@ -173,15 +173,19 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       setMemberResults([]);
       return;
     }
+    let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const res = await api.discord.searchMembers(effectiveGuildId, acQuery);
-        setMemberResults(res.members || []);
+        if (!cancelled) setMemberResults(res.members || []);
       } catch {
-        setMemberResults([]);
+        if (!cancelled) setMemberResults([]);
       }
     }, 200);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [acType, acQuery, effectiveGuildId]);
 
   /**
