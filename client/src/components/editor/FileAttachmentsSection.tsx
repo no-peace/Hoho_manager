@@ -161,7 +161,7 @@ export const FileAttachmentsSection: React.FC = () => {
             type="button"
             disabled={attachedFiles.length >= MAX_FILES}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 rounded bg-[#818CF8] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#6366F1] disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1 rounded bg-[#5865F2] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#4752C4] active:bg-[#3C45A5] disabled:opacity-40 transition-colors"
           >
             <Upload size={12} />
             <span>Upload</span>
@@ -197,7 +197,7 @@ export const FileAttachmentsSection: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddUrl}
-                className="rounded bg-[#818CF8] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#6366F1]"
+                className="rounded bg-[#5865F2] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#4752C4] active:bg-[#3C45A5]"
               >
                 Add
               </button>
