@@ -89,11 +89,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
   };
 
   const handleTestLog = async () => {
-    if (!data.log_channel_id) {
-      useGlobalStore.getState().showToast("Select an audit log channel first.", "warning");
-      return;
-    }
-
     setTestingLog(true);
     try {
       const qs = selectedGuildId ? "?guildId=" + encodeURIComponent(selectedGuildId) : "";
@@ -340,7 +335,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                       icon={Send}
                       onClick={handleTestLog}
                       loading={testingLog}
-                      disabled={saving || !data.log_channel_id}
+                      disabled={saving}
                     >
                       Send Test Log
                     </Button>
@@ -349,7 +344,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                     </Button>
                   </div>
                   <p className="text-[10px] text-[#6F788A] text-right">
-                    Test Log saves the current settings first, then confirms Discord accepted the embed.
+                    Test Log saves the current settings first, then confirms Discord accepted the configured channel or global fallback.
                   </p>
                 </>
               )}
