@@ -11,13 +11,14 @@ interface StickyChannel {
 const stickyChannels = new Map<string, StickyChannel & { count: number }>();
 let lastCacheRefresh = 0;
 let lastCacheAttempt = 0;
+let lastCacheAttemptFailed = false;
 let cacheRefresh: Promise<void> | null = null;
 const CACHE_REFRESH_FAILURE_BACKOFF_MS = 30_000;
 const refreshingChannels = new Set<string>();
 
 export const refreshStickyCache = async (): Promise<void> => {
   if (cacheRefresh) return cacheRefresh;
-  if (lastCacheRefresh < lastCacheAttempt && Date.now() - lastCacheAttempt < CACHE_REFRESH_FAILURE_BACKOFF_MS) return;
+  if (lastCacheAttemptFailed && Date.now() - lastCacheAttempt < CACHE_REFRESH_FAILURE_BACKOFF_MS) return;
   cacheRefresh = (async () => {
     try {
       const response = await fetch(`${env.apiBaseUrl}/api/automation/sticky/active`, {
@@ -38,7 +39,9 @@ export const refreshStickyCache = async (): Promise<void> => {
       stickyChannels.clear();
       next.forEach((value, key) => stickyChannels.set(key, value));
       lastCacheRefresh = Date.now();
+      lastCacheAttemptFailed = false;
     } catch (error) {
+      lastCacheAttemptFailed = true;
       console.warn("[sticky] Could not refresh sticky-message cache:", error);
     } finally {
       lastCacheAttempt = Date.now();
@@ -59,7 +62,7 @@ export class StickyMessageListener extends Listener {
 
     if (
       Date.now() - lastCacheRefresh > 60_000 &&
-      Date.now() - lastCacheAttempt >= CACHE_REFRESH_FAILURE_BACKOFF_MS
+      (!lastCacheAttemptFailed || Date.now() - lastCacheAttempt >= CACHE_REFRESH_FAILURE_BACKOFF_MS)
     ) {
       void refreshStickyCache();
     }
