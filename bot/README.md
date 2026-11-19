@@ -63,8 +63,9 @@ Fill in:
 | Variable | Notes |
 | -------- | ----- |
 | `DISCORD_BOT_TOKEN` | Same token the API uses |
-| `API_BASE_URL` | Origin of the Express API (default `http://localhost:3001`) |
+| `API_BASE_URL` | Origin of the Express API (default `http://127.0.0.1:3001`). HTTP is accepted only for loopback hosts in production; remote production hosts must use HTTPS. |
 | `ADMIN_API_KEY` | Must match `server/.env`  sent as `x-admin-key` |
+| `CLIENT_ORIGIN` | Optional client origin; defaults to `http://localhost:5173`. A loopback default does not block production startup. |
 | `BOT_COMMAND_ADMIN_IDS` | Comma-separated Discord user IDs allowed to run `/send`, `/exploit` and `/sync`. Falls back to `OWNER_DISCORD_IDS`; if empty, privileged commands are disabled. |
 | `DEV_GUILD_ID` | Optional. Scopes command registration to one guild so changes appear instantly |
 | `NODE_ENV` | `production` in production (the worker exits if the admin key or API URL is unsafe) |
