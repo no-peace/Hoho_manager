@@ -16,7 +16,6 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
   return {
     ...actual,
     sendChannelMessage: vi.fn().mockResolvedValue({ id: "msg_out_1" }),
-    sendWebhook: vi.fn().mockResolvedValue({ id: "hook_out_1" }),
     createInteractionResponse: vi.fn().mockResolvedValue(true),
     getGuildChannels: vi.fn().mockResolvedValue([]),
     getChannelGuildId: vi.fn().mockResolvedValue("guild_123"),
@@ -29,7 +28,6 @@ vi.mock("../src/services/discordService.js", async (importOriginal) => {
         ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`
         : "https://cdn.discordapp.com/embed/avatars/0.png",
     ),
-    getWebhookInfo: vi.fn().mockResolvedValue({ id: "hook_1", name: "Webhook REST" }),
     resolveBotToken: vi.fn().mockResolvedValue("Bot.FakeToken"),
   };
 });
@@ -229,21 +227,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       }
     });
 
-    it("rejects webhook mode even when webhookUrl is missing", async () => {
-      const res = await fetch(`${baseUrl}/api/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": env.adminApiKey,
-        },
-        body: JSON.stringify({ mode: "webhook", payload: { content: "hi" } }),
-      });
 
-      expect(res.status).toBe(400);
-
-      const json = await res.json();
-      expect(json.error).toContain("mode");
-    });
     
     it("returns HTTP 400 when messages array exceeds 10 messages", async () => {
       const excessiveMessages = Array.from({ length: 11 }, (_, i) => ({
@@ -265,7 +249,7 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       expect(json.error).toContain("maximum 10 allowed");
     });
 
-    it("rejects webhook URL message sending and never calls Discord webhook delivery", async () => {
+    it("rejects legacy webhook URL fields before bot delivery", async () => {
         const res = await fetch(`${baseUrl}/api/send`, {
         method: "POST",
         headers: {
@@ -273,13 +257,14 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
           "x-admin-key": env.adminApiKey,
         },
         body: JSON.stringify({
-          mode: "webhook",
+          mode: "bot",
+          channelId: "123456789012345678",
           webhookUrl: "https://discord.com/api/webhooks/111222333/valid_token",
           payload: { content: "Automated test message" },
         }),
       });
       expect(res.status).toBe(400);
-      expect(discordService.sendWebhook).not.toHaveBeenCalled();
+      expect(discordService.sendChannelMessage).not.toHaveBeenCalled();
     });
 
     it("blocks staff from sending to a channel in a unauthoried guild", async () =>{
