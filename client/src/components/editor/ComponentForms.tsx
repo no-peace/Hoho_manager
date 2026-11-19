@@ -111,7 +111,7 @@ const MediaGalleryForm = ({ component, update }: ComponentFormProps) => {
             <IconButton
               icon={Trash2}
               label="Remove item"
-              onClick={() => update({ items: items.filter((entry) => entry._id !== item._id) })}
+              onClick={() => update({ items: items.filter((_, itemIndex) => itemIndex !== index) })}
             />
           </div>
         ))}
@@ -362,7 +362,7 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
                   icon={Trash2}
                   size={12}
                   label="Remove option"
-                  onClick={() => update({ options: options.filter((entry) => entry._id !== option._id) })}
+                  onClick={() => update({ options: options.filter((_, optionIndex) => optionIndex !== index) })}
                 />
               </div>
             </div>
