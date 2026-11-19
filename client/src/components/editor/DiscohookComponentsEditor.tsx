@@ -173,7 +173,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
               </div>
             </div>
 
-            <div className="p-3 space-y-2.5">
+            <div className="sortable-collapse-on-drag p-3 space-y-2.5">
               {children.length > 0 && (
                 <SortableList
                   items={children.map((child, childIdx) => child._id ?? `row-${rowId}-child-${childIdx}`)}
