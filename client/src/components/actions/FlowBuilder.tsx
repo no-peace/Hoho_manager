@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { ComponentType, type ComponentNode, type FlowStep } from "@dmb/shared";
 import { buildCustomId, parseCustomId } from "@dmb/shared";
+import { uid } from "../../utils/constants";
 import { useActionStore } from "../../store/actionStore";
 import { useMessageStore } from "../../store/messageStore";
 import { StepList } from "./StepList";
@@ -70,14 +71,14 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
     if (first) {
       const config = cleanedConfig(first.config ?? {});
       try {
-        nextCustomId = buildCustomId(first.type, config);
+        nextCustomId = buildCustomId(first.type, { ...config, _componentId: componentId || uid() });
         setWarning(null);
       } catch {
         // The params alone overflow 100 chars. Drop them from the id  the full
         // config is still registered server-side, so the flow keeps working. A
         // webhook-only send would lose them, so say so.
         try {
-          nextCustomId = buildCustomId(first.type);
+          nextCustomId = buildCustomId(first.type, { _componentId: componentId || uid() });
         } catch {
           nextCustomId = customId;
         }
