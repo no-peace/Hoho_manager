@@ -4,6 +4,7 @@ import { attachUser, requireUserOrAdminKey } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
+import { getChannelGuildId } from "../services/discordService.js";
 import {
   createScheduledMessage,
   createStickyMessage,
@@ -40,7 +41,7 @@ const assertChannelAccess = (
   }
 };
 
-router.get("/schedules", asyncHandler(async (req, res) => {
+router.get("/schedules", requireStaffPermission("automation"), asyncHandler(async (req, res) => {
   const guildId = typeof req.query.guildId === "string" ? req.query.guildId : "";
   if (!snowflake(guildId)) throw ApiError.badRequest("A valid guildId is required.");
   const staff = req.staffContext;
@@ -50,12 +51,20 @@ router.get("/schedules", asyncHandler(async (req, res) => {
       throw ApiError.forbidden("You are not allowed to access this server.");
     }
   }
-  res.json(await listScheduledMessages(guildId));
+  const schedules = await listScheduledMessages(guildId);
+  if (staff && !staff.isAdmin && staff.record) {
+    const allowedChannels = parseAllowedIds(staff.record.allowed_channel_ids);
+    return res.json(schedules.filter((schedule) =>
+      allowedChannels.includes("*") || allowedChannels.includes(schedule.channel_id),
+    ));
+  }
+  res.json(schedules);
 }));
 
 router.post(
   "/schedules",
-  requireStaffPermission(() => "send"),
+  requireStaffPermission("automation"),
+  requireStaffPermission("send"),
   asyncHandler(async (req, res) => {
     const { guildId, channelId, threadId, payload, runAt, timezone, recurrence, targetMessageId, templateId } = req.body ?? {};
     if (!snowflake(guildId) || !snowflake(channelId)) throw ApiError.badRequest("Valid guildId and channelId are required.");
@@ -87,7 +96,7 @@ router.post(
   }),
 );
 
-router.patch("/schedules/:id", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
+router.patch("/schedules/:id", requireStaffPermission("automation"), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
   const schedule = await getScheduledMessage(id);
@@ -98,7 +107,7 @@ router.patch("/schedules/:id", requireStaffPermission(() => "send"), asyncHandle
   res.json({ success: true });
 }));
 
-router.delete("/schedules/:id", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
+router.delete("/schedules/:id", requireStaffPermission("automation"), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
   const schedule = await getScheduledMessage(id);
@@ -108,7 +117,7 @@ router.delete("/schedules/:id", requireStaffPermission(() => "send"), asyncHandl
   res.json({ success: true });
 }));
 
-router.post("/sticky", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
+router.post("/sticky", requireStaffPermission("automation"), requireStaffPermission("send"), asyncHandler(async (req, res) => {
   const { guildId, channelId, payload, intervalMessages } = req.body ?? {};
   if (!snowflake(guildId) || !snowflake(channelId)) throw ApiError.badRequest("Valid guildId and channelId are required.");
   assertChannelAccess(req, guildId, channelId);
@@ -138,8 +147,11 @@ router.post("/sticky/:channelId/refresh", asyncHandler(async (req, res) => {
   res.json({ success: true, messageId });
 }));
 
-router.delete("/sticky/:channelId", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
+router.delete("/sticky/:channelId", requireStaffPermission("automation"), asyncHandler(async (req, res) => {
   if (!snowflake(req.params.channelId)) throw ApiError.badRequest("Invalid channel ID.");
+  const guildId = await getChannelGuildId(req.params.channelId);
+  if (!guildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
+  assertChannelAccess(req, guildId, req.params.channelId);
   await removeStickyMessage(req.params.channelId);
   res.json({ success: true });
 }));
