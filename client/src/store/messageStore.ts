@@ -446,10 +446,11 @@ export const useMessageStore = create<MessageState>()(
 
       reorderEmbeds: (activeId, overId) =>
         set((state) => {
-          const embeds = [...(state.data?.embeds ?? [])];
-          const from = embeds.findIndex((embed) => embed._id === activeId);
-          const to = embeds.findIndex((embed) => embed._id === overId);
+          const original = state.data?.embeds ?? [];
+          const from = original.findIndex((embed, index) => (embed._id ?? `embed-${index}`) === activeId);
+          const to = original.findIndex((embed, index) => (embed._id ?? `embed-${index}`) === overId);
           if (from < 0 || to < 0 || from === to) return {};
+          const embeds = original.map((embed) => embed._id ? embed : { ...embed, _id: uid() });
           const [moved] = embeds.splice(from, 1);
           if (!moved) return {};
           embeds.splice(to, 0, moved);
@@ -514,10 +515,11 @@ export const useMessageStore = create<MessageState>()(
           let changed = false;
           const embeds = (state.data?.embeds ?? []).map((embed) => {
             if (embed._id !== embedId) return embed;
-            const fields = [...(embed.fields ?? [])];
-            const from = fields.findIndex((field) => field._id === activeId);
-            const to = fields.findIndex((field) => field._id === overId);
+            const originalFields = embed.fields ?? [];
+            const from = originalFields.findIndex((field, index) => (field._id ?? `field-${embedId}-${index}`) === activeId);
+            const to = originalFields.findIndex((field, index) => (field._id ?? `field-${embedId}-${index}`) === overId);
             if (from < 0 || to < 0 || from === to) return embed;
+            const fields = originalFields.map((field) => field._id ? field : { ...field, _id: uid() });
             const [moved] = fields.splice(from, 1);
             if (!moved) return embed;
             fields.splice(to, 0, moved);
