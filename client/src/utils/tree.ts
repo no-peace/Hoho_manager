@@ -179,6 +179,32 @@ export const insertComponent = (
   return result;
 };
 
+
+/** Reorder two components within the same sibling list without mutating the source tree. */
+export const reorderComponent = (
+  components: ComponentNode[] | undefined,
+  activeId: string,
+  overId: string,
+  parentId: string | null = null,
+): TreeResult => {
+  const list = parentId ? findComponent(components, parentId)?.components : components;
+  if (!list) return { components: components ?? [], found: false };
+
+  const oldIndex = list.findIndex((component) => component._id === activeId);
+  const newIndex = list.findIndex((component) => component._id === overId);
+  if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+    return { components: components ?? [], found: false };
+  }
+
+  const next = [...list];
+  const [moved] = next.splice(oldIndex, 1);
+  if (!moved) return { components: components ?? [], found: false };
+  next.splice(newIndex, 0, moved);
+
+  if (!parentId) return { components: next, found: true };
+  return updateComponent(components, parentId, () => ({ components: next }));
+};
+
 /** Move a component one slot earlier/later among its own siblings. */
 export const moveComponent = (
   components: ComponentNode[] | undefined,
