@@ -136,7 +136,7 @@ const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | nu
       )].sort((a, b) => a - b);
       const selected = weekdays.length > 0 ? weekdays : [new Date(Date.UTC(local.year, local.month - 1, local.day)).getUTCDay()];
       const currentWeekday = new Date(Date.UTC(local.year, local.month - 1, local.day)).getUTCDay();
-      const nextWeekday = selected.find((day) => day > currentWeekday) ?? selected[0];
+      const nextWeekday = selected.find((day) => day > currentWeekday) ?? selected[0] ?? currentWeekday;
       let dayOffset = (nextWeekday - currentWeekday + 7) % 7;
       if (dayOffset === 0) dayOffset = 7;
       if (nextWeekday <= currentWeekday) dayOffset += (interval - 1) * 7;
