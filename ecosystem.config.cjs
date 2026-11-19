@@ -47,8 +47,8 @@ module.exports = {
       ...base,
       name: "dmb-api",
       // Built output. Run `npm run build:server` first.
-      script: path.join("server", "dist", "index.js"),
-      cwd: path.join(root, "server"),
+      script: "dist/index.js",
+      cwd: path.resolve(root, "server"),
       // SQLite: exactly one instance. See the note at the top of this file.
       instances: 1,
       exec_mode: "fork",
@@ -71,8 +71,8 @@ module.exports = {
       name: "dmb-web",
       // Vite's preview server hosts the built SPA. Swap for nginx if you prefer
       // a real static host; the only requirement is that it can reach the API.
-      script: path.join("node_modules", "vite", "bin", "vite.js"),
-      cwd: path.join(root, "client"),
+      script: path.resolve(root, "node_modules", "vite", "bin", "vite.js"),
+      cwd: path.resolve(root, "client"),
       args: "preview --port 5173 --host 0.0.0.0",
       instances: 1,
       exec_mode: "fork",
@@ -98,8 +98,8 @@ module.exports = {
     // {
     //   ...base,
     //   name: "dmb-gateway",
-    //   script: path.join("bot", "dist", "index.js"),
-    //   cwd: path.join(root, "bot"),
+    //   script: "dist/index.js",
+    //   cwd: path.resolve(root, "bot"),
     //   instances: 1,
     //   exec_mode: "fork",
     //   env: { NODE_ENV: "production" },
