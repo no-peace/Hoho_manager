@@ -148,7 +148,7 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
       value = String(rawValue ?? "");
     }
     const reservedNamespaces = new Set(["user", "member", "guild", "channel", "interaction", "weao", "role"]);
-    const namespace = customId.split(/[.:]/, 1)[0];
+    const namespace = customId.split(/[.:]/, 1)[0] ?? "";
     if (!reservedNamespaces.has(namespace)) {
       variables[customId] = value;
     }
