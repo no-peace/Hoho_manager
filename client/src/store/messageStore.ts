@@ -158,8 +158,6 @@ export const createEmptyMessage = (): MessageData => ({
   content: "",
   embeds: [],
   components: [],
-  username: "",
-  avatar_url: "",
   thread_name: "",
   flags: 0,
   allowed_mentions: undefined,
