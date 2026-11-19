@@ -145,7 +145,9 @@ export const StudioLayout: React.FC = () => {
   const data = useMessageStore((state) => state.data);
   const addMessage = useMessageStore((state) => state.addMessage);
   const reorderMessages = useMessageStore((state) => state.reorderMessages);
-  const hasUnsavedWork = useMessageStore((state) => state.isDirty);
+  const hasUnsavedMessage = useMessageStore((state) => state.isDirty);
+  const hasUnsavedActions = useActionStore((state) => state.isDirty);
+  const hasUnsavedWork = hasUnsavedMessage || hasUnsavedActions;
 
   useEffect(() => {
     if (!hasUnsavedWork) return;
