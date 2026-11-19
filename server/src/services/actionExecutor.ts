@@ -147,7 +147,11 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
     } else {
       value = String(rawValue ?? "");
     }
-    variables[customId] = value;
+    const reservedNamespaces = new Set(["user", "member", "guild", "channel", "interaction", "weao", "role"]);
+    const namespace = customId.split(/[.:]/, 1)[0];
+    if (!reservedNamespaces.has(namespace)) {
+      variables[customId] = value;
+    }
     variables[`input.${customId}`] = value;
     variables[`modal.${customId}`] = value;
   };
@@ -180,7 +184,7 @@ export const executeCustomId = async (
   // Support standard action IDs or stored modal IDs
   const parsed = parseCustomId(customId);
   const messageId = interaction.message?.id;
-  const stored = await actionRepository.findByCustomId(customId, messageId);
+  const stored = await actionRepository.findByCustomId(customId, messageId, interaction.guild_id);
 
   if (!parsed && stored.length === 0) {
     return { response: undefined, handled: false, type: null };
