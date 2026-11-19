@@ -2100,3 +2100,72 @@ These are audit observations, not confirmed defects:
 - Dependency metadata: current client manifest and lockfile contain no Puck package/dependency-chain entries.
 - **Not run:** `npm ci`, `npm run typecheck`, `npm test`, `npm run build`, browser QA, Lighthouse, live Turso migration or production deployment.
 - The owner instruction in this handoff says not to run npm checks until explicitly authorized. Keep that restriction. The next verification step, when authorized, is to run the repository root scripts and record the exact output against the then-current HEAD.
+
+
+# V14 / V14.1 implementation — 2026-11-19
+
+## Plan identity and revision
+
+- The repository copies `docs/hoho_v14_plan.md` and `docs/hoho_v14.1_plan.md` were fetched from `main`; both resolved to the same blob SHA `5c6c7162ad0387f9a172548727b50f82688fcbf7` and contain identical plan text. V14.1 therefore adds no separate requirements beyond V14.
+- Implementation branch: `main`.
+- Implementation HEAD after the final V14 source commit: `bc78fe14f252cbff8ac3cdb5da60c2e2d8638e3d`.
+
+## Batch 1 — Build speed, dependency audit and server config cache
+
+- `f111d62ed4fe74f9654e0b4319b28edb3f55f2f0` — parallelize client/server/bot builds after the shared workspace.
+- `172c6b1b062ce64cd93c905a201ee4699ea9e284` — remove GSAP-dependent primitives from the client manifest.
+- `770b0440260262cac17a980a59b3df4523446bfa` — replace GSAP SplitTextReveal, CountUpNumber and MagneticButton with lightweight React implementations; retain ShinyText and SpotlightCard exports.
+- `2d74f51e3c75da9510e42e647b20c6d4dd73bc6c` — add five-minute public cache header to GET /api/config.
+- `465cdd9cca2475513413f84e8734e477accf044c` — remove GSAP from package-lock.
+- `9593d2f153dc2ad99f9c285fa1a6833b5ce366d7` — remove unused @base-ui/react, @emoji-mart/data, emoji-mart, chrono-node and highlight.js dependencies after source import search found no active client imports.
+- `54451d8f3121245439216b653794bf53f30cc40f` — update lockfile dependency metadata and remove the corresponding direct package entries.
+- `731419a2325aa61c143d2f5dac9bbfd3a548e8ef` — remove the obsolete Vite vendor-pickers chunk rule. `lenis` and its editor smooth-scroll integration were left untouched.
+
+## Batch 2 — Toast and confirm audit
+
+- `ee97c7d7a18656afec226fb460f84d4efcaf12af` — add shared error toasts for invalid attachment URLs, attachment-count overflow and files above 25 MB.
+- `c58f1047e8bccaf98498ed70d4f2d105dfc0ea86` — add send/edit success and failure toasts alongside inline dispatch status.
+- `8dd39f230c4d4e209b0918fa5cfb6be650e0b4c3` — show a shared error toast when Docs clipboard copy fails.
+- `c61b9ab5e7ac7a8cc17494d3b462ff09af8c83e2` — include bot-access and invalid edit-target validation failures in dispatch toast feedback.
+- Static GitHub code search found no production `window.alert(`, `window.confirm(`, or `window.prompt(` calls in client source. Remaining `alert(` search matches were test strings containing unsafe URL examples; the `window.confirm` search match was the global-store comment documenting the replacement API.
+
+## Batch 3 — Login page and blueprint background
+
+- `b2b47c927d64d8ed30c83c7a777a76db2677eb60` — replace LoginScreen canvas/orbs with grid and CSS beams; add equal-height 5/7 cards, SpotlightCard wrappers, Blurple OAuth CTA and interactive ephemeral preview.
+- `1c19f0c990ec7734350fd4e736a844771cb7ce3c` — replace the atmospheric login CSS with the precision grid and GPU transform beam animations; add dark native-control, touch, overscroll and mobile input safeguards.
+- `5f1208cbb31092ead582c7d4576c1b42efca9ca3` — remove the ThreeHeroCanvas test mock and assert the new grid, beams and ephemeral preview interaction.
+- `4fca326cd90923cb9f368e91534c66b8e51d6a8a` — add the lightweight CSS fade class to SplitTextReveal.
+- `845fab99b7a02cf10df9cfb6cda53df16114a5e7` — add reduced-motion handling for the SplitTextReveal fade.
+- `db76cf4f86c3afcca04ea5f1b9574cce05c98aa4` — keep the preview channel label on one line.
+- `d8ea60fed48d75484100c25a885c6d50a44ab8dd` — keep the Studio status footer inside the preview window card.
+- `bc78fe14f252cbff8ac3cdb5da60c2e2d8638e3d` — add the matching metallic specular rim to the right preview card.
+- `ThreeHeroCanvas.tsx` and its dedicated unit test were retained. The LoginScreen no longer imports the canvas.
+
+## Batch 4 — Studio layout and mobile inspector
+
+- `0eeecb5ffea28edf166d13f4f13069fbefb74e2e` — remove duplicate editor/preview headers, align editor surfaces, redesign mobile segmented dock and add the unsaved-work beforeunload guard.
+- `d1523561f6215525a19d9f42ef327f6b4008328e` — hide the duplicate header Dispatch button below 1200px and widen the mobile server selector.
+- `b492f708e5b058752fd3c4d2f3d083f423e98a75` — show Loading server… / Select Server… instead of unresolved guild snowflake IDs.
+- `d04591f4edd61f98df7d1b50b9116cdda285c463` — remove the redundant inspector Properties micro-labels and add mobile safe-area padding.
+- `01a10646f0484513754d5b770a962264dda58e27` — restore the Properties tab label (not the removed micro-label) and apply safe-area padding to both mobile message and embed inspector bodies.
+
+## Batch 5 — Contrast, surfaces and mobile browser polish
+
+- `2d96c1b827732a2ad5a1bf3e141ddc7650de7986` — update shared primary button token to Discord Blurple and safe-area padding for the desktop inspector body.
+- `32c87a66503a4753f7d8ca659fa2c9bc9b1e9b76` — align Forum Thread Name field and hover surface.
+- `d850d9d623ef5e446610bdaa6e5e631e03009dfb` and `9cf4a2e641ad428393223029ffa220ad2792270e` — align Components V2 accessory/thumbnail input surfaces.
+- `9f493b95a69431b03d92ba78f0f37da99016128a` — update Classic and V2 Add actions to the higher-contrast Blurple.
+- `fb57ae75cad177242ece68c2006edc4c8b3fcc44` — update attachment Upload/Add action contrast.
+- `b998c33089d31192e7351b24c6664e22c484a47f` — align the dispatch target-message-ID input surface.
+- `2c269c58f569c8e39d925c5dfced21161fdf6509` — align Toolbox header and tab-bar backgrounds.
+- `9e8444dc851af6a3067115141e9fc5f9ffaa8c1a` — set explicit dark color-scheme on the HTML root.
+- The CultMorphSurface trigger already used the requested high-contrast Blurple class in the audited source; no additional commit was necessary for that item.
+
+## Batch 6 — Source review and verification limits
+
+- Each changed source file was fetched again from GitHub after its write and its returned content compared with the committed replacement.
+- Package manifests and lockfile were updated together; the lockfile JSON was parsed while preparing the dependency cleanup.
+- Static code search confirmed no active GSAP import or dependency remains, and no production native alert/confirm/prompt call was found.
+- **Not run by instruction:** `npm test`, `npm run typecheck`, or `npm run build`. GitHub Actions were not used.
+- No browser QA, deployment, Render resource measurement, Lighthouse run or production profiling is claimed.
+- After pulling this HEAD, the owner should run `npm run typecheck`, `npm test`, and `npm run build` locally and share any failures before deployment.
