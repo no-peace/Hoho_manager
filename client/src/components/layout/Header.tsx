@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
         {/* Center: Server Select dropdown, Settings/Bot Config button, Backups button */}
         <div className="flex items-center justify-self-center gap-1 sm:gap-2 min-w-0">
           {hasDefaultBotAccess && (
-            <div className="w-[104px] sm:w-32 lg:w-48 min-w-0 relative shrink-0">
+            <div className="relative min-w-[120px] max-w-[175px] flex-1 sm:flex-none sm:w-44 lg:w-52">
               <SearchableDiscordSelect
                 type="guild"
                 value={selectedGuildId || ""}
@@ -162,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
               </button>
             )}
             {onOpenSend && (
-              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="rounded-md border border-[#248046] bg-[#248046] px-1 sm:px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
+              <button type="button" onClick={() => onOpenSend("send")} title="Dispatch message" aria-label="Dispatch message" className="hidden min-[1200px]:inline-flex rounded-md border border-[#248046] bg-[#248046] px-1 sm:px-2 py-1 text-white transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#1a6334] active:scale-[0.97]">
                 <Send size={14} />
               </button>
             )}
