@@ -404,42 +404,55 @@ export const useMessageStore = create<MessageState>()(
       setMessageMode: (index, mode) =>
         set((state) => {
           if (index < 0 || index >= state.messages.length) return state;
-          const isV2 = mode === EDITOR_MODES.V2;
           const targetMsg = state.messages[index] ?? state.data ?? createEmptyMessage();
-          const currentFlags = targetMsg.flags ?? 0;
-          const nextFlags = isV2 ? currentFlags | 32768 : currentFlags & ~32768;
-          const existingComponents = targetMsg.components ?? [];
+          const currentMode = resolveMessageMode(targetMsg, state.mode);
+          if (currentMode === mode) return state;
 
-          // Convert classic message text into a V2 Text Display and retain action rows.
-          // In the reverse direction, fold top-level Text Displays back into message content.
+          const isV2 = mode === EDITOR_MODES.V2;
+          const nextFlags = isV2
+            ? (targetMsg.flags ?? 0) | 32768
+            : (targetMsg.flags ?? 0) & ~32768;
+          const existingComponents = targetMsg.components ?? [];
+          const collectClassicRows = (nodes: ComponentNode[]): ComponentNode[] => {
+            const rows: ComponentNode[] = [];
+            for (const node of nodes) {
+              if (node.type === ComponentType.ActionRow) {
+                rows.push(node);
+              } else if (node.type === ComponentType.Container && node.components) {
+                rows.push(...collectClassicRows(node.components));
+              }
+              if (rows.length >= 5) break;
+            }
+            return rows.slice(0, 5);
+          };
+          const collectText = (nodes: ComponentNode[]): string[] =>
+            nodes.flatMap((node) => [
+              ...(node.type === ComponentType.TextDisplay && node.content ? [node.content] : []),
+              ...(node.components ? collectText(node.components) : []),
+            ]);
           const convertedContent = isV2
             ? ""
             : [
                 targetMsg.content ?? "",
-                ...existingComponents
-                  .filter((component) => component.type === ComponentType.TextDisplay)
-                  .map((component) => component.content ?? ""),
-              ]
-                .filter((part) => part.length > 0)
-                .join("\n\n");
+                ...collectText(existingComponents),
+              ].filter((part) => part.length > 0).join("\n\n");
           const convertedComponents = isV2
             ? [
                 ...(targetMsg.content ? [newTextDisplay(targetMsg.content)] : []),
                 ...existingComponents,
               ]
-            : existingComponents.filter((component) => component.type === ComponentType.ActionRow);
-
+            : collectClassicRows(existingComponents);
           const updatedMsg: MessageData = {
             ...targetMsg,
             content: convertedContent,
             components: convertedComponents,
             flags: nextFlags,
+            ...(isV2 ? { poll: undefined } : {}),
           };
-          (updatedMsg as any).mode = mode;
+          (updatedMsg as MessageData & { mode?: EditorMode }).mode = mode;
 
           const nextMessages = [...state.messages];
           nextMessages[index] = updatedMsg;
-
           const isCurrent = index === (state.activeMessageIndex ?? 0);
           return {
             messages: nextMessages,
