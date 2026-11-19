@@ -16,10 +16,12 @@ const createDefaultPoll = (): DiscordPoll => ({
   layout_type: 1,
 });
 
-export const PollSection: React.FC<{ poll?: DiscordPoll }> = ({ poll }) => {
+export const PollSection: React.FC<{ poll?: DiscordPoll; ensureActive?: () => void }> = ({ poll, ensureActive }) => {
   const [expanded, setExpanded] = useState(Boolean(poll));
-  const update = (next: DiscordPoll | undefined) =>
+  const update = (next: DiscordPoll | undefined) => {
+    ensureActive?.();
     useMessageStore.getState().setField("poll", next);
+  };
 
   return (
     <section className="overflow-hidden rounded-xl border border-[#272D3A] bg-[#10131A]">
