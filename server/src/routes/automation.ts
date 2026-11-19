@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { env } from "../config/env.js";
 import { attachUser, requireUserOrAdminKey } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
@@ -125,7 +126,7 @@ router.post("/sticky", requireStaffPermission(() => "send"), asyncHandler(async 
 }));
 
 router.get("/sticky/active", asyncHandler(async (req, res) => {
-  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal bot access is required.");
+  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal bot access is required.");
   res.json(await getActiveStickyMessages());
 }));
 
@@ -144,7 +145,7 @@ router.delete("/sticky/:channelId", requireStaffPermission(() => "send"), asyncH
 }));
 
 router.post("/tick", asyncHandler(async (req, res) => {
-  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal automation access is required.");
+  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal automation access is required.");
   await runAutomationTick();
   res.json({ success: true });
 }));
