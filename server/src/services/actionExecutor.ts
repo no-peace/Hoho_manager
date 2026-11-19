@@ -127,20 +127,42 @@ export const extractVariablesFromInteraction = (interaction: DiscordInteraction)
   };
 
   // ── Modal Input Extraction ────────────────────────────────────────────────
-  // Extracts submitted values into variables: {input_id}, {input.input_id}, {modal.input_id}
-  if (interaction.data?.components && Array.isArray(interaction.data.components)) {
-    for (const row of interaction.data.components as any[]) {
-      if (Array.isArray(row.components)) {
-        for (const comp of row.components) {
-          if (comp.custom_id && comp.value !== undefined) {
-            const val = String(comp.value);
-            variables[comp.custom_id] = val;
-            variables[`input.${comp.custom_id}`] = val;
-            variables[`modal.${comp.custom_id}`] = val;
-          }
+  // Supports legacy ActionRow -> TextInput and current Label -> component payloads.
+  const resolvedAttachments = (interaction.data as any)?.resolved?.attachments ?? {};
+  const saveModalValue = (customId: unknown, rawValue: unknown): void => {
+    if (typeof customId !== "string" || !customId) return;
+    let value: string;
+    if (Array.isArray(rawValue)) {
+      value = rawValue.map((entry) => {
+        if (typeof entry === "string") {
+          const attachment = resolvedAttachments[entry];
+          return attachment?.url ?? entry;
         }
-      }
+        return String(entry);
+      }).join(", ");
+    } else if (typeof rawValue === "boolean") {
+      value = rawValue ? "true" : "false";
+    } else if (rawValue && typeof rawValue === "object") {
+      value = JSON.stringify(rawValue);
+    } else {
+      value = String(rawValue ?? "");
     }
+    variables[customId] = value;
+    variables[`input.${customId}`] = value;
+    variables[`modal.${customId}`] = value;
+  };
+  const visitModalComponent = (component: any): void => {
+    if (!component || typeof component !== "object") return;
+    if (component.custom_id) {
+      if (component.value !== undefined) saveModalValue(component.custom_id, component.value);
+      else if (Array.isArray(component.values)) saveModalValue(component.custom_id, component.values);
+      else if (component.checked !== undefined) saveModalValue(component.custom_id, component.checked);
+    }
+    if (component.component) visitModalComponent(component.component);
+    if (Array.isArray(component.components)) component.components.forEach(visitModalComponent);
+  };
+  if (Array.isArray(interaction.data?.components)) {
+    interaction.data.components.forEach(visitModalComponent);
   }
 
   return variables;
