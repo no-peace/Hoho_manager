@@ -37,6 +37,11 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    setChannelId("");
+    setChannels([]);
+  }, [guildId]);
+
   const refresh = async () => {
     if (!guildId) return;
     setLoading(true);
