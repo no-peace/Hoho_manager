@@ -2169,3 +2169,12 @@ These are audit observations, not confirmed defects:
 - **Not run by instruction:** `npm test`, `npm run typecheck`, or `npm run build`. GitHub Actions were not used.
 - No browser QA, deployment, Render resource measurement, Lighthouse run or production profiling is claimed.
 - After pulling this HEAD, the owner should run `npm run typecheck`, `npm test`, and `npm run build` locally and share any failures before deployment.
+
+
+# Post-V14 regression assertion correction — 2026-11-19
+
+- Reported failure: `client/src/__tests__/m4_challenger2_layout_stress.test.ts` expected the obsolete server-selector class `w-[104px] sm:w-32 lg:w-48`.
+- The V14 Header implementation intentionally uses the newer responsive sizing `min-w-[120px] max-w-[175px] flex-1 sm:flex-none sm:w-44 lg:w-52`.
+- Updated the source-validation assertion to check the implemented V14 class rather than reverting the UI to the obsolete width rule.
+- Commit: `e870c49f50bb2ac12239cde72d7042e8bfdd621d` — `update header layout regression expectation`.
+- The test suite was **not run**; owner is batching npm checks until all implementation batches are committed.
