@@ -67,18 +67,42 @@ export const FlowBuilder = ({ component }: FlowBuilderProps) => {
     const store = useActionStore.getState();
     const first = nextSteps[0];
 
+    const usedCustomIds = new Set<string>();
+    const collectCustomIds = (nodes: ComponentNode[]): void => {
+      for (const node of nodes) {
+        if (node._id !== componentId && typeof node.custom_id === "string") {
+          usedCustomIds.add(node.custom_id);
+        }
+        if (node.components) collectCustomIds(node.components);
+        if (node.accessory) collectCustomIds([node.accessory]);
+      }
+    };
+    collectCustomIds(useMessageStore.getState().data.components ?? []);
+
+    const createUniqueCustomId = (
+      type: FlowStep["type"],
+      config: Record<string, unknown>,
+    ): string => {
+      const stableId = componentId || uid();
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        const suffix = attempt === 0 ? stableId : `${stableId}-${attempt}`;
+        const candidate = buildCustomId(type, { ...config, _componentId: suffix });
+        if (candidate === customId || !usedCustomIds.has(candidate)) return candidate;
+      }
+      throw new Error("Could not create a unique component custom_id.");
+    };
+
     let nextCustomId = customId;
     if (first) {
       const config = cleanedConfig(first.config ?? {});
       try {
-        nextCustomId = buildCustomId(first.type, { ...config, _componentId: componentId || uid() });
+        nextCustomId = createUniqueCustomId(first.type, config);
         setWarning(null);
       } catch {
-        // The params alone overflow 100 chars. Drop them from the id  the full
-        // config is still registered server-side, so the flow keeps working. A
-        // webhook-only send would lose them, so say so.
+        // Keep the first action type and stable component identity when its
+        // complete settings exceed Discord's 100-character custom_id limit.
         try {
-          nextCustomId = buildCustomId(first.type, { _componentId: componentId || uid() });
+          nextCustomId = createUniqueCustomId(first.type, {});
         } catch {
           nextCustomId = customId;
         }
