@@ -155,6 +155,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                 <button
                   type="button"
                   title="Duplicate Row"
+                  aria-label="Duplicate action row"
                   onClick={() => duplicateComponentById(rowId)}
                   className="p-1 text-[#A1A8B8] hover:text-white rounded hover:bg-[#252B3A]"
                 >
@@ -163,6 +164,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                 <button
                   type="button"
                   title="Delete Row"
+                  aria-label="Delete action row"
                   onClick={() => removeComponentById(rowId)}
                   className="p-1 text-[#F87171] hover:text-white hover:bg-[#F87171] rounded ml-0.5 transition-colors"
                 >
