@@ -442,4 +442,11 @@ export const migrations: readonly Migration[] = [
         ON sticky_messages(enabled, channel_id);
     `,
   },
+  {
+    id: "021_staff_automation_permission",
+    sql: `
+      ALTER TABLE staff_access
+        ADD COLUMN can_manage_automation INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];
