@@ -22,7 +22,7 @@ import { ContentTab } from "./ContentTab";
 import { EmbedsTab } from "./EmbedsTab";
 import { ComponentsTab, V2_ADD_OPTIONS } from "./ComponentsTab";
 import { MessageLinkModal } from "./MessageLinkModal";
-import { DragHandle, useIsListDragging } from "../../ui/SortableList";
+import { DragHandle } from "../../ui/SortableList";
 
 export interface MessageEditorProps {
   index: number;
@@ -59,7 +59,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const addComponent = useMessageStore((state) => state.addComponent);
 
   const isActive = activeMessageIndex === index;
-  const isListDragging = useIsListDragging();
 
   const setExtendedField = <K extends keyof ExtendedMessageData>(
     key: K,
@@ -286,7 +285,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
 
       {/* ── Message Body Panel ── */}
       {isOpen && (
-        <div className={`p-3 space-y-3 bg-[#161A23] rounded-b-xl ${isListDragging ? "hidden" : ""}`}>
+        <div className="sortable-collapse-on-drag p-3 space-y-3 bg-[#161A23] rounded-b-xl">
           <ContentTab
             message={message}
             isV2={isV2}
