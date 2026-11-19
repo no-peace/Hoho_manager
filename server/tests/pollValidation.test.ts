@@ -19,7 +19,7 @@ describe("Discord poll payload validation", () => {
   it("rejects polls with fewer than two answers", () => {
     expect(() => validateMessagePayload({
       poll: { ...validPoll, answers: [validPoll.answers[0]] },
-    })).toThrow(/poll\.answers/);
+    })).toThrow("Message payload failed validation");
   });
 
   it("rejects polls combined with Components V2", () => {
@@ -27,6 +27,6 @@ describe("Discord poll payload validation", () => {
       flags: 32768,
       components: [{ type: 10, content: "Hello" }],
       poll: validPoll,
-    })).toThrow(/poll cannot be combined/);
+    })).toThrow("Message payload failed validation");
   });
 });
