@@ -342,6 +342,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
       items={rowEntries.map(({ row }, index) => row._id ?? `action-row-${index}`)}
       onReorder={(activeId, overId) => reorderComponentById(activeId, overId, parentId)}
       strategy="vertical"
+      renderOverlay={() => "Action Row"}
       className="space-y-2.5"
     >
       {rowCards}
