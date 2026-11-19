@@ -438,7 +438,8 @@ router.get(
   "/messages/:channelId/:messageId",
   requireStaffPermission("edit"),
   asyncHandler(async (req, res) => {
-    const { channelId, messageId } = req.params;
+    const channelId = typeof req.params.channelId === "string" ? req.params.channelId : "";
+    const messageId = typeof req.params.messageId === "string" ? req.params.messageId : "";
     if (!channelId || !DISCORD_SNOWFLAKE_REGEX.test(channelId) ||
         !messageId || !DISCORD_SNOWFLAKE_REGEX.test(messageId)) {
       throw ApiError.badRequest("Valid channelId and messageId are required.");
@@ -472,21 +473,24 @@ router.get(
       ...(Array.isArray(component.options) ? { options: component.options.map((option: any) => ({ ...option, _id: freshId() })) } : {}),
       ...(Array.isArray(component.items) ? { items: component.items.map((item: any) => ({ ...item, _id: freshId() })) } : {}),
     });
+    const liveEmbeds = Array.isArray(liveMessage.embeds) ? liveMessage.embeds as any[] : [];
+    const liveComponents = Array.isArray(liveMessage.components) ? liveMessage.components as any[] : [];
+    const flags = typeof liveMessage.flags === "number" ? liveMessage.flags : 0;
     const data: MessageData = {
-      content: liveMessage.content ?? "",
-      embeds: (liveMessage.embeds ?? []).map((embed: any) => ({
+      content: typeof liveMessage.content === "string" ? liveMessage.content : "",
+      embeds: liveEmbeds.map((embed: any) => ({
         ...embed,
         _id: freshId(),
         fields: Array.isArray(embed.fields) ? embed.fields.map((field: any) => ({ ...field, _id: freshId() })) : [],
       })),
-      components: (liveMessage.components ?? []).map(mapComponent),
-      flags: liveMessage.flags ?? 0,
-      poll: (liveMessage as any).poll,
+      components: liveComponents.map(mapComponent),
+      flags,
+      poll: liveMessage.poll as MessageData["poll"],
       username: "",
       avatar_url: "",
       thread_name: "",
     };
-    const mode = (data.flags & 32768) !== 0 ? "v2" : "classic";
+    const mode = (flags & 32768) !== 0 ? "v2" : "classic";
     return res.json({ data, mode });
   }),
 );
