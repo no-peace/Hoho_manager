@@ -104,11 +104,11 @@ describe("shared/customId: Wire Codec & Enforcement Suite", () => {
     });
 
     it("preserves colons inside the JSON parameter string", () => {
-      const raw = 'action:send_webhook:{"target":"http://localhost:3000/webhook"}';
+      const raw = 'action:send_message:{"channelId":"123456789012345678"}';
       const parsed = parseCustomId(raw);
       expect(parsed).toEqual({
-        type: "send_webhook",
-        params: { target: "http://localhost:3000/webhook" },
+        type: "send_message",
+        params: { channelId: "123456789012345678" },
       });
     });
 
