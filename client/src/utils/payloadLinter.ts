@@ -142,6 +142,21 @@ export const lintPayloads = (
       }
     }
 
+    if (message.poll) {
+      if (message.poll.question.text.trim().length === 0 || message.poll.question.text.length > 300) {
+        add("error", "Poll question must contain 1–300 characters.");
+      }
+      if (message.poll.answers.length < 2 || message.poll.answers.length > 10) {
+        add("error", "Poll must contain between 2 and 10 answers.");
+      }
+      if (message.poll.answers.some((answer) => !answer.poll_media.text.trim() || answer.poll_media.text.length > 55)) {
+        add("error", "Each poll answer must contain 1–55 characters.");
+      }
+      if (message.poll.duration < 1 || message.poll.duration > 168) {
+        add("error", "Poll duration must be between 1 and 168 hours.");
+      }
+      if (isV2) add("error", "Discord polls cannot be combined with Components V2.");
+    }
     const hasAttachments = messageIndex === activeMessageIndex && attachments.length > 0;
     const hasPoll = Boolean((message as MessageData & { poll?: unknown }).poll);
     if (
