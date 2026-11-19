@@ -124,7 +124,8 @@ export const StudioLayout: React.FC = () => {
     () => attachedFiles.length > 0 || displayMessages.some((message) =>
       Boolean(message.content?.trim()) ||
       (Array.isArray(message.embeds) && message.embeds.length > 0) ||
-      (Array.isArray(message.components) && message.components.length > 0),
+      (Array.isArray(message.components) && message.components.length > 0) ||
+      Boolean(message.poll),
     ),
     [attachedFiles.length, displayMessages],
   );
