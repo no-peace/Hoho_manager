@@ -122,12 +122,8 @@ export const useSend = (): UseSendReturn => {
   }, [setSendState]);
 
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
-  const targets = useMessageStore((state) => state.targets);
-  const hasWebhookTarget = targets.some((target) =>
-    /^https:\/\/(?:www\.|canary\.|ptb\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d{17,20}\/[\w-]+$/i.test(target.url.trim()),
-  );
-  const isConfigured = Boolean(selectedGuildId || hasWebhookTarget);
-  return { sendMessage, isConfigured, mode, sendMode: SEND_MODES.BOT };
+  const isConfigured = Boolean(selectedGuildId);
+  return { sendMessage, isConfigured, mode };
 };
 
 export default useSend;
