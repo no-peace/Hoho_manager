@@ -328,7 +328,7 @@ export const useMessageStore = create<MessageState>()(
           } as Partial<MessageState>, replace as any);
           return;
         }
-        rawSet(partial as any, replace as any);
+        rawSet(next as any, replace as any);
       };
       return ({
       mode: EDITOR_MODES.CLASSIC,
