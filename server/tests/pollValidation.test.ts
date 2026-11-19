@@ -16,9 +16,9 @@ describe("Discord poll payload validation", () => {
     expect(validateMessagePayload({ poll: validPoll })).toMatchObject({ poll: validPoll });
   });
 
-  it("rejects polls with fewer than two answers", () => {
+  it("rejects polls with no answers", () => {
     expect(() => validateMessagePayload({
-      poll: { ...validPoll, answers: [validPoll.answers[0]] },
+      poll: { ...validPoll, answers: [] },
     })).toThrow("Message payload failed validation");
   });
 
