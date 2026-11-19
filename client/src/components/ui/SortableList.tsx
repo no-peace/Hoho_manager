@@ -111,6 +111,7 @@ export const SortableList: React.FC<SortableListProps> = ({
 
   return (
     <SortableListStateContext.Provider value={listState}>
+      <style>{`[data-list-dragging="true"] .sortable-collapse-on-drag { display: none !important; }`}</style>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
