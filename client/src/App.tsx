@@ -70,9 +70,11 @@ export const App: React.FC = () => {
 
 
   useEffect(() => {
+    if (route !== "studio") return;
+    let cancelled = false;
     void (async () => {
       const user = await fetchCurrentUser();
-      if (!user) return;
+      if (!user || cancelled) return;
 
       const { useActionStore } = await import("./store/actionStore");
       void useActionStore.getState().fetchActionTypes();
@@ -81,13 +83,16 @@ export const App: React.FC = () => {
       if (params.get("setup") === "1" || user.isFirstLogin || user.needsBotConfig) {
         setConfigModalOpen(true);
       }
-      if (params.has("login") || params.has("setup") || params.has("error")) {
-        window.history.replaceState({}, "", window.location.pathname);
+      const handledParams = ["login", "setup", "error"];
+      for (const key of handledParams) params.delete(key);
+      const remainingQuery = params.toString();
+      if (handledParams.some((key) => new URLSearchParams(window.location.search).has(key))) {
+        window.history.replaceState({}, "", `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`);
       }
 
       try {
         const res = await api.discord.identity();
-        if (res && res.id) {
+        if (!cancelled && res && res.id) {
           useGlobalStore.getState().setBotIdentity({
             id: res.id,
             username: res.username || "HoHo Bot",
@@ -97,7 +102,8 @@ export const App: React.FC = () => {
       } catch {
       }
     })();
-  }, [fetchCurrentUser, setConfigModalOpen]);
+    return () => { cancelled = true; };
+  }, [route, fetchCurrentUser, setConfigModalOpen]);
 
   if (route === "docs") {
     return (
