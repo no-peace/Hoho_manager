@@ -6,8 +6,14 @@
 - **Batch 8 — Restore to HoHo Studio:** The authenticated `GET /api/discord/messages/:channelId/:messageId` endpoint fetches a live Discord message, checks staff edit permission plus allowed guild/channel scope, and imports content, embeds, Classic Action Rows / Components V2 component trees, flags and polls with fresh local IDs. The Message Link modal has a Fetch & Import action; Studio also consumes `?importChannel=...&importMessage=...` links and removes those parameters from browser history. The admin-gated `Edit in HoHo Studio` message context-menu command builds the deep link using `CLIENT_ORIGIN`. Final route cleanup also recursively re-IDs nested `component` children and places the router export after route registration.
 - **Batch 9 — regression tests:** Added message-store history tests for undo/redo, the 40-snapshot bound and rapid-typing coalescing; added rich modal submission extraction tests for legacy TextInput and Label-wrapped FileUpload, RadioGroup, CheckboxGroup, Select and Checkbox; expanded automation tests for idle-cache reads, expiring deletion, in-place scheduled edits and sticky refresh; expanded payload-linter tests for the 40-component limit and empty String Select; expanded flow-simulator tests for ephemeral and DM traces; and added native poll validation-bound tests. Existing SortableList and poll serialization tests remain.
 - **Automation migration:** V16 migration `020_automation_features` creates `scheduled_messages`, `expiring_messages`, and `sticky_messages`; migration execution against a live database has not been verified here.
-- **V16 implementation commits (remaining work):**
-  - `8e36684a49cf6638b263392753f8b2b01352306e` — finalize recursive live message import mapping.
+- **V16 implementation commits (all batches):**
+  - Batch 1: `e74aa024fb7485ccb65ca0300245ef7bf5afedb3` — drag-and-drop compactness and V2 component headers.
+  - Batch 3: `291b96faa9cd567745dc18fdd16937c1f880e3e0`, `1c06d560075a3c55dce24740dc9143b35728ed79` — lint issue navigation and exported lint result type.
+  - Batch 4: `d342cc4`, `50ba34c` — flow variable/selection simulation and preview click handling.
+  - Batch 5: `59319ab85a9046c36db922b88bb5ded5d811b89c` — rich modal preview option parsing and controls.
+  - Batch 6: `e46a068`, `957cd03`, `2a566dd`, `e118464`, `151d388` — sticky endpoint authentication, expiry selector, crosspost warning behavior.
+  - Batch 7: `2d5f82fdd3d28c40f5640ac576fd151e351591fd` — schedule saved templates or current Studio message.
+  - Batch 8: `8e36684a49cf6638b263392753f8b2b01352306e` — finalize recursive live message import mapping.
   - `d59fd4db67e491b1269ff0d651cb6df221dacbf5` — message-store history tests.
   - `58cb3a523c99db286d2cd8d15b040dbb6bd05c46` — rich modal submission extraction tests.
   - `fc45555e40fbf4a0aa79d958bfaad0ed9b39a3a5` — automation regression coverage.
