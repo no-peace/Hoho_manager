@@ -506,6 +506,9 @@ export const AccessPanel = () => {
                           <span>Max/hr: {record.max_messages_per_hour}</span>
                           <span>Channels: {record.allowed_channel_ids.length === 0 ? 'NONE' : record.allowed_channel_ids.includes('*') ? 'ALL' : record.allowed_channel_ids.length}</span>
                           <span>Files: {record.can_attach_files === 0 ? 'No' : 'Yes'}</span>
+                          <span>Servers: {!record.allowed_guild_ids?.length ? 'NONE' : record.allowed_guild_ids.includes('*') ? 'ALL' : record.allowed_guild_ids.length}</span>
+                          <span>Automation: {record.can_manage_automation === 1 ? 'Yes' : 'No'}</span>
+                          <span>Expires: {record.expires_at ? new Date(record.expires_at).toLocaleDateString() : 'Never'}</span>
                         </div>
                       </div>
                     </div>
