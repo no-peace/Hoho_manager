@@ -117,6 +117,37 @@ describe("client discord utils", () => {
     });
   });
 
+  describe("native Discord polls", () => {
+    const poll = {
+      question: { text: "What should we build?" },
+      answers: [
+        { poll_media: { text: "Poll editor", emoji: { name: "📊" } } },
+        { poll_media: { text: "Scheduler" } },
+      ],
+      duration: 24,
+      allow_multiselect: false,
+      layout_type: 1 as const,
+    };
+
+    it("serializes polls in Classic mode and treats them as non-empty", () => {
+      const message: MessageData = {
+        content: "", username: "", avatar_url: "", thread_name: "",
+        embeds: [], components: [], poll,
+      };
+      const payload = toDiscordPayload(message, "classic");
+      expect(payload.poll).toEqual(poll);
+      expect(isPayloadEmpty(payload)).toBe(false);
+    });
+
+    it("omits polls from Components V2 payloads", () => {
+      const message: MessageData = {
+        content: "", username: "", avatar_url: "", thread_name: "",
+        embeds: [], components: [], poll,
+      };
+      expect(toDiscordPayload(message, "v2").poll).toBeUndefined();
+    });
+  });
+
   describe("embedCharCount & validateMessage", () => {
     it("calculates embed character count accurately", () => {
       const count = embedCharCount({
