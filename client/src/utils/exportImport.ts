@@ -1,12 +1,11 @@
 import { MessageFlags } from "@dmb/shared";
-import type { MessageData, ComponentNode, EmbedData, EmbedField, TargetData } from "@dmb/shared";
+import type { MessageData, ComponentNode, EmbedData, EmbedField } from "@dmb/shared";
 import { EDITOR_MODES } from "./constants";
 import type { EditorMode } from "./constants";
 
 export interface QueryData {
   version?: "d2" | string;
-  messages: { data: MessageData | { data: MessageData; targets?: TargetData[] } }[];
-  targets?: TargetData[];
+  messages: { data: MessageData }[];
   mode?: EditorMode;
 }
 
@@ -44,11 +43,12 @@ const normalizeMessageData = (raw: any): MessageData => {
   if (item.data !== null && typeof item.data === "object" && !Array.isArray(item.data)) {
     item = item.data;
   }
+  const normalized = { ...item };
+  delete normalized.username;
+  delete normalized.avatar_url;
   return {
-    ...item,
+    ...normalized,
     content: item.content || "",
-    username: item.username || "",
-    avatar_url: item.avatar_url || "",
     thread_name: item.thread_name || "",
     ...(typeof item.flags === "number" ? { flags: item.flags } : {}),
     embeds: (item.embeds || []).map((e: any): EmbedData => ({
@@ -62,7 +62,6 @@ const normalizeMessageData = (raw: any): MessageData => {
 
 export interface ParsedQueryData extends MessageData {
   messages: MessageData[];
-  targets?: TargetData[];
   mode?: EditorMode;
 }
 
@@ -71,14 +70,12 @@ export const fromQueryData = (parsed: any): ParsedQueryData => {
     parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
 
   let rawList: any[] = [];
-  let targets: TargetData[] | undefined = rawData.targets;
 
   // 1. Detect official Discohook full workspace backups (like backups-2026-09-30.json)
   if (rawData.backups && Array.isArray(rawData.backups) && rawData.backups.length > 0) {
     const backup = rawData.backups[0];
     if (backup.messages && Array.isArray(backup.messages) && backup.messages.length > 0) {
       rawList = backup.messages;
-      targets = backup.targets || targets;
     }
   }
   // 2. Detect standard QueryData multi-message / single-message exports
@@ -99,7 +96,6 @@ export const fromQueryData = (parsed: any): ParsedQueryData => {
   return {
     ...primary,
     messages: allMessages,
-    ...(targets ? { targets } : {}),
     ...(rawData.mode === EDITOR_MODES.V2 || rawData.mode === EDITOR_MODES.CLASSIC
       ? { mode: rawData.mode }
       : {}),
@@ -108,14 +104,12 @@ export const fromQueryData = (parsed: any): ParsedQueryData => {
 
 export const toQueryData = (
   payload: MessageData | MessageData[],
-  targets?: TargetData[],
   mode?: EditorMode,
 ): QueryData => {
   const msgs = Array.isArray(payload) ? payload : [payload];
   return {
     version: "d2",
     messages: msgs.map((m) => ({ data: m })),
-    ...(targets ? { targets } : {}),
     ...(mode ? { mode } : {}),
   };
 };
