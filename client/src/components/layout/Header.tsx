@@ -404,6 +404,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           onClose={() => setAccessOpen(false)}
           title="Staff Access Controls"
           width="max-w-4xl"
+          className="h-[90dvh] sm:h-[85vh]"
         >
           <React.Suspense fallback={null}>
             <AccessPanel />
