@@ -81,7 +81,7 @@ router.post(
       req.staffContext.record?.can_use_weao_exploits === 0 &&
       (containsWeaoPlaceholder(body.data) || containsWeaoPlaceholder(actions))
     ) {
-      throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in template actions.");
+      throw ApiError.forbidden("Your staff account is not permitted to use WEAO placeholders in template data or actions.");
     }
     const template = await templateService.create(requireUser(req).id, {
       name: String(body.name),
