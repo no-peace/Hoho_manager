@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { Bot, Eye, FileText, Link2, Music, Play } from "lucide-react";
 import type { ComponentNode, FlowStep } from "@dmb/shared";
-import { ComponentType, MessageFlags } from "@dmb/shared";
+import { ComponentType, MessageFlags, parseCustomId } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { EmbedPreview } from "./EmbedPreview";
 import { UserPlaceholderPreviewProvider } from "./UserPlaceholderPreviewContent";
@@ -297,7 +297,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#313338] p-3 pb-24 sm:p-4 sm:pb-28 custom-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#313338] p-3 sm:p-4 custom-scrollbar">
         {/* Responsive Discord Preview Container */}
         <div className="w-full max-w-4xl mx-auto ">
 
@@ -372,7 +372,13 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
                               component?.type === ComponentType.MentionableSelect;
                         if (testFlow && isSimulatable && (isButton || !isInteractive || selectedOption !== undefined)) {
                           const customId = component?._action_custom_id || component?.custom_id;
-                          const steps = customId ? useActionStore.getState().getFlow(customId) : [];
+                          const storedSteps = customId ? useActionStore.getState().getFlow(customId) : [];
+                          const parsedInline = customId ? parseCustomId(customId) : null;
+                          const steps = storedSteps.length > 0
+                            ? storedSteps
+                            : parsedInline && parsedInline.type !== "dud"
+                              ? [{ _id: "preview-inline", type: parsedInline.type as FlowStep["type"], config: parsedInline.params }]
+                              : [];
                           setSimulationSteps(steps);
                           setSimulationSelectedValues(selectedOption ? [selectedOption] : []);
                           setSimulationModalFieldIds(getModalFieldIds(steps));
@@ -514,7 +520,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
       </div>
       </div>
       {testFlow && simulationResult && (
-        <div className="absolute inset-x-0 bottom-0 z-40 px-2 pb-2 sm:px-3">
+        <div className="relative z-40 shrink-0 px-2 pb-2 pt-1 sm:px-3">
           <Suspense fallback={<div className="rounded-t-xl border border-[#272D3A] bg-[#10131A] px-3 py-3 text-[11px] text-[#A1A8B8]">Loading flow simulator…</div>}>
             <FlowSimulatorDrawer
               result={simulationResult}
