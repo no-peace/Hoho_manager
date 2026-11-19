@@ -28,6 +28,22 @@ describe("simulateFlow", () => {
     expect(result.trace[1]?.previewMessage?.content).toBe("Received Need help");
   });
 
+  it("records ephemeral and direct-message outputs in the trace", () => {
+    const result = simulateFlow([
+      { type: "send_ephemeral_reply", config: { content: "Private response" } },
+      { type: "send_dm", config: { content: "Hello {user.username}" } },
+    ], { username: "FlowTester" });
+
+    expect(result.trace[0]?.previewMessage).toEqual({
+      kind: "ephemeral",
+      content: "Private response",
+    });
+    expect(result.trace[1]?.previewMessage).toEqual({
+      kind: "dm",
+      content: "Hello FlowTester",
+    });
+  });
+
   it("stops execution after a stop step", () => {
     const result = simulateFlow([
       { type: "stop", config: { content: "Done" } },
