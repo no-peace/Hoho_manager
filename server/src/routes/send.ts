@@ -437,6 +437,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       }
     }
 
+    let actionGuildId: string | null | undefined;
     const registerMessageFlows = async (sentMessage: unknown): Promise<void> => {
       const messageId =
         sentMessage !== null && typeof sentMessage === "object"
@@ -448,7 +449,10 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         }
         return;
       }
-      await actionRepository.registerFlows(messageId, flows);
+      if (flows.length > 0 && actionGuildId === undefined) {
+        actionGuildId = await discord.getChannelGuildId(destinationChannelId);
+      }
+      await actionRepository.registerFlows(messageId, flows, actionGuildId ?? null);
       if (flows.length > 0) {
         log.info(`Registered ${flows.length} action flow(s) for message ${messageId}`);
       }
