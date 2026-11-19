@@ -3,20 +3,13 @@ import type { DiscordMessagePayload, DiscordUser, InteractionResponse } from "@d
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
-import { parseWebhookUrl } from "../utils/validation.js";
 
 const log = logger.child("discord");
 
 /**
- * Everything that talks to Discord's REST API lives here.
- *
- * Two things are kept strictly separate:
- *   - **Webhook calls** need no bot token and may be made with a URL supplied by
- *     the browser (they can only ever post to that one webhook).
- *   - **Bot calls** need the token, which is resolved server-side only.
- *
- * The token is *never* accepted from a request body  callers pass a profile id
- * or fall back to the environment variable.
+ * All Discord REST calls are centralized here.
+ * Message delivery uses only a server-resolved bot token. Interaction callback
+ * routes use the short-lived interaction token received from Discord.
  */
 
 /** A guild member, as far as this app cares. */
@@ -140,8 +133,6 @@ interface ApiRequestOptions {
   retries?: number;
   /** Explicitly opt a request into retries when its operation is idempotent. */
   idempotent?: boolean;
-  /** Skip the base-URL join (used for webhook endpoints). */
-  absoluteUrl?: string;
   timeoutMs?: number;
   signal?: AbortSignal;
 }
@@ -165,12 +156,11 @@ const apiRequest = async <T>(
     auth = "Bot",
     retries = 3,
     idempotent,
-    absoluteUrl,
     timeoutMs,
     signal: callerSignal,
   }: ApiRequestOptions = {},
 ): Promise<T | null> => {
-  const url = absoluteUrl ?? `${DISCORD_API_BASE}${path ?? ""}`;
+  const url = `${DISCORD_API_BASE}${path ?? ""}`;
   const normalizedMethod = method.toUpperCase();
   const retryableRequest = idempotent ?? ["GET", "HEAD", "PUT", "DELETE"].includes(normalizedMethod);
   let attempt = 0;
@@ -203,7 +193,7 @@ const apiRequest = async <T>(
       if (callerSignal?.aborted) throw error;
       if (!retryableRequest || attempt >= retries) {
         if (isTimeout) {
-          // Discord interaction/webhook tokens can appear in request paths. Never
+          // Discord interaction tokens can appear in request paths. Never
           // include the URL in a client-visible error or structured error details.
           throw ApiError.gatewayTimeout(
             `Discord request timed out after ${effectiveTimeout}ms (${method})`,
@@ -217,7 +207,7 @@ const apiRequest = async <T>(
       continue;
     }
 
-    // 204 No Content (most webhook sends) has no body to parse.
+    // 204 No Content has no body to parse.
     if (response.status === 204) return null;
 
     const isJson = (response.headers.get("content-type") ?? "").includes("application/json");
@@ -290,71 +280,6 @@ const apiRequest = async <T>(
       true,
     );
   }
-};
-
-/* ── Webhooks (no bot token required) ─────────────────────────────────────── */
-
-export interface DiscordAttachmentFile {
-  file: File | Blob;
-  filename: string;
-  key?: string;
-}
-
-export interface WebhookSendOptions {
-  wait?: boolean;
-  threadId?: string | null;
-  files?: DiscordAttachmentFile[];
-}
-
-const buildMultipartPayload = (
-  payload: DiscordMessagePayload,
-  files: DiscordAttachmentFile[],
-): FormData => {
-  const fd = new FormData();
-  const finalPayload: DiscordMessagePayload = {
-    ...payload,
-    allowed_mentions: payload.allowed_mentions ?? { parse: [] },
-  };
-
-  if (!finalPayload.attachments || finalPayload.attachments.length === 0) {
-    finalPayload.attachments = files.map((f, idx) => ({
-      id: idx,
-      filename: f.filename,
-    }));
-  }
-
-  fd.append("payload_json", JSON.stringify(finalPayload));
-  for (let i = 0; i < files.length; i++) {
-    const f = files[i];
-    const key = f.key || `files[${i}]`;
-    fd.append(key, f.file, f.filename);
-  }
-  return fd;
-};
-
-/**
- * Legacy compatibility stub. Arbitrary webhook-URL message sending is disabled.
- * Keep this export so old callers fail explicitly instead of sending externally.
- */
-export const sendWebhook = async (
-  _webhookUrl: string,
-  _payload: DiscordMessagePayload,
-  _options: WebhookSendOptions = {},
-): Promise<DiscordMessage | null> => {
-  throw ApiError.forbidden(
-    "Webhook URL message sending is disabled. Use the configured server bot.",
-  );
-};
-
-
-/** Inspect a webhook without sending (used to validate a URL before saving). */
-export const getWebhookInfo = async (webhookUrl: string): Promise<unknown> => {
-  const parsed = parseWebhookUrl(webhookUrl);
-  if (!parsed) throw ApiError.badRequest("Not a valid Discord webhook URL");
-
-  return apiRequest<unknown>("GET", null, {
-    absoluteUrl: `${DISCORD_API_BASE}/webhooks/${parsed.id}/${parsed.token}`,
-  });
 };
 
 /* ── Bot (token required, server-side only) ───────────────────────────────── */
@@ -1064,8 +989,6 @@ export const deferResponse = async (
 export default {
   resolveBotToken,
   resolveBotTokenForApplication,
-  sendWebhook,
-  getWebhookInfo,
   sendChannelMessage,
   sendChannelMessageWithToken,
   editChannelMessage,
