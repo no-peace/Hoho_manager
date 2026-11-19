@@ -73,6 +73,17 @@ export const validateEnv = (): string[] => {
   if (env.isProd && env.adminApiKey.length < 32) {
     errors.push("ADMIN_API_KEY must contain at least 32 characters outside local development and tests.");
   }
+  try {
+    const clientOrigin = new URL(env.clientOrigin);
+    if (clientOrigin.protocol !== "https:" && env.isProd) {
+      errors.push("CLIENT_ORIGIN must use HTTPS outside local development and tests.");
+    }
+    if (clientOrigin.username || clientOrigin.password || clientOrigin.search || clientOrigin.hash) {
+      errors.push("CLIENT_ORIGIN must not contain credentials, query or fragment.");
+    }
+  } catch {
+    errors.push("CLIENT_ORIGIN must be a valid absolute URL.");
+  }
   const invalidCommandAdminIds = rawCommandAdminIds
     .split(",")
     .map((id) => id.trim())
