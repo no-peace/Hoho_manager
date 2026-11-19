@@ -76,7 +76,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
   if (!isV2) {
     return (
       <div className="pt-1">
-        <DiscohookComponentsEditor parentId={null} componentsOverride={message.components || []} />
+        <DiscohookComponentsEditor parentId={null} componentsOverride={message.components || []} ensureActive={ensureActive} />
       </div>
     );
   }
