@@ -125,7 +125,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
   if (rowEntries.length === 0) return null;
 
-  const rowCards = rowEntries.map(({ row, containerId, siblingIndex }) => {
+  const rowCards = rowEntries.map(({ row, siblingIndex }) => {
         const rowId = row._id ?? "";
         const children = row.components ?? [];
         const hasSelect = children.some((c) => c.type !== ComponentType.Button);
