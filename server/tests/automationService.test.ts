@@ -1,9 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  listSchedules: vi.fn().mockResolvedValue([]),
-  listExpiring: vi.fn().mockResolvedValue([]),
-  listActiveSticky: vi.fn().mockResolvedValue([]),
+  listSchedules: vi.fn(),
+  listExpiring: vi.fn(),
+  listActiveSticky: vi.fn(),
+  findDueSchedules: vi.fn(),
+  findDueExpiring: vi.fn(),
+  removeExpiring: vi.fn(),
+  updateSchedule: vi.fn(),
+  setStickyMessageId: vi.fn(),
+  findSticky: vi.fn(),
+  resolveBotToken: vi.fn(),
+  deleteChannelMessage: vi.fn(),
+  sendChannelMessageWithToken: vi.fn(),
+  editChannelMessage: vi.fn(),
 }));
 
 vi.mock("../src/repositories/automationRepository.js", () => ({
@@ -11,37 +21,47 @@ vi.mock("../src/repositories/automationRepository.js", () => ({
     listSchedules: mocks.listSchedules,
     listExpiring: mocks.listExpiring,
     listActiveSticky: mocks.listActiveSticky,
-    findDueSchedules: vi.fn().mockResolvedValue([]),
-    findDueExpiring: vi.fn().mockResolvedValue([]),
+    findDueSchedules: mocks.findDueSchedules,
+    findDueExpiring: mocks.findDueExpiring,
+    removeExpiring: mocks.removeExpiring,
+    updateSchedule: mocks.updateSchedule,
+    setStickyMessageId: mocks.setStickyMessageId,
+    findSticky: mocks.findSticky,
   },
 }));
 
 vi.mock("../src/services/discordService.js", () => ({
-  resolveBotToken: vi.fn(),
-  sendChannelMessageWithToken: vi.fn(),
-  editChannelMessage: vi.fn(),
-  deleteChannelMessage: vi.fn(),
+  resolveBotToken: mocks.resolveBotToken,
+  deleteChannelMessage: mocks.deleteChannelMessage,
+  sendChannelMessageWithToken: mocks.sendChannelMessageWithToken,
+  editChannelMessage: mocks.editChannelMessage,
 }));
 
-import {
-  getAutomationCacheState,
-  initializeAutomationService,
-  runAutomationTick,
-} from "../src/services/automationService.js";
-
-describe("automation service idle caches", () => {
+describe("automation service", () => {
   beforeEach(() => {
-    mocks.listSchedules.mockClear();
-    mocks.listExpiring.mockClear();
-    mocks.listActiveSticky.mockClear();
+    vi.resetModules();
+    vi.clearAllMocks();
+    mocks.listSchedules.mockResolvedValue([]);
+    mocks.listExpiring.mockResolvedValue([]);
+    mocks.listActiveSticky.mockResolvedValue([]);
+    mocks.findDueSchedules.mockResolvedValue([]);
+    mocks.findDueExpiring.mockResolvedValue([]);
+    mocks.removeExpiring.mockResolvedValue(undefined);
+    mocks.updateSchedule.mockResolvedValue(undefined);
+    mocks.setStickyMessageId.mockResolvedValue(undefined);
+    mocks.resolveBotToken.mockResolvedValue("test-token");
+    mocks.deleteChannelMessage.mockResolvedValue(undefined);
+    mocks.sendChannelMessageWithToken.mockResolvedValue({ id: "new-sticky-id" });
+    mocks.editChannelMessage.mockResolvedValue(undefined);
   });
 
-  it("loads each automation table once and performs no recurring reads when caches are empty", async () => {
-    await initializeAutomationService();
-    await runAutomationTick();
-    await runAutomationTick();
+  it("performs no recurring database reads while all automation caches are empty", async () => {
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    await service.runAutomationTick();
+    await service.runAutomationTick();
 
-    expect(getAutomationCacheState()).toMatchObject({
+    expect(service.getAutomationCacheState()).toMatchObject({
       initialized: true,
       hasSchedules: false,
       hasExpiringMessages: false,
@@ -50,5 +70,90 @@ describe("automation service idle caches", () => {
     expect(mocks.listSchedules).toHaveBeenCalledTimes(1);
     expect(mocks.listExpiring).toHaveBeenCalledTimes(1);
     expect(mocks.listActiveSticky).toHaveBeenCalledTimes(1);
+    expect(mocks.findDueSchedules).not.toHaveBeenCalled();
+    expect(mocks.findDueExpiring).not.toHaveBeenCalled();
+  });
+
+  it("deletes due expiring messages and refreshes the empty-table cache", async () => {
+    const due = {
+      id: 7,
+      guild_id: "guild",
+      channel_id: "channel",
+      message_id: "message",
+      delete_at: new Date(Date.now() - 60_000).toISOString(),
+      created_by: "staff",
+      created_at: new Date().toISOString(),
+    };
+    mocks.listExpiring.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.findDueExpiring.mockResolvedValue([due]);
+
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    await service.runAutomationTick();
+
+    expect(mocks.deleteChannelMessage).toHaveBeenCalledWith("channel", "message", "test-token");
+    expect(mocks.removeExpiring).toHaveBeenCalledWith(7);
+    expect(service.getAutomationCacheState().hasExpiringMessages).toBe(false);
+  });
+
+  it("edits an existing scheduled message in place instead of posting a duplicate", async () => {
+    const due = {
+      id: 4,
+      guild_id: "guild",
+      channel_id: "channel",
+      thread_id: null,
+      template_id: null,
+      target_message_id: "existing-message",
+      payload_json: { content: "Updated announcement" },
+      cron_expr: null,
+      run_at: new Date(Date.now() - 60_000).toISOString(),
+      timezone: "UTC",
+      enabled: 1,
+      next_run_at: new Date(Date.now() - 60_000).toISOString(),
+      created_by: "staff",
+      created_at: new Date().toISOString(),
+    };
+    mocks.listSchedules.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.findDueSchedules.mockResolvedValue([due]);
+
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    await service.runAutomationTick();
+
+    expect(mocks.editChannelMessage).toHaveBeenCalledWith(
+      "channel",
+      "existing-message",
+      { content: "Updated announcement" },
+    );
+    expect(mocks.sendChannelMessageWithToken).not.toHaveBeenCalled();
+    expect(mocks.updateSchedule).toHaveBeenCalledWith(4, expect.objectContaining({ enabled: 0 }));
+  });
+
+  it("refreshes a cached sticky message by replacing the previous Discord message", async () => {
+    const sticky = {
+      id: 2,
+      guild_id: "guild",
+      channel_id: "channel",
+      current_message_id: "old-sticky-id",
+      payload_json: { content: "Pinned notice" },
+      interval_messages: 10,
+      enabled: 1,
+      created_by: "staff",
+      created_at: new Date().toISOString(),
+    };
+    mocks.listActiveSticky.mockResolvedValue([sticky]);
+
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    const messageId = await service.refreshStickyMessage("channel");
+
+    expect(mocks.deleteChannelMessage).toHaveBeenCalledWith("channel", "old-sticky-id", "test-token");
+    expect(mocks.sendChannelMessageWithToken).toHaveBeenCalledWith(
+      "channel",
+      { content: "Pinned notice" },
+      "test-token",
+    );
+    expect(mocks.setStickyMessageId).toHaveBeenCalledWith("channel", "new-sticky-id");
+    expect(messageId).toBe("new-sticky-id");
   });
 });
