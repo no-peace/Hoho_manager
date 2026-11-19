@@ -131,7 +131,7 @@ router.get("/sticky/active", asyncHandler(async (req, res) => {
 }));
 
 router.post("/sticky/:channelId/refresh", asyncHandler(async (req, res) => {
-  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal bot access is required.");
+  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal bot access is required.");
   if (!snowflake(req.params.channelId)) throw ApiError.badRequest("Invalid channel ID.");
   const messageId = await refreshStickyMessage(req.params.channelId);
   if (!messageId) throw ApiError.notFound("Sticky message not found.");
