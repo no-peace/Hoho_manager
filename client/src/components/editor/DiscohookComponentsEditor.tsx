@@ -207,8 +207,10 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               {isLinkButton(child) && <ExternalLink size={12} className="shrink-0 opacity-80" />}
                             </button>
                             <div className="flex items-center gap-0.5 border-l border-current/20 pl-1.5">
-                              <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { event.stopPropagation(); ensureActive?.(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
-                              <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { event.stopPropagation(); ensureActive?.(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
+                              <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { ensureActive?.();
+                                event.stopPropagation(); ensureActive?.(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
+                              <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { ensureActive?.();
+                                event.stopPropagation(); ensureActive?.(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
                             </div>
                           </div>
                         </SortableItem>
@@ -222,6 +224,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                       <div
                         data-editor-target-id={childId}
                         onClick={(e) => {
+                          ensureActive?.();
                           e.stopPropagation();
                           select({ kind: "component", id: childId });
                         }}
@@ -280,7 +283,8 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation();
+                        ensureActive?.();
+                          e.stopPropagation();
                         addActionRowChild(rowId, ComponentType.Button);
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161A23] hover:bg-[#252B3A] text-[#F1F3F9] hover:text-white text-[0.6875rem] font-semibold border border-[#272D3A] hover:border-[#818CF8]/50 hover:bg-[#1D2230]/50 transition-colors"
@@ -294,6 +298,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                       <button
                         type="button"
                         onClick={(e) => {
+                          ensureActive?.();
                           e.stopPropagation();
                           setSelectMenuDropdownRow(
                             selectMenuDropdownRow === rowId ? null : rowId,
@@ -313,7 +318,8 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                                 key={typeNum}
                                 type="button"
                                 onClick={(e) => {
-                                  e.stopPropagation();
+                                  ensureActive?.();
+                          e.stopPropagation();
                                   addActionRowChild(rowId, Number(typeNum));
                                   setSelectMenuDropdownRow(null);
                                 }}
