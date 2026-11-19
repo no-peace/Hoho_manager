@@ -20,7 +20,6 @@ export interface StaffMentionPermissions {
   can_mention_here: boolean;
   can_mention_roles: boolean;
   allowed_role_mention_ids: string[];
-  can_use_webhooks?: boolean;
   can_override_profile?: boolean;
   can_attach_files?: boolean;
   can_use_components_v2?: boolean;
@@ -41,7 +40,6 @@ export interface CurrentUser {
   isFirstLogin?: boolean;
   mutualGuilds?: MutualGuildInfo[];
   customBotCount?: number;
-  customWebhookCount?: number;
   needsBotConfig?: boolean;
   staffPermissions?: StaffMentionPermissions | null;
 }
