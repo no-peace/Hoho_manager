@@ -185,23 +185,35 @@ export const DiscordModalPreview = ({
         {inputs.length === 0 ? (
           <p className="text-xs text-[#A1A8B8] text-center py-3">No input fields added yet</p>
         ) : (
-          inputs.map((inp, idx) => (
-            <div key={idx} className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#b5bac1]">
-                {inp.label || `Question ${idx + 1}`}
-                {inp.required !== false && <span className="text-[#da373c] ml-1">*</span>}
-              </label>
-              {inp.style === 2 ? (
-                <div className="min-h-[60px] rounded bg-[#272D3A] border border-[#111214] p-2 text-xs text-[#A1A8B8] select-none">
-                  {inp.placeholder || "Paragraph response..."}
-                </div>
-              ) : (
-                <div className="h-8 rounded bg-[#272D3A] border border-[#111214] px-2.5 flex items-center text-xs text-[#A1A8B8] select-none">
-                  {inp.placeholder || "Short answer..."}
-                </div>
-              )}
-            </div>
-          ))
+          inputs.map((inp, idx) => {
+            const options = (inp.optionsText ?? "").split("\\n").map((line) => line.split("|")[0]?.trim()).filter(Boolean);
+            if (inp.fieldType === "text_display") {
+              return <div key={idx} className="rounded-md border border-[#272D3A] bg-[#272D3A]/60 p-2.5 text-xs text-[#F1F3F9] whitespace-pre-wrap">{inp.content || inp.label}</div>;
+            }
+            return (
+              <div key={idx} className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#b5bac1]">
+                  {inp.label || `Question ${idx + 1}`}
+                  {inp.required !== false && <span className="text-[#da373c] ml-1">*</span>}
+                </label>
+                {inp.fieldType === "text_input" ? (
+                  inp.style === 2
+                    ? <div className="min-h-[60px] rounded bg-[#272D3A] border border-[#111214] p-2 text-xs text-[#A1A8B8]">{inp.placeholder || "Paragraph response..."}</div>
+                    : <div className="h-8 rounded bg-[#272D3A] border border-[#111214] px-2.5 flex items-center text-xs text-[#A1A8B8]">{inp.placeholder || "Short answer..."}</div>
+                ) : inp.fieldType === "checkbox" ? (
+                  <div className="flex items-center gap-2 rounded bg-[#272D3A] border border-[#111214] px-2.5 py-2 text-xs text-[#A1A8B8]"><span className="h-4 w-4 rounded border border-[#A1A8B8]" /> Checkbox</div>
+                ) : inp.fieldType === "file_upload" ? (
+                  <div className="rounded border border-dashed border-[#818CF8]/60 bg-[#272D3A] px-3 py-4 text-center text-xs text-[#A1A8B8]">Upload file(s) · max {inp.maxValues ?? 1}</div>
+                ) : ["string_select", "user_select", "role_select", "channel_select", "mentionable_select"].includes(inp.fieldType) ? (
+                  <div className="h-9 rounded bg-[#272D3A] border border-[#111214] px-2.5 flex items-center text-xs text-[#A1A8B8]">{inp.placeholder || `Select ${inp.fieldType.replace(/_/g, " ")}...`}</div>
+                ) : (
+                  <div className="space-y-1 rounded bg-[#272D3A] border border-[#111214] p-2">
+                    {options.map((option, optionIndex) => <div key={optionIndex} className="flex items-center gap-2 text-xs text-[#A1A8B8]"><span className="h-3.5 w-3.5 rounded border border-[#A1A8B8]" />{option}</div>)}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
