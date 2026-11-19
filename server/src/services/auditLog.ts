@@ -17,6 +17,7 @@
 import crypto from "node:crypto";
 import { env } from "../config/env.js";
 import { settingsService } from "./settingsService.js";
+import { DEFAULT_LOG_EVENTS } from "@dmb/shared";
 import { logger } from "../utils/logger.js";
 
 const log = logger.child("auditLog");
@@ -39,7 +40,8 @@ export type AuditEvent =
   | "PROFILE_OVERRIDE_BLOCKED"
   | "TEMPLATE_SAVED"
   | "TEMPLATE_DELETED"
-  | "LOGIN_SUCCESS";
+  | "LOGIN_SUCCESS"
+  | "LOG_TEST";
 
 const EVENT_COLORS: Record<AuditEvent, number> = {
   SEND_MESSAGE:             0x23A55A,  // green
@@ -60,6 +62,7 @@ const EVENT_COLORS: Record<AuditEvent, number> = {
   TEMPLATE_SAVED:           0x5865F2,  // blurple
   TEMPLATE_DELETED:         0xFF6B35,  // orange
   LOGIN_SUCCESS:            0x23A55A,  // green
+  LOG_TEST:                 0x5865F2,  // blurple
 };
 
 const EVENT_LABELS: Record<AuditEvent, string> = {
@@ -81,6 +84,7 @@ const EVENT_LABELS: Record<AuditEvent, string> = {
   TEMPLATE_SAVED:           "💾 Template Saved",
   TEMPLATE_DELETED:         "🗑️ Template Deleted",
   LOGIN_SUCCESS:            "🔐 Operator Logged In",
+  LOG_TEST:                 "🧪 Audit Log Test",
 };
 
 export interface AuditContext {
@@ -156,7 +160,7 @@ const buildEmbed = (ctx: AuditContext) => {
         `> **Actor:** ${ctx.actorDiscordId ? `<@${ctx.actorDiscordId}>` : "System"}`,
       ].join("\n"),
       color: EVENT_COLORS[ctx.event],
-      fields,
+      fields: fields.slice(0, 25),
       footer: {
         text: `HoHo Manager Security Audit${ctx.ip ? ` • IP Hash: ${hashIp(ctx.ip)}` : ""}`,
       },
@@ -165,47 +169,95 @@ const buildEmbed = (ctx: AuditContext) => {
   };
 };
 
+export interface AuditDeliveryResult {
+  ok: boolean;
+  status?: number;
+  skipped?: boolean;
+  error?: string;
+}
+
+export interface AuditDeliveryOptions {
+  channelId?: string;
+  bypassEventFilter?: boolean;
+}
+
 /**
- * Fire-and-forget: post an audit embed to the configured log channel.
- * Never stores in SQLite to conserve database storage.
- * Never throws — a logging failure must never break the request.
+ * Deliver one audit embed. Callers that need confirmation (for example the
+ * Settings test button) can await the result; normal audit events remain
+ * fire-and-forget through auditLog().
+ */
+export const sendAuditLogToChannel = async (
+  ctx: AuditContext,
+  options: AuditDeliveryOptions = {},
+): Promise<AuditDeliveryResult> => {
+  try {
+    if (!options.bypassEventFilter) {
+      const guildSettings = ctx.guildId
+        ? await settingsService.getSettings(ctx.guildId)
+        : undefined;
+      const globalSettings = await settingsService.getSettings("__global__");
+      const getEnabledEvents = (settings: typeof globalSettings | undefined): string[] | undefined => {
+        const config = settings?.extra_settings?.logging_config as
+          | { enabled_channel_events?: unknown }
+          | undefined;
+        return Array.isArray(config?.enabled_channel_events)
+          ? config.enabled_channel_events.filter((event): event is string => typeof event === "string")
+          : undefined;
+      };
+      const enabledEvents =
+        getEnabledEvents(guildSettings) ??
+        getEnabledEvents(globalSettings) ??
+        [...DEFAULT_LOG_EVENTS];
+
+      if (!enabledEvents.includes(ctx.event)) {
+        return { ok: true, skipped: true };
+      }
+    }
+
+    const logChannelId =
+      options.channelId?.trim() || await settingsService.getEffectiveLogChannelId(ctx.guildId);
+    const botToken = env.discord.botToken;
+
+    if (!logChannelId || !botToken) {
+      const reason = !logChannelId ? "No audit log channel is configured" : "Discord bot token is unavailable";
+      log.info("[AUDIT] " + ctx.event + " actor=" + (ctx.actorDiscordId ?? "?") + " reason=" + (ctx.reason ?? "-") + " (" + reason + ")");
+      return { ok: false, error: reason };
+    }
+
+    const response = await fetch("https://discord.com/api/v10/channels/" + logChannelId + "/messages", {
+      method: "POST",
+      headers: {
+        Authorization: "Bot " + botToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildEmbed(ctx)),
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      let detail = "";
+      try {
+        detail = (await response.text()).slice(0, 240);
+      } catch {
+        // Keep the HTTP status even if Discord's error body cannot be read.
+      }
+      const error = "Discord API rejected the audit log (" + response.status + ")" + (detail ? ": " + detail : "");
+      log.warn(error);
+      return { ok: false, status: response.status, error };
+    }
+
+    return { ok: true, status: response.status };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    log.warn("Audit log delivery failed: " + error);
+    return { ok: false, error: "Audit log delivery failed. Check the server logs for details." };
+  }
+};
+
+/**
+ * Fire-and-forget audit logging. A logging failure must never block the
+ * operation being audited.
  */
 export const auditLog = (ctx: AuditContext): void => {
-  void (async () => {
-    try {
-      // Check if this event type is enabled for Discord channel dispatch in Head Admin Settings
-      const settings = ctx.guildId ? await settingsService.getSettings(ctx.guildId) : await settingsService.getSettings("__global__");
-      const loggingConfig = (settings?.extra_settings as any)?.logging_config as { enabled_channel_events?: string[] } | undefined;
-
-      if (loggingConfig && Array.isArray(loggingConfig.enabled_channel_events)) {
-        if (!loggingConfig.enabled_channel_events.includes(ctx.event)) {
-          // Event disabled by Head Admin for Discord logging
-          return;
-        }
-      }
-
-      const logChannelId = await settingsService.getEffectiveLogChannelId(ctx.guildId);
-      const botToken = env.discord.botToken;
-
-      if (!logChannelId || !botToken) {
-        // Log locally when no channel is configured — still useful during dev.
-        log.info(`[AUDIT] ${ctx.event} actor=${ctx.actorDiscordId ?? "?"} reason=${ctx.reason ?? "-"}`);
-        return;
-      }
-
-      const body = buildEmbed(ctx);
-
-      await fetch(`https://discord.com/api/v10/channels/${logChannelId}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bot ${botToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch (err) {
-      log.warn(`Audit log delivery failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  })();
+  void sendAuditLogToChannel(ctx);
 };
