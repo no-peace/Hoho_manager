@@ -4,6 +4,7 @@ import { SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBit
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import "./docs-page.css";
 import { UI_THEME_CONFIG } from "../config/uiThemeConfig";
+import { useGlobalStore } from "../store/globalStore";
 import { motion } from "motion/react";
 import {
   Search,
@@ -186,6 +187,7 @@ export const DocsPage = () => {
       window.setTimeout(() => setCopiedTag((current) => current === tag ? null : current), 1500);
     } catch {
       setCopiedTag(null);
+      useGlobalStore.getState().showToast("Could not copy to clipboard", "error");
     }
   };
 
