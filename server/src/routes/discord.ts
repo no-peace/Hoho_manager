@@ -430,8 +430,6 @@ router.delete("/guilds/:guildId/sessions/:tokenId", requireHeadAdmin, asyncHandl
   return res.json({ ok: true, revoked: revokedCount });
 }));
 
-export default router;
-
 /**
  * Fetch a live Discord message and convert it into an editor-safe document.
  * Fresh local IDs prevent imported nested components from colliding with existing cards.
@@ -469,6 +467,7 @@ router.get(
       ...component,
       _id: freshId(),
       ...(Array.isArray(component.components) ? { components: component.components.map(mapComponent) } : {}),
+      ...(component.component ? { component: mapComponent(component.component) } : {}),
       ...(component.accessory ? { accessory: mapComponent(component.accessory) } : {}),
       ...(Array.isArray(component.options) ? { options: component.options.map((option: any) => ({ ...option, _id: freshId() })) } : {}),
       ...(Array.isArray(component.items) ? { items: component.items.map((item: any) => ({ ...item, _id: freshId() })) } : {}),
@@ -492,3 +491,4 @@ router.get(
   }),
 );
 
+export default router;
