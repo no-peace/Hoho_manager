@@ -33,6 +33,11 @@ interface TransactionContext {
   queue: Promise<void>;
 }
 
+const normalizePipelineUrl = (rawUrl: string): string => {
+  const cleanUrl = rawUrl.replace(/\\/+$/, "");
+  return cleanUrl.endsWith("/v2/pipeline") ? cleanUrl : `${cleanUrl}/v2/pipeline`;
+};
+
 const EMPTY_RESULT: TursoExecuteResult = {
   cols: [],
   rows: [],
@@ -140,7 +145,7 @@ export const createTursoPipelineClient = (
 
     const payload = (await response.json()) as PipelineResponse;
     context.baton = payload.baton ?? null;
-    if (payload.base_url) context.baseUrl = payload.base_url;
+    if (payload.base_url) context.baseUrl = normalizePipelineUrl(payload.base_url);
 
     const results = payload.results ?? [];
     const failure = results.find((item) => item.type === "error" || item.error);
