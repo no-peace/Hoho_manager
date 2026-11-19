@@ -283,7 +283,7 @@ export const useMessageStore = create<MessageState>()(
           (next.data !== undefined && next.data !== current.data) ||
           (next.targets !== undefined && next.targets !== current.targets) ||
           (next.attachedFiles !== undefined && next.attachedFiles !== current.attachedFiles);
-        if (hasDocumentChanges && !suppressDirtyTracking && !next.isDirty === false) {
+        if (hasDocumentChanges && !suppressDirtyTracking && next.isDirty !== false) {
           // A document becomes dirty only after an actual editor mutation.
           // Loading and resetting explicitly suppress this transition.
           next.isDirty = true;
