@@ -160,8 +160,7 @@ export const removeComponent = (
 };
 
 /**
- * Append `item` to a parent's children, or to the top level when `parentId` is
- * null/unknown.
+ * Append `item` to a parent's children, or to the top level when `parentId` is null.
  */
 export const insertComponent = (
   components: ComponentNode[] | undefined,
@@ -174,8 +173,8 @@ export const insertComponent = (
     components: [...(parent.components ?? []), item],
   }));
 
-  // Unknown parent: fall back to the top level rather than silently dropping it.
-  if (!result.found) return { components: [...(components ?? []), item], found: true };
+  // An orphaned child must not be promoted to the root component list.
+  if (!result.found) return { components: components ?? [], found: false };
   return result;
 };
 
