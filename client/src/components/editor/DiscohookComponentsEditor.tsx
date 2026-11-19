@@ -37,12 +37,14 @@ export interface DiscohookComponentsEditorProps {
   parentId?: string | null;
   rowId?: string;
   componentsOverride?: ComponentNode[];
+  ensureActive?: () => void;
 }
 
 export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps> = ({
   parentId = null,
   rowId: targetRowId,
   componentsOverride,
+  ensureActive,
 }) => {
   // When a caller supplies a message-specific component tree, subscribe to
   // that stable tree rather than the active message's entire data object.
@@ -156,7 +158,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   type="button"
                   title="Duplicate Row"
                   aria-label="Duplicate action row"
-                  onClick={() => duplicateComponentById(rowId)}
+                  onClick={() => { ensureActive?.(); duplicateComponentById(rowId); }}
                   className="p-1 text-[#A1A8B8] hover:text-white rounded hover:bg-[#252B3A]"
                 >
                   <Copy size={12} />
@@ -165,7 +167,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                   type="button"
                   title="Delete Row"
                   aria-label="Delete action row"
-                  onClick={() => removeComponentById(rowId)}
+                  onClick={() => { ensureActive?.(); removeComponentById(rowId); }}
                   className="p-1 text-[#F87171] hover:text-white hover:bg-[#F87171] rounded ml-0.5 transition-colors"
                 >
                   <Trash2 size={12} />
@@ -205,8 +207,8 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               {isLinkButton(child) && <ExternalLink size={12} className="shrink-0 opacity-80" />}
                             </button>
                             <div className="flex items-center gap-0.5 border-l border-current/20 pl-1.5">
-                              <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { event.stopPropagation(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
-                              <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { event.stopPropagation(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
+                              <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { event.stopPropagation(); ensureActive?.(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
+                              <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { event.stopPropagation(); ensureActive?.(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
                             </div>
                           </div>
                         </SortableItem>
@@ -259,7 +261,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           </button>
                           <button
                             type="button"
-                            onClick={() => removeComponentById(childId)}
+                            onClick={() => { ensureActive?.(); removeComponentById(childId); }}
                             className="p-1 text-[#F87171] hover:text-white hover:bg-[#F87171] rounded"
                           >
                             <Trash2 size={13} />
