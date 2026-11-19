@@ -19,6 +19,9 @@ import { PollPreview } from "./PollPreview";
 
 const FlowSimulatorDrawer = React.lazy(() => import("./FlowSimulatorDrawer").then((module) => ({ default: module.FlowSimulatorDrawer })));
 
+// Zustand selectors must return a stable snapshot when a guild has no cached roles.
+const EMPTY_CACHED_ROLES: { id: string; name: string; color: number }[] = [];
+
 const findPreviewComponent = (nodes: ComponentNode[], id: string): ComponentNode | undefined => {
   for (const node of nodes) {
     if (node._id === id) return node;
@@ -162,7 +165,9 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const botIdentity = useGlobalStore((state) => state.botIdentity);
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
-  const cachedRoles = useDiscordCacheStore((state) => selectedGuildId ? state.roles[selectedGuildId] ?? [] : []);
+  const cachedRoles = useDiscordCacheStore((state) =>
+    selectedGuildId ? state.roles[selectedGuildId] ?? EMPTY_CACHED_ROLES : EMPTY_CACHED_ROLES,
+  );
   const [testFlow, setTestFlow] = useState(false);
   const [simulationSteps, setSimulationSteps] = useState<FlowStep[] | null>(null);
   const [simulationResult, setSimulationResult] = useState<FlowSimulationResult | null>(null);
