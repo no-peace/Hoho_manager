@@ -21,7 +21,7 @@ export class RawInteractionRelay extends Listener {
     if (rawInteraction?.type !== 3 && rawInteraction?.type !== 5) return;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2_200);
+    const timeout = setTimeout(() => controller.abort(), 2_600);
 
     try {
       const res = await fetch(`${env.apiBaseUrl}/api/interactions/relay`, {
@@ -41,7 +41,8 @@ export class RawInteractionRelay extends Listener {
         this.container.logger.warn(`API rejected relay: ${res.status} - ${text}`);
         await this.sendFallbackResponse(rawInteraction);
       } else {
-        this.container.logger.info("✅ Successfully relayed component/modal interaction to API!");
+        await res.body?.cancel().catch(() => undefined);
+        this.container.logger.info("Successfully relayed component/modal interaction to API.");
       }
     } catch (error) {
       this.container.logger.error(`Failed to reach the API at ${env.apiBaseUrl}`, error);
