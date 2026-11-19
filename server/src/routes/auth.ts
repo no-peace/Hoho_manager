@@ -335,7 +335,6 @@ router.get(
       isAdmin || (hasActiveStaffRecord && (mutualGuilds.length > 0 || !env.isProd));
 
     let customBotCount = 0;
-    let customWebhookCount = 0;
 
     let avatarUrl: string;
     if (user.avatar) {
@@ -363,7 +362,6 @@ router.get(
         isFirstLogin: Boolean(user.isFirstLogin),
         mutualGuilds,
         customBotCount,
-        customWebhookCount,
         needsBotConfig: !hasDefaultBotAccess,
         staffPermissions:
           hasActiveStaffRecord && staffRecord
