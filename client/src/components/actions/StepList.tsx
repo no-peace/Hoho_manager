@@ -113,7 +113,7 @@ const parseModalComponents = (components: unknown): ModalInputField[] => {
     } else if (record.type === 10) {
       fields.push(modalFieldFromComponent(record, undefined, undefined, fields.length));
     } else if (record.type) {
-      fields.push(modalFieldFromComponent(record));
+      fields.push(modalFieldFromComponent(record, undefined, undefined, fields.length));
     }
   }
   return fields.slice(0, 5);
@@ -499,7 +499,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                       </div>
                       <div className="flex-1">
                         <TextField
-                          label="Field Label"
+                          label="Label"
                           variables
                           value={input.label}
                           placeholder="e.g. Why should we accept you?"
@@ -550,7 +550,6 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                           ]}
                         />
                       ) : (
-                        <TextField label="Display Label" value={input.label} onChange={(e) => patchInput(fieldIdx, { label: e.target.value })} />
                       )}
                     </div>
 
