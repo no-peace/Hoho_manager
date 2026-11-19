@@ -106,6 +106,25 @@ router.post(
     }
     const profileId: number | null = null;
     const staffCtx = req.staffContext;
+    const hasExpireAfterSeconds =
+      body.expireAfterSeconds !== undefined &&
+      body.expireAfterSeconds !== null &&
+      body.expireAfterSeconds !== "";
+    const expireAfterSeconds = hasExpireAfterSeconds ? Number(body.expireAfterSeconds) : 0;
+    if (
+      hasExpireAfterSeconds &&
+      (!Number.isSafeInteger(expireAfterSeconds) || expireAfterSeconds < 60 || expireAfterSeconds > 2_592_000)
+    ) {
+      throw ApiError.badRequest("expireAfterSeconds must be between 60 seconds and 30 days.");
+    }
+    if (
+      expireAfterSeconds > 0 &&
+      staffCtx &&
+      !staffCtx.isAdmin &&
+      staffCtx.record?.can_manage_automation !== 1
+    ) {
+      throw ApiError.forbidden("Your staff account is not permitted to manage message automation.");
+    }
     const dbUser = req.user as { discord_id?: string; username?: string; avatar?: string | null } | undefined;
     // Sender identity is derived only from the authenticated session/staff context.
     // Legacy request-body authorUserId values are ignored and cannot impersonate users.
@@ -517,12 +536,8 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     }
 
     const autoPublish = body.autoPublish === true;
-    const expireAfterSeconds = Number(body.expireAfterSeconds ?? 0);
     const makeSticky = body.sticky === true;
     const automationWarnings: string[] = [];
-    if (expireAfterSeconds && (!Number.isInteger(expireAfterSeconds) || expireAfterSeconds < 60 || expireAfterSeconds > 2_592_000)) {
-      throw ApiError.badRequest("expireAfterSeconds must be between 60 seconds and 30 days.");
-    }
     if ((autoPublish || expireAfterSeconds || makeSticky) && sentList.some((message) => Boolean(message?.id))) {
       const guildId = await discord.getChannelGuildId(destinationChannelId);
       if (!guildId) throw ApiError.badRequest("Automation requires a guild text channel.");
