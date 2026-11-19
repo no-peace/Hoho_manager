@@ -1,17 +1,17 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn } from "node:child_process";
 
 const targets = ["server/dist/index.js", "bot/dist/index.js"] as const;
-const children: ChildProcess[] = [];
+const children = [];
 let shuttingDown = false;
 let failed = false;
 
-const stopChildren = (signal: NodeJS.Signals): void => {
+const stopChildren = (signal) => {
   for (const child of children) {
     if (child.exitCode === null && child.signalCode === null) child.kill(signal);
   }
 };
 
-const handleSignal = (signal: NodeJS.Signals): void => {
+const handleSignal = (signal) => {
   if (shuttingDown) return;
   shuttingDown = true;
   stopChildren(signal);
