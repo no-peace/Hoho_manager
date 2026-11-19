@@ -7,7 +7,7 @@ import { ApiError } from "./errors.js";
 import { logger } from "./logger.js";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
-const MAX_TOTAL_URL_ATTACHMENT_SIZE = 50 * 1024 * 1024; // 50 mb
+const MAX_TOTAL_URL_ATTACHMENT_SIZE = 25 * 1024 * 1024; // 25 MB total across URL attachments
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_URL_ATTACHMENTS = 10;
 
