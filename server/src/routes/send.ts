@@ -519,6 +519,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
     const autoPublish = body.autoPublish === true;
     const expireAfterSeconds = Number(body.expireAfterSeconds ?? 0);
     const makeSticky = body.sticky === true;
+    const automationWarnings: string[] = [];
     if (expireAfterSeconds && (!Number.isInteger(expireAfterSeconds) || expireAfterSeconds < 60 || expireAfterSeconds > 2_592_000)) {
       throw ApiError.badRequest("expireAfterSeconds must be between 60 seconds and 30 days.");
     }
@@ -526,7 +527,6 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       const guildId = await discord.getChannelGuildId(destinationChannelId);
       if (!guildId) throw ApiError.badRequest("Automation requires a guild text channel.");
       const createdBy = senderDiscordId || "unknown";
-      const automationWarnings: string[] = [];
       if (autoPublish) {
         for (const message of sentList) {
           if (!message?.id || typeof editMessageId === "string" && editMessageId.trim()) continue;
@@ -586,9 +586,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
       mode,
       message: sentList[0],
       messages: sentList,
-      ...(typeof automationWarnings !== "undefined" && automationWarnings.length > 0
-        ? { warnings: automationWarnings }
-        : {}),
+      ...(automationWarnings.length > 0 ? { warnings: automationWarnings } : {}),
     });
   }),
 );
