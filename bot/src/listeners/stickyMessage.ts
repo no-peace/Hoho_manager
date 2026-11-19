@@ -24,7 +24,11 @@ export const refreshStickyCache = async (): Promise<void> => {
         headers: { "x-admin-key": env.adminApiKey },
         signal: AbortSignal.timeout(5_000),
       });
-      if (!response.ok) throw new Error(`API returned ${response.status}`);
+      if (!response.ok) {
+        const status = response.status;
+        await response.body?.cancel().catch(() => undefined);
+        throw new Error(`API returned ${status}`);
+      }
       const rows = await response.json() as StickyChannel[];
       const next = new Map<string, StickyChannel & { count: number }>();
       for (const row of rows) {
