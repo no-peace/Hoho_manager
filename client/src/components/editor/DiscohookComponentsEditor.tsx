@@ -2,10 +2,6 @@ import React, { useState } from "react";
 import {
   Plus,
   Trash2,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   ExternalLink,
   Layers,
@@ -14,13 +10,12 @@ import {
   Shield,
   Hash,
   AtSign,
-  Sliders,
 } from "lucide-react";
 import { useEffect } from "react";
 import { ButtonStyle, ComponentType, type ComponentNode } from "@dmb/shared";
 import { renderButtonEmoji } from "../preview/ActionRowPreview";
 import { useMessageStore } from "../../store/messageStore";
-import { useActionStore } from "../../store/actionStore";
+import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 import { componentLabel } from "../../utils/componentsV2";
 
 const isLinkButton = (component?: Partial<ComponentNode>) =>
@@ -57,11 +52,10 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
   );
   const addActionRowChild = useMessageStore((state) => state.addActionRowChild);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
-  const moveComponentById = useMessageStore((state) => state.moveComponentById);
+  const reorderComponentById = useMessageStore((state) => state.reorderComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
   const select = useMessageStore((state) => state.select);
   const selection = useMessageStore((state) => state.selection);
-  const flows = useActionStore((state) => state.flows);
 
   const [selectMenuDropdownRow, setSelectMenuDropdownRow] = useState<string | null>(null);
 
@@ -132,21 +126,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
     }
   };
 
-  const getFlowStepCount = (child: ComponentNode): number => {
-    if (isLinkButton(child)) return 0;
-    const customId = child.custom_id ?? "";
-    const flowSteps = flows[customId] || [];
-    if (flowSteps.length > 0) return flowSteps.length;
-    if (
-      customId &&
-      customId !== "action:dud" &&
-      !customId.startsWith("action:dud:")
-    ) {
-      return 1;
-    }
-    return 0;
-  };
-
   if (rowEntries.length === 0) return null;
 
   return (
@@ -177,24 +156,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
               </div>
 
               <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  title="Move Row Up"
-                  disabled={siblingIndex === 0}
-                  onClick={() => moveComponentById(rowId, -1, containerId)}
-                  className="p-1 text-[#A1A8B8] hover:text-white disabled:opacity-30 rounded hover:bg-[#252B3A]"
-                >
-                  <ChevronUp size={13} />
-                </button>
-                <button
-                  type="button"
-                  title="Move Row Down"
-                  disabled={siblingIndex === siblingCount - 1}
-                  onClick={() => moveComponentById(rowId, 1, containerId)}
-                  className="p-1 text-[#A1A8B8] hover:text-white disabled:opacity-30 rounded hover:bg-[#252B3A]"
-                >
-                  <ChevronDown size={13} />
-                </button>
+                <DragHandle label="Drag to reorder action row" />
                 <button
                   type="button"
                   title="Duplicate Row"
@@ -216,94 +178,49 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
             <div className="p-3 space-y-2.5">
               {children.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
+                <SortableList
+                  items={children.map((child, childIdx) => child._id ?? `row-${rowId}-child-${childIdx}`)}
+                  onReorder={(activeId, overId) => reorderComponentById(activeId, overId, rowId)}
+                  strategy="grid"
+                  className="flex flex-wrap items-center gap-2"
+                >
                   {children.map((child, childIdx) => {
                     const childId = child._id ?? "";
                     const isSelected =
                       selection?.kind === "component" && selection.id === childId;
                     const isButton = child.type === ComponentType.Button;
-                    const stepCount = getFlowStepCount(child);
                     const selectMeta = SELECT_TYPE_MAP[child.type];
 
                     if (isButton) {
+                      const sortableId = child._id ?? `row-${rowId}-child-${childIdx}`;
                       return (
-                        <div
-                          key={childId}
-                          data-editor-target-id={childId}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            select({ kind: "component", id: childId });
-                          }}
-                          className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold cursor-pointer transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out select-none ${getDiscordButtonClasses(
-                            child.style,
-                            isSelected,
-                          )} ${child.disabled ? "opacity-50" : ""}`}
-                        >
-                          {renderButtonEmoji(child.emoji)}
-                          <span className="truncate max-w-[150px]">
-                            {child.label || "Button"}
-                          </span>
-
-                          {isLinkButton(child) ? (
-                            <ExternalLink size={12} className="opacity-80 shrink-0" />
-                          ) : stepCount > 0 ? (
-                            <span
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-black/30 text-[0.625rem] font-mono"
-                              title={`${stepCount} Flow Action(s)`}
-                            >
-                              ⚡ {stepCount} steps
-                            </span>
-                          ) : null}
-
-                          <Sliders size={11} className="opacity-60 group-hover:opacity-100" />
-
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className={`${isSelected ? "flex" : "hidden group-hover:flex"} items-center gap-0.5 absolute -top-7 right-0 bg-[#10131A] border border-[#161A23] rounded px-1 py-0.5 shadow-lg z-20`}
-                          >
+                        <SortableItem key={sortableId} id={sortableId}>
+                          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-current/20 bg-[#1D2230] px-1.5 py-1 text-xs font-semibold text-[#F1F3F9]">
+                            <DragHandle label="Drag to reorder button" className="min-h-6 min-w-6" />
                             <button
                               type="button"
-                              disabled={childIdx === 0}
-                              onClick={() => moveComponentById(childId, -1, rowId)}
-                              className="p-0.5 text-[#A1A8B8] hover:text-white disabled:opacity-30"
-                              title="Move Left"
+                              data-editor-target-id={childId}
+                              onClick={() => select({ kind: "component", id: childId })}
+                              className={`inline-flex min-w-0 items-center gap-1.5 rounded px-1.5 py-1 text-left transition-[background-color,border-color,color,box-shadow] duration-150 hover:ring-2 hover:ring-[#818CF8]/60 ${getDiscordButtonClasses(child.style, isSelected)} ${child.disabled ? "opacity-50" : ""}`}
                             >
-                              <ChevronLeft size={11} />
+                              {renderButtonEmoji(child.emoji)}
+                              <span className="max-w-[140px] truncate">{child.label || "Button"}</span>
+                              {isLinkButton(child) && <ExternalLink size={12} className="shrink-0 opacity-80" />}
                             </button>
-                            <button
-                              type="button"
-                              disabled={childIdx === children.length - 1}
-                              onClick={() => moveComponentById(childId, 1, rowId)}
-                              className="p-0.5 text-[#A1A8B8] hover:text-white disabled:opacity-30"
-                              title="Move Right"
-                            >
-                              <ChevronRight size={11} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => duplicateComponentById(childId)}
-                              className="p-0.5 text-[#A1A8B8] hover:text-white"
-                              title="Duplicate"
-                            >
-                              <Copy size={10} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeComponentById(childId)}
-                              className="p-0.5 text-[#F87171] hover:text-white"
-                              title="Remove"
-                            >
-                              <Trash2 size={10} />
-                            </button>
+                            <div className="flex items-center gap-0.5 border-l border-current/20 pl-1.5">
+                              <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { event.stopPropagation(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
+                              <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { event.stopPropagation(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
+                            </div>
                           </div>
-                        </div>
+                        </SortableItem>
                       );
                     }
 
                     // Select Menu Full-Width Discord Bar
+                    const sortableId = child._id ?? `row-${rowId}-child-${childIdx}`;
                     return (
+                      <SortableItem key={sortableId} id={sortableId}>
                       <div
-                        key={childId}
                         data-editor-target-id={childId}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -327,9 +244,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                               <span>{selectMeta?.label || "Select Menu"}</span>
                               {child.type === ComponentType.StringSelect && (
                                 <span>• {(child.options || []).length} option(s)</span>
-                              )}
-                              {stepCount > 0 && (
-                                <span className="text-[#f0b232] font-mono">⚡ {stepCount} steps</span>
                               )}
                             </div>
                           </div>
@@ -355,9 +269,10 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                           </button>
                         </div>
                       </div>
+                      </SortableItem>
                     );
                   })}
-                </div>
+                </SortableList>
               )}
 
               {(canAddButton || canAddSelect) && (
