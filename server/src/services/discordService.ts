@@ -937,6 +937,18 @@ export const sendDirectMessage = async (
   });
 };
 
+export const crosspostMessage = async (
+  channelId: string,
+  messageId: string,
+): Promise<void> => {
+  const token = await resolveBotToken();
+  await apiRequest(
+    "POST",
+    `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}/crosspost`,
+    { token, body: {} },
+  );
+};
+
 export const deleteChannelMessage = async (
   channelId: string,
   messageId: string,
@@ -1047,6 +1059,7 @@ export default {
   hasRole,
   sendDirectMessage,
   deleteChannelMessage,
+  crosspostMessage,
   createThreadFromMessage,
   createInteractionResponse,
   createFollowupMessage,
