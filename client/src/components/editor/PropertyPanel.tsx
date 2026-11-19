@@ -66,7 +66,17 @@ export const PropertyPanel = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") select(null);
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+
+      const target = e.target;
+      if (target instanceof Element && target.closest('[role="listbox"]')) return;
+
+      const hasOpenOverlay = document.querySelector(
+        '[role="dialog"], [aria-modal="true"], [data-popover-open="true"], [data-state="open"][data-radix-popper-content-wrapper]',
+      );
+      if (hasOpenOverlay) return;
+
+      select(null);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
