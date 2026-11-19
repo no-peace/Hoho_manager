@@ -13,6 +13,7 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
 import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 import { applyPreviewComponentSelection } from "../../utils/previewSelection";
+import { STARTER_BLUEPRINTS } from "../../utils/starterBlueprints";
 import { SortableItem, SortableList } from "../ui/SortableList";
 
 const PropertyPanel = React.lazy(() =>
@@ -244,6 +245,27 @@ export const StudioLayout: React.FC = () => {
                         <div className="shrink-0 rounded bg-[#818CF8]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
                         <div><p className="text-sm font-bold text-white">Components V2 Message</p><p className="mt-0.5 text-xs text-[#A1A8B8]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p></div>
                       </button>
+                      <div className="border-t border-[#272D3A] pt-3">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">Start from a V2 Blueprint</p>
+                        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                          {STARTER_BLUEPRINTS.map((blueprint) => (
+                            <button
+                              key={blueprint.id}
+                              type="button"
+                              onClick={() => {
+                                const created = blueprint.create();
+                                addMessage(created.message);
+                                created.flows.forEach((flow) => useActionStore.getState().setFlow(flow.customId, flow.steps));
+                                showToast(`${blueprint.title} added to Studio.`, "info");
+                              }}
+                              className="rounded-lg border border-[#272D3A] bg-[#161A23] p-2.5 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]"
+                            >
+                              <span className="block text-xs font-semibold text-[#F1F3F9]">{blueprint.title}</span>
+                              <span className="mt-0.5 block text-[10px] leading-relaxed text-[#A1A8B8]">{blueprint.description}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </CultMorphSurface>
                 </div>
