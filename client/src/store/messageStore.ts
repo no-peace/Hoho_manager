@@ -779,10 +779,23 @@ export const useMessageStore = create<MessageState>()(
               : fromIndex > state.activeMessageIndex && toIndex <= state.activeMessageIndex
                 ? state.activeMessageIndex + 1
                 : state.activeMessageIndex;
+          const selection = state.selection?.kind === "message"
+            ? {
+                ...state.selection,
+                index: state.selection.index === fromIndex
+                  ? toIndex
+                  : fromIndex < state.selection.index && toIndex >= state.selection.index
+                    ? state.selection.index - 1
+                    : fromIndex > state.selection.index && toIndex <= state.selection.index
+                      ? state.selection.index + 1
+                      : state.selection.index,
+              }
+            : state.selection;
           return {
             messages,
             activeMessageIndex,
             data: messages[activeMessageIndex] ?? state.data,
+            selection,
           };
         }),
 
