@@ -3,9 +3,7 @@ import { AlertCircle, Clock, Lock, ShieldCheck, X } from "lucide-react";
 import { HoHoLogoMark } from "./HoHoLogoMark";
 import { api } from "../../api/client";
 import { PublicPageHeader } from "./PublicPageHeader";
-const ThreeHeroCanvas = React.lazy(() =>
-  import("../reactbits/ThreeHeroCanvas").then((module) => ({ default: module.ThreeHeroCanvas })),
-);
+import { SpotlightCard } from "../reactbits/ReactBitsPrimitives";
 
 export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   oauth_not_configured: "Discord login is not configured on the server. Please contact an administrator.",
@@ -84,30 +82,16 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
     return () => window.clearInterval(timer);
   }, []);
 
-  const [showHeroCanvas, setShowHeroCanvas] = useState(false);
-
-  useEffect(() => {
-    // The decorative canvas is intentionally excluded from touch/mobile and
-    // reduced-motion sessions so it cannot compete with the login content.
-    const canvasQuery = window.matchMedia(
-      "(min-width: 768px) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
-    );
-    const syncCanvasVisibility = () => setShowHeroCanvas(canvasQuery.matches);
-    syncCanvasVisibility();
-    canvasQuery.addEventListener("change", syncCanvasVisibility);
-    return () => canvasQuery.removeEventListener("change", syncCanvasVisibility);
-  }, []);
-
   const currentDemo = DEMO_SHOWCASES[activeShowcase];
 
   return (
-    <div data-testid="login-screen-scroll-root" className="hoho-studio-backdrop relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar text-[#F1F3F9] flex flex-col justify-between select-none">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true"><div className="hoho-studio-grid-overlay absolute inset-0" /><div className="absolute -top-28 left-1/4 h-[26rem] w-[38rem] -translate-x-1/2 rounded-full bg-[#818CF8]/14 blur-[64px] sm:blur-[110px]" /><div className="absolute top-1/3 right-[-6rem] h-[24rem] w-[32rem] rounded-full bg-[#A78BFA]/10 blur-[72px] sm:blur-[120px]" /><div className="absolute -bottom-24 left-1/2 h-[22rem] w-[36rem] -translate-x-1/2 rounded-full bg-[#34D399]/8 blur-[72px] sm:blur-[120px]" />{showHeroCanvas && <React.Suspense fallback={null}><ThreeHeroCanvas /></React.Suspense>}</div>
+    <div data-testid="login-screen-scroll-root" className="hoho-studio-backdrop relative h-dvh w-full overflow-y-auto overflow-x-hidden overscroll-y-contain custom-scrollbar text-[#F1F3F9] flex flex-col justify-between">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true"><div className="hoho-studio-grid-overlay absolute inset-0" /><div className="hoho-grid-beam-x top-[192px] left-0 opacity-60" /><div className="hoho-grid-beam-y left-[288px] top-0 opacity-60" /></div>
       <PublicPageHeader activePage="studio" />
 
       <div className="relative z-10 flex flex-1 flex-col justify-between px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start lg:items-center my-2 lg:my-auto py-2 sm:py-6">
-        <div className="relative isolate overflow-hidden lg:col-span-5 min-w-0 bg-[#161A23]/90 backdrop-blur-sm sm:backdrop-blur-xl border border-[#272D3A] rounded-2xl p-4 sm:p-8 shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] space-y-5 sm:space-y-6">
+      <main className="relative z-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-stretch lg:items-stretch my-2 lg:my-auto py-2 sm:py-6">
+        <SpotlightCard className="lg:col-span-5 min-w-0 rounded-2xl h-full"><div className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 p-5 shadow-[0_24px_64px_rgba(0,0,0,0.55)] sm:p-7 space-y-5 sm:space-y-6"><div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#818CF8]/60 to-transparent" aria-hidden="true" />
           <div className="space-y-2">
             <span className="inline-block px-2 py-0.5 rounded bg-[#818CF8]/15 border border-[#818CF8]/30 text-[#dee0fc] text-[0.6875rem] font-semibold uppercase tracking-wider">
               COMPONENTS V2 & DYNAMIC TRACKING
@@ -132,7 +116,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             onClick={() => {
               window.location.href = "/api/auth/discord/login";
             }}
-            className="w-full min-h-[46px] py-2.5 px-4 rounded-lg bg-[#818CF8] text-[#10131A] hover:bg-[#5B5FEA] hover:text-white active:bg-[#4F46E5] active:text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
+            className="w-full min-h-[46px] py-2.5 px-4 rounded-lg bg-[#5865F2] text-white hover:bg-[#4752C4] active:bg-[#3C45A5] font-semibold text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.08-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z" />
@@ -169,7 +153,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             </div>
           )}
 
-          <div className="space-y-2.5 pt-2 border-t border-[#272D3A]">
+          <div className="space-y-2.5 rounded-xl border border-[#1D2230] bg-[#0B0E14] divide-y divide-[#1D2230] px-3.5 py-1">
             <div className="flex items-start gap-2.5 text-xs text-[#b5bac1]">
               <ShieldCheck size={15} className="text-[#57f287] shrink-0 mt-0.5" />
               <span>
@@ -192,14 +176,14 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               </span>
             </div>
           </div>
-        </div>
+        </div></SpotlightCard>
 
-        <div className="relative isolate overflow-hidden lg:col-span-7 min-w-0 bg-[#161A23]/90 backdrop-blur-sm sm:backdrop-blur-xl border border-[#272D3A] rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col">
-          <div className="bg-[#10131A] px-4 py-2.5 border-b border-[#272D3A] flex flex-wrap items-center justify-between gap-2">
+        <SpotlightCard className="lg:col-span-7 min-w-0 rounded-2xl h-full"><div className="relative flex h-full min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
+          <div className="bg-[#0B0E14] px-4 py-2.5 border-b border-[#1D2230] flex items-center justify-between gap-3 min-w-0">
             <span className="text-xs font-bold text-[#A1A8B8]">
               #announcements  Preview
             </span>
-            <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#10131A] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full">
+            <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#10131A] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full whitespace-nowrap shrink-0">
               {DEMO_SHOWCASES.map((item, idx) => (
                 <button
                   key={item.id}
@@ -210,8 +194,8 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                     setActiveShowcase(idx);
                     setClickedBtn(null);
                   }}
-                  className={`px-2.5 py-1 rounded text-[0.6875rem] font-bold transition-colors ${activeShowcase === idx
-                    ? "bg-[#818CF8] text-[#10131A]"
+                  className={`px-2.5 py-1 rounded text-[0.6875rem] font-bold transition-colors whitespace-nowrap shrink-0 ${activeShowcase === idx
+                    ? "bg-[#5865F2] text-white"
                     : "text-[#A1A8B8] hover:text-white"
                     }`}
                 >
@@ -221,7 +205,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
             </div>
           </div>
 
-          <div className="p-3 sm:p-6 bg-[#10131A]/90 space-y-4">
+          <div className="flex-1 p-3 sm:p-6 bg-[#1B1E26] space-y-4">
             <div className="flex items-start gap-3.5">
               <HoHoLogoMark className="h-10 w-10" />
               <div className="flex-1 min-w-0 space-y-2">
@@ -234,17 +218,17 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                 </div>
 
                 <div
-                  className="rounded-lg bg-[#1D2230] border border-[#272D3A] p-4 space-y-3 transition-[border-color,background-color,box-shadow] duration-150 ease-out"
+                  className="rounded-lg bg-[#2B2D31] border border-[#3A3D44] p-4 space-y-3 transition-[border-color,background-color,box-shadow] duration-150 ease-out"
                   style={{
                     borderLeftWidth: "4px",
                     borderLeftColor: currentDemo.accent,
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span data-showcase-badge className="text-[0.625rem] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#10131A] text-[#A1A8B8]">
+                    <span data-showcase-badge className="text-[0.625rem] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1B1E26] text-[#A1A8B8] whitespace-nowrap shrink-0">
                       {currentDemo.badge}
                     </span>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#10131A] border border-[#272D3A] text-[0.625rem] font-bold uppercase tracking-wider text-[#F1F3F9]"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#1B1E26] border border-[#3A3D44] text-[0.625rem] font-bold uppercase tracking-wider text-[#F1F3F9] whitespace-nowrap shrink-0"><span className="h-2 w-2 rounded-full bg-[#57f287]" aria-hidden="true" />Bot Dispatch</div>
                   </div>
 
                   <h2 data-showcase-title className="text-base font-bold text-white">{currentDemo.title}</h2>
@@ -266,9 +250,9 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
                   </div>
 
                   {clickedBtn && (
-                    <div className="mt-2 p-2.5 rounded bg-[#10131A] border border-[#272D3A] text-[0.6875rem] text-[#F1F3F9] flex items-center justify-between">
+                    <div className="mt-2 p-2.5 rounded bg-[#1B1E26] border border-[#5865F2]/40 text-[0.6875rem] text-[#F1F3F9] flex items-center justify-between" role="status" aria-live="polite">
                       <span>
-                        Action triggered: <strong>{clickedBtn}</strong>
+                        Only you can see this · Triggered &quot;{clickedBtn}&quot; flow
                       </span>
                       <button
                         type="button"
@@ -283,7 +267,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               </div>
             </div>
           </div>
-        </div>
+        </div><div className="flex items-center justify-between gap-3 border-t border-[#1D2230] bg-[#0B0E14] px-4 py-2.5 text-[0.6875rem] font-mono text-[#6F788A]"><span className="min-w-0 truncate">Components V2 · Action Flows · Dynamic Variables</span><span className="shrink-0 text-[#34D399]">● Ready</span></div></div></SpotlightCard>
       </main>
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[0.6875rem] text-[#b5bac1] border-t border-[#272D3A] pt-4">
