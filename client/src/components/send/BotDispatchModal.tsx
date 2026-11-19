@@ -319,25 +319,27 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
       }
 
       if (successCount === selectedChannels.length) {
-        setSendResult(
-          mode === "edit"
-            ? "Message updated successfully."
-            : `Dispatched to all ${successCount} selected channel(s).`,
-        );
+        const message = mode === "edit"
+          ? "Message updated successfully."
+          : `Dispatched to all ${successCount} selected channel(s).`;
+        setSendResult(message);
+        useGlobalStore.getState().showToast(message, "success");
         window.setTimeout(onClose, 2000);
       } else if (successCount > 0) {
-        setSendResult(
-          `${successCount} of ${selectedChannels.length} channel(s) succeeded. ${firstFailure ?? "Some requests failed."}`,
-        );
+        const message = `${successCount} of ${selectedChannels.length} channel(s) succeeded. ${firstFailure ?? "Some requests failed."}`;
+        setSendResult(message);
+        useGlobalStore.getState().showToast(message, "error");
       } else {
-        setSendResult(firstFailure ?? "No messages were sent.");
+        const message = firstFailure ?? "No messages were sent.";
+        setSendResult(message);
+        useGlobalStore.getState().showToast(message, "error");
       }
     } catch (error) {
-      setSendResult(
-        error instanceof Error
-          ? error.message
-          : "An error occurred while communicating with the server.",
-      );
+      const message = error instanceof Error
+        ? error.message
+        : "An error occurred while communicating with the server.";
+      setSendResult(message);
+      useGlobalStore.getState().showToast(message, "error");
     } finally {
       setIsSending(false);
     }
