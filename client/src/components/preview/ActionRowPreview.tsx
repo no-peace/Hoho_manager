@@ -238,7 +238,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
       const maxHeight = Math.max(96, Math.min(250, openUpwards ? spaceAbove : spaceBelow));
       const top = openUpwards
         ? Math.max(margin, rect.top - maxHeight - 6)
-        : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
+        : Math.max(margin, Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6));
       const left = Math.max(margin, Math.min(rect.left, window.innerWidth - rect.width - margin));
       const width = Math.min(rect.width, window.innerWidth - margin * 2);
       setDropdownPosition({ top, left, width, maxHeight });
@@ -371,7 +371,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         aria-label="Configure select menu"
         title="Configure select menu"
         data-preview-component-id={select._id}
-        onClick={() => useMessageStore.getState().select({ kind: "component", id: select._id })}
+        onClick={() => { if (select._id) useMessageStore.getState().select({ kind: "component", id: select._id }); }}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#A1A8B8] transition-colors hover:bg-[#3f4147] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
       >
         <SlidersHorizontal size={14} />
