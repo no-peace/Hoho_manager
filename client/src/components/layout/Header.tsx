@@ -13,11 +13,14 @@ import {
   FileJson,
   Trash2,
   Send,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { Modal } from "../ui/Modal";
 import { AnimatedMorphIcon } from "../ui/CultSkiperPrimitives";
 import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore } from "../../store/messageStore";
 import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { navigateTo } from "./StudioRouter";
 
@@ -56,6 +59,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const canUndo = useMessageStore((state) => state.canUndo);
+  const canRedo = useMessageStore((state) => state.canRedo);
+  const undo = useMessageStore((state) => state.undo);
+  const redo = useMessageStore((state) => state.redo);
 
   const {
     selectedGuildId,
@@ -163,6 +170,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
           )}
 
           <div className="inline-flex items-center gap-0 sm:gap-1 rounded-lg bg-[#111214] p-0.5 sm:p-1 border border-[#272D3A] shrink-0">
+            <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)" aria-label="Undo" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+              <Undo2 size={14} />
+            </button>
+            <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo" className="rounded-md border border-transparent bg-transparent p-1.5 text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+              <Redo2 size={14} />
+            </button>
             {onOpenBackups && (
               <button type="button" onClick={onOpenBackups} title="Backups & saved messages" aria-label="Backups and saved messages" className="inline-flex items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1 sm:px-2 py-1 text-xs font-semibold text-[#F1F3F9] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out hover:bg-[#252B3A] active:scale-[0.97]">
                 <Archive size={14} /><span className="hidden xl:inline">Backups</span>
