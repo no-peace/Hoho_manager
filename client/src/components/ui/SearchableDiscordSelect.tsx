@@ -196,7 +196,7 @@ export const SearchableDiscordSelect: React.FC<Props> = ({
   const selectedOption = valArr.length > 0
     ? options.find((option) => option.id === valArr[0])
     : undefined;
-  const unresolvedGuildId = type === "guild" && /^\\d{17,20}$/.test(String(valArr[0] ?? "")) && !selectedOption;
+  const unresolvedGuildId = type === "guild" && /^\d{17,20}$/.test(String(valArr[0] ?? "")) && !selectedOption;
   const displayValue = valArr.length === 0
     ? placeholder
     : multiple
