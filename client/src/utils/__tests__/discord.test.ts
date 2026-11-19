@@ -139,6 +139,21 @@ describe("client discord utils", () => {
       expect(isPayloadEmpty(payload)).toBe(false);
     });
 
+    it("validates poll answer counts and duration bounds", () => {
+      const invalid: MessageData = {
+        content: "", username: "", avatar_url: "", thread_name: "",
+        embeds: [], components: [],
+        poll: {
+          ...poll,
+          answers: [],
+          duration: 169,
+        },
+      };
+      const errors = validateMessage(invalid, "classic");
+      expect(errors.some((error) => error.includes("between 1 and 10 answers"))).toBe(true);
+      expect(errors.some((error) => error.includes("1 and 168 hours"))).toBe(true);
+    });
+
     it("omits polls from Components V2 payloads", () => {
       const message: MessageData = {
         content: "", username: "", avatar_url: "", thread_name: "",
