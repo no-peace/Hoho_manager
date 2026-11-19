@@ -2178,3 +2178,13 @@ These are audit observations, not confirmed defects:
 - Updated the source-validation assertion to check the implemented V14 class rather than reverting the UI to the obsolete width rule.
 - Commit: `e870c49f50bb2ac12239cde72d7042e8bfdd621d` — `update header layout regression expectation`.
 - The test suite was **not run**; owner is batching npm checks until all implementation batches are committed.
+
+
+# Internal navigation / unsaved-work prompt correction — 2026-11-19
+
+- The owner reported that clicking Docs from the Studio showed the browser-native “Leave site? Changes you made may not be saved.” dialog.
+- Root cause: the V14 unsaved-work guard listens to `beforeunload`, while Header's Docs and Privacy links (and Dashboard/logo links) used ordinary document-navigation anchors. A full-page navigation fires `beforeunload` even though the destination is another HoHo Manager page.
+- Updated `client/src/components/layout/Header.tsx` to route same-tab, unmodified clicks through the existing `navigateTo()` SPA router. Normal modifier-click behavior is preserved so users can still open links in a new tab/window.
+- Applied to Docs, Privacy, Dashboard-back and logo links. Internal navigation no longer unloads the Studio document, so it does not trigger the unsaved-work browser prompt.
+- Commit: `d89bc2a5ecc6cab90a747239031a0998fa1194f4` — `keep internal header navigation within the app`.
+- Source was re-fetched from GitHub after commit. No npm checks or browser QA were run; the owner is batching npm checks until all implementation work is complete.
