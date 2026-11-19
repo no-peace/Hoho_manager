@@ -12,7 +12,7 @@ const stickyChannels = new Map<string, StickyChannel & { count: number }>();
 let lastCacheRefresh = 0;
 let cacheRefresh: Promise<void> | null = null;
 
-const refreshStickyCache = async (): Promise<void> => {
+export const refreshStickyCache = async (): Promise<void> => {
   if (cacheRefresh) return cacheRefresh;
   cacheRefresh = (async () => {
     try {
