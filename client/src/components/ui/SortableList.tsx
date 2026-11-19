@@ -1,13 +1,17 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
+  type Modifier,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -28,6 +32,7 @@ interface SortableListProps {
   strategy?: SortStrategy;
   children: React.ReactNode;
   className?: string;
+  renderOverlay?: (activeId: string) => React.ReactNode;
 }
 
 interface SortableItemProps {
@@ -43,7 +48,16 @@ interface SortableHandleContextValue {
   isDragging: boolean;
 }
 
+interface SortableListState {
+  activeDragId: string | null;
+  isDraggingAny: boolean;
+}
+
 const SortableHandleContext = createContext<SortableHandleContextValue | null>(null);
+const SortableListStateContext = createContext<SortableListState>({
+  activeDragId: null,
+  isDraggingAny: false,
+});
 
 const SORT_STRATEGIES = {
   vertical: verticalListSortingStrategy,
@@ -51,30 +65,76 @@ const SORT_STRATEGIES = {
   grid: rectSortingStrategy,
 };
 
+const restrictToVerticalAxis: Modifier = ({ transform }) => ({
+  ...transform,
+  x: 0,
+});
+
+export const useSortableListState = (): SortableListState =>
+  useContext(SortableListStateContext);
+
+export const useIsListDragging = (): boolean =>
+  useSortableListState().isDraggingAny;
+
 export const SortableList: React.FC<SortableListProps> = ({
   items,
   onReorder,
   strategy = "vertical",
   children,
   className,
+  renderOverlay,
 }) => {
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const modifiers = useMemo(
+    () => (strategy === "vertical" ? [restrictToVerticalAxis] : undefined),
+    [strategy],
+  );
+  const listState = useMemo(
+    () => ({ activeDragId, isDraggingAny: activeDragId !== null }),
+    [activeDragId],
+  );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) onReorder(String(active.id), String(over.id));
+    setActiveDragId(null);
   };
+  const handleDragCancel = () => setActiveDragId(null);
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={items} strategy={SORT_STRATEGIES[strategy]}>
-        <div className={className}>{children}</div>
-      </SortableContext>
-    </DndContext>
+    <SortableListStateContext.Provider value={listState}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        modifiers={modifiers}
+        measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <SortableContext items={items} strategy={SORT_STRATEGIES[strategy]}>
+          <div className={className} data-list-dragging={activeDragId !== null || undefined}>
+            {children}
+          </div>
+        </SortableContext>
+        <DragOverlay dropAnimation={null}>
+          {activeDragId ? (
+            <div className="flex h-11 max-w-[min(280px,80vw)] items-center gap-2 overflow-hidden rounded-lg border border-[#818CF8]/60 bg-[#161A23] px-3 text-xs font-semibold text-[#F1F3F9] shadow-xl">
+              <GripVertical size={14} className="shrink-0 text-[#818CF8]" />
+              <span className="truncate">{renderOverlay?.(activeDragId) ?? "Moving item"}</span>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </SortableListStateContext.Provider>
   );
 };
 
@@ -92,12 +152,14 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children, classN
       <div
         ref={sortable.setNodeRef}
         style={{
-          transform: CSS.Transform.toString(sortable.transform),
+          transform: CSS.Translate.toString(sortable.transform),
           transition: sortable.transition,
         }}
         className={[
           "motion-reduce:!transition-none",
-          sortable.isDragging ? "relative z-30 opacity-80 shadow-xl ring-2 ring-[#818CF8]/70" : "",
+          sortable.isDragging
+            ? "relative z-30 border border-dashed border-[#818CF8]/60 bg-[#818CF8]/5 opacity-35"
+            : "",
           className ?? "",
         ].join(" ")}
       >
