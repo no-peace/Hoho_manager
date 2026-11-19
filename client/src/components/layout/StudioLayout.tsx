@@ -218,7 +218,7 @@ export const StudioLayout: React.FC = () => {
           }
           right={
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#313338] min-[1200px]:rounded-[10px] min-[1200px]:border min-[1200px]:border-[#272D3A]">
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#313338]">
                 <MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} />
               </div>
             </section>
