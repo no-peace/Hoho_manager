@@ -391,4 +391,55 @@ export const migrations: readonly Migration[] = [
       DROP TABLE IF EXISTS design_access_users;
     `,
   },
+  {
+    id: "020_automation_features",
+    sql: `
+      CREATE TABLE IF NOT EXISTS scheduled_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id TEXT NOT NULL,
+        channel_id TEXT NOT NULL,
+        thread_id TEXT,
+        template_id INTEGER REFERENCES templates(id) ON DELETE SET NULL,
+        target_message_id TEXT,
+        payload_json TEXT NOT NULL,
+        cron_expr TEXT,
+        run_at TEXT,
+        timezone TEXT NOT NULL DEFAULT 'UTC',
+        enabled INTEGER NOT NULL DEFAULT 1,
+        last_run_at TEXT,
+        next_run_at TEXT,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_scheduled_messages_due
+        ON scheduled_messages(enabled, next_run_at);
+
+      CREATE TABLE IF NOT EXISTS expiring_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id TEXT NOT NULL,
+        channel_id TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        delete_at TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(channel_id, message_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_expiring_messages_due
+        ON expiring_messages(delete_at);
+
+      CREATE TABLE IF NOT EXISTS sticky_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id TEXT NOT NULL,
+        channel_id TEXT NOT NULL UNIQUE,
+        current_message_id TEXT,
+        payload_json TEXT NOT NULL,
+        interval_messages INTEGER NOT NULL DEFAULT 10,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_sticky_messages_active
+        ON sticky_messages(enabled, channel_id);
+    `,
+  },
 ];
