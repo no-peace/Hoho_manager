@@ -160,6 +160,22 @@ export const embedCharCount = (embed: EmbedData): number =>
 export const validateMessage = (data: MessageData, mode: EditorMode): string[] => {
   const errors: string[] = [];
 
+  if (data.poll) {
+    if (mode !== "classic") errors.push("Discord polls are only supported in Classic messages");
+    if (!data.poll.question.text.trim() || data.poll.question.text.length > 300) {
+      errors.push("Poll question must contain 1–300 characters");
+    }
+    if (data.poll.answers.length < 1 || data.poll.answers.length > 10) {
+      errors.push("Poll must contain between 1 and 10 answers");
+    }
+    if (data.poll.answers.some((answer) => !answer.poll_media.text.trim() || answer.poll_media.text.length > 55)) {
+      errors.push("Each poll answer must contain 1–55 characters");
+    }
+    if (!Number.isInteger(data.poll.duration) || data.poll.duration < 1 || data.poll.duration > 168) {
+      errors.push("Poll duration must be between 1 and 168 hours");
+    }
+  }
+
   if (mode === "classic" && data.content.length > Limits.content) {
     errors.push(`Message content is ${data.content.length}/${Limits.content} characters`);
   }
