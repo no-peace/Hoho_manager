@@ -86,6 +86,7 @@ export const createStickyMessage = async (input: {
   channelId: string;
   payload: Record<string, unknown>;
   intervalMessages: number;
+  currentMessageId?: string | null;
   createdBy: string;
 }): Promise<void> => {
   await automationRepository.upsertSticky({
@@ -96,11 +97,19 @@ export const createStickyMessage = async (input: {
     enabled: 1,
     created_by: input.createdBy,
   });
+  await automationRepository.setStickyMessageId(input.channelId, input.currentMessageId ?? null);
   const row = await automationRepository.findSticky(input.channelId);
   if (row) stickyCache.set(input.channelId, row);
 };
 
 export const removeStickyMessage = async (channelId: string): Promise<void> => {
+  const sticky = stickyCache.get(channelId) ?? await automationRepository.findSticky(channelId);
+  if (sticky?.current_message_id) {
+    const token = await discord.resolveBotToken();
+    await discord.deleteChannelMessage(channelId, sticky.current_message_id, token).catch((error) => {
+      log.warn(`Could not delete removed sticky message in ${channelId}: ${String(error)}`);
+    });
+  }
   await automationRepository.deleteSticky(channelId);
   stickyCache.delete(channelId);
 };
@@ -213,7 +222,8 @@ const runDueSchedules = async (now: Date): Promise<void> => {
       });
     } catch (error) {
       log.error(`Scheduled message ${row.id} failed: ${String(error)}`);
-      await automationRepository.updateSchedule(row.id, { last_run_at: now.toISOString(), next_run_at: scheduleNextAt(row, now.getTime()) });
+      const retryAt = scheduleNextAt(row, now.getTime());
+      await automationRepository.updateSchedule(row.id, { last_run_at: now.toISOString(), enabled: retryAt ? 1 : 0, next_run_at: retryAt });
     }
   }
   await rebuildCaches();
