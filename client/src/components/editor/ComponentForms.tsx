@@ -9,6 +9,7 @@ import { DiscordMentionInput } from "./DiscordMentionInput";
 import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
 import { buttonStylePatch, createComponent, newGalleryItem } from "../../utils/componentsV2";
 import { Plus, Trash2 } from "lucide-react";
+import { useMessageStore } from "../../store/messageStore";
 
 export interface ComponentFormProps {
   component: ComponentNode;
@@ -180,6 +181,22 @@ const ActionRowForm = ({ component, update }: ComponentFormProps) => {
         {children.length} control(s). An action row holds up to {Limits.components.actionRowButtons}{" "}
         buttons, or a single select menu.
       </p>
+      {children.length > 0 && (
+        <div className="mb-3 space-y-1.5">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-[#A1A8B8]">Existing controls</span>
+          {children.map((child, index) => (
+            <button
+              key={child._id}
+              type="button"
+              onClick={() => useMessageStore.getState().select({ kind: "component", id: child._id })}
+              className="flex min-h-9 w-full items-center justify-between rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 text-left text-xs text-[#F1F3F9] transition-colors hover:border-[#818CF8]/60 hover:bg-[#252B3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+            >
+              <span>{child.type === ComponentType.Button ? child.label || `Button ${index + 1}` : child.placeholder || "Select menu"}</span>
+              <span className="text-[0.625rem] uppercase text-[#A1A8B8]">{child.type === ComponentType.Button ? "Button" : "Select"}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           size="sm"
