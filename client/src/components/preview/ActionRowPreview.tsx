@@ -6,6 +6,7 @@ import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useGlobalStore } from "../../store/globalStore";
+import { useMessageStore } from "../../store/messageStore";
 
 /**
  * Preview of an action row's controls.
@@ -370,7 +371,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         aria-label="Configure select menu"
         title="Configure select menu"
         data-preview-component-id={select._id}
-        onClick={() => useGlobalStore.getState().showToast("Select menu selected for configuration.", "info")}
+        onClick={() => useMessageStore.getState().select({ kind: "component", id: select._id })}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#A1A8B8] transition-colors hover:bg-[#3f4147] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
       >
         <SlidersHorizontal size={14} />
