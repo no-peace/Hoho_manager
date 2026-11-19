@@ -137,6 +137,23 @@ export const StudioLayout: React.FC = () => {
   // Jakob's Law: Familiar Studio Keyboard Shortcuts (Ctrl/Cmd+S -> Backups, Ctrl/Cmd+Enter -> Dispatch)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditingText =
+        Boolean(target?.closest("input, textarea, [contenteditable='true']"));
+      if ((event.metaKey || event.ctrlKey) && !isEditingText) {
+        const key = event.key.toLowerCase();
+        if (key === "z") {
+          event.preventDefault();
+          if (event.shiftKey) useMessageStore.getState().redo();
+          else useMessageStore.getState().undo();
+          return;
+        }
+        if (key === "y" && event.ctrlKey) {
+          event.preventDefault();
+          useMessageStore.getState().redo();
+          return;
+        }
+      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
         setBackupsModalOpen(true);
