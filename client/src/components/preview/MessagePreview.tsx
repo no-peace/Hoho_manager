@@ -356,15 +356,16 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
                         const selectedOption = target.closest<HTMLElement>("[data-preview-select-value]")?.dataset.previewSelectValue;
                         const isInteractive = componentElement.dataset.previewInteractive === "true";
                         const component = findPreviewComponent(message.components ?? [], componentId);
+                        const isButton = component?.type === ComponentType.Button;
                         const isSimulatable =
-                          component?.type === ComponentType.Button
+                          isButton
                             ? component.style !== 5 && component.style !== 6
                             : component?.type === ComponentType.StringSelect ||
                               component?.type === ComponentType.UserSelect ||
                               component?.type === ComponentType.RoleSelect ||
                               component?.type === ComponentType.ChannelSelect ||
                               component?.type === ComponentType.MentionableSelect;
-                        if (testFlow && isSimulatable && (!isInteractive || selectedOption !== undefined)) {
+                        if (testFlow && isSimulatable && (isButton || !isInteractive || selectedOption !== undefined)) {
                           const customId = component?._action_custom_id || component?.custom_id;
                           const steps = customId ? useActionStore.getState().getFlow(customId) : [];
                           setSimulationSteps(steps);
