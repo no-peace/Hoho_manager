@@ -107,7 +107,7 @@ export const CultMorphSurface: React.FC<CultMorphSurfaceProps> = ({
             type="button"
             onClick={() => setOpen(true)}
             disabled={disabled}
-            className="w-full py-2.5 px-4 rounded-[8px] bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform duration-75 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-[8px] bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#3C45A5] active:scale-[0.97] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform duration-75 cursor-pointer"
           >
             {triggerIcon}
             <span>{triggerLabel}</span>
