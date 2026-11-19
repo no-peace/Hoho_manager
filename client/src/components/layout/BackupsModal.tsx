@@ -10,7 +10,7 @@ import { useTemplateStore } from "../../store/templateStore";
 import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore, getServerNow } from "../../store/globalStore";
-import { downloadJson, parseImportedJson, toQueryData } from "../../utils/exportImport";
+import { downloadJson, getEditorModeForDiscordMessage, parseImportedJson, toQueryData } from "../../utils/exportImport";
 import api, { request } from "../../api/client";
 
 const ScheduledMessageModal = React.lazy(() => import("./ScheduledMessageModal").then((module) => ({ default: module.ScheduledMessageModal })));
@@ -249,7 +249,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
           edit_channel_id: item.source.channelId,
           edit_message_id: item.source.messageId,
         },
-        mode: store.mode,
+        mode: getEditorModeForDiscordMessage(payload),
       });
       onClose();
       openBotModal("edit");
