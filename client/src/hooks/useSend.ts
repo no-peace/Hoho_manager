@@ -107,6 +107,8 @@ export const useSend = (): UseSendReturn => {
       }
 
       setSendState({ status: "success", error: null, result });
+      useMessageStore.getState().markClean();
+      useActionStore.getState().markClean();
       return { ok: true, result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
