@@ -208,9 +208,9 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
                             </button>
                             <div className="flex items-center gap-0.5 border-l border-current/20 pl-1.5">
                               <button type="button" aria-label="Duplicate button" title="Duplicate button" onClick={(event) => { ensureActive?.();
-                                event.stopPropagation(); ensureActive?.(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
+                                event.stopPropagation(); duplicateComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#A1A8B8] transition-colors hover:bg-[#252B3A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Copy size={12} /></button>
                               <button type="button" aria-label="Delete button" title="Delete button" onClick={(event) => { ensureActive?.();
-                                event.stopPropagation(); ensureActive?.(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
+                                event.stopPropagation(); removeComponentById(childId); }} className="inline-flex min-h-6 min-w-6 items-center justify-center rounded text-[#F87171] transition-colors hover:bg-[#F87171]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"><Trash2 size={12} /></button>
                             </div>
                           </div>
                         </SortableItem>
