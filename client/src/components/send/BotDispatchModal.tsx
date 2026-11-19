@@ -648,8 +648,8 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">Message Automation</p>
             <Checkbox checked={autoPublish} onChange={setAutoPublish} label="Auto-publish (crosspost announcement channels)" className="text-xs" />
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Checkbox checked={expireAfterSeconds > 0} onChange={(checked) => setExpireAfterSeconds(checked ? 3600 : 0)} label="Auto-delete after sending" className="text-xs" />
-              <select value={String(expireAfterSeconds)} onChange={(event) => setExpireAfterSeconds(Number(event.target.value))} disabled={expireAfterSeconds === 0} aria-label="Auto-delete duration" className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1 text-[11px] text-[#F1F3F9] disabled:opacity-40">
+              <label htmlFor="dispatch-expiry-duration" className="text-xs text-[#F1F3F9]">Auto-delete after</label>
+              <select id="dispatch-expiry-duration" value={String(expireAfterSeconds)} onChange={(event) => setExpireAfterSeconds(Number(event.target.value))} aria-label="Auto-delete duration" className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1 text-[11px] text-[#F1F3F9]">
                 <option value="0">Never</option>
                 <option value="3600">1 hour</option>
                 <option value="21600">6 hours</option>
