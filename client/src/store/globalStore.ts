@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api }  from "../api/client";
+import { api, API_BASE_URL, registerStaffIdProvider } from "../api/client";
 
 export interface BotIdentity {
   id: string;
@@ -258,11 +258,12 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
     serverTimeOffsetMs: 0,
     syncServerTime: async () => {
       try {
-        const response = await fetch("/api/health");
+        const response = await fetch(`${API_BASE_URL}/api/health`);
         if (!response.ok) return;
         const json = await response.json();
         if (typeof json.time === "string") {
-          set({ serverTimeOffsetMs: new Date(json.time).getTime() - Date.now() });
+          const offset = new Date(json.time).getTime() - Date.now();
+          if (Number.isFinite(offset)) set({ serverTimeOffsetMs: offset });
         }
       } catch {
         // Keep the last known server clock offset when offline.
@@ -292,7 +293,14 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
         // Ignore network errors on logout
       } finally {
         setSessionHint(false);
+        get().setBotIdentity(null);
         set({ currentUser: null, configModalOpen: false });
+        try {
+          const { useDiscordCacheStore } = await import("./discordCacheStore");
+          useDiscordCacheStore.getState().clearCache();
+        } catch {
+          // Auth state is still cleared if the optional cache module cannot load.
+        }
         if (typeof localStorage !== "undefined") {
           localStorage.removeItem("staff_id");
         }
@@ -352,6 +360,8 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       })),
   };
 });
+
+registerStaffIdProvider(() => useGlobalStore.getState().currentUser?.id ?? null);
 
 export const getServerNow = (): Date =>
   new Date(Date.now() + useGlobalStore.getState().serverTimeOffsetMs);
