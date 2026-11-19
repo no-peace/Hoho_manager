@@ -61,7 +61,7 @@ const defaultConfig = (type: ActionType): Record<string, unknown> => {
     case "send_dm":
       return { content: "" };
     case "open_modal":
-      return { title: "Form", customId: "modal:form" };
+      return { title: "Form", customId: "" };
     case "send_message":
       return { content: "" };
     case "send_webhook_message":
@@ -281,40 +281,80 @@ export const useActionStore = create<ActionState>()((set, get) => ({
   loadFromList: (list) =>
     set(() => {
       const grouped: Record<string, FlowStep[]> = {};
-      for (const item of list) {
+      const ordered = [...list].sort((left, right) =>
+        left.customId.localeCompare(right.customId) ||
+        left.executionOrder - right.executionOrder,
+      );
+      for (const item of ordered) {
         (grouped[item.customId] ??= []).push(
           hydrateStep({ type: item.actionType, config: item.config ?? {} }),
         );
       }
-      // Order within each custom_id is whatever the server returned, which is
-      // already sorted by execution_order.
       return { flows: grouped, isDirty: false };
     }),
 
   toRegistrations: () => {
     const flows = get().flows;
     const registrations: FlowRegistration[] = [];
+    const registeredModalIds = new Set<string>();
 
-    // Emit all top-level component flows
-    for (const [customId, steps] of Object.entries(flows)) {
-      if (steps.length === 0) continue;
-      registrations.push({ customId, steps: steps.map(stripStep) });
+    const walkSteps = (
+      steps: FlowStep[],
+      parentCustomId: string,
+      path: string,
+    ): FlowStep[] => steps.map((step, index) => {
+      const config: Record<string, unknown> = { ...(step.config ?? {}) };
+      const stepPath = `${path}.${index}`;
 
-      // Scan for open_modal steps with nested `then` branches
-      for (const step of steps) {
-        if (step.type === "open_modal" && step.config?.then && Array.isArray(step.config.then) && step.config.then.length > 0) {
-          const modalCustomId = (typeof step.config.customId === "string" && step.config.customId.trim() !== "")
-            ? step.config.customId.trim()
-            : null;
-          
-          if (modalCustomId) {
-            registrations.push({
-              customId: modalCustomId,
-              steps: step.config.then.map((entry) => stripStep(entry as FlowStep)),
-            });
-          }
+      if (step.type === "open_modal") {
+        const requestedId =
+          typeof config.customId === "string" ? config.customId.trim() : "";
+        const stableSuffix = (step._id || String(index)).replace(/[^a-zA-Z0-9_-]/g, "").slice(-16) || String(index);
+        const baseId = requestedId && requestedId !== "modal:form"
+          ? requestedId
+          : `modal:${parentCustomId.slice(-55)}:${stableSuffix}`;
+        let modalCustomId = baseId.slice(0, 100);
+        if (registeredModalIds.has(modalCustomId)) {
+          const suffix = `:${stableSuffix}`;
+          modalCustomId = `${baseId.slice(0, 100 - suffix.length)}${suffix}`;
+        }
+        registeredModalIds.add(modalCustomId);
+        config.customId = modalCustomId;
+
+        const submitSteps = Array.isArray(config.then)
+          ? config.then.filter((entry): entry is FlowStep =>
+              entry !== null && typeof entry === "object" &&
+              typeof (entry as FlowStep).type === "string",
+            )
+          : [];
+        if (submitSteps.length > 0) {
+          registrations.push({
+            customId: modalCustomId,
+            steps: walkSteps(submitSteps, modalCustomId, `${stepPath}.then`).map(stripStep),
+          });
         }
       }
+
+      for (const branchKey of BRANCH_KEYS) {
+        const branch = config[branchKey];
+        if (Array.isArray(branch)) {
+          const nested = branch.filter((entry): entry is FlowStep =>
+            entry !== null && typeof entry === "object" &&
+            typeof (entry as FlowStep).type === "string",
+          );
+          config[branchKey] = walkSteps(nested, parentCustomId, `${stepPath}.${branchKey}`);
+        }
+      }
+
+      return { ...step, config };
+    });
+
+    for (const [customId, steps] of Object.entries(flows)) {
+      if (steps.length === 0) continue;
+      registrations.push({
+        customId,
+        steps: walkSteps(steps, customId, customId).map(stripStep),
+      });
     }
 
     return registrations;
