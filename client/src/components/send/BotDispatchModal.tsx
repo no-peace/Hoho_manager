@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { request, api } from "../../api/client";
 import {
   CheckSquare,
@@ -42,6 +42,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [lintExpanded, setLintExpanded] = useState(false);
   const [autoPublish, setAutoPublish] = useState(false);
@@ -99,36 +100,43 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
     currentUser?.isAdmin || currentUser?.hasDefaultBotAccess,
   );
 
-  const fetchChannels = useCallback(async () => {
+  const fetchChannels = useCallback(async (isCurrent: () => boolean = () => true) => {
     if (!canUseServerBot) {
-      setChannels([]);
+      if (isCurrent()) setChannels([]);
       return;
     }
 
-    setIsLoading(true);
+    if (isCurrent()) setIsLoading(true);
     try {
       const data = await request<Channel[]>("/api/send/channels");
-      setChannels(Array.isArray(data) ? data : []);
+      if (isCurrent()) setChannels(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Failed to fetch channels:", error);
-      setChannels([]);
+      if (isCurrent()) {
+        console.error("Failed to fetch channels:", error);
+        setChannels([]);
+      }
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   }, [canUseServerBot]);
 
-  const fetchRecentMessages = useCallback(async (channelId: string) => {
-    setIsLoadingMessages(true);
+  const fetchRecentMessages = useCallback(async (
+    channelId: string,
+    isCurrent: () => boolean = () => true,
+  ) => {
+    if (isCurrent()) setIsLoadingMessages(true);
     try {
       const data = await request<BotMessage[]>(
         `/api/send/channels/${encodeURIComponent(channelId)}/messages`,
       );
-      setBotMessages(Array.isArray(data) ? data : []);
+      if (isCurrent()) setBotMessages(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Failed to fetch recent bot messages:", error);
-      setBotMessages([]);
+      if (isCurrent()) {
+        console.error("Failed to fetch recent bot messages:", error);
+        setBotMessages([]);
+      }
     } finally {
-      setIsLoadingMessages(false);
+      if (isCurrent()) setIsLoadingMessages(false);
     }
   }, []);
 
@@ -175,7 +183,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
         return;
       }
 
-      await fetchChannels();
+      await fetchChannels(() => !cancelled);
       if (cancelled) return;
     };
 
@@ -187,12 +195,36 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   }, [open, initialMode, canUseServerBot, fetchChannels]);
 
   useEffect(() => {
-    if (mode === "edit" && selectedChannels.length === 1 && canUseServerBot) {
-      void fetchRecentMessages(selectedChannels[0]);
-    } else {
+    if (!open) {
       setBotMessages([]);
+      setIsLoadingMessages(false);
+      return;
     }
-  }, [mode, selectedChannels, canUseServerBot, fetchRecentMessages]);
+    if (mode !== "edit" || selectedChannels.length !== 1 || !canUseServerBot) {
+      setBotMessages([]);
+      setIsLoadingMessages(false);
+      return;
+    }
+
+    let cancelled = false;
+    void fetchRecentMessages(selectedChannels[0], () => !cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, mode, selectedChannels, canUseServerBot, fetchRecentMessages]);
+
+  useEffect(() => {
+    if (open && closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, [open]);
 
   const toggleChannel = (channelId: string) => {
     setSelectedChannels((previous) =>
@@ -357,7 +389,11 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
           : `Dispatched to all ${successCount} selected channel(s).`;
         setSendResult(message);
         useGlobalStore.getState().showToast(message, "success");
-        window.setTimeout(onClose, 2000);
+        if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = window.setTimeout(() => {
+          closeTimerRef.current = null;
+          onClose();
+        }, 2000);
       } else if (successCount > 0) {
         const message = `${successCount} of ${selectedChannels.length} channel(s) succeeded. ${firstFailure ?? "Some requests failed."}`;
         setSendResult(message);
