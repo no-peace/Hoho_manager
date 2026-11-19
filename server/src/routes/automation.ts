@@ -8,6 +8,7 @@ import {
   createStickyMessage,
   deleteScheduledMessage,
   getActiveStickyMessages,
+  getScheduledMessage,
   listScheduledMessages,
   refreshStickyMessage,
   removeStickyMessage,
@@ -39,8 +40,15 @@ const assertChannelAccess = (
 };
 
 router.get("/schedules", asyncHandler(async (req, res) => {
-  const guildId = typeof req.query.guildId === "string" ? req.query.guildId : undefined;
-  if (guildId && !snowflake(guildId)) throw ApiError.badRequest("Invalid guild ID.");
+  const guildId = typeof req.query.guildId === "string" ? req.query.guildId : "";
+  if (!snowflake(guildId)) throw ApiError.badRequest("A valid guildId is required.");
+  const staff = req.staffContext;
+  if (staff && !staff.isAdmin && staff.record) {
+    const allowedGuilds = parseAllowedIds(staff.record.allowed_guild_ids);
+    if (!allowedGuilds.includes("*") && !allowedGuilds.includes(guildId)) {
+      throw ApiError.forbidden("You are not allowed to access this server.");
+    }
+  }
   res.json(await listScheduledMessages(guildId));
 }));
 
@@ -81,6 +89,9 @@ router.post(
 router.patch("/schedules/:id", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
+  const schedule = await getScheduledMessage(id);
+  if (!schedule) throw ApiError.notFound("Schedule not found.");
+  assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
   if (typeof req.body?.enabled !== "boolean") throw ApiError.badRequest("enabled must be a boolean.");
   await updateScheduledMessage(id, req.body.enabled);
   res.json({ success: true });
@@ -89,6 +100,9 @@ router.patch("/schedules/:id", requireStaffPermission(() => "send"), asyncHandle
 router.delete("/schedules/:id", requireStaffPermission(() => "send"), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
+  const schedule = await getScheduledMessage(id);
+  if (!schedule) throw ApiError.notFound("Schedule not found.");
+  assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
   await deleteScheduledMessage(id);
   res.json({ success: true });
 }));
@@ -110,11 +124,13 @@ router.post("/sticky", requireStaffPermission(() => "send"), asyncHandler(async 
   res.status(201).json({ success: true });
 }));
 
-router.get("/sticky/active", asyncHandler(async (_req, res) => {
+router.get("/sticky/active", asyncHandler(async (req, res) => {
+  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal bot access is required.");
   res.json(await getActiveStickyMessages());
 }));
 
 router.post("/sticky/:channelId/refresh", asyncHandler(async (req, res) => {
+  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal bot access is required.");
   if (!snowflake(req.params.channelId)) throw ApiError.badRequest("Invalid channel ID.");
   const messageId = await refreshStickyMessage(req.params.channelId);
   if (!messageId) throw ApiError.notFound("Sticky message not found.");
@@ -127,7 +143,8 @@ router.delete("/sticky/:channelId", requireStaffPermission(() => "send"), asyncH
   res.json({ success: true });
 }));
 
-router.post("/tick", asyncHandler(async (_req, res) => {
+router.post("/tick", asyncHandler(async (req, res) => {
+  if (!req.get("x-admin-key")) throw ApiError.forbidden("Internal automation access is required.");
   await runAutomationTick();
   res.json({ success: true });
 }));
