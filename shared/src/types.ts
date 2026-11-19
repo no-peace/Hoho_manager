@@ -627,6 +627,11 @@ export const ALL_LOG_EVENTS = [
   { event: "LOGIN_SUCCESS", label: "Operator Login", category: "Staff & Auth" },
   { event: "TEMPLATE_SAVED", label: "Template Saved", category: "Templates" },
   { event: "TEMPLATE_DELETED", label: "Template Deleted", category: "Templates" },
+  { event: "AUTOMATION_CREATED", label: "Schedule Created", category: "Automation" },
+  { event: "AUTOMATION_UPDATED", label: "Schedule Updated", category: "Automation" },
+  { event: "AUTOMATION_DELETED", label: "Schedule Deleted", category: "Automation" },
+  { event: "STICKY_CREATED", label: "Sticky Message Created", category: "Automation" },
+  { event: "STICKY_DELETED", label: "Sticky Message Deleted", category: "Automation" },
 ] as const;
 
 export const DEFAULT_LOG_EVENTS = ALL_LOG_EVENTS.map((e) => e.event);
