@@ -17,6 +17,7 @@ export interface BotEnv {
   readonly isProd: boolean;
   readonly token: string;
   readonly apiBaseUrl: string;
+  readonly clientOrigin: string;
   readonly adminApiKey: string;
   readonly commandAdminIds: readonly string[];
   readonly devGuildId: string | undefined;
@@ -32,6 +33,7 @@ export const env: BotEnv = Object.freeze({
   isProd: nodeEnv !== "development" && nodeEnv !== "test",
   token: str("DISCORD_BOT_TOKEN"),
   apiBaseUrl: str("API_BASE_URL", `http://127.0.0.1:${activePort}`).replace(/\/$/, ""),
+  clientOrigin: str("CLIENT_ORIGIN", "http://localhost:5173").replace(/\/$/, ""),
   adminApiKey: str("ADMIN_API_KEY", "dev-admin-key"),
   commandAdminIds: Object.freeze(parseDiscordIdList(rawCommandAdminIds)),
   devGuildId: str("DEV_GUILD_ID") || undefined,
