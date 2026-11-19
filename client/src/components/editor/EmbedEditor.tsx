@@ -137,7 +137,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
       </div>
 
       {isOpen && (
-        <div className="p-3 space-y-3 font-sans text-xs">
+        <div className="sortable-collapse-on-drag p-3 space-y-3 font-sans text-xs">
           <div className="flex items-center justify-between p-2 rounded bg-[#1D2230] border border-[#10131A]">
             <div className="flex items-center gap-2">
               <div
