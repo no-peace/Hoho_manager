@@ -122,11 +122,34 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
       }
     };
 
+    const ComponentIcon =
+      comp.type === ComponentType.TextDisplay ? Type
+      : comp.type === ComponentType.Section ? Layers
+      : comp.type === ComponentType.Container ? Box
+      : comp.type === ComponentType.MediaGallery ? ImageIcon
+      : comp.type === ComponentType.File ? FileText
+      : comp.type === ComponentType.Separator ? Minus
+      : Layers;
+    const headerSummary =
+      comp.type === ComponentType.TextDisplay ? comp.content
+      : comp.type === ComponentType.Section ? comp.components?.map((child) => child.content ?? "").join(" ")
+      : comp.type === ComponentType.Container ? `${comp.components?.length ?? 0} child components`
+      : comp.type === ComponentType.MediaGallery ? `${comp.items?.length ?? 0} media items`
+      : comp.type === ComponentType.File ? comp.file?.url
+      : comp.type === ComponentType.Separator ? (comp.divider === false ? "Spacer" : "Divider")
+      : `${comp.components?.length ?? 0} controls`;
+
     const cardHeader = (
-      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#161A23] border-b border-[#272D3A] rounded-t-lg select-none">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#F1F3F9]">
-          {getComponentTitle(comp, compIdx)}
-        </span>
+      <div className="flex min-h-10 items-center justify-between gap-2 px-3 py-2 bg-[#161A23] border-b border-[#272D3A] rounded-t-lg select-none">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <ComponentIcon size={13} className="shrink-0 text-[#A1A8B8]" />
+          <span className="shrink-0 text-xs font-bold uppercase tracking-wider text-[#F1F3F9]">
+            {getComponentTitle(comp, compIdx)}
+          </span>
+          <span className="min-w-0 truncate text-[10px] font-normal normal-case text-[#A1A8B8]">
+            {headerSummary || " "}
+          </span>
+        </div>
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <DragHandle label="Drag to reorder component" />
           <button
