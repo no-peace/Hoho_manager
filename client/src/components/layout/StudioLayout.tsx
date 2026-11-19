@@ -41,7 +41,7 @@ export const StudioLayout: React.FC = () => {
     const cleanUrl = `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`;
     window.history.replaceState({}, document.title, cleanUrl);
 
-    if (!/^\\d{17,20}$/.test(channelId) || !/^\\d{17,20}$/.test(messageId)) {
+    if (!/^\d{17,20}$/.test(channelId) || !/^\d{17,20}$/.test(messageId)) {
       useGlobalStore.getState().showToast("The Discord import link contains an invalid ID.", "error");
       return;
     }
