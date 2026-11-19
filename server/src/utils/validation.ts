@@ -468,6 +468,7 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
     typeof payload.flags === "number" && (payload.flags & MessageFlags.IsComponentsV2) !== 0;
 
   if (isComponentsV2) {
+    if (poll != null) errors.push("poll cannot be combined with Components V2");
     if (!Array.isArray(components) || components.length === 0) {
       errors.push("Components V2 flag requires a non-empty `components` array");
     }
