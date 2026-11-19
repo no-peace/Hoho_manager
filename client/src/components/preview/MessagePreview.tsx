@@ -34,7 +34,7 @@ const getModalFieldIds = (steps: FlowStep[]): string[] => {
     const config = step.config ?? {};
     if (step.type === "open_modal") {
       const rows = Array.isArray(config.components) ? config.components : [];
-      rows.forEach((row: any) => (Array.isArray(row?.components) ? row.components : []).forEach((field: any) => {
+      rows.forEach((row: any) => (row?.component ? [row.component] : Array.isArray(row?.components) ? row.components : []).forEach((field: any) => {
         const id = field?.custom_id ?? field?.customId;
         if (typeof id === "string" && id) ids.add(id);
       }));
