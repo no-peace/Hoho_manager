@@ -46,6 +46,7 @@ const parseExpiresAt = (raw: unknown): string | null | undefined => {
 /** GET /api/templates?q=search  list the current user's templates. */
 router.get(
   "/",
+  requireStaffPermission("templates"),
   asyncHandler(async (req, res) => {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     res.json({ templates: await templateService.list(requireUser(req).id, { q }) });
@@ -78,7 +79,7 @@ router.post(
       req.staffContext &&
       !req.staffContext.isAdmin &&
       req.staffContext.record?.can_use_weao_exploits === 0 &&
-      containsWeaoPlaceholder(actions)
+      (containsWeaoPlaceholder(body.data) || containsWeaoPlaceholder(actions))
     ) {
       throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in template actions.");
     }
@@ -102,11 +103,10 @@ router.put(
     const body = readBody(req.body);
     const actions = body.actions === undefined ? undefined : parseStoredActionDefinitions(body.actions);
     if (
-      actions &&
       req.staffContext &&
       !req.staffContext.isAdmin &&
       req.staffContext.record?.can_use_weao_exploits === 0 &&
-      containsWeaoPlaceholder(actions)
+      (containsWeaoPlaceholder(body.data) || (actions !== undefined && containsWeaoPlaceholder(actions)))
     ) {
       throw ApiError.forbidden("Your staff account is not permitted to use WEAO variables in template actions.");
     }
