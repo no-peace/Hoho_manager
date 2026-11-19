@@ -115,7 +115,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
       return {
         message: makeMessage([container([
           text("# Need Help?\nOpen a support request or submit an application using the form below."),
-          { _id: uid(), type: ComponentType.Section, components: [text("**Support team**\nWe usually respond as soon as a staff member is available.")] },
+          text("**Support team**\nWe usually respond as soon as a staff member is available."),
           actionRow([button]),
         ], 0x5865f2)]),
         flows: [{ customId: button.custom_id!, steps: [
@@ -157,7 +157,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
     create: () => ({
       message: makeMessage([container([
         text("# Service Status\n🟢 **All systems operational**"),
-        text("**WEAO Status:** {weao.status}\n**Last checked:** <t:1795094400:R>\n**Next update:** <t:1795098000:R>"),
+        text("**WEAO Status:** {status}\n**Last checked:** <t:1795094400:R>\n**Next update:** <t:1795098000:R>"),
         { _id: uid(), type: ComponentType.Separator, divider: true, spacing: 1 },
         text("Status values are editable placeholders. Replace them with your live status variables."),
       ], 0x57f287)]),
