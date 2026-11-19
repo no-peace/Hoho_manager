@@ -141,8 +141,6 @@ export const StudioLayout: React.FC = () => {
   const showToast = useGlobalStore((state) => state.showToast);
   const openConfirm = useGlobalStore((state) => state.openConfirm);
 
-  const messages = useMessageStore((state) => state.messages);
-  const data = useMessageStore((state) => state.data);
   const addMessage = useMessageStore((state) => state.addMessage);
   const reorderMessages = useMessageStore((state) => state.reorderMessages);
   const hasUnsavedMessage = useMessageStore((state) => state.isDirty);
