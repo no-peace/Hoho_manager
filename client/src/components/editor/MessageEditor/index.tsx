@@ -325,7 +325,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     ensureActive();
                     addEmbed();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                  className="px-3 py-1.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#3C45A5] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add Embed ({message.embeds?.length ?? 0}/10)
                 </button>
@@ -349,7 +349,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                     e.stopPropagation();
                     setAddMenuOpen(!addMenuOpen);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
+                  className="px-3 py-1.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#3C45A5] active:scale-[0.97] text-white text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
                 >
                   <Plus size={13} /> Add <ChevronDown size={13} />
                 </button>
