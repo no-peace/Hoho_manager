@@ -1,11 +1,11 @@
-# CURRENT AUTHORITATIVE SNAPSHOT — 2026-11-18
+# CURRENT AUTHORITATIVE SNAPSHOT — 2026-11-19
 
 > This snapshot describes current `main`. Older entries below are retained as implementation history only; their baselines, branch assignments, blockers and status claims are not current instructions.
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Current main has reverted the V13 UI edits to the pre-UI baseline and removed Puck, Design Lab, custom themes, and published app-layout customization. See the removal handoff appended at the end of this file.
-- The previous 386-file inventory predates this removal. The current recursive tree count has not yet been refreshed.
+- Current main HEAD: `9cbca79624353b87218febeb75d5ab10d04a77e5` (`updated package-lock`, 2026-11-18). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
+- Current recursive Git tree: **354 tracked files across 62 directories**. The four application `src/` trees contain **233 files / 1,621,892 bytes**: client 130, server 85, bot 14, shared 4.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat missing workflow runs as a code defect.
 - No npm checks, browser QA, Lighthouse run, production deployment or live database migration verification was performed against this current baseline.
 
@@ -18,8 +18,8 @@
 | C — App-layout publishing/runtime | **Removed 2026-11-18** | Published Desktop/Mobile layout API, repository, validation, hook, runtime CSS, tests and tables removed. Studio now uses a fixed built-in layout. |
 | D — Custom theme management | **Removed 2026-11-18** | Personal/community/server theme management, permissions, theme application/cache, theme API/UI and database tables removed. |
 | E — Docs and Settings | Retained | Existing Docs and bot/admin Settings flows remain. |
-| F — Repository audit | Historical inventory | The earlier 386-file inventory predates this removal; refresh the recursive tree before quoting current counts. |
-| G — Performance/accessibility/security | Historical source review | Prior source review and non-UI server optimizations remain unless explicitly reverted below. |
+| F — Repository audit | Refreshed 2026-11-19 | Current recursive tree: 354 tracked files / 62 directories; 233 application `src/` files scanned. |
+| G — Source audit | Completed 2026-11-19 | All 233 files under `client/src`, `server/src`, `bot/src`, and `shared/src` were fetched and statically reviewed for imports, stale Puck/theme references, and common risk patterns. This is not runtime verification. |
 | H — Final verification | Pending | Typecheck, tests and production build have not been run after the removal. |
 
 ### Removal boundary
@@ -31,9 +31,9 @@
 
 ## Repository audit findings and limits
 
-- The current ledger accounts for all 386 tracked files: 376 marked source-reviewed and 10 vendored picomatch files marked provenance/metadata-only. The latter are intentionally not described as implementation-audited.
+- The current recursive tree contains 354 tracked files across 62 directories. The current source audit covered all 233 files under the four application `src/` trees (client 130, server 85, bot 14, shared 4). The remaining 121 tracked files are outside those `src/` trees and were not included in this source pass.
 - The five historical plan documents have now been reviewed for status reconciliation. Their original findings and step-by-step history remain in place; current status banners and this snapshot supersede stale claims.
-- The source inventory review is not a literal claim that every line has been runtime-executed. No tests, typecheck, build, browser QA or Lighthouse run was performed for this snapshot.
+- The source review is static inspection, not proof that every runtime path works. No tests, typecheck, build, browser QA or Lighthouse run was performed for this snapshot. The owner instruction not to run npm checks until explicitly authorized remains in force.
 
 ### Confirmed limitations / incomplete product scope
 1. **Webhook URL sending is deliberately disabled.** The legacy action remains a failure stub; the send route rejects a non-empty `webhookUrl`. Do not re-enable without a separately approved secure design.
@@ -64,15 +64,15 @@
 - Production deployment and live database migration status are unconfirmed.
 
 ## Audit ledger status
-| Area | Inventory | Source review | Status |
-|---|---:|---|---|
-| Root / infrastructure | 25 | Source reviewed | Complete |
-| Client | 167 | 167/167 source reviewed | Complete |
-| Server | 142 | 142/142 source reviewed | Complete |
-| Bot | 24 | 24/24 source reviewed | Complete |
-| Shared | 10 | 10/10 source reviewed | Complete |
-| Documentation | 8 | 8/8 reviewed for current-status reconciliation | Complete |
-| Vendored picomatch | 10 | Provenance/metadata only | Partial |
+| Area | Tracked files | `src/` files scanned in this pass |
+|---|---:|---:|
+| Root, `.github`, scripts, tunnel and vendor | 35 | — |
+| Client | 141 | 130 |
+| Server | 137 | 85 |
+| Bot | 24 | 14 |
+| Shared | 10 | 4 |
+| Docs | 7 | — |
+| **Total** | **354** | **233** |
 | **Total** | **386** | **376 source-reviewed; 10 partial** | **Accounted for** |
 
 ---
@@ -2038,3 +2038,65 @@ The following files were restored to their exact contents at pre-UI baseline com
 - The lockfile was parsed as JSON after pruning; @puckeditor/core and every package path containing puck are absent.
 - TypeScript, Vitest, and production build have not been run after this removal. The Desktop Commander local-terminal connection returned HTTP 404, so local commands could not be executed from this session. Do not treat the UI as runtime-verified until the owner runs npm run typecheck, npm test, and npm run build and shares the results.
 - The built-in UI style tokens remain. All user-facing custom theme and Puck layout customization features are removed from the source/API/dependency surface.
+
+
+# Full application source re-audit — 2026-11-19
+
+## Exact revision and scope
+
+- Repository: `no-peace/Hoho_manager`
+- Branch: `main`
+- Audited HEAD: `9cbca79624353b87218febeb75d5ab10d04a77e5`
+- Recursive Git tree: 354 tracked files across 62 directories.
+- Source scope: every tracked file under `client/src/`, `server/src/`, `bot/src/`, and `shared/src/`: **233 files**, approximately **1,621,892 bytes**.
+- Per-area source counts: client 130; server 85; bot 14; shared 4.
+- This pass fetched the blob content for every source file, including tests stored under `src/__tests__` and `src/**/__tests__`.
+
+## Source-tree and import checks
+
+- All 233 source files were fetched from the audited HEAD.
+- A static relative-import resolution scan found **no unresolved relative import targets**. The resolver accounts for TypeScript source files imported with emitted `.js` specifiers and common index-file resolution.
+- The scan does not replace TypeScript's compiler/module-resolution checks.
+- The audit found no source files importing the deleted Puck editor, Design Lab, published app-layout runtime, or custom-theme API.
+
+## Puck and custom-theme residue
+
+The only live-source matches for the removed feature family are deliberate cleanup references:
+
+1. `client/src/App.tsx` removes old local-storage keys matching the retired user-theme library, app-layout draft, and Puck design prefixes. This is one-time legacy-data cleanup; it does not load, render, edit, or publish themes/layouts.
+2. `server/src/config/migrations.ts`, migration `019_remove_design_customization`, drops the old `published_app_layouts`, `app_layout_publishers`, `server_theme_settings`, `design_themes`, and `design_access_users` tables. These names are retained only to clean existing databases.
+
+Other source checks:
+- `client/src/components/layout/StudioRouter.tsx` exposes only Studio, Docs, Privacy and not-found route states; there is no Design Lab route.
+- `server/src/app.ts` has no design router registration.
+- `server/src/routes/auth.ts` has no Design Lab permission response.
+- `client/src/components/layout/SettingsModal.tsx` contains Head Admin logging-channel, event and administrator settings; no theme editor or theme publishing controls.
+- `client/package.json` has no `@puckeditor/core` dependency.
+- The current `package-lock.json` parses as JSON and has no package entries matching Puck, Tiptap, ProseMirror or DnD Kit package names from the removed Puck dependency chain.
+- GitHub code search for the removed route, API, repository and component identifiers returned no live source matches beyond the two intentional cleanup locations above. Historical documentation and migration names remain searchable by design.
+
+## Theme terminology boundary
+
+- `client/src/config/uiThemeConfig.ts` remains as the application's **static built-in design-token and component-class configuration**. It is imported by shared UI primitives and screens (for example Button, Field, Modal, Tabs, Header, StudioLayout, PropertyPanel and Docs).
+- This file does not contain a user-editable theme store, theme API, theme publisher, user theme library, or runtime theme selection. Removing it would be a separate UI refactor of the built-in design system, not removal of the retired custom-theme feature.
+- `client/src/components/ui/ColorPicker.tsx` remains a generic color-input primitive; it is not a theme-management surface.
+- Preserve this distinction when using the word “theme” in future reports. The removed feature was user-managed custom themes; the retained code is the fixed application styling system.
+
+## Static quality observations
+
+These are audit observations, not confirmed defects:
+- Explicit `any` annotations/casts remain in several legacy UI, API, action-execution and test files. They should be tightened incrementally where behavior is being changed; this source pass did not attempt a risky mass rewrite.
+- Console calls remain in a small number of startup/ready/cache paths and in tests. Review them contextually before changing; do not automatically remove operational error reporting.
+- The unsafe-HTML pattern scan only found a test-side DOM setup occurrence, not a production `dangerouslySetInnerHTML` rendering path.
+- No TODO/FIXME/XXX markers were surfaced by the source scan.
+- A development localhost fallback remains in server environment configuration; this is configuration behavior, not a Puck/theme remnant.
+- These text-pattern checks are heuristic and are not a substitute for linting, typechecking, dependency analysis, security review or tests.
+
+## Verification and next actions
+
+- Source retrieval and static inspection: completed for all 233 application source files.
+- Relative-import path scan: no unresolved local targets detected.
+- Puck/custom-theme residue scan: only intentional browser-storage cleanup and legacy database-table cleanup remain in application source.
+- Dependency metadata: current client manifest and lockfile contain no Puck package/dependency-chain entries.
+- **Not run:** `npm ci`, `npm run typecheck`, `npm test`, `npm run build`, browser QA, Lighthouse, live Turso migration or production deployment.
+- The owner instruction in this handoff says not to run npm checks until explicitly authorized. Keep that restriction. The next verification step, when authorized, is to run the repository root scripts and record the exact output against the then-current HEAD.
