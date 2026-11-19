@@ -12,7 +12,7 @@ export interface StarterBlueprint {
   };
 }
 
-const actionButton = (label: string, style: number, actionName: string) => {
+const actionButton = (label: string, style: number) => {
   const id = uid();
   return {
     _id: id,
@@ -61,7 +61,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
     title: "Verification Gate",
     description: "Rules, a Verify button, and a starter role-grant flow.",
     create: () => {
-      const button = actionButton("Verify", ButtonStyle.Success, "verify");
+      const button = actionButton("Verify", ButtonStyle.Success);
       return {
         message: makeMessage([container([
           text("# Verify to Continue\nRead the rules below, then press **Verify** to receive access."),
@@ -111,7 +111,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
     title: "Support / Application Launcher",
     description: "An Open Form button with a modal submission flow.",
     create: () => {
-      const button = actionButton("Open Form", ButtonStyle.Primary, "open-form");
+      const button = actionButton("Open Form", ButtonStyle.Primary);
       return {
         message: makeMessage([container([
           text("# Need Help?\nOpen a support request or submit an application using the form below."),
@@ -136,7 +136,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
     title: "Release Changelog Card",
     description: "A clean release card with highlights and a link button.",
     create: () => {
-      const button = actionButton("View Full Changelog", ButtonStyle.Link, "changelog-link");
+      const button = actionButton("View Full Changelog", ButtonStyle.Link);
       button.url = "https://example.com/changelog";
       delete button.custom_id;
       return {
