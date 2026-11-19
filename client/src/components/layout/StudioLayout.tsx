@@ -61,6 +61,10 @@ export const StudioLayout: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    useMessageStore.getState().ensureStableIds();
+  }, []);
+
+  useEffect(() => {
     const wrapper = editorScrollRef.current;
     if (!wrapper) return;
     return initializeEditorLenis(wrapper);
@@ -231,14 +235,18 @@ export const StudioLayout: React.FC = () => {
                     </button>
                   </div>
                   <SortableList
-                    items={displayMessages.map((_, idx) => `message-${idx}`)}
-                    onReorder={(activeId, overId) => reorderMessages(Number(activeId.slice(8)), Number(overId.slice(8)))}
+                    items={displayMessages.map((message, idx) => message._id ?? `message-${idx}`)}
+                    onReorder={(activeId, overId) => {
+                      const from = displayMessages.findIndex((message, idx) => (message._id ?? `message-${idx}`) === activeId);
+                      const to = displayMessages.findIndex((message, idx) => (message._id ?? `message-${idx}`) === overId);
+                      if (from >= 0 && to >= 0) reorderMessages(from, to);
+                    }}
                     strategy="vertical"
-                    renderOverlay={(activeId) => `Message ${Number(activeId.slice(8)) + 1}`}
+                    renderOverlay={(activeId) => `Message ${displayMessages.findIndex((message, idx) => (message._id ?? `message-${idx}`) === activeId) + 1}`}
                     className="space-y-3"
                   >
-                    {displayMessages.map((_, idx) => {
-                      const id = `message-${idx}`;
+                    {displayMessages.map((message, idx) => {
+                      const id = message._id ?? `message-${idx}`;
                       return (
                         <SortableItem key={id} id={id}>
                           <MessageEditor index={idx} />
