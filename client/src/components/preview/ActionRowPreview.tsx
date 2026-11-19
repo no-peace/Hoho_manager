@@ -413,6 +413,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
                   <div
                     key={opt.value}
                     role="option"
+                    data-preview-select-value={opt.value}
                     aria-selected={isSelected}
                     onClick={() => handleOptionClick(opt.value)}
                     className={`flex items-center justify-between px-2.5 py-2 rounded text-sm cursor-pointer transition-colors select-none ${
