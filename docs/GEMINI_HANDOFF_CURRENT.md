@@ -1,3 +1,77 @@
+# Post-V16 maintenance and owner-reported issues — 2026-11-19
+
+This section is the newest authoritative addendum. It records changes made after the V16/V15 snapshot below. The repository remains on `main`. Do not treat source edits as runtime-verified unless a check is explicitly recorded here.
+
+## Latest commits and fixes
+
+- **`21a4e5b34e2a416ac1d3bea53326133ebfb771e2`** — pass the active-message activation callback into the Classic Components editor.
+- **`9d5457d510f3ad90a8ed4d28594418833f0a3789`** — activate the correct message before component duplicate/delete operations. The visible Copy/Delete controls were acting on the globally active message store; click propagation was stopped before the parent MessageEditor could activate the message being edited. The handlers now explicitly activate the owning message before calling the store actions. This is a targeted fix; verify duplicate/delete on both the active and non-active message cards.
+- **`f84c22cbdede067b371245b252bf0f80523cab74`** — fix Studio recovery crash `displayMessages is not defined` by subscribing `displayMessages` to the message store's `messages` list in `client/src/components/layout/StudioLayout.tsx`.
+- **`f03dc839531e698964df4e0008117bb0dac1d125`** — remove the Studio `beforeunload` unsaved-work warning completely, at the owner's explicit request. Closing, refreshing, or navigating away must no longer show the browser-native unsaved-changes dialog. This removes only the unload guard; it does not remove editor persistence, templates, backups, undo or redo.
+- **Recovery screen / “Local Draft” explanation:** the recovery UI offers Try Resume, Reload Studio and Reset Local Draft. “Local Draft” refers to locally persisted application/editor state, not necessarily a named user-created document. Reset is destructive and must not be recommended casually; inspect its exact key-removal scope before changing it. The `displayMessages` runtime error was a missing variable, not evidence that local draft data was corrupt.
+
+## Earlier V16 follow-up fixes after the initial V16 handoff
+
+- **Server TypeScript corrections:** `13409a8` — narrow route params and normalize live message embeds/components/flags.
+- **Studio imports:** `1714054` — add missing `DownloadCloud` and `CalendarClock` imports.
+- **Starter blueprint typing:** `e7ca141` — type action button nodes correctly.
+- **Import/export mode and flags:** `0f7ee41` and `540196e` — preserve editor mode/flags and correct scheduled template mode.
+- **Import regression tests:** `e44f1be`.
+- **MessagePreview React infinite render:** `33e6e565166321d3d9375ee9f79d3f30f26f7159` stabilizes the empty cached-roles selector with a shared constant instead of returning a fresh `[]` on every Zustand snapshot read. `41420e52e35bd60300eeb90647a2778d40622acb` adds a regression test for rendering without a selected guild or cached roles. The user's seven failing preview/editor click tests shared a `Maximum update depth exceeded` symptom; this selector was identified as the common root cause. Runtime retest is still required.
+- **Lenis editor smooth scrolling:** owner approved the targeted delayed-pane/target mounting fix. Commits: `fd783c6`, `3dd16b6`, `b483dcf`. It replaces the short fixed retry window with visibility/DOM observation, a 2-second safety timeout and bounded RAF fallback. Existing reduced-motion, native touch and editor-only scroll behavior should be preserved.
+
+## Test Flow, Staff Access and bot audit-log work
+
+The owner reported that Test Flow had unusable layout/interaction behavior, Staff Access could not scroll, and the configured bot log channel might not receive logs. The following implementation work was committed:
+
+### Test Flow
+- Simulator moved into a docked area below Live Preview rather than covering preview content/controls.
+- Trace panel made independently scrollable and more compact.
+- Flow simulation supports actions stored inline in a button's `custom_id`, not only actions represented in the flow store.
+- Trace status presentation improved and regression coverage added.
+- Related V16 commits include `d342cc4`, `50ba34c`, and `2d5f82fdd3d28c40f5640ac576fd151e351591fd` for flow simulation, preview interactions and saved-template/current-message scheduling.
+- Limitation: saved-template scheduling currently schedules only `document.messages[0]`, not every message in a multi-message template.
+
+### Staff Access
+- Access modal height/overflow constraints adjusted so the staff permissions content can scroll.
+- Added a distinct Can Manage Automations permission, enforced server-side for schedules and sticky messages.
+- Schedule listings are scoped to staff-allowed channels; sticky deletion checks guild ownership/scope.
+- Access controls include expiry, allowed servers/channels, per-action cooldowns and per-action hourly limits.
+- Corrected wildcard channel handling so unchecking “Allow ALL channels” cannot retain unrestricted access.
+- New grants use least-privilege defaults: file uploads, Components V2, WEAO and automation permissions start disabled until granted.
+- Schedules UI is hidden from staff without automation permission. Existing staff automation permission defaults disabled and must be explicitly enabled by a Head Admin.
+- Relevant commits include `450c29f`, `28f91a3`, `86ef89d`, `9328d07`, and `b511578` (the latter also hardens optional staff form fields).
+
+### Bot audit logs
+- Audit-log sender now checks Discord HTTP response status instead of silently treating failed HTTP responses as success.
+- Added per-server channel configuration with global/default fallback, embed field-count protection (max 25), and schedule/sticky-message audit event types.
+- Added **Send Test Log** action in Settings; it saves the current configuration and sends a real test embed to the effective configured channel, including global fallback.
+- Added event types and emitters for schedule/sticky create/update/delete changes.
+- Relevant commits include `4816dcf`, `271b7a1`, `5a96fb7`, `514b06d`, and `65ac2bd`.
+- **Verification limitation:** source code now detects/reports Discord delivery failures, but successful delivery to the owner's live Discord channel has not been confirmed. Use Settings → Send Test Log with the bot online and the bot granted View Channel + Send Messages + Embed Links in the selected channel. Confirm the test embed arrives; then exercise a real event and verify the corresponding configured event toggle.
+
+## Current owner-reported Studio UI follow-up — pending clarification
+
+- Screenshot shows the Classic Components editor's Action Row button card with drag handle, label, Copy and Delete icons. The owner reports Copy and Delete did not work; the active-message fix above has been committed.
+- Owner also asked to “remove the default sidebar from editor and preview side.” **Do not remove a sidebar until the owner clarifies which UI region is meant.** Asked them to choose: (A) right Properties/Inspector panel, (B) editor/preview pane navigation/sidebar while retaining two-pane workspace, or (C) both sidebars leaving Editor and Preview as the only workspace panels. No sidebar has been removed yet.
+- Screenshot's inline-code toolbar is visible but no specific toolbar change was requested; red markup is overlaid on the screenshot and should not be interpreted as a requested code change.
+
+## Verification status and instructions
+
+- No `npm test`, `npm run typecheck`, `npm run build`, browser QA, deployment or live Discord delivery test was run by the assistant for the above maintenance commits.
+- The owner runs npm checks locally and expects the assistant not to run them unless explicitly authorized.
+- After pulling latest `main`, first run `npm run typecheck`, `npm test`, then `npm run build`; share failures for direct fixes. Also manually verify:
+  1. Recovery screen no longer crashes with `displayMessages is not defined`.
+  2. Component Copy and Delete on the first, active and non-active message cards.
+  3. Test Flow simulator dock/scroll and inline button actions.
+  4. Staff Access modal scroll at desktop and narrow/mobile widths, and server-side automation permission denial.
+  5. Settings → Send Test Log posts into the effective configured Discord channel and reports permission/channel failures.
+  6. Closing/reloading Studio does not show a beforeunload prompt.
+- GitHub Actions remain intentionally disabled. Do not enable them.
+- No claim of production migration execution, live Discord verification, browser QA or runtime correctness is justified until those checks are performed.
+
+---
+
 # CURRENT AUTHORITATIVE SNAPSHOT — 2026-11-19
 
 ## V16 implementation — remaining batches completed on main
