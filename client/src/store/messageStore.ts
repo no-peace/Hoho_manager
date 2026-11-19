@@ -17,6 +17,7 @@ import {
   findComponent,
   insertComponent,
   moveComponent as moveInTree,
+  reorderComponent as reorderInTree,
   removeComponent as removeFromTree,
   updateComponent as updateInTree,
 } from "../utils/tree";
@@ -82,10 +83,12 @@ export interface MessageState {
   removeEmbed(id: string): void;
   duplicateEmbed(id: string): void;
   moveEmbed(id: string, direction: number): void;
+  reorderEmbeds(activeId: string, overId: string): void;
   addEmbedField(embedId: string): void;
   updateEmbedField(embedId: string, fieldId: string, patch: Partial<EmbedField>): void;
   removeEmbedField(embedId: string, fieldId: string): void;
   moveEmbedField(embedId: string, fieldId: string, direction: number): void;
+  reorderEmbedFields(embedId: string, activeId: string, overId: string): void;
   duplicateEmbedField(embedId: string, fieldId: string): void;
 
   addComponent(type: number, parentId?: string | null): void;
@@ -93,6 +96,7 @@ export interface MessageState {
   updateComponentById(id: string, patch: Partial<ComponentNode>): void;
   removeComponentById(id: string): void;
   moveComponentById(id: string, direction: number, parentId?: string | null): void;
+  reorderComponentById(activeId: string, overId: string, parentId?: string | null): void;
   duplicateComponentById(id: string): void;
 
   select(selection: Selection): void;
@@ -107,6 +111,7 @@ export interface MessageState {
   removeMessage(index: number): void;
   duplicateMessage(index: number): void;
   moveMessage(index: number, direction: number): void;
+  reorderMessages(fromIndex: number, toIndex: number): void;
   setActiveMessageIndex(index: number): void;
   setMessageFlags(flags: number): void;
   setAllowedMentions(allowedMentions?: MessageData["allowed_mentions"]): void;
@@ -439,6 +444,18 @@ export const useMessageStore = create<MessageState>()(
           return syncDataToMessages(nextData, state);
         }),
 
+      reorderEmbeds: (activeId, overId) =>
+        set((state) => {
+          const embeds = [...(state.data?.embeds ?? [])];
+          const from = embeds.findIndex((embed) => embed._id === activeId);
+          const to = embeds.findIndex((embed) => embed._id === overId);
+          if (from < 0 || to < 0 || from === to) return {};
+          const [moved] = embeds.splice(from, 1);
+          if (!moved) return {};
+          embeds.splice(to, 0, moved);
+          return syncDataToMessages({ ...(state.data ?? createEmptyMessage()), embeds }, state);
+        }),
+
       moveEmbed: (id, direction) =>
         set((state) => {
           const embeds = [...(state.data?.embeds ?? [])];
@@ -490,6 +507,25 @@ export const useMessageStore = create<MessageState>()(
           );
           const nextData = { ...(state.data ?? createEmptyMessage()), embeds };
           return syncDataToMessages(nextData, state);
+        }),
+
+      reorderEmbedFields: (embedId, activeId, overId) =>
+        set((state) => {
+          let changed = false;
+          const embeds = (state.data?.embeds ?? []).map((embed) => {
+            if (embed._id !== embedId) return embed;
+            const fields = [...(embed.fields ?? [])];
+            const from = fields.findIndex((field) => field._id === activeId);
+            const to = fields.findIndex((field) => field._id === overId);
+            if (from < 0 || to < 0 || from === to) return embed;
+            const [moved] = fields.splice(from, 1);
+            if (!moved) return embed;
+            fields.splice(to, 0, moved);
+            changed = true;
+            return { ...embed, fields };
+          });
+          if (!changed) return {};
+          return syncDataToMessages({ ...(state.data ?? createEmptyMessage()), embeds }, state);
         }),
 
       moveEmbedField: (embedId, fieldId, direction) =>
@@ -598,6 +634,18 @@ export const useMessageStore = create<MessageState>()(
           if (!found) return {};
           const nextData = { ...(state.data ?? createEmptyMessage()), components };
           return syncDataToMessages(nextData, state);
+        }),
+
+      reorderComponentById: (activeId, overId, parentId = null) =>
+        set((state) => {
+          const { components, found } = reorderInTree(
+            state.data?.components ?? [],
+            activeId,
+            overId,
+            parentId,
+          );
+          if (!found) return {};
+          return syncDataToMessages({ ...(state.data ?? createEmptyMessage()), components }, state);
         }),
 
       duplicateComponentById: (id) =>
@@ -710,6 +758,31 @@ export const useMessageStore = create<MessageState>()(
             activeMessageIndex: target,
             data: targetMsg,
             mode: resolveMessageMode(targetMsg),
+          };
+        }),
+
+      reorderMessages: (fromIndex, toIndex) =>
+        set((state) => {
+          if (
+            fromIndex < 0 || toIndex < 0 ||
+            fromIndex >= state.messages.length || toIndex >= state.messages.length ||
+            fromIndex === toIndex
+          ) return {};
+          const messages = [...state.messages];
+          const [moved] = messages.splice(fromIndex, 1);
+          if (!moved) return {};
+          messages.splice(toIndex, 0, moved);
+          const activeMessageIndex = state.activeMessageIndex === fromIndex
+            ? toIndex
+            : fromIndex < state.activeMessageIndex && toIndex >= state.activeMessageIndex
+              ? state.activeMessageIndex - 1
+              : fromIndex > state.activeMessageIndex && toIndex <= state.activeMessageIndex
+                ? state.activeMessageIndex + 1
+                : state.activeMessageIndex;
+          return {
+            messages,
+            activeMessageIndex,
+            data: messages[activeMessageIndex] ?? state.data,
           };
         }),
 
