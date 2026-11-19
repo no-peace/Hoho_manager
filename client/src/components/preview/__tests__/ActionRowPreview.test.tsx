@@ -130,6 +130,14 @@ describe("ActionRowPreview (UI-04 Interactive Controls Preview)", () => {
       fireEvent.click(screen.getByText("Option 1"));
     });
 
+    it("renders the dropdown in document.body through a portal", () => {
+      render(<SelectPreview select={stringSelect as any} />);
+      fireEvent.click(screen.getByRole("button", { name: /Option 3/i }));
+      const listbox = screen.getByRole("listbox");
+      expect(document.body.contains(listbox)).toBe(true);
+      expect(listbox.style.position).toBe("fixed");
+    });
+
     it("does not rely on plugin-only animation utilities", () => {
       render(<SelectPreview select={stringSelect as any} />);
       fireEvent.click(screen.getByRole("button", { name: /Option 3/i }));
