@@ -386,6 +386,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                     items={(embed.fields || []).map((field, fieldIdx) => field._id || `field-${id}-${fieldIdx}`)}
                     onReorder={(activeId, overId) => reorderEmbedFields(id, activeId, overId)}
                     strategy="vertical"
+                    renderOverlay={(activeId) => `Field ${(embed.fields ?? []).findIndex((field, fieldIdx) => (field._id || `field-${id}-${fieldIdx}`) === activeId) + 1}`}
                     className="space-y-3"
                   >
                   {(embed.fields || []).map((field, fieldIdx) => {
@@ -437,6 +438,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                           </div>
                         </div>
 
+                        <div className="sortable-collapse-on-drag space-y-2">
                         <div>
                           <input
                             type="text"
@@ -458,6 +460,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                             placeholder="Field Value (supports markdown, @mentions, :emojis:)"
                             onChange={(val) => updateEmbedField(id, fieldId, { value: val })}
                           />
+                        </div>
                         </div>
                       </div>
                       </SortableItem>
