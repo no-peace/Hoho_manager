@@ -39,10 +39,10 @@ export const useTemplates = (): UseTemplatesReturn => {
 
   const saveCurrent = useCallback(
     async (expiresAt?: string | null, isTracked?: boolean): Promise<TemplateDetailResponse["template"]> => {
-      const { data, messages, targets, mode } = useMessageStore.getState();
+      const { data, messages, mode } = useMessageStore.getState();
       const actions = useActionStore.getState().toList();
       const messagesToSave = messages && messages.length > 0 ? messages : [data];
-      const document = toQueryData(messagesToSave, targets, mode);
+      const document = toQueryData(messagesToSave, mode);
 
       const saved = await useTemplateStore.getState().save({ data: document, actions, expiresAt, isTracked });
       useMessageStore.getState().markClean();
@@ -59,12 +59,8 @@ export const useTemplates = (): UseTemplatesReturn => {
 
       const document = template.data as QueryData;
       const legacyData = document.messages?.[0]?.data;
-      const legacyTargets = legacyData && "targets" in legacyData
-        ? (legacyData as any).targets
-        : undefined;
       useMessageStore.getState().load({
         data: document,
-        targets: document.targets ?? legacyTargets,
         mode: document.mode,
       });
       useActionStore.getState().loadFromList(template.actions ?? []);
