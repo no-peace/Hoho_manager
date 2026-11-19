@@ -293,7 +293,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
-          <div className="p-3 space-y-3">
+          <div className="sortable-collapse-on-drag p-3 space-y-3">
             {sectionTexts.map((tNode, tIdx) => (
               <div key={tNode._id || tIdx} data-editor-target-id={tNode._id} className="space-y-1">
                 <DiscordMentionInput
@@ -478,7 +478,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
-          <div className="p-3 space-y-2.5">
+          <div className="sortable-collapse-on-drag p-3 space-y-2.5">
             {items.map((item, itemIdx) => (
               <div
                 key={item._id || itemIdx}
@@ -568,7 +568,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
-          <div className="p-3 space-y-2">
+          <div className="sortable-collapse-on-drag p-3 space-y-2">
             <label className="block text-[10px] font-bold text-[#A1A8B8] uppercase tracking-wider">
               File URL or Attachment URI
             </label>
@@ -600,7 +600,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
-          <div className="p-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="sortable-collapse-on-drag p-3 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-[#F1F3F9]">Spacing Size:</span>
               <div className="inline-flex rounded bg-[#272D3A] p-0.5 border border-[#111214]">
@@ -696,7 +696,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           }}
         >
           {cardHeader}
-          <div className="p-3 space-y-3">
+          <div className="sortable-collapse-on-drag p-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3 bg-[#161A23] p-2.5 rounded border border-[#272D3A]">
               <ColorPicker
                 label="Container Accent Color"
