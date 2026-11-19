@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useMessageStore, type AttachedFile } from "../../store/messageStore";
+import { useGlobalStore } from "../../store/globalStore";
 
 const MAX_FILES = 10;
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
@@ -48,11 +49,15 @@ export const FileAttachmentsSection: React.FC = () => {
     setUrlErrorMessage(null);
     const value = urlValue.trim();
     if (!/^https?:\/\//i.test(value)) {
-      setUrlErrorMessage("Enter a valid http(s) URL.");
+      const message = "Enter a valid http(s) URL.";
+      setUrlErrorMessage(message);
+      useGlobalStore.getState().showToast(message, "error");
       return;
     }
     if (attachedFiles.length >= MAX_FILES) {
-      setUrlErrorMessage(`Maximum ${MAX_FILES} attachments allowed per message.`);
+      const message = `Maximum ${MAX_FILES} attachments allowed per message.`;
+      setUrlErrorMessage(message);
+      useGlobalStore.getState().showToast(message, "error");
       return;
     }
     addUrlAttachment(value);
@@ -66,13 +71,17 @@ export const FileAttachmentsSection: React.FC = () => {
     const files = Array.from(fileList);
 
     if (attachedFiles.length + files.length > MAX_FILES) {
-      setErrorMessage(`Maximum ${MAX_FILES} attachments allowed per message.`);
+      const message = `Maximum ${MAX_FILES} attachments allowed per message.`;
+      setErrorMessage(message);
+      useGlobalStore.getState().showToast(message, "error");
       return;
     }
 
     const oversized = files.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
     if (oversized.length > 0) {
-      setErrorMessage(`File "${oversized[0].name}" exceeds the 25 MB limit.`);
+      const message = `File "${oversized[0].name}" exceeds the 25 MB limit.`;
+      setErrorMessage(message);
+      useGlobalStore.getState().showToast(message, "error");
       return;
     }
 
