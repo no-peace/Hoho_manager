@@ -464,4 +464,11 @@ export const migrations: readonly Migration[] = [
         ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    id: "024_remove_legacy_webhook_actions",
+    sql: `
+      DELETE FROM action_definitions
+      WHERE action_type = 'send_webhook_message';
+    `,
+  },
 ];
