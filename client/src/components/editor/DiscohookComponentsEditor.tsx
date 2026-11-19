@@ -136,8 +136,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         const canAddSelect = children.length === 0;
         const capacityLabel = hasSelect ? "1/1 Select Menu" : `${children.length}/5 Buttons`;
 
-        return (
-          <SortableItem key={rowId} id={rowId}>
+        const rowCard = (
           <div
             data-editor-target-id={rowId}
             className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
@@ -331,7 +330,9 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
               )}
             </div>
           </div>
-          </SortableItem>
+        );
+        return targetRowId ? rowCard : (
+          <SortableItem key={rowId} id={rowId}>{rowCard}</SortableItem>
         );
       });
   return targetRowId ? (
