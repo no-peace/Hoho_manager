@@ -125,7 +125,7 @@ export const toDiscordPayload = (
     };
   }
 
-  if (extData.poll) payload.poll = extData.poll;
+  if (extData.poll && mode !== "v2") payload.poll = extData.poll;
 
   if (extData.allowed_mentions) {
     payload.allowed_mentions = extData.allowed_mentions;
