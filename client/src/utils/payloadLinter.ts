@@ -48,7 +48,10 @@ const collectAttachmentReferences = (value: unknown, output: Set<string>): void 
   if (typeof value === "string") {
     const matches = value.matchAll(/attachment:\/\/([^\s"'<>]+)/gi);
     for (const match of matches) {
-      if (match[1]) output.add(decodeURIComponent(match[1]));
+      if (match[1]) {
+        try { output.add(decodeURIComponent(match[1])); }
+        catch { output.add(match[1]); }
+      }
     }
     return;
   }
