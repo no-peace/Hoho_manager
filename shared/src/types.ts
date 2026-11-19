@@ -110,6 +110,41 @@ export interface ComponentNode {
   options?: SelectOption[];
 }
 
+export type ModalFieldType =
+  | "text_input"
+  | "string_select"
+  | "user_select"
+  | "role_select"
+  | "channel_select"
+  | "mentionable_select"
+  | "radio_group"
+  | "checkbox_group"
+  | "checkbox"
+  | "file_upload"
+  | "text_display";
+
+export interface ModalFieldOption {
+  label: string;
+  value: string;
+  description?: string;
+}
+
+export interface ModalFieldConfig {
+  type: ModalFieldType;
+  custom_id: string;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  required?: boolean;
+  style?: 1 | 2;
+  min_length?: number;
+  max_length?: number;
+  min_values?: number;
+  max_values?: number;
+  options?: ModalFieldOption[];
+  content?: string;
+}
+
 export interface DiscordMessageReference {
   message_id: string;
   channel_id?: string;
