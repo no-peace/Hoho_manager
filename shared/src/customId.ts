@@ -21,9 +21,13 @@ import type { ActionConfig, ParsedCustomId } from "./types.js";
  * @throws if the result would exceed Discord's 100-character limit.
  */
 export const buildCustomId = (type: string, params?: ActionConfig | null): string => {
+  if (!type || type.includes(ACTION_SEPARATOR)) {
+    throw new Error("custom_id type must be non-empty and cannot contain the separator");
+  }
   const parts = [ACTION_PREFIX, type];
   if (params && Object.keys(params).length > 0) {
-    parts.push(JSON.stringify(params));
+    const serialized = JSON.stringify(params);
+    if (serialized !== "{}") parts.push(serialized);
   }
   const value = parts.join(ACTION_SEPARATOR);
 
