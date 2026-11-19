@@ -1,5 +1,24 @@
 # CURRENT AUTHORITATIVE SNAPSHOT — 2026-11-19
 
+## V16 implementation — remaining batches completed on main
+
+- **Plan:** [`docs/hoho_v16_plan.md`](hoho_v16_plan.md). V16 was implemented in nine batches; earlier Batch 1–7 work is recorded in the current conversation handoff and repository commits.
+- **Batch 8 — Restore to HoHo Studio:** The authenticated `GET /api/discord/messages/:channelId/:messageId` endpoint fetches a live Discord message, checks staff edit permission plus allowed guild/channel scope, and imports content, embeds, Classic Action Rows / Components V2 component trees, flags and polls with fresh local IDs. The Message Link modal has a Fetch & Import action; Studio also consumes `?importChannel=...&importMessage=...` links and removes those parameters from browser history. The admin-gated `Edit in HoHo Studio` message context-menu command builds the deep link using `CLIENT_ORIGIN`. Final route cleanup also recursively re-IDs nested `component` children and places the router export after route registration.
+- **Batch 9 — regression tests:** Added message-store history tests for undo/redo, the 40-snapshot bound and rapid-typing coalescing; added rich modal submission extraction tests for legacy TextInput and Label-wrapped FileUpload, RadioGroup, CheckboxGroup, Select and Checkbox; expanded automation tests for idle-cache reads, expiring deletion, in-place scheduled edits and sticky refresh; expanded payload-linter tests for the 40-component limit and empty String Select; expanded flow-simulator tests for ephemeral and DM traces; and added native poll validation-bound tests. Existing SortableList and poll serialization tests remain.
+- **Automation migration:** V16 migration `020_automation_features` creates `scheduled_messages`, `expiring_messages`, and `sticky_messages`; migration execution against a live database has not been verified here.
+- **V16 implementation commits (remaining work):**
+  - `8e36684a49cf6638b263392753f8b2b01352306e` — finalize recursive live message import mapping.
+  - `d59fd4db67e491b1269ff0d651cb6df221dacbf5` — message-store history tests.
+  - `58cb3a523c99db286d2cd8d15b040dbb6bd05c46` — rich modal submission extraction tests.
+  - `fc45555e40fbf4a0aa79d958bfaad0ed9b39a3a5` — automation regression coverage.
+  - `852649ef171b97e01f2aa18b9c9090cc4cea271d`, `9c5926ed9c7168ed731bea9755f468562edbffef` — payload-linter regression coverage and assertion alignment.
+  - `9898b78f52d6bf7ff3f1073ee01dc0481f41c2f7` — flow-simulator DM/ephemeral trace coverage.
+  - `f57b2017fadd90695bb29f6d407217a0ccfc4fee` — native poll validation tests.
+- **Verification boundary:** No npm install, typecheck, test suite, build, GitHub Actions, browser QA or deployment was run. Regression tests were authored and statically reviewed only; the owner must run local verification after pulling `main`.
+- **Preservation:** `client/src/utils/editorSmoothScroll.ts` was not modified. Existing Studio tokens, color palette and layout were retained.
+
+---
+
 > This snapshot describes current `main`. Older entries below are retained as implementation history only; their baselines, branch assignments, blockers and status claims are not current instructions.
 
 ## V15 implementation — 2026-11-19
