@@ -5,6 +5,7 @@ import { requireAdminKey } from "../middleware/auth.js";
 import { env } from "../config/env.js";
 import { requireInteraction, verifyDiscordSignature } from "../middleware/verifyDiscordSignature.js";
 import {
+  cacheInteractionReceipt,
   cleanupDeferredInteraction,
   completeDeferredInteraction,
   handleInteraction,
@@ -60,11 +61,20 @@ router.post(
     const interaction = requireInteraction(req);
     log.info(`Received verified interaction type ${interaction.type}`);
     const response = await handleInteraction(interaction, startedAt);
+    res.once("finish", () => {
+      cacheInteractionReceipt(interaction.id, response);
+      cacheInteractionReceipt(interaction.id, response);
+      if (
+        response.type === InteractionResponseType.DeferredUpdateMessage ||
+        response.type === InteractionResponseType.DeferredChannelMessageWithSource
+      ) {
+        void completeDeferredInteraction(interaction);
+      }
+    });
     if (
       response.type === InteractionResponseType.DeferredUpdateMessage ||
       response.type === InteractionResponseType.DeferredChannelMessageWithSource
     ) {
-      res.once("finish", () => void completeDeferredInteraction(interaction));
       res.once("close", () => {
         if (!res.writableFinished) {
           cleanupDeferredInteraction(interaction.id);
