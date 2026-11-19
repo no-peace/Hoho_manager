@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "lucide-react";
 import { motion } from "motion/react";
 import { Modal } from "../../ui/Modal";
@@ -56,6 +56,16 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
   const [shakeKey, setShakeKey] = useState(0);
   const [isLoadingLinkedMsg, setIsLoadingLinkedMsg] = useState(false);
   const [isImportingLiveMessage, setIsImportingLiveMessage] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setMessageLinkInput(message.message_link || "");
+    setLinkModeInput(message.link_mode || "reply");
+    setLinkError(null);
+    setShakeKey(0);
+    setIsLoadingLinkedMsg(false);
+    setIsImportingLiveMessage(false);
+  }, [open, message.message_link, message.link_mode]);
 
   const handleFetchImport = async () => {
     setLinkError(null);
