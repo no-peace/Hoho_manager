@@ -571,6 +571,7 @@ export interface StaffRecord {
   can_edit_messages: number;
   can_delete_messages: number;
   can_manage_templates: number;
+  can_manage_automation?: number;
   allowed_channel_ids: string[];
   can_mention_everyone: number;
   can_mention_here: number;
