@@ -199,6 +199,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           <button
             type="button"
             title={isOpen ? "Collapse Message" : "Expand Message"}
+            aria-label={isOpen ? "Collapse message" : "Expand message"}
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(!isOpen);
@@ -253,6 +254,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             }}
             className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
             title="Rename Message"
+            aria-label="Rename message"
           >
             <Edit2 size={13} />
           </button>
@@ -263,6 +265,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             disabled={messageCount >= 10}
             className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] disabled:opacity-30 transition-colors"
             title="Duplicate Message"
+            aria-label="Duplicate message"
           >
             <Copy size={13} />
           </button>
@@ -273,6 +276,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             disabled={messageCount <= 1}
             className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20 disabled:opacity-30 transition-colors"
             title="Delete Message"
+            aria-label="Delete message"
           >
             <Trash2 size={13} />
           </button>
