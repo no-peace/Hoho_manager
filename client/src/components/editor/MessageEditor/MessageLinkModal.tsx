@@ -9,6 +9,7 @@ import {
 } from "../../../utils/discord";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../../utils/exportImport";
 import { useMessageStore } from "../../../store/messageStore";
+import { useGlobalStore } from "../../../store/globalStore";
 import { request } from "../../../api/client";
 import { UI_THEME_CONFIG } from "../../../config/uiThemeConfig";
 
