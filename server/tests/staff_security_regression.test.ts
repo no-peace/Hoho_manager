@@ -243,7 +243,7 @@ describe("Phase 2 staff security regressions", () => {
 
     try {
       const response = await fetch(
-        \`${baseUrl}/api/automation/schedules?guildId=guild_allowed\`,
+        `${baseUrl}/api/automation/schedules?guildId=guild_allowed`,
         { headers: { "x-staff-id": staffId } },
       );
 
