@@ -29,18 +29,6 @@ export const EMBED_COLOR_PRESETS: readonly ColorPreset[] = [
 
 export const DEFAULT_EMBED_COLOR = 0x5865f2;
 
-/**
- * How a message is delivered.
- * - `webhook` may be sent straight from the browser.
- * - `bot` must go through `/api/send` so the token stays server-side.
- */
-export const SEND_MODES = {
-  WEBHOOK: "webhook",
-  BOT: "bot",
-} as const;
-
-export type SendModeValue = (typeof SEND_MODES)[keyof typeof SEND_MODES];
-
 /** Editor surface modes. V2 is the modern default; classic is the legacy path. */
 export const EDITOR_MODES = {
   CLASSIC: "classic",
