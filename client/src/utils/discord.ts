@@ -106,9 +106,8 @@ export const toDiscordPayload = (
     if (classicComponents.length > 0) {
       payload.components = stripInternal(classicComponents) as ComponentNode[];
     }
-    if (extData.flags) {
-      payload.flags = extData.flags;
-    }
+    const classicFlags = (extData.flags ?? 0) & ~MessageFlags.IsComponentsV2;
+    if (classicFlags !== 0) payload.flags = classicFlags;
   }
 
   if (extData.link_mode === "reply" && extData.message_reference?.message_id) {
@@ -125,7 +124,9 @@ export const toDiscordPayload = (
     };
   }
 
-  if (extData.poll && mode !== "v2") payload.poll = extData.poll;
+  if (extData.poll && mode !== "v2") {
+    payload.poll = stripInternal(extData.poll) as typeof extData.poll;
+  }
 
   if (extData.allowed_mentions) {
     payload.allowed_mentions = extData.allowed_mentions;
@@ -210,6 +211,8 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
       : data.components;
   let componentCount = 0;
   let actionRowCount = 0;
+  let v2TextCharacters = 0;
+  const interactiveCustomIds = new Set<string>();
   const validateRows = (components: ComponentNode[], path: string, depth: number): void => {
     if (depth > 25) {
       errors.push(`${path}: component nesting exceeds 25 levels`);
@@ -219,9 +222,22 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
     components.forEach((component, index) => {
       componentCount += 1;
       const componentPath = `${path}[${index}]`;
+      for (const textValue of [component.content, component.label, component.description, component.placeholder]) {
+        if (typeof textValue === "string") v2TextCharacters += textValue.length;
+      }
+      if (component.type === ComponentType.Button && component.style === ButtonStyle.Link) {
+        if (typeof component.url !== "string" || !/^https?:\\/\\//i.test(component.url.trim())) {
+          errors.push(`${componentPath}: Link buttons require an HTTP or HTTPS URL`);
+        }
+      } else if (typeof component.custom_id === "string" && component.custom_id.length > 0) {
+        if (interactiveCustomIds.has(component.custom_id)) {
+          errors.push(`${componentPath}: Duplicate custom_id "${component.custom_id}"`);
+        }
+        interactiveCustomIds.add(component.custom_id);
+      }
       if (component.type === ComponentType.ActionRow) {
         actionRowCount += 1;
-        if (actionRowCount > 5) {
+        if (mode === "classic" && actionRowCount > 5) {
           errors.push(`${componentPath}: A message cannot contain more than 5 Action Rows`);
         }
         const children = component.components ?? [];
@@ -277,9 +293,16 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
       if (component.components) {
         validateRows(component.components, `${componentPath}.components`, depth + 1);
       }
+      if (component.accessory) {
+        validateRows([component.accessory], `${componentPath}.accessory`, depth + 1);
+      }
     });
   };
   validateRows(components, "components", 0);
+
+  if (mode === "v2" && v2TextCharacters > 4000) {
+    errors.push(`Components V2 text totals ${v2TextCharacters}/4000 characters`);
+  }
 
   if (componentCount > Limits.components.total) {
     errors.push(
