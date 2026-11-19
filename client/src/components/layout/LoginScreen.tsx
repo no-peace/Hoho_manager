@@ -267,7 +267,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
               </div>
             </div>
           </div>
-        </div><div className="flex items-center justify-between gap-3 border-t border-[#1D2230] bg-[#0B0E14] px-4 py-2.5 text-[0.6875rem] font-mono text-[#6F788A]"><span className="min-w-0 truncate">Components V2 · Action Flows · Dynamic Variables</span><span className="shrink-0 text-[#34D399]">● Ready</span></div></div></SpotlightCard>
+        <div className="flex items-center justify-between gap-3 border-t border-[#1D2230] bg-[#0B0E14] px-4 py-2.5 text-[0.6875rem] font-mono text-[#6F788A]"><span className="min-w-0 truncate">Components V2 · Action Flows · Dynamic Variables</span><span className="shrink-0 text-[#34D399]">● Ready</span></div></div></SpotlightCard>
       </main>
 
       <footer className="relative z-10 max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 text-[0.6875rem] text-[#b5bac1] border-t border-[#272D3A] pt-4">
