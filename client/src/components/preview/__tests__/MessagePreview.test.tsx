@@ -9,6 +9,14 @@ describe("MessagePreview component click routing", () => {
     useMessageStore.getState().reset();
   });
 
+  it("renders without a selected guild or cached roles", () => {
+    useMessageStore.getState().reset();
+
+    render(<MessagePreview />);
+
+    expect(screen.getByText("Live Preview")).toBeTruthy();
+  });
+
   it("keeps the active message and selection unchanged when an interactive select is clicked", () => {
     const firstMessage = {
       content: "First message",
