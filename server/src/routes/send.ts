@@ -554,6 +554,7 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
           channelId: destinationChannelId,
           payload: firstMessage as unknown as Record<string, unknown>,
           intervalMessages: Number(body.stickyIntervalMessages ?? 10),
+          currentMessageId: sentList[0].id,
           createdBy,
         });
       }
