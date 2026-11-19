@@ -70,7 +70,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
     row: ComponentNode;
     containerId: string | null;
     siblingIndex: number;
-    siblingCount: number;
   }
 
   const rowEntries: RowEntry[] = [];
@@ -83,7 +82,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         row,
         containerId: null,
         siblingIndex: actualIdx !== -1 ? actualIdx : idx,
-        siblingCount: targetRowId ? components.length : topLevelRows.length,
       });
     });
   } else {
@@ -103,7 +101,6 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         row: child,
         containerId: parentId,
         siblingIndex: actualIdx !== -1 ? actualIdx : idx,
-        siblingCount: targetRowId ? containerChildren.length : containerRows.length,
       });
     });
   }
@@ -138,6 +135,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
         const rowCard = (
           <div
+            key={rowId}
             data-editor-target-id={rowId}
             className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
           >
