@@ -226,7 +226,7 @@ export const validateMessage = (data: MessageData, mode: EditorMode): string[] =
         if (typeof textValue === "string") v2TextCharacters += textValue.length;
       }
       if (component.type === ComponentType.Button && component.style === ButtonStyle.Link) {
-        if (typeof component.url !== "string" || !/^https?:\\/\\//i.test(component.url.trim())) {
+        if (typeof component.url !== "string" || !/^https?:\/\//i.test(component.url.trim())) {
           errors.push(`${componentPath}: Link buttons require an HTTP or HTTPS URL`);
         }
       } else if (typeof component.custom_id === "string" && component.custom_id.length > 0) {
