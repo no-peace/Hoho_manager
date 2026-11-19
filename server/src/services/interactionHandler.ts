@@ -134,6 +134,7 @@ export const completeDeferredInteraction = async (
  */
 export const handleInteraction = async (
   interaction: DiscordInteraction,
+  startedAt = Date.now(),
 ): Promise<InteractionResponse> => {
   // Discord's endpoint-validation handshake (webhook mode only).
   if (interaction.type === InteractionType.Ping) {
@@ -167,29 +168,26 @@ export const handleInteraction = async (
 
   const execution = executeInteraction(interaction);
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  const remainingAckBudget = Math.max(400, ACK_DEADLINE_MS - (Date.now() - startedAt));
   const outcome = await Promise.race([
     execution.then((response) => ({ kind: "complete" as const, response })),
     new Promise<{ kind: "timeout" }>((resolve) => {
-      timeout = setTimeout(() => resolve({ kind: "timeout" }), ACK_DEADLINE_MS);
+      timeout = setTimeout(() => resolve({ kind: "timeout" }), remainingAckBudget);
     }),
   ]);
   if (timeout) clearTimeout(timeout);
 
   if (outcome.kind === "complete") {
-    try {
-      await interactionReceiptRepository.complete(interaction.id, outcome.response);
-    } catch (error) {
+    void interactionReceiptRepository.complete(interaction.id, outcome.response).catch((error: unknown) => {
       log.error(`Could not cache response for interaction ${interaction.id}: ${String(error)}`);
-    }
+    });
     return outcome.response;
   }
 
   const deferred = deferredResponse(interaction);
-  try {
-    await interactionReceiptRepository.complete(interaction.id, deferred);
-  } catch (error) {
+  void interactionReceiptRepository.complete(interaction.id, deferred).catch((error: unknown) => {
     log.error(`Could not cache deferred response for interaction ${interaction.id}: ${String(error)}`);
-  }
+  });
 
   const ttlTimer = setTimeout(() => {
     cleanupDeferredInteraction(interaction.id);
