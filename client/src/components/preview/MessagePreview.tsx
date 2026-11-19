@@ -179,7 +179,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
 
   return (
     <UserPlaceholderPreviewProvider source={displayMessages}>
-      <div className="flex min-h-0 flex-1 flex-col select-text">
+      <div className="flex h-full min-h-0 flex-1 flex-col select-text">
         {/* Enhanced Preview Toolbar */}
         <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-1.5 shrink-0">
           <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 sm:p-4 custom-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#313338] p-3 pb-24 sm:p-4 sm:pb-28 custom-scrollbar">
         {/* Responsive Discord Preview Container */}
         <div className="w-full max-w-4xl mx-auto ">
 
