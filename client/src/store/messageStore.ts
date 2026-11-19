@@ -94,6 +94,8 @@ export interface MessageState {
   future: MessageHistorySnapshot[];
   canUndo: boolean;
   canRedo: boolean;
+  isDirty: boolean;
+  markClean(): void;
   undo(): void;
   redo(): void;
 
@@ -269,12 +271,23 @@ export const useMessageStore = create<MessageState>()(
     (rawSet, get) => {
       let lastHistoryAt = 0;
       let resetHistoryOnNextChange = false;
+      let suppressDirtyTracking = false;
       const set: typeof rawSet = (partial, replace) => {
         const current = get();
         const nextState = typeof partial === "function" ? partial(current) : partial;
         const next = (nextState ?? {}) as Partial<MessageState>;
         const nextMessages = next.messages ?? current.messages;
         const nextData = next.data ?? current.data;
+        const hasDocumentChanges =
+          (next.messages !== undefined && next.messages !== current.messages) ||
+          (next.data !== undefined && next.data !== current.data) ||
+          (next.targets !== undefined && next.targets !== current.targets) ||
+          (next.attachedFiles !== undefined && next.attachedFiles !== current.attachedFiles);
+        if (hasDocumentChanges && !suppressDirtyTracking && !next.isDirty === false) {
+          // A document becomes dirty only after an actual editor mutation.
+          // Loading and resetting explicitly suppress this transition.
+          next.isDirty = true;
+        }
         const activeIndexChanged =
           next.activeMessageIndex !== undefined &&
           next.activeMessageIndex !== current.activeMessageIndex;
@@ -330,6 +343,8 @@ export const useMessageStore = create<MessageState>()(
       future: [],
       canUndo: false,
       canRedo: false,
+      isDirty: false,
+      markClean: () => rawSet({ isDirty: false }),
 
       undo: () => {
         const state = get();
@@ -352,6 +367,7 @@ export const useMessageStore = create<MessageState>()(
           future,
           canUndo: state.past.length > 1,
           canRedo: future.length > 0,
+          isDirty: true,
         });
       },
 
@@ -376,6 +392,7 @@ export const useMessageStore = create<MessageState>()(
           future: state.future.slice(0, -1),
           canUndo: past.length > 0,
           canRedo: state.future.length > 1,
+          isDirty: true,
         });
       },
 
@@ -957,6 +974,7 @@ export const useMessageStore = create<MessageState>()(
       setAllowedMentions: (allowedMentions) => get().setField("allowed_mentions", allowedMentions),
 
       reset: () => {
+        suppressDirtyTracking = true;
         get().clearFiles();
         const blank = createEmptyMessage();
         resetHistoryOnNextChange = true;
@@ -968,10 +986,13 @@ export const useMessageStore = create<MessageState>()(
           targets: [{ url: "" }],
           selection: null,
           send: idleSendState(),
+          isDirty: false,
         });
+        suppressDirtyTracking = false;
       },
 
       load: (input: any) => {
+        suppressDirtyTracking = true;
         const doc =
           input && typeof input === "object" && input.data !== undefined && input.messages === undefined && input.backups === undefined
             ? input.data
@@ -1039,7 +1060,9 @@ export const useMessageStore = create<MessageState>()(
           activeMessageIndex: 0,
           targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
           selection: null,
+          isDirty: false,
         });
+        suppressDirtyTracking = false;
       },
 
       getPayload: () => {
