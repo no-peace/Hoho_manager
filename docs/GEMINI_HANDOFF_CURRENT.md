@@ -5,7 +5,7 @@
 ## V15 implementation — 2026-11-19
 
 - **Plan:** [`docs/hoho_v15_plan.md`](hoho_v15_plan.md), introduced in commit `57907fb023a0e9d60c46397c52028fd2a0be69c5`.
-- **Implementation branch:** `main`; V15 source and regression-test changes are committed through `7a9367d195d642990408b2595632b82b6eba8091` before this handoff update.
+- **Implementation branch:** `main`; V15 source and regression-test changes are committed through `6a37ccf32f0be07b5eff56091267faeec46d3827` before this handoff update.
 - **Batch 1 — preview layout and dropdowns:** Studio now has one full-height preview scroll owner; the preview toolbar remains outside the scroll body; Container previews no longer clip child menus; SelectPreview renders its listbox through `createPortal` into `document.body`, clamps its fixed position to the viewport, tracks window/ancestor scrolling and resize, and ignores scroll events originating inside the menu.
 - **Batch 2 — direct component inspection:** Preview buttons no longer identify as interactive-only controls, so clicking a button selects its own component ID. Disabled buttons remain inspectable. Select menus have a separate accessible Configure button, and Action Row inspector forms list existing child controls for direct selection.
 - **Batch 3 — Action Row cleanup:** Removed the per-control flow-step count pills and the floating hover toolbar. Button pills now use a dedicated touch drag handle, a selectable label area, and always-visible inline duplicate/delete controls. Action Row and select-menu step-count clutter was removed.
@@ -20,7 +20,7 @@
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- V15 code baseline before this handoff sync: `7a9367d195d642990408b2595632b82b6eba8091` (V15 implementation and preview regression tests, 2026-11-19). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
+- V15 code baseline before this handoff sync: `6a37ccf32f0be07b5eff56091267faeec46d3827` (V15 implementation and preview regression tests, 2026-11-19). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
 - Current recursive Git tree: **354 tracked files across 62 directories**. The four application `src/` trees contain **233 files / 1,621,892 bytes**: client 130, server 85, bot 14, shared 4.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat missing workflow runs as a code defect.
 - No npm checks, browser QA, Lighthouse run, production deployment or live database migration verification was performed against this current baseline.
