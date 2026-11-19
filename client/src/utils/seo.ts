@@ -1,5 +1,6 @@
 const SITE = "https://hoho-manager.onrender.com";
 const DESCRIPTION = "Visual Discord Bot Message, Embed, Components V2, and Dynamic Placeholder Studio for HoHo Hub.";
+const OG_IMAGE = `${SITE}/og-banner.png`;
 
 export interface PageSeoOptions {
   title: string;
@@ -33,6 +34,13 @@ export const updatePageSeo = ({ title, description, path, schemaType = "Software
   setMeta('meta[property="og:url"]', "property", "og:url", canonicalUrl);
   setMeta('meta[property="og:title"]', "property", "og:title", title);
   setMeta('meta[property="og:description"]', "property", "og:description", description);
+  setMeta('meta[property="og:image"]', "property", "og:image", OG_IMAGE);
+  setMeta('meta[property="og:image:type"]', "property", "og:image:type", "image/png");
+  setMeta('meta[property="og:image:width"]', "property", "og:image:width", "1200");
+  setMeta('meta[property="og:image:height"]', "property", "og:image:height", "630");
+  setMeta('meta[name="twitter:title"]', "name", "twitter:title", title);
+  setMeta('meta[name="twitter:description"]', "name", "twitter:description", description);
+  setMeta('meta[name="twitter:image"]', "name", "twitter:image", OG_IMAGE);
   const websiteNode = {
     "@type": "WebSite",
     name: "HoHo Manager",
