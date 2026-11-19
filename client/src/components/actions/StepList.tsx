@@ -12,6 +12,8 @@ import { Button, IconButton } from "../ui/Button";
 import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
+import { uid } from "../../utils/constants";
+import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 
 interface ConfigField {
@@ -715,15 +717,31 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
     );
   };
 
+  const stepIds = steps.map((step, index) => step._id ?? `step-${index}`);
+  const handleReorderSteps = (activeId: string, overId: string) => {
+    const from = stepIds.indexOf(activeId);
+    const to = stepIds.indexOf(overId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = steps.map((step) => step._id ? step : { ...step, _id: uid() });
+    const [moved] = next.splice(from, 1);
+    if (!moved) return;
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
+
   return (
     <div className="space-y-2">
-      {steps.map((step, index) => (
-        <div
-          key={step._id || index}
-          className="rounded-lg border border-[#272D3A] bg-[#161A23] p-3 space-y-2.5 shadow-sm"
-        >
+      <SortableList items={stepIds} onReorder={handleReorderSteps} strategy="vertical" className="space-y-2">
+      {steps.map((step, index) => {
+        const stepId = step._id ?? stepIds[index]!;
+        return (
+        <SortableItem key={stepId} id={stepId}>
+        <div className="rounded-lg border border-[#272D3A] bg-[#161A23] p-3 space-y-2.5 shadow-sm">
           <div className="flex items-center justify-between gap-2 border-b border-[#272D3A] pb-2">
-            <span className="shrink-0 rounded border border-[#272D3A] bg-[#10131A] px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-[#b5bac1]">#{index + 1}</span>
+            <div className="flex items-center gap-1.5">
+              <DragHandle label="Drag to reorder flow step" />
+              <span className="shrink-0 rounded border border-[#272D3A] bg-[#10131A] px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-[#b5bac1]">#{index + 1}</span>
+            </div>
             <Select
               className="flex-1 max-w-[220px]"
               value={step.type}
@@ -742,7 +760,10 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
           <div className="space-y-2 pt-1">{renderFields(index, step)}</div>
         </div>
-      ))}
+        </SortableItem>
+        );
+      })}
+      </SortableList>
 
       <div className="flex items-end gap-2 pt-1">
         <Select
