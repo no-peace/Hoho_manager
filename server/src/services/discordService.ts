@@ -138,6 +138,8 @@ interface ApiRequestOptions {
   token?: string;
   auth?: string;
   retries?: number;
+  /** Explicitly opt a request into retries when its operation is idempotent. */
+  idempotent?: boolean;
   /** Skip the base-URL join (used for webhook endpoints). */
   absoluteUrl?: string;
   timeoutMs?: number;
@@ -161,12 +163,15 @@ const apiRequest = async <T>(
     token,
     auth = "Bot",
     retries = 3,
+    idempotent,
     absoluteUrl,
     timeoutMs,
     signal: callerSignal,
   }: ApiRequestOptions = {},
 ): Promise<T | null> => {
   const url = absoluteUrl ?? `${DISCORD_API_BASE}${path ?? ""}`;
+  const normalizedMethod = method.toUpperCase();
+  const retryableRequest = idempotent ?? ["GET", "HEAD", "PUT", "DELETE"].includes(normalizedMethod);
   let attempt = 0;
 
   for (;;) {
@@ -195,7 +200,7 @@ const apiRequest = async <T>(
         error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       const reason = error instanceof Error ? error.message : String(error);
       if (callerSignal?.aborted) throw error;
-      if (attempt >= retries) {
+      if (!retryableRequest || attempt >= retries) {
         if (isTimeout) {
           // Discord interaction/webhook tokens can appear in request paths. Never
           // include the URL in a client-visible error or structured error details.
@@ -224,15 +229,34 @@ const apiRequest = async <T>(
     // Throttled  honour Discord's own retry hint.
     if (response.status === 429 && attempt < retries) {
       const retryAfter = asRecord(data).retry_after;
-      const retryAfterMs = Math.ceil((typeof retryAfter === "number" ? retryAfter : 1) * 1000);
+      const headerValue = response.headers.get("retry-after");
+      const headerSeconds = headerValue === null
+        ? NaN
+        : Number.isFinite(Number(headerValue))
+          ? Number(headerValue)
+          : Math.max(0, (Date.parse(headerValue) - Date.now()) / 1000);
+      const retryAfterSeconds =
+        typeof retryAfter === "number" && Number.isFinite(retryAfter)
+          ? retryAfter
+          : Number.isFinite(headerSeconds)
+            ? headerSeconds
+            : 1;
+      const retryAfterMs = Math.max(0, Math.ceil(retryAfterSeconds * 1000));
+      if (retryAfterMs > 10_000) {
+        throw new ApiError(429, `Discord rate limit requires waiting ${Math.ceil(retryAfterMs / 1000)} seconds; request was not retried.`, {
+          code: "discord_rate_limited",
+          details: { retryAfterMs },
+          expose: true,
+        });
+      }
       log.warn(`Rate limited by Discord; retrying in ${retryAfterMs}ms`);
-      await sleep(Math.min(retryAfterMs, 10_000));
+      await sleep(retryAfterMs);
       attempt += 1;
       continue;
     }
 
-    // Transient server errors are worth another shot.
-    if (response.status >= 500 && attempt < retries) {
+    // Only idempotent operations may be retried after a server-side failure.
+    if (retryableRequest && response.status >= 500 && attempt < retries) {
       await sleep(2 ** attempt * 500);
       attempt += 1;
       continue;
