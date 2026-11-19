@@ -64,8 +64,8 @@ describe("lintPayloads", () => {
         }],
       }),
     ]);
-    expect(issues.some((issue) => issue.message.includes("40 components"))).toBe(true);
-    expect(issues.some((issue) => issue.message.includes("at least one option"))).toBe(true);
+    expect(issues.some((issue) => issue.message.includes("at most 40"))).toBe(true);
+    expect(issues.some((issue) => issue.message.includes("no options"))).toBe(true);
   });
 
   it("counts Components V2 text and warns about empty messages", () => {
