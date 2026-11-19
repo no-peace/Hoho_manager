@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { CalendarClock, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { request } from "../../api/client";
+import { api, request, type TemplateSummary } from "../../api/client";
 import { Modal } from "../ui/Modal";
 import { useGlobalStore } from "../../store/globalStore";
 import { useMessageStore } from "../../store/messageStore";
+import { fromQueryData } from "../../utils/exportImport";
+import { toDiscordPayload } from "../../utils/discord";
+import { EDITOR_MODES } from "../../utils/constants";
 
 interface Channel { id: string; name: string }
 interface ScheduleRow {
@@ -24,6 +27,8 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
   const guildId = useGlobalStore((state) => state.selectedGuildId);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [channelId, setChannelId] = useState("");
+  const [templateId, setTemplateId] = useState("");
+  const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [runAt, setRunAt] = useState(() => toLocalInput(new Date(Date.now() + 60 * 60_000)));
   const [frequency, setFrequency] = useState("once");
   const [interval, setInterval] = useState(1);
@@ -37,12 +42,14 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
     if (!guildId) return;
     setLoading(true);
     try {
-      const [channelRows, scheduleRows] = await Promise.all([
+      const [channelRows, scheduleRows, templateRows] = await Promise.all([
         request<Channel[]>(`/api/send/channels?guildId=${encodeURIComponent(guildId)}`),
         request<ScheduleRow[]>(`/api/automation/schedules?guildId=${encodeURIComponent(guildId)}`),
+        api.templates.list(),
       ]);
       setChannels(Array.isArray(channelRows) ? channelRows : []);
       setSchedules(Array.isArray(scheduleRows) ? scheduleRows : []);
+      setTemplates(Array.isArray(templateRows.templates) ? templateRows.templates : []);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not load schedules.");
     } finally {
@@ -61,7 +68,15 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
     setSaving(true);
     setError("");
     try {
-      const payload = useMessageStore.getState().getPayload();
+      let payload = useMessageStore.getState().getPayload();
+      const selectedTemplateId = templateId ? Number(templateId) : null;
+      if (selectedTemplateId) {
+        const { template } = await api.templates.get(selectedTemplateId);
+        const document = fromQueryData(template.data);
+        const firstMessage = document.messages[0];
+        if (!firstMessage) throw new Error("The selected template has no message to schedule.");
+        payload = toDiscordPayload(firstMessage, document.mode ?? EDITOR_MODES.CLASSIC);
+      }
       const recurrence = frequency === "once" ? null : {
         frequency: frequency === "custom" ? "custom" : frequency,
         interval,
@@ -73,6 +88,7 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
           guildId,
           channelId,
           payload,
+          ...(selectedTemplateId ? { templateId: selectedTemplateId } : {}),
           runAt: runDate.toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
           recurrence,
@@ -104,7 +120,13 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
     <Modal open={open} onClose={onClose} title="Scheduled Messages" width="max-w-2xl">
       <div className="space-y-4">
         <section className="space-y-3 rounded-xl border border-[#272D3A] bg-[#10131A] p-3.5">
-          <div className="flex items-center gap-2"><CalendarClock size={15} className="text-[#818CF8]" /><p className="text-xs font-bold text-[#F1F3F9]">Create schedule from current message</p></div>
+          <div className="flex items-center gap-2"><CalendarClock size={15} className="text-[#818CF8]" /><p className="text-xs font-bold text-[#F1F3F9]">Create schedule</p></div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">Message source
+            <select value={templateId} onChange={(event) => setTemplateId(event.target.value)} className="mt-1 w-full rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-2 text-xs text-[#F1F3F9]">
+              <option value="">Current Studio message</option>
+              {templates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+            </select>
+          </label>
           <label className="block text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">Destination channel
             <select value={channelId} onChange={(event) => setChannelId(event.target.value)} className="mt-1 w-full rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-2 text-xs text-[#F1F3F9]">
               <option value="">Select channel</option>{channels.map((channel) => <option key={channel.id} value={channel.id}># {channel.name}</option>)}
@@ -124,7 +146,7 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
             </label>}
           </div>
           {frequency === "weekly" && <div className="flex flex-wrap gap-1.5">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day,index) => <button key={day} type="button" onClick={() => setWeekdays((current) => current.includes(index) ? current.filter((value) => value !== index) : [...current,index])} aria-pressed={weekdays.includes(index)} className={`rounded-md border px-2 py-1 text-[10px] ${weekdays.includes(index) ? "border-[#818CF8] bg-[#818CF8]/20 text-white" : "border-[#272D3A] text-[#A1A8B8]"}`}>{day}</button>)}</div>}
-          <button type="button" onClick={() => void createSchedule()} disabled={saving || loading || !guildId} className="inline-flex items-center gap-2 rounded-lg bg-[#5865F2] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4752C4] disabled:opacity-40"><Plus size={13} /> {saving ? "Saving..." : "Create schedule"}</button>
+          <button type="button" onClick={() => void createSchedule()} disabled={saving || loading || !guildId} className="inline-flex items-center gap-2 rounded-lg bg-[#5865F2] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4752C4] disabled:opacity-40"><Plus size={13} /> {saving ? "Saving..." : templateId ? "Schedule template" : "Schedule current message"}</button>
         </section>
         <section className="space-y-2">
           <div className="flex items-center justify-between"><p className="text-[10px] font-bold uppercase tracking-wider text-[#A1A8B8]">Existing schedules ({schedules.length})</p><button type="button" onClick={() => void refresh()} aria-label="Refresh schedules" className="rounded p-1 text-[#A1A8B8] hover:text-white"><RefreshCw size={13} /></button></div>
