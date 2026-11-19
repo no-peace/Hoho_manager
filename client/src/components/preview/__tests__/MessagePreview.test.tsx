@@ -51,6 +51,10 @@ describe("MessagePreview component click routing", () => {
 
     expect(screen.getByRole("listbox")).toBeTruthy();
     expect(onSelectPreviewComponent).toHaveBeenCalledWith(1, "interactive-select", true);
+
+    // The portaled options list remains interactive and must not hijack Inspector selection.
+    fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
+    expect(onSelectPreviewComponent).toHaveBeenCalledWith(1, "interactive-select", true);
     expect(useMessageStore.getState().activeMessageIndex).toBe(0);
     expect(useMessageStore.getState().selection).toEqual(originalSelection);
   });
