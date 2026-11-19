@@ -55,8 +55,9 @@ const interpolate = (
       return value == null ? "" : Array.isArray(value) ? value.join(", ") : String(value);
     }
 
-    // Flow actions commonly reference plain variables as {variable_name}.
-    const variable = variables[token] ?? variables[key];
+    // Scoped tokens must never fall back to an unrelated top-level variable.
+    if (separator >= 0) return match;
+    const variable = variables[token];
     return variable == null ? match : variable;
   });
 };
@@ -68,10 +69,10 @@ const readSteps = (value: unknown): FlowStep[] =>
 const compare = (left: string, operator: string, right: string): boolean => {
   switch (operator) {
     case "!=": return left !== right;
-    case ">": return Number(left) > Number(right);
-    case ">=": return Number(left) >= Number(right);
-    case "<": return Number(left) < Number(right);
-    case "<=": return Number(left) <= Number(right);
+    case ">": return left.trim() !== "" && right.trim() !== "" && Number.isFinite(Number(left)) && Number.isFinite(Number(right)) && Number(left) > Number(right);
+    case ">=": return left.trim() !== "" && right.trim() !== "" && Number.isFinite(Number(left)) && Number.isFinite(Number(right)) && Number(left) >= Number(right);
+    case "<": return left.trim() !== "" && right.trim() !== "" && Number.isFinite(Number(left)) && Number.isFinite(Number(right)) && Number(left) < Number(right);
+    case "<=": return left.trim() !== "" && right.trim() !== "" && Number.isFinite(Number(left)) && Number.isFinite(Number(right)) && Number(left) <= Number(right);
     case "includes": return left.includes(right);
     case "starts_with": return left.startsWith(right);
     case "ends_with": return left.endsWith(right);
@@ -97,7 +98,12 @@ export const simulateFlow = (
   let stepIndex = 0;
   let stopped = false;
 
-  const run = (list: FlowStep[]): void => {
+  const run = (list: FlowStep[], depth = 0): void => {
+    if (depth > 20) {
+      trace.push({ stepIndex: stepIndex++, type: "recursion_limit", status: "stopped", summary: "Flow simulation stopped after 20 nested branches." });
+      stopped = true;
+      return;
+    }
     for (const step of list) {
       if (stopped) return;
       const index = stepIndex++;
@@ -129,7 +135,12 @@ export const simulateFlow = (
           status: passed ? "branch_then" : "branch_else",
           summary: passed ? "Condition passed; running Then branch." : "Condition failed; running Else branch.",
         });
-        run(readSteps(passed ? config.pass ?? config.then : config.fail ?? config.else));
+        const passSteps = readSteps(config.pass);
+        const failSteps = readSteps(config.fail);
+        const branchSteps = passed
+          ? (passSteps.length > 0 ? passSteps : readSteps(config.then))
+          : (failSteps.length > 0 ? failSteps : readSteps(config.else));
+        run(branchSteps, depth + 1);
         continue;
       }
 
@@ -155,7 +166,7 @@ export const simulateFlow = (
           variables[`modal.${key}`] = Array.isArray(value) ? value.join(", ") : String(value);
         });
         trace.push({ stepIndex: index, type: step.type, status: "modal", summary: modalSummary });
-        run(readSteps(config.then));
+        run(readSteps(config.then), depth + 1);
         continue;
       }
 
