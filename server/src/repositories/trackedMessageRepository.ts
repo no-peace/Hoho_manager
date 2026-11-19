@@ -18,6 +18,15 @@ export interface TrackedMessageRecord {
 }
 
 let knownEmpty = false;
+let cachedRows: TrackedMessageRecord[] | null = null;
+let cacheExpiresAt = 0;
+const LIST_CACHE_TTL_MS = 60_000;
+const MAX_CACHED_TRACKED_ROWS = 2_000;
+const invalidateListCache = (): void => {
+  knownEmpty = false;
+  cachedRows = null;
+  cacheExpiresAt = 0;
+};
 const lastCheckedById = new Map<number, number>();
 
 export interface UpsertTrackedMessageInput {
@@ -36,7 +45,7 @@ export interface UpsertTrackedMessageInput {
 export const trackedMessageRepository = {
   async upsert(data: UpsertTrackedMessageInput): Promise<TrackedMessageRecord> {
     const now = Date.now();
-    knownEmpty = false;
+    invalidateListCache();
     const existing = await db.get<TrackedMessageRecord>(
       `SELECT * FROM tracked_messages WHERE channel_id = @channel_id AND message_id = @message_id`,
       { channel_id: data.channel_id, message_id: data.message_id },
@@ -127,20 +136,39 @@ export const trackedMessageRepository = {
   },
 
   async listAll(): Promise<TrackedMessageRecord[]> {
-    if (knownEmpty) return [];
+    const now = Date.now();
+    if (knownEmpty && now < cacheExpiresAt) return [];
+    if (cachedRows && now < cacheExpiresAt) {
+      return cachedRows.map((row) => ({
+        ...row,
+        last_checked_at: Math.max(row.last_checked_at ?? 0, lastCheckedById.get(row.id) ?? 0),
+      }));
+    }
 
     const rows = await db.query<TrackedMessageRecord>(
       `SELECT * FROM tracked_messages ORDER BY updated_at DESC`,
     );
     if (rows.length === 0) {
       knownEmpty = true;
+      cachedRows = [];
+      cacheExpiresAt = now + LIST_CACHE_TTL_MS;
       return [];
     }
 
+    knownEmpty = false;
+    cachedRows = rows.length <= MAX_CACHED_TRACKED_ROWS ? rows : null;
+    cacheExpiresAt = now + LIST_CACHE_TTL_MS;
     return rows.map((row) => ({
       ...row,
       last_checked_at: Math.max(row.last_checked_at ?? 0, lastCheckedById.get(row.id) ?? 0),
     }));
+  },
+
+  async findById(id: number): Promise<TrackedMessageRecord | undefined> {
+    return db.get<TrackedMessageRecord>(
+      `SELECT * FROM tracked_messages WHERE id = @id`,
+      { id },
+    );
   },
 
   recordCheckInMemory(id: number, timestamp = Date.now()): void {
@@ -157,6 +185,7 @@ export const trackedMessageRepository = {
   async updateHashAndCheck(id: number, hash: string): Promise<void> {
     const now = Date.now();
     lastCheckedById.set(id, now);
+    invalidateListCache();
     await db.run(
       `UPDATE tracked_messages
           SET last_payload_hash = @hash,
@@ -173,6 +202,7 @@ export const trackedMessageRepository = {
     if (data.name !== undefined) { fields.push("name = @name"); params.name = data.name; }
     if (data.expires_at !== undefined) { fields.push("expires_at = @expires_at"); params.expires_at = data.expires_at; }
     if (fields.length === 0) return;
+    invalidateListCache();
     fields.push("updated_at = @now");
     await db.run(`UPDATE tracked_messages SET ${fields.join(", ")} WHERE id = @id`, params);
   },
@@ -184,6 +214,7 @@ export const trackedMessageRepository = {
   async delete(channelId: string, messageId: string): Promise<void> {
     const existing = await this.findByMessage(channelId, messageId);
     if (existing) lastCheckedById.delete(existing.id);
+    invalidateListCache();
     await db.run(
       `DELETE FROM tracked_messages WHERE channel_id = @channelId AND message_id = @messageId`,
       { channelId, messageId },
@@ -193,6 +224,7 @@ export const trackedMessageRepository = {
   
   async deleteById(id: number): Promise<void> {
     lastCheckedById.delete(id);
+    invalidateListCache();
     await db.run(`DELETE FROM tracked_messages WHERE id = @id`, { id });
   },
 };
