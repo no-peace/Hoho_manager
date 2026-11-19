@@ -13,6 +13,7 @@ import { UI_THEME_CONFIG } from "../../config/uiThemeConfig";
 import { SplitPane } from "./SplitPane";
 import { focusMessageEditor, initializeEditorLenis, scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 import { applyPreviewComponentSelection } from "../../utils/previewSelection";
+import { SortableItem, SortableList } from "../ui/SortableList";
 
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
@@ -106,6 +107,7 @@ export const StudioLayout: React.FC = () => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const addMessage = useMessageStore((state) => state.addMessage);
+  const reorderMessages = useMessageStore((state) => state.reorderMessages);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
 
   const displayMessages = useMemo(
@@ -193,7 +195,21 @@ export const StudioLayout: React.FC = () => {
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0B0D12] min-[1200px]:rounded-[10px] min-[1200px]:border min-[1200px]:border-[#272D3A]">
               <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#0B0D12] p-3 custom-scrollbar sm:p-4">
                 <div data-editor-scroll-content className="space-y-3">
-                  {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
+                  <SortableList
+                    items={displayMessages.map((_, idx) => `message-${idx}`)}
+                    onReorder={(activeId, overId) => reorderMessages(Number(activeId.slice(8)), Number(overId.slice(8)))}
+                    strategy="vertical"
+                    className="space-y-3"
+                  >
+                    {displayMessages.map((_, idx) => {
+                      const id = `message-${idx}`;
+                      return (
+                        <SortableItem key={id} id={id}>
+                          <MessageEditor index={idx} />
+                        </SortableItem>
+                      );
+                    })}
+                  </SortableList>
                   <CultMorphSurface
                     triggerLabel={<>Add Message (<CountUpNumber value={displayMessages.length} suffix="/10" />)</>}
                     triggerIcon={<Plus size={15} />}
