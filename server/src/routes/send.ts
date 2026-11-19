@@ -16,6 +16,7 @@ import { canAccessTemplate } from "../utils/templateAccess.js";
 import { containsWeaoPlaceholder, parseFlowRegistrations, validateMessagePayload } from "../utils/validation.js";
 import { buildTimestampVariables, interpolateObject } from "../services/variableInterpolation.js";
 import { parseAllowedIds, parseProfileId } from "../utils/requestParsing.js";
+import { createStickyMessage, registerExpiringMessage } from "../services/automationService.js";
 
 const router = Router();
 const log = logger.child("send");
@@ -513,6 +514,49 @@ weaoInterpolated = interpolateObject(weaoInterpolated, sendVars);
         await registerTracking(sent, i);
       }
       log.info(`Bot send to ${destinationChannelId} by user ${req.user?.id ?? "?"}`);
+    }
+
+    const autoPublish = body.autoPublish === true;
+    const expireAfterSeconds = Number(body.expireAfterSeconds ?? 0);
+    const makeSticky = body.sticky === true;
+    if (expireAfterSeconds && (!Number.isInteger(expireAfterSeconds) || expireAfterSeconds < 60 || expireAfterSeconds > 2_592_000)) {
+      throw ApiError.badRequest("expireAfterSeconds must be between 60 seconds and 30 days.");
+    }
+    if ((autoPublish || expireAfterSeconds || makeSticky) && sentList.some((message) => Boolean(message?.id))) {
+      const guildId = await discord.getChannelGuildId(destinationChannelId);
+      if (!guildId) throw ApiError.badRequest("Automation requires a guild text channel.");
+      const createdBy = senderDiscordId || "unknown";
+      if (autoPublish) {
+        for (const message of sentList) {
+          if (!message?.id || typeof editMessageId === "string" && editMessageId.trim()) continue;
+          try {
+            await discord.crosspostMessage(destinationChannelId, message.id);
+          } catch (error) {
+            log.warn(`Could not crosspost announcement ${message.id}: ${String(error)}`);
+          }
+        }
+      }
+      if (expireAfterSeconds) {
+        for (const message of sentList) {
+          if (!message?.id) continue;
+          await registerExpiringMessage({
+            guildId,
+            channelId: destinationChannelId,
+            messageId: message.id,
+            deleteAt: new Date(Date.now() + expireAfterSeconds * 1000).toISOString(),
+            createdBy,
+          });
+        }
+      }
+      if (makeSticky && sentList[0]?.id) {
+        await createStickyMessage({
+          guildId,
+          channelId: destinationChannelId,
+          payload: firstMessage as unknown as Record<string, unknown>,
+          intervalMessages: Number(body.stickyIntervalMessages ?? 10),
+          createdBy,
+        });
+      }
     }
 
     if (staffCtx && !staffCtx.isAdmin && staffCtx.staffId) {
