@@ -20,7 +20,7 @@
 
 ## Repository state
 - Repository: `no-peace/Hoho_manager`; authoritative branch: `main`.
-- Current main HEAD: `9cbca79624353b87218febeb75d5ab10d04a77e5` (`updated package-lock`, 2026-11-18). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
+- V15 code baseline before this handoff sync: `7a9367d195d642990408b2595632b82b6eba8091` (V15 implementation and preview regression tests, 2026-11-19). The V13 UI edits were reverted to the pre-UI baseline; Puck, Design Lab, custom themes, and published app-layout customization were removed. See the removal handoff and 2026-11-19 source-audit addendum below.
 - Current recursive Git tree: **354 tracked files across 62 directories**. The four application `src/` trees contain **233 files / 1,621,892 bytes**: client 130, server 85, bot 14, shared 4.
 - GitHub Actions are intentionally disabled by the owner. Do not enable them or treat missing workflow runs as a code defect.
 - No npm checks, browser QA, Lighthouse run, production deployment or live database migration verification was performed against this current baseline.
