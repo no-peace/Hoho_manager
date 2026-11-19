@@ -75,7 +75,7 @@ export interface ModalInputField {
   channelTypes?: number[];
 }
 
-const modalFieldFromComponent = (component: any, label?: string, required?: boolean): ModalInputField => {
+const modalFieldFromComponent = (component: any, label?: string, required?: boolean, fallbackIndex = 0): ModalInputField => {
   const typeMap: Record<number, ModalInputField["fieldType"]> = {
     4: "text_input", 3: "string_select", 5: "user_select", 6: "role_select",
     7: "mentionable_select", 8: "channel_select", 21: "radio_group",
@@ -86,7 +86,7 @@ const modalFieldFromComponent = (component: any, label?: string, required?: bool
     ? component.options.map((option: any) => [option.label ?? "", option.value ?? "", option.description ?? ""].join(" | ")).join("\n")
     : "";
   return {
-    customId: component?.custom_id || component?.customId || `field_${Number(component?.type) || 0}_${String(component?.label ?? component?.description ?? "field").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 24)}`,
+    customId: component?.custom_id || component?.customId || `field_${fallbackIndex + 1}`,
     label: label ?? component?.label ?? component?.description ?? "Question",
     fieldType,
     style: Number(component?.style) === 2 ? 2 : 1,
@@ -110,12 +110,12 @@ const parseModalComponents = (components: unknown): ModalInputField[] => {
     const record = item as any;
     if (record.type === 1 && Array.isArray(record.components)) {
       for (const input of record.components) {
-        if (input && typeof input === "object") fields.push(modalFieldFromComponent(input));
+        if (input && typeof input === "object") fields.push(modalFieldFromComponent(input, undefined, undefined, fields.length));
       }
     } else if (record.type === 18 && record.component) {
-      fields.push(modalFieldFromComponent(record.component, record.label, record.required));
+      fields.push(modalFieldFromComponent(record.component, record.label, record.required, fields.length));
     } else if (record.type === 10) {
-      fields.push(modalFieldFromComponent(record));
+      fields.push(modalFieldFromComponent(record, undefined, undefined, fields.length));
     } else if (record.type) {
       fields.push(modalFieldFromComponent(record));
     }
