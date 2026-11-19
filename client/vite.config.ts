@@ -52,9 +52,6 @@ export default defineConfig({
           // Do not force every Lucide icon used by the lazy Studio route into
           // one eagerly shared vendor chunk. Let Rollup split icon modules by
           // their actual route usage so the public login page downloads less JS.
-          if (id.includes("emoji-mart") || id.includes("@emoji-mart") || id.includes("chrono-node")) {
-            return "vendor-pickers";
-          }
           // Let Vite keep route-only React libraries in their lazy route chunks.
           return undefined;
         },
