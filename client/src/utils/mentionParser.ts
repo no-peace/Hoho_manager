@@ -189,8 +189,7 @@ export const detectAutocompleteToken = (
   if (braceMatch) {
     const token = braceMatch[2] ?? "";
     const start = cursorPos - braceMatch[0].length;
-    if (!/\s/.test(token)) {
-      if (token.toLowerCase().startsWith("exploit.")) {
+    if (token.toLowerCase().startsWith("exploit.")) {
         const afterPrefix = token.slice("exploit.".length);
         const sortedKnown = [...weaoExploits].sort((a, b) => b.title.length - a.title.length);
         const matchedKnown = sortedKnown.find((exploit) =>
@@ -230,7 +229,7 @@ export const detectAutocompleteToken = (
             (field) => field.key.toLowerCase().startsWith(fieldQuery.toLowerCase()),
           );
 
-          if (!isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField || isFieldPrefix)) {
+          if (sortedKnown.length > 0 && !isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField || isFieldPrefix)) {
             return {
               type: "exploit_field",
               exploitTarget: candidateName,
@@ -249,13 +248,14 @@ export const detectAutocompleteToken = (
         };
       }
 
-      return {
-        type: "variable",
-        query: token,
-        start,
-        end: cursorPos,
-      };
-    }
+      if (!/\s/.test(token)) {
+        return {
+          type: "variable",
+          query: token,
+          start,
+          end: cursorPos,
+        };
+      }
   }
 
   const userMatch = beforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_.-]{0,32})$/);
