@@ -19,6 +19,7 @@ import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/expor
 import { checkUnauthorizedMentions } from "../../utils/mentionValidation";
 import { parseEditTargetMessageIds } from "../../utils/dispatchValidation";
 import { lintPayloads } from "../../utils/payloadLinter";
+import { scrollToMessageEditor } from "../../utils/editorSmoothScroll";
 
 export interface DispatchModalProps {
   open: boolean;
@@ -64,6 +65,9 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
     store.select(issue.componentId
       ? { kind: "component", id: issue.componentId }
       : { kind: "message", index: issue.messageIndex });
+    window.requestAnimationFrame(() => {
+      scrollToMessageEditor(issue.messageIndex, issue.componentId);
+    });
   };
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [trackAfterSend, setTrackAfterSend] = useState(() => {
