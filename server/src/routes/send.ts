@@ -630,13 +630,7 @@ router.get(
     const botGuilds = await discord.getBotGuilds(profileId);
     let availableGuilds = botGuilds;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-      let allowedGuilds: string[] = [];
-      try {
-        const parsed = JSON.parse(staffCtx.record.allowed_guild_ids || "[]");
-        if (Array.isArray(parsed)) allowedGuilds = parsed.map(String);
-      } catch {
-        // Invalid allowlist data must fail closed.
-      }
+      const allowedGuilds = parseAllowedIds(staffCtx.record.allowed_guild_ids);
       if (!allowedGuilds.includes("*")) {
         availableGuilds = botGuilds.filter((guild) => allowedGuilds.includes(guild.id));
       }
@@ -653,14 +647,9 @@ router.get(
 
     let filteredChannels = channels;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
-      try {
-        const allowed = JSON.parse(staffCtx.record.allowed_channel_ids);
-        const allAllowed = allowed.includes("*");
-        if (!allAllowed) {
-          filteredChannels = channels.filter((c: any) => allowed.includes(c.id));
-        }
-      } catch {
-        filteredChannels = [];
+      const allowed = parseAllowedIds(staffCtx.record.allowed_channel_ids);
+      if (!allowed.includes("*")) {
+        filteredChannels = channels.filter((channel) => allowed.includes(channel.id));
       }
     }
 
