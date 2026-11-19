@@ -10,6 +10,7 @@ import { BUTTON_STYLE_LABELS, uid } from "../../utils/constants";
 import { buttonStylePatch, createComponent, newGalleryItem } from "../../utils/componentsV2";
 import { Plus, Trash2 } from "lucide-react";
 import { useMessageStore } from "../../store/messageStore";
+import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 
 export interface ComponentFormProps {
   component: ComponentNode;
@@ -327,11 +328,31 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
         </Button>
       </div>
 
-      <div className="space-y-2.5">
-        {options.map((option, index) => (
-          <div key={option._id} className="p-2.5 rounded-lg border border-[#272D3A] bg-[#1D2230] space-y-2">
+      <SortableList
+        items={options.map((option, index) => option._id ?? `option-${index}`)}
+        onReorder={(activeId, overId) => {
+          const from = options.findIndex((option, index) => (option._id ?? `option-${index}`) === activeId);
+          const to = options.findIndex((option, index) => (option._id ?? `option-${index}`) === overId);
+          if (from < 0 || to < 0 || from === to) return;
+          const reordered = options.map((option) => option._id ? option : { ...option, _id: uid() });
+          const [moved] = reordered.splice(from, 1);
+          if (!moved) return;
+          reordered.splice(to, 0, moved);
+          update({ options: reordered });
+        }}
+        strategy="vertical"
+        className="space-y-2.5"
+      >
+        {options.map((option, index) => {
+          const optionId = option._id ?? `option-${index}`;
+          return (
+          <SortableItem key={optionId} id={optionId}>
+          <div className="p-2.5 rounded-lg border border-[#272D3A] bg-[#1D2230] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] font-medium text-[#A1A8B8]">Option {index + 1}</span>
+              <div className="flex items-center gap-1.5">
+                <DragHandle label="Drag to reorder select option" />
+                <span className="text-[0.6875rem] font-medium text-[#A1A8B8]">Option {index + 1}</span>
+              </div>
               <div className="flex items-center gap-2">
                 <Checkbox label="Default" checked={Boolean(option.default)} onChange={(checked) => replaceOption(index, { default: checked })} className="text-[0.6875rem]" />
                 <IconButton
@@ -381,8 +402,10 @@ const StringSelectForm = ({ component, update }: ComponentFormProps) => {
               />
             </div>
           </div>
-        ))}
-      </div>
+          </SortableItem>
+          );
+        })}
+      </SortableList>
 
       <div className="grid grid-cols-2 gap-2">
         <TextField
