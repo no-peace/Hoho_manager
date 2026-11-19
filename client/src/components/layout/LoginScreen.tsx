@@ -180,7 +180,7 @@ export const LoginScreen: React.FC<{ authError?: string | null }> = ({ authError
 
         <SpotlightCard className="lg:col-span-7 min-w-0 rounded-2xl h-full"><div className="relative flex h-full min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-[#222734] bg-[#11141B]/95 shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
           <div className="bg-[#0B0E14] px-4 py-2.5 border-b border-[#1D2230] flex items-center justify-between gap-3 min-w-0">
-            <span className="text-xs font-bold text-[#A1A8B8]">
+            <span className="shrink-0 whitespace-nowrap text-xs font-bold text-[#A1A8B8]">
               #announcements  Preview
             </span>
             <div role="tablist" aria-label="Preview showcase modes" className="flex items-center gap-1 bg-[#10131A] p-1 rounded-lg overflow-x-auto no-scrollbar max-w-full whitespace-nowrap shrink-0">
