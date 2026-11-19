@@ -993,6 +993,8 @@ export const useMessageStore = create<MessageState>()(
 
       load: (input: any) => {
         suppressDirtyTracking = true;
+        try {
+          get().clearFiles();
         const doc =
           input && typeof input === "object" && input.data !== undefined && input.messages === undefined && input.backups === undefined
             ? input.data
@@ -1053,6 +1055,7 @@ export const useMessageStore = create<MessageState>()(
 
         const activeMode = resolveMessageMode(initialMessages[0], resolvedMode || EDITOR_MODES.CLASSIC);
 
+        resetHistoryOnNextChange = true;
         set({
           mode: activeMode,
           data: initialMessages[0],
@@ -1060,9 +1063,15 @@ export const useMessageStore = create<MessageState>()(
           activeMessageIndex: 0,
           targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
           selection: null,
+          past: [],
+          future: [],
+          canUndo: false,
+          canRedo: false,
           isDirty: false,
         });
-        suppressDirtyTracking = false;
+        } finally {
+          suppressDirtyTracking = false;
+        }
       },
 
       getPayload: () => {
