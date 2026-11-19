@@ -58,6 +58,7 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
 
   useEffect(() => {
     if (!open) return;
+    setChannels([]);
     setRunAt(toLocalInput(new Date(Date.now() + 60 * 60_000)));
     setChannelId("");
     setTemplateId("");
