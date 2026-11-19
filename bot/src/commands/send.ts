@@ -68,7 +68,7 @@ export class SendCommand extends Command {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
-      await api.sendMessage({ content: message, channelId: channel.id });
+      await api.sendMessage({ content: message, channelId: channel.id, authorUserId: interaction.user.id });
       await interaction.editReply(`\u2705 Sent to <#${channel.id}>.`);
       if (typeof interaction.deleteReply === "function") {
         setTimeout(() => {
