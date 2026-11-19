@@ -20,9 +20,10 @@ import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 export interface EmbedEditorProps {
   embed: EmbedData;
   index: number;
+  ensureActive?: () => void;
 }
 
-const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
+const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index, ensureActive }) => {
   const updateEmbed = useMessageStore((state) => state.updateEmbed);
   const removeEmbed = useMessageStore((state) => state.removeEmbed);
   const duplicateEmbed = useMessageStore((state) => state.duplicateEmbed);
@@ -84,6 +85,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
           <button
             type="button"
             onClick={(e) => {
+              ensureActive?.();
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
