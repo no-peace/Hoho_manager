@@ -142,6 +142,7 @@ export const StudioLayout: React.FC = () => {
   const openConfirm = useGlobalStore((state) => state.openConfirm);
 
   const addMessage = useMessageStore((state) => state.addMessage);
+  const displayMessages = useMessageStore((state) => state.messages);
   const reorderMessages = useMessageStore((state) => state.reorderMessages);
   // Jakob's Law: Familiar Studio Keyboard Shortcuts (Ctrl/Cmd+S -> Backups, Ctrl/Cmd+Enter -> Dispatch)
   useEffect(() => {
