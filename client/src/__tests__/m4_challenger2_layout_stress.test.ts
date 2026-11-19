@@ -768,7 +768,7 @@ describe("Responsive Header layout containment", () => {
   });
 
   it("keeps the server selector at a usable compact width on phones and expands it at larger breakpoints", () => {
-    expect(source).toContain("w-[104px] sm:w-32 lg:w-48");
+    expect(source).toContain("min-w-[120px] max-w-[175px] flex-1 sm:flex-none sm:w-44 lg:w-52");
     expect(source).toContain("shrink-0");
   });
 
