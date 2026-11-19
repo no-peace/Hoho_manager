@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   Copy,
   Edit2,
   Layers,
@@ -23,6 +22,7 @@ import { ContentTab } from "./ContentTab";
 import { EmbedsTab } from "./EmbedsTab";
 import { ComponentsTab, V2_ADD_OPTIONS } from "./ComponentsTab";
 import { MessageLinkModal } from "./MessageLinkModal";
+import { DragHandle } from "../../ui/SortableList";
 
 export interface MessageEditorProps {
   index: number;
@@ -52,7 +52,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
   const setActiveMessageIndex = useMessageStore((state) => state.setActiveMessageIndex);
   const duplicateMessage = useMessageStore((state) => state.duplicateMessage);
   const removeMessage = useMessageStore((state) => state.removeMessage);
-  const moveMessage = useMessageStore((state) => state.moveMessage);
+
   const setMessageMode = useMessageStore((state) => state.setMessageMode);
   const setField = useMessageStore((state) => state.setField);
   const addEmbed = useMessageStore((state) => state.addEmbed);
@@ -243,27 +243,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
           className="flex items-center gap-1 shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
-          {index > 0 && (
-            <button
-              type="button"
-              onClick={() => moveMessage?.(index, -1)}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
-              title="Move Message Up"
-            >
-              <ChevronUp size={14} />
-            </button>
-          )}
-
-          {index < messageCount - 1 && (
-            <button
-              type="button"
-              onClick={() => moveMessage?.(index, 1)}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A] transition-colors"
-              title="Move Message Down"
-            >
-              <ChevronDown size={14} />
-            </button>
-          )}
+          {messageCount > 1 && <DragHandle label="Drag to reorder message" />}
 
           <button
             type="button"
