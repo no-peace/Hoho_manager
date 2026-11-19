@@ -18,26 +18,129 @@ const asPayload = (value: ScheduledMessageRow["payload_json"] | StickyMessageRow
   return value && typeof value === "object" ? value as Record<string, unknown> : {};
 };
 
-const scheduleNextAt = (row: ScheduledMessageRow, from = Date.now()): string | null => {
+interface ZonedDateParts {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+const getZonedParts = (date: Date, timezone: string): ZonedDateParts => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.get("year")),
+    month: Number(values.get("month")),
+    day: Number(values.get("day")),
+    hour: Number(values.get("hour")),
+    minute: Number(values.get("minute")),
+    second: Number(values.get("second")),
+  };
+};
+
+const zonedPartsToDate = (parts: ZonedDateParts, timezone: string): Date => {
+  const targetUtc = Date.UTC(
+    parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second,
+  );
+  let guess = targetUtc;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const actual = getZonedParts(new Date(guess), timezone);
+    const actualUtc = Date.UTC(
+      actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, actual.second,
+    );
+    const difference = targetUtc - actualUtc;
+    if (difference === 0) break;
+    guess += difference;
+  }
+  return new Date(guess);
+};
+
+const addZonedTime = (
+  parts: ZonedDateParts,
+  timezone: string,
+  unit: "hour" | "day" | "minute",
+  amount: number,
+): Date => {
+  const local = new Date(Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day + (unit === "day" ? amount : 0),
+    parts.hour + (unit === "hour" ? amount : 0),
+    parts.minute + (unit === "minute" ? amount : 0),
+    parts.second,
+  ));
+  return zonedPartsToDate({
+    year: local.getUTCFullYear(),
+    month: local.getUTCMonth() + 1,
+    day: local.getUTCDate(),
+    hour: local.getUTCHours(),
+    minute: local.getUTCMinutes(),
+    second: local.getUTCSeconds(),
+  }, timezone);
+};
+
+const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | null => {
   if (!row.cron_expr) return null;
   let rule: { frequency?: string; interval?: number; weekdays?: number[] } = {};
-  try { rule = JSON.parse(row.cron_expr) as typeof rule; } catch { return null; }
-  const interval = Math.max(1, Number(rule.interval) || 1);
-  const date = new Date(from);
-  if (rule.frequency === "hourly") date.setHours(date.getHours() + interval);
-  else if (rule.frequency === "daily") date.setDate(date.getDate() + interval);
-  else if (rule.frequency === "weekly") {
-    const weekdays = Array.isArray(rule.weekdays) && rule.weekdays.length
-      ? rule.weekdays
-      : [date.getDay()];
-    let days = 1;
-    while (days <= 7 && !weekdays.includes(new Date(from + days * 86_400_000).getDay())) days++;
-    date.setTime(from + days * 86_400_000);
-    date.setDate(date.getDate() + (interval - 1) * 7);
-  } else {
-    date.setMinutes(date.getMinutes() + interval);
+  try {
+    rule = JSON.parse(row.cron_expr) as typeof rule;
+  } catch {
+    return null;
   }
-  return date.toISOString();
+
+  const frequency = rule.frequency;
+  if (frequency !== "hourly" && frequency !== "daily" && frequency !== "weekly" && frequency !== "custom") {
+    throw new Error(`Unsupported schedule frequency: ${String(frequency)}`);
+  }
+  const interval = Math.max(1, Math.min(365, Number(rule.interval) || 1));
+  let timezone = row.timezone || "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+  } catch {
+    timezone = "UTC";
+  }
+
+  const anchorValue = row.next_run_at ?? row.run_at;
+  const anchorTime = anchorValue ? Date.parse(anchorValue) : now;
+  if (!Number.isFinite(anchorTime)) throw new Error(`Schedule ${row.id} has an invalid next_run_at anchor`);
+
+  let candidate = new Date(anchorTime);
+  for (let attempt = 0; attempt < 10_000 && candidate.getTime() <= now; attempt++) {
+    const local = getZonedParts(candidate, timezone);
+    if (frequency === "weekly") {
+      const weekdays = [...new Set(
+        (Array.isArray(rule.weekdays) ? rule.weekdays : [])
+          .filter((day): day is number => Number.isInteger(day) && day >= 0 && day <= 6),
+      )].sort((a, b) => a - b);
+      const selected = weekdays.length > 0 ? weekdays : [new Date(Date.UTC(local.year, local.month - 1, local.day)).getUTCDay()];
+      const currentWeekday = new Date(Date.UTC(local.year, local.month - 1, local.day)).getUTCDay();
+      const nextWeekday = selected.find((day) => day > currentWeekday) ?? selected[0];
+      let dayOffset = (nextWeekday - currentWeekday + 7) % 7;
+      if (dayOffset === 0) dayOffset = 7;
+      if (nextWeekday <= currentWeekday) dayOffset += (interval - 1) * 7;
+      candidate = addZonedTime(local, timezone, "day", dayOffset);
+    } else {
+      candidate = addZonedTime(
+        local,
+        timezone,
+        frequency === "hourly" ? "hour" : frequency === "daily" ? "day" : "minute",
+        interval,
+      );
+    }
+  }
+  if (candidate.getTime() <= now) throw new Error(`Schedule ${row.id} exceeded recurrence advancement limit`);
+  return candidate.toISOString();
 };
 
 const rebuildCaches = async (): Promise<void> => {
@@ -222,8 +325,17 @@ const runDueSchedules = async (now: Date): Promise<void> => {
       });
     } catch (error) {
       log.error(`Scheduled message ${row.id} failed: ${String(error)}`);
-      const retryAt = scheduleNextAt(row, now.getTime());
-      await automationRepository.updateSchedule(row.id, { last_run_at: now.toISOString(), enabled: retryAt ? 1 : 0, next_run_at: retryAt });
+      let retryAt: string | null = null;
+      try {
+        retryAt = scheduleNextAt(row, now.getTime());
+      } catch (scheduleError) {
+        log.error(`Scheduled message ${row.id} has an unsupported recurrence and was disabled: ${String(scheduleError)}`);
+      }
+      await automationRepository.updateSchedule(row.id, {
+        last_run_at: now.toISOString(),
+        enabled: retryAt ? 1 : 0,
+        next_run_at: retryAt,
+      });
     }
   }
   await rebuildCaches();
