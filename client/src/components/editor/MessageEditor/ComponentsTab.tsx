@@ -170,7 +170,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           className="rounded-lg bg-[#161A23] border border-[#272D3A] transition-[border-color,box-shadow] duration-150"
         >
           {cardHeader}
-          <div className="p-3 space-y-2.5">
+          <div className="sortable-collapse-on-drag p-3 space-y-2.5">
             <DiscordMentionInput
               label="Content"
               maxLength={Limits.components.textDisplay}
