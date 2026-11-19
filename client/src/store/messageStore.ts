@@ -56,6 +56,31 @@ export interface AttachedFile {
   description?: string;
 }
 
+type MessageHistorySnapshot = {
+  messages: MessageData[];
+  activeMessageIndex: number;
+};
+
+const historyStructureKey = (messages: MessageData[]): string => {
+  const componentKey = (node: ComponentNode): unknown => ({
+    id: node._id,
+    type: node.type,
+    children: node.components?.map(componentKey),
+    accessory: node.accessory ? componentKey(node.accessory) : undefined,
+    optionIds: node.options?.map((option) => option._id),
+    itemIds: node.items?.map((item) => item._id),
+  });
+  return JSON.stringify(messages.map((message) => ({
+    mode: (message as any).mode,
+    flags: message.flags,
+    embeds: message.embeds?.map((embed) => ({
+      id: embed._id,
+      fields: embed.fields?.map((field) => field._id),
+    })),
+    components: message.components?.map(componentKey),
+  })));
+};
+
 export interface MessageState {
   mode: EditorMode;
   data: MessageData;
@@ -65,6 +90,12 @@ export interface MessageState {
   selection: Selection;
   send: SendState;
   attachedFiles: AttachedFile[];
+  past: MessageHistorySnapshot[];
+  future: MessageHistorySnapshot[];
+  canUndo: boolean;
+  canRedo: boolean;
+  undo(): void;
+  redo(): void;
 
   setMode(mode: EditorMode): void;
   setMessageMode(index: number, mode: EditorMode): void;
@@ -235,7 +266,40 @@ const resolveMessageMode = (message?: Partial<MessageData> | null, fallback: Edi
 
 export const useMessageStore = create<MessageState>()(
   persist(
-    (set, get) => ({
+    (rawSet, get) => {
+      let lastHistoryAt = 0;
+      const set: typeof rawSet = (partial, replace) => {
+        const current = get();
+        const nextState = typeof partial === "function" ? partial(current) : partial;
+        const next = (nextState ?? {}) as Partial<MessageState>;
+        const nextMessages = next.messages ?? current.messages;
+        const nextData = next.data ?? current.data;
+        if (nextMessages !== current.messages || nextData !== current.data) {
+          const structureChanged =
+            historyStructureKey(current.messages) !== historyStructureKey(nextMessages);
+          const now = Date.now();
+          const coalesceTyping =
+            !structureChanged && current.past.length > 0 && now - lastHistoryAt < 600;
+          const snapshot: MessageHistorySnapshot = {
+            messages: structuredClone(current.messages),
+            activeMessageIndex: current.activeMessageIndex,
+          };
+          const past = coalesceTyping
+            ? current.past
+            : [...current.past, snapshot].slice(-40);
+          lastHistoryAt = now;
+          rawSet({
+            ...next,
+            past,
+            future: [],
+            canUndo: past.length > 0,
+            canRedo: false,
+          } as Partial<MessageState>, replace as any);
+          return;
+        }
+        rawSet(partial as any, replace as any);
+      };
+      return ({
       mode: EDITOR_MODES.CLASSIC,
       data: defaultInitial,
       messages: [defaultInitial],
@@ -244,6 +308,58 @@ export const useMessageStore = create<MessageState>()(
       selection: null,
       send: idleSendState(),
       attachedFiles: [],
+      past: [],
+      future: [],
+      canUndo: false,
+      canRedo: false,
+
+      undo: () => {
+        const state = get();
+        const previous = state.past[state.past.length - 1];
+        if (!previous) return;
+        const activeMessageIndex = Math.max(0, Math.min(previous.activeMessageIndex, previous.messages.length - 1));
+        const messages = structuredClone(previous.messages);
+        const data = messages[activeMessageIndex] ?? createEmptyMessage();
+        const future = [...state.future, {
+          messages: structuredClone(state.messages),
+          activeMessageIndex: state.activeMessageIndex,
+        }].slice(-40);
+        rawSet({
+          messages,
+          data,
+          activeMessageIndex,
+          mode: resolveMessageMode(data, state.mode),
+          selection: null,
+          past: state.past.slice(0, -1),
+          future,
+          canUndo: state.past.length > 1,
+          canRedo: future.length > 0,
+        });
+      },
+
+      redo: () => {
+        const state = get();
+        const next = state.future[state.future.length - 1];
+        if (!next) return;
+        const activeMessageIndex = Math.max(0, Math.min(next.activeMessageIndex, next.messages.length - 1));
+        const messages = structuredClone(next.messages);
+        const data = messages[activeMessageIndex] ?? createEmptyMessage();
+        const past = [...state.past, {
+          messages: structuredClone(state.messages),
+          activeMessageIndex: state.activeMessageIndex,
+        }].slice(-40);
+        rawSet({
+          messages,
+          data,
+          activeMessageIndex,
+          mode: resolveMessageMode(data, state.mode),
+          selection: null,
+          past,
+          future: state.future.slice(0, -1),
+          canUndo: past.length > 0,
+          canRedo: state.future.length > 1,
+        });
+      },
 
       setMode: (mode) => {
         const activeIdx = get().activeMessageIndex ?? 0;
@@ -925,7 +1041,8 @@ export const useMessageStore = create<MessageState>()(
         const msgMode = resolveMessageMode(activeData, get().mode);
         return validateMessage(activeData, msgMode);
       },
-    }),
+      });
+    },
     {
       name: "dmb:message",
       partialize: (state) => ({
