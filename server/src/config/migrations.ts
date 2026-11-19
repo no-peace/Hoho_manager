@@ -450,18 +450,18 @@ export const migrations: readonly Migration[] = [
     `,
   },
   {
-    id: "023_scheduled_message_retry_count",
-    sql: `
-      ALTER TABLE scheduled_messages
-        ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
-    `,
-  },
-  {
     id: "022_guild_scoped_action_definitions",
     sql: `
       ALTER TABLE action_definitions ADD COLUMN guild_id TEXT;
       CREATE INDEX IF NOT EXISTS idx_action_defs_guild_custom
         ON action_definitions(guild_id, custom_id);
+    `,
+  },
+  {
+    id: "023_scheduled_message_retry_count",
+    sql: `
+      ALTER TABLE scheduled_messages
+        ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
     `,
   },
 ];
