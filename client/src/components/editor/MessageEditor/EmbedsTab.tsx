@@ -16,6 +16,7 @@ export const EmbedsTab: React.FC<EmbedsTabProps> = ({ embeds }) => {
       items={embeds.map((embed, index) => embed._id ?? `embed-${index}`)}
       onReorder={(activeId, overId) => useMessageStore.getState().reorderEmbeds(activeId, overId)}
       strategy="vertical"
+      renderOverlay={(activeId) => `Embed ${embeds.findIndex((embed, index) => (embed._id ?? `embed-${index}`) === activeId) + 1}`}
       className="space-y-2.5 pt-1"
     >
       {embeds.map((embed, embedIdx) => {
