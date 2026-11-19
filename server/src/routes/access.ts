@@ -42,7 +42,8 @@ const formatStaffRecord = (r: import("../repositories/staffRepository.js").Staff
     can_override_profile: r.can_override_profile ?? 1,
     can_attach_files: r.can_attach_files ?? 1,
     can_use_components_v2: r.can_use_components_v2 ?? 1,
-    can_use_weao_exploits: r.can_use_weao_exploits ?? 1,
+    can_use_weao_exploits: r.can_use_weao_exploits ?? 0,
+    can_manage_automation: r.can_manage_automation ?? 0,
     granular_cooldowns: parseGranular(r.granular_cooldowns),
     granular_rate_limits: parseGranular(r.granular_rate_limits),
   };
@@ -89,6 +90,7 @@ router.post(
       can_edit_messages,
       can_delete_messages,
       can_manage_templates,
+      can_manage_automation,
       allowed_channel_ids,
       can_mention_everyone,
       can_mention_here,
@@ -159,8 +161,9 @@ router.post(
       can_override_profile: can_override_profile ?? 1,
       can_attach_files: can_attach_files ?? 1,
       can_use_components_v2: can_use_components_v2 ?? 1,
-      can_use_weao_exploits: can_use_weao_exploits ?? 1,
-      allowed_guild_ids: JSON.stringify(allowed_guild_ids ?? ["*"]),
+      can_use_weao_exploits: can_use_weao_exploits ?? 0,
+      can_manage_automation: can_manage_automation ?? 0,
+      allowed_guild_ids: JSON.stringify(allowed_guild_ids ?? []),
       granular_cooldowns:
         typeof granular_cooldowns === "string"
           ? granular_cooldowns
@@ -225,6 +228,7 @@ router.patch(
       "can_attach_files",
       "can_use_components_v2",
       "can_use_weao_exploits",
+      "can_manage_automation",
       "notes",
     ];
     for (const key of allowed) {
@@ -337,6 +341,7 @@ router.get(
         can_edit_messages: record.can_edit_messages === 1,
         can_delete_messages: record.can_delete_messages === 1,
         can_manage_templates: record.can_manage_templates === 1,
+        can_manage_automation: record.can_manage_automation === 1,
         allowed_channel_ids: JSON.parse(record.allowed_channel_ids),
         can_mention_everyone: record.can_mention_everyone === 1,
         can_mention_here: record.can_mention_here === 1,
