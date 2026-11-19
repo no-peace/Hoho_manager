@@ -1,8 +1,9 @@
 import { Command } from "@sapphire/framework";
 import { MessageFlags } from "discord.js";
 import api from "../lib/api.js";
-import { env } from "../lib/env.js";
 import { commandRegistration } from "../lib/registration.js";
+import { BOT_COMMAND_ADMIN_DENIED_MESSAGE, isBotCommandAdmin } from "../lib/commandPermissions.js";
+import { checkCommandCooldown } from "../lib/commandCooldown.js";
 
 /**
  * `/status`  shows whether the API and its Discord integrations are configured.
@@ -27,6 +28,15 @@ export class StatusCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
+    if (!isBotCommandAdmin(interaction.user.id)) {
+      await interaction.reply({ content: BOT_COMMAND_ADMIN_DENIED_MESSAGE, flags: MessageFlags.Ephemeral });
+      return;
+    }
+    const waitSec = checkCommandCooldown("status", interaction.user.id, 15);
+    if (waitSec > 0) {
+      await interaction.reply({ content: `Please wait ${waitSec}s before running /status again.`, flags: MessageFlags.Ephemeral });
+      return;
+    }
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
@@ -38,7 +48,7 @@ export class StatusCommand extends Command {
       const statusBadge = health.status === "ok" ? "🟢 Operational" : "🟡 Degraded";
       const body = [
         `### 🛠️ HoHo Manager System Status — ${statusBadge}`,
-        `**API** \`${env.apiBaseUrl}\` • **${health.status}** (${health.environment})`,
+        `**API** • **${health.status}**`,
         line("Database connected", health.database.connected),
         line("Bot token configured", health.discord.botTokenConfigured),
         line("Public key configured", health.discord.publicKeyConfigured),
