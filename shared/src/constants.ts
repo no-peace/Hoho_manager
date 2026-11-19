@@ -85,11 +85,6 @@ export const InteractionResponseType = {
   Modal: 9,
 } as const;
 
-/** Destination kinds inside an exported `QueryData` document. */
-export const TargetType = {
-  Webhook: 1,
-} as const;
-
 /**
  * Discord's documented hard limits. The editor validates against these before a
  * payload ever leaves the browser, so users get a real explanation instead of an
