@@ -131,6 +131,7 @@ export class ActionRepository extends BaseRepository {
   async findByCustomId(
     customId: string,
     messageId?: string,
+    guildId?: string,
   ): Promise<ActionDefinitionRecord[]> {
     const registered = messageId
       ? await this.db.query<ActionRow>(
@@ -144,10 +145,26 @@ export class ActionRepository extends BaseRepository {
       return parseJsonList(registered as unknown as ActionDefinitionRecord[], ["config"]);
     }
 
+    // A modal submit has no source message. Resolve only registrations attached
+    // to tracked messages in the same guild; never search globally by custom_id.
+    if (!messageId) {
+      if (!guildId) return [];
+      const modalRows = await this.db.query<ActionRow>(
+        `SELECT action_definitions.*
+         FROM action_definitions
+         INNER JOIN tracked_messages
+           ON tracked_messages.message_id = action_definitions.message_id
+         WHERE action_definitions.custom_id = @customId
+           AND tracked_messages.guild_id = @guildId
+         ORDER BY action_definitions.execution_order ASC`,
+        { customId, guildId },
+      );
+      return parseJsonList(modalRows as unknown as ActionDefinitionRecord[], ["config"]);
+    }
+
     // A template action is only eligible for the message that was actually
     // tracked as using that template. Never fall back to another user's
     // template merely because its custom ID happens to collide.
-    if (!messageId) return [];
     const tracked = await this.db.get<{ template_id: number | null }>(
       "SELECT template_id FROM tracked_messages WHERE message_id = @messageId LIMIT 1",
       { messageId },
