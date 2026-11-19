@@ -3,9 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { LoginScreen, AUTH_ERROR_MESSAGES } from "../LoginScreen";
 
-vi.mock("../../reactbits/ThreeHeroCanvas", () => ({
-  ThreeHeroCanvas: () => <div aria-hidden="true" />,
-}));
 
 describe("LoginScreen mobile and desktop regressions", () => {
   beforeEach(() => {
@@ -32,7 +29,7 @@ describe("LoginScreen mobile and desktop regressions", () => {
 
     expect(screen.getByText(/No-Code Button & Modal Workflows/i)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Submit Application/i }));
-    expect(screen.getByText(/Action triggered:/i)).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain('Only you can see this · Triggered "Submit Application" flow');
   });
 
   it("renders the studio atmosphere and preserves the 5/7 showcase grid", () => {
@@ -40,8 +37,11 @@ describe("LoginScreen mobile and desktop regressions", () => {
     const root = screen.getByTestId("login-screen-scroll-root");
     expect(root.className).toContain("hoho-studio-backdrop");
     expect(root.querySelector(".hoho-studio-grid-overlay")).toBeTruthy();
+    expect(root.querySelector(".hoho-grid-beam-x")).toBeTruthy();
+    expect(root.querySelector(".hoho-grid-beam-y")).toBeTruthy();
     expect(root.querySelector(".lg\\:col-span-5")).toBeTruthy();
     expect(root.querySelector(".lg\\:col-span-7")).toBeTruthy();
+    expect(root.querySelector("main")?.className).toContain("lg:items-stretch");
     expect(screen.getByRole("button", { name: /Login with Discord/i })).toBeTruthy();
 
     const studioLink = screen.getByRole("link", { name: "Studio" });
