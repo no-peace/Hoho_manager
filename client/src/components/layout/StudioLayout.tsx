@@ -19,9 +19,13 @@ import { SortableItem, SortableList } from "../ui/SortableList";
 const PropertyPanel = React.lazy(() =>
   import("../editor/PropertyPanel").then((module) => ({ default: module.PropertyPanel })),
 );
+const ImportLiveMessageModal = React.lazy(() => import("./ImportLiveMessageModal").then((module) => ({ default: module.ImportLiveMessageModal })));
+const ScheduledMessageModal = React.lazy(() => import("./ScheduledMessageModal").then((module) => ({ default: module.ScheduledMessageModal })));
 
 export const StudioLayout: React.FC = () => {
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -213,6 +217,14 @@ export const StudioLayout: React.FC = () => {
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0B0D12] min-[1200px]:rounded-[10px] min-[1200px]:border min-[1200px]:border-[#272D3A]">
               <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#0B0D12] p-3 custom-scrollbar sm:p-4">
                 <div data-editor-scroll-content className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <button type="button" onClick={() => setImportModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-[#272D3A] bg-[#161A23] px-2.5 py-1.5 text-[10px] font-semibold text-[#A1A8B8] transition-colors hover:border-[#818CF8] hover:text-white">
+                      <DownloadCloud size={12} /> Import Live Message
+                    </button>
+                    <button type="button" onClick={() => setScheduleModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-[#272D3A] bg-[#161A23] px-2.5 py-1.5 text-[10px] font-semibold text-[#A1A8B8] transition-colors hover:border-[#818CF8] hover:text-white">
+                      <CalendarClock size={12} /> Schedule
+                    </button>
+                  </div>
                   <SortableList
                     items={displayMessages.map((_, idx) => `message-${idx}`)}
                     onReorder={(activeId, overId) => reorderMessages(Number(activeId.slice(8)), Number(overId.slice(8)))}
@@ -288,6 +300,11 @@ export const StudioLayout: React.FC = () => {
         />
         <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} /></React.Suspense>
       </main>
+
+      <React.Suspense fallback={null}>
+        <ImportLiveMessageModal open={importModalOpen} onClose={() => setImportModalOpen(false)} />
+        <ScheduledMessageModal open={scheduleModalOpen} onClose={() => setScheduleModalOpen(false)} />
+      </React.Suspense>
 
       {/* Native-feeling segmented mobile workspace dock */}
       <nav aria-label="Mobile workspace navigation" className="min-[1200px]:hidden flex items-center gap-2.5 border-t border-[#202531] bg-[#0D1017]/95 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md shrink-0 z-30">
