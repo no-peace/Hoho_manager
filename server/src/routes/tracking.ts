@@ -303,7 +303,7 @@ router.patch(
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("`id` must be a positive integer");
-    const target = (await trackedMessageRepository.listAll()).find((m) => m.id === id);
+    const target = await trackedMessageRepository.findById(id);
     if (!target) throw ApiError.notFound("Tracked message record not found");
     const staffCtx = req.staffContext;
     if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
@@ -335,7 +335,7 @@ router.patch(
       updates.expires_at = body.expiresAt;
     }
     await trackedMessageRepository.updateConfig(id, updates);
-    const updated = (await trackedMessageRepository.listAll()).find((m) => m.id === id);
+    const updated = await trackedMessageRepository.findById(id);
     return res.json({ ok: true, tracked: true, message: updated });
   }),
 );
@@ -354,8 +354,7 @@ router.delete(
       throw ApiError.badRequest("`id` must be a positive integer");
     }
 
-    const list = await trackedMessageRepository.listAll();
-    const target = list.find((m) => m.id === id);
+    const target = await trackedMessageRepository.findById(id);
     if (!target) {
       throw ApiError.notFound("Tracked message record not found");
     }
