@@ -63,7 +63,6 @@ router.post(
     const response = await handleInteraction(interaction, startedAt);
     res.once("finish", () => {
       cacheInteractionReceipt(interaction.id, response);
-      cacheInteractionReceipt(interaction.id, response);
       if (
         response.type === InteractionResponseType.DeferredUpdateMessage ||
         response.type === InteractionResponseType.DeferredChannelMessageWithSource
@@ -159,6 +158,7 @@ router.post(
         response,
         { timeoutMs: Math.max(400, 2_200 - (Date.now() - startedAt)) },
       );
+      cacheInteractionReceipt(interaction.id, response);
       if (
         response.type === InteractionResponseType.DeferredUpdateMessage ||
         response.type === InteractionResponseType.DeferredChannelMessageWithSource
