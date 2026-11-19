@@ -268,13 +268,31 @@ export const useMessageStore = create<MessageState>()(
   persist(
     (rawSet, get) => {
       let lastHistoryAt = 0;
+      let resetHistoryOnNextChange = false;
       const set: typeof rawSet = (partial, replace) => {
         const current = get();
         const nextState = typeof partial === "function" ? partial(current) : partial;
         const next = (nextState ?? {}) as Partial<MessageState>;
         const nextMessages = next.messages ?? current.messages;
         const nextData = next.data ?? current.data;
-        if (nextMessages !== current.messages || nextData !== current.data) {
+        const activeIndexChanged =
+          next.activeMessageIndex !== undefined &&
+          next.activeMessageIndex !== current.activeMessageIndex;
+        const shouldTrackHistory =
+          nextMessages !== current.messages ||
+          (nextData !== current.data && !activeIndexChanged);
+        if (shouldTrackHistory) {
+          if (resetHistoryOnNextChange) {
+            resetHistoryOnNextChange = false;
+            rawSet({
+              ...next,
+              past: [],
+              future: [],
+              canUndo: false,
+              canRedo: false,
+            } as Partial<MessageState>, replace as any);
+            return;
+          }
           const structureChanged =
             historyStructureKey(current.messages) !== historyStructureKey(nextMessages);
           const now = Date.now();
@@ -941,6 +959,7 @@ export const useMessageStore = create<MessageState>()(
       reset: () => {
         get().clearFiles();
         const blank = createEmptyMessage();
+        resetHistoryOnNextChange = true;
         set({
           mode: EDITOR_MODES.CLASSIC,
           data: blank,
