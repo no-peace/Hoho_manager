@@ -49,14 +49,13 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const currentTemplateId = useTemplateStore((state) => state.currentId);
   const editorData = useMessageStore((state) => state.data) as any;
   const editorMessages = useMessageStore((state) => state.messages);
-  const editorTargets = useMessageStore((state) => state.targets);
   const editorMode = useMessageStore((state) => state.mode);
   const editorFlows = useActionStore((state) => state.flows);
   const [savedTemplateBaseline, setSavedTemplateBaseline] = useState<{ data: unknown; actions: unknown[] } | null>(null);
   const currentDocument = useMemo(() => {
     const messagesToSave = editorMessages && editorMessages.length > 0 ? editorMessages : [editorData];
-    return toQueryData(messagesToSave, editorTargets, editorMode);
-  }, [editorData, editorMessages, editorTargets, editorMode]);
+    return toQueryData(messagesToSave, editorMode);
+  }, [editorData, editorMessages, editorMode]);
   const currentActions = useMemo(() => useActionStore.getState().toList(), [editorFlows]);
   const currentTemplateModified = Boolean(savedTemplateBaseline && (
     JSON.stringify(savedTemplateBaseline.data) !== JSON.stringify(currentDocument) ||
@@ -349,7 +348,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   const handleExportJson = () => {
     const store = useMessageStore.getState();
-    const queryData = toQueryData(store.messages, store.targets, store.mode);
+    const queryData = toQueryData(store.messages, store.mode);
     downloadJson(queryData, `${currentName.trim() || "hoho-messages"}.json`);
     showToast("Exported JSON file", "info");
   };
@@ -362,7 +361,6 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
       const document = parseImportedJson(text);
       useMessageStore.getState().load({
         data: document,
-        targets: document?.targets,
         mode: document?.mode,
       });
       setCurrentName(file.name.replace(/\.json$/i, ""));
