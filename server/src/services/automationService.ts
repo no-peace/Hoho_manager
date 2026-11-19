@@ -27,17 +27,8 @@ interface ZonedDateParts {
   second: number;
 }
 
-const getZonedParts = (date: Date, timezone: string): ZonedDateParts => {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
+const getZonedParts = (date: Date, formatter: Intl.DateTimeFormat): ZonedDateParts => {
+  const parts = formatter.formatToParts(date);
   const values = new Map(parts.map((part) => [part.type, part.value]));
   return {
     year: Number(values.get("year")),
@@ -49,13 +40,13 @@ const getZonedParts = (date: Date, timezone: string): ZonedDateParts => {
   };
 };
 
-const zonedPartsToDate = (parts: ZonedDateParts, timezone: string): Date => {
+const zonedPartsToDate = (parts: ZonedDateParts, formatter: Intl.DateTimeFormat): Date => {
   const targetUtc = Date.UTC(
     parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second,
   );
   let guess = targetUtc;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const actual = getZonedParts(new Date(guess), timezone);
+    const actual = getZonedParts(new Date(guess), formatter);
     const actualUtc = Date.UTC(
       actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, actual.second,
     );
@@ -68,7 +59,7 @@ const zonedPartsToDate = (parts: ZonedDateParts, timezone: string): Date => {
 
 const addZonedTime = (
   parts: ZonedDateParts,
-  timezone: string,
+  formatter: Intl.DateTimeFormat,
   unit: "hour" | "day" | "minute",
   amount: number,
 ): Date => {
@@ -87,7 +78,7 @@ const addZonedTime = (
     hour: local.getUTCHours(),
     minute: local.getUTCMinutes(),
     second: local.getUTCSeconds(),
-  }, timezone);
+  }, formatter);
 };
 
 const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | null => {
@@ -105,10 +96,30 @@ const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | nu
   }
   const interval = Math.max(1, Math.min(365, Number(rule.interval) || 1));
   let timezone = row.timezone || "UTC";
+  let formatter: Intl.DateTimeFormat;
   try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+    formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    });
   } catch {
     timezone = "UTC";
+    formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    });
   }
 
   const anchorValue = row.next_run_at ?? row.run_at;
@@ -117,7 +128,7 @@ const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | nu
 
   let candidate = new Date(anchorTime);
   for (let attempt = 0; attempt < 10_000 && candidate.getTime() <= now; attempt++) {
-    const local = getZonedParts(candidate, timezone);
+    const local = getZonedParts(candidate, formatter);
     if (frequency === "weekly") {
       const weekdays = [...new Set(
         (Array.isArray(rule.weekdays) ? rule.weekdays : [])
@@ -129,11 +140,11 @@ const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | nu
       let dayOffset = (nextWeekday - currentWeekday + 7) % 7;
       if (dayOffset === 0) dayOffset = 7;
       if (nextWeekday <= currentWeekday) dayOffset += (interval - 1) * 7;
-      candidate = addZonedTime(local, timezone, "day", dayOffset);
+      candidate = addZonedTime(local, formatter, "day", dayOffset);
     } else {
       candidate = addZonedTime(
         local,
-        timezone,
+        formatter,
         frequency === "hourly" ? "hour" : frequency === "daily" ? "day" : "minute",
         interval,
       );
