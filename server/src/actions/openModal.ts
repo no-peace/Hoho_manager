@@ -16,14 +16,16 @@ export const run = async ({
   if (components.length === 0) return undefined;
 
   // Use the configured customId, or build a valid action: customId using buildCustomId
-  const modalId =
+  const configuredModalId =
     configString(config, "customId") ??
     buildCustomId("modal_submit", { id: crypto.randomUUID() });
+  const modalId = configuredModalId.slice(0, 100);
+  const title = (configString(config, "title") ?? "Submission Form").slice(0, 45);
 
   return modal({
     customId: modalId,
-    title: configString(config, "title") ?? "Submission Form",
-    components,
+    title,
+    components: components.slice(0, 5),
   });
 };
 
