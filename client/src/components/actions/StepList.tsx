@@ -13,7 +13,7 @@ import { Checkbox, Select, TextArea, TextField } from "../ui/Field";
 import { createStep, useActionStore } from "../../store/actionStore";
 import { useGlobalStore } from "../../store/globalStore";
 import { uid } from "../../utils/constants";
-import { DragHandle, SortableItem, SortableList, useIsListDragging } from "../ui/SortableList";
+import { DragHandle, SortableItem, SortableList } from "../ui/SortableList";
 import { useDiscordCacheStore } from "../../store/discordCacheStore";
 
 interface ConfigField {
@@ -226,7 +226,6 @@ export interface StepListProps {
 export const StepList = ({ steps, onChange, depth }: StepListProps) => {
   const [addingType, setAddingType] = useState<string>("add_role");
   const nested = depth > 0;
-  const isListDragging = useIsListDragging();
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
 
   const actionTypes = useActionStore((state) => state.actionTypes);
@@ -759,7 +758,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
             </div>
           </div>
 
-          <div className={`space-y-2 pt-1 ${isListDragging ? "hidden" : ""}`}>{renderFields(index, step)}</div>
+          <div className="sortable-collapse-on-drag space-y-2 pt-1">{renderFields(index, step)}</div>
         </div>
         </SortableItem>
         );
