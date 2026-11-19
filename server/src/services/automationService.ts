@@ -235,11 +235,31 @@ const runDueExpirations = async (now: Date): Promise<void> => {
   const token = due.length ? await discord.resolveBotToken() : null;
   for (const row of due) {
     try {
-      if (token) await discord.deleteChannelMessage(row.channel_id, row.message_id, token);
-    } catch (error) {
-      log.warn(`Expiring message ${row.message_id} could not be deleted: ${String(error)}`);
-    } finally {
+      if (!token) throw new Error("Discord bot token is unavailable");
+      await discord.deleteChannelMessage(row.channel_id, row.message_id, token);
       await automationRepository.removeExpiring(row.id);
+    } catch (error) {
+      const status =
+        error !== null && typeof error === "object" && "status" in error
+          ? Number((error as { status: unknown }).status)
+          : 0;
+      const details =
+        error !== null && typeof error === "object" && "details" in error
+          ? (error as { details: unknown }).details
+          : null;
+      const discordCode =
+        details !== null && typeof details === "object" && "code" in details
+          ? Number((details as { code: unknown }).code)
+          : 0;
+      const permanent = status === 403 || status === 404 || discordCode === 10008 || discordCode === 10003;
+      if (permanent) {
+        await automationRepository.removeExpiring(row.id);
+        log.warn(`Expiring message ${row.message_id} is no longer deletable: ${String(error)}`);
+      } else {
+        const retryAt = new Date(now.getTime() + 60_000).toISOString();
+        await automationRepository.retryExpiring(row.id, retryAt);
+        log.warn(`Expiring message ${row.message_id} will retry at ${retryAt}: ${String(error)}`);
+      }
     }
   }
   const nextDeleteAtValue = await automationRepository.getNextExpiringAt();
