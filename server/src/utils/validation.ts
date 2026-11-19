@@ -447,8 +447,8 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
     } else {
       const question = isRecord(poll.question) ? asString(poll.question.text) : null;
       if (!question || question.length > 300) errors.push("`poll.question.text` must contain 1–300 characters");
-      if (!Array.isArray(poll.answers) || poll.answers.length < 2 || poll.answers.length > 10) {
-        errors.push("`poll.answers` must contain between 2 and 10 answers");
+      if (!Array.isArray(poll.answers) || poll.answers.length < 1 || poll.answers.length > 10) {
+        errors.push("`poll.answers` must contain between 1 and 10 answers");
       } else {
         poll.answers.forEach((answer, index) => {
           const media = isRecord(answer) && isRecord(answer.poll_media) ? answer.poll_media : null;
