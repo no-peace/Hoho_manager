@@ -19,6 +19,7 @@ import { EDITOR_MODES } from "../../../utils/constants";
 import type { ExtendedMessageData } from "../../../utils/discord";
 import { UI_THEME_CONFIG } from "../../../config/uiThemeConfig";
 import { ContentTab } from "./ContentTab";
+import { PollEditor } from "../PollEditor";
 import { EmbedsTab } from "./EmbedsTab";
 import { ComponentsTab, V2_ADD_OPTIONS } from "./ComponentsTab";
 import { MessageLinkModal } from "./MessageLinkModal";
@@ -293,6 +294,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             setField={setField}
             setExtendedField={setExtendedField}
           />
+
+          {!isV2 && <PollEditor poll={message.poll} />}
 
           {!isV2 && <EmbedsTab embeds={message.embeds || []} />}
 
