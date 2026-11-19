@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import express, { Router, type Request, type RequestHandler } from "express";
 import { InteractionResponseType, InteractionType } from "@dmb/shared";
 import type { DiscordInteraction } from "@dmb/shared";
 import { requireAdminKey } from "../middleware/auth.js";
@@ -16,6 +16,11 @@ import { logger } from "../utils/logger.js";
 
 const router = Router();
 const log = logger.child("interactions");
+const interactionStartTimes = new WeakMap<Request, number>();
+const markInteractionStart: RequestHandler = (req, _res, next) => {
+  interactionStartTimes.set(req, Date.now());
+  next();
+};
 
 /**
  * Interaction delivery.
@@ -54,10 +59,11 @@ const log = logger.child("interactions");
 
 router.post(
   "/",
+  markInteractionStart,
   express.raw({ type: "application/json", limit: "1mb" }),
   verifyDiscordSignature,
   asyncHandler(async (req, res) => {
-    const startedAt = Date.now();
+    const startedAt = interactionStartTimes.get(req) ?? Date.now();
     const interaction = requireInteraction(req);
     log.info(`Received verified interaction type ${interaction.type}`);
     const response = await handleInteraction(interaction, startedAt);
@@ -131,6 +137,7 @@ const isRelayable = (value: unknown): value is DiscordInteraction => {
  */
 router.post(
   "/relay",
+  markInteractionStart,
   requireAdminKey,
   express.json({ limit: "1mb" }),
   asyncHandler(async (req, res) => {
@@ -140,7 +147,7 @@ router.post(
       );
     }
 
-    const startedAt = Date.now();
+    const startedAt = interactionStartTimes.get(req) ?? Date.now();
     const interaction = req.body;
     const response = await handleInteraction(interaction, startedAt);
 
