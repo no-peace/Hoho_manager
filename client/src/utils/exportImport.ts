@@ -45,6 +45,7 @@ const normalizeMessageData = (raw: any): MessageData => {
     item = item.data;
   }
   return {
+    ...item,
     content: item.content || "",
     username: item.username || "",
     avatar_url: item.avatar_url || "",
