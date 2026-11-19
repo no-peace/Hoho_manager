@@ -3,8 +3,9 @@ import { api } from "../api/client";
 import { useActionStore } from "../store/actionStore";
 import { useMessageStore } from "../store/messageStore";
 import { SEND_MODES } from "../utils/constants";
+import { EDITOR_MODES } from "../utils/constants";
 import type { EditorMode, SendModeValue } from "../utils/constants";
-import { isPayloadEmpty } from "../utils/discord";
+import { isPayloadEmpty, validateMessage } from "../utils/discord";
 import { checkUnauthorizedMentions } from "../utils/mentionValidation";
 import { useGlobalStore } from "../store/globalStore";
 
@@ -28,7 +29,14 @@ export const useSend = (): UseSendReturn => {
   const sendMessage = useCallback(async (editMessageId?: string): Promise<SendResult> => {
     const store = useMessageStore.getState();
     const rawPayload = store.getPayload();
-    const problems = store.getValidationErrors();
+    const problems = store.messages.flatMap((message, index) => {
+      const messageMode = (message.flags ?? 0) & 32768
+        ? EDITOR_MODES.V2
+        : EDITOR_MODES.CLASSIC;
+      return validateMessage(message, messageMode).map((problem) =>
+        store.messages.length > 1 ? `Message #${index + 1}: ${problem}` : problem,
+      );
+    });
     const attachedFiles = store.attachedFiles;
     const activeMessage = store.messages?.[store.activeMessageIndex] ?? store.data;
     const threadId = typeof (activeMessage as unknown as { thread_id?: unknown }).thread_id === "string"
@@ -107,8 +115,6 @@ export const useSend = (): UseSendReturn => {
       }
 
       setSendState({ status: "success", error: null, result });
-      useMessageStore.getState().markClean();
-      useActionStore.getState().markClean();
       return { ok: true, result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -117,8 +123,12 @@ export const useSend = (): UseSendReturn => {
     }
   }, [setSendState]);
 
-  const activeMessage = useMessageStore((state) => state.data) as unknown as { thread_id?: string };
-  const isConfigured = Boolean(activeMessage.thread_id?.trim());
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const targets = useMessageStore((state) => state.targets);
+  const hasWebhookTarget = targets.some((target) =>
+    /^https:\/\/(?:www\.|canary\.|ptb\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d{17,20}\/[\w-]+$/i.test(target.url.trim()),
+  );
+  const isConfigured = Boolean(selectedGuildId || hasWebhookTarget);
   return { sendMessage, isConfigured, mode, sendMode: SEND_MODES.BOT };
 };
 
