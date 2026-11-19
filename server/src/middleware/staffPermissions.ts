@@ -11,13 +11,14 @@ import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const log = logger.child("staffPermissions");
 
-type StaffAction = "send" | "edit" | "delete" | "templates" | "weao";
+type StaffAction = "send" | "edit" | "delete" | "templates" | "automation" | "weao";
 
 const ACTION_COLUMN: Record<StaffAction, keyof import("../repositories/staffRepository.js").StaffRecord> = {
   send: "can_send_messages",
   edit: "can_edit_messages",
   delete: "can_delete_messages",
   templates: "can_manage_templates",
+  automation: "can_manage_automation",
   weao: "can_use_weao_exploits",
 };
 
