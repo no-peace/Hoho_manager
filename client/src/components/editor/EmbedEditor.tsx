@@ -392,7 +392,6 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index }) => {
                       <SortableItem key={fieldId} id={fieldId}>
                       <div
                         data-editor-target-id={id}
-                        data-editor-target-id={id}
                         data-editor-target-part="field"
                         data-editor-target-field-id={fieldId}
                         className="p-2.5 rounded-lg bg-[#1D2230] border border-[#10131A] space-y-2 relative group"
