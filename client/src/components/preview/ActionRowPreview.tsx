@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronDown, ExternalLink, Check } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ChevronDown, ExternalLink, Check, SlidersHorizontal } from "lucide-react";
 import type { ComponentNode, SelectOption } from "@dmb/shared";
 import { ButtonStyle, ComponentType } from "@dmb/shared";
 import { useUserPlaceholderPreview } from "./UserPlaceholderPreviewContent";
@@ -104,8 +105,7 @@ export const ButtonPreview = ({ button }: { button: ComponentNode }) => {
   return (
     <div
       data-preview-component-id={button._id}
-      data-preview-interactive="true"
-      className="inline-flex"
+      className="inline-flex rounded-lg hover:ring-2 hover:ring-[#818CF8]/70"
     >
       <button
         type="button"
@@ -131,7 +131,8 @@ export interface SelectPreviewProps {
 export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [openUpwards, setOpenUpwards] = useState(false);
+  const portalRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
 
   // Cache store for real server entities if available
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
@@ -219,13 +220,42 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
     }
   }, [availableOptions]);
 
-  // Viewport boundary check when opening
+  // Keep the portaled menu aligned to its trigger, including nested scroll containers.
   useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUpwards(spaceBelow < 260 && rect.top > 260);
+    if (!isOpen) {
+      setDropdownPosition(null);
+      return;
     }
+
+    const updatePosition = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const margin = 8;
+      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - margin);
+      const spaceAbove = Math.max(0, rect.top - margin);
+      const openUpwards = spaceBelow < 240 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(96, Math.min(250, openUpwards ? spaceAbove : spaceBelow));
+      const top = openUpwards
+        ? Math.max(margin, rect.top - maxHeight - 6)
+        : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
+      const left = Math.max(margin, Math.min(rect.left, window.innerWidth - rect.width - margin));
+      const width = Math.min(rect.width, window.innerWidth - margin * 2);
+      setDropdownPosition({ top, left, width, maxHeight });
+    };
+
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && portalRef.current?.contains(target)) return;
+      updatePosition();
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, [isOpen]);
 
   // Dismiss dropdown on outside click or Escape key
@@ -233,7 +263,11 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
     if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        !portalRef.current?.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -287,7 +321,8 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
   const placeholderText = select.placeholder || defaultPlaceholder;
 
   return (
-    <div className="relative w-full max-w-[400px]" ref={containerRef} data-preview-component-id={select._id} data-preview-interactive="true" data-preview-select="true">
+    <div className="flex w-full max-w-[440px] items-center gap-1">
+      <div className="relative min-w-0 flex-1" ref={containerRef} data-preview-component-id={select._id} data-preview-interactive="true" data-preview-select="true">
       {/* Trigger Bar */}
       <button
         type="button"
@@ -329,15 +364,32 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
         </div>
       </button>
 
+      </div>
+      <button
+        type="button"
+        aria-label="Configure select menu"
+        title="Configure select menu"
+        data-preview-component-id={select._id}
+        onClick={() => useGlobalStore.getState().showToast("Select menu selected for configuration.", "info")}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#A1A8B8] transition-colors hover:bg-[#3f4147] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8]"
+      >
+        <SlidersHorizontal size={14} />
+      </button>
       {/* Dropdown Options Popup */}
-      {isOpen && (
+      {isOpen && dropdownPosition && createPortal(
         <div
+          ref={portalRef}
           role="listbox"
           aria-multiselectable={isMulti}
-          className={`absolute left-0 w-full rounded-md bg-[#2b2d31] border border-[#1e1f22] shadow-2xl py-1.5 z-50 ${
-            openUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"
-          }`}
-          style={{ maxHeight: "250px" }}
+          className="rounded-md border border-[#1e1f22] bg-[#2b2d31] py-1.5 shadow-2xl"
+          style={{
+            position: "fixed",
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            maxHeight: dropdownPosition.maxHeight,
+            zIndex: 99999,
+          }}
         >
           {isMulti && (
             <div className="px-3 py-1.5 mb-1 border-b border-[#1e1f22] flex items-center justify-between text-[0.6875rem] text-[#949ba4] font-medium select-none">
@@ -346,7 +398,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
             </div>
           )}
 
-          <div className="overflow-y-auto max-h-52 space-y-0.5 px-1 custom-scrollbar">
+          <div className="min-h-0 overflow-y-auto space-y-0.5 px-1 custom-scrollbar">
             {availableOptions.length === 0 ? (
               <div className="px-3 py-3 text-xs text-[#949ba4] italic text-center">
                 No options configured. Add options in the Component Editor.
@@ -406,7 +458,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 };
