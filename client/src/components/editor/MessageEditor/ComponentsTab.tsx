@@ -383,7 +383,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                           });
                         }
                       }}
-                      className="w-full bg-[#272D3A] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
+                      className="w-full bg-[#1D2230] text-xs text-[#F1F3F9] px-2.5 py-1.5 rounded border border-[#161A23] focus:border-[#818CF8] focus:outline-none"
                     />
                   </div>
                 ) : (
