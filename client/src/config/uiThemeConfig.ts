@@ -45,7 +45,7 @@ export const UI_THEME_CONFIG = {
   button: {
     base: "relative inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-[transform,background-color,color,opacity] duration-150 ease-out shrink-0 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0D12]",
     variants: {
-      primary: "bg-[#818CF8] hover:bg-[#6366F1] active:bg-[#4F46E5] text-[#0B0D12] font-semibold border border-[#818CF8]/70 shadow-sm",
+      primary: "bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#3C45A5] text-white font-semibold border border-[#5865F2]/70 shadow-sm",
       secondary: "bg-[#1D2230] hover:bg-[#252B3A] active:bg-[#2C3344] text-[#F1F3F9] border border-[#272D3A]",
       success: "bg-[#34D399]/15 hover:bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/30",
       danger: "bg-[#F87171]/12 hover:bg-[#F87171]/20 active:bg-[#F87171]/25 text-[#F87171] border border-[#F87171]/30",
@@ -95,7 +95,7 @@ export const UI_THEME_CONFIG = {
     inspectorBackdrop: "fixed inset-0 z-40 bg-[#0B0D12]/75 backdrop-blur-[2px] min-[1200px]:hidden",
     inspectorPanel: "fixed inset-x-0 bottom-0 z-50 flex max-h-[82dvh] flex-col rounded-t-[12px] border-t border-[#272D3A] bg-[#161A23] shadow-2xl min-[1200px]:static min-[1200px]:z-10 min-[1200px]:max-h-none min-[1200px]:w-[27.5rem] min-[1200px]:shrink-0 min-[1200px]:rounded-none min-[1200px]:border-t-0 min-[1200px]:border-l min-[1200px]:border-[#272D3A] min-[1200px]:shadow-none",
     inspectorHeader: "flex items-center justify-between border-b border-[#202531] bg-[#10131A] px-5 py-4 shrink-0",
-    inspectorBody: "min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[env(safe-area-inset-bottom)] custom-scrollbar",
+    inspectorBody: "min-h-0 flex-1 space-y-5 overflow-y-auto p-5 pb-[max(1rem,env(safe-area-inset-bottom))] custom-scrollbar",
     docsTableCard: "bg-[#161A23] border border-[#272D3A] rounded-[10px] overflow-hidden shadow-sm mb-12",
     docsTableHeader: "px-5 py-3 border-b border-[#202531] bg-[#10131A] flex items-center justify-between",
     docsVariableCard: "rounded-[8px] border border-[#272D3A] bg-[#1D2230] p-3",
