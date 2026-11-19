@@ -328,14 +328,16 @@ export const useActionStore = create<ActionState>()((set, get) => ({
             )
           : [];
         if (submitSteps.length > 0) {
+          config.then = walkSteps(submitSteps, modalCustomId, `${stepPath}.then`);
           registrations.push({
             customId: modalCustomId,
-            steps: walkSteps(submitSteps, modalCustomId, `${stepPath}.then`).map(stripStep),
+            steps: (config.then as FlowStep[]).map(stripStep),
           });
         }
       }
 
       for (const branchKey of BRANCH_KEYS) {
+        if (step.type === "open_modal" && branchKey === "then") continue;
         const branch = config[branchKey];
         if (Array.isArray(branch)) {
           const nested = branch.filter((entry): entry is FlowStep =>
