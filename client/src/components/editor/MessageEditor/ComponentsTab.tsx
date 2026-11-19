@@ -137,6 +137,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             }}
             className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
             title="Duplicate"
+            aria-label="Duplicate component"
           >
             <Copy size={13} />
           </button>
@@ -148,6 +149,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             }}
             className="p-1 rounded text-[#A1A8B8] hover:text-[#f28b8b] hover:bg-[#da373c]/20"
             title="Delete"
+            aria-label="Delete component"
           >
             <Trash2 size={13} />
           </button>
