@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Edit3, Upload, RefreshCw } from "lucide-react";
+import { Download, Edit3, Upload, RefreshCw, CalendarClock, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
@@ -11,7 +11,9 @@ import { useMessageStore } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useGlobalStore, getServerNow } from "../../store/globalStore";
 import { downloadJson, parseImportedJson, toQueryData } from "../../utils/exportImport";
-import api from "../../api/client";
+import api, { request } from "../../api/client";
+
+const ScheduledMessageModal = React.lazy(() => import("./ScheduledMessageModal").then((module) => ({ default: module.ScheduledMessageModal })));
 
 export interface BackupsModalProps {
   open: boolean;
@@ -23,7 +25,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   onClose,
 }) => {
   const { templates, saveCurrent, loadTemplate, refresh } = useTemplates();
-  const [filter, setFilter] = useState<"all" | "tracked" | "templates">("all");
+  const [filter, setFilter] = useState<"all" | "tracked" | "templates" | "schedules">("all");
   const [templateName, setTemplateName] = useState("");
   const [trackOnSave, setTrackOnSave] = useState(false);
   const [addToBotCommand, setAddToBotCommand] = useState(false);
@@ -37,7 +39,11 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [editExpiresAt, setEditExpiresAt] = useState<string | null>(null);
   const [trackedList, setTrackedList] = useState<any[]>([]);
   const [loadingTracked, setLoadingTracked] = useState(false);
+  const [scheduleRows, setScheduleRows] = useState<Array<{ id: number; channel_id: string; next_run_at: string | null; enabled: number; cron_expr: string | null }>>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const currentUser = useGlobalStore((state) => state.currentUser);
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const currentName = useTemplateStore((state) => state.currentName);
   const currentTemplateId = useTemplateStore((state) => state.currentId);
   const editorData = useMessageStore((state) => state.data) as any;
@@ -78,6 +84,24 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   useEffect(() => {
     if (open) void refreshTracked();
   }, [open]);
+
+  const refreshSchedules = async () => {
+    if (!selectedGuildId) { setScheduleRows([]); return; }
+    setLoadingSchedules(true);
+    try {
+      const rows = await request<typeof scheduleRows>(`/api/automation/schedules?guildId=${encodeURIComponent(selectedGuildId)}`);
+      setScheduleRows(Array.isArray(rows) ? rows : []);
+    } catch (error: any) {
+      showToast(error?.message || "Failed to load schedules", "error");
+      setScheduleRows([]);
+    } finally {
+      setLoadingSchedules(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && filter === "schedules") void refreshSchedules();
+  }, [open, filter, selectedGuildId]);
 
   useEffect(() => {
     if (!open || !currentTemplateId) {
@@ -381,11 +405,12 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
   const visibleItems = items.filter((item) => {
     if (filter === "tracked") return item.isTracked;
     if (filter === "templates") return item.kind === "template";
-    return true;
+    return filter !== "schedules";
   });
 
   return (
     <Modal open={open} onClose={onClose} title="Backups & Tracking" width="max-w-2xl">
+      {filter !== "schedules" && (
       <section className="space-y-3 rounded-xl border border-[#272D3A] bg-[#10131A] p-3">
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -432,6 +457,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
           Tracking keeps dynamic user and exploit placeholders synchronized. New backups expire after 14 days by default.
         </p>
       </section>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1 rounded-lg border border-[#272D3A] bg-[#1D2230] p-1 overflow-x-auto no-scrollbar max-w-full">
@@ -439,6 +465,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             ["all", `All · ${items.length}`],
             ["tracked", `Tracked Only · ${items.filter((item) => item.isTracked).length}`],
             ["templates", `Saved Templates · ${templates.length}`],
+            ["schedules", "Schedules"],
           ] as const).map(([value, label]) => (
             <button
               key={value}
@@ -450,7 +477,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        {filter !== "schedules" && <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" icon={Download} onClick={handleExportJson}>
             Export
           </Button>
@@ -464,9 +491,24 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
             accept=".json,application/json"
             onChange={(event) => void handleImportJson(event)}
           />
-        </div>
+        </div>}
       </div>
 
+      {filter === "schedules" ? (
+        <section className="space-y-2 rounded-xl border border-[#272D3A] bg-[#10131A] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div><p className="text-xs font-bold text-[#F1F3F9]">Scheduled messages</p><p className="text-[10px] text-[#A1A8B8]">Manage one-off and recurring posts for the selected server.</p></div>
+            <Button size="sm" variant="primary" icon={CalendarClock} onClick={() => setScheduleModalOpen(true)}>Schedule current</Button>
+          </div>
+          {loadingSchedules ? <p className="py-5 text-center text-xs text-[#A1A8B8]">Loading schedules...</p> : scheduleRows.length === 0 ? <p className="rounded-lg border border-dashed border-[#272D3A] p-5 text-center text-xs text-[#A1A8B8]">No schedules for this server yet.</p> : scheduleRows.map((row) => (
+            <div key={row.id} className="flex items-center gap-2 rounded-lg border border-[#272D3A] bg-[#161A23] p-2.5">
+              <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-[#F1F3F9]">Channel {row.channel_id}</p><p className="text-[10px] text-[#A1A8B8]">{row.next_run_at ? new Date(row.next_run_at).toLocaleString() : "No next run"} · {row.cron_expr ? "Recurring" : "One time"}</p></div>
+              <button type="button" onClick={() => void request(`/api/automation/schedules/${row.id}`, { method: "PATCH", body: { enabled: !row.enabled } }).then(refreshSchedules).catch((error) => showToast(error?.message || "Could not update schedule", "error"))} className="rounded-md border border-[#272D3A] px-2 py-1 text-[10px] text-[#A1A8B8] hover:text-white">{row.enabled ? "Pause" : "Resume"}</button>
+              <button type="button" onClick={() => void request(`/api/automation/schedules/${row.id}`, { method: "DELETE" }).then(refreshSchedules).catch((error) => showToast(error?.message || "Could not delete schedule", "error"))} aria-label="Delete schedule" className="rounded p-1.5 text-[#F87171] hover:bg-[#F87171]/10"><Trash2 size={13} /></button>
+            </div>
+          ))}
+        </section>
+      ) : (
       <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 custom-scrollbar">
         {loadingTracked ? (
           <div className="flex items-center justify-center gap-2 py-6 text-xs text-[#A1A8B8]"><RefreshCw size={15} className="animate-spin text-[#818CF8]" /><span>Loading tracked messages…</span></div>
@@ -580,6 +622,8 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
           </article>
         ))}
       </div>
+      )}
+      <React.Suspense fallback={null}><ScheduledMessageModal open={scheduleModalOpen} onClose={() => { setScheduleModalOpen(false); void refreshSchedules(); }} /></React.Suspense>
     </Modal>
   );
 };
