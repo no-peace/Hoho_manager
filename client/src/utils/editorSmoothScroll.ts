@@ -119,14 +119,23 @@ export function scrollToMessageEditor(index: number, targetId?: string, targetPa
 
     if (typeof MutationObserver !== "undefined") {
       observer = new MutationObserver(navigate);
-      if (targetMissing) {
-        observer.observe(wrapper, { childList: true, subtree: true });
-      }
-      if (hiddenPane) {
-        observer.observe(hiddenPane, {
+      if (targetMissing && hiddenPane === wrapper) {
+        observer.observe(wrapper, {
+          childList: true,
+          subtree: true,
           attributes: true,
           attributeFilter: ["aria-hidden", "inert", "class"],
         });
+      } else {
+        if (targetMissing) {
+          observer.observe(wrapper, { childList: true, subtree: true });
+        }
+        if (hiddenPane) {
+          observer.observe(hiddenPane, {
+            attributes: true,
+            attributeFilter: ["aria-hidden", "inert", "class"],
+          });
+        }
       }
       // Avoid retaining an observer if a requested message/target never appears.
       timeoutId = window.setTimeout(stopWaiting, 2000);
@@ -134,16 +143,12 @@ export function scrollToMessageEditor(index: number, targetId?: string, targetPa
     }
 
     // Older environments without MutationObserver get a bounded RAF fallback.
-    const retry = () => {
+    if (retryAttempts >= 60) return;
+    retryFrame = window.requestAnimationFrame(() => {
       retryFrame = 0;
-      if (retryAttempts >= 60) return;
       retryAttempts += 1;
       navigate();
-      if (retryAttempts < 60 && (observer === null)) {
-        retryFrame = window.requestAnimationFrame(retry);
-      }
-    };
-    retryFrame = window.requestAnimationFrame(retry);
+    });
   };
 
   const navigate = () => {
