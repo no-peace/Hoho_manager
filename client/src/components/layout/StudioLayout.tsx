@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Edit3, Eye, Plus, Send } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import { Header } from "./Header";
 import { MessageEditor } from "../editor/MessageEditor";
 import { MessagePreview } from "../preview/MessagePreview";
 import { CultMorphSurface } from "../ui/CultSkiperPrimitives";
-import { CountUpNumber, MagneticButton } from "../reactbits/ReactBitsPrimitives";
+import { CountUpNumber } from "../reactbits/ReactBitsPrimitives";
 import { useMessageStore, type Selection, type EmbedPreviewPart } from "../../store/messageStore";
 import { useActionStore } from "../../store/actionStore";
 import { useTemplateStore } from "../../store/templateStore";
@@ -20,7 +19,6 @@ const PropertyPanel = React.lazy(() =>
 );
 
 export const StudioLayout: React.FC = () => {
-  const prefersReducedMotion = useReducedMotion();
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
@@ -108,11 +106,31 @@ export const StudioLayout: React.FC = () => {
   const messages = useMessageStore((state) => state.messages);
   const data = useMessageStore((state) => state.data);
   const addMessage = useMessageStore((state) => state.addMessage);
+  const attachedFiles = useMessageStore((state) => state.attachedFiles);
 
   const displayMessages = useMemo(
     () => (messages && messages.length > 0 ? messages : [data]),
     [messages, data],
   );
+
+  const hasUnsavedWork = useMemo(
+    () => attachedFiles.length > 0 || displayMessages.some((message) =>
+      Boolean(message.content?.trim()) ||
+      (Array.isArray(message.embeds) && message.embeds.length > 0) ||
+      (Array.isArray(message.components) && message.components.length > 0),
+    ),
+    [attachedFiles.length, displayMessages],
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedWork) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasUnsavedWork]);
 
   // Jakob's Law: Familiar Studio Keyboard Shortcuts (Ctrl/Cmd+S -> Backups, Ctrl/Cmd+Enter -> Dispatch)
   useEffect(() => {
@@ -172,9 +190,8 @@ export const StudioLayout: React.FC = () => {
         <SplitPane
           initialRatio={0.5}
           left={
-            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#2B2D31]">
-              <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Message Editor</h2></div>
-              <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#2B2D31] p-3 custom-scrollbar sm:p-4">
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0B0D12] min-[1200px]:rounded-[10px] min-[1200px]:border min-[1200px]:border-[#272D3A]">
+              <div ref={editorScrollRef} data-editor-scroll-container className="min-h-0 flex-1 overflow-y-auto bg-[#0B0D12] p-3 custom-scrollbar sm:p-4">
                 <div data-editor-scroll-content className="space-y-3">
                   {displayMessages.map((_, idx) => <MessageEditor key={idx} index={idx} />)}
                   <CultMorphSurface
@@ -185,11 +202,11 @@ export const StudioLayout: React.FC = () => {
                     className="mt-2 pb-4"
                   >
                     <div className="space-y-2">
-                      <button type="button" onClick={() => addMessage({ flags: 0 })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
+                      <button type="button" onClick={() => addMessage({ flags: 0 })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#1D2230] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
                         <div className="shrink-0 rounded bg-[#272D3A] p-2 font-mono text-xs font-bold text-[#F1F3F9]">TXT</div>
                         <div><p className="text-sm font-bold text-white">Standard Message (Classic)</p><p className="mt-0.5 text-xs text-[#A1A8B8]">Classic message with content, embeds, attachments, and action rows.</p></div>
                       </button>
-                      <button type="button" onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#2b2d31] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
+                      <button type="button" onClick={() => addMessage({ flags: 32768, components: [{ _id: Math.random().toString(36).slice(2, 10), type: 10, content: "" }] })} className="flex w-full items-start gap-3 rounded-lg border border-[#272D3A] bg-[#1D2230] p-3 text-left transition-colors hover:border-[#818CF8] hover:bg-[#252B3A]">
                         <div className="shrink-0 rounded bg-[#818CF8]/20 p-2 font-mono text-xs font-bold text-[#949cf7]">V2</div>
                         <div><p className="text-sm font-bold text-white">Components V2 Message</p><p className="mt-0.5 text-xs text-[#A1A8B8]">Build layouts with containers, text blocks, galleries, files, separators, and action rows.</p></div>
                       </button>
@@ -200,8 +217,7 @@ export const StudioLayout: React.FC = () => {
             </section>
           }
           right={
-            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[#272D3A] bg-[#313338]">
-              <div className="shrink-0 border-b border-[#272D3A] px-3 py-2"><h2 className="m-0 text-xs font-bold leading-5 text-[#F1F3F9]">Live Preview</h2></div>
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#313338] min-[1200px]:rounded-[10px] min-[1200px]:border min-[1200px]:border-[#272D3A]">
               <div className="min-h-0 flex-1 overflow-y-auto bg-[#313338] p-3 custom-scrollbar sm:p-4">
                 <MessagePreview onSelectMessage={handlePreviewMessageSelect} onSelectPreviewComponent={handlePreviewComponentSelect} onSelectPreviewEmbed={handlePreviewEmbedSelect} />
               </div>
@@ -217,65 +233,20 @@ export const StudioLayout: React.FC = () => {
         <React.Suspense fallback={null}><PropertyPanel onOpenFullEditor={handleOpenFullEditor} /></React.Suspense>
       </main>
 
-      {/* Fitts's Law Mobile / Tablet Bottom Navigation Bar (< 1200px) */}
-      <nav
-        aria-label="Mobile workspace navigation"
-        className="min-[1200px]:hidden flex h-[60px] min-h-[60px] items-center gap-2 border-t border-[#272D3A] bg-[#10131A] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md shrink-0 z-30"
-      >
-        <button
-          type="button"
-          onClick={() => setMobileView("editor")}
-          aria-label="Editor"
-          aria-pressed={mobileView === "editor"}
-          className="relative flex-1 min-h-[40px] flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.97] select-none"
-        >
-          {mobileView === "editor" && (
-            <motion.span
-              layoutId="mobileWorkspaceTab"
-              className="absolute inset-0 rounded-lg bg-[#818CF8]"
-              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
-            />
-          )}
-          <Edit3 size={14} className="relative z-10" />
-          <span aria-hidden="true" className={`relative z-10 ${mobileView === "editor" ? "text-white" : ""}`}>
-            Editor
-          </span>
-          <span
-            className={`relative z-10 text-[0.625rem] px-1.5 py-0.5 rounded bg-black/20 font-mono ${mobileView === "editor" ? "text-white" : ""}`}
-          >
-            <CountUpNumber value={displayMessages.length} />
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileView("preview")}
-          aria-label="Preview"
-          aria-pressed={mobileView === "preview"}
-          className="relative flex-1 min-h-[40px] flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-[#b5bac1] transition-colors active:scale-[0.97] select-none"
-        >
-          {mobileView === "preview" && (
-            <motion.span
-              layoutId="mobileWorkspaceTab"
-              className="absolute inset-0 rounded-lg bg-[#818CF8]"
-              transition={prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
-            />
-          )}
-          <Eye size={14} className="relative z-10" />
-          <span aria-hidden="true" className={`relative z-10 ${mobileView === "preview" ? "text-white" : ""}`}>
-            Preview
-          </span>
-        </button>
-        <MagneticButton className="shrink-0">
-          <button
-            type="button"
-            onClick={() => openBotModal("send")}
-            aria-label="Dispatch"
-            className="min-h-[40px] px-4 py-2.5 rounded-lg bg-[#248046] hover:bg-[#1a6334] text-white text-xs font-bold transition-[transform,background-color,color,box-shadow,opacity] duration-150 active:scale-[0.97] flex items-center gap-1.5 select-none shadow-md"
-          >
-            <Send size={13} />
-            <span aria-hidden="true">Dispatch</span>
+      {/* Native-feeling segmented mobile workspace dock */}
+      <nav aria-label="Mobile workspace navigation" className="min-[1200px]:hidden flex items-center gap-2.5 border-t border-[#202531] bg-[#0D1017]/95 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md shrink-0 z-30">
+        <div className="flex flex-1 items-center gap-1 rounded-xl border border-[#232836] bg-[#141821] p-1">
+          <button type="button" onClick={() => setMobileView("editor")} aria-label="Editor" aria-pressed={mobileView === "editor"} className={`relative flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${mobileView === "editor" ? "border-[#818CF8]/40 bg-[#242A3A] text-[#F1F3F9] shadow-xs" : "border-transparent text-[#8B93A7] hover:text-[#F1F3F9]"}`}>
+            <Edit3 size={14} /><span>Editor</span>
+            <span className="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[0.625rem]"><CountUpNumber value={displayMessages.length} /></span>
           </button>
-        </MagneticButton>
+          <button type="button" onClick={() => setMobileView("preview")} aria-label="Preview" aria-pressed={mobileView === "preview"} className={`relative flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${mobileView === "preview" ? "border-[#818CF8]/40 bg-[#242A3A] text-[#F1F3F9] shadow-xs" : "border-transparent text-[#8B93A7] hover:text-[#F1F3F9]"}`}>
+            <Eye size={14} /><span>Preview</span>
+          </button>
+        </div>
+        <button type="button" onClick={() => openBotModal("send")} aria-label="Dispatch" className="flex min-h-[42px] shrink-0 items-center gap-1.5 rounded-xl bg-[#248046] px-4 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a6334] active:scale-[0.98]">
+          <Send size={13} /><span>Dispatch</span>
+        </button>
       </nav>
     </div>
   );
