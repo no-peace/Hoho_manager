@@ -199,6 +199,7 @@ export const StudioLayout: React.FC = () => {
                     items={displayMessages.map((_, idx) => `message-${idx}`)}
                     onReorder={(activeId, overId) => reorderMessages(Number(activeId.slice(8)), Number(overId.slice(8)))}
                     strategy="vertical"
+                    renderOverlay={(activeId) => `Message ${Number(activeId.slice(8)) + 1}`}
                     className="space-y-3"
                   >
                     {displayMessages.map((_, idx) => {
