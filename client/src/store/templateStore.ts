@@ -49,6 +49,8 @@ export interface TemplateState {
   detach(): void;
 }
 
+let templateFetchSequence = 0;
+
 export const useTemplateStore = create<TemplateState>()((set, get) => ({
   templates: [],
   currentId: null,
@@ -61,11 +63,14 @@ export const useTemplateStore = create<TemplateState>()((set, get) => ({
   markDirty: () => set({ dirty: true }),
 
   fetchTemplates: async (query) => {
+    const requestId = ++templateFetchSequence;
     set({ status: "loading", error: null });
     try {
       const response = await api.templates.list(query);
+      if (requestId !== templateFetchSequence) return;
       set({ templates: response.templates, status: "idle" });
     } catch (error) {
+      if (requestId !== templateFetchSequence) return;
       set({
         status: "error",
         error: error instanceof Error ? error.message : String(error),
@@ -74,6 +79,7 @@ export const useTemplateStore = create<TemplateState>()((set, get) => ({
   },
 
   save: async (document) => {
+    templateFetchSequence += 1;
     const { currentId, currentName } = get();
     if (!currentName.trim()) throw new Error("Give the template a name before saving.");
 
@@ -124,11 +130,17 @@ export const useTemplateStore = create<TemplateState>()((set, get) => ({
   },
 
   remove: async (id) => {
+    templateFetchSequence += 1;
     await api.templates.remove(id);
-    set((state) => ({
-      templates: state.templates.filter((template) => template.id !== id),
-      currentId: state.currentId === id ? null : state.currentId,
-    }));
+    set((state) => {
+      const removingCurrent = state.currentId === id;
+      return {
+        templates: state.templates.filter((template) => template.id !== id),
+        currentId: removingCurrent ? null : state.currentId,
+        currentName: removingCurrent ? "" : state.currentName,
+        dirty: removingCurrent ? false : state.dirty,
+      };
+    });
   },
 
   detach: () => set({ currentId: null, currentName: "", dirty: false }),
