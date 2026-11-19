@@ -9,8 +9,7 @@ export const resolveStudioRoute = (pathname: string): StudioRouteKind => {
   if (
     pathname === "/" ||
     pathname === "" ||
-    pathname === "/bots/webhook" ||
-    pathname === "/studio"
+      pathname === "/studio"
   ) {
     return "studio";
   }
