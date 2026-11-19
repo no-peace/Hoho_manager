@@ -44,14 +44,15 @@ interface RequestOptions {
   body?: unknown;
   anonymous?: boolean;
   signal?: AbortSignal;
+  timeoutMs?: number;
 }
 
 const request = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
-  const { method = "GET", body, anonymous = false, signal } = options;
+  const { method = "GET", body, anonymous = false, signal, timeoutMs = 15_000 } = options;
 
   let response: Response;
   try {
-    const timeoutSignal = AbortSignal.timeout(15_000);
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
     const requestSignal = signal
       ? AbortSignal.any([signal, timeoutSignal])
       : timeoutSignal;
@@ -74,6 +75,7 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
 
   const isJson = (response.headers.get("content-type") ?? "").includes("application/json");
   const payload: unknown = isJson ? await response.json().catch(() => null) : null;
+  if (!isJson) await response.body?.cancel().catch(() => undefined);
 
   if (!response.ok) {
     const record = (payload ?? {}) as Record<string, unknown>;
@@ -88,9 +90,9 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 };
 
-export const listWeaoExploits = async (query = ""): Promise<WeaoExploitChoice[]> => {
+export const listWeaoExploits = async (query = "", options: { timeoutMs?: number } = {}): Promise<WeaoExploitChoice[]> => {
   const qs = query ? `?q=${encodeURIComponent(query)}` : "";
-  const data = await request<{ exploits: WeaoExploitChoice[] }>(`/api/weao/exploits${qs}`);
+  const data = await request<{ exploits: WeaoExploitChoice[] }>(`/api/weao/exploits${qs}`, options);
   return data?.exploits ?? [];
 };
 
@@ -117,7 +119,7 @@ export const syncTrackedMessages = async (): Promise<{
 }> => {
   const data = await request<{ ok: boolean; result: { checked: number; updated: number; removed: number; errors: number } }>(
     "/api/tracking/sync",
-    { method: "POST" },
+    { method: "POST", timeoutMs: 60_000 },
   );
   return data?.result ?? { checked: 0, updated: 0, removed: 0, errors: 0 };
 };
