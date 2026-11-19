@@ -2,9 +2,8 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { useActionStore } from "../store/actionStore";
 import { useMessageStore } from "../store/messageStore";
-import { SEND_MODES } from "../utils/constants";
 import { EDITOR_MODES } from "../utils/constants";
-import type { EditorMode, SendModeValue } from "../utils/constants";
+import type { EditorMode } from "../utils/constants";
 import { isPayloadEmpty, validateMessage } from "../utils/discord";
 import { checkUnauthorizedMentions } from "../utils/mentionValidation";
 import { useGlobalStore } from "../store/globalStore";
@@ -19,7 +18,6 @@ export interface UseSendReturn {
   sendMessage: (editMessageId?: string) => Promise<SendResult>;
   isConfigured: boolean;
   mode: EditorMode;
-  sendMode: SendModeValue;
 }
 
 export const useSend = (): UseSendReturn => {
