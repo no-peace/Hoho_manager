@@ -137,8 +137,7 @@ describe("Empirical Challenger: Multipart Middleware Fallback & Stress Testing",
     fd.append(
       "payload_json",
       JSON.stringify({
-        mode: "webhook",
-        webhookUrl: "https://discord.com/api/webhooks/1/abc",
+        mode: "bot",
         payload: { content: "Wrapped message" },
       }),
     );
@@ -150,8 +149,7 @@ describe("Empirical Challenger: Multipart Middleware Fallback & Stress Testing",
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.body.mode).toBe("webhook");
-    expect(data.body.webhookUrl).toBe("https://discord.com/api/webhooks/1/abc");
+    expect(data.body.mode).toBe("bot");
     expect(data.body.payload.content).toBe("Wrapped message");
   });
 
