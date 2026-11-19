@@ -834,7 +834,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
 
   return (
     <div className="space-y-2">
-      <SortableList items={stepIds} onReorder={handleReorderSteps} strategy="vertical" className="space-y-2">
+      <SortableList items={stepIds} onReorder={handleReorderSteps} strategy="vertical" renderOverlay={(activeId) => `Step ${stepIds.indexOf(activeId) + 1}`} className="space-y-2">
       {steps.map((step, index) => {
         const stepId = step._id ?? stepIds[index]!;
         return (
