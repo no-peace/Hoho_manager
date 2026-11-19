@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Edit3, Eye, Plus, Send } from "lucide-react";
+import { CalendarClock, DownloadCloud, Edit3, Eye, Plus, Send } from "lucide-react";
 import { Header } from "./Header";
 import { MessageEditor } from "../editor/MessageEditor";
 import { MessagePreview } from "../preview/MessagePreview";
