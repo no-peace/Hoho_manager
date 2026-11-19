@@ -128,9 +128,7 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
   if (rowEntries.length === 0) return null;
 
-  return (
-    <div className="space-y-2.5">
-      {rowEntries.map(({ row, containerId, siblingIndex, siblingCount }) => {
+  const rowCards = rowEntries.map(({ row, containerId, siblingIndex }) => {
         const rowId = row._id ?? "";
         const children = row.components ?? [];
         const hasSelect = children.some((c) => c.type !== ComponentType.Button);
@@ -139,8 +137,8 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
         const capacityLabel = hasSelect ? "1/1 Select Menu" : `${children.length}/5 Buttons`;
 
         return (
+          <SortableItem key={rowId} id={rowId}>
           <div
-            key={rowId}
             data-editor-target-id={rowId}
             className="rounded-lg bg-[#10131A] border border-[#272D3A] shadow-sm transition-[border-color,background-color] duration-150 hover:border-[#252B3A]"
           >
@@ -333,9 +331,20 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
               )}
             </div>
           </div>
+          </SortableItem>
         );
-      })}
-    </div>
+      });
+  return targetRowId ? (
+    <div className="space-y-2.5">{rowCards}</div>
+  ) : (
+    <SortableList
+      items={rowEntries.map(({ row }, index) => row._id ?? `action-row-${index}`)}
+      onReorder={(activeId, overId) => reorderComponentById(activeId, overId, parentId)}
+      strategy="vertical"
+      className="space-y-2.5"
+    >
+      {rowCards}
+    </SortableList>
   );
 };
 
