@@ -7,7 +7,7 @@ interface TextProps {
 }
 
 export const SplitTextReveal: React.FC<TextProps> = ({ text, className = "" }) => (
-  <span className={className} aria-label={text}>{text}</span>
+  <span className={`hoho-split-text-reveal ${className}`} aria-label={text}>{text}</span>
 );
 
 export const ShinyText: React.FC<TextProps> = ({ text, className = "" }) => (
