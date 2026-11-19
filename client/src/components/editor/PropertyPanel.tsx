@@ -175,7 +175,7 @@ export const PropertyPanel = ({
               <IconButton icon={X} label="Close Embed Inspector" size={15} onClick={() => select(null)} />
             </div>
           </div>
-          <div data-embed-inspector-body className="min-h-0 overflow-y-auto p-3.5">
+          <div data-embed-inspector-body className="min-h-0 overflow-y-auto p-3.5 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <EmbedEditor embed={embed} index={embedIndex} />
           </div>
         </aside>
@@ -266,6 +266,7 @@ export const PropertyPanel = ({
               }`}
             >
               <Sliders size={12} />
+              <span>Properties</span>
             </button>
             <button
               type="button"
