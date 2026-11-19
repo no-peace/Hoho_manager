@@ -152,8 +152,9 @@ const DEFAULT_MULTIPART_TIMEOUT_MS = 30_000;
 /**
  * Low-level fetch against the Discord API with retry/backoff.
  *
- * Discord signals throttling with 429 and a `retry_after` (seconds); transient
- * 5xx responses are also retried. 4xx is never retried  that is our bug.
+ * Discord signals throttling with 429 and a `retry_after` (seconds). Only
+ * idempotent requests are retried after network or 5xx failures; 4xx is never
+ * retried except for an explicit 429 rate-limit response.
  */
 const apiRequest = async <T>(
   method: string,
