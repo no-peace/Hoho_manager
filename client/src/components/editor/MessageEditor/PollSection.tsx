@@ -70,7 +70,7 @@ export const PollSection: React.FC<{ poll?: DiscordPoll; ensureActive?: () => vo
                     aria-label={`Answer ${index + 1} emoji`}
                     maxLength={8}
                     value={answer.poll_media.emoji?.name ?? ""}
-                    onChange={(event) => update({ ...poll, answers: poll.answers.map((item, itemIndex) => item._id === answer._id ? { ...item, poll_media: { ...item.poll_media, emoji: event.target.value ? { name: event.target.value } : undefined } } : item) })}
+                    onChange={(event) => update({ ...poll, answers: poll.answers.map((item) => item._id === answer._id ? { ...item, poll_media: { ...item.poll_media, emoji: event.target.value ? { name: event.target.value } : undefined } } : item) })}
                     placeholder="😀"
                     className="w-10 rounded-md border border-[#272D3A] bg-[#1D2230] px-1.5 py-1.5 text-center text-xs text-[#F1F3F9] outline-none focus:border-[#818CF8]"
                   />
