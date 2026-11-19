@@ -43,6 +43,10 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [lintExpanded, setLintExpanded] = useState(false);
+  const [autoPublish, setAutoPublish] = useState(false);
+  const [expireAfterSeconds, setExpireAfterSeconds] = useState(0);
+  const [sticky, setSticky] = useState(false);
+  const [stickyIntervalMessages, setStickyIntervalMessages] = useState(10);
   const lintMessages = useMessageStore((state) => state.messages);
   const lintAttachments = useMessageStore((state) => state.attachedFiles);
   const lintActiveMessageIndex = useMessageStore((state) => state.activeMessageIndex);
@@ -303,6 +307,10 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 flows,
                 track: trackAfterSend,
                 expiresAt: customExpiry,
+                autoPublish,
+                expireAfterSeconds,
+                sticky,
+                stickyIntervalMessages,
                 ...(urlAttachments.length > 0 ? { attachments: urlAttachments } : {}),
               },
               true,
@@ -628,6 +636,33 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
                 )}
               </div>
             )}
+          </section>
+        )}
+
+        {mode === "send" && (
+          <section className="space-y-3 rounded-xl border border-[#272D3A] bg-[#10131A] p-3.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A1A8B8]">Message Automation</p>
+            <Checkbox checked={autoPublish} onChange={setAutoPublish} label="Auto-publish (crosspost announcement channels)" className="text-xs" />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Checkbox checked={expireAfterSeconds > 0} onChange={(checked) => setExpireAfterSeconds(checked ? 3600 : 0)} label="Auto-delete after sending" className="text-xs" />
+              <select value={String(expireAfterSeconds)} onChange={(event) => setExpireAfterSeconds(Number(event.target.value))} disabled={expireAfterSeconds === 0} aria-label="Auto-delete duration" className="rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1 text-[11px] text-[#F1F3F9] disabled:opacity-40">
+                <option value="3600">1 hour</option>
+                <option value="21600">6 hours</option>
+                <option value="86400">24 hours</option>
+                <option value="604800">7 days</option>
+                <option value="2592000">30 days</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Checkbox checked={sticky} onChange={setSticky} label="Keep this message sticky in each selected channel" className="text-xs" />
+              {sticky && (
+                <div className="ml-6 flex flex-wrap items-center gap-2">
+                  <label htmlFor="sticky-message-interval" className="text-[10px] text-[#A1A8B8]">Repost after</label>
+                  <input id="sticky-message-interval" type="number" min={5} max={50} value={stickyIntervalMessages} onChange={(event) => setStickyIntervalMessages(Math.max(5, Math.min(50, Number(event.target.value) || 5)))} className="w-16 rounded-md border border-[#272D3A] bg-[#1D2230] px-2 py-1 text-xs text-[#F1F3F9]" />
+                  <span className="text-[10px] text-[#A1A8B8]">new messages (5–50)</span>
+                </div>
+              )}
+            </div>
           </section>
         )}
 
