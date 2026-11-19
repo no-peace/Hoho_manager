@@ -44,28 +44,50 @@ export interface WeaoMetaInfo {
 }
 
 const WEAO_STORAGE_KEY = "hoho_weao_exploits_cache";
-const WEAO_CLIENT_TTL_MS = 60_000;
+const GUILD_CACHE_TTL_MS = 5 * 60_000;
+const WEAO_CLIENT_TTL_MS = 15 * 60_000;
+const MAX_GUILD_CACHE_ENTRIES = 50;
+let cacheGeneration = 0;
+let guildsFetchedAt = 0;
 let weaoLastFetchedAt = 0;
+const channelsFetchedAt = new Map<string, number>();
+const rolesFetchedAt = new Map<string, number>();
+const emojisFetchedAt = new Map<string, number>();
+const setFetchedAt = (cache: Map<string, number>, key: string): void => {
+  cache.delete(key);
+  if (cache.size >= MAX_GUILD_CACHE_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) cache.delete(oldestKey);
+  }
+  cache.set(key, Date.now());
+};
 let inFlightWeaoPromise: Promise<void> | null = null;
 let inFlightGuildsPromise: Promise<void> | null = null;
 const inFlightChannelsMap = new Map<string, Promise<void>>();
 const inFlightRolesMap = new Map<string, Promise<void>>();
 const inFlightEmojisMap = new Map<string, Promise<void>>();
 
-const loadCachedWeaoExploits = (): WeaoExploitItem[] => {
+const loadCachedWeaoExploits = (): { exploits: WeaoExploitItem[]; fetchedAt: number } => {
   try {
     if (typeof localStorage !== "undefined") {
       const raw = localStorage.getItem(WEAO_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return { exploits: parsed, fetchedAt: 0 };
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.exploits)) {
+          const fetchedAt = Number(parsed.fetchedAt);
+          return { exploits: parsed.exploits as WeaoExploitItem[], fetchedAt: Number.isFinite(fetchedAt) ? fetchedAt : 0 };
+        }
       }
     }
   } catch {
     // Ignore localStorage parse errors
   }
-  return [];
+  return { exploits: [], fetchedAt: 0 };
 };
+
+const cachedWeao = loadCachedWeaoExploits();
+weaoLastFetchedAt = cachedWeao.fetchedAt;
 
 interface DiscordCacheState {
   guilds: { id: string; name: string; icon: string | null }[] | null;
@@ -75,6 +97,8 @@ interface DiscordCacheState {
   weaoExploits: WeaoExploitItem[];
   weaoMeta: WeaoMetaInfo | null;
   weaoError: string | null;
+  discordError: string | null;
+  clearCache: () => void;
   fetchGuilds: () => Promise<void>;
   fetchChannels: (guildId: string) => Promise<void>;
   fetchRoles: (guildId: string) => Promise<void>;
@@ -87,19 +111,39 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
   channels: {},
   roles: {},
   emojis: {},
-  weaoExploits: loadCachedWeaoExploits(),
+  weaoExploits: cachedWeao.exploits,
   weaoMeta: null,
   weaoError: null,
+  discordError: null,
+
+  clearCache: () => {
+    cacheGeneration += 1;
+    guildsFetchedAt = 0;
+    weaoLastFetchedAt = 0;
+    channelsFetchedAt.clear();
+    rolesFetchedAt.clear();
+    emojisFetchedAt.clear();
+    inFlightWeaoPromise = null;
+    inFlightGuildsPromise = null;
+    inFlightChannelsMap.clear();
+    inFlightRolesMap.clear();
+    inFlightEmojisMap.clear();
+    try { if (typeof localStorage !== "undefined") localStorage.removeItem(WEAO_STORAGE_KEY); } catch { /* Ignore storage errors. */ }
+    set({ guilds: null, channels: {}, roles: {}, emojis: {}, weaoExploits: [], weaoMeta: null, weaoError: null, discordError: null });
+  },
 
   fetchGuilds: async () => {
-    if (get().guilds) return;
+    if (get().guilds && Date.now() - guildsFetchedAt < GUILD_CACHE_TTL_MS) return;
     if (inFlightGuildsPromise) return inFlightGuildsPromise;
+    const generation = cacheGeneration;
     inFlightGuildsPromise = (async () => {
       try {
         const { guilds } = await api.discord.guilds();
-        set({ guilds });
-      } catch {
-        // Ignore error
+        if (generation !== cacheGeneration) return;
+        guildsFetchedAt = Date.now();
+        set({ guilds, discordError: null });
+      } catch (error) {
+        if (generation === cacheGeneration) set({ discordError: error instanceof Error ? error.message : "Could not load Discord servers." });
       } finally {
         inFlightGuildsPromise = null;
       }
@@ -108,15 +152,18 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
   },
 
   fetchChannels: async (guildId: string) => {
-    if (get().channels[guildId]) return;
+    if (get().channels[guildId] && Date.now() - (channelsFetchedAt.get(guildId) ?? 0) < GUILD_CACHE_TTL_MS) return;
     const existing = inFlightChannelsMap.get(guildId);
     if (existing) return existing;
+    const generation = cacheGeneration;
     const promise = (async () => {
       try {
         const { channels } = await api.discord.channels(guildId);
-        set((state) => ({ channels: { ...state.channels, [guildId]: channels } }));
-      } catch {
-        // Ignore error
+        if (generation !== cacheGeneration) return;
+        setFetchedAt(channelsFetchedAt, guildId);
+        set((state) => ({ channels: { ...state.channels, [guildId]: channels }, discordError: null }));
+      } catch (error) {
+        if (generation === cacheGeneration) set({ discordError: error instanceof Error ? error.message : "Could not load Discord channels." });
       } finally {
         inFlightChannelsMap.delete(guildId);
       }
@@ -126,15 +173,18 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
   },
 
   fetchRoles: async (guildId: string) => {
-    if (get().roles[guildId]) return;
+    if (get().roles[guildId] && Date.now() - (rolesFetchedAt.get(guildId) ?? 0) < GUILD_CACHE_TTL_MS) return;
     const existing = inFlightRolesMap.get(guildId);
     if (existing) return existing;
+    const generation = cacheGeneration;
     const promise = (async () => {
       try {
         const { roles } = await api.discord.roles(guildId);
-        set((state) => ({ roles: { ...state.roles, [guildId]: roles } }));
-      } catch {
-        // Ignore error
+        if (generation !== cacheGeneration) return;
+        setFetchedAt(rolesFetchedAt, guildId);
+        set((state) => ({ roles: { ...state.roles, [guildId]: roles }, discordError: null }));
+      } catch (error) {
+        if (generation === cacheGeneration) set({ discordError: error instanceof Error ? error.message : "Could not load Discord roles." });
       } finally {
         inFlightRolesMap.delete(guildId);
       }
@@ -144,15 +194,18 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
   },
 
   fetchEmojis: async (guildId: string) => {
-    if (get().emojis[guildId]) return;
+    if (get().emojis[guildId] && Date.now() - (emojisFetchedAt.get(guildId) ?? 0) < GUILD_CACHE_TTL_MS) return;
     const existing = inFlightEmojisMap.get(guildId);
     if (existing) return existing;
+    const generation = cacheGeneration;
     const promise = (async () => {
       try {
-        const res = await (api.discord as any).emojis?.(guildId);
-        if (res?.emojis) set((state) => ({ emojis: { ...state.emojis, [guildId]: res.emojis } }));
-      } catch {
-        // Ignore error
+        const res = await api.discord.emojis(guildId);
+        if (generation !== cacheGeneration) return;
+        setFetchedAt(emojisFetchedAt, guildId);
+        set((state) => ({ emojis: { ...state.emojis, [guildId]: res.emojis }, discordError: null }));
+      } catch (error) {
+        if (generation === cacheGeneration) set({ discordError: error instanceof Error ? error.message : "Could not load Discord emojis." });
       } finally {
         inFlightEmojisMap.delete(guildId);
       }
@@ -174,16 +227,18 @@ export const useDiscordCacheStore = create<DiscordCacheState>((set, get) => ({
 
     inFlightWeaoPromise = (async () => {
       try {
+        const generation = cacheGeneration;
         const data = await request<{
           exploits?: WeaoExploitItem[];
           meta?: WeaoMetaInfo;
         }>("/api/weao/exploits");
 
+        if (generation !== cacheGeneration) return;
         if (Array.isArray(data?.exploits)) {
           weaoLastFetchedAt = Date.now();
           try {
             if (typeof localStorage !== "undefined") {
-              localStorage.setItem(WEAO_STORAGE_KEY, JSON.stringify(data.exploits));
+              localStorage.setItem(WEAO_STORAGE_KEY, JSON.stringify({ fetchedAt: weaoLastFetchedAt, exploits: data.exploits }));
             }
           } catch {
             // Ignore quota errors
