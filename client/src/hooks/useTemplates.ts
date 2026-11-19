@@ -44,7 +44,10 @@ export const useTemplates = (): UseTemplatesReturn => {
       const messagesToSave = messages && messages.length > 0 ? messages : [data];
       const document = toQueryData(messagesToSave, targets, mode);
 
-      return useTemplateStore.getState().save({ data: document, actions, expiresAt, isTracked });
+      const saved = await useTemplateStore.getState().save({ data: document, actions, expiresAt, isTracked });
+      useMessageStore.getState().markClean();
+      useActionStore.getState().markClean();
+      return saved;
     },
     [],
   );
