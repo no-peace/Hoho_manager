@@ -150,8 +150,8 @@ export const lintPayloads = (
       if (message.poll.question.text.trim().length === 0 || message.poll.question.text.length > 300) {
         add("error", "Poll question must contain 1–300 characters.");
       }
-      if (message.poll.answers.length < 2 || message.poll.answers.length > 10) {
-        add("error", "Poll must contain between 2 and 10 answers.");
+      if (message.poll.answers.length < 1 || message.poll.answers.length > 10) {
+        add("error", "Poll must contain between 1 and 10 answers.");
       }
       if (message.poll.answers.some((answer) => !answer.poll_media.text.trim() || answer.poll_media.text.length > 55)) {
         add("error", "Each poll answer must contain 1–55 characters.");
