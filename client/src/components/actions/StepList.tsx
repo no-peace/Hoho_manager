@@ -72,6 +72,7 @@ export interface ModalInputField {
   maxValues?: number;
   optionsText?: string;
   content?: string;
+  channelTypes?: number[];
 }
 
 const modalFieldFromComponent = (component: any, label?: string, required?: boolean): ModalInputField => {
@@ -85,7 +86,7 @@ const modalFieldFromComponent = (component: any, label?: string, required?: bool
     ? component.options.map((option: any) => [option.label ?? "", option.value ?? "", option.description ?? ""].join(" | ")).join("\n")
     : "";
   return {
-    customId: component?.custom_id || component?.customId || `field_${Date.now()}`,
+    customId: component?.custom_id || component?.customId || `field_${Number(component?.type) || 0}_${String(component?.label ?? component?.description ?? "field").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 24)}`,
     label: label ?? component?.label ?? component?.description ?? "Question",
     fieldType,
     style: Number(component?.style) === 2 ? 2 : 1,
@@ -97,6 +98,7 @@ const modalFieldFromComponent = (component: any, label?: string, required?: bool
     maxValues: typeof component?.max_values === "number" ? component.max_values : undefined,
     optionsText: options,
     content: component?.content ?? "",
+    channelTypes: Array.isArray(component?.channel_types) ? component.channel_types.filter((value: unknown): value is number => typeof value === "number" && Number.isInteger(value)) : undefined,
   };
 };
 
@@ -147,10 +149,16 @@ const formatModalComponents = (fields: ModalInputField[]) => fields.slice(0, 5).
     });
   } else if (["string_select", "radio_group", "checkbox_group"].includes(field.fieldType)) {
     component.options = options;
+    component.placeholder = field.placeholder?.trim() || undefined;
     if (field.fieldType === "string_select" || field.fieldType === "checkbox_group") {
       component.min_values = field.minValues ?? 0;
       component.max_values = field.maxValues ?? Math.max(1, options.length);
     }
+  } else if (["user_select", "role_select", "channel_select", "mentionable_select"].includes(field.fieldType)) {
+    component.placeholder = field.placeholder?.trim() || undefined;
+    component.min_values = field.minValues ?? 1;
+    component.max_values = field.maxValues ?? 1;
+    if (field.fieldType === "channel_select" && field.channelTypes?.length) component.channel_types = field.channelTypes;
   } else if (field.fieldType === "file_upload") {
     component.min_values = field.minValues ?? 0;
     component.max_values = field.maxValues ?? 1;
