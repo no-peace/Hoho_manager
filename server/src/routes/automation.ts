@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { env } from "../config/env.js";
-import { attachUser, requireUserOrAdminKey } from "../middleware/auth.js";
+import { attachUser, requireAdminKey, requireUserOrAdminKey } from "../middleware/auth.js";
 import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
@@ -185,13 +184,11 @@ router.post("/sticky", requireStaffPermission("automation"), requireStaffPermiss
   res.status(201).json({ success: true });
 }));
 
-router.get("/sticky/active", asyncHandler(async (req, res) => {
-  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal bot access is required.");
+router.get("/sticky/active", requireAdminKey, asyncHandler(async (_req, res) => {
   res.json(await getActiveStickyMessages());
 }));
 
-router.post("/sticky/:channelId/refresh", asyncHandler(async (req, res) => {
-  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal bot access is required.");
+router.post("/sticky/:channelId/refresh", requireAdminKey, asyncHandler(async (req, res) => {
   if (!snowflake(req.params.channelId)) throw ApiError.badRequest("Invalid channel ID.");
   const messageId = await refreshStickyMessage(req.params.channelId);
   if (!messageId) throw ApiError.notFound("Sticky message not found.");
@@ -214,8 +211,7 @@ router.delete("/sticky/:channelId", requireStaffPermission("automation"), asyncH
   res.json({ success: true });
 }));
 
-router.post("/tick", asyncHandler(async (req, res) => {
-  if (!env.adminApiKey || req.get("x-admin-key") !== env.adminApiKey) throw ApiError.forbidden("Internal automation access is required.");
+router.post("/tick", requireAdminKey, asyncHandler(async (_req, res) => {
   await runAutomationTick();
   res.json({ success: true });
 }));
