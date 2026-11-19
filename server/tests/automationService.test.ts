@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const listSchedules = vi.fn().mockResolvedValue([]);
-const listExpiring = vi.fn().mockResolvedValue([]);
-const listActiveSticky = vi.fn().mockResolvedValue([]);
+const mocks = vi.hoisted(() => ({
+  listSchedules: vi.fn().mockResolvedValue([]),
+  listExpiring: vi.fn().mockResolvedValue([]),
+  listActiveSticky: vi.fn().mockResolvedValue([]),
+}));
 
 vi.mock("../src/repositories/automationRepository.js", () => ({
   automationRepository: {
-    listSchedules,
-    listExpiring,
-    listActiveSticky,
+    listSchedules: mocks.listSchedules,
+    listExpiring: mocks.listExpiring,
+    listActiveSticky: mocks.listActiveSticky,
     findDueSchedules: vi.fn().mockResolvedValue([]),
     findDueExpiring: vi.fn().mockResolvedValue([]),
   },
@@ -29,9 +31,9 @@ import {
 
 describe("automation service idle caches", () => {
   beforeEach(() => {
-    listSchedules.mockClear();
-    listExpiring.mockClear();
-    listActiveSticky.mockClear();
+    mocks.listSchedules.mockClear();
+    mocks.listExpiring.mockClear();
+    mocks.listActiveSticky.mockClear();
   });
 
   it("loads each automation table once and performs no recurring reads when caches are empty", async () => {
@@ -45,8 +47,8 @@ describe("automation service idle caches", () => {
       hasExpiringMessages: false,
       stickyCount: 0,
     });
-    expect(listSchedules).toHaveBeenCalledTimes(1);
-    expect(listExpiring).toHaveBeenCalledTimes(1);
-    expect(listActiveSticky).toHaveBeenCalledTimes(1);
+    expect(mocks.listSchedules).toHaveBeenCalledTimes(1);
+    expect(mocks.listExpiring).toHaveBeenCalledTimes(1);
+    expect(mocks.listActiveSticky).toHaveBeenCalledTimes(1);
   });
 });
