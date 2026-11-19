@@ -180,6 +180,9 @@ export const createScheduledMessage = async (input: {
 export const listScheduledMessages = async (guildId?: string): Promise<ScheduledMessageRow[]> =>
   automationRepository.listSchedules(guildId);
 
+export const getScheduledMessage = (id: number): Promise<ScheduledMessageRow | undefined> =>
+  automationRepository.findScheduleById(id);
+
 export const updateScheduledMessage = async (id: number, enabled: boolean): Promise<void> => {
   await automationRepository.updateSchedule(id, { enabled: enabled ? 1 : 0 });
   await rebuildCaches();
