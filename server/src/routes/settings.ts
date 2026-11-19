@@ -2,7 +2,8 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { requireHeadAdmin } from "../middleware/auth.js";
 import { settingsService } from "../services/settingsService.js";
-import { auditLog } from "../services/auditLog.js";
+import { auditLog, sendAuditLogToChannel } from "../services/auditLog.js";
+import { getChannelGuildId } from "../services/discordService.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { getSessionUserFromRequest } from "../utils/session.js";
 import { env } from "../config/env.js";
@@ -61,6 +62,50 @@ router.get("/", requireHeadAdmin, asyncHandler(async (req, res) => {
     created_at: settings.created_at,
     updated_at: settings.updated_at,
   });
+}));
+
+/**
+ * POST /api/settings/test-log
+ * Sends a real test embed to the channel saved for the selected scope.
+ */
+router.post("/test-log", requireHeadAdmin, asyncHandler(async (req, res) => {
+  const requestedGuildId = typeof req.query.guildId === "string" && req.query.guildId.trim()
+    ? req.query.guildId.trim()
+    : "__global__";
+  if (requestedGuildId !== "__global__" && !/^\d{17,20}$/.test(requestedGuildId)) {
+    throw ApiError.badRequest("Invalid guild ID.");
+  }
+
+  const settings = await settingsService.getSettings(requestedGuildId);
+  const channelId = settings.log_channel_id?.trim();
+  if (!channelId || !/^\d{17,20}$/.test(channelId)) {
+    throw ApiError.badRequest("Select and save a valid audit log channel first.");
+  }
+
+  if (requestedGuildId !== "__global__") {
+    const channelGuildId = await getChannelGuildId(channelId);
+    if (channelGuildId !== requestedGuildId) {
+      throw ApiError.badRequest("The saved audit log channel is not accessible in the selected server.");
+    }
+  }
+
+  const result = await sendAuditLogToChannel(
+    {
+      event: "LOG_TEST",
+      guildId: requestedGuildId === "__global__" ? undefined : requestedGuildId,
+      reason: "Test message sent from HoHo Manager Head Admin Settings",
+    },
+    { channelId, bypassEventFilter: true },
+  );
+
+  if (!result.ok) {
+    return res.status(502).json({
+      error: result.error ?? "Discord rejected the test log. Check bot channel permissions.",
+      discord_status: result.status,
+    });
+  }
+
+  return res.json({ ok: true, channel_id: channelId, discord_status: result.status });
 }));
 
 /**
