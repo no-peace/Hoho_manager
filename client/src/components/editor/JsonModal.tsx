@@ -12,7 +12,6 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
   // document until it is opened, otherwise every editor keystroke rerenders it.
   const messages = useMessageStore((state) => open ? state.messages : undefined);
   const data = useMessageStore((state) => open ? state.data : undefined);
-  const targets = useMessageStore((state) => open ? state.targets : undefined);
   const load = useMessageStore((state) => state.load);
 
   const [jsonText, setJsonText] = useState("");
@@ -22,13 +21,13 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
     if (open) {
       const messagesToExport = messages && messages.length > 0 ? messages : [data];
       const exportData = {
+        version: "d2",
         messages: messagesToExport.map((m) => ({ data: m })),
-        targets: targets || [{ url: "" }],
       };
       setJsonText(JSON.stringify(exportData, null, 2));
       setErrorMessage(null);
     }
-  }, [open, messages, data, targets]);
+  }, [open, messages, data]);
 
   const handleApply = () => {
     try {
@@ -37,10 +36,9 @@ export const JsonModal: React.FC<JsonModalProps> = ({ open, onClose }) => {
         if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
           load({
             data: parsed,
-            targets: parsed.targets,
           });
         } else if (parsed.data) {
-          load({ data: parsed.data, targets: parsed.targets });
+          load({ data: parsed.data });
         } else {
           load({ data: parsed });
         }
