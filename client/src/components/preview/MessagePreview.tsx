@@ -67,6 +67,9 @@ const formatBytes = (bytes: number): string => {
 
 const AttachmentPreviewItem = ({ file }: { file: AttachedFile }) => {
   const [spoilerHidden, setSpoilerHidden] = useState(Boolean(file.spoiler));
+  useEffect(() => {
+    setSpoilerHidden(Boolean(file.spoiler));
+  }, [file.spoiler]);
   const isUrl = Boolean(file.url && !file.file);
   const isImage = file.type.startsWith("image/");
   const isVideo = file.type.startsWith("video/");
