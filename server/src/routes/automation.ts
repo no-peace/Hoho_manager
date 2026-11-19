@@ -5,6 +5,8 @@ import { requireStaffPermission } from "../middleware/staffPermissions.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { parseAllowedIds } from "../utils/requestParsing.js";
 import { getChannelGuildId } from "../services/discordService.js";
+import { validateMessagePayload } from "../utils/validation.js";
+import { sanitizeAllowedMentions, scrubMentions } from "../utils/mentionScrubber.js";
 import { auditLog } from "../services/auditLog.js";
 import {
   createScheduledMessage,
@@ -146,14 +148,27 @@ router.delete("/schedules/:id", requireStaffPermission("automation"), asyncHandl
 }));
 
 router.post("/sticky", requireStaffPermission("automation"), requireStaffPermission("send"), asyncHandler(async (req, res) => {
-  const { guildId, channelId, payload, intervalMessages } = req.body ?? {};
-  if (!snowflake(guildId) || !snowflake(channelId)) throw ApiError.badRequest("Valid guildId and channelId are required.");
-  assertChannelAccess(req, guildId, channelId);
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw ApiError.badRequest("A sticky payload is required.");
+  const { guildId: requestedGuildId, channelId, payload: rawPayload, intervalMessages } = req.body ?? {};
+  if (!snowflake(channelId)) throw ApiError.badRequest("A valid channelId is required.");
+  const resolvedGuildId = await getChannelGuildId(channelId);
+  if (!resolvedGuildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
+  if (requestedGuildId !== undefined && requestedGuildId !== resolvedGuildId) throw ApiError.forbidden("The supplied guildId does not match the channel's guild.");
+  assertChannelAccess(req, resolvedGuildId, channelId);
+  if (!rawPayload || typeof rawPayload !== "object" || Array.isArray(rawPayload)) throw ApiError.badRequest("A sticky payload is required.");
+  const validatedPayload = validateMessagePayload(rawPayload);
+  const payload = validatedPayload as unknown as Record<string, unknown>;
+  const hasComponents = Array.isArray(payload.components) && payload.components.length > 0;
+  const hasComponentsV2Flag = typeof payload.flags === "number" && (payload.flags & (1 << 15)) !== 0;
+  const staff = req.staffContext;
+  if (staff && !staff.isAdmin && staff.record) {
+    if (staff.record.can_use_components_v2 === 0 && (hasComponents || hasComponentsV2Flag)) throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
+    const scrubbed = scrubMentions(payload, staff.record).payload;
+    Object.assign(payload, sanitizeAllowedMentions(scrubbed, staff.record));
+  }
   const interval = Number(intervalMessages ?? 10);
   if (!Number.isInteger(interval) || interval < 5 || interval > 50) throw ApiError.badRequest("Sticky interval must be between 5 and 50 messages.");
   await createStickyMessage({
-    guildId,
+    guildId: resolvedGuildId,
     channelId,
     payload,
     intervalMessages: interval,
@@ -161,7 +176,7 @@ router.post("/sticky", requireStaffPermission("automation"), requireStaffPermiss
   });
   auditLog({
     event: "STICKY_CREATED",
-    guildId,
+    guildId: resolvedGuildId,
     actorDiscordId: req.staffContext?.staffId ?? req.user?.discord_id,
     channelId,
     reason: "Sticky message created",
