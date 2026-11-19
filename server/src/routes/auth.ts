@@ -375,6 +375,7 @@ router.get(
                 can_attach_files: staffRecord.can_attach_files !== 0,
                 can_use_components_v2: staffRecord.can_use_components_v2 !== 0,
                 can_use_weao_exploits: staffRecord.can_use_weao_exploits !== 0,
+                can_manage_automation: staffRecord.can_manage_automation === 1,
                 allowed_guild_ids: staffRecord.allowed_guild_ids
                   ? JSON.parse(staffRecord.allowed_guild_ids)
                   : ["*"],
