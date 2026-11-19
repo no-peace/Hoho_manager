@@ -283,7 +283,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       const grouped: Record<string, FlowStep[]> = {};
       const ordered = [...list].sort((left, right) =>
         left.customId.localeCompare(right.customId) ||
-        left.executionOrder - right.executionOrder,
+        (left.executionOrder ?? 0) - (right.executionOrder ?? 0),
       );
       for (const item of ordered) {
         (grouped[item.customId] ??= []).push(
