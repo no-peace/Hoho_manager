@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { request, api } from "../../api/client";
 import {
   CheckSquare,
@@ -18,6 +18,7 @@ import { useGlobalStore } from "../../store/globalStore";
 import { fromQueryData, getEditorModeForDiscordMessage } from "../../utils/exportImport";
 import { checkUnauthorizedMentions } from "../../utils/mentionValidation";
 import { parseEditTargetMessageIds } from "../../utils/dispatchValidation";
+import { lintPayloads } from "../../utils/payloadLinter";
 
 export interface DispatchModalProps {
   open: boolean;
@@ -41,6 +42,25 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [lintExpanded, setLintExpanded] = useState(false);
+  const lintMessages = useMessageStore((state) => state.messages);
+  const lintAttachments = useMessageStore((state) => state.attachedFiles);
+  const lintActiveMessageIndex = useMessageStore((state) => state.activeMessageIndex);
+  const lintIssues = useMemo(
+    () => open
+      ? lintPayloads(lintMessages, lintAttachments, lintActiveMessageIndex)
+      : [],
+    [open, lintMessages, lintAttachments, lintActiveMessageIndex],
+  );
+  const lintErrorCount = lintIssues.filter((issue) => issue.severity === "error").length;
+  const lintWarningCount = lintIssues.length - lintErrorCount;
+  const focusLintIssue = (issue: (typeof lintIssues)[number]) => {
+    const store = useMessageStore.getState();
+    store.setActiveMessageIndex(issue.messageIndex);
+    store.select(issue.componentId
+      ? { kind: "component", id: issue.componentId }
+      : { kind: "message", index: issue.messageIndex });
+  };
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [trackAfterSend, setTrackAfterSend] = useState(() => {
     const payload = JSON.stringify(useMessageStore.getState().getAllPayloads());
@@ -375,6 +395,7 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
               !canUseServerBot ||
               selectedChannels.length === 0 ||
               isSending ||
+              lintErrorCount > 0 ||
               (mode === "edit" && !targetMessageId.trim())
             }
           >
@@ -621,6 +642,43 @@ const BotDispatchModalComponent: React.FC<DispatchModalProps> = ({
             <span className="text-[11px] text-[#A1A8B8]">Optional retention expiry</span>
             <DateTimePickerPopover value={customExpiry} onChange={setCustomExpiry} placeholder="No expiry" />
           </div>
+        </section>
+
+        <section className="rounded-lg border border-[#272D3A] bg-[#10131A] p-3">
+          <button
+            type="button"
+            onClick={() => setLintExpanded((value) => !value)}
+            aria-expanded={lintExpanded}
+            className="flex w-full items-center justify-between gap-2 text-left"
+          >
+            <span className={lintErrorCount > 0 ? "text-xs font-semibold text-[#F87171]" : "text-xs font-semibold text-[#34D399]"}>
+              {lintErrorCount > 0
+                ? `Pre-flight: ${lintErrorCount} error(s) blocking dispatch`
+                : `Ready to dispatch${lintWarningCount ? ` · ${lintWarningCount} warning(s)` : ""}`}
+            </span>
+            <span className="text-[10px] text-[#A1A8B8]">{lintExpanded ? "Hide details" : "View details"}</span>
+          </button>
+          {lintExpanded && (
+            <div className="mt-2 space-y-1.5 border-t border-[#272D3A] pt-2">
+              {lintIssues.length === 0 ? (
+                <p className="text-[11px] text-[#34D399]">No payload issues found.</p>
+              ) : lintIssues.map((issue, index) => (
+                <button
+                  key={`${issue.messageIndex}-${issue.componentId ?? "message"}-${index}`}
+                  type="button"
+                  onClick={() => focusLintIssue(issue)}
+                  className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#1D2230]"
+                >
+                  <span className={issue.severity === "error" ? "mt-0.5 text-[9px] font-bold uppercase text-[#F87171]" : "mt-0.5 text-[9px] font-bold uppercase text-[#FBBF24]"}>
+                    {issue.severity}
+                  </span>
+                  <span className="text-[11px] leading-relaxed text-[#F1F3F9]">
+                    Message {issue.messageIndex + 1}: {issue.message}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
         {sendResult && (
