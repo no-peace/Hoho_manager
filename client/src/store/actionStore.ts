@@ -230,7 +230,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       const flows = { ...state.flows };
       if (steps.length === 0) delete flows[customId];
       else flows[customId] = steps;
-      return { flows };
+      return { flows, isDirty: true };
     }),
 
   moveStep: (customId, index, direction) =>
@@ -257,7 +257,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       const flows = { ...state.flows };
       delete flows[oldCustomId];
       flows[nextCustomId] = existing;
-      return { flows };
+      return { flows, isDirty: true };
     }),
 
   removeFlow: (customId) =>
@@ -265,7 +265,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       if (!state.flows[customId]) return {};
       const flows = { ...state.flows };
       delete flows[customId];
-      return { flows };
+      return { flows, isDirty: true };
     }),
 
   toList: () =>
