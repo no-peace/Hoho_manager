@@ -98,6 +98,8 @@ export interface ActionState {
   typesLoaded: boolean;
   /** `{ [customId]: FlowStep[] }`  the ordered chain for each component. */
   flows: Record<string, FlowStep[]>;
+  isDirty: boolean;
+  markClean(): void;
 
   fetchActionTypes(): Promise<void>;
 
@@ -172,6 +174,8 @@ export const useActionStore = create<ActionState>()((set, get) => ({
   actionTypes: FALLBACK_TYPES,
   typesLoaded: false,
   flows: {},
+  isDirty: false,
+  markClean: () => set({ isDirty: false }),
 
   fetchActionTypes: async () => {
     try {
@@ -195,7 +199,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       const flows = { ...state.flows };
       if (steps.length === 0) delete flows[customId];
       else flows[customId] = steps;
-      return { flows };
+      return { flows, isDirty: true };
     }),
 
   addStep: (customId, type = "dud") =>
@@ -204,6 +208,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
         ...state.flows,
         [customId]: [...(state.flows[customId] ?? []), createStep(type)],
       },
+      isDirty: true,
     })),
 
   updateStep: (customId, index, patch) =>
@@ -213,7 +218,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
 
       const steps = [...existing];
       steps[index] = { ...steps[index], ...patch } as FlowStep;
-      return { flows: { ...state.flows, [customId]: steps } };
+      return { flows: { ...state.flows, [customId]: steps }, isDirty: true };
     }),
 
   removeStep: (customId, index) =>
@@ -240,7 +245,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       if (!a || !b) return {};
       steps[index] = b;
       steps[target] = a;
-      return { flows: { ...state.flows, [customId]: steps } };
+      return { flows: { ...state.flows, [customId]: steps }, isDirty: true };
     }),
 
   renameFlow: (oldCustomId, nextCustomId) =>
@@ -283,7 +288,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       }
       // Order within each custom_id is whatever the server returned, which is
       // already sorted by execution_order.
-      return { flows: grouped };
+      return { flows: grouped, isDirty: false };
     }),
 
   toRegistrations: () => {
@@ -315,7 +320,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
     return registrations;
   },
 
-  reset: () => set({ flows: {} }),
+  reset: () => set({ flows: {}, isDirty: false }),
 }));
 
 export default useActionStore;
