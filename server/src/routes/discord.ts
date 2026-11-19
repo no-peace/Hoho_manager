@@ -102,6 +102,11 @@ const requireAllowedGuild: RequestHandler = (req, _res, next) => {
 router.get("/guilds", requireStaffPermission("send"), asyncHandler(async (req, res) => {
   const profileId = parseProfileId(req.query.profileId);
   let guilds = await discord.getBotGuilds(profileId);
+  const sessionUser = await getSessionUserFromRequest(req);
+  if (sessionUser && Array.isArray(sessionUser.mutualGuilds)) {
+    const mutualGuildIds = new Set(sessionUser.mutualGuilds.map((guild) => guild.id));
+    guilds = guilds.filter((guild) => mutualGuildIds.has(guild.id));
+  }
   const staffCtx = req.staffContext;
   if (staffCtx && !staffCtx.isAdmin && staffCtx.record) {
     const allowedGuilds = parseAllowedIds(
