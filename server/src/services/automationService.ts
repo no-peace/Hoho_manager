@@ -155,18 +155,17 @@ const scheduleNextAt = (row: ScheduledMessageRow, now = Date.now()): string | nu
 };
 
 const rebuildCaches = async (): Promise<void> => {
-  const [schedules, expiring, sticky] = await Promise.all([
-    automationRepository.listSchedules(),
-    automationRepository.listExpiring(),
+  const [nextScheduleAtValue, nextDeleteAtValue, sticky] = await Promise.all([
+    automationRepository.getNextScheduleAt(),
+    automationRepository.getNextExpiringAt(),
     automationRepository.listActiveSticky(),
   ]);
-  hasSchedules = schedules.some((row) => row.enabled === 1 && Boolean(row.next_run_at));
-  nextScheduleAt = schedules.reduce((min, row) =>
-    row.enabled === 1 && row.next_run_at ? Math.min(min, Date.parse(row.next_run_at)) : min,
-    Number.POSITIVE_INFINITY,
-  );
-  hasExpiringMessages = expiring.length > 0;
-  nextDeleteAt = expiring.reduce((min, row) => Math.min(min, Date.parse(row.delete_at)), Number.POSITIVE_INFINITY);
+  const parsedScheduleAt = nextScheduleAtValue ? Date.parse(nextScheduleAtValue) : Number.POSITIVE_INFINITY;
+  const parsedDeleteAt = nextDeleteAtValue ? Date.parse(nextDeleteAtValue) : Number.POSITIVE_INFINITY;
+  hasSchedules = Number.isFinite(parsedScheduleAt);
+  nextScheduleAt = hasSchedules ? parsedScheduleAt : Number.POSITIVE_INFINITY;
+  hasExpiringMessages = Number.isFinite(parsedDeleteAt);
+  nextDeleteAt = hasExpiringMessages ? parsedDeleteAt : Number.POSITIVE_INFINITY;
   stickyCache.clear();
   sticky.forEach((row) => stickyCache.set(row.channel_id, row));
   initialized = true;
@@ -191,8 +190,11 @@ export const registerExpiringMessage = async (input: {
     delete_at: input.deleteAt,
     created_by: input.createdBy,
   });
-  hasExpiringMessages = true;
-  nextDeleteAt = Math.min(nextDeleteAt, Date.parse(input.deleteAt));
+  const parsedDeleteAt = Date.parse(input.deleteAt);
+  if (Number.isFinite(parsedDeleteAt)) {
+    hasExpiringMessages = true;
+    nextDeleteAt = Math.min(nextDeleteAt, parsedDeleteAt);
+  }
 };
 
 export const createStickyMessage = async (input: {
@@ -295,7 +297,8 @@ export const createScheduledMessage = async (input: {
   });
   if (row) {
     hasSchedules = true;
-    nextScheduleAt = Math.min(nextScheduleAt, Date.parse(row.next_run_at ?? row.run_at ?? input.runAt));
+    const parsedNextRunAt = Date.parse(row.next_run_at ?? row.run_at ?? input.runAt);
+    if (Number.isFinite(parsedNextRunAt)) nextScheduleAt = Math.min(nextScheduleAt, parsedNextRunAt);
   }
   return row;
 };
@@ -323,7 +326,7 @@ const runDueSchedules = async (now: Date): Promise<void> => {
     try {
       const payload = asPayload(row.payload_json) as any;
       if (row.target_message_id) {
-        await discord.editChannelMessage(row.channel_id, row.target_message_id, payload);
+        await discord.editChannelMessage(row.thread_id || row.channel_id, row.target_message_id, payload);
       } else {
         const token = await discord.resolveBotToken();
         await discord.sendChannelMessageWithToken(row.thread_id || row.channel_id, payload, token);
@@ -333,12 +336,25 @@ const runDueSchedules = async (now: Date): Promise<void> => {
         last_run_at: now.toISOString(),
         enabled: next ? 1 : 0,
         next_run_at: next,
+        retry_count: 0,
       });
     } catch (error) {
       log.error(`Scheduled message ${row.id} failed: ${String(error)}`);
+      const status = error !== null && typeof error === "object" && "status" in error
+        ? Number((error as { status: unknown }).status)
+        : 0;
+      const transient = status === 0 || status === 408 || status === 429 || status >= 500;
+      const retryCount = Number.isInteger(row.retry_count) ? Number(row.retry_count) : 0;
       let retryAt: string | null = null;
+      let nextRetryCount = retryCount;
       try {
-        retryAt = scheduleNextAt(row, now.getTime());
+        if (row.cron_expr) {
+          retryAt = scheduleNextAt(row, now.getTime());
+          nextRetryCount = 0;
+        } else if (transient && retryCount < 5) {
+          retryAt = new Date(now.getTime() + 60_000).toISOString();
+          nextRetryCount = retryCount + 1;
+        }
       } catch (scheduleError) {
         log.error(`Scheduled message ${row.id} has an unsupported recurrence and was disabled: ${String(scheduleError)}`);
       }
@@ -346,6 +362,7 @@ const runDueSchedules = async (now: Date): Promise<void> => {
         last_run_at: now.toISOString(),
         enabled: retryAt ? 1 : 0,
         next_run_at: retryAt,
+        retry_count: nextRetryCount,
       });
     }
   }
@@ -392,8 +409,8 @@ const runDueExpirations = async (now: Date): Promise<void> => {
     return;
   }
   const parsedNextDeleteAt = Date.parse(nextDeleteAtValue);
-  hasExpiringMessages = true;
-  nextDeleteAt = Number.isFinite(parsedNextDeleteAt) ? parsedNextDeleteAt : now.getTime();
+  hasExpiringMessages = Number.isFinite(parsedNextDeleteAt);
+  nextDeleteAt = hasExpiringMessages ? parsedNextDeleteAt : Number.POSITIVE_INFINITY;
 };
 
 export const runAutomationTick = async (): Promise<void> => {
