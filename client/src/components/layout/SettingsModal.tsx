@@ -5,7 +5,7 @@ import { SearchableDiscordSelect } from "../ui/SearchableDiscordSelect";
 import { useGlobalStore } from "../../store/globalStore";
 import { request } from "../../api/client";
 import { ALL_LOG_EVENTS, DEFAULT_LOG_EVENTS } from "@dmb/shared";
-import { Check, Shield, Bell, RefreshCw } from "lucide-react";
+import { Check, Shield, Bell, RefreshCw, Send } from "lucide-react";
 
 interface SettingsData {
   log_channel_id: string | null;
@@ -23,6 +23,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SettingsData>({ log_channel_id: null, head_admin_ids: [] });
   const [saving, setSaving] = useState(false);
+  const [testingLog, setTestingLog] = useState(false);
   const [isHeadAdmin, setIsHeadAdmin] = useState(false);
 
   useEffect(() => {
@@ -84,6 +85,34 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
       useGlobalStore.getState().showToast("Failed to save settings", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestLog = async () => {
+    if (!data.log_channel_id) {
+      useGlobalStore.getState().showToast("Select an audit log channel first.", "warning");
+      return;
+    }
+
+    setTestingLog(true);
+    try {
+      const qs = selectedGuildId ? "?guildId=" + encodeURIComponent(selectedGuildId) : "";
+      await request("/api/settings" + qs, {
+        method: "PATCH",
+        body: data,
+      });
+      const result = await request<{ ok: boolean; channel_id: string }>("/api/settings/test-log" + qs, {
+        method: "POST",
+      });
+      useGlobalStore.getState().showToast("Test audit log delivered to the selected channel.", "success");
+      void result;
+    } catch (e) {
+      useGlobalStore.getState().showToast(
+        e instanceof Error ? e.message : "Test log delivery failed. Check bot permissions for that channel.",
+        "error",
+      );
+    } finally {
+      setTestingLog(false);
     }
   };
 
@@ -305,11 +334,23 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                     </p>
                   </div>
 
-                  <div className="pt-4 flex justify-end">
-                    <Button variant="primary" onClick={handleSave} loading={saving}>
+                  <div className="pt-4 flex flex-wrap justify-end gap-2">
+                    <Button
+                      variant="secondary"
+                      icon={Send}
+                      onClick={handleTestLog}
+                      loading={testingLog}
+                      disabled={saving || !data.log_channel_id}
+                    >
+                      Send Test Log
+                    </Button>
+                    <Button variant="primary" onClick={handleSave} loading={saving} disabled={testingLog}>
                       Save Changes
                     </Button>
                   </div>
+                  <p className="text-[10px] text-[#6F788A] text-right">
+                    Test Log saves the current settings first, then confirms Discord accepted the embed.
+                  </p>
                 </>
               )}
           </div>
