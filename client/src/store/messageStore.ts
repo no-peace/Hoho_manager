@@ -96,6 +96,7 @@ export interface MessageState {
   canRedo: boolean;
   isDirty: boolean;
   markClean(): void;
+  ensureStableIds(): void;
   undo(): void;
   redo(): void;
 
@@ -158,6 +159,7 @@ export interface MessageState {
 }
 
 export const createEmptyMessage = (): MessageData => ({
+  _id: uid(),
   content: "",
   embeds: [],
   components: [],
@@ -345,6 +347,35 @@ export const useMessageStore = create<MessageState>()(
       canRedo: false,
       isDirty: false,
       markClean: () => rawSet({ isDirty: false }),
+      ensureStableIds: () => {
+        const state = get();
+        let changed = false;
+        const messages = state.messages.map((message) => {
+          const messageId = message._id || uid();
+          const answers = message.poll?.answers.map((answer) => {
+            const answerId = answer._id || uid();
+            if (answerId !== answer._id) changed = true;
+            return answerId === answer._id ? answer : { ...answer, _id: answerId };
+          });
+          if (messageId !== message._id) changed = true;
+          if (!changed && !answers?.some((answer, index) => answer !== message.poll?.answers[index])) return message;
+          return {
+            ...message,
+            _id: messageId,
+            ...(message.poll && answers ? { poll: { ...message.poll, answers } } : {}),
+          };
+        });
+        if (!changed) return;
+        const activeIndex = Math.max(0, Math.min(state.activeMessageIndex, messages.length - 1));
+        rawSet({
+          messages,
+          data: messages[activeIndex] ?? messages[0] ?? createEmptyMessage(),
+          past: [],
+          future: [],
+          canUndo: false,
+          canRedo: false,
+        });
+      },
 
       undo: () => {
         const state = get();
@@ -888,7 +919,13 @@ export const useMessageStore = create<MessageState>()(
         set((state) => {
           if (state.messages.length >= 10) return state;
           const source = state.messages[index] ?? state.data ?? createEmptyMessage();
-          const cloned: MessageData = structuredClone(source);
+          const cloned: MessageData = { ...structuredClone(source), _id: uid() };
+          if (cloned.poll) {
+            cloned.poll = {
+              ...cloned.poll,
+              answers: cloned.poll.answers.map((answer) => ({ ...answer, _id: uid() })),
+            };
+          }
           if (cloned.embeds) {
             cloned.embeds = cloned.embeds.map((emb) => ({
               ...emb,
@@ -1039,6 +1076,13 @@ export const useMessageStore = create<MessageState>()(
         }
 
         initialMessages.forEach((msg) => {
+          msg._id = msg._id || uid();
+          if (msg.poll) {
+            msg.poll = {
+              ...msg.poll,
+              answers: msg.poll.answers.map((answer) => ({ ...answer, _id: answer._id || uid() })),
+            };
+          }
           if (msg.embeds) {
             msg.embeds = msg.embeds.map((e) => ({
               ...e,
