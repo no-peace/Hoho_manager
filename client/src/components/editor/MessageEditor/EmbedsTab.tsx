@@ -6,9 +6,10 @@ import { useMessageStore } from "../../../store/messageStore";
 
 export interface EmbedsTabProps {
   embeds: EmbedData[];
+  ensureActive: () => void;
 }
 
-export const EmbedsTab: React.FC<EmbedsTabProps> = ({ embeds }) => {
+export const EmbedsTab: React.FC<EmbedsTabProps> = ({ embeds, ensureActive }) => {
   if (!embeds || embeds.length === 0) return null;
 
   return (
@@ -23,7 +24,7 @@ export const EmbedsTab: React.FC<EmbedsTabProps> = ({ embeds }) => {
         const id = embed._id ?? `embed-${embedIdx}`;
         return (
           <SortableItem key={id} id={id}>
-            <EmbedEditor embed={embed} index={embedIdx} />
+            <EmbedEditor embed={embed} index={embedIdx} ensureActive={ensureActive} />
           </SortableItem>
         );
       })}
