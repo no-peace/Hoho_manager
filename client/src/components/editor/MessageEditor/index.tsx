@@ -295,9 +295,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
             setExtendedField={setExtendedField}
           />
 
-          {!isV2 && <PollSection poll={message.poll} />}
+          {!isV2 && <PollSection poll={message.poll} ensureActive={ensureActive} />}
 
-          {!isV2 && <EmbedsTab embeds={message.embeds || []} />}
+          {!isV2 && <EmbedsTab embeds={message.embeds || []} ensureActive={ensureActive} />}
 
           <ComponentsTab message={message} isV2={isV2} ensureActive={ensureActive} />
 
