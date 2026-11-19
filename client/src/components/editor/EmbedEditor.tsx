@@ -116,6 +116,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index, ensure
             title="Duplicate"
             aria-label="Duplicate embed"
             onClick={(e) => {
+              ensureActive?.();
               e.stopPropagation();
               if (id) duplicateEmbed(id);
             }}
@@ -128,6 +129,7 @@ const EmbedEditorComponent: React.FC<EmbedEditorProps> = ({ embed, index, ensure
             title="Delete"
             aria-label="Delete embed"
             onClick={(e) => {
+              ensureActive?.();
               e.stopPropagation();
               if (id) removeEmbed(id);
             }}
