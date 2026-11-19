@@ -77,12 +77,15 @@ router.post("/test-log", requireHeadAdmin, asyncHandler(async (req, res) => {
   }
 
   const settings = await settingsService.getSettings(requestedGuildId);
-  const channelId = settings.log_channel_id?.trim();
+  const explicitlySelectedChannel = settings.log_channel_id?.trim() || null;
+  const channelId = explicitlySelectedChannel || await settingsService.getEffectiveLogChannelId(
+    requestedGuildId === "__global__" ? undefined : requestedGuildId,
+  );
   if (!channelId || !/^\d{17,20}$/.test(channelId)) {
-    throw ApiError.badRequest("Select and save a valid audit log channel first.");
+    throw ApiError.badRequest("No valid audit log channel is configured for this server or the global fallback.");
   }
 
-  if (requestedGuildId !== "__global__") {
+  if (explicitlySelectedChannel && requestedGuildId !== "__global__") {
     const channelGuildId = await getChannelGuildId(channelId);
     if (channelGuildId !== requestedGuildId) {
       throw ApiError.badRequest("The saved audit log channel is not accessible in the selected server.");
