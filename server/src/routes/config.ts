@@ -15,6 +15,7 @@ const router = Router();
 router.get(
   "/",
   asyncHandler(async (_req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=300");
     res.json({
       actionTypes: listActionTypes(),
       features: {
