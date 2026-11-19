@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Bot, Eye, FileText, Link2, Music } from "lucide-react";
-import type { ComponentNode } from "@dmb/shared";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
+import { Bot, Eye, FileText, Link2, Music, Play } from "lucide-react";
+import type { ComponentNode, FlowStep } from "@dmb/shared";
 import { ComponentType, MessageFlags } from "@dmb/shared";
 import { Markdown } from "./Markdown";
 import { EmbedPreview } from "./EmbedPreview";
@@ -9,9 +9,44 @@ import { ContainerPreview } from "./ContainerPreview";
 import { AutoComponent } from "./ComponentPreview";
 import { ActionRowPreview } from "./ActionRowPreview";
 import { useGlobalStore } from "../../store/globalStore";
+import { useActionStore } from "../../store/actionStore";
+import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import { useMessageStore, type AttachedFile, type EmbedPreviewPart } from "../../store/messageStore";
 import { EDITOR_MODES } from "../../utils/constants";
 import { scrollToMessageEditor } from "../../utils/editorSmoothScroll";
+import { simulateFlow, type FlowSimulationResult } from "../../utils/flowSimulator";
+
+const FlowSimulatorDrawer = React.lazy(() => import("./FlowSimulatorDrawer").then((module) => ({ default: module.FlowSimulatorDrawer })));
+
+const findPreviewComponent = (nodes: ComponentNode[], id: string): ComponentNode | undefined => {
+  for (const node of nodes) {
+    if (node._id === id) return node;
+    const nested = findPreviewComponent(node.components ?? [], id);
+    if (nested) return nested;
+    if (node.accessory?._id === id) return node.accessory;
+  }
+  return undefined;
+};
+
+const getModalFieldIds = (steps: FlowStep[]): string[] => {
+  const ids = new Set<string>();
+  const visit = (items: FlowStep[]) => items.forEach((step) => {
+    const config = step.config ?? {};
+    if (step.type === "open_modal") {
+      const rows = Array.isArray(config.components) ? config.components : [];
+      rows.forEach((row: any) => (Array.isArray(row?.components) ? row.components : []).forEach((field: any) => {
+        const id = field?.custom_id ?? field?.customId;
+        if (typeof id === "string" && id) ids.add(id);
+      }));
+    }
+    ["then", "else", "pass", "fail"].forEach((key) => {
+      const branch = config[key];
+      if (Array.isArray(branch)) visit(branch as FlowStep[]);
+    });
+  });
+  visit(steps);
+  return [...ids];
+};
 
 const TopLevelComponent = ({ component }: { component: ComponentNode }) =>
   component.type === ComponentType.Container ? (
@@ -125,11 +160,38 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
   const selectComponent = useMessageStore((state) => state.select);
   const attachedFiles = useMessageStore((state) => state.attachedFiles);
   const botIdentity = useGlobalStore((state) => state.botIdentity);
+  const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
+  const cachedRoles = useDiscordCacheStore((state) => selectedGuildId ? state.roles[selectedGuildId] ?? [] : []);
+  const [testFlow, setTestFlow] = useState(false);
+  const [simulationSteps, setSimulationSteps] = useState<FlowStep[] | null>(null);
+  const [simulationResult, setSimulationResult] = useState<FlowSimulationResult | null>(null);
+  const [simulatedRoleIds, setSimulatedRoleIds] = useState<string[]>([]);
+  const [modalInputs, setModalInputs] = useState<Record<string, string>>({});
+  const [simulationModalFieldIds, setSimulationModalFieldIds] = useState<string[]>([]);
+  const [simulationSelectedValues, setSimulationSelectedValues] = useState<string[]>([]);
   const displayMessages = useMemo(
     () => (messages && messages.length > 0 ? messages : [data]),
     [messages, data]
   );
   const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    if (!testFlow || !selectedGuildId || useDiscordCacheStore.getState().roles[selectedGuildId]) return;
+    void useDiscordCacheStore.getState().fetchRoles(selectedGuildId);
+  }, [testFlow, selectedGuildId]);
+
+  useEffect(() => {
+    if (!testFlow || !simulationSteps) return;
+    setSimulationResult(simulateFlow(simulationSteps, {
+      username: "DemoUser",
+      userId: "123456789012345678",
+      serverName: selectedGuildId ? "Selected Server" : "Example Server",
+      serverId: selectedGuildId ?? undefined,
+      heldRoleIds: simulatedRoleIds,
+      modalInputs,
+      selectedValues: simulationSelectedValues,
+    }));
+  }, [testFlow, simulationSteps, simulatedRoleIds, modalInputs, simulationSelectedValues, selectedGuildId]);
 
   const handleSelectMessage = (index: number) => {
     setActiveMessageIndex?.(index);
@@ -179,7 +241,7 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
 
   return (
     <UserPlaceholderPreviewProvider source={displayMessages}>
-      <div className="flex h-full min-h-0 flex-1 flex-col select-text">
+      <div className="relative flex h-full min-h-0 flex-1 flex-col select-text">
         {/* Enhanced Preview Toolbar */}
         <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-[#1e1f22] bg-[#2b2d31] px-3.5 py-1.5 shrink-0">
           <div className="flex items-center gap-2">
@@ -193,6 +255,18 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
 
         {/* Viewport Device & Density Controls */}
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setTestFlow((value) => !value);
+              setSimulationResult(null);
+              setSimulationSteps(null);
+            }}
+            aria-pressed={testFlow}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] ${testFlow ? "border-[#818CF8]/60 bg-[#5865F2]/25 text-white" : "border-[#4e5058] bg-[#18191c] text-[#b5bac1] hover:text-white"}`}
+          >
+            <Play size={11} /> Test Flow
+          </button>
           {displayMessages.length > 1 && (
             <div className="flex items-center gap-1 bg-[#18191c] p-0.5 rounded-lg border border-[#26282d] mr-1">
               {displayMessages.map((_, i) => (
@@ -277,7 +351,26 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
                       const componentElement = target.closest<HTMLElement>("[data-preview-component-id]");
                       const componentId = componentElement?.dataset.previewComponentId;
                       if (componentId) {
+                        const selectedOption = target.closest<HTMLElement>("[data-preview-select-value]")?.dataset.previewSelectValue;
                         const isInteractive = componentElement.dataset.previewInteractive === "true";
+                        if (testFlow && (!isInteractive || selectedOption !== undefined)) {
+                          const component = findPreviewComponent(message.components ?? [], componentId);
+                          const customId = component?._action_custom_id || component?.custom_id;
+                          const steps = customId ? useActionStore.getState().getFlow(customId) : [];
+                          setSimulationSteps(steps);
+                          setSimulationSelectedValues(selectedOption ? [selectedOption] : []);
+                          setSimulationModalFieldIds(getModalFieldIds(steps));
+                          setModalInputs({});
+                          setSimulationResult(simulateFlow(steps, {
+                            username: "DemoUser",
+                            userId: "123456789012345678",
+                            serverName: selectedGuildId ? "Selected Server" : "Example Server",
+                            serverId: selectedGuildId ?? undefined,
+                            heldRoleIds: simulatedRoleIds,
+                            selectedValues: selectedOption ? [selectedOption] : [],
+                          }));
+                          return;
+                        }
                         if (isInteractive) {
                           onSelectPreviewComponent?.(index, componentId, true);
                           return;
@@ -403,6 +496,22 @@ export const MessagePreview = ({ onSelectMessage, onSelectPreviewComponent, onSe
         </div>
       </div>
       </div>
+      {testFlow && simulationResult && (
+        <div className="absolute inset-x-0 bottom-0 z-40 px-2 pb-2 sm:px-3">
+          <Suspense fallback={<div className="rounded-t-xl border border-[#272D3A] bg-[#10131A] px-3 py-3 text-[11px] text-[#A1A8B8]">Loading flow simulator…</div>}>
+            <FlowSimulatorDrawer
+              result={simulationResult}
+              roles={cachedRoles}
+              heldRoleIds={simulatedRoleIds}
+              modalFieldIds={simulationModalFieldIds}
+              modalInputs={modalInputs}
+              onToggleRole={(roleId) => setSimulatedRoleIds((current) => current.includes(roleId) ? current.filter((id) => id !== roleId) : [...current, roleId])}
+              onModalInputChange={(fieldId, value) => setModalInputs((current) => ({ ...current, [fieldId]: value }))}
+              onClose={() => { setSimulationResult(null); setSimulationSteps(null); }}
+            />
+          </Suspense>
+        </div>
+      )}
     </UserPlaceholderPreviewProvider>
   );
 };
