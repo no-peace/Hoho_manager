@@ -382,7 +382,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
           ref={portalRef}
           role="listbox"
           aria-multiselectable={isMulti}
-          className="rounded-md border border-[#1e1f22] bg-[#2b2d31] py-1.5 shadow-2xl"
+          className="flex flex-col overflow-hidden rounded-md border border-[#1e1f22] bg-[#2b2d31] py-1.5 shadow-2xl"
           style={{
             position: "fixed",
             top: dropdownPosition.top,
@@ -399,7 +399,7 @@ export const SelectPreview: React.FC<SelectPreviewProps> = ({ select }) => {
             </div>
           )}
 
-          <div className="min-h-0 overflow-y-auto space-y-0.5 px-1 custom-scrollbar">
+          <div className="min-h-0 max-h-52 overflow-y-auto space-y-0.5 px-1 custom-scrollbar">
             {availableOptions.length === 0 ? (
               <div className="px-3 py-3 text-xs text-[#949ba4] italic text-center">
                 No options configured. Add options in the Component Editor.
