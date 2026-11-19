@@ -21,7 +21,6 @@ export interface StaffRecord {
   can_mention_roles: number;
   allowed_role_mention_ids: string; // JSON
   max_messages_per_hour: number;
-  can_use_webhooks?: number;
   can_override_profile?: number;
   can_attach_files?: number;
   can_use_components_v2?: number;
@@ -71,7 +70,6 @@ export const staffRepository = {
     can_mention_roles?: number;
     allowed_role_mention_ids?: string;
     max_messages_per_hour?: number;
-    can_use_webhooks?: number;
     can_override_profile?: number;
     can_attach_files?: number;
     can_use_components_v2?: number;
@@ -88,7 +86,7 @@ export const staffRepository = {
         can_send_messages, can_edit_messages, can_delete_messages, can_manage_templates, can_manage_automation,
         allowed_channel_ids,
         can_mention_everyone, can_mention_here, can_mention_roles, allowed_role_mention_ids,
-        max_messages_per_hour, can_use_webhooks, can_override_profile, can_attach_files,
+        max_messages_per_hour, can_override_profile, can_attach_files,
         can_use_components_v2, can_use_weao_exploits, allowed_guild_ids,
         granular_cooldowns, granular_rate_limits, notes
       ) VALUES (
@@ -97,7 +95,7 @@ export const staffRepository = {
         @can_send_messages, @can_edit_messages, @can_delete_messages, @can_manage_templates, @can_manage_automation,
         @allowed_channel_ids,
         @can_mention_everyone, @can_mention_here, @can_mention_roles, @allowed_role_mention_ids,
-        @max_messages_per_hour, @can_use_webhooks, @can_override_profile, @can_attach_files,
+        @max_messages_per_hour, @can_override_profile, @can_attach_files,
         @can_use_components_v2, @can_use_weao_exploits, @allowed_guild_ids,
         @granular_cooldowns, @granular_rate_limits, @notes
       )
@@ -121,7 +119,6 @@ export const staffRepository = {
       can_mention_roles: data.can_mention_roles ?? 0,
       allowed_role_mention_ids: data.allowed_role_mention_ids ?? '[]',
       max_messages_per_hour: data.max_messages_per_hour ?? 10,
-      can_use_webhooks: data.can_use_webhooks ?? 0,
       can_override_profile: data.can_override_profile ?? 0,
       can_attach_files: data.can_attach_files ?? 0,
       can_use_components_v2: data.can_use_components_v2 ?? 0,
