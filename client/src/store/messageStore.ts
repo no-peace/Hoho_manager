@@ -6,7 +6,6 @@ import type {
   EmbedData,
   EmbedField,
   MessageData,
-  TargetData,
 } from "@dmb/shared";
 import { useActionStore } from "./actionStore.js"
 import { ComponentType, DEFAULT_EMBED_COLOR, EDITOR_MODES, uid } from "../utils/constants";
@@ -86,7 +85,6 @@ export interface MessageState {
   data: MessageData;
   messages: MessageData[];
   activeMessageIndex: number;
-  targets: TargetData[];
   selection: Selection;
   send: SendState;
   attachedFiles: AttachedFile[];
@@ -134,9 +132,6 @@ export interface MessageState {
   duplicateComponentById(id: string): void;
 
   select(selection: Selection): void;
-  setTargetUrl(index: number, url: string): void;
-  addTarget(): void;
-  removeTarget(index: number): void;
 
   setSendState(patch: Partial<SendState>): void;
   resetSendState(): void;
@@ -151,7 +146,7 @@ export interface MessageState {
   setAllowedMentions(allowedMentions?: MessageData["allowed_mentions"]): void;
 
   reset(): void;
-  load(input: { data?: any; mode?: EditorMode; targets?: TargetData[] } | any): void;
+  load(input: { data?: any; mode?: EditorMode } | any): void;
 
   getPayload(): DiscordMessagePayload;
   getAllPayloads(): DiscordMessagePayload[];
@@ -283,7 +278,6 @@ export const useMessageStore = create<MessageState>()(
         const hasDocumentChanges =
           (next.messages !== undefined && next.messages !== current.messages) ||
           (next.data !== undefined && next.data !== current.data) ||
-          (next.targets !== undefined && next.targets !== current.targets) ||
           (next.attachedFiles !== undefined && next.attachedFiles !== current.attachedFiles);
         if (hasDocumentChanges && !suppressDirtyTracking && next.isDirty !== false) {
           // A document becomes dirty only after an actual editor mutation.
@@ -337,7 +331,6 @@ export const useMessageStore = create<MessageState>()(
       data: defaultInitial,
       messages: [defaultInitial],
       activeMessageIndex: 0,
-      targets: [{ url: "" }],
       selection: null,
       send: idleSendState(),
       attachedFiles: [],
@@ -864,18 +857,6 @@ export const useMessageStore = create<MessageState>()(
 
       select: (selection) => set({ selection }),
 
-      setTargetUrl: (index, url) =>
-        set((state) => {
-          const targets = [...state.targets];
-          targets[index] = { url };
-          return { targets };
-        }),
-
-      addTarget: () => set((state) => ({ targets: [...state.targets, { url: "" }] })),
-
-      removeTarget: (index) =>
-        set((state) => ({ targets: state.targets.filter((_, i) => i !== index) })),
-
       setSendState: (patch) => set((state) => ({ send: { ...state.send, ...patch } })),
       resetSendState: () => set({ send: idleSendState() }),
 
@@ -1054,11 +1035,6 @@ export const useMessageStore = create<MessageState>()(
               ? input.data
               : (input ?? {});
           const resolvedMode = input?.mode ?? doc?.mode;
-          const resolvedTargets =
-            (input?.targets && input.targets.length > 0)
-              ? input.targets
-              : (doc?.targets && doc.targets.length > 0 ? doc.targets : undefined);
-
           let initialMessages: MessageData[] = [];
           if (doc?.backups && Array.isArray(doc.backups) && doc.backups.length > 0) {
             const b = doc.backups[0];
@@ -1122,7 +1098,6 @@ export const useMessageStore = create<MessageState>()(
             data: initialMessages[0],
             messages: initialMessages,
             activeMessageIndex: 0,
-            targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
             selection: null,
             past: [],
             future: [],
