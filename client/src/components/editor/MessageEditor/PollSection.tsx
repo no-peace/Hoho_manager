@@ -70,7 +70,7 @@ export const PollSection: React.FC<{ poll?: DiscordPoll; ensureActive?: () => vo
                     aria-label={`Answer ${index + 1} emoji`}
                     maxLength={8}
                     value={answer.poll_media.emoji?.name ?? ""}
-                    onChange={(event) => update({ ...poll, answers: poll.answers.map((item) => item._id === answer._id ? { ...item, poll_media: { ...item.poll_media, emoji: event.target.value ? { name: event.target.value } : undefined } } : item) })}
+                    onChange={(event) => update({ ...poll, answers: poll.answers.map((item, itemIndex) => (answer._id ? item._id === answer._id : itemIndex === index) ? { ...item, poll_media: { ...item.poll_media, emoji: event.target.value ? { name: event.target.value } : undefined } } : item) })}
                     placeholder="😀"
                     className="w-10 rounded-md border border-[#272D3A] bg-[#1D2230] px-1.5 py-1.5 text-center text-xs text-[#F1F3F9] outline-none focus:border-[#818CF8]"
                   />
@@ -81,7 +81,7 @@ export const PollSection: React.FC<{ poll?: DiscordPoll; ensureActive?: () => vo
                     onChange={(event) => update({ ...poll, answers: poll.answers.map((item, itemIndex) => itemIndex === index ? { ...item, poll_media: { ...item.poll_media, text: event.target.value } } : item) })}
                     className="min-w-0 flex-1 rounded-md border border-[#272D3A] bg-[#1D2230] px-2.5 py-1.5 text-xs text-[#F1F3F9] outline-none focus:border-[#818CF8]"
                   />
-                  <button type="button" disabled={poll.answers.length <= 1} onClick={() => update({ ...poll, answers: poll.answers.filter((item) => item._id !== answer._id) })} aria-label={`Remove poll answer ${index + 1}`} className="rounded p-1.5 text-[#F87171] transition-colors hover:bg-[#F87171]/10 disabled:opacity-30"><Trash2 size={13} /></button>
+                  <button type="button" disabled={poll.answers.length <= 1} onClick={() => update({ ...poll, answers: poll.answers.filter((item, itemIndex) => answer._id ? item._id !== answer._id : itemIndex !== index) })} aria-label={`Remove poll answer ${index + 1}`} className="rounded p-1.5 text-[#F87171] transition-colors hover:bg-[#F87171]/10 disabled:opacity-30"><Trash2 size={13} /></button>
                 </SortableItem>
               );
             })}
