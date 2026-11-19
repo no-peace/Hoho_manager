@@ -44,6 +44,11 @@ export const ComponentType = {
   File: 13,
   Separator: 14,
   Container: 17,
+  Label: 18,
+  FileUpload: 19,
+  RadioGroup: 21,
+  CheckboxGroup: 22,
+  Checkbox: 23,
 } as const;
 
 export type ComponentTypeValue = (typeof ComponentType)[keyof typeof ComponentType];
