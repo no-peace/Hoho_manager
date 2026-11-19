@@ -62,54 +62,108 @@ const asText = (value: unknown): string =>
 export interface ModalInputField {
   customId: string;
   label: string;
-  style: number; // 1: Short, 2: Paragraph
+  style: number;
+  fieldType: "text_input" | "string_select" | "user_select" | "role_select" | "channel_select" | "mentionable_select" | "radio_group" | "checkbox_group" | "checkbox" | "file_upload" | "text_display";
   placeholder?: string;
   required?: boolean;
   minLength?: number;
   maxLength?: number;
+  minValues?: number;
+  maxValues?: number;
+  optionsText?: string;
+  content?: string;
 }
+
+const modalFieldFromComponent = (component: any, label?: string, required?: boolean): ModalInputField => {
+  const typeMap: Record<number, ModalInputField["fieldType"]> = {
+    4: "text_input", 3: "string_select", 5: "user_select", 6: "role_select",
+    7: "mentionable_select", 8: "channel_select", 21: "radio_group",
+    22: "checkbox_group", 23: "checkbox", 19: "file_upload", 10: "text_display",
+  };
+  const fieldType = typeMap[Number(component?.type)] ?? "text_input";
+  const options = Array.isArray(component?.options)
+    ? component.options.map((option: any) => [option.label ?? "", option.value ?? "", option.description ?? ""].join(" | ")).join("\n")
+    : "";
+  return {
+    customId: component?.custom_id || component?.customId || `field_${Date.now()}`,
+    label: label ?? component?.label ?? component?.description ?? "Question",
+    fieldType,
+    style: Number(component?.style) === 2 ? 2 : 1,
+    placeholder: component?.placeholder || "",
+    required: required ?? component?.required !== false,
+    minLength: typeof component?.min_length === "number" ? component.min_length : undefined,
+    maxLength: typeof component?.max_length === "number" ? component.max_length : undefined,
+    minValues: typeof component?.min_values === "number" ? component.min_values : undefined,
+    maxValues: typeof component?.max_values === "number" ? component.max_values : undefined,
+    optionsText: options,
+    content: component?.content ?? "",
+  };
+};
 
 const parseModalComponents = (components: unknown): ModalInputField[] => {
   if (!Array.isArray(components)) return [];
-
   const fields: ModalInputField[] = [];
-  for (const row of components) {
-    if (row && typeof row === "object" && Array.isArray((row as any).components)) {
-      for (const input of (row as any).components) {
-        if (input && typeof input === "object") {
-          fields.push({
-            customId: input.custom_id || input.customId || `input_${fields.length + 1}`,
-            label: input.label || "Question",
-            style: Number(input.style) === 2 ? 2 : 1,
-            placeholder: input.placeholder || "",
-            required: input.required !== false,
-            minLength: typeof input.min_length === "number" ? input.min_length : undefined,
-            maxLength: typeof input.max_length === "number" ? input.max_length : undefined,
-          });
-        }
+  for (const item of components) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as any;
+    if (record.type === 1 && Array.isArray(record.components)) {
+      for (const input of record.components) {
+        if (input && typeof input === "object") fields.push(modalFieldFromComponent(input));
       }
+    } else if (record.type === 18 && record.component) {
+      fields.push(modalFieldFromComponent(record.component, record.label, record.required));
+    } else if (record.type === 10) {
+      fields.push(modalFieldFromComponent(record));
+    } else if (record.type) {
+      fields.push(modalFieldFromComponent(record));
     }
   }
-  return fields;
+  return fields.slice(0, 5);
 };
 
-const formatModalComponents = (fields: ModalInputField[]) => {
-  return fields.slice(0, 5).map((field) => ({
-    type: 1, // ActionRow
-    components: [
-      {
-        type: 4, // TextInput
-        custom_id: field.customId.trim() || `input_${Date.now()}`,
-        label: field.label.trim() || "Question",
-        style: field.style === 2 ? 2 : 1,
-        placeholder: field.placeholder?.trim() || undefined,
-        required: field.required !== false,
-        min_length: field.minLength,
-        max_length: field.maxLength,
-      },
-    ],
-  }));
-};
+const formatModalComponents = (fields: ModalInputField[]) => fields.slice(0, 5).map((field) => {
+  const options = (field.optionsText ?? "").split("\n").map((line) => line.trim()).filter(Boolean).map((line, index) => {
+    const [label, value, description] = line.split("|").map((part) => part.trim());
+    return { label: label || `Option ${index + 1}`, value: value || `option_${index + 1}`, ...(description ? { description } : {}) };
+  });
+  if (field.fieldType === "text_display") {
+    return { type: 10, content: field.content?.trim() || field.label.trim() || "Instructions" };
+  }
+  const componentType: Record<ModalInputField["fieldType"], number> = {
+    text_input: 4, string_select: 3, user_select: 5, role_select: 6,
+    channel_select: 8, mentionable_select: 7, radio_group: 21,
+    checkbox_group: 22, checkbox: 23, file_upload: 19, text_display: 10,
+  };
+  const component: Record<string, unknown> = {
+    type: componentType[field.fieldType],
+    custom_id: field.customId.trim() || `field_${uid()}`,
+  };
+  if (field.fieldType === "text_input") {
+    Object.assign(component, {
+      style: field.style === 2 ? 2 : 1,
+      placeholder: field.placeholder?.trim() || undefined,
+      min_length: field.minLength,
+      max_length: field.maxLength,
+    });
+  } else if (["string_select", "radio_group", "checkbox_group"].includes(field.fieldType)) {
+    component.options = options;
+    if (field.fieldType === "string_select" || field.fieldType === "checkbox_group") {
+      component.min_values = field.minValues ?? 0;
+      component.max_values = field.maxValues ?? Math.max(1, options.length);
+    }
+  } else if (field.fieldType === "file_upload") {
+    component.min_values = field.minValues ?? 0;
+    component.max_values = field.maxValues ?? 1;
+  } else if (field.fieldType === "checkbox") {
+    component.default = false;
+  }
+  return {
+    type: 18,
+    label: field.label.trim() || "Question",
+    required: field.required !== false,
+    component,
+  };
+});
 
 export const DiscordModalPreview = ({
   title,
@@ -317,6 +371,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
           {
             customId: `field_${inputFields.length + 1}`,
             label: `Question ${inputFields.length + 1}`,
+            fieldType: "text_input",
             style: 1,
             placeholder: "",
             required: true,
@@ -444,30 +499,66 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
+                      <Select
+                        label="Field Type"
+                        value={input.fieldType}
+                        onChange={(e) => patchInput(fieldIdx, { fieldType: e.target.value as ModalInputField["fieldType"] })}
+                        options={[
+                          { value: "text_input", label: "Text Input" },
+                          { value: "string_select", label: "String Select" },
+                          { value: "user_select", label: "User Select" },
+                          { value: "role_select", label: "Role Select" },
+                          { value: "channel_select", label: "Channel Select" },
+                          { value: "mentionable_select", label: "Mentionable Select" },
+                          { value: "radio_group", label: "Radio Group" },
+                          { value: "checkbox_group", label: "Checkbox Group" },
+                          { value: "checkbox", label: "Checkbox" },
+                          { value: "file_upload", label: "File Upload" },
+                          { value: "text_display", label: "Text Display" },
+                        ]}
+                      />
                       <TextField
                         label="Variable Key (custom_id)"
                         value={input.customId}
                         placeholder="reason"
                         onChange={(e) => patchInput(fieldIdx, { customId: e.target.value })}
                       />
-                      <Select
-                        label="Input Style"
-                        value={String(input.style)}
-                        onChange={(e) => patchInput(fieldIdx, { style: Number(e.target.value) })}
-                        options={[
-                          { value: "1", label: "Short (Single Line)" },
-                          { value: "2", label: "Paragraph (Multi-line)" },
-                        ]}
-                      />
+                      {input.fieldType === "text_input" ? (
+                        <Select
+                          label="Input Style"
+                          value={String(input.style)}
+                          onChange={(e) => patchInput(fieldIdx, { style: Number(e.target.value) })}
+                          options={[
+                            { value: "1", label: "Short (Single Line)" },
+                            { value: "2", label: "Paragraph (Multi-line)" },
+                          ]}
+                        />
+                      ) : (
+                        <TextField label="Display Label" value={input.label} onChange={(e) => patchInput(fieldIdx, { label: e.target.value })} />
+                      )}
                     </div>
 
-                    <TextField
-                      label="Placeholder (optional)"
-                      variables
-                      value={input.placeholder ?? ""}
-                      placeholder="Type your answer here..."
-                      onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
-                    />
+                    {input.fieldType === "text_input" || input.fieldType.includes("select") ? (
+                      <TextField
+                        label="Placeholder (optional)"
+                        variables
+                        value={input.placeholder ?? ""}
+                        placeholder="Type your answer here..."
+                        onChange={(e) => patchInput(fieldIdx, { placeholder: e.target.value })}
+                      />
+                    ) : null}
+                    {input.fieldType === "text_display" ? (
+                      <TextArea label="Read-only Instructions" value={input.content ?? ""} onChange={(e) => patchInput(fieldIdx, { content: e.target.value })} />
+                    ) : null}
+                    {["string_select", "radio_group", "checkbox_group"].includes(input.fieldType) ? (
+                      <TextArea label="Options (one per line: Label | value | description)" value={input.optionsText ?? ""} onChange={(e) => patchInput(fieldIdx, { optionsText: e.target.value })} />
+                    ) : null}
+                    {input.fieldType === "file_upload" ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <TextField label="Minimum files" type="number" value={String(input.minValues ?? 0)} onChange={(e) => patchInput(fieldIdx, { minValues: Number(e.target.value) })} />
+                        <TextField label="Maximum files" type="number" value={String(input.maxValues ?? 1)} onChange={(e) => patchInput(fieldIdx, { maxValues: Number(e.target.value) })} />
+                      </div>
+                    ) : null}
 
                     {/* Character Limits */}
                     <div className="grid grid-cols-2 gap-2">
