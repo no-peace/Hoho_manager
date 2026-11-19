@@ -88,7 +88,6 @@ export const PropertyPanel = ({
           </div>
           <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
             <div className="min-w-0 flex-1">
-              <span className="mb-0.5 block text-[0.625rem] font-bold uppercase leading-4 tracking-[0.08em] text-[#A1A8B8]">Properties</span>
               <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Message Quick Edit</span>
               <h2 className="truncate text-base font-bold text-white">Message {selection.index + 1}</h2>
             </div>
@@ -97,7 +96,7 @@ export const PropertyPanel = ({
               <IconButton icon={X} label="Close Message Editor" size={15} onClick={() => select(null)} />
             </div>
           </div>
-          <div className="min-h-0 overflow-y-auto p-3.5" data-message-quick-editor>
+          <div className="min-h-0 overflow-y-auto p-3.5 pb-[max(1rem,env(safe-area-inset-bottom))]" data-message-quick-editor>
             <label htmlFor="preview-message-content" className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#A1A8B8]">
               {isV2Message ? "Text Display content" : "Message content"}
               {isV2Message && <span className="rounded border border-[#818CF8]/30 bg-[#818CF8]/10 px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#A5B4FC]">Components V2 Text Block</span>}
@@ -160,7 +159,6 @@ export const PropertyPanel = ({
           </div>
           <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
             <div className="min-w-0 flex-1">
-              <span className="mb-0.5 block text-[0.625rem] font-bold uppercase leading-4 tracking-[0.08em] text-[#A1A8B8]">Properties</span>
               <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">Embed Inspector</span>
               <h2 className="truncate text-base font-bold text-white">
                 {partLabel}{embed.title ? ` · ${embed.title}` : ` · Embed ${embedIndex + 1}`}
@@ -220,7 +218,6 @@ export const PropertyPanel = ({
         {/* Inspector Header */}
         <div className={UI_THEME_CONFIG.surfaces.inspectorHeader}>
           <div className="min-w-0 flex-1">
-            <span className="mb-0.5 block text-[0.625rem] font-bold uppercase leading-4 tracking-[0.08em] text-[#A1A8B8]">Properties</span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#A1A8B8] block">
               Component Inspector
             </span>
@@ -269,7 +266,6 @@ export const PropertyPanel = ({
               }`}
             >
               <Sliders size={12} />
-              <span>Properties</span>
             </button>
             <button
               type="button"
