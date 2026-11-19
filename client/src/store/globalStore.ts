@@ -25,6 +25,7 @@ export interface StaffMentionPermissions {
   can_attach_files?: boolean;
   can_use_components_v2?: boolean;
   can_use_weao_exploits?: boolean;
+  can_manage_automation?: boolean;
   allowed_guild_ids?: string[];
 }
 
