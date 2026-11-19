@@ -54,6 +54,32 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
   const [linkError, setLinkError] = useState<string | null>(null);
   const [shakeKey, setShakeKey] = useState(0);
   const [isLoadingLinkedMsg, setIsLoadingLinkedMsg] = useState(false);
+  const [isImportingLiveMessage, setIsImportingLiveMessage] = useState(false);
+
+  const handleFetchImport = async () => {
+    setLinkError(null);
+    const normalized = normalizeMessageLinkInput(messageLinkInput);
+    const parsed = parseDiscordMessageLink(normalized);
+    if (!parsed) {
+      setLinkError("Enter a valid Discord message URL before importing.");
+      setShakeKey((key) => key + 1);
+      return;
+    }
+    setIsImportingLiveMessage(true);
+    try {
+      const result = await request<{ data: ExtendedMessageData; mode: "classic" | "v2" }>(
+        `/api/discord/messages/${encodeURIComponent(parsed.channelId)}/${encodeURIComponent(parsed.messageId)}`,
+      );
+      load({ data: result.data as any, mode: result.mode as any });
+      useGlobalStore.getState().showToast("Live Discord message imported into Studio.", "success");
+      onClose();
+    } catch (error) {
+      setLinkError(error instanceof Error ? error.message : "Could not import the live Discord message.");
+      setShakeKey((key) => key + 1);
+    } finally {
+      setIsImportingLiveMessage(false);
+    }
+  };
 
   const handleSaveMessageLink = async (loadExistingContent = false) => {
     setLinkError(null);
@@ -218,6 +244,11 @@ export const MessageLinkModal: React.FC<MessageLinkModalProps> = ({
             }}
             className="w-full bg-[#1D2230] text-xs text-white px-2.5 py-2 rounded-lg border border-[#343C4E] focus:border-[#818CF8] focus:outline-none font-mono"
           />
+          <div className="flex justify-end">
+            <Button variant="secondary" size="sm" loading={isImportingLiveMessage} onClick={() => void handleFetchImport()}>
+              Fetch &amp; Import into Studio
+            </Button>
+          </div>
           <p className="text-[11px] text-[#A1A8B8]">
             {linkModeInput === "reply"
               ? "When sent via Bot, this message will natively reply to the linked Discord message."
