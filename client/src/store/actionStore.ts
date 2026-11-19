@@ -64,8 +64,6 @@ const defaultConfig = (type: ActionType): Record<string, unknown> => {
       return { title: "Form", customId: "" };
     case "send_message":
       return { content: "" };
-    case "send_webhook_message":
-      return { content: "" };
     case "create_thread":
       return { name: "" };
     case "wait":
@@ -182,7 +180,7 @@ export const useActionStore = create<ActionState>()((set, get) => ({
       const response = await api.config();
       if (Array.isArray(response.actionTypes) && response.actionTypes.length > 0) {
         set({
-          actionTypes: response.actionTypes.filter((a) => a.type !== "send_webhook_message"),
+          actionTypes: response.actionTypes,
           typesLoaded: true,
         });
       }
