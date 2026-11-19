@@ -41,6 +41,33 @@ describe("lintPayloads", () => {
     expect(issues.some((issue) => issue.message.includes("no matching attached file"))).toBe(true);
   });
 
+  it("reports Components V2 component overflow and empty String Select menus", () => {
+    const tooMany = Array.from({ length: 41 }, (_, index) => ({
+      _id: `text-${index}`,
+      type: ComponentType.TextDisplay,
+      content: "x",
+    }));
+    const issues = lintPayloads([
+      message({
+        flags: 32768,
+        components: tooMany,
+      }),
+      message({
+        components: [{
+          _id: "empty-select-row",
+          type: ComponentType.ActionRow,
+          components: [{
+            _id: "empty-select",
+            type: ComponentType.StringSelect,
+            options: [],
+          }],
+        }],
+      }),
+    ]);
+    expect(issues.some((issue) => issue.message.includes("40 components"))).toBe(true);
+    expect(issues.some((issue) => issue.message.includes("at least one option"))).toBe(true);
+  });
+
   it("counts Components V2 text and warns about empty messages", () => {
     const issues = lintPayloads([
       message({ flags: 32768, components: [{ type: ComponentType.TextDisplay, content: "x".repeat(4001) }] }),
