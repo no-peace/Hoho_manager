@@ -440,6 +440,29 @@ export const validateMessagePayload = (payload: unknown): DiscordMessagePayload 
     }
   }
 
+  const poll = payload.poll;
+  if (poll != null) {
+    if (!isRecord(poll)) {
+      errors.push("`poll` must be an object");
+    } else {
+      const question = isRecord(poll.question) ? asString(poll.question.text) : null;
+      if (!question || question.length > 300) errors.push("`poll.question.text` must contain 1–300 characters");
+      if (!Array.isArray(poll.answers) || poll.answers.length < 2 || poll.answers.length > 10) {
+        errors.push("`poll.answers` must contain between 2 and 10 answers");
+      } else {
+        poll.answers.forEach((answer, index) => {
+          const media = isRecord(answer) && isRecord(answer.poll_media) ? answer.poll_media : null;
+          const text = media ? asString(media.text) : null;
+          if (!text || text.length > 55) errors.push(`poll.answers[${index}].poll_media.text must contain 1–55 characters`);
+        });
+      }
+      if (typeof poll.duration !== "number" || !Number.isInteger(poll.duration) || poll.duration < 1 || poll.duration > 168) {
+        errors.push("`poll.duration` must be an integer from 1 to 168 hours");
+      }
+      if (typeof poll.allow_multiselect !== "boolean") errors.push("`poll.allow_multiselect` must be a boolean");
+    }
+  }
+
   const components = payload.components;
   const isComponentsV2 =
     typeof payload.flags === "number" && (payload.flags & MessageFlags.IsComponentsV2) !== 0;
