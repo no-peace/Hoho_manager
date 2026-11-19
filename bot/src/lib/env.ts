@@ -55,7 +55,7 @@ export const validateApiBaseUrl = (value: string, production: boolean): string |
   const isLoopback =
     parsed.hostname === "127.0.0.1" ||
     parsed.hostname === "localhost" ||
-    parsed.hostname === "::1";
+    (parsed.hostname === "::1" || parsed.hostname === "[::1]");
   if (production && parsed.protocol !== "https:" && !(parsed.protocol === "http:" && isLoopback)) {
     return "API_BASE_URL must use HTTPS for non-loopback production hosts because the bot sends ADMIN_API_KEY.";
   }
@@ -82,7 +82,7 @@ export const validateEnv = (): string[] => {
     const isLoopbackClientOrigin =
       clientOrigin.hostname === "127.0.0.1" ||
       clientOrigin.hostname === "localhost" ||
-      clientOrigin.hostname === "::1";
+      (clientOrigin.hostname === "::1" || clientOrigin.hostname === "[::1]");
     if (clientOrigin.protocol !== "https:" && env.isProd && !isLoopbackClientOrigin) {
       errors.push("CLIENT_ORIGIN must use HTTPS for non-loopback production hosts.");
     }
