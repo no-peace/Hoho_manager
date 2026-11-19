@@ -27,8 +27,10 @@ export class ReadyListener extends Listener {
         method: "POST",
         headers: { "x-admin-key": env.adminApiKey },
         signal: AbortSignal.timeout(8_000),
-      }).then((response) => {
-        if (!response.ok) throw new Error(`API returned ${response.status}`);
+      }).then(async (response) => {
+        const status = response.status;
+        await response.body?.cancel().catch(() => undefined);
+        if (!response.ok) throw new Error(`API returned ${status}`);
       }).catch((error) => {
         console.warn("[automation] Scheduled-message tick failed:", error);
       });
