@@ -18,7 +18,9 @@ import type {
  * to the Express server, so relative requests just work.
  */
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+let staffIdProvider: () => string | null = () => null;
+export const registerStaffIdProvider = (provider: () => string | null): void => { staffIdProvider = provider; };
 const ADMIN_KEY = import.meta.env.DEV ? (import.meta.env.VITE_ADMIN_API_KEY ?? "") : "";
 const ENV_STAFF_ID = import.meta.env.VITE_STAFF_DISCORD_ID ?? "";
 
@@ -40,7 +42,7 @@ export class ApiRequestError extends Error {
   }
 }
 
-import { useGlobalStore, type CurrentUser } from "../store/globalStore";
+import type { CurrentUser } from "../store/globalStore";
 
 interface RequestOptions {
   method?: string;
@@ -53,11 +55,10 @@ export const request = async <T>(path: string, { method = "GET", body, signal }:
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   // Resolve active staff ID: store user (if authenticated) > localStorage > ENV_STAFF_ID
-  const storeUser = typeof window !== "undefined" ? useGlobalStore.getState()?.currentUser : null;
-  const staffId = storeUser?.id || (typeof localStorage !== "undefined" ? localStorage.getItem("staff_id") : "") || ENV_STAFF_ID || "";
+  const staffId = staffIdProvider() || (typeof localStorage !== "undefined" ? localStorage.getItem("staff_id") : "") || ENV_STAFF_ID || "";
 
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       credentials: "include", // CRITICAL: transmit session cookies for OAuth2
       headers: {
@@ -70,7 +71,7 @@ export const request = async <T>(path: string, { method = "GET", body, signal }:
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw error;
-    throw new ApiRequestError("Can't reach the server. Is it running on port 3001?", {
+    throw new ApiRequestError(import.meta.env.DEV ? "Can't reach the server. Check that the development server is running on port 3001." : "Can't reach the server. Please try again in a moment.", {
       code: "network_error",
     });
   }
@@ -200,12 +201,12 @@ export const api = {
       request<TemplateListResponse>(
         `/api/templates${q ? `?q=${encodeURIComponent(q)}` : ""}`,
       ),
-    get: (id: number) => request<TemplateDetailResponse>(`/api/templates/${id}`),
+    get: (id: number) => request<TemplateDetailResponse>(`/api/templates/${encodeURIComponent(String(id))}`),
     create: (template: TemplateSaveBody) =>
       request<TemplateDetailResponse>("/api/templates", { method: "POST", body: template }),
     update: (id: number, template: TemplateSaveBody) =>
-      request<TemplateDetailResponse>(`/api/templates/${id}`, { method: "PUT", body: template }),
-    remove: (id: number) => request<null>(`/api/templates/${id}`, { method: "DELETE" }),
+      request<TemplateDetailResponse>(`/api/templates/${encodeURIComponent(String(id))}`, { method: "PUT", body: template }),
+    remove: (id: number) => request<null>(`/api/templates/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
   },
 
   profiles: {
@@ -216,32 +217,32 @@ export const api = {
         body: profile,
       }),
     updateWebhook: (id: number, profile: Record<string, unknown>) =>
-      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${id}`, {
+      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${encodeURIComponent(String(id))}`, {
         method: "PATCH",
         body: profile,
       }),
     setDefaultWebhook: (id: number) =>
-      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${id}/default`, {
+      request<{ profile: WebhookProfile }>(`/api/profiles/webhooks/${encodeURIComponent(String(id))}/default`, {
         method: "POST",
       }),
     removeWebhook: (id: number) =>
-      request<null>(`/api/profiles/webhooks/${id}`, { method: "DELETE" }),
+      request<null>(`/api/profiles/webhooks/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
 
     listBots: () => request<BotListResponse>("/api/profiles/bots"),
     createBot: (profile: Record<string, unknown>) =>
       request<{ profile: BotProfile }>("/api/profiles/bots", { method: "POST", body: profile }),
     updateBot: (id: number, profile: Record<string, unknown>) =>
-      request<{ profile: BotProfile }>(`/api/profiles/bots/${id}`, {
+      request<{ profile: BotProfile }>(`/api/profiles/bots/${encodeURIComponent(String(id))}`, {
         method: "PATCH",
         body: profile,
       }),
-    removeBot: (id: number) => request<null>(`/api/profiles/bots/${id}`, { method: "DELETE" }),
+    removeBot: (id: number) => request<null>(`/api/profiles/bots/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
   },
 
   discord: {
     identity: (profileId?: number) =>
       request<{ id: string; username: string; avatar: string | null } | null>(
-        `/api/discord/identity${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/identity${profileId ? `?profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     resolveUsers: (ids: string[], signal?: AbortSignal, guildId?: string) =>
       request<{
@@ -268,11 +269,11 @@ export const api = {
       ),
     channels: (guildId: string, profileId?: number) =>
       request<{ channels: { id: string; name: string; type: number; parent_id?: string | null }[] }>(
-        `/api/discord/guilds/${guildId}/channels${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/channels${profileId ? `?profileId=${profileId}` : ""}`
       ),
     roles: (guildId: string, profileId?: number) =>
       request<{ roles: { id: string; name: string; color: number }[] }>(
-        `/api/discord/guilds/${guildId}/roles${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/roles${profileId ? `?profileId=${profileId}` : ""}`
       ),
     searchMembers: (guildId: string, query: string, profileId?: number) =>
       request<{
@@ -284,7 +285,7 @@ export const api = {
           avatar: string | null;
         }>;
       }>(
-        `/api/discord/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/members/search?query=${encodeURIComponent(query)}${profileId ? `&profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     emojis: (guildId: string, profileId?: number) =>
       request<{
@@ -295,7 +296,7 @@ export const api = {
           available?: boolean;
         }>;
       }>(
-        `/api/discord/guilds/${guildId}/emojis${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/emojis${profileId ? `?profileId=${profileId}` : ""}`
       ),
     auditLogs: (guildId: string, params?: { limit?: number; page?: number; action?: string; channelId?: string; webhookId?: string; userId?: string }) => {
       const sp = new URLSearchParams();
@@ -320,7 +321,7 @@ export const api = {
         }>;
         total: number;
         query: { limit: number; page: number };
-      }>(`/api/discord/guilds/${guildId}/audit-logs${query}`);
+      }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/audit-logs${query}`);
     },
     sessions: (guildId: string, params?: { channelId?: string; cursor?: number }) => {
       const sp = new URLSearchParams();
@@ -339,10 +340,10 @@ export const api = {
           me: boolean;
           channelId?: string | null;
         }>;
-      }>(`/api/discord/guilds/${guildId}/sessions${query}`);
+      }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/sessions${query}`);
     },
     revokeSession: (guildId: string, tokenId: string) =>
-      request<{ ok: boolean; revoked: number }>(`/api/discord/guilds/${guildId}/sessions/${tokenId}`, { method: "DELETE" }),
+      request<{ ok: boolean; revoked: number }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/sessions/${tokenId}`, { method: "DELETE" }),
   },
 
   auth: {
