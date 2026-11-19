@@ -10,10 +10,14 @@ interface StickyChannel {
 
 const stickyChannels = new Map<string, StickyChannel & { count: number }>();
 let lastCacheRefresh = 0;
+let lastCacheAttempt = 0;
 let cacheRefresh: Promise<void> | null = null;
+const CACHE_REFRESH_FAILURE_BACKOFF_MS = 30_000;
+const refreshingChannels = new Set<string>();
 
 export const refreshStickyCache = async (): Promise<void> => {
   if (cacheRefresh) return cacheRefresh;
+  if (lastCacheRefresh < lastCacheAttempt && Date.now() - lastCacheAttempt < CACHE_REFRESH_FAILURE_BACKOFF_MS) return;
   cacheRefresh = (async () => {
     try {
       const response = await fetch(`${env.apiBaseUrl}/api/automation/sticky/active`, {
@@ -33,6 +37,7 @@ export const refreshStickyCache = async (): Promise<void> => {
     } catch (error) {
       console.warn("[sticky] Could not refresh sticky-message cache:", error);
     } finally {
+      lastCacheAttempt = Date.now();
       cacheRefresh = null;
     }
   })();
@@ -48,7 +53,10 @@ export class StickyMessageListener extends Listener {
     const message = args[0] as Message;
     if (!message || message.author?.bot || !message.guildId || !message.channelId) return;
 
-    if (Date.now() - lastCacheRefresh > 60_000) {
+    if (
+      Date.now() - lastCacheRefresh > 60_000 &&
+      Date.now() - lastCacheAttempt >= CACHE_REFRESH_FAILURE_BACKOFF_MS
+    ) {
       void refreshStickyCache();
     }
 
@@ -57,20 +65,30 @@ export class StickyMessageListener extends Listener {
     sticky.count += 1;
     if (sticky.count < Math.max(5, sticky.interval)) return;
 
+    if (refreshingChannels.has(message.channelId)) return;
     sticky.count = 0;
-    void fetch(`${env.apiBaseUrl}/api/automation/sticky/${encodeURIComponent(message.channelId)}/refresh`, {
-      method: "POST",
-      headers: { "x-admin-key": env.adminApiKey },
-      signal: AbortSignal.timeout(8_000),
-    }).then(async (response) => {
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(`API returned ${response.status}: ${detail}`);
+    refreshingChannels.add(message.channelId);
+    void (async () => {
+      try {
+        const response = await fetch(`${env.apiBaseUrl}/api/automation/sticky/${encodeURIComponent(message.channelId)}/refresh`, {
+          method: "POST",
+          headers: { "x-admin-key": env.adminApiKey },
+          signal: AbortSignal.timeout(8_000),
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(`API returned ${response.status}: ${detail}`);
+        }
+        const result = await response.json() as { messageId?: string };
+        const currentSticky = stickyChannels.get(message.channelId);
+        if (currentSticky) {
+          currentSticky.currentMessageId = result.messageId ?? currentSticky.currentMessageId;
+        }
+      } catch (error) {
+        console.warn(`[sticky] Could not refresh sticky message in ${message.channelId}:`, error);
+      } finally {
+        refreshingChannels.delete(message.channelId);
       }
-      const result = await response.json() as { messageId?: string };
-      sticky.currentMessageId = result.messageId ?? sticky.currentMessageId;
-    }).catch((error) => {
-      console.warn(`[sticky] Could not refresh sticky message in ${message.channelId}:`, error);
-    });
+    })();
   }
 }
