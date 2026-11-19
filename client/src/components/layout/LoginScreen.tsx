@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Clock, Lock, ShieldCheck, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { HoHoLogoMark } from "./HoHoLogoMark";
 import { api } from "../../api/client";
 import { PublicPageHeader } from "./PublicPageHeader";
