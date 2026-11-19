@@ -1,4 +1,4 @@
-import { ButtonStyle, ComponentType } from "@dmb/shared";
+import { ButtonStyle, ComponentType, buildCustomId } from "@dmb/shared";
 import type { ComponentNode, FlowStep, MessageData } from "@dmb/shared";
 import { uid } from "./constants";
 
@@ -121,7 +121,7 @@ export const STARTER_BLUEPRINTS: StarterBlueprint[] = [
         flows: [{ customId: button.custom_id!, steps: [
           step("open_modal", {
             title: "Support Request",
-            customId: "support_request",
+            customId: buildCustomId("modal_submit", { id: "support_request" }),
             components: [{ type: 1, components: [
               { type: 4, custom_id: "reason", label: "How can we help?", style: 2, required: true, max_length: 1000 },
             ] }],
