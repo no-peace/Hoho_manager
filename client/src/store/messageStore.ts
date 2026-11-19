@@ -352,13 +352,17 @@ export const useMessageStore = create<MessageState>()(
         let changed = false;
         const messages = state.messages.map((message) => {
           const messageId = message._id || uid();
+          let answersChanged = false;
           const answers = message.poll?.answers.map((answer) => {
             const answerId = answer._id || uid();
-            if (answerId !== answer._id) changed = true;
+            if (answerId !== answer._id) {
+              changed = true;
+              answersChanged = true;
+            }
             return answerId === answer._id ? answer : { ...answer, _id: answerId };
           });
           if (messageId !== message._id) changed = true;
-          if (!changed && !answers?.some((answer, index) => answer !== message.poll?.answers[index])) return message;
+          if (messageId === message._id && !answersChanged) return message;
           return {
             ...message,
             _id: messageId,
@@ -1045,90 +1049,90 @@ export const useMessageStore = create<MessageState>()(
         suppressDirtyTracking = true;
         try {
           get().clearFiles();
-        const doc =
-          input && typeof input === "object" && input.data !== undefined && input.messages === undefined && input.backups === undefined
-            ? input.data
-            : (input ?? {});
-        const resolvedMode = input?.mode ?? doc?.mode;
-        const resolvedTargets =
-          (input?.targets && input.targets.length > 0)
-            ? input.targets
-            : (doc?.targets && doc.targets.length > 0 ? doc.targets : undefined);
+          const doc =
+            input && typeof input === "object" && input.data !== undefined && input.messages === undefined && input.backups === undefined
+              ? input.data
+              : (input ?? {});
+          const resolvedMode = input?.mode ?? doc?.mode;
+          const resolvedTargets =
+            (input?.targets && input.targets.length > 0)
+              ? input.targets
+              : (doc?.targets && doc.targets.length > 0 ? doc.targets : undefined);
 
-        let initialMessages: MessageData[] = [];
-        if (doc?.backups && Array.isArray(doc.backups) && doc.backups.length > 0) {
-          const b = doc.backups[0];
-          if (Array.isArray(b.messages) && b.messages.length > 0) {
-            initialMessages = b.messages.map((m: any) => ({
+          let initialMessages: MessageData[] = [];
+          if (doc?.backups && Array.isArray(doc.backups) && doc.backups.length > 0) {
+            const b = doc.backups[0];
+            if (Array.isArray(b.messages) && b.messages.length > 0) {
+              initialMessages = b.messages.map((m: any) => ({
+                ...createEmptyMessage(),
+                ...(m.data || m),
+              }));
+            }
+          } else if (Array.isArray(doc?.messages) && doc.messages.length > 0) {
+            initialMessages = doc.messages.map((m: any) => ({
               ...createEmptyMessage(),
               ...(m.data || m),
             }));
+          } else if (doc && typeof doc === "object" && (doc.content !== undefined || doc.embeds !== undefined || doc.components !== undefined)) {
+            initialMessages = [{ ...createEmptyMessage(), ...doc }];
+          } else {
+            initialMessages = [createEmptyMessage()];
           }
-        } else if (Array.isArray(doc?.messages) && doc.messages.length > 0) {
-          initialMessages = doc.messages.map((m: any) => ({
-            ...createEmptyMessage(),
-            ...(m.data || m),
-          }));
-        } else if (doc && typeof doc === "object" && (doc.content !== undefined || doc.embeds !== undefined || doc.components !== undefined)) {
-          initialMessages = [{ ...createEmptyMessage(), ...doc }];
-        } else {
-          initialMessages = [createEmptyMessage()];
-        }
 
-        initialMessages.forEach((msg) => {
-          msg._id = msg._id || uid();
-          if (msg.poll) {
-            msg.poll = {
-              ...msg.poll,
-              answers: msg.poll.answers.map((answer) => ({ ...answer, _id: answer._id || uid() })),
-            };
-          }
-          if (msg.embeds) {
-            msg.embeds = msg.embeds.map((e) => ({
-              ...e,
-              _id: e._id || uid(),
-              fields: (e.fields || []).map((f) => ({ ...f, _id: f._id || uid() })),
-            }));
-          }
-          const hydrateNode = (c: ComponentNode): ComponentNode => ({
-            ...c,
-            _id: c._id || uid(),
-            ...(c.accessory ? { accessory: hydrateNode(c.accessory) } : {}),
-            ...(Array.isArray(c.components) ? { components: c.components.map(hydrateNode) } : {}),
-            ...(Array.isArray(c.options)
-              ? { options: c.options.map((o) => ({ ...o, _id: o._id || uid() })) }
-              : {}),
-            ...(Array.isArray(c.items)
-              ? { items: c.items.map((it) => ({ ...it, _id: it._id || uid() })) }
-              : {}),
+          initialMessages.forEach((msg) => {
+            msg._id = msg._id || uid();
+            if (msg.poll) {
+              msg.poll = {
+                ...msg.poll,
+                answers: msg.poll.answers.map((answer) => ({ ...answer, _id: answer._id || uid() })),
+              };
+            }
+            if (msg.embeds) {
+              msg.embeds = msg.embeds.map((e) => ({
+                ...e,
+                _id: e._id || uid(),
+                fields: (e.fields || []).map((f) => ({ ...f, _id: f._id || uid() })),
+              }));
+            }
+            const hydrateNode = (c: ComponentNode): ComponentNode => ({
+              ...c,
+              _id: c._id || uid(),
+              ...(c.accessory ? { accessory: hydrateNode(c.accessory) } : {}),
+              ...(Array.isArray(c.components) ? { components: c.components.map(hydrateNode) } : {}),
+              ...(Array.isArray(c.options)
+                ? { options: c.options.map((o) => ({ ...o, _id: o._id || uid() })) }
+                : {}),
+              ...(Array.isArray(c.items)
+                ? { items: c.items.map((it) => ({ ...it, _id: it._id || uid() })) }
+                : {}),
+            });
+            if (msg.components) {
+              msg.components = msg.components.map(hydrateNode);
+            }
+            const isV2 = resolveMessageMode(msg, resolvedMode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
+            msg.flags = isV2 ? (msg.flags ?? 0) | 32768 : (msg.flags ?? 0) & ~32768;
+            (msg as any).mode = isV2 ? EDITOR_MODES.V2 : EDITOR_MODES.CLASSIC;
           });
-          if (msg.components) {
-            msg.components = msg.components.map(hydrateNode);
+
+          const activeMode = resolveMessageMode(initialMessages[0], resolvedMode || EDITOR_MODES.CLASSIC);
+
+          resetHistoryOnNextChange = true;
+          set({
+            mode: activeMode,
+            data: initialMessages[0],
+            messages: initialMessages,
+            activeMessageIndex: 0,
+            targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
+            selection: null,
+            past: [],
+            future: [],
+            canUndo: false,
+            canRedo: false,
+            isDirty: false,
+          });
+          } finally {
+            suppressDirtyTracking = false;
           }
-          const isV2 = resolveMessageMode(msg, resolvedMode || EDITOR_MODES.CLASSIC) === EDITOR_MODES.V2;
-          msg.flags = isV2 ? (msg.flags ?? 0) | 32768 : (msg.flags ?? 0) & ~32768;
-          (msg as any).mode = isV2 ? EDITOR_MODES.V2 : EDITOR_MODES.CLASSIC;
-        });
-
-        const activeMode = resolveMessageMode(initialMessages[0], resolvedMode || EDITOR_MODES.CLASSIC);
-
-        resetHistoryOnNextChange = true;
-        set({
-          mode: activeMode,
-          data: initialMessages[0],
-          messages: initialMessages,
-          activeMessageIndex: 0,
-          targets: resolvedTargets && resolvedTargets.length > 0 ? resolvedTargets : [{ url: "" }],
-          selection: null,
-          past: [],
-          future: [],
-          canUndo: false,
-          canRedo: false,
-          isDirty: false,
-        });
-        } finally {
-          suppressDirtyTracking = false;
-        }
       },
 
       getPayload: () => {
