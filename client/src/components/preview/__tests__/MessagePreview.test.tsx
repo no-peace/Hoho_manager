@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { ComponentType } from "@dmb/shared";
+import { buildCustomId, ComponentType } from "@dmb/shared";
 import { MessagePreview } from "../MessagePreview";
 import { useMessageStore } from "../../../store/messageStore";
 
@@ -15,6 +15,42 @@ describe("MessagePreview component click routing", () => {
     render(<MessagePreview />);
 
     expect(screen.getByText("Live Preview")).toBeTruthy();
+  });
+
+  it("runs a legacy inline action in the docked Test Flow simulator", async () => {
+    const customId = buildCustomId("send_ephemeral_reply", {
+      content: "Hello {user.username}",
+    });
+    const message = {
+      content: "",
+      embeds: [],
+      flags: 0,
+      components: [{
+        _id: "test-flow-row",
+        type: ComponentType.ActionRow,
+        components: [{
+          _id: "test-flow-button",
+          type: ComponentType.Button,
+          style: 1,
+          label: "Run test action",
+          custom_id: customId,
+        }],
+      }],
+    } as any;
+    useMessageStore.setState({
+      data: message,
+      messages: [message],
+      activeMessageIndex: 0,
+      selection: null,
+      attachedFiles: [],
+    });
+
+    render(<MessagePreview />);
+    fireEvent.click(screen.getByRole("button", { name: /Test Flow/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Run test action" }));
+
+    expect(await screen.findByText("Flow Simulation")).toBeTruthy();
+    expect(await screen.findByText("Hello DemoUser")).toBeTruthy();
   });
 
   it("keeps the active message and selection unchanged when an interactive select is clicked", () => {
