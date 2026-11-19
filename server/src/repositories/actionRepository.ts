@@ -20,6 +20,7 @@ interface ActionRow {
   id: number;
   template_id: number | null;
   message_id: string | null;
+  guild_id: string | null;
   custom_id: string;
   action_type: string;
   config: string;
@@ -42,6 +43,7 @@ export interface ActionLogRow {
 export interface CreateActionInput {
   templateId?: number | null;
   messageId?: string | null;
+  guildId?: string | null;
   customId: string;
   actionType: ActionType;
   config?: ActionConfig;
@@ -69,17 +71,19 @@ export class ActionRepository extends BaseRepository {
   async create({
     templateId = null,
     messageId = null,
+    guildId = null,
     customId,
     actionType,
     config = {},
     executionOrder = 0,
   }: CreateActionInput): Promise<ActionDefinitionRecord | undefined> {
     const { lastInsertRowid } = await this.db.run(
-      `INSERT INTO action_definitions (template_id, message_id, custom_id, action_type, config, execution_order)
-       VALUES (@templateId, @messageId, @customId, @actionType, @config, @executionOrder)`,
+      `INSERT INTO action_definitions (template_id, message_id, guild_id, custom_id, action_type, config, execution_order)
+       VALUES (@templateId, @messageId, @guildId, @customId, @actionType, @config, @executionOrder)`,
       {
         templateId,
         messageId,
+        guildId,
         customId,
         actionType,
         config: JSON.stringify(config ?? {}),
@@ -150,13 +154,9 @@ export class ActionRepository extends BaseRepository {
     if (!messageId) {
       if (!guildId) return [];
       const modalRows = await this.db.query<ActionRow>(
-        `SELECT action_definitions.*
-         FROM action_definitions
-         INNER JOIN tracked_messages
-           ON tracked_messages.message_id = action_definitions.message_id
-         WHERE action_definitions.custom_id = @customId
-           AND tracked_messages.guild_id = @guildId
-         ORDER BY action_definitions.execution_order ASC`,
+        `SELECT * FROM action_definitions
+         WHERE custom_id = @customId AND guild_id = @guildId
+         ORDER BY execution_order ASC`,
         { customId, guildId },
       );
       return parseJsonList(modalRows as unknown as ActionDefinitionRecord[], ["config"]);
@@ -185,7 +185,11 @@ export class ActionRepository extends BaseRepository {
    * ad-hoc registration for the same components. Template-owned rows are left
    * untouched.
    */
-  async registerFlows(messageId: string, flows: FlowRegistration[] = []): Promise<number> {
+  async registerFlows(
+    messageId: string,
+    flows: FlowRegistration[] = [],
+    guildId: string | null = null,
+  ): Promise<number> {
     return this.db.transaction(async () => {
       await this.db.run(
         "DELETE FROM action_definitions WHERE message_id = @messageId AND template_id IS NULL",
@@ -199,6 +203,7 @@ export class ActionRepository extends BaseRepository {
           await this.create({
             templateId: null,
             messageId,
+            guildId,
             customId: flow.customId,
             actionType: step.type,
             config: step.config ?? {},
