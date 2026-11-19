@@ -42,33 +42,39 @@ export const ScheduledMessageModal: React.FC<{ open: boolean; onClose: () => voi
     setChannels([]);
   }, [guildId]);
 
-  const refresh = async () => {
+  const refresh = async (isCurrent: () => boolean = () => true) => {
     if (!guildId) return;
-    setLoading(true);
+    if (isCurrent()) setLoading(true);
     try {
       const [channelRows, scheduleRows, templateRows] = await Promise.all([
         request<Channel[]>(`/api/send/channels?guildId=${encodeURIComponent(guildId)}`),
         request<ScheduleRow[]>(`/api/automation/schedules?guildId=${encodeURIComponent(guildId)}`),
         api.templates.list(),
       ]);
-      setChannels(Array.isArray(channelRows) ? channelRows : []);
-      setSchedules(Array.isArray(scheduleRows) ? scheduleRows : []);
-      setTemplates(Array.isArray(templateRows.templates) ? templateRows.templates : []);
+      if (isCurrent()) {
+        setChannels(Array.isArray(channelRows) ? channelRows : []);
+        setSchedules(Array.isArray(scheduleRows) ? scheduleRows : []);
+        setTemplates(Array.isArray(templateRows.templates) ? templateRows.templates : []);
+      }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not load schedules.");
+      if (isCurrent()) setError(reason instanceof Error ? reason.message : "Could not load schedules.");
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     setChannels([]);
     setRunAt(toLocalInput(new Date(Date.now() + 60 * 60_000)));
     setChannelId("");
     setTemplateId("");
     setError("");
-    void refresh();
+    void refresh(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [open, guildId]);
 
   const createSchedule = async () => {
