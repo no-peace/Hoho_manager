@@ -121,6 +121,10 @@ export class AutomationRepository extends BaseRepository {
     );
   }
 
+  async retryExpiring(id: number, deleteAt: string): Promise<void> {
+    await this.db.run("UPDATE expiring_messages SET delete_at = @deleteAt WHERE id = @id", { id, deleteAt });
+  }
+
   async removeExpiring(id: number): Promise<void> {
     await this.db.run("DELETE FROM expiring_messages WHERE id = @id", { id });
   }
