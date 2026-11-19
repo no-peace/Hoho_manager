@@ -56,6 +56,11 @@ export class AutomationRepository extends BaseRepository {
     return rows.map(hydratePayload);
   }
 
+  async findScheduleById(id: number): Promise<ScheduledMessageRow | undefined> {
+    const row = await this.db.get<ScheduledMessageRow>("SELECT * FROM scheduled_messages WHERE id = @id", { id });
+    return row ? hydratePayload(row) : undefined;
+  }
+
   async findDueSchedules(now: string): Promise<ScheduledMessageRow[]> {
     const rows = await this.db.query<ScheduledMessageRow>(
       "SELECT * FROM scheduled_messages WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= @now ORDER BY next_run_at ASC LIMIT 50",
