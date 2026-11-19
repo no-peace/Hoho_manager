@@ -12,7 +12,7 @@ export interface StarterBlueprint {
   };
 }
 
-const actionButton = (label: string, style: number) => {
+const actionButton = (label: string, style: number): ComponentNode => {
   const id = uid();
   return {
     _id: id,
