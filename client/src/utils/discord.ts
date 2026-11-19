@@ -125,6 +125,8 @@ export const toDiscordPayload = (
     };
   }
 
+  if (extData.poll) payload.poll = extData.poll;
+
   if (extData.allowed_mentions) {
     payload.allowed_mentions = extData.allowed_mentions;
   }
@@ -140,7 +142,8 @@ export const isPayloadEmpty = (
   !(payload.attachments && payload.attachments.length > 0) &&
   !payload.content &&
   !(payload.embeds && payload.embeds.length > 0) &&
-  !(payload.components && payload.components.length > 0);
+  !(payload.components && payload.components.length > 0) &&
+  !payload.poll;
 
 /* ── Validation ───────────────────────────────────────────────────────────── */
 
