@@ -37,7 +37,7 @@ for (const target of targets) {
       failed = true;
       shuttingDown = true;
       stopChildren("SIGTERM");
-      process.exitCode = code && code !== 0 ? code : signal ? 1 : 1;
+      process.exitCode = code !== null && code !== 0 ? code : 1;
     }
     if (shuttingDown && children.every((entry) => entry.exitCode !== null || entry.signalCode !== null)) {
       process.exitCode = failed ? process.exitCode ?? 1 : 0;
