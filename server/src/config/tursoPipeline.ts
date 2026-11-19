@@ -34,7 +34,7 @@ interface TransactionContext {
 }
 
 const normalizePipelineUrl = (rawUrl: string): string => {
-  const cleanUrl = rawUrl.replace(/\\/+$/, "");
+  const cleanUrl = rawUrl.replace(/\/+$/, "");
   return cleanUrl.endsWith("/v2/pipeline") ? cleanUrl : `${cleanUrl}/v2/pipeline`;
 };
 
