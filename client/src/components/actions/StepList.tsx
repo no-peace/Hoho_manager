@@ -186,7 +186,7 @@ export const DiscordModalPreview = ({
           <p className="text-xs text-[#A1A8B8] text-center py-3">No input fields added yet</p>
         ) : (
           inputs.map((inp, idx) => {
-            const options = (inp.optionsText ?? "").split("\\n").map((line) => line.split("|")[0]?.trim()).filter(Boolean);
+            const options = (inp.optionsText ?? "").split("\n").map((line) => line.split("|")[0]?.trim()).filter(Boolean);
             if (inp.fieldType === "text_display") {
               return <div key={idx} className="rounded-md border border-[#272D3A] bg-[#272D3A]/60 p-2.5 text-xs text-[#F1F3F9] whitespace-pre-wrap">{inp.content || inp.label}</div>;
             }
@@ -208,7 +208,7 @@ export const DiscordModalPreview = ({
                   <div className="h-9 rounded bg-[#272D3A] border border-[#111214] px-2.5 flex items-center text-xs text-[#A1A8B8]">{inp.placeholder || `Select ${inp.fieldType.replace(/_/g, " ")}...`}</div>
                 ) : (
                   <div className="space-y-1 rounded bg-[#272D3A] border border-[#111214] p-2">
-                    {options.map((option, optionIndex) => <div key={optionIndex} className="flex items-center gap-2 text-xs text-[#A1A8B8]"><span className="h-3.5 w-3.5 rounded border border-[#A1A8B8]" />{option}</div>)}
+                    {options.map((option, optionIndex) => <div key={optionIndex} className="flex items-center gap-2 text-xs text-[#A1A8B8]"><span className={`h-3.5 w-3.5 shrink-0 border border-[#A1A8B8] ${inp.fieldType === "radio_group" ? "rounded-full" : "rounded"}`} />{option}</div>)}
                   </div>
                 )}
               </div>
