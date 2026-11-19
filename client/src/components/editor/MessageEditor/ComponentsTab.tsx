@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   Box,
   ChevronDown,
-  ChevronUp,
   Copy,
   FileText,
   Image as ImageIcon,
@@ -26,6 +25,7 @@ import { ColorPicker } from "../../ui/ColorPicker";
 import { TextField } from "../../ui/Field";
 import { useMessageStore } from "../../../store/messageStore";
 import { uid } from "../../../utils/constants";
+import { DragHandle, SortableItem, SortableList } from "../../ui/SortableList";
 import { decimalToHex, type ExtendedMessageData } from "../../../utils/discord";
 import {
   buttonStylePatch,
@@ -66,7 +66,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
   const addComponent = useMessageStore((state) => state.addComponent);
   const updateComponentById = useMessageStore((state) => state.updateComponentById);
   const removeComponentById = useMessageStore((state) => state.removeComponentById);
-  const moveComponentById = useMessageStore((state) => state.moveComponentById);
+  const reorderComponentById = useMessageStore((state) => state.reorderComponentById);
   const duplicateComponentById = useMessageStore((state) => state.duplicateComponentById);
   const selection = useMessageStore((state) => state.selection);
   const select = useMessageStore((state) => state.select);
@@ -129,32 +129,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           {getComponentTitle(comp, compIdx)}
         </span>
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          {compIdx > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                ensureActive();
-                if (id) moveComponentById(id, -1, parentId);
-              }}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
-              title="Move Up"
-            >
-              <ChevronUp size={13} />
-            </button>
-          )}
-          {compIdx < siblingCount - 1 && (
-            <button
-              type="button"
-              onClick={() => {
-                ensureActive();
-                if (id) moveComponentById(id, 1, parentId);
-              }}
-              className="p-1 rounded text-[#A1A8B8] hover:text-white hover:bg-[#252B3A]"
-              title="Move Down"
-            >
-              <ChevronDown size={13} />
-            </button>
-          )}
+          <DragHandle label="Drag to reorder component" />
           <button
             type="button"
             onClick={() => {
@@ -733,11 +708,21 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             </div>
 
             {/* Nested Components inside Container */}
-            <div className="space-y-2.5 pl-2 border-l-2 border-[#272D3A]">
-              {children.map((child, childIdx) =>
-                renderV2ComponentCard(child, childIdx, children.length, id),
-              )}
-            </div>
+            <SortableList
+              items={children.map((child, childIdx) => child._id ?? `container-${id}-child-${childIdx}`)}
+              onReorder={(activeId, overId) => reorderComponentById(activeId, overId, id)}
+              strategy="vertical"
+              className="space-y-2.5 pl-2 border-l-2 border-[#272D3A]"
+            >
+              {children.map((child, childIdx) => {
+                const childId = child._id ?? `container-${id}-child-${childIdx}`;
+                return (
+                  <SortableItem key={childId} id={childId}>
+                    {renderV2ComponentCard(child, childIdx, children.length, id)}
+                  </SortableItem>
+                );
+              })}
+            </SortableList>
 
             {/* + Add to Container Dropdown */}
             <div className="relative inline-block" onMouseDown={(e) => e.stopPropagation()}>
@@ -798,11 +783,21 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
           No V2 components yet. Use the Add menu below to add Content, a Container, Media Gallery, File, Separator, or Action Row.
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {v2TopComponents.map((comp, compIdx) =>
-            renderV2ComponentCard(comp, compIdx, v2TopComponents.length, null),
-          )}
-        </div>
+        <SortableList
+          items={v2TopComponents.map((comp, compIdx) => comp._id ?? `v2-component-${compIdx}`)}
+          onReorder={(activeId, overId) => reorderComponentById(activeId, overId, null)}
+          strategy="vertical"
+          className="space-y-2.5"
+        >
+          {v2TopComponents.map((comp, compIdx) => {
+            const componentId = comp._id ?? `v2-component-${compIdx}`;
+            return (
+              <SortableItem key={componentId} id={componentId}>
+                {renderV2ComponentCard(comp, compIdx, v2TopComponents.length, null)}
+              </SortableItem>
+            );
+          })}
+        </SortableList>
       )}
     </div>
   );
