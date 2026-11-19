@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-const targets = ["server/dist/index.js", "bot/dist/index.js"] as const;
+const targets = ["server/dist/index.js", "bot/dist/index.js"];
 const children = [];
 let shuttingDown = false;
 let failed = false;
@@ -23,7 +23,7 @@ process.once("SIGTERM", () => handleSignal("SIGTERM"));
 for (const target of targets) {
   const child = spawn(process.execPath, [target], { stdio: "inherit" });
   children.push(child);
-  child.once("error", (error: Error) => {
+  child.once("error", (error) => {
     console.error("[start] Failed to launch " + target + ": " + error.message);
     if (!shuttingDown) {
       failed = true;
