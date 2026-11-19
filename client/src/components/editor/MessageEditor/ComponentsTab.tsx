@@ -96,7 +96,6 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
   const renderV2ComponentCard = (
     comp: ComponentNode,
     compIdx: number,
-    siblingCount: number,
     parentId: string | null,
   ) => {
     const id = comp._id ?? "";
@@ -718,7 +717,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
                 const childId = child._id ?? `container-${id}-child-${childIdx}`;
                 return (
                   <SortableItem key={childId} id={childId}>
-                    {renderV2ComponentCard(child, childIdx, children.length, id)}
+                    {renderV2ComponentCard(child, childIdx, id)}
                   </SortableItem>
                 );
               })}
@@ -793,7 +792,7 @@ export const ComponentsTab: React.FC<ComponentsTabProps> = ({
             const componentId = comp._id ?? `v2-component-${compIdx}`;
             return (
               <SortableItem key={componentId} id={componentId}>
-                {renderV2ComponentCard(comp, compIdx, v2TopComponents.length, null)}
+                {renderV2ComponentCard(comp, compIdx, null)}
               </SortableItem>
             );
           })}
