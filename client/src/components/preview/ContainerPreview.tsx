@@ -20,7 +20,7 @@ export const ContainerPreview = ({ component }: ContainerPreviewProps) => {
     <div data-preview-component-id={component._id} className="relative max-w-[520px] min-w-0 overflow-visible rounded-lg border border-[#3f4147] bg-[#2b2d31] p-4 pl-5 [overflow-wrap:anywhere]">
       {hasAccent && (
         <span
-          className="absolute inset-y-0 left-0 w-1"
+          className="absolute inset-y-0 left-0 w-1 rounded-l-[7px]"
           style={{ backgroundColor: decimalToHex(component.accent_color) }}
         />
       )}
