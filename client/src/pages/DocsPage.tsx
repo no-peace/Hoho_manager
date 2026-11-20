@@ -395,7 +395,7 @@ export const DocsPage = () => {
             <Link to="/privacy" className="hover:text-white transition-colors font-semibold">Privacy &amp; Bot Policy</Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</Link>
+            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
           </div>
         </footer>
 
