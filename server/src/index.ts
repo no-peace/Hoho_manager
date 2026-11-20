@@ -2,8 +2,8 @@ import { createApp } from "./app.js";
 import { db, initializeDatabase } from "./config/database.js";
 import { env, validateEnv } from "./config/env.js";
 import { runDatabaseMaintenance } from "./services/maintenanceService.js";
-import { startMessageTrackerPolling, stopMessageTrackerPolling } from "./services/messageTrackerService.js";
-import { initializeAutomationService, runAutomationTick } from "./services/automationService.js";
+import { startMessageTrackerPolling, stopMessageTrackerPolling, waitForTrackedMessageSync } from "./services/messageTrackerService.js";
+import { initializeAutomationService, runAutomationTick, waitForAutomationTick } from "./services/automationService.js";
 import { logger } from "./utils/logger.js";
 import type { Server } from "node:http";
 
@@ -66,7 +66,7 @@ const start = async (): Promise<void> => {
   automationInterval.unref();
 
   let isShuttingDown = false;
-  const gracefulShutdown = (signal: string) => {
+  const gracefulShutdown = async (signal: string) => {
     if (isShuttingDown) return;
     isShuttingDown = true;
     log.info(`Received ${signal}. Starting graceful shutdown...`);
@@ -74,6 +74,11 @@ const start = async (): Promise<void> => {
     clearInterval(cleanup);
     clearInterval(automationInterval);
     stopMessageTrackerPolling();
+
+    await Promise.race([
+      Promise.all([waitForAutomationTick(), waitForTrackedMessageSync()]),
+      new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
+    ]);
 
     server.close(() => {
       log.info("HTTP server closed.");
@@ -88,8 +93,8 @@ const start = async (): Promise<void> => {
     }, 10_000).unref();
   };
 
-  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => { void gracefulShutdown("SIGINT"); });
+  process.on("SIGTERM", () => { void gracefulShutdown("SIGTERM"); });
 };
 
 process.on("unhandledRejection", (reason) => {
