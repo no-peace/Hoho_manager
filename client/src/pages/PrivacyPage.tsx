@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ShieldCheck, Lock, Clock, Database } from "lucide-react";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { updatePageSeo } from "../utils/seo";
@@ -72,9 +73,9 @@ export const PrivacyPage: React.FC = () => {
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#272D3A] pt-6 text-xs text-[#A1A8B8]">
           <span>HoHo Hub • HoHo Manager</span>
           <nav aria-label="Footer links" className="flex flex-wrap items-center gap-4">
-            <a href="/" className="transition-colors hover:text-white">Studio</a>
-            <a href="/docs" className="transition-colors hover:text-white">Docs</a>
-            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</a>
+            <Link to="/" className="transition-colors hover:text-white">Studio</Link>
+            <Link to="/docs" className="transition-colors hover:text-white">Docs</Link>
+            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</Link>
           </nav>
         </footer>
       </main>
