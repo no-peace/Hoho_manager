@@ -228,11 +228,6 @@ html, body, #root {
   border-radius: 9999px;
 }
 
-/* ── Base UI Dialog & Modal Fixes ─────────────────────────────────────── */
-div[data-base-ui-portal] > div[role="presentation"]:has(~ div[role="dialog"]) {
-  z-index: 40;
-}
-
 /* Remove default summary marker */
 details summary::-webkit-details-marker {
   display: none;
