@@ -3,6 +3,23 @@ import { Listener } from "@sapphire/framework";
 import { InteractionResponseType, MessageFlags, Routes } from "discord.js";
 import { env } from "../lib/env.js";
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isInteractionCallbackTarget = (
+  value: unknown,
+): value is { id: string; token: string } => {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    /^\\d{17,20}$/.test(value.id) &&
+    typeof value.token === "string" &&
+    value.token.length > 0 &&
+    value.token.length <= 512 &&
+    /^[A-Za-z0-9._-]+$/.test(value.token)
+  );
+};
+
 export class RawInteractionRelay extends Listener {
   public constructor(context: Listener.LoaderContext, options: Listener.Options) {
     super(context, {
@@ -11,14 +28,18 @@ export class RawInteractionRelay extends Listener {
     });
   }
 
-  public async run(packet: any) {
-    if (packet.t !== "INTERACTION_CREATE") return;
+  public async run(packet: unknown): Promise<void> {
+    if (!isRecord(packet) || packet.t !== "INTERACTION_CREATE") return;
 
     const rawInteraction = packet.d;
 
     // Only relay MessageComponent (3) and ModalSubmit (5) to the Express action engine.
     // Slash commands (2) and Autocomplete (4) are handled in-process by Sapphire.
-    if (rawInteraction?.type !== 3 && rawInteraction?.type !== 5) return;
+    if (
+      !isRecord(rawInteraction) ||
+      (rawInteraction.type !== 3 && rawInteraction.type !== 5) ||
+      !isInteractionCallbackTarget(rawInteraction)
+    ) return;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2_600);
@@ -56,8 +77,8 @@ export class RawInteractionRelay extends Listener {
    * Dispatches an ephemeral error callback to Discord before the 3,000ms deadline expires
    * when the central Express API fails to answer or times out.
    */
-  private async sendFallbackResponse(rawInteraction: any): Promise<void> {
-    if (!rawInteraction?.id || !rawInteraction?.token) return;
+  private async sendFallbackResponse(rawInteraction: unknown): Promise<void> {
+    if (!isInteractionCallbackTarget(rawInteraction)) return;
 
     try {
       await this.container.client.rest.post(
