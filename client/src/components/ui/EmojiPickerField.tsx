@@ -70,11 +70,16 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [autocompleteStyle, setAutocompleteStyle] = useState<CSSProperties>({});
   const selectedOptionRef = useRef<HTMLButtonElement>(null);
+  const closeAutocompleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedGuildId = useGlobalStore((state) => state.selectedGuildId);
   const emojisByGuild = useDiscordCacheStore((state) => state.emojis);
   const fetchEmojis = useDiscordCacheStore((state) => state.fetchEmojis);
   const guildEmojis = (selectedGuildId && emojisByGuild[selectedGuildId]) || [];
+
+  useEffect(() => () => {
+    if (closeAutocompleteTimeoutRef.current) clearTimeout(closeAutocompleteTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     if (selectedGuildId) {
@@ -222,7 +227,11 @@ export const EmojiPickerField: React.FC<EmojiPickerFieldProps> = ({
           placeholder={placeholder}
           onChange={handleInputChange}
           onBlur={() => {
-            setTimeout(() => setAcOpen(false), 200);
+            if (closeAutocompleteTimeoutRef.current) clearTimeout(closeAutocompleteTimeoutRef.current);
+            closeAutocompleteTimeoutRef.current = setTimeout(() => {
+              setAcOpen(false);
+              closeAutocompleteTimeoutRef.current = null;
+            }, 200);
           }}
           onKeyDown={(e) => {
             if (!acOpen || filteredEmojis.length === 0) return;
