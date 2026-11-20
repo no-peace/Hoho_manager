@@ -343,7 +343,15 @@ const runDueSchedules = async (now: Date): Promise<void> => {
       const status = error !== null && typeof error === "object" && "status" in error
         ? Number((error as { status: unknown }).status)
         : 0;
-      const transient = status === 0 || status === 408 || status === 429 || status >= 500;
+      const errorCode =
+        error !== null && typeof error === "object" && "code" in error
+          ? String((error as { code: unknown }).code)
+          : "";
+      const isEdit = Boolean(row.target_message_id);
+      const retryableFailure =
+        status === 429 ||
+        (isEdit && (status === 0 || status === 408 || status >= 500)) ||
+        errorCode === "bot_token_missing";
       const retryCount = Number.isInteger(row.retry_count) ? Number(row.retry_count) : 0;
       let retryAt: string | null = null;
       let nextRetryCount = retryCount;
@@ -351,7 +359,7 @@ const runDueSchedules = async (now: Date): Promise<void> => {
         if (row.cron_expr) {
           retryAt = scheduleNextAt(row, now.getTime());
           nextRetryCount = 0;
-        } else if (transient && retryCount < 5) {
+        } else if (retryableFailure && retryCount < 5) {
           retryAt = new Date(now.getTime() + 60_000).toISOString();
           nextRetryCount = retryCount + 1;
         }
