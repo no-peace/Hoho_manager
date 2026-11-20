@@ -66,7 +66,7 @@ describe("allowed mention payload sanitization", () => {
     const result = sanitizeAllowedMentions(scrubbed, permissions);
 
     expect(result).toMatchObject({
-      content: `<@&${allowedRoleId}> @\\u200b${blockedRoleId}`,
+      content: `<@&${allowedRoleId}> @\u200b${blockedRoleId}`,
       allowed_mentions: { roles: [allowedRoleId] },
     });
     expect(result.allowed_mentions).not.toHaveProperty("parse");
