@@ -139,7 +139,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
       expect(capturedHeaders["x-admin-key"]).toBeDefined();
 
       const parsed = JSON.parse(capturedBody);
-      expect(parsed.id).toBe("interaction-btn-1");
+      expect(parsed.id).toBe("923456789012345678");
       expect(parsed.member.user.id).toBe("123456789"); // BigInt serialized to string!
 
       // Fallback response must NOT be sent on success
@@ -185,7 +185,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
       expect(mockRestPost).toHaveBeenCalledTimes(1);
       const [calledRoute, calledPayload] = mockRestPost.mock.calls[0];
 
-      expect(calledRoute).toBe(Routes.interactionCallback("timeout-interaction-1", "timeout-token-1"));
+      expect(calledRoute).toBe(Routes.interactionCallback("103456789012345678", "timeout-token-1"));
       expect(calledPayload).toEqual({
         body: {
           type: InteractionResponseType.ChannelMessageWithSource,
@@ -222,7 +222,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
       expect(mockRestPost).toHaveBeenCalledTimes(1);
       const [calledRoute, calledPayload] = mockRestPost.mock.calls[0];
 
-      expect(calledRoute).toBe(Routes.interactionCallback("error-interaction-500", "error-token-500"));
+      expect(calledRoute).toBe(Routes.interactionCallback("113456789012345678", "error-token-500"));
       expect(calledPayload.body.type).toBe(InteractionResponseType.ChannelMessageWithSource);
       expect(calledPayload.body.data.flags).toBe(MessageFlags.Ephemeral);
       expect(calledPayload.auth).toBe(false);
