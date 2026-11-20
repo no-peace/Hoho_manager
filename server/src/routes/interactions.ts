@@ -158,12 +158,23 @@ router.post(
       return;
     }
 
+    const callbackBudgetMs = 2_500 - (Date.now() - startedAt);
+    if (callbackBudgetMs <= 0) {
+      cleanupDeferredInteraction(interaction.id);
+      res.status(504).json({
+        ok: false,
+        delivered: false,
+        error: "The interaction acknowledgement budget was exhausted before callback delivery.",
+      });
+      return;
+    }
+
     try {
       await discord.createInteractionResponse(
         interaction.id,
         interaction.token,
         response,
-        { timeoutMs: Math.max(100, 2_450 - (Date.now() - startedAt)) },
+        { timeoutMs: Math.min(300, callbackBudgetMs) },
       );
       cacheInteractionReceipt(interaction.id, response);
       if (
