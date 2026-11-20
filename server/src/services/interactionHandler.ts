@@ -150,34 +150,31 @@ export const handleInteraction = async (
     return { type: InteractionResponseType.Pong };
   }
 
-  let claimed: boolean;
-  try {
-    claimed = await interactionReceiptRepository.claim(interaction.id);
-  } catch (error) {
-    log.error(`Could not claim interaction ${interaction.id}: ${String(error)}`);
-    return ephemeral("This interaction could not be processed safely. Please try again.");
-  }
-
-  if (!claimed) {
+  const execution = (async (): Promise<InteractionResponse> => {
+    let claimed: boolean;
     try {
-      const cachedResponse = await interactionReceiptRepository.getResponse(interaction.id);
-      if (cachedResponse) return cachedResponse;
+      claimed = await interactionReceiptRepository.claim(interaction.id);
     } catch (error) {
-      log.error(`Could not load cached response for interaction ${interaction.id}: ${String(error)}`);
+      log.error(`Could not claim interaction ${interaction.id}: ${String(error)}`);
+      return ephemeral("This interaction could not be processed safely. Please try again.");
     }
 
-    log.warn(`Duplicate interaction ${interaction.id} arrived while its first delivery is running`);
-    return {
-      type:
-        interaction.type === InteractionType.MessageComponent
-          ? InteractionResponseType.DeferredUpdateMessage
-          : InteractionResponseType.DeferredChannelMessageWithSource,
-    };
-  }
+    if (!claimed) {
+      try {
+        const cachedResponse = await interactionReceiptRepository.getResponse(interaction.id);
+        if (cachedResponse) return cachedResponse;
+      } catch (error) {
+        log.error(`Could not load cached response for interaction ${interaction.id}: ${String(error)}`);
+      }
 
-  const execution = executeInteraction(interaction);
+      log.warn(`Duplicate interaction ${interaction.id} arrived while its first delivery is running`);
+      return ephemeral("This interaction is already being processed. Please wait and try again.");
+    }
+
+    return executeInteraction(interaction);
+  })();
   let timeout: ReturnType<typeof setTimeout> | undefined;
-  const remainingAckBudget = Math.max(400, ACK_DEADLINE_MS - (Date.now() - startedAt));
+  const remainingAckBudget = Math.max(0, ACK_DEADLINE_MS - (Date.now() - startedAt));
   const outcome = await Promise.race([
     execution.then((response) => ({ kind: "complete" as const, response })),
     new Promise<{ kind: "timeout" }>((resolve) => {
