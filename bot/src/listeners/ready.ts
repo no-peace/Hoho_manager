@@ -22,21 +22,10 @@ export class ReadyListener extends Listener {
     console.log(`[bot] ready as ${client.user.tag}  ${client.guilds.cache.size} guild(s)`);
     void refreshStickyCache();
 
-    const automationInterval = setInterval(() => {
-      void fetch(`${env.apiBaseUrl}/api/automation/tick`, {
-        method: "POST",
-        headers: { "x-admin-key": env.adminApiKey },
-        signal: AbortSignal.timeout(8_000),
-      }).then(async (response) => {
-        const status = response.status;
-        await response.body?.cancel().catch(() => undefined);
-        if (!response.ok) throw new Error(`API returned ${status}`);
-      }).catch((error) => {
-        console.warn("[automation] Scheduled-message tick failed:", error);
-      });
+    const stickyCacheInterval = setInterval(() => {
       void refreshStickyCache();
     }, 60_000);
-    automationInterval.unref();
+    stickyCacheInterval.unref();
 
     console.log(
       env.devGuildId
