@@ -124,7 +124,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
 
       const interaction = {
         type: 3,
-        id: "interaction-btn-1",
+        id: "923456789012345678",
         token: "token-btn-1",
         data: { custom_id: "action:dud:{}" },
         member: { user: { id: 123456789n } },
@@ -151,7 +151,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
   });
 
   describe("Relay Timeout & Failure Fallback (RB-19)", () => {
-    it("dispatches ephemeral fallback response when API relay times out (2,200ms abort deadline)", async () => {
+    it("dispatches ephemeral fallback response when API relay times out (2,600ms abort deadline)", async () => {
       // Simulate slow API where fetch rejects when the AbortSignal fires
       globalThis.fetch = vi.fn().mockImplementation((_url: string, opts: any) => {
         return new Promise((_, reject) => {
@@ -165,7 +165,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
 
       const interaction = {
         type: 3,
-        id: "timeout-interaction-1",
+        id: "103456789012345678",
         token: "timeout-token-1",
         data: { custom_id: "action:check:{}" },
       };
@@ -177,8 +177,8 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
       });
       const elapsed = Date.now() - start;
 
-      // AbortController in interactionRelay triggers at 2,200ms
-      expect(elapsed).toBeGreaterThanOrEqual(2100);
+      // AbortController in interactionRelay triggers at 2,600ms
+      expect(elapsed).toBeGreaterThanOrEqual(2500);
       expect(elapsed).toBeLessThan(3500);
 
       // Verify fallback response was dispatched to Discord before 3,000ms deadline
@@ -210,7 +210,7 @@ describe("Empirical Challenger: Bot Interaction Relay Timeout Fallback & Clean B
 
       const interaction = {
         type: 5, // ModalSubmit
-        id: "error-interaction-500",
+        id: "113456789012345678",
         token: "error-token-500",
       };
 
