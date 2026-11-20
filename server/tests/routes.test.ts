@@ -786,6 +786,81 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
       }
     });
 
+    it("requires thread allowlist access when listing, pausing, or deleting a schedule", async () => {
+      const staffId = "923456789012345678";
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue(guildId);
+
+      let scheduleId: number | null = null;
+      try {
+        const createResponse = await fetch(`${baseUrl}/api/automation/schedules`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": env.adminApiKey,
+          },
+          body: JSON.stringify({
+            guildId,
+            channelId,
+            threadId,
+            payload: { content: "Thread-scoped schedule" },
+            runAt: new Date(Date.now() + 60_000).toISOString(),
+          }),
+        });
+        expect(createResponse.status).toBe(201);
+        const created: unknown = await createResponse.json();
+        if (
+          created === null ||
+          typeof created !== "object" ||
+          !("id" in created) ||
+          typeof created.id !== "number"
+        ) {
+          throw new Error("Schedule creation did not return a numeric ID.");
+        }
+        scheduleId = created.id;
+
+        await createStaff(staffId, {
+          allowed_channel_ids: JSON.stringify([channelId]),
+        });
+
+        const staffHeaders = { "x-staff-id": staffId };
+        const listResponse = await fetch(
+          `${baseUrl}/api/automation/schedules?guildId=${guildId}`,
+          { headers: staffHeaders },
+        );
+        expect(listResponse.status).toBe(200);
+        const listed: unknown = await listResponse.json();
+        expect(Array.isArray(listed)).toBe(true);
+        if (!Array.isArray(listed)) throw new Error("Schedule list response was not an array.");
+        expect(listed.some((entry: unknown) =>
+          entry !== null &&
+          typeof entry === "object" &&
+          "id" in entry &&
+          entry.id === scheduleId,
+        )).toBe(false);
+
+        const patchResponse = await fetch(
+          `${baseUrl}/api/automation/schedules/${scheduleId}`,
+          {
+            method: "PATCH",
+            headers: { ...staffHeaders, "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: false }),
+          },
+        );
+        expect(patchResponse.status).toBe(403);
+
+        const deleteResponse = await fetch(
+          `${baseUrl}/api/automation/schedules/${scheduleId}`,
+          { method: "DELETE", headers: staffHeaders },
+        );
+        expect(deleteResponse.status).toBe(403);
+      } finally {
+        if (scheduleId !== null) {
+          await db.run("DELETE FROM scheduled_messages WHERE id = ?", [scheduleId]);
+        }
+        await cleanUp(staffId);
+      }
+    });
+
     it("scrubs unauthorized mentions and allowed_mentions overrides before persisting", async () => {
       const staffId = "823456789012345678";
       await createStaff(staffId, { can_mention_everyone: 0 });

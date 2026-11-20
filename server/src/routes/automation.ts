@@ -70,6 +70,16 @@ const assertChannelAccess = (
   }
 };
 
+const assertScheduleAccess = (
+  req: Express.Request,
+  schedule: { guild_id: string; channel_id: string; thread_id: string | null },
+): void => {
+  assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
+  if (schedule.thread_id) {
+    assertChannelAccess(req, schedule.guild_id, schedule.thread_id);
+  }
+};
+
 router.get("/schedules", requireStaffPermission("automation"), asyncHandler(async (req, res) => {
   const guildId = typeof req.query.guildId === "string" ? req.query.guildId : "";
   if (!snowflake(guildId)) throw ApiError.badRequest("A valid guildId is required.");
@@ -83,9 +93,15 @@ router.get("/schedules", requireStaffPermission("automation"), asyncHandler(asyn
   const schedules = await listScheduledMessages(guildId);
   if (staff && !staff.isAdmin && staff.record) {
     const allowedChannels = parseAllowedIds(staff.record.allowed_channel_ids);
-    return res.json(schedules.filter((schedule) =>
-      allowedChannels.includes("*") || allowedChannels.includes(schedule.channel_id),
-    ));
+    return res.json(schedules.filter((schedule) => {
+      const parentAllowed =
+        allowedChannels.includes("*") || allowedChannels.includes(schedule.channel_id);
+      const threadAllowed =
+        !schedule.thread_id ||
+        allowedChannels.includes("*") ||
+        allowedChannels.includes(schedule.thread_id);
+      return parentAllowed && threadAllowed;
+    }));
   }
   res.json(schedules);
 }));
@@ -161,7 +177,7 @@ router.patch("/schedules/:id", requireStaffPermission("automation"), asyncHandle
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
   const schedule = await getScheduledMessage(id);
   if (!schedule) throw ApiError.notFound("Schedule not found.");
-  assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
+  assertScheduleAccess(req, schedule);
   if (typeof req.body?.enabled !== "boolean") throw ApiError.badRequest("enabled must be a boolean.");
   await updateScheduledMessage(id, req.body.enabled);
   auditLog({
@@ -180,7 +196,7 @@ router.delete("/schedules/:id", requireStaffPermission("automation"), asyncHandl
   if (!Number.isSafeInteger(id) || id <= 0) throw ApiError.badRequest("Invalid schedule ID.");
   const schedule = await getScheduledMessage(id);
   if (!schedule) throw ApiError.notFound("Schedule not found.");
-  assertChannelAccess(req, schedule.guild_id, schedule.channel_id);
+  assertScheduleAccess(req, schedule);
   await deleteScheduledMessage(id);
   auditLog({
     event: "AUTOMATION_DELETED",
