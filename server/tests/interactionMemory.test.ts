@@ -13,6 +13,7 @@ import {
 import * as actionExecutor from "../src/services/actionExecutor.js";
 import * as discord from "../src/services/discordService.js";
 import { initializeDatabase } from "../src/config/database.js";
+import { interactionReceiptRepository } from "../src/repositories/interactionReceiptRepository.js";
 
 describe("PERF-03: Deferred Interaction Memory Retention & Prompt Cleanup", () => {
   beforeEach(async () => {
@@ -34,6 +35,43 @@ describe("PERF-03: Deferred Interaction Memory Retention & Prompt Cleanup", () =
       custom_id: "action:say:{}",
       component_type: 2,
     },
+  });
+
+  it("includes a slow Turso receipt claim inside the ACK deadline", async () => {
+    const interaction = makeInteraction(`int_slow_claim_${Date.now()}`);
+    const claimSpy = vi.spyOn(interactionReceiptRepository, "claim").mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2_300));
+      return true;
+    });
+    const executeSpy = vi.spyOn(actionExecutor, "executeCustomId").mockResolvedValue({
+      handled: true,
+      response: { type: InteractionResponseType.ChannelMessageWithSource },
+    });
+    vi.spyOn(discord, "createFollowupMessage").mockResolvedValue({ id: "msg_followup" });
+
+    const startedAt = Date.now();
+    const acknowledgement = await handleInteraction(interaction, startedAt);
+    const elapsed = Date.now() - startedAt;
+
+    expect(acknowledgement.type).toBe(InteractionResponseType.DeferredUpdateMessage);
+    expect(elapsed).toBeLessThan(2_600);
+    expect(claimSpy).toHaveBeenCalledTimes(1);
+
+    await completeDeferredInteraction(interaction);
+
+    expect(executeSpy).toHaveBeenCalledTimes(1);
+    expect(getPendingLateResponsesCount()).toBe(0);
+  });
+
+  it("returns an immediate response for a duplicate still being processed", async () => {
+    const interaction = makeInteraction(`int_duplicate_${Date.now()}`);
+    vi.spyOn(interactionReceiptRepository, "claim").mockResolvedValue(false);
+    vi.spyOn(interactionReceiptRepository, "getResponse").mockResolvedValue(null);
+
+    const response = await handleInteraction(interaction);
+
+    expect(response.type).toBe(InteractionResponseType.ChannelMessageWithSource);
+    expect(response.data?.content).toContain("already being processed");
   });
 
   it("registers pending deferred interaction and cleans it up immediately on completeDeferredInteraction", async () => {
