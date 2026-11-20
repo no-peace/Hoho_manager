@@ -476,3 +476,8 @@ option {
     animation: none;
   }
 }
+
+
+[data-list-dragging="true"] .sortable-collapse-on-drag {
+  display: none !important;
+}
