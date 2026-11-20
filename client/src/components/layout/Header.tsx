@@ -73,6 +73,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
     showToast,
   } = useGlobalStore();
 
+  const copiedTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const isSubRoute =
     typeof window !== "undefined" &&
     (window.location.pathname.startsWith("/bots/") || window.location.pathname !== "/");
@@ -91,13 +93,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBackups, onOpenJson, onCle
     };
   }, [userMenuOpen]);
 
+  useEffect(() => () => {
+    if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+  }, []);
+
   const handleCopyId = (id: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(id);
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    void navigator.clipboard.writeText(id).then(() => {
       setCopiedId(true);
       showToast("Discord ID copied to clipboard", "info");
-      setTimeout(() => setCopiedId(false), 2000);
-    }
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+      copiedTimeoutRef.current = setTimeout(() => {
+        setCopiedId(false);
+        copiedTimeoutRef.current = null;
+      }, 2000);
+    }).catch(() => {
+      showToast("Could not copy Discord ID", "error");
+    });
   };
 
   const handleInternalNavigation = (event: React.MouseEvent<HTMLAnchorElement>, path: string) => {
