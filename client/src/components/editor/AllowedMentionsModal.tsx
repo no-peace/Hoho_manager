@@ -24,14 +24,20 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
       setAllowedMentions(undefined);
     } else {
       setAllowedMentions({
-        parse: ["users", "roles"],
+        parse: [],
         users: [],
         roles: [],
       });
     }
   };
 
-  const am = allowedMentions ?? { parse: [], users: [], roles: [] };
+  const rawAllowedMentions = allowedMentions ?? { parse: [], users: [], roles: [] };
+  const hasExplicitIds =
+    (rawAllowedMentions.users?.length ?? 0) > 0 ||
+    (rawAllowedMentions.roles?.length ?? 0) > 0;
+  const am = hasExplicitIds
+    ? { ...rawAllowedMentions, parse: [] }
+    : rawAllowedMentions;
 
   const hasParse = (type: "everyone" | "roles" | "users") =>
     am.parse?.includes(type) ?? false;
@@ -41,7 +47,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
     const next = current.includes(type)
       ? current.filter((t) => t !== type)
       : [...current, type];
-    setAllowedMentions({ ...am, parse: next });
+    setAllowedMentions({ ...am, parse: next, users: [], roles: [] });
   };
 
   const addUserId = () => {
@@ -49,7 +55,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
     if (!trimmed || !/^\d{17,20}$/.test(trimmed)) return;
     const current = am.users ?? [];
     if (!current.includes(trimmed)) {
-      setAllowedMentions({ ...am, users: [...current, trimmed] });
+      setAllowedMentions({ ...am, parse: [], users: [...current, trimmed] });
     }
     setNewUserId("");
   };
@@ -66,7 +72,7 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
     if (!trimmed || !/^\d{17,20}$/.test(trimmed)) return;
     const current = am.roles ?? [];
     if (!current.includes(trimmed)) {
-      setAllowedMentions({ ...am, roles: [...current, trimmed] });
+      setAllowedMentions({ ...am, parse: [], roles: [...current, trimmed] });
     }
     setNewRoleId("");
   };
@@ -124,6 +130,9 @@ export const AllowedMentionsModal: React.FC<AllowedMentionsModalProps> = ({ open
 
                 <Checkbox checked={hasParse("roles")} onChange={() => toggleParse("roles")} label="All Roles" className="rounded-lg bg-[#161A23] px-2 py-2 text-xs font-semibold text-white" />
               </div>
+              <p className="text-[10px] leading-relaxed text-[#A1A8B8]">
+                Choose broad mention types or explicit IDs. Adding an ID switches to specific-ID mode; selecting a broad type clears the ID lists.
+              </p>
             </div>
 
             <div className="space-y-2">

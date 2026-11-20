@@ -69,6 +69,47 @@ describe("client discord utils", () => {
     });
 
 
+    it("omits empty explicit ID arrays when broad parser types are selected", () => {
+      const message: MessageData = {
+        content: "@everyone notice",
+        username: "",
+        avatar_url: "",
+        thread_name: "",
+        embeds: [],
+        components: [],
+        allowed_mentions: {
+          parse: ["everyone", "roles"],
+          users: [],
+          roles: [],
+        },
+      };
+
+      expect(toDiscordPayload(message, "classic").allowed_mentions).toEqual({
+        parse: ["everyone", "roles"],
+      });
+    });
+
+    it("uses explicit mention IDs instead of conflicting parser types", () => {
+      const message: MessageData = {
+        content: "<@123456789012345678> <@&223456789012345678>",
+        username: "",
+        avatar_url: "",
+        thread_name: "",
+        embeds: [],
+        components: [],
+        allowed_mentions: {
+          parse: ["everyone", "roles"],
+          users: ["123456789012345678"],
+          roles: ["223456789012345678"],
+        },
+      };
+
+      expect(toDiscordPayload(message, "classic").allowed_mentions).toEqual({
+        users: ["123456789012345678"],
+        roles: ["223456789012345678"],
+      });
+    });
+
     it("keeps forum thread creation separate from an existing thread destination", () => {
       const existingThreadMessage = {
         content: "Send into an existing thread",

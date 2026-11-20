@@ -175,36 +175,39 @@ export const sanitizeAllowedMentions = (
   perms: MentionPermissions,
 ): Record<string, unknown> => {
   const existing = payload.allowed_mentions as Record<string, unknown> | undefined;
-  const parse: string[] = [];
-  // Discord's allowed_mentions parser uses "everyone" for both @everyone and @here.
-  if (perms.can_mention_everyone || perms.can_mention_here) parse.push("everyone");
-
-  let roles: string[] | undefined;
-
-  let allowedRoleIds: string[] = [];
-  try {
-    allowedRoleIds =
-      typeof perms.allowed_role_mention_ids === "string"
+  const allowedRoleIds = (() => {
+    try {
+      const parsed: unknown = typeof perms.allowed_role_mention_ids === "string"
         ? JSON.parse(perms.allowed_role_mention_ids)
-        : Array.isArray(perms.allowed_role_mention_ids)
-          ? perms.allowed_role_mention_ids
-          : [];
-  } catch {
-    allowedRoleIds = [];
-  }
+        : [];
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === "string")
+        : [];
+    } catch {
+      return [];
+    }
+  })();
+  const explicitUsers = Array.isArray(existing?.users)
+    ? existing.users
+        .filter((id): id is string => typeof id === "string" && /^\\d{17,20}$/.test(id))
+        .slice(0, 100)
+    : [];
+  const parse: string[] = [];
 
-  if (perms.can_mention_roles || allowedRoleIds.includes("*")) {
-    parse.push("roles");
-  } else if (allowedRoleIds.length > 0) {
-    roles = allowedRoleIds.filter((id) => id !== "*");
+  // Explicit user IDs and parser-wide mention types are mutually exclusive in Discord's API.
+  if (explicitUsers.length === 0) {
+    // Discord's "everyone" parser controls both @everyone and @here.
+    if (perms.can_mention_everyone || perms.can_mention_here) parse.push("everyone");
+
+    // Role allowlists are enforced by scrubMentions before this parser is applied.
+    if (perms.can_mention_roles || allowedRoleIds.includes("*") || allowedRoleIds.length > 0) {
+      parse.push("roles");
+    }
   }
 
   const allowedMentions: Record<string, unknown> = {
-    parse,
-    ...(roles && roles.length > 0 ? { roles } : {}),
-    // Preserve replied_user if it was already set
-    ...(existing?.replied_user !== undefined ? { replied_user: existing.replied_user } : {}),
-    ...(Array.isArray(existing?.users) ? { users: existing.users } : {}),
+    ...(explicitUsers.length > 0 ? { users: explicitUsers } : { parse }),
+    ...(typeof existing?.replied_user === "boolean" ? { replied_user: existing.replied_user } : {}),
   };
 
   return { ...payload, allowed_mentions: allowedMentions };

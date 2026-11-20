@@ -79,6 +79,21 @@ export const stripInternal = (value: unknown): unknown => {
 
 /* ── Payload building ─────────────────────────────────────────────────────── */
 
+const normalizeAllowedMentions = (
+  value: NonNullable<MessageData["allowed_mentions"]>,
+): NonNullable<DiscordMessagePayload["allowed_mentions"]> => {
+  const users = [...new Set(value.users ?? [])];
+  const roles = [...new Set(value.roles ?? [])];
+  const hasExplicitIds = users.length > 0 || roles.length > 0;
+
+  return {
+    ...(hasExplicitIds ? {} : { parse: [...new Set(value.parse ?? [])] }),
+    ...(users.length > 0 ? { users } : {}),
+    ...(roles.length > 0 ? { roles } : {}),
+    ...(typeof value.replied_user === "boolean" ? { replied_user: value.replied_user } : {}),
+  };
+};
+
 export const toDiscordPayload = (
   data: MessageData,
   mode: EditorMode,
@@ -129,7 +144,7 @@ export const toDiscordPayload = (
   }
 
   if (extData.allowed_mentions) {
-    payload.allowed_mentions = extData.allowed_mentions;
+    payload.allowed_mentions = normalizeAllowedMentions(extData.allowed_mentions);
   }
 
   return payload;
