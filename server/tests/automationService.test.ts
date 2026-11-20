@@ -4,6 +4,8 @@ const mocks = vi.hoisted(() => ({
   listSchedules: vi.fn(),
   listExpiring: vi.fn(),
   listActiveSticky: vi.fn(),
+  getNextScheduleAt: vi.fn(),
+  getNextExpiringAt: vi.fn(),
   findDueSchedules: vi.fn(),
   findDueExpiring: vi.fn(),
   removeExpiring: vi.fn(),
@@ -21,6 +23,8 @@ vi.mock("../src/repositories/automationRepository.js", () => ({
     listSchedules: mocks.listSchedules,
     listExpiring: mocks.listExpiring,
     listActiveSticky: mocks.listActiveSticky,
+    getNextScheduleAt: mocks.getNextScheduleAt,
+    getNextExpiringAt: mocks.getNextExpiringAt,
     findDueSchedules: mocks.findDueSchedules,
     findDueExpiring: mocks.findDueExpiring,
     removeExpiring: mocks.removeExpiring,
@@ -44,6 +48,8 @@ describe("automation service", () => {
     mocks.listSchedules.mockResolvedValue([]);
     mocks.listExpiring.mockResolvedValue([]);
     mocks.listActiveSticky.mockResolvedValue([]);
+    mocks.getNextScheduleAt.mockResolvedValue(null);
+    mocks.getNextExpiringAt.mockResolvedValue(null);
     mocks.findDueSchedules.mockResolvedValue([]);
     mocks.findDueExpiring.mockResolvedValue([]);
     mocks.removeExpiring.mockResolvedValue(undefined);
@@ -85,6 +91,7 @@ describe("automation service", () => {
       created_at: new Date().toISOString(),
     };
     mocks.listExpiring.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.getNextExpiringAt.mockResolvedValueOnce(due.delete_at);
     mocks.findDueExpiring.mockResolvedValue([due]);
 
     const service = await import("../src/services/automationService.js");
@@ -116,6 +123,7 @@ describe("automation service", () => {
     };
     const ambiguousError = Object.assign(new Error("Discord request timed out"), { status: 504 });
     mocks.listSchedules.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.getNextScheduleAt.mockResolvedValueOnce(due.next_run_at);
     mocks.findDueSchedules.mockResolvedValue([due]);
     mocks.sendChannelMessageWithToken.mockRejectedValueOnce(ambiguousError);
 
@@ -149,6 +157,7 @@ describe("automation service", () => {
       created_at: new Date().toISOString(),
     };
     mocks.listSchedules.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.getNextScheduleAt.mockResolvedValueOnce(due.next_run_at);
     mocks.findDueSchedules.mockResolvedValue([due]);
 
     const service = await import("../src/services/automationService.js");
