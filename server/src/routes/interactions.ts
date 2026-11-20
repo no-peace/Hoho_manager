@@ -163,7 +163,7 @@ router.post(
         interaction.id,
         interaction.token,
         response,
-        { timeoutMs: Math.max(400, 2_200 - (Date.now() - startedAt)) },
+        { timeoutMs: Math.max(100, 2_450 - (Date.now() - startedAt)) },
       );
       cacheInteractionReceipt(interaction.id, response);
       if (
