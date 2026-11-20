@@ -58,6 +58,8 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   showToolbar = true,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const pendingUiTimeoutsRef = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const pendingUiFramesRef = useRef(new Set<number>());
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [showRichPicker, setShowRichPicker] = useState(false);
@@ -152,6 +154,29 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       avatar: string | null;
     }>
   >([]);
+
+  useEffect(() => () => {
+    pendingUiTimeoutsRef.current.forEach((timer) => clearTimeout(timer));
+    pendingUiTimeoutsRef.current.clear();
+    pendingUiFramesRef.current.forEach((frame) => cancelAnimationFrame(frame));
+    pendingUiFramesRef.current.clear();
+  }, []);
+
+  const scheduleUiTimeout = useCallback((callback: () => void) => {
+    const timer = setTimeout(() => {
+      pendingUiTimeoutsRef.current.delete(timer);
+      callback();
+    }, 0);
+    pendingUiTimeoutsRef.current.add(timer);
+  }, []);
+
+  const scheduleUiFrame = useCallback((callback: () => void) => {
+    const frame = requestAnimationFrame(() => {
+      pendingUiFramesRef.current.delete(frame);
+      callback();
+    });
+    pendingUiFramesRef.current.add(frame);
+  }, []);
 
   useEffect(() => {
     if (effectiveGuildId) {
@@ -512,7 +537,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
       if (item.keepOpen) {
         // Immediately transition to Step 2 (exploit_field) at the new cursor position
-        setTimeout(() => {
+        scheduleUiTimeout(() => {
           if (textareaRef.current) {
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(newPos, newPos);
@@ -522,7 +547,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       } else {
         setAcType(null);
         setAcQuery("");
-        setTimeout(() => {
+        scheduleUiTimeout(() => {
           if (textareaRef.current) {
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(newPos, newPos);
@@ -530,7 +555,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         }, 0);
       }
     },
-    [acCursorStart, acCursorEnd, value, onChange, checkAutocomplete],
+    [acCursorStart, acCursorEnd, value, onChange, checkAutocomplete, scheduleUiTimeout],
   );
 
   const insertDirect = useCallback(
@@ -556,7 +581,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
         textarea.setSelectionRange(newPos, newPos);
       }, 0);
     },
-    [value, onChange],
+    [value, onChange, scheduleUiTimeout],
   );
 
   const formatSelection = useCallback(
@@ -647,14 +672,14 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
       }
 
       // Restore caret / text selection
-      requestAnimationFrame(() => {
+      scheduleUiFrame(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
           textareaRef.current.setSelectionRange(newStart, newEnd);
         }
       });
     },
-    [disabled, onChange],
+    [disabled, onChange, scheduleUiFrame],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
