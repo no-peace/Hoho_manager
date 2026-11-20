@@ -12,7 +12,7 @@ const isInteractionCallbackTarget = (
   if (!isRecord(value)) return false;
   return (
     typeof value.id === "string" &&
-    /^\\d{17,20}$/.test(value.id) &&
+    /^\d{17,20}$/.test(value.id) &&
     typeof value.token === "string" &&
     value.token.length > 0 &&
     value.token.length <= 512 &&
