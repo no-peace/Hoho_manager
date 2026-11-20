@@ -261,6 +261,7 @@ export const sendAuditLogToChannel = async (
       return { ok: false, status: response.status, error };
     }
 
+    await response.body?.cancel().catch(() => undefined);
     return { ok: true, status: response.status };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
