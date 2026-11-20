@@ -139,9 +139,18 @@ router.post(
           signal: AbortSignal.timeout(5_000),
         });
         if (userRes.ok) {
-          const userData = (await userRes.json()) as any;
-          if (!resolvedAvatar && userData.avatar) resolvedAvatar = userData.avatar;
-          if (!resolvedGlobalName && userData.global_name) resolvedGlobalName = userData.global_name;
+          const userData: unknown = await userRes.json();
+          if (userData !== null && typeof userData === "object" && !Array.isArray(userData)) {
+            const userRecord = userData as Record<string, unknown>;
+            if (!resolvedAvatar && typeof userRecord.avatar === "string") {
+              resolvedAvatar = userRecord.avatar;
+            }
+            if (!resolvedGlobalName && typeof userRecord.global_name === "string") {
+              resolvedGlobalName = userRecord.global_name;
+            }
+          }
+        } else {
+          await userRes.body?.cancel().catch(() => undefined);
         }
       } catch {
         // Non-blocking avatar lookup
