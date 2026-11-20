@@ -111,7 +111,6 @@ export const SortableList: React.FC<SortableListProps> = ({
 
   return (
     <SortableListStateContext.Provider value={listState}>
-      <style>{`[data-list-dragging="true"] .sortable-collapse-on-drag { display: none !important; }`}</style>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -141,12 +140,15 @@ export const SortableList: React.FC<SortableListProps> = ({
 
 export const SortableItem: React.FC<SortableItemProps> = ({ id, children, className }) => {
   const sortable = useSortable({ id });
-  const contextValue: SortableHandleContextValue = {
-    attributes: sortable.attributes,
-    listeners: sortable.listeners,
-    setActivatorNodeRef: sortable.setActivatorNodeRef,
-    isDragging: sortable.isDragging,
-  };
+  const contextValue = useMemo<SortableHandleContextValue>(
+    () => ({
+      attributes: sortable.attributes,
+      listeners: sortable.listeners,
+      setActivatorNodeRef: sortable.setActivatorNodeRef,
+      isDragging: sortable.isDragging,
+    }),
+    [sortable.attributes, sortable.listeners, sortable.setActivatorNodeRef, sortable.isDragging],
+  );
 
   return (
     <SortableHandleContext.Provider value={contextValue}>
