@@ -424,7 +424,7 @@ export const runAutomationTick = async (): Promise<void> => {
 };
 
 export const waitForAutomationTick = async (): Promise<void> => {
-  if (tickInFlight) await tickInFlight;
+  if (tickInFlight) await tickInFlight.catch(() => undefined);
 };
 
 export const getAutomationCacheState = () => ({
