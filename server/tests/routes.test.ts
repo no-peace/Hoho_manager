@@ -651,6 +651,170 @@ describe("server/routes: 11 REST Route Controllers Suite", () => {
     });
   });
 
+  describe("POST /api/automation/schedules authorization", () => {
+    const guildId = "123456789012345678";
+    const otherGuildId = "923456789012345678";
+    const channelId = "223456789012345678";
+    const threadId = "323456789012345678";
+
+    const createStaff = async (
+      staffId: string,
+      overrides: Partial<{
+        can_edit_messages: number;
+        can_use_components_v2: number;
+        can_mention_everyone: number;
+        allowed_channel_ids: string;
+        allowed_guild_ids: string;
+      }> = {},
+    ) => staffRepository.create({
+      discord_user_id: staffId,
+      discord_username: "automation-route-test",
+      granted_by_discord_id: "987654321098765432",
+      can_send_messages: 1,
+      can_edit_messages: 0,
+      can_manage_automation: 1,
+      can_use_components_v2: 1,
+      can_mention_everyone: 0,
+      can_mention_here: 0,
+      can_mention_roles: 0,
+      cooldown_seconds: 0,
+      max_messages_per_hour: 100,
+      allowed_channel_ids: JSON.stringify(["*"]),
+      allowed_guild_ids: JSON.stringify([guildId]),
+      ...overrides,
+    });
+
+    const postSchedule = (staffId: string, body: Record<string, unknown>) =>
+      fetch(`${baseUrl}/api/automation/schedules`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffId,
+        },
+        body: JSON.stringify({
+          guildId,
+          channelId,
+          payload: { content: "Scheduled route regression test" },
+          runAt: new Date(Date.now() + 60_000).toISOString(),
+          ...body,
+        }),
+      });
+
+    const cleanUp = async (staffId: string): Promise<void> => {
+      await db.run("DELETE FROM scheduled_messages WHERE created_by = ?", [staffId]);
+      await staffRepository.delete(staffId);
+    };
+
+    it("rejects a forged guild ID when the channel resolves to another guild", async () => {
+      const staffId = "423456789012345678";
+      await createStaff(staffId);
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue(otherGuildId);
+
+      try {
+        const response = await postSchedule(staffId, {});
+        expect(response.status).toBe(403);
+        const saved = await db.get<{ id: number }>(
+          "SELECT id FROM scheduled_messages WHERE created_by = ?",
+          [staffId],
+        );
+        expect(saved).toBeUndefined();
+      } finally {
+        await cleanUp(staffId);
+      }
+    });
+
+    it("rejects a thread that belongs to a different guild", async () => {
+      const staffId = "523456789012345678";
+      await createStaff(staffId);
+      vi.mocked(discordService.getChannelGuildId).mockImplementation(async (id) =>
+        id === threadId ? otherGuildId : guildId,
+      );
+
+      try {
+        const response = await postSchedule(staffId, { threadId });
+        expect(response.status).toBe(403);
+        const saved = await db.get<{ id: number }>(
+          "SELECT id FROM scheduled_messages WHERE created_by = ?",
+          [staffId],
+        );
+        expect(saved).toBeUndefined();
+      } finally {
+        await cleanUp(staffId);
+      }
+    });
+
+    it("requires edit permission when a schedule targets an existing message", async () => {
+      const staffId = "623456789012345678";
+      await createStaff(staffId, { can_edit_messages: 0 });
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue(guildId);
+
+      try {
+        const response = await postSchedule(staffId, {
+          targetMessageId: "423456789012345678",
+        });
+        expect(response.status).toBe(403);
+        const saved = await db.get<{ id: number }>(
+          "SELECT id FROM scheduled_messages WHERE created_by = ?",
+          [staffId],
+        );
+        expect(saved).toBeUndefined();
+      } finally {
+        await cleanUp(staffId);
+      }
+    });
+
+    it("enforces the Components V2 staff permission for scheduled payloads", async () => {
+      const staffId = "723456789012345678";
+      await createStaff(staffId, { can_use_components_v2: 0 });
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue(guildId);
+
+      try {
+        const response = await postSchedule(staffId, {
+          payload: {
+            flags: 1 << 15,
+            components: [{ type: 10, content: "Scheduled V2 content" }],
+          },
+        });
+        expect(response.status).toBe(403);
+        const saved = await db.get<{ id: number }>(
+          "SELECT id FROM scheduled_messages WHERE created_by = ?",
+          [staffId],
+        );
+        expect(saved).toBeUndefined();
+      } finally {
+        await cleanUp(staffId);
+      }
+    });
+
+    it("scrubs unauthorized mentions and allowed_mentions overrides before persisting", async () => {
+      const staffId = "823456789012345678";
+      await createStaff(staffId, { can_mention_everyone: 0 });
+      vi.mocked(discordService.getChannelGuildId).mockResolvedValue(guildId);
+
+      try {
+        const response = await postSchedule(staffId, {
+          payload: {
+            content: "@everyone scheduled notice",
+            allowed_mentions: { parse: ["everyone"] },
+          },
+        });
+        expect(response.status).toBe(201);
+
+        const saved = await db.get<{ payload_json: string }>(
+          "SELECT payload_json FROM scheduled_messages WHERE created_by = ? ORDER BY id DESC LIMIT 1",
+          [staffId],
+        );
+        expect(saved).toBeDefined();
+        expect(JSON.parse(saved?.payload_json ?? "{}")).toMatchObject({
+          content: "@\u200beveryone scheduled notice",
+          allowed_mentions: { parse: [] },
+        });
+      } finally {
+        await cleanUp(staffId);
+      }
+    });
+  });
+
   // 11. /api/weao
   describe("GET /api/weao/exploits", () => {
     it("does not expose another user’s private template as an exploit backup", async () => {

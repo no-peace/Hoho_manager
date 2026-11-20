@@ -24,7 +24,34 @@ const router = Router();
 router.use(attachUser, requireUserOrAdminKey);
 
 const snowflake = (value: unknown): value is string =>
-  typeof value === "string" && /^\d{17,20}$/.test(value.trim());
+  typeof value === "string" && /^\d{17,20}$/.test(value);
+
+const prepareAutomationPayload = (
+  rawPayload: unknown,
+  staff: Express.Request["staffContext"],
+): Record<string, unknown> => {
+  const validatedPayload = validateMessagePayload(rawPayload);
+  const payload = validatedPayload as unknown as Record<string, unknown>;
+  const hasComponents = Array.isArray(payload.components) && payload.components.length > 0;
+  const hasComponentsV2Flag =
+    typeof payload.flags === "number" && (payload.flags & (1 << 15)) !== 0;
+
+  if (staff && !staff.isAdmin && staff.record) {
+    if (
+      staff.record.can_use_components_v2 === 0 &&
+      (hasComponents || hasComponentsV2Flag)
+    ) {
+      throw ApiError.forbidden(
+        "Your staff account is not permitted to use Interactive Components V2.",
+      );
+    }
+
+    const scrubbed = scrubMentions(payload, staff.record).payload;
+    return sanitizeAllowedMentions(scrubbed, staff.record);
+  }
+
+  return payload;
+};
 
 const assertChannelAccess = (
   req: Express.Request,
@@ -66,16 +93,36 @@ router.get("/schedules", requireStaffPermission("automation"), asyncHandler(asyn
 router.post(
   "/schedules",
   requireStaffPermission("automation"),
-  requireStaffPermission("send"),
+  requireStaffPermission((req) =>
+    typeof req.body?.targetMessageId === "string" &&
+    req.body.targetMessageId.trim() !== ""
+      ? "edit"
+      : "send",
+  ),
   asyncHandler(async (req, res) => {
-    const { guildId, channelId, threadId, payload, runAt, timezone, recurrence, targetMessageId, templateId } = req.body ?? {};
+    const { guildId, channelId, threadId, payload: rawPayload, runAt, timezone, recurrence, targetMessageId, templateId } = req.body ?? {};
     if (!snowflake(guildId) || !snowflake(channelId)) throw ApiError.badRequest("Valid guildId and channelId are required.");
-    assertChannelAccess(req, guildId, channelId);
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw ApiError.badRequest("A message payload is required.");
+    if (threadId != null && !snowflake(threadId)) throw ApiError.badRequest("Invalid thread ID.");
+
+    const resolvedGuildId = await getChannelGuildId(channelId);
+    if (!resolvedGuildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
+    if (resolvedGuildId !== guildId) {
+      throw ApiError.forbidden("The supplied guildId does not match the channel's guild.");
+    }
+
+    assertChannelAccess(req, resolvedGuildId, channelId);
+    if (threadId) {
+      const threadGuildId = await getChannelGuildId(threadId);
+      if (!threadGuildId || threadGuildId !== resolvedGuildId) {
+        throw ApiError.forbidden("The destination thread must belong to the selected server.");
+      }
+      assertChannelAccess(req, resolvedGuildId, threadId);
+    }
+
+    const payload = prepareAutomationPayload(rawPayload, req.staffContext);
     if (typeof runAt !== "string" || !Number.isFinite(Date.parse(runAt)) || Date.parse(runAt) <= Date.now()) {
       throw ApiError.badRequest("runAt must be a future ISO date.");
     }
-    if (threadId != null && !snowflake(threadId)) throw ApiError.badRequest("Invalid thread ID.");
     if (targetMessageId != null && !snowflake(targetMessageId)) throw ApiError.badRequest("Invalid target message ID.");
     const allowedFrequencies = ["hourly", "daily", "weekly", "custom"];
     if (recurrence && (!allowedFrequencies.includes(recurrence.frequency) || (recurrence.interval != null && (!Number.isInteger(recurrence.interval) || recurrence.interval < 1 || recurrence.interval > 365)))) {
@@ -83,7 +130,7 @@ router.post(
     }
     const createdBy = req.user?.discord_id ?? req.staffContext?.staffId ?? "admin";
     const row = await createScheduledMessage({
-      guildId,
+      guildId: resolvedGuildId,
       channelId,
       threadId: threadId ?? null,
       templateId: Number.isSafeInteger(Number(templateId)) && Number(templateId) > 0 ? Number(templateId) : null,
@@ -153,17 +200,7 @@ router.post("/sticky", requireStaffPermission("automation"), requireStaffPermiss
   if (!resolvedGuildId) throw ApiError.notFound("Channel not found or unavailable to the configured bot.");
   if (requestedGuildId !== undefined && requestedGuildId !== resolvedGuildId) throw ApiError.forbidden("The supplied guildId does not match the channel's guild.");
   assertChannelAccess(req, resolvedGuildId, channelId);
-  if (!rawPayload || typeof rawPayload !== "object" || Array.isArray(rawPayload)) throw ApiError.badRequest("A sticky payload is required.");
-  const validatedPayload = validateMessagePayload(rawPayload);
-  const payload = validatedPayload as unknown as Record<string, unknown>;
-  const hasComponents = Array.isArray(payload.components) && payload.components.length > 0;
-  const hasComponentsV2Flag = typeof payload.flags === "number" && (payload.flags & (1 << 15)) !== 0;
-  const staff = req.staffContext;
-  if (staff && !staff.isAdmin && staff.record) {
-    if (staff.record.can_use_components_v2 === 0 && (hasComponents || hasComponentsV2Flag)) throw ApiError.forbidden("Your staff account is not permitted to use Interactive Components V2.");
-    const scrubbed = scrubMentions(payload, staff.record).payload;
-    Object.assign(payload, sanitizeAllowedMentions(scrubbed, staff.record));
-  }
+  const payload = prepareAutomationPayload(rawPayload, req.staffContext);
   const interval = Number(intervalMessages ?? 10);
   if (!Number.isInteger(interval) || interval < 5 || interval > 50) throw ApiError.badRequest("Sticky interval must be between 5 and 50 messages.");
   await createStickyMessage({
