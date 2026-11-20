@@ -255,6 +255,10 @@ export const startMessageTrackerPolling = (intervalMs = 60_000): void => {
   log.info(`Started background message tracker polling (interval: ${intervalMs / 1000}s)`);
 };
 
+export const waitForTrackedMessageSync = async (): Promise<void> => {
+  if (syncInFlight) await syncInFlight;
+};
+
 export const stopMessageTrackerPolling = (): void => {
   if (pollingTimer) {
     clearInterval(pollingTimer);
