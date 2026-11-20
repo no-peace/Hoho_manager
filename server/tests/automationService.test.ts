@@ -96,6 +96,41 @@ describe("automation service", () => {
     expect(service.getAutomationCacheState().hasExpiringMessages).toBe(false);
   });
 
+  it("does not retry a one-time message send after an ambiguous Discord failure", async () => {
+    const due = {
+      id: 9,
+      guild_id: "guild",
+      channel_id: "channel",
+      thread_id: null,
+      template_id: null,
+      target_message_id: null,
+      payload_json: { content: "One-time announcement" },
+      cron_expr: null,
+      run_at: new Date(Date.now() - 60_000).toISOString(),
+      timezone: "UTC",
+      enabled: 1,
+      next_run_at: new Date(Date.now() - 60_000).toISOString(),
+      retry_count: 0,
+      created_by: "staff",
+      created_at: new Date().toISOString(),
+    };
+    const ambiguousError = Object.assign(new Error("Discord request timed out"), { status: 504 });
+    mocks.listSchedules.mockResolvedValueOnce([due]).mockResolvedValueOnce([]);
+    mocks.findDueSchedules.mockResolvedValue([due]);
+    mocks.sendChannelMessageWithToken.mockRejectedValueOnce(ambiguousError);
+
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    await service.runAutomationTick();
+
+    expect(mocks.sendChannelMessageWithToken).toHaveBeenCalledTimes(1);
+    expect(mocks.updateSchedule).toHaveBeenCalledWith(9, expect.objectContaining({
+      enabled: 0,
+      next_run_at: null,
+      retry_count: 0,
+    }));
+  });
+
   it("edits an existing scheduled message in place instead of posting a duplicate", async () => {
     const due = {
       id: 4,
