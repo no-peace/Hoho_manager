@@ -110,7 +110,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
       });
 
       const parsedBody = JSON.parse(capturedRequest.init.body);
-      expect(parsedBody.id).toBe("1234567890");
+      expect(parsedBody.id).toBe("323456789012345678");
       expect(parsedBody.data.custom_id).toBe("action:dud");
     });
 
@@ -136,7 +136,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
   });
 
   describe("2,600ms relay fallback deadline", () => {
-    it("aborts the outbound request when the API takes > 2,200ms", async () => {
+    it("aborts the outbound request when the API takes > 2,600ms", async () => {
       vi.useFakeTimers();
 
       let abortSignal: AbortSignal | undefined;
@@ -160,7 +160,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
 
       expect(abortSignal?.aborted).toBe(true);
       expect(mockClient.rest.post).toHaveBeenCalledWith(
-        Routes.interactionCallback("late_1", "tok_late"),
+        Routes.interactionCallback("523456789012345678", "tok_late"),
         expect.anything(),
       );
     });
@@ -183,7 +183,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
       );
       expect(mockClient.rest.post).toHaveBeenCalledTimes(1);
       expect(mockClient.rest.post).toHaveBeenCalledWith(
-        Routes.interactionCallback("fail_1", "tok_fail"),
+        Routes.interactionCallback("623456789012345678", "tok_fail"),
         {
           body: {
             type: InteractionResponseType.ChannelMessageWithSource,
@@ -210,7 +210,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
         expect.any(Error),
       );
       expect(mockClient.rest.post).toHaveBeenCalledWith(
-        Routes.interactionCallback("err_1", "tok_err"),
+        Routes.interactionCallback("723456789012345678", "tok_err"),
         expect.objectContaining({ auth: false }),
       );
     });
