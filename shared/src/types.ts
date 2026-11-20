@@ -1,3 +1,5 @@
+import type { ComponentTypeValue } from "./constants.js";
+
 /**
  * Domain types shared by the client and server.
  *
@@ -81,7 +83,7 @@ export interface GalleryItem {
 export interface ComponentNode {
   _id?: string;
   _action_custom_id?: string;
-  type: number;
+  type: ComponentTypeValue;
 
   /* Content */
   content?: string;
@@ -108,6 +110,10 @@ export interface ComponentNode {
   min_values?: number;
   max_values?: number;
   options?: SelectOption[];
+  spoiler?: boolean;
+  channel_types?: number[];
+  default_values?: unknown[];
+  description?: string;
 }
 
 export type ModalFieldType =
@@ -579,9 +585,6 @@ export interface StaffMentionPermissions {
   allowed_guild_ids?: string[];
 }
 
-export interface LoggingConfig {
-  enabled_channel_events: string[];
-}
 
 export const ALL_LOG_EVENTS = [
   { event: "SEND_MESSAGE", label: "Message Sent", category: "Messages" },
