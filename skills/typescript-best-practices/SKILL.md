@@ -1,31 +1,47 @@
 ---
 name: typescript-best-practices
-description: TypeScript best practices. Use when reading or editing any .ts or .tsx file.
-paths: ["**/*.ts", "**/*.tsx"]
-disable-model-invocation: true
+description: Strict TypeScript practices for Hoho_manager shared contracts, API boundaries, React components, Discord payloads, and Node services.
 ---
 
-# TypeScript best practices
+# TypeScript Best Practices — Hoho_manager
 
-Apply the **type-system-discipline** principle skill first.
+Use for every `.ts` and `.tsx` change. Keep types aligned with runtime behavior and the repository's TypeScript configuration.
 
-| Rule | Summary |
-|------|---------|
-| Discriminated unions | Model variants with a `kind` literal discriminant so impossible states can't be represented. No optional-field bags. |
-| Branded types | Brand primitives with `& { readonly __brand: "X" }` so they can't be mixed up. Validate once at the boundary. A brand comes from a verifying type guard (`input is AgentId`), never from `as`. |
-| Constructive modeling | Build the shape so the illegal value can't be constructed. `[T, ...T[]]` for non-empty, `[T, T][]` for even length, `start` plus `duration` for a range. Not a runtime guard, not a wish for refinement types. |
-| Simplest total type | Keep `T[]` while every operation on it stays total. Strengthen to `NonEmpty<T>` only where the loose type forces `!`, a cast, or a "should never happen" throw. |
-| `unknown` over `any` | External data is `unknown`. |
-| Schemas before guards | Before hand-writing a property-by-property type guard, use the repository's runtime schema library and infer the type from the schema, such as `z.infer`. |
-| No `as` casts | Every `as` is a runtime crash waiting. Cast only after validation. |
-| Narrowing hierarchy | Discriminant switch > `in` operator > `typeof`/`instanceof` > user-defined type guard > `as`. |
-| Type guards | Must verify the claim. A lying guard is worse than `as` because the bug hides behind a name that says it's safe. Name them `isX` or `hasX`. |
-| Exhaustiveness | Inline `const _exhaustive: never = x;` in default arms so the compiler errors when a new variant is added. |
-| `satisfies` over `as` | Validates the value without widening literal types. |
-| Boundary validation | Parse where data crosses in, into a named domain type. `Record<string, unknown>` (however spelled) stops at that parse. Trust types inside. See the **boundary-discipline** principle skill. |
-| Schema-derived types | Reach for `Pick`/`Omit`/`Parameters`/`ReturnType`/`Awaited`/`typeof` before declaring a new interface. |
-| Object args | Pass objects, not positional, so argument order is self-documenting. Skip on hot paths (per-frame render, tokenizers, parsers). |
-| Real tests | Don't mock what you can run. Prefer the framework's real test primitives with leak/disposable checks, and verify UI in a running build. Mock only what you can't run locally. |
-| Structured telemetry | Prefer structured logger diagnostics with enough context to debug from an id. No `console.log` in shipped code. |
+## Modeling
 
-Examples: `references/patterns.md`.
+- Prefer discriminated unions when variants have different required fields or behavior.
+- Model impossible states out when it improves clarity; do not add branded/non-empty wrappers without a concrete boundary or misuse risk.
+- Prefer the simplest type that keeps normal operations total.
+- Use `unknown` for untrusted external data. Narrow it with runtime checks or the repository's schema library before use.
+- Derive types with `typeof`, `Pick`, `Omit`, `Parameters`, `ReturnType`, and `Awaited` where that avoids duplication.
+- Use `satisfies` to validate literals without widening them.
+
+## Assertions
+
+- Do not use `any` as a shortcut, including `as any`, `@ts-ignore`, or broad index signatures that hide errors.
+- Assertions are not categorically forbidden. Use one only when the runtime invariant is established and TypeScript cannot express it; keep it narrow and documented.
+- Never assert that unvalidated external data has a trusted domain type.
+- A type guard must verify every property needed for its claim; do not implement a guard that merely casts.
+- Prefer discriminant narrowing, `in`, `typeof`, `instanceof`, and validated schemas before assertions.
+- Use exhaustive `never` checks for important discriminated unions.
+
+## Boundaries
+
+- Validate HTTP bodies/params/query, Discord payloads, environment variables, and upstream HTTP responses at ingress.
+- Keep external values as `unknown` until validation completes; convert to a domain type once at the boundary.
+- Reuse existing schemas. Do not create parallel validators or duplicate shared contracts.
+- Treat database rows as runtime data when migrations or legacy rows may violate declared shapes.
+
+## React and APIs
+
+- Use stable domain IDs for React keys and dnd-kit identities, never array indices for reorderable content.
+- Keep Zustand selectors narrow. Clean up effects, timers, observers, animation frames, listeners, and abortable requests.
+- Share request/response types through `shared` where client and server both depend on them, but validate server ingress independently.
+- Keep Discord payloads within API limits and represent Classic/V2 variants distinctly where useful.
+- Use installed Discord.js and discord-api-types definitions; do not widen literals unnecessarily.
+
+## Maintainability
+
+- Object parameters help complex functions, but avoid wrapper allocations in hot loops/render paths without reason.
+- Use structured logging in shipped server code.
+- Avoid generic abstractions for one call site and dependencies for functionality already in the stack.
