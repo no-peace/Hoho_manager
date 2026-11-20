@@ -75,7 +75,7 @@ export const PrivacyPage: React.FC = () => {
           <nav aria-label="Footer links" className="flex flex-wrap items-center gap-4">
             <Link to="/" className="transition-colors hover:text-white">Studio</Link>
             <Link to="/docs" className="transition-colors hover:text-white">Docs</Link>
-            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</Link>
+            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</a>
           </nav>
         </footer>
       </main>
