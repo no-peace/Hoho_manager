@@ -176,8 +176,8 @@ export const sanitizeAllowedMentions = (
 ): Record<string, unknown> => {
   const existing = payload.allowed_mentions as Record<string, unknown> | undefined;
   const parse: string[] = [];
-  if (perms.can_mention_everyone) parse.push("everyone");
-  if (perms.can_mention_here) parse.push("here");
+  // Discord's allowed_mentions parser uses "everyone" for both @everyone and @here.
+  if (perms.can_mention_everyone || perms.can_mention_here) parse.push("everyone");
 
   let roles: string[] | undefined;
 
