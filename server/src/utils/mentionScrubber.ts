@@ -192,10 +192,21 @@ export const sanitizeAllowedMentions = (
         .filter((id): id is string => typeof id === "string" && /^\d{17,20}$/.test(id))
         .slice(0, 100)
     : [];
+  const hasExplicitUsers = Array.isArray(existing?.users) && existing.users.length > 0;
+  const requestedRoles = Array.isArray(existing?.roles)
+    ? existing.roles
+        .filter((id): id is string => typeof id === "string" && /^\d{17,20}$/.test(id))
+        .slice(0, 100)
+    : [];
+  const hasExplicitRoles = Array.isArray(existing?.roles) && existing.roles.length > 0;
+  const explicitRoles = requestedRoles.filter((id) =>
+    perms.can_mention_roles || allowedRoleIds.includes("*") || allowedRoleIds.includes(id),
+  );
+  const hasExplicitIds = hasExplicitUsers || hasExplicitRoles;
   const parse: string[] = [];
 
-  // Explicit user IDs and parser-wide mention types are mutually exclusive in Discord's API.
-  if (explicitUsers.length === 0) {
+  // Discord's parse array cannot be combined with explicit users/roles arrays.
+  if (!hasExplicitIds) {
     // Discord's "everyone" parser controls both @everyone and @here.
     if (perms.can_mention_everyone || perms.can_mention_here) parse.push("everyone");
 
@@ -206,7 +217,9 @@ export const sanitizeAllowedMentions = (
   }
 
   const allowedMentions: Record<string, unknown> = {
-    ...(explicitUsers.length > 0 ? { users: explicitUsers } : { parse }),
+    ...(hasExplicitUsers ? { users: explicitUsers } : {}),
+    ...(hasExplicitRoles ? { roles: explicitRoles } : {}),
+    ...(!hasExplicitIds ? { parse } : {}),
     ...(typeof existing?.replied_user === "boolean" ? { replied_user: existing.replied_user } : {}),
   };
 
