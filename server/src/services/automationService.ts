@@ -423,6 +423,10 @@ export const runAutomationTick = async (): Promise<void> => {
   return tickInFlight;
 };
 
+export const waitForAutomationTick = async (): Promise<void> => {
+  if (tickInFlight) await tickInFlight;
+};
+
 export const getAutomationCacheState = () => ({
   initialized,
   hasSchedules,
