@@ -256,7 +256,7 @@ export const startMessageTrackerPolling = (intervalMs = 60_000): void => {
 };
 
 export const waitForTrackedMessageSync = async (): Promise<void> => {
-  if (syncInFlight) await syncInFlight;
+  if (syncInFlight) await syncInFlight.catch(() => undefined);
 };
 
 export const stopMessageTrackerPolling = (): void => {
