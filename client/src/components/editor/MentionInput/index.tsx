@@ -575,11 +575,11 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
 
       onChange(nextValue);
 
-      setTimeout(() => {
+      scheduleUiTimeout(() => {
         textarea.focus();
         const newPos = start + insertWithSpace.length;
         textarea.setSelectionRange(newPos, newPos);
-      }, 0);
+      });
     },
     [value, onChange, scheduleUiTimeout],
   );
