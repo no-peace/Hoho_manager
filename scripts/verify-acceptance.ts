@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { buildCustomId, parseCustomId } from "../shared/src/customId.js";
 
 interface ChecklistItem {
   id: string;
@@ -104,8 +105,17 @@ const items: ChecklistItem[] = [
     category: "Invariants",
     description: "INV-2: Custom ID format action:<type>:<jsonParams> and 100-character ceiling enforced",
     verify: () => {
-      const customIdSrc = fs.readFileSync(path.join("shared", "src", "customId.ts"), "utf8");
-      return customIdSrc.includes("100") && customIdSrc.includes("action:");
+      const validId = buildCustomId("acceptance", { token: "round-trip" });
+      const parsed = parseCustomId(validId);
+      if (validId.length > 100 || parsed?.type !== "acceptance" || parsed.params.token !== "round-trip") {
+        return false;
+      }
+      try {
+        buildCustomId("acceptance", { token: "x".repeat(200) });
+        return false;
+      } catch {
+        return true;
+      }
     },
   },
   {
