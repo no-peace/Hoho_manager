@@ -73,12 +73,12 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
 
       await relay.run({
         t: "INTERACTION_CREATE",
-        d: { type: 3, id: "btn_1", token: "tok_1" },
+        d: { type: 3, id: "123456789012345678", token: "tok_1" },
       });
 
       await relay.run({
         t: "INTERACTION_CREATE",
-        d: { type: 5, id: "modal_1", token: "tok_2" },
+        d: { type: 5, id: "223456789012345678", token: "tok_2" },
       });
 
       expect(fetchSpy).toHaveBeenCalledTimes(2);
@@ -95,7 +95,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
 
       const interaction = {
         type: 3,
-        id: "1234567890",
+        id: "323456789012345678",
         token: "secret_token",
         data: { custom_id: "action:dud" },
       };
@@ -123,7 +123,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
 
       const interactionWithBigInt = {
         type: 3,
-        id: "100",
+        id: "423456789012345678",
         token: "tok",
         guild_id: 123456789012345678n, // BigInt
       };
@@ -135,7 +135,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
     });
   });
 
-  describe("2,200ms ACK Deadline Enforcement", () => {
+  describe("2,600ms relay fallback deadline", () => {
     it("aborts the outbound request when the API takes > 2,200ms", async () => {
       vi.useFakeTimers();
 
@@ -151,11 +151,11 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
         });
       });
 
-      const interaction = { type: 3, id: "late_1", token: "tok_late" };
+      const interaction = { type: 3, id: "523456789012345678", token: "tok_late" };
       const relayPromise = relay.run({ t: "INTERACTION_CREATE", d: interaction });
 
-      // Fast-forward past the 2,200ms abort deadline
-      await vi.advanceTimersByTimeAsync(2250);
+      // Fast-forward past the 2,600ms abort deadline
+      await vi.advanceTimersByTimeAsync(2650);
       await relayPromise;
 
       expect(abortSignal?.aborted).toBe(true);
@@ -174,7 +174,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
         text: async () => "Gateway Timeout",
       } as any);
 
-      const interaction = { type: 3, id: "fail_1", token: "tok_fail" };
+      const interaction = { type: 3, id: "623456789012345678", token: "tok_fail" };
 
       await relay.run({ t: "INTERACTION_CREATE", d: interaction });
 
@@ -201,7 +201,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
     it("dispatches fallback response when API connection throws network exception", async () => {
       vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
 
-      const interaction = { type: 5, id: "err_1", token: "tok_err" };
+      const interaction = { type: 5, id: "723456789012345678", token: "tok_err" };
 
       await relay.run({ t: "INTERACTION_CREATE", d: interaction });
 
@@ -232,7 +232,7 @@ describe("bot/listeners: RawInteractionRelay Gateway & Fallback Suite", () => {
       vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network drop"));
       mockClient.rest.post.mockRejectedValueOnce(new Error("Unknown interaction"));
 
-      const interaction = { type: 3, id: "ghost_1", token: "tok_ghost" };
+      const interaction = { type: 3, id: "823456789012345678", token: "tok_ghost" };
 
       await expect(
         relay.run({ t: "INTERACTION_CREATE", d: interaction }),
