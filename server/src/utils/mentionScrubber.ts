@@ -189,7 +189,7 @@ export const sanitizeAllowedMentions = (
   })();
   const explicitUsers = Array.isArray(existing?.users)
     ? existing.users
-        .filter((id): id is string => typeof id === "string" && /^\\d{17,20}$/.test(id))
+        .filter((id): id is string => typeof id === "string" && /^\d{17,20}$/.test(id))
         .slice(0, 100)
     : [];
   const parse: string[] = [];
