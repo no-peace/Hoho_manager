@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { updatePageSeo } from "../utils/seo";
 import { SplitTextReveal, SpotlightCard } from "../components/reactbits/ReactBitsPrimitives";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
@@ -389,12 +390,12 @@ export const DocsPage = () => {
         {/* Internal Links & Official Backlinks Footer */}
         <footer className="mt-10 pt-6 border-t border-[#272D3A] flex flex-wrap items-center justify-between gap-4 text-xs text-[#A1A8B8]">
           <div className="flex items-center gap-4">
-            <a href="/" className="hover:text-white transition-colors font-semibold">Studio Builder</a>
-            <a href="/docs" className="text-[#A78BFA] font-semibold">Documentation</a>
-            <a href="/privacy" className="hover:text-white transition-colors font-semibold">Privacy &amp; Bot Policy</a>
+            <Link to="/" className="hover:text-white transition-colors font-semibold">Studio Builder</Link>
+            <Link to="/docs" className="text-[#A78BFA] font-semibold">Documentation</Link>
+            <Link to="/privacy" className="hover:text-white transition-colors font-semibold">Privacy &amp; Bot Policy</Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</a>
+            <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">HoHo Hub Discord</Link>
           </div>
         </footer>
 
