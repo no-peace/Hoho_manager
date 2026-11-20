@@ -383,7 +383,7 @@ export const DocsPage = () => {
             </pre>
           </div>
           <p className="text-[11px] text-[#A1A8B8]">
-            💡 Notice that the <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.name</code> and <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.icon_url</code> are omitted: When the message is sent, the server attempts to fetch the Discord user and fills blank author name and icon fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
+            💡 In this example, <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.name</code> uses a user-ID placeholder. If <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.name</code> or <code className="text-white font-mono bg-[#10131A] px-1 rounded">author.icon_url</code> is left blank, the server attempts to fetch the Discord user's profile and fill the missing fields. The live editor preview does not fetch Discord profiles. If Discord lookup fails, the original author values are kept.
           </p>
         </section>
 
