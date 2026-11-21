@@ -380,10 +380,9 @@ const runDueSchedules = async (now: Date): Promise<void> => {
 const runDueExpirations = async (now: Date): Promise<void> => {
   if (!hasExpiringMessages || now.getTime() < nextDeleteAt) return;
   const due = await automationRepository.findDueExpiring(now.toISOString());
-  const token = due.length ? await discord.resolveBotToken() : null;
   for (const row of due) {
     try {
-      if (!token) throw new Error("Discord bot token is unavailable");
+      const token = await discord.resolveBotToken();
       await discord.deleteChannelMessage(row.channel_id, row.message_id, token);
       await automationRepository.removeExpiring(row.id);
     } catch (error) {
