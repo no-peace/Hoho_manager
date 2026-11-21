@@ -35,6 +35,10 @@ const nodeEnv = str("NODE_ENV", "development") ?? "development";
 export const isProductionLikeEnvironment = (value: string): boolean =>
   value !== "development" && value !== "test";
 const isProd = isProductionLikeEnvironment(nodeEnv);
+const sessionLegacyAdminKeyUntilRaw = str("SESSION_LEGACY_ADMIN_KEY_UNTIL");
+const sessionLegacyAdminKeyUntilMs = sessionLegacyAdminKeyUntilRaw
+  ? Date.parse(sessionLegacyAdminKeyUntilRaw)
+  : undefined;
 
 /** Resolve `DATABASE_URL` to an absolute path (Postgres URLs are passed through). */
 const resolveDatabase = (): string => {
@@ -69,6 +73,8 @@ export interface Env {
   readonly discord: DiscordEnv;
   readonly adminApiKey: string;
   readonly sessionSecret: string;
+  /** Optional UTC cutoff for accepting pre-migration ADMIN_API_KEY sessions. */
+  readonly sessionLegacyAdminKeyUntilMs: number | undefined;
   readonly encryptionKey: string | undefined;
   readonly rateLimit: RateLimitEnv;
   /** Discord channel ID for audit logs. Bot posts structured embeds here. */
@@ -107,7 +113,13 @@ export const env: Env = Object.freeze({
     redirectUri: str("DISCORD_REDIRECT_URI", "http://localhost:3001/api/auth/discord/callback")!,
   }),
   adminApiKey: str("ADMIN_API_KEY", isProd ? "" : "dev-admin-key") ?? "",
-  sessionSecret: str("SESSION_SECRET", str("ADMIN_API_KEY", isProd ? "" : "dev-session-secret")) ?? "",
+  // Production must use an independent secret. Local development retains the
+  // ADMIN_API_KEY fallback to avoid requiring another local configuration value.
+  sessionSecret: str(
+    "SESSION_SECRET",
+    isProd ? "" : (str("ADMIN_API_KEY", "dev-session-secret") ?? "dev-session-secret"),
+  ) ?? "",
+  sessionLegacyAdminKeyUntilMs,
   encryptionKey: str("ENCRYPTION_KEY"),
   rateLimit: Object.freeze({
     windowMs: int("RATE_LIMIT_WINDOW_MS", 60_000),
@@ -158,10 +170,16 @@ export const validateEnv = (): string[] => {
       "ADMIN_API_KEY is missing, too short, or still uses the development default. Production startup requires a unique secret of at least 32 characters.",
     );
   }
-  if (env.isProd && !process.env.SESSION_SECRET?.trim()) {
+  if (env.isProd && env.sessionSecret.length < 32) {
     warnings.push(
-      "SESSION_SECRET is not set. Sessions currently fall back to ADMIN_API_KEY; configure a separate high-entropy secret for key separation.",
+      "SESSION_SECRET is missing or too short. Production requires a dedicated secret of at least 32 characters, separate from ADMIN_API_KEY.",
     );
+  }
+  if (
+    env.sessionLegacyAdminKeyUntilMs !== undefined &&
+    !Number.isFinite(env.sessionLegacyAdminKeyUntilMs)
+  ) {
+    warnings.push("SESSION_LEGACY_ADMIN_KEY_UNTIL must be a valid ISO-8601 UTC timestamp.");
   }
   if (env.isProd && (!env.encryptionKey || env.encryptionKey.length < 32)) {
     warnings.push(
