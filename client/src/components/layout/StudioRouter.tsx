@@ -1,7 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FC, type ReactNode } from "react";
 import { updatePageSeo } from "../../utils/seo";
 
 export type StudioRouteKind = "studio" | "docs" | "privacy" | "not_found";
+
+export const navigateTo = (path: string): void => {
+  if (typeof window === "undefined") return;
+  if (window.location.pathname === path) return;
+  window.history.pushState({}, "", path);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+};
 
 export const resolveStudioRoute = (pathname: string): StudioRouteKind => {
   if (pathname === "/docs") return "docs";
@@ -14,13 +21,6 @@ export const resolveStudioRoute = (pathname: string): StudioRouteKind => {
     return "studio";
   }
   return "not_found";
-};
-
-export const navigateTo = (path: string): void => {
-  if (typeof window === "undefined") return;
-  if (window.location.pathname === path) return;
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
 };
 
 export const useStudioRoute = () => {
