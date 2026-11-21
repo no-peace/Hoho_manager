@@ -43,7 +43,7 @@ export const revokeAllSessions = async (): Promise<void> => {
 };
 
 const getSecret = (): string => {
-  if (!env.sessionSecret && env.isProd) {
+  if (env.isProd && (!env.sessionSecret || env.sessionSecret === env.adminApiKey)) {
     throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
   }
   return env.sessionSecret || "dev-only-session-secret";
@@ -54,6 +54,10 @@ const getSecret = (): string => {
  * configured cutoff. The cutoff must be no more than one session lifetime away.
  */
 const getVerificationSecrets = (): VerificationSecret[] => {
+  if (env.isProd && (!env.sessionSecret || env.sessionSecret === env.adminApiKey)) {
+    throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
+  }
+
   const secrets: VerificationSecret[] = env.sessionSecret
     ? [{ value: env.sessionSecret, isLegacyAdminKey: false }]
     : [];
@@ -61,6 +65,7 @@ const getVerificationSecrets = (): VerificationSecret[] => {
   const cutoffMs = env.sessionLegacyAdminKeyUntilMs;
   const nowMs = Date.now();
   if (
+    env.sessionSecret &&
     cutoffMs !== undefined &&
     Number.isFinite(cutoffMs) &&
     cutoffMs > nowMs &&
