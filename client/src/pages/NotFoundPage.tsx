@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { StudioLink } from "../components/layout/StudioRouter";
 import { ArrowLeft, BookOpen, ShieldCheck, Terminal } from "lucide-react";
 import { HOHO_LOGO_URL } from "../components/layout/HoHoLogoMark";
 
@@ -42,21 +42,21 @@ export const NotFoundPage: React.FC = () => {
         </div>
 
         <nav aria-label="Helpful pages" className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
-          <Link to="/"
+          <StudioLink to="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#818CF8] hover:bg-[#6366F1] text-white text-xs font-bold active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out shadow-sm"
           >
             <ArrowLeft size={15} /> Back to Message Studio
-          </Link>
-          <Link to="/docs"
+          </StudioLink>
+          <StudioLink to="/docs"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#252B3A] hover:bg-[#404249] text-[#F1F3F9] hover:text-white text-xs font-semibold active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
           >
             <BookOpen size={15} /> View Documentation
-          </Link>
-        <Link to="/privacy"
+          </StudioLink>
+        <StudioLink to="/privacy"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#252B3A] hover:bg-[#404249] text-[#F1F3F9] hover:text-white text-xs font-semibold active:scale-[0.97] transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-out"
           >
             <ShieldCheck size={15} /> Privacy Policy
-          </Link>
+          </StudioLink>
         </nav>
       </div>
     </div>
