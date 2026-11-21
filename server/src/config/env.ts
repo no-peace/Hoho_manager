@@ -37,7 +37,9 @@ export const isProductionLikeEnvironment = (value: string): boolean =>
 const isProd = isProductionLikeEnvironment(nodeEnv);
 const sessionLegacyAdminKeyUntilRaw = str("SESSION_LEGACY_ADMIN_KEY_UNTIL");
 const sessionLegacyAdminKeyUntilMs = sessionLegacyAdminKeyUntilRaw
-  ? Date.parse(sessionLegacyAdminKeyUntilRaw)
+  ? /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(sessionLegacyAdminKeyUntilRaw)
+    ? Date.parse(sessionLegacyAdminKeyUntilRaw)
+    : Number.NaN
   : undefined;
 
 /** Resolve `DATABASE_URL` to an absolute path (Postgres URLs are passed through). */
@@ -174,6 +176,9 @@ export const validateEnv = (): string[] => {
     warnings.push(
       "SESSION_SECRET is missing or too short. Production requires a dedicated secret of at least 32 characters, separate from ADMIN_API_KEY.",
     );
+  }
+  if (env.isProd && env.sessionSecret && env.sessionSecret === env.adminApiKey) {
+    warnings.push("SESSION_SECRET must not equal ADMIN_API_KEY in production.");
   }
   if (
     env.sessionLegacyAdminKeyUntilMs !== undefined &&
