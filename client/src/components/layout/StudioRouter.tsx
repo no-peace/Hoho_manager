@@ -23,6 +23,28 @@ export const resolveStudioRoute = (pathname: string): StudioRouteKind => {
   return "not_found";
 };
 
+export interface StudioLinkProps {
+  to: string;
+  className?: string;
+  children: ReactNode;
+  "aria-label"?: string;
+}
+
+export const StudioLink: FC<StudioLinkProps> = ({ to, className, children, "aria-label": ariaLabel }) => (
+  <a
+    href={to}
+    className={className}
+    aria-label={ariaLabel}
+    onClick={(event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      navigateTo(to);
+    }}
+  >
+    {children}
+  </a>
+);
+
 export const useStudioRoute = () => {
   const [pathname, setPathname] = useState(() =>
     typeof window !== "undefined" ? window.location.pathname : "/",
