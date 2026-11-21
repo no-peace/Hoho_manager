@@ -144,7 +144,7 @@ router.post(
     if (recurrence && (!allowedFrequencies.includes(recurrence.frequency) || (recurrence.interval != null && (!Number.isInteger(recurrence.interval) || recurrence.interval < 1 || recurrence.interval > 365)))) {
       throw ApiError.badRequest("Invalid recurrence settings.");
     }
-    const createdBy = req.user?.discord_id ?? req.staffContext?.staffId ?? "admin";
+    const createdBy = req.staffContext?.staffId ?? req.user?.discord_id ?? "admin";
     const row = await createScheduledMessage({
       guildId: resolvedGuildId,
       channelId,
@@ -224,7 +224,7 @@ router.post("/sticky", requireStaffPermission("automation"), requireStaffPermiss
     channelId,
     payload,
     intervalMessages: interval,
-    createdBy: req.user?.discord_id ?? req.staffContext?.staffId ?? "admin",
+    createdBy: req.staffContext?.staffId ?? req.user?.discord_id ?? "admin",
   });
   auditLog({
     event: "STICKY_CREATED",
