@@ -252,6 +252,7 @@ const syncDataToMessages = (nextData: MessageData, state: MessageState) => {
 };
 
 const defaultInitial = createEmptyMessage();
+let cleanMessagesSnapshot = JSON.stringify([defaultInitial]);
 
 const resolveMessageMode = (message?: Partial<MessageData> | null, fallback: EditorMode = EDITOR_MODES.CLASSIC): EditorMode => {
   if (!message) return fallback;
@@ -337,7 +338,10 @@ export const useMessageStore = create<MessageState>()(
       canUndo: false,
       canRedo: false,
       isDirty: false,
-      markClean: () => rawSet({ isDirty: false }),
+      markClean: () => {
+        cleanMessagesSnapshot = JSON.stringify(get().messages);
+        rawSet({ isDirty: false });
+      },
       ensureStableIds: () => {
         const state = get();
         let changed = false;
@@ -393,7 +397,7 @@ export const useMessageStore = create<MessageState>()(
           future,
           canUndo: state.past.length > 1,
           canRedo: future.length > 0,
-          isDirty: true,
+          isDirty: JSON.stringify(messages) !== cleanMessagesSnapshot,
         });
       },
 
@@ -418,7 +422,7 @@ export const useMessageStore = create<MessageState>()(
           future: state.future.slice(0, -1),
           canUndo: past.length > 0,
           canRedo: state.future.length > 1,
-          isDirty: true,
+          isDirty: JSON.stringify(messages) !== cleanMessagesSnapshot,
         });
       },
 
@@ -1010,6 +1014,7 @@ export const useMessageStore = create<MessageState>()(
         suppressDirtyTracking = true;
         get().clearFiles();
         const blank = createEmptyMessage();
+        cleanMessagesSnapshot = JSON.stringify([blank]);
         resetHistoryOnNextChange = true;
         set({
           mode: EDITOR_MODES.CLASSIC,
@@ -1088,6 +1093,7 @@ export const useMessageStore = create<MessageState>()(
           });
 
           const activeMode = resolveMessageMode(initialMessages[0], resolvedMode || EDITOR_MODES.CLASSIC);
+          cleanMessagesSnapshot = JSON.stringify(initialMessages);
 
           resetHistoryOnNextChange = true;
           set({
@@ -1136,6 +1142,13 @@ export const useMessageStore = create<MessageState>()(
         activeMessageIndex: state.activeMessageIndex,
       }),
       version: 1,
+      onRehydrateStorage: () => (state) => {
+        if (!state || state.messages.length === 0) return;
+        const activeMessageIndex = Math.max(0, Math.min(state.activeMessageIndex, state.messages.length - 1));
+        state.activeMessageIndex = activeMessageIndex;
+        state.data = state.messages[activeMessageIndex] ?? state.messages[0] ?? createEmptyMessage();
+        cleanMessagesSnapshot = JSON.stringify(state.messages);
+      },
     },
   ),
 );
