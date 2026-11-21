@@ -315,6 +315,35 @@ export const getGuildEmojis = async (
   }));
 };
 
+export interface DiscordAttachmentFile {
+  file: Blob;
+  filename: string;
+  description?: string;
+}
+
+const buildMultipartPayload = (
+  payload: DiscordMessagePayload,
+  files: DiscordAttachmentFile[],
+): FormData => {
+  const formData = new FormData();
+  const uploadedAttachments = files.map((attachment, index) => ({
+    id: index,
+    filename: attachment.filename,
+    ...(attachment.description ? { description: attachment.description } : {}),
+  }));
+  const payloadJson: DiscordMessagePayload = {
+    ...payload,
+    allowed_mentions: payload.allowed_mentions ?? { parse: [] },
+    attachments: [...(payload.attachments ?? []), ...uploadedAttachments],
+  };
+
+  formData.append("payload_json", JSON.stringify(payloadJson));
+  files.forEach((attachment, index) => {
+    formData.append(`files[${index}]`, attachment.file, attachment.filename);
+  });
+
+  return formData;
+};
 export interface BotSendOptions {
   profileId?: number | null;
   files?: DiscordAttachmentFile[];
