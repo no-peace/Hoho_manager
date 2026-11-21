@@ -105,11 +105,13 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
     if (parts.length !== 3) return null;
     const [h, p, s] = parts;
     const bufA = Buffer.from(s);
-    const matchingSecret = getVerificationSecrets().find(({ value }) => {
-      const expected = crypto.createHmac("sha256", value).update(`${h}.${p}`).digest("base64url");
+    let matchingSecret: VerificationSecret | undefined;
+    for (const candidate of getVerificationSecrets()) {
+      const expected = crypto.createHmac("sha256", candidate.value).update(`${h}.${p}`).digest("base64url");
       const bufB = Buffer.from(expected);
-      return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
-    });
+      const matches = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+      if (matches && !matchingSecret) matchingSecret = candidate;
+    }
     if (!matchingSecret) return null;
 
     const data: unknown = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
