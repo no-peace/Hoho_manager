@@ -172,7 +172,7 @@ export const validateEnv = (): string[] => {
       "ADMIN_API_KEY is missing, too short, or still uses the development default. Production startup requires a unique secret of at least 32 characters.",
     );
   }
-  if (env.isProd && env.sessionSecret.length < 32) {
+  if (env.isProd && env.sessionSecret.trim().length < 32) {
     warnings.push(
       "SESSION_SECRET is missing or too short. Production requires a dedicated secret of at least 32 characters, separate from ADMIN_API_KEY.",
     );
