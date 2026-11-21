@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   findDueSchedules: vi.fn(),
   findDueExpiring: vi.fn(),
   removeExpiring: vi.fn(),
+  retryExpiring: vi.fn(),
   updateSchedule: vi.fn(),
   setStickyMessageId: vi.fn(),
   findSticky: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("../src/repositories/automationRepository.js", () => ({
     findDueSchedules: mocks.findDueSchedules,
     findDueExpiring: mocks.findDueExpiring,
     removeExpiring: mocks.removeExpiring,
+    retryExpiring: mocks.retryExpiring,
     updateSchedule: mocks.updateSchedule,
     setStickyMessageId: mocks.setStickyMessageId,
     findSticky: mocks.findSticky,
@@ -53,6 +55,7 @@ describe("automation service", () => {
     mocks.findDueSchedules.mockResolvedValue([]);
     mocks.findDueExpiring.mockResolvedValue([]);
     mocks.removeExpiring.mockResolvedValue(undefined);
+    mocks.retryExpiring.mockResolvedValue(undefined);
     mocks.updateSchedule.mockResolvedValue(undefined);
     mocks.setStickyMessageId.mockResolvedValue(undefined);
     mocks.resolveBotToken.mockResolvedValue("test-token");
@@ -103,6 +106,36 @@ describe("automation service", () => {
     expect(mocks.deleteChannelMessage).toHaveBeenCalledWith("channel", "message", "test-token");
     expect(mocks.removeExpiring).toHaveBeenCalledWith(7);
     expect(service.getAutomationCacheState().hasExpiringMessages).toBe(false);
+  });
+
+  it("reschedules expiring messages after transient Discord deletion failures", async () => {
+    const due = {
+      id: 8,
+      guild_id: "guild",
+      channel_id: "channel",
+      message_id: "message",
+      delete_at: new Date(Date.now() - 60_000).toISOString(),
+      created_by: "staff",
+      created_at: new Date().toISOString(),
+    };
+    mocks.getNextExpiringAt
+      .mockResolvedValueOnce(due.delete_at)
+      .mockImplementationOnce(async () => new Date(Date.now() + 60_000).toISOString());
+    mocks.findDueExpiring.mockResolvedValue([due]);
+    mocks.deleteChannelMessage.mockRejectedValueOnce(
+      Object.assign(new Error("Discord is temporarily unavailable"), { status: 503 }),
+    );
+
+    const service = await import("../src/services/automationService.js");
+    await service.initializeAutomationService();
+    await service.runAutomationTick();
+
+    expect(mocks.removeExpiring).not.toHaveBeenCalled();
+    expect(mocks.retryExpiring).toHaveBeenCalledWith(8, expect.any(String));
+    const retryAt = Date.parse(String(mocks.retryExpiring.mock.calls[0]?.[1]));
+    expect(retryAt).toBeGreaterThan(Date.now() + 50_000);
+    expect(retryAt).toBeLessThan(Date.now() + 70_000);
+    expect(service.getAutomationCacheState().hasExpiringMessages).toBe(true);
   });
 
   it("does not retry a one-time message send after an ambiguous Discord failure", async () => {
