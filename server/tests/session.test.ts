@@ -54,8 +54,9 @@ describe("database-backed auth session revocation", () => {
     sessionSecret: string,
     adminApiKey: string,
     legacyCutoff: string,
+    nodeEnv: "test" | "production" = "test",
   ) => {
-    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("NODE_ENV", nodeEnv);
     vi.stubEnv("SESSION_SECRET", sessionSecret);
     vi.stubEnv("ADMIN_API_KEY", adminApiKey);
     vi.stubEnv("SESSION_LEGACY_ADMIN_KEY_UNTIL", legacyCutoff);
@@ -110,6 +111,24 @@ describe("database-backed auth session revocation", () => {
         id: "123456789012345678",
       });
       await expect(sessions.verifySessionToken(signWithSecret("admin-key-secret-0123456789abcdef", postMigrationIssuedAt))).resolves.toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
+  it("fails closed when production reuses ADMIN_API_KEY as SESSION_SECRET", async () => {
+    try {
+      const sharedSecret = "same-production-secret-0123456789abcdef";
+      const sessions = await loadWithSessionSecrets(sharedSecret, sharedSecret, "", "production");
+      const issuedAt = Math.floor(Date.now() / 1000);
+
+      expect(() => sessions.createSessionToken({
+        id: "123456789012345678",
+        username: "Session Test",
+        role: "editor",
+      })).toThrow(/SESSION_SECRET must be configured independently/);
+      await expect(sessions.verifySessionToken(signWithSecret(sharedSecret, issuedAt))).resolves.toBeNull();
     } finally {
       vi.unstubAllEnvs();
       vi.resetModules();
