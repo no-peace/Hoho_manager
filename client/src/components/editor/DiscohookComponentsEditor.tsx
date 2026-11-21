@@ -253,7 +253,10 @@ export const DiscohookComponentsEditor: React.FC<DiscohookComponentsEditorProps>
 
                         <div
                           className="flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            ensureActive?.();
+                            e.stopPropagation();
+                          }}
                         >
                           <button
                             type="button"
