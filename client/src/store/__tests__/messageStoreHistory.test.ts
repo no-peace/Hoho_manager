@@ -24,6 +24,34 @@ describe("messageStore history", () => {
     expect(useMessageStore.getState().data.content).toBe("First version");
   });
 
+  it("returns to the clean saved state when undo restores the saved snapshot", () => {
+    useMessageStore.getState().setContent("Saved version");
+    useMessageStore.getState().markClean();
+    useMessageStore.getState().setContent("Unsaved version");
+
+    expect(useMessageStore.getState().isDirty).toBe(true);
+    useMessageStore.getState().undo();
+    expect(useMessageStore.getState().data.content).toBe("Saved version");
+    expect(useMessageStore.getState().isDirty).toBe(false);
+  });
+
+  it("records message reordering in undo history", () => {
+    useMessageStore.getState().load({
+      messages: [
+        { _id: "first", content: "First" },
+        { _id: "second", content: "Second" },
+      ],
+    });
+
+    useMessageStore.getState().reorderMessages(0, 1);
+    expect(useMessageStore.getState().messages.map((message) => message._id)).toEqual(["second", "first"]);
+    expect(useMessageStore.getState().canUndo).toBe(true);
+
+    useMessageStore.getState().undo();
+    expect(useMessageStore.getState().messages.map((message) => message._id)).toEqual(["first", "second"]);
+    expect(useMessageStore.getState().isDirty).toBe(false);
+  });
+
   it("coalesces rapid typing into one undo entry", () => {
     useMessageStore.getState().setContent("H");
     vi.advanceTimersByTime(200);
