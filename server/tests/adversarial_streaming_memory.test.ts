@@ -301,7 +301,7 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(inspectedSignal).toBeInstanceOf(AbortSignal);
     });
 
-    it("Probe 2.2: Fast interaction callback uses a 1s attempt timeout", async () => {
+    it("Probe 2.2: Fast interaction callback uses a 1s timeout without ambiguous retries", async () => {
       let callCount = 0;
 
       globalThis.fetch = vi.fn().mockImplementation(async () => {
@@ -325,8 +325,8 @@ describe("Milestone 3 Challenger 1: Adversarial Streaming, Timeout & Memory Prob
       expect(err.message).toContain("Discord request timed out after 1000ms");
       expect(err.message).not.toContain("tok_456");
       expect(JSON.stringify(err.details)).not.toContain("tok_456");
-      // retries: 1 means 1 initial attempt + 1 retry = 2 calls
-      expect(callCount).toBe(2);
+      // Interaction callback POSTs are not retried after an ambiguous timeout.
+      expect(callCount).toBe(1);
     });
 
 
