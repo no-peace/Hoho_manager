@@ -13,6 +13,7 @@ vi.mock("../../../api/client", () => ({
       roles: rolesRequest,
     },
   },
+  registerStaffIdProvider: vi.fn(),
   request: vi.fn(),
 }));
 
