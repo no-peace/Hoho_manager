@@ -35,6 +35,7 @@ describe("SortableList V16 drag behavior", () => {
     );
 
     expect(screen.getByText("Field editor body")).toBeTruthy();
-    expect(container.querySelector("style")?.textContent).toContain('[data-list-dragging="true"] .sortable-collapse-on-drag');
+    expect(container.querySelector(".sortable-collapse-on-drag")).not.toBeNull();
+    expect(container.querySelector('[data-list-dragging="true"] .sortable-collapse-on-drag')).toBeNull();
   });
 });
