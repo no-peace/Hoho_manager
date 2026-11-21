@@ -230,15 +230,15 @@ export const api = {
       ),
     guilds: (profileId?: number) =>
       request<{ guilds: { id: string; name: string; icon: string | null }[] }>(
-        `/api/discord/guilds${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds${profileId ? `?profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     channels: (guildId: string, profileId?: number) =>
       request<{ channels: { id: string; name: string; type: number; parent_id?: string | null }[] }>(
-        `/api/discord/guilds/${encodeURIComponent(guildId)}/channels${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/channels${profileId ? `?profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     roles: (guildId: string, profileId?: number) =>
       request<{ roles: { id: string; name: string; color: number }[] }>(
-        `/api/discord/guilds/${encodeURIComponent(guildId)}/roles${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/roles${profileId ? `?profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     searchMembers: (guildId: string, query: string, profileId?: number) =>
       request<{
@@ -261,7 +261,7 @@ export const api = {
           available?: boolean;
         }>;
       }>(
-        `/api/discord/guilds/${encodeURIComponent(guildId)}/emojis${profileId ? `?profileId=${profileId}` : ""}`
+        `/api/discord/guilds/${encodeURIComponent(guildId)}/emojis${profileId ? `?profileId=${encodeURIComponent(String(profileId))}` : ""}`
       ),
     auditLogs: (guildId: string, params?: { limit?: number; page?: number; action?: string; channelId?: string; webhookId?: string; userId?: string }) => {
       const sp = new URLSearchParams();
@@ -308,7 +308,7 @@ export const api = {
       }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/sessions${query}`);
     },
     revokeSession: (guildId: string, tokenId: string) =>
-      request<{ ok: boolean; revoked: number }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/sessions/${tokenId}`, { method: "DELETE" }),
+      request<{ ok: boolean; revoked: number }>(`/api/discord/guilds/${encodeURIComponent(guildId)}/sessions/${encodeURIComponent(tokenId)}`, { method: "DELETE" }),
   },
 
   auth: {
@@ -374,12 +374,12 @@ export const api = {
         body,
       }),
     update: (id: number, body: { name?: string | null; expiresAt?: string | null; track?: boolean }) =>
-      request<{ ok: boolean; tracked: boolean; message?: any }>(`/api/tracking/messages/${id}`, {
+      request<{ ok: boolean; tracked: boolean; message?: any }>(`/api/tracking/messages/${encodeURIComponent(String(id))}`, {
         method: "PATCH",
         body,
       }),
     untrack: (id: number) =>
-      request<{ ok: boolean; deletedId: number }>(`/api/tracking/messages/${id}`, {
+      request<{ ok: boolean; deletedId: number }>(`/api/tracking/messages/${encodeURIComponent(String(id))}`, {
         method: "DELETE",
       }),
   },
