@@ -73,9 +73,11 @@ describe("automation service", () => {
       hasExpiringMessages: false,
       stickyCount: 0,
     });
-    expect(mocks.listSchedules).toHaveBeenCalledTimes(1);
-    expect(mocks.listExpiring).toHaveBeenCalledTimes(1);
+    expect(mocks.getNextScheduleAt).toHaveBeenCalledTimes(1);
+    expect(mocks.getNextExpiringAt).toHaveBeenCalledTimes(1);
     expect(mocks.listActiveSticky).toHaveBeenCalledTimes(1);
+    expect(mocks.listSchedules).not.toHaveBeenCalled();
+    expect(mocks.listExpiring).not.toHaveBeenCalled();
     expect(mocks.findDueSchedules).not.toHaveBeenCalled();
     expect(mocks.findDueExpiring).not.toHaveBeenCalled();
   });
