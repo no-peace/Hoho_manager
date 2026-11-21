@@ -229,7 +229,7 @@ export const detectAutocompleteToken = (
             (field) => field.key.toLowerCase().startsWith(fieldQuery.toLowerCase()),
           );
 
-          if (sortedKnown.length > 0 && !isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField || isFieldPrefix)) {
+          if (!isPartialDottedExploit && (isKnownExploit || fieldQuery === "" || isKnownField || isFieldPrefix)) {
             return {
               type: "exploit_field",
               exploitTarget: candidateName,
