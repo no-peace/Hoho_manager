@@ -491,8 +491,6 @@ router.get(
       components: liveComponents.map(mapComponent),
       flags,
       poll: liveMessage.poll as MessageData["poll"],
-      username: "",
-      avatar_url: "",
       thread_name: "",
     };
     const mode = (flags & 32768) !== 0 ? "v2" : "classic";
