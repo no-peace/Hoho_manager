@@ -86,4 +86,28 @@ describe("allowed mention payload sanitization", () => {
     });
     expect(sanitizeAllowedMentions(payload, permissions).allowed_mentions).not.toHaveProperty("roles");
   });
+
+  it("keeps an explicit role allowlist restrictive when broad role mentions are enabled", () => {
+    const allowedRoleId = "123456789012345678";
+    const blockedRoleId = "223456789012345678";
+    const payload = {
+      content: `<@&${allowedRoleId}> <@&${blockedRoleId}>`,
+      allowed_mentions: { roles: [allowedRoleId, blockedRoleId] },
+    };
+    const permissions = {
+      can_mention_everyone: 0,
+      can_mention_here: 0,
+      can_mention_roles: 1,
+      allowed_role_mention_ids: JSON.stringify([allowedRoleId]),
+    };
+
+    const scrubbed = scrubMentions(payload, permissions).payload;
+    const result = sanitizeAllowedMentions(scrubbed, permissions);
+
+    expect(result).toMatchObject({
+      content: `<@&${allowedRoleId}> @\\u200b${blockedRoleId}`,
+      allowed_mentions: { roles: [allowedRoleId] },
+    });
+    expect(result.allowed_mentions).not.toHaveProperty("parse");
+  });
 });
