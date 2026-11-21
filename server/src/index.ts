@@ -20,6 +20,9 @@ const start = async (): Promise<void> => {
   if (env.isProd && env.sessionSecret.length < 32) {
     throw new Error("CRITICAL: Set a dedicated SESSION_SECRET with at least 32 characters, separate from ADMIN_API_KEY, before starting in production.");
   }
+  if (env.isProd && env.sessionSecret === env.adminApiKey) {
+    throw new Error("CRITICAL: SESSION_SECRET must not equal ADMIN_API_KEY in production.");
+  }
   if (
     env.sessionLegacyAdminKeyUntilMs !== undefined &&
     !Number.isFinite(env.sessionLegacyAdminKeyUntilMs)
