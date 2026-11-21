@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { StudioLink } from "../components/layout/StudioRouter";
 import { ShieldCheck, Lock, Clock, Database } from "lucide-react";
 import { PublicPageHeader } from "../components/layout/PublicPageHeader";
 import { updatePageSeo } from "../utils/seo";
@@ -73,8 +73,8 @@ export const PrivacyPage: React.FC = () => {
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#272D3A] pt-6 text-xs text-[#A1A8B8]">
           <span>HoHo Hub • HoHo Manager</span>
           <nav aria-label="Footer links" className="flex flex-wrap items-center gap-4">
-            <Link to="/" className="transition-colors hover:text-white">Studio</Link>
-            <Link to="/docs" className="transition-colors hover:text-white">Docs</Link>
+            <StudioLink to="/" className="transition-colors hover:text-white">Studio</StudioLink>
+            <StudioLink to="/docs" className="transition-colors hover:text-white">Docs</StudioLink>
             <a href="https://discord.gg/hohohub" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Discord Support</a>
           </nav>
         </footer>
