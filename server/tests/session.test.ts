@@ -36,6 +36,33 @@ describe("database-backed auth session revocation", () => {
       role: "editor",
     });
 
+  const signWithSecret = (secret: string, issuedAtSeconds: number): string => {
+    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({
+      id: "123456789012345678",
+      username: "Session Test",
+      role: "editor",
+      iat: issuedAtSeconds,
+      exp: issuedAtSeconds + 86_400,
+      iatMs: issuedAtSeconds * 1000 + 500,
+    })).toString("base64url");
+    const signature = crypto.createHmac("sha256", secret).update(`${header}.${payload}`).digest("base64url");
+    return `${header}.${payload}.${signature}`;
+  };
+
+  const loadWithSessionSecrets = async (
+    sessionSecret: string,
+    adminApiKey: string,
+    legacyCutoff: string,
+  ) => {
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("SESSION_SECRET", sessionSecret);
+    vi.stubEnv("ADMIN_API_KEY", adminApiKey);
+    vi.stubEnv("SESSION_LEGACY_ADMIN_KEY_UNTIL", legacyCutoff);
+    vi.resetModules();
+    return import("../src/utils/session.js");
+  };
+
   it("accepts a valid session when no revocation floor exists", async () => {
     await expect(verifySessionToken(token())).resolves.toMatchObject({
       id: "123456789012345678",
@@ -57,13 +84,37 @@ describe("database-backed auth session revocation", () => {
     await expect(verifySessionToken(signedToken)).resolves.toBeNull();
   });
 
-  const signClaims = (claims: Record<string, unknown>): string => {
-    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-    const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
-    const secret = env.sessionSecret || env.adminApiKey || "dev-only-session-secret";
-    const signature = crypto.createHmac("sha256", secret).update(`${header}.${payload}`).digest("base64url");
-    return `${header}.${payload}.${signature}`;
-  };
+  it("rejects ADMIN_API_KEY signatures when a dedicated SESSION_SECRET is configured without a legacy cutoff", async () => {
+    try {
+      const sessions = await loadWithSessionSecrets("dedicated-session-secret-0123456789abcdef", "admin-key-secret-0123456789abcdef", "");
+      const issuedAt = Math.floor(Date.now() / 1000);
+      await expect(sessions.verifySessionToken(signWithSecret("admin-key-secret-0123456789abcdef", issuedAt))).resolves.toBeNull();
+      await expect(sessions.verifySessionToken(signWithSecret("dedicated-session-secret-0123456789abcdef", issuedAt))).resolves.toMatchObject({
+        id: "123456789012345678",
+      });
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
+  it("accepts only pre-migration ADMIN_API_KEY sessions during the bounded 24-hour transition", async () => {
+    try {
+      const migrationStartedAt = Math.floor(Date.now() / 1000);
+      const cutoff = new Date((migrationStartedAt + 86_400) * 1000).toISOString();
+      const sessions = await loadWithSessionSecrets("dedicated-session-secret-0123456789abcdef", "admin-key-secret-0123456789abcdef", cutoff);
+      const legacyIssuedAt = migrationStartedAt - 10;
+      const postMigrationIssuedAt = migrationStartedAt + 10;
+
+      await expect(sessions.verifySessionToken(signWithSecret("admin-key-secret-0123456789abcdef", legacyIssuedAt))).resolves.toMatchObject({
+        id: "123456789012345678",
+      });
+      await expect(sessions.verifySessionToken(signWithSecret("admin-key-secret-0123456789abcdef", postMigrationIssuedAt))).resolves.toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
 
   it("rejects signed session claims without a valid expiry window", async () => {
     const now = Math.floor(Date.now() / 1000);
@@ -74,6 +125,14 @@ describe("database-backed auth session revocation", () => {
     await expect(verifySessionToken(signClaims({ ...base, exp: now + 86_401 }))).resolves.toBeNull();
     await expect(verifySessionToken(signClaims({ ...base, id: "not-a-snowflake", exp: now + 60 }))).resolves.toBeNull();
   });
+
+  const signClaims = (claims: Record<string, unknown>): string => {
+    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+    const secret = env.sessionSecret || env.adminApiKey || "dev-only-session-secret";
+    const signature = crypto.createHmac("sha256", secret).update(`${header}.${payload}`).digest("base64url");
+    return `${header}.${payload}.${signature}`;
+  };
 
   it("persists user and global revocation requests", async () => {
     await revokeUserSessions("123456789012345678");
