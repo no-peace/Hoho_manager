@@ -19,7 +19,7 @@ export const checkUnauthorizedMentions = (payloads: unknown[]): MentionViolation
   }
 
   const allowedRoleIds: string[] = staffPerms.allowed_role_mention_ids ?? [];
-  const allRolesAllowed = Boolean(staffPerms.can_mention_roles || allowedRoleIds.includes("*"));
+  const allRolesAllowed = allowedRoleIds.includes("*") || (Boolean(staffPerms.can_mention_roles) && allowedRoleIds.length === 0);
 
   const violations: string[] = [];
   const scanned = new Set<string>();
