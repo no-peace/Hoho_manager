@@ -18,6 +18,7 @@ import { useDiscordCacheStore } from "../../../store/discordCacheStore";
 import { calculateFloatingPosition } from "../../../utils/floatingPosition";
 import api from "../../../api/client";
 import { getUserIdPlaceholderSuggestions } from "../../../utils/userPlaceholderAutocomplete";
+import { filterMentionableRoles } from "../../../utils/mentionPermissions";
 import {
   COMMON_EMOJIS_LIST,
   EXPLOIT_FIELD_OPTIONS,
@@ -131,14 +132,10 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
   const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);
   const canPingHere = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_here);
 
-  const mentionableRoles = useMemo(() => {
-    if (isUnrestrictedMentions) return guildRoles;
-    if (!staffPerms) return EMPTY_ROLES;
-    const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
-    if (staffPerms.can_mention_roles && (allowedIds.length === 0 || allowedIds.includes("*"))) return guildRoles;
-    if (allowedIds.includes("*")) return guildRoles;
-    return guildRoles.filter((r) => allowedIds.includes(r.id));
-  }, [guildRoles, isUnrestrictedMentions, staffPerms]);
+  const mentionableRoles = useMemo(
+    () => filterMentionableRoles(guildRoles, staffPerms, isUnrestrictedMentions),
+    [guildRoles, isUnrestrictedMentions, staffPerms],
+  );
 
   const serverEmojis = useDiscordCacheStore((state) =>
     effectiveGuildId ? state.emojis[effectiveGuildId] : undefined,
