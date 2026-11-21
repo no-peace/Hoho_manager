@@ -21,6 +21,7 @@ vi.mock("../../../api/client", () => ({
       resolveUsers: (...args: unknown[]) => resolveUsersMock(...args),
     },
   },
+  registerStaffIdProvider: vi.fn(),
 }));
 
 import {
