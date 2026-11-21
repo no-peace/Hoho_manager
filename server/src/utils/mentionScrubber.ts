@@ -132,7 +132,7 @@ export const scrubString = (text: string, perms: MentionPermissions, stripped: s
     allowedRoleIds = [];
   }
 
-  const allRolesAllowed = Boolean(perms.can_mention_roles) || allowedRoleIds.includes("*");
+  const allRolesAllowed = areAllRolesAllowed(perms, allowedRoleIds);
   if (!allRolesAllowed) {
     result = result.replace(ROLE_MENTION_RE, (match, roleId) => {
       if (allowedRoleIds.includes(roleId)) return match;
