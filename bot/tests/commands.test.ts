@@ -113,6 +113,7 @@ describe("bot/commands: Slash Command Suite", () => {
       });
 
       const interaction: any = {
+        user: { id: "111111111111111111" },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
       };
@@ -133,6 +134,7 @@ describe("bot/commands: Slash Command Suite", () => {
       vi.mocked(api.health).mockRejectedValueOnce(new Error("Connection refused"));
 
       const interaction: any = {
+        user: { id: "222222222222222222" },
         deferReply: vi.fn().mockResolvedValue(undefined),
         editReply: vi.fn().mockResolvedValue(undefined),
       };
@@ -220,6 +222,7 @@ describe("bot/commands: Slash Command Suite", () => {
       expect(api.sendMessage).toHaveBeenCalledWith({
         content: "Hello from bot!",
         channelId: "chan_99",
+        authorUserId: "111111111111111111",
       });
       expect(interaction.editReply).toHaveBeenCalledWith("✅ Sent to <#chan_99>.");
     });
@@ -292,7 +295,7 @@ describe("bot/commands: Slash Command Suite", () => {
 
       await command.autocompleteRun(interaction);
 
-      expect(listWeaoExploits).toHaveBeenCalledWith("del");
+      expect(listWeaoExploits).toHaveBeenCalledWith("del", { timeoutMs: 2_500 });
       expect(interaction.respond).toHaveBeenCalledWith([
         { name: "🟢 Delta (v2.5 • 99% sUNC) ★ Backup", value: "Delta" },
         { name: "🔴 Vega (v1.0)", value: "Vega" },
