@@ -549,8 +549,7 @@ export const StepList = ({ steps, onChange, depth }: StepListProps) => {
                             { value: "2", label: "Paragraph (Multi-line)" },
                           ]}
                         />
-                      ) : (
-                      )}
+                      ) : null}
                     </div>
 
                     {input.fieldType === "text_input" || input.fieldType.includes("select") ? (
