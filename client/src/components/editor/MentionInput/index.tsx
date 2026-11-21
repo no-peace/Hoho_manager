@@ -543,7 +543,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             textareaRef.current.setSelectionRange(newPos, newPos);
           }
           checkAutocomplete(nextValue, newPos);
-        }, 0);
+        });
       } else {
         setAcType(null);
         setAcQuery("");
@@ -552,7 +552,7 @@ const DiscordMentionInputComponent: React.FC<DiscordMentionInputProps> = ({
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(newPos, newPos);
           }
-        }, 0);
+        });
       }
     },
     [acCursorStart, acCursorEnd, value, onChange, checkAutocomplete, scheduleUiTimeout],
