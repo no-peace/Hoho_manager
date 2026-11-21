@@ -14,7 +14,7 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
 
 
 
-  it("sets a 1s attempt timeout and retries interaction callbacks once", async () => {
+  it("sets a 1s attempt timeout without retrying an ambiguous interaction callback", async () => {
     let callCount = 0;
     let capturedInit: RequestInit | undefined;
 
@@ -50,6 +50,6 @@ describe("PERF-02: Discord REST API Request Timeouts", () => {
     expect((thrownError as Error).message).not.toContain("token_abc");
     expect(JSON.stringify((thrownError as ApiError).details)).not.toContain("token_abc");
     expect(capturedInit?.signal).toBeInstanceOf(AbortSignal);
-    expect(callCount).toBe(2);
+    expect(callCount).toBe(1);
   });
 });
