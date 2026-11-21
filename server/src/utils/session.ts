@@ -43,7 +43,7 @@ export const revokeAllSessions = async (): Promise<void> => {
 };
 
 const getSecret = (): string => {
-  if (env.isProd && (!env.sessionSecret || env.sessionSecret === env.adminApiKey)) {
+  if (env.isProd && (env.sessionSecret.trim().length < 32 || env.sessionSecret === env.adminApiKey)) {
     throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
   }
   return env.sessionSecret || "dev-only-session-secret";
@@ -65,7 +65,8 @@ const getVerificationSecrets = (): VerificationSecret[] => {
   const cutoffMs = env.sessionLegacyAdminKeyUntilMs;
   const nowMs = Date.now();
   if (
-    env.sessionSecret &&
+    env.sessionSecret.trim().length >= 32 &&
+    env.sessionSecret !== env.adminApiKey &&
     cutoffMs !== undefined &&
     Number.isFinite(cutoffMs) &&
     cutoffMs > nowMs &&
