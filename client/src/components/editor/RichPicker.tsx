@@ -18,6 +18,7 @@ import { useDiscordCacheStore } from "../../store/discordCacheStore";
 import api from "../../api/client";
 import { UNICODE_EMOJI_CATEGORIES as COMMON_UNICODE_EMOJIS } from "../../utils/unicodeEmojis";
 import { calculateFloatingPosition } from "../../utils/floatingPosition";
+import { filterMentionableRoles } from "../../utils/mentionPermissions";
 
 export interface RichPickerProps {
   onInsert: (text: string) => void;
@@ -66,16 +67,10 @@ const RichPickerComponent: React.FC<RichPickerProps> = ({
   const canPingEveryone = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_everyone);
   const canPingHere = isUnrestrictedMentions || Boolean(staffPerms?.can_mention_here);
 
-  const mentionableRoles = useMemo(() => {
-    if (isUnrestrictedMentions) return guildRoles;
-    if (!staffPerms) return EMPTY_ROLES;
-    const allowedIds = staffPerms.allowed_role_mention_ids ?? [];
-    if (staffPerms.can_mention_roles && (allowedIds.length === 0 || allowedIds.includes("*"))) {
-      return guildRoles;
-    }
-    if (allowedIds.includes("*")) return guildRoles;
-    return guildRoles.filter((r) => allowedIds.includes(r.id));
-  }, [guildRoles, isUnrestrictedMentions, staffPerms]);
+  const mentionableRoles = useMemo(
+    () => filterMentionableRoles(guildRoles, staffPerms, isUnrestrictedMentions),
+    [guildRoles, isUnrestrictedMentions, staffPerms],
+  );
 
   const fetchChannels = useDiscordCacheStore((state) => state.fetchChannels);
   const fetchRoles = useDiscordCacheStore((state) => state.fetchRoles);
