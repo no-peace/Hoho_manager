@@ -54,7 +54,7 @@ const getSecret = (): string => {
  * configured cutoff. The cutoff must be no more than one session lifetime away.
  */
 const getVerificationSecrets = (): VerificationSecret[] => {
-  if (env.isProd && (!env.sessionSecret || env.sessionSecret === env.adminApiKey)) {
+  if (env.isProd && (env.sessionSecret.trim().length < 32 || env.sessionSecret === env.adminApiKey)) {
     throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
   }
 
