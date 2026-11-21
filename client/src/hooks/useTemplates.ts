@@ -58,7 +58,6 @@ export const useTemplates = (): UseTemplatesReturn => {
       if (!template) return null;
 
       const document = template.data as QueryData;
-      const legacyData = document.messages?.[0]?.data;
       useMessageStore.getState().load({
         data: document,
         mode: document.mode,
