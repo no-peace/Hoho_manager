@@ -26,6 +26,11 @@ export interface SessionUser {
 export const SESSION_TTL_SECONDS = 24 * 60 * 60;
 export const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 
+interface VerificationSecret {
+  value: string;
+  isLegacyAdminKey: boolean;
+}
+
 /** Persistently invalidate all existing JWT sessions for a Discord user ID. */
 export const revokeUserSessions = async (discordUserId: string): Promise<void> => {
   if (!discordUserId) return;
@@ -38,20 +43,38 @@ export const revokeAllSessions = async (): Promise<void> => {
 };
 
 const getSecret = (): string => {
-  const secret = env.sessionSecret || env.adminApiKey;
-  if (!secret && env.isProd) {
-    throw new Error("CRITICAL: SESSION_SECRET or ADMIN_API_KEY must be configured in production");
+  if (!env.sessionSecret && env.isProd) {
+    throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
   }
-  return secret || "dev-only-session-secret";
+  return env.sessionSecret || "dev-only-session-secret";
 };
 
-/** Accept sessions signed with the previous admin-key fallback during key separation. */
-const getVerificationSecrets = (): string[] => {
-  const secrets = [...new Set([env.sessionSecret, env.adminApiKey].filter(Boolean))];
-  if (secrets.length === 0 && env.isProd) {
-    throw new Error("CRITICAL: SESSION_SECRET or ADMIN_API_KEY must be configured in production");
+/**
+ * The admin key is accepted only for pre-migration tokens and only until the
+ * configured cutoff. The cutoff must be no more than one session lifetime away.
+ */
+const getVerificationSecrets = (): VerificationSecret[] => {
+  const secrets: VerificationSecret[] = env.sessionSecret
+    ? [{ value: env.sessionSecret, isLegacyAdminKey: false }]
+    : [];
+
+  const cutoffMs = env.sessionLegacyAdminKeyUntilMs;
+  const nowMs = Date.now();
+  if (
+    cutoffMs !== undefined &&
+    Number.isFinite(cutoffMs) &&
+    cutoffMs > nowMs &&
+    cutoffMs <= nowMs + SESSION_TTL_MS &&
+    env.adminApiKey &&
+    env.adminApiKey !== env.sessionSecret
+  ) {
+    secrets.push({ value: env.adminApiKey, isLegacyAdminKey: true });
   }
-  return secrets.length > 0 ? secrets : ["dev-only-session-secret"];
+
+  if (secrets.length === 0 && env.isProd) {
+    throw new Error("CRITICAL: SESSION_SECRET must be configured independently from ADMIN_API_KEY in production");
+  }
+  return secrets.length > 0 ? secrets : [{ value: "dev-only-session-secret", isLegacyAdminKey: false }];
 };
 
 export const createSessionToken = (user: SessionUser): string => {
@@ -77,12 +100,12 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
     if (parts.length !== 3) return null;
     const [h, p, s] = parts;
     const bufA = Buffer.from(s);
-    const validSignature = getVerificationSecrets().some((secret) => {
-      const expected = crypto.createHmac("sha256", secret).update(`${h}.${p}`).digest("base64url");
+    const matchingSecret = getVerificationSecrets().find(({ value }) => {
+      const expected = crypto.createHmac("sha256", value).update(`${h}.${p}`).digest("base64url");
       const bufB = Buffer.from(expected);
       return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
     });
-    if (!validSignature) return null;
+    if (!matchingSecret) return null;
 
     const data: unknown = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
     if (data === null || typeof data !== "object" || Array.isArray(data)) return null;
@@ -96,6 +119,12 @@ export const verifySessionToken = async (token: string): Promise<SessionUser | n
       (claims.exp as number) <= (claims.iat as number) ||
       (claims.exp as number) - (claims.iat as number) > SESSION_TTL_SECONDS
     ) return null;
+    if (matchingSecret.isLegacyAdminKey) {
+      const cutoffMs = env.sessionLegacyAdminKeyUntilMs;
+      const migrationStartedAtSeconds =
+        cutoffMs === undefined ? Number.POSITIVE_INFINITY : Math.floor(cutoffMs / 1000) - SESSION_TTL_SECONDS;
+      if ((claims.iat as number) > migrationStartedAtSeconds) return null;
+    }
     if (
       typeof claims.id !== "string" || !/^\d{17,20}$/.test(claims.id) ||
       typeof claims.username !== "string" || !claims.username.trim()
