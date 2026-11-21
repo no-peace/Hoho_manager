@@ -24,6 +24,12 @@ export interface UnauthorizedMentionViolation {
 
 // Role mention pattern: <@&123456789012345678> or <@123456789012345678>
 const ROLE_OR_USER_MENTION_RE = /<@&?(\d{17,20})>/g;
+const areAllRolesAllowed = (
+  permissions: Pick<MentionPermissions, "can_mention_roles">,
+  allowedRoleIds: readonly string[],
+): boolean =>
+  allowedRoleIds.includes("*") ||
+  (Boolean(permissions.can_mention_roles) && allowedRoleIds.length === 0);
 
 export const findUnauthorizedMentions = (
   obj: unknown,
@@ -45,7 +51,7 @@ export const findUnauthorizedMentions = (
 
   const canEveryone = Boolean(perms.can_mention_everyone);
   const canHere = Boolean(perms.can_mention_here);
-  const allRolesAllowed = Boolean(perms.can_mention_roles) || allowedRoleIds.includes("*");
+  const allRolesAllowed = areAllRolesAllowed(perms, allowedRoleIds);
 
   const scanText = (text: string) => {
     // 1. Check @everyone
@@ -199,8 +205,9 @@ export const sanitizeAllowedMentions = (
         .slice(0, 100)
     : [];
   const hasExplicitRoles = Array.isArray(existing?.roles) && existing.roles.length > 0;
+  const allRolesAllowed = areAllRolesAllowed(perms, allowedRoleIds);
   const explicitRoles = requestedRoles.filter((id) =>
-    perms.can_mention_roles || allowedRoleIds.includes("*") || allowedRoleIds.includes(id),
+    allRolesAllowed || allowedRoleIds.includes(id),
   );
   const hasExplicitIds = hasExplicitUsers || hasExplicitRoles;
   const parse: string[] = [];
@@ -211,7 +218,7 @@ export const sanitizeAllowedMentions = (
     if (perms.can_mention_everyone || perms.can_mention_here) parse.push("everyone");
 
     // Role allowlists are enforced by scrubMentions before this parser is applied.
-    if (perms.can_mention_roles || allowedRoleIds.includes("*") || allowedRoleIds.length > 0) {
+    if (allRolesAllowed || allowedRoleIds.length > 0) {
       parse.push("roles");
     }
   }
