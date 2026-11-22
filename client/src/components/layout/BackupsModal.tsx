@@ -58,7 +58,7 @@ export const BackupsModal: React.FC<{ open: boolean; onClose: () => void }> = ({
     return toQueryData(messagesToSave, editorMode);
   }, [open, editorData, editorMessages, editorMode]);
   const currentActions = useMemo(() => useActionStore.getState().toList(), [editorFlows]);
-  const currentTemplateModified = Boolean(savedTemplateBaseline && (
+  const currentTemplateModified = Boolean(open && savedTemplateBaseline && (
     JSON.stringify(savedTemplateBaseline.data) !== JSON.stringify(currentDocument) ||
     JSON.stringify(savedTemplateBaseline.actions) !== JSON.stringify(currentActions)
   ));
