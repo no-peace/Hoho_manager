@@ -413,8 +413,16 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({ index }) => {
                       type="button"
                       onClick={() => {
                         const text = JSON.stringify(message, null, 2);
-                        void navigator.clipboard.writeText(text);
-                        useGlobalStore.getState().showToast("Message JSON copied to clipboard!", "success");
+                        if (!navigator.clipboard?.writeText) {
+                          useGlobalStore.getState().showToast("Clipboard access is unavailable", "error");
+                          setOptionsMenuOpen(false);
+                          return;
+                        }
+                        void navigator.clipboard.writeText(text).then(() => {
+                          useGlobalStore.getState().showToast("Message JSON copied to clipboard!", "success");
+                        }).catch(() => {
+                          useGlobalStore.getState().showToast("Could not copy message JSON", "error");
+                        });
                         setOptionsMenuOpen(false);
                       }}
                       className="w-full text-left px-3 py-1.5 text-[#F1F3F9] hover:bg-[#818CF8] hover:text-white flex items-center gap-2"
