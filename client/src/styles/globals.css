@@ -68,12 +68,12 @@
 
   /* ── Semantic UI tokens (used as Tailwind utilities) ─────────────────── */
   /* Discord dark-mode surface hierarchy */
-  --color-chrome:   #1E1F22;   /* bg-chrome   darkest chrome/toolbar */
-  --color-sidebar:  #2B2D31;   /* bg-sidebar  left rail / panels */
-  --color-surface:  #313338;   /* bg-surface  main canvas */
-  --color-raised:   #383A40;   /* bg-raised   elevated cards / popovers */
-  --color-hover:    #35373C;   /* bg-hover    item hover state */
-  --color-input:    #1E1F22;   /* bg-input    input backgrounds */
+  --color-chrome:   #10131A;   /* Studio chrome */
+  --color-sidebar:  #10131A;   /* Studio sidebar */
+  --color-surface:  #0B0D12;   /* Studio canvas */
+  --color-raised:   #161A23;   /* Studio elevated surfaces */
+  --color-hover:    #252B3A;   /* Studio hover state */
+  --color-input:    #1D2230;   /* Studio input surfaces */
 
   /* Border tones */
   --color-line:      #1E1F22;  /* border-line       subtle divider */
