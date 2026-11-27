@@ -17,6 +17,7 @@ import {
 } from "../utils/session.js";
 import { ApiError, asyncHandler } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
+import { parseAllowedIds } from "../utils/requestParsing.js";
 
 const router = Router();
 const log = logger.child("auth");
@@ -319,15 +320,7 @@ router.get(
         (!staffRecord.expires_at || new Date(staffRecord.expires_at) >= new Date()),
     );
 
-    let allowedRoleMentionIds: string[] = [];
-    if (staffRecord?.allowed_role_mention_ids) {
-      try {
-        const parsed = JSON.parse(staffRecord.allowed_role_mention_ids);
-        if (Array.isArray(parsed)) allowedRoleMentionIds = parsed.map(String);
-      } catch {
-        allowedRoleMentionIds = [];
-      }
-    }
+    const allowedRoleMentionIds = parseAllowedIds(staffRecord?.allowed_role_mention_ids);
 
     const mutualGuilds = user.mutualGuilds ?? [];
     // Always compute live from DB  never trust stale user.hasDefaultBotAccess from the JWT
@@ -375,7 +368,7 @@ router.get(
                 can_use_weao_exploits: staffRecord.can_use_weao_exploits !== 0,
                 can_manage_automation: staffRecord.can_manage_automation === 1,
                 allowed_guild_ids: staffRecord.allowed_guild_ids
-                  ? JSON.parse(staffRecord.allowed_guild_ids)
+                  ? parseAllowedIds(staffRecord.allowed_guild_ids)
                   : ["*"],
               }
             : null,
