@@ -50,7 +50,8 @@ const start = async (): Promise<void> => {
       try {
         const parsed = new URL(origin);
         return parsed.protocol !== "https:" || parsed.origin !== origin ||
-          parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1";
+          parsed.hostname === "localhost" || parsed.hostname.endsWith(".localhost") ||
+          parsed.hostname.startsWith("127.") || parsed.hostname === "[::1]";
       } catch {
         return true;
       }
