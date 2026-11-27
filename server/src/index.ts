@@ -39,6 +39,36 @@ const start = async (): Promise<void> => {
     throw new Error("CRITICAL: Set a dedicated ENCRYPTION_KEY with at least 32 characters before starting in production.");
   }
 
+  if (env.isProd && !env.discord.botToken) {
+    throw new Error("CRITICAL: DISCORD_BOT_TOKEN is required for production bot-based message delivery.");
+  }
+  if (env.isProd && (!env.discord.applicationId || !env.discord.clientId || !env.discord.clientSecret)) {
+    throw new Error("CRITICAL: DISCORD_APPLICATION_ID, DISCORD_CLIENT_ID, and DISCORD_CLIENT_SECRET are required for production bot access and Discord OAuth login.");
+  }
+  if (env.isProd) {
+    const invalidClientOrigins = env.clientOrigins.filter((origin) => {
+      try {
+        const parsed = new URL(origin);
+        return parsed.protocol !== "https:" || parsed.origin !== origin ||
+          parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1";
+      } catch {
+        return true;
+      }
+    });
+    if (env.clientOrigins.length === 0 || invalidClientOrigins.length > 0) {
+      throw new Error("CRITICAL: Set CLIENT_ORIGIN to one or more exact HTTPS frontend origins in production; localhost, paths, and malformed origins are not allowed.");
+    }
+    let redirectUrl: URL;
+    try {
+      redirectUrl = new URL(env.discord.redirectUri);
+    } catch {
+      throw new Error("CRITICAL: DISCORD_REDIRECT_URI must be a valid absolute HTTPS URL in production.");
+    }
+    if (redirectUrl.protocol !== "https:") {
+      throw new Error("CRITICAL: DISCORD_REDIRECT_URI must use HTTPS in production.");
+    }
+  }
+
   await initializeDatabase();
   log.info("Database ready");
 
