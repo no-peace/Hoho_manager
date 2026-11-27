@@ -69,6 +69,25 @@ describe("staff access endpoint security", () => {
     expect(await response.json()).toEqual({ hasAccess: false, reason: "invalid_expiry" });
   });
 
+  it("does not turn malformed stored guild allowlists into wildcard access", async () => {
+    await staffRepository.create({
+      discord_user_id: targetId,
+      discord_username: "Target user",
+      granted_by_discord_id: ownerId,
+      allowed_guild_ids: "{invalid-json",
+    });
+
+    const response = await fetch(`${baseUrl}/api/access`, { headers: ownerHeaders });
+    expect(response.status).toBe(200);
+    const records = await response.json() as Array<{
+      discord_user_id: string;
+      allowed_guild_ids: string[];
+    }>;
+    const target = records.find((record) => record.discord_user_id === targetId);
+    expect(target?.allowed_guild_ids).toEqual([]);
+    expect(target?.allowed_guild_ids).not.toContain("*");
+  });
+
   it("rejects malformed target IDs before reading or changing staff records", async () => {
     const response = await fetch(`${baseUrl}/api/access/not-a-snowflake/check`);
     expect(response.status).toBe(400);
