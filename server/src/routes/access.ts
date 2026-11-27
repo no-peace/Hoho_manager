@@ -49,7 +49,7 @@ const formatStaffRecord = (r: import("../repositories/staffRepository.js").Staff
       : `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`,
     allowed_channel_ids: parseStringArray(r.allowed_channel_ids),
     allowed_role_mention_ids: parseStringArray(r.allowed_role_mention_ids),
-    allowed_guild_ids: parseStringArray(r.allowed_guild_ids, ["*"]),
+    allowed_guild_ids: parseStringArray(r.allowed_guild_ids),
     can_override_profile: r.can_override_profile ?? 1,
     can_attach_files: r.can_attach_files ?? 1,
     can_use_components_v2: r.can_use_components_v2 ?? 1,
