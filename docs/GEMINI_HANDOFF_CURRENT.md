@@ -1689,7 +1689,7 @@ These are the owner's local Lighthouse measurements, not measurements reproduced
 ## Shared package audit — Batch F2 (2026-11-18)
 
 - Inspected all 10 files under `shared/`: package manifest, constants, custom-ID codec, exports, domain types, both test files, and TypeScript/Vitest configuration.
-- Confirmed `WEBHOOK_URL_REGEX` is still used by `server/src/utils/validation.ts` and `discordService.getWebhookInfo`; it is not an orphaned constant.
+- Confirmed the current app is bot-only: `server/src/routes/send.ts` rejects non-empty `webhookUrl`, and there is no current `WEBHOOK_URL_REGEX`, `parseWebhookUrl`, or `getWebhookInfo` implementation. V17 M-03 is not applicable; do not add webhook URL support.
 - Confirmed `send_webhook_message` remains in the shared persisted action type for compatibility while runtime dispatch is disabled. Do not restore execution merely by retaining the type.
 - Found a duplicate identical `LoggingConfig` interface declaration in `shared/src/types.ts`. It is harmless interface merging and was left unchanged rather than making an unrelated cleanup.
 - No functional defect was confirmed. Tests/build/typecheck were not executed.
