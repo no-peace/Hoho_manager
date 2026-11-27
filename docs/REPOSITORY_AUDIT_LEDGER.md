@@ -48,7 +48,7 @@ No finding above has been runtime-tested. The Docker and CI concerns are configu
 
 Findings:
 1. `LoggingConfig` is declared twice identically in `shared/src/types.ts`. This is harmless TypeScript interface merging but redundant; left unchanged to avoid an unnecessary type-only cleanup during the audit.
-2. `WEBHOOK_URL_REGEX` is not orphaned: `server/src/utils/validation.ts` uses it in `parseWebhookUrl`, and `server/src/services/discordService.ts` calls that parser from `getWebhookInfo`. Keep it unless that API feature is separately removed.
+2. The current app is bot-only and has no webhook URL acceptance or sending path. `server/src/routes/send.ts` rejects a non-empty `webhookUrl`; current `shared/src/constants.ts` has no `WEBHOOK_URL_REGEX`, and current `server/src/utils/validation.ts` has no `parseWebhookUrl`/`getWebhookInfo` path. V17 M-03 is not applicable to the current code and must not be “fixed” by adding webhook URL support.
 3. `ActionType` still includes `send_webhook_message`. This is a persisted-flow compatibility identifier; runtime dispatch remains disabled and should not be re-enabled by changing the shared union alone.
 4. The shared package has no runtime dependencies; it exports protocol constants, custom-ID codec and domain types used across client/server boundaries. Payload boundary validation remains the security control for the deliberately generic `ComponentNode` and `ActionConfig` shapes.
 
