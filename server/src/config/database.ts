@@ -38,6 +38,12 @@ if (
 }
 const useTurso = env.nodeEnv !== "test" && Boolean(tursoUrlRaw) && Boolean(tursoAuthToken) && validTursoUrl;
 
+if (env.isProd && !useTurso) {
+  throw new Error(
+    "Production requires TURSO_DATABASE_URL and TURSO_AUTH_TOKEN. Refusing to fall back to local SQLite, which may be ephemeral on the production host.",
+  );
+}
+
 const getTursoPipelineUrl = (): string => {
   const httpsBase = tursoUrlRaw.replace(/^libsql:\/\//i, "https://").replace(/\/+$/, "");
   return `${httpsBase}/v2/pipeline`;
