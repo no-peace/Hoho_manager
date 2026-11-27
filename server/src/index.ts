@@ -43,7 +43,7 @@ const start = async (): Promise<void> => {
     throw new Error("CRITICAL: DISCORD_BOT_TOKEN is required for production bot-based message delivery.");
   }
   if (env.isProd && (!env.discord.applicationId || !env.discord.clientId || !env.discord.clientSecret)) {
-    throw new Error("CRITICAL: DISCORD_APPLICATION_ID, DISCORD_CLIENT_ID, and DISCORD_CLIENT_SECRET are required for production bot access and Discord OAuth login.");
+    throw new Error("CRITICAL: DISCORD_APPLICATION_ID, a Discord OAuth client ID (DISCORD_CLIENT_ID or the application ID), and DISCORD_CLIENT_SECRET are required for production bot access and Discord OAuth login.");
   }
   if (env.isProd) {
     const invalidClientOrigins = env.clientOrigins.filter((origin) => {
